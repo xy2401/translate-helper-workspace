@@ -3,11 +3,46 @@
 			</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">原始逻辑卷 - 大而慢的逻辑卷</li><li class="listitem">缓存池逻辑卷 - 小而快速的逻辑卷，由两个设备组成：缓存数据逻辑卷和缓存元数据逻辑卷</li><li class="listitem">缓存数据逻辑卷 - 包含缓存池逻辑卷的数据块的逻辑卷</li><li class="listitem">缓存元数据逻辑卷 - 包含缓存池逻辑卷的元数据的逻辑卷，其中包含指定数据块存储位置的记帐信息（例如，在源逻辑卷或缓存数据逻辑卷上）。
 					</li><li class="listitem">缓存逻辑卷 - 包含原始逻辑卷和缓存池逻辑卷的逻辑卷。这是生成的可用设备，它封装了各种缓存卷组件。
 					</li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_creating-lvm-cache-volume-cache-volumes"></a>创建LVM缓存逻辑卷</h1></div></div></div><p>以下过程将创建LVM缓存逻辑卷。
-			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">创建包含慢物理卷和快速物理卷的卷组。在这个例子中。 <code class="literal">/dev/sde1</code>是一个速度较慢的设备， <code class="literal">/dev/sdf1</code>是一个快速设备，两个设备都包含在卷组<code class="literal">VG</code> 。</p><pre class="literallayout">＃ <code class="literal">pvcreate /dev/sde1</code> ＃ <code class="literal">pvcreate /dev/sdf1</code> ＃ <code class="literal">vgcreate VG /dev/sde1 /dev/sdf1</code></pre></li><li class="listitem"><p class="simpara">创建原始卷。此示例创建一个名为<code class="literal">lv</code>的原始卷，其大小为10千兆字节，由<code class="literal">/dev/sde1</code> （慢速物理卷）组成。
-					</p><pre class="literallayout"><code class="literal">lvcreate -L 10G -n lv VG /dev/sde1</code></pre></li><li class="listitem"><p class="simpara">创建缓存池逻辑卷。此示例在快速设备<code class="literal">/dev/sdf1</code>上创建名为<code class="literal">cpool</code>的缓存池逻辑卷，它是卷组<code class="literal">VG</code> 。此命令创建的缓存池逻辑卷包含隐藏缓存数据逻辑卷<code class="literal">cpool_cdata</code>和隐藏缓存元数据逻辑卷<code class="literal">cpool_cmeta</code> 。
-					</p><pre class="literallayout"><code class="literal">lvcreate --type cache-pool -L 5G -n cpool VG /dev/sdf1</code>使用默认的stripeize 64.00 KiB。创建逻辑卷“cpool”。<code class="literal">lvs -a -o name,size,attr,devices VG</code> LV LSize Attr Devices cpool 5.00g Cwi --- C --- cpool_cdata（0）[cpool_cdata] 5.00g Cwi ------- / dev / sdf1 （4）[cpool_cmeta] 8.00m ewi ------- / dev / sdf1（2）lv 10.00g -wi -a ----- / dev / sde1（0）[lvol0_pmspare] 8.00m ewi-- ----- / dev / sdf1（0）</pre><p class="simpara">对于更复杂的配置，您可能需要单独创建缓存数据和缓存元数据逻辑卷，然后将卷合并到缓存池逻辑卷中。有关此过程的信息，请参见<code class="literal">lvmcache</code> （7）手册页。
+			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">创建包含慢物理卷和快速物理卷的卷组。在这个例子中。 <code class="literal">/dev/sde1</code>是一个速度较慢的设备， <code class="literal">/dev/sdf1</code>是一个快速设备，两个设备都包含在卷组<code class="literal">VG</code> 。</p><pre class="literallayout"># <code class="literal">pvcreate /dev/sde1</code>
+# <code class="literal">pvcreate /dev/sdf1</code>
+# <code class="literal">vgcreate VG /dev/sde1 /dev/sdf1</code></pre></li><li class="listitem"><p class="simpara">创建原始卷。此示例创建一个名为<code class="literal">lv</code>的原始卷，其大小为10千兆字节，由<code class="literal">/dev/sde1</code> （慢速物理卷）组成。
+					</p><pre class="literallayout"># <code class="literal">lvcreate -L 10G -n lv VG /dev/sde1</code></pre></li><li class="listitem"><p class="simpara">创建缓存池逻辑卷。此示例在快速设备<code class="literal">cpool</code>上创建名为<code class="literal">/dev/sdf1</code>的缓存池逻辑卷，它是卷组<code class="literal">VG</code> 。此命令创建的缓存池逻辑卷包含隐藏缓存数据逻辑卷<code class="literal">cpool_cdata</code>和隐藏缓存元数据逻辑卷<code class="literal">cpool_cmeta</code> 。
+					</p><pre class="literallayout"># <code class="literal">lvcreate --type cache-pool -L 5G -n cpool VG /dev/sdf1</code>
+  Using default stripesize 64.00 KiB.
+  Logical volume "cpool" created.
+# <code class="literal">lvs -a -o name,size,attr,devices VG</code>
+  LV              LSize  Attr       Devices
+  cpool            5.00g Cwi---C--- cpool_cdata(0)
+  [cpool_cdata]    5.00g Cwi------- /dev/sdf1(4)
+  [cpool_cmeta]    8.00m ewi------- /dev/sdf1(2)
+  lv              10.00g -wi-a----- /dev/sde1(0)
+  [lvol0_pmspare]  8.00m ewi------- /dev/sdf1(0)</pre><p class="simpara">对于更复杂的配置，您可能需要单独创建缓存数据和缓存元数据逻辑卷，然后将卷合并到缓存池逻辑卷中。有关此过程的信息，请参见<code class="literal">lvmcache</code> （7）手册页。
 					</p></li><li class="listitem"><p class="simpara">通过将缓存池逻辑卷链接到源逻辑卷来创建缓存逻辑卷。生成的用户可访问的缓存逻辑卷采用原始逻辑卷的名称。原始逻辑卷成为隐藏的逻辑卷，其中<code class="literal">_corig</code>附加到原始名称。请注意，此转换可以实时完成，但您必须确保先执行备份。
-					</p><pre class="literallayout"><code class="literal">lvconvert --type cache --cachepool cpool VG/lv</code>现在缓存逻辑卷cpool。<code class="literal">lvs -a -o name,size,attr,devices VG</code> LV LSize Attr Devices [cpool] 5.00g Cwi --- C --- cpool_cdata（0）[cpool_cdata] 5.00g Cwi-ao ---- / dev / sdf1（4）[cpool_cmeta] 8.00m ewi-ao ---- / dev / sdf1（2）lv 10.00g Cwi-aC --- lv_corig（0）[lv_corig] 10.00g owi-aoC --- / dev / sde1（0）[lvol0_pmspare] 8.00m ewi ------- / dev / sdf1（0）</pre></li><li class="listitem"><p class="simpara">（可选）您可以将缓存的逻辑卷转换为精简池逻辑卷。请注意，从池中创建的任何精简逻辑卷都将共享缓存。
+					</p><pre class="literallayout"># <code class="literal">lvconvert --type cache --cachepool cpool VG/lv</code>
+  Logical volume cpool is now cached.
+# <code class="literal">lvs -a -o name,size,attr,devices VG</code>
+    LV              LSize  Attr       Devices
+    [cpool]          5.00g Cwi---C--- cpool_cdata(0)
+    [cpool_cdata]    5.00g Cwi-ao---- /dev/sdf1(4)
+    [cpool_cmeta]    8.00m ewi-ao---- /dev/sdf1(2)
+    lv              10.00g Cwi-a-C--- lv_corig(0)
+    [lv_corig]      10.00g owi-aoC--- /dev/sde1(0)
+    [lvol0_pmspare]  8.00m ewi------- /dev/sdf1(0)</pre></li><li class="listitem"><p class="simpara">（可选）您可以将缓存的逻辑卷转换为精简池逻辑卷。请注意，从池中创建的任何精简逻辑卷都将共享缓存。
 					</p><p class="simpara">以下命令使用快速设备<code class="literal">/dev/sdf1</code>来分配精简池元数据（ <code class="literal">lv_tmeta</code> ）。这与缓存池卷使用的设备相同，这意味着精简池元数据卷与缓存数据逻辑卷<code class="literal">cpool_cdata</code>和缓存元数据逻辑卷<code class="literal">cpool_cmeta</code>共享该设备。
-					</p><pre class="literallayout"><code class="literal">lvconvert --type thin-pool VG/lv /dev/sdf1</code>警告：使用元数据擦除将逻辑卷VG / lv转换为精简池的数据卷。这将破坏逻辑卷的内容（文件系统等）你真的想转换VG / lv吗？[y / n]： <code class="literal">y</code> VG / lv转换为精简池。<code class="literal">lvs -a -o name,size,attr,devices vg</code> LV LSize Attr Devices [cpool] 5.00g Cwi --- C --- cpool_cdata（0）[cpool_cdata] 5.00g Cwi-ao ---- / dev / sdf1（4）[cpool_cmeta] 8.00m ewi-ao ---- / dev / sdf1（2）lv 10.00g twi-a-tz-- lv_tdata（0）[lv_tdata] 10.00g Cwi-aoC --- lv_tdata_corig（ 0）[lv_tdata_corig] 10.00g owi-aoC --- / dev / sde1（0）[lv_tmeta] 12.00m ewi-ao ---- / dev / sdf1（1284）[lvol0_pmspare] 12.00m ewi ----- -  / dev / sdf1（0）[lvol0_pmspare] 12.00m ewi ------- / dev / sdf1（1287）</pre></li></ol></div><p>有关LVM缓存卷的更多信息，包括其他管理示例，请参见<code class="literal">lvmcache</code> （7）手册页。
+					</p><pre class="literallayout"># <code class="literal">lvconvert --type thin-pool VG/lv /dev/sdf1</code>
+   WARNING: Converting logical volume VG/lv to thin pool's data volume with metadata wiping.
+   THIS WILL DESTROY CONTENT OF LOGICAL VOLUME (filesystem etc.)
+ Do you really want to convert VG/lv? [y/n]: <code class="literal">y</code>
+   Converted VG/lv to thin pool.
+# <code class="literal">lvs -a -o name,size,attr,devices vg</code>
+   LV               LSize  Attr       Devices
+   [cpool]           5.00g Cwi---C--- cpool_cdata(0)
+   [cpool_cdata]     5.00g Cwi-ao---- /dev/sdf1(4)
+   [cpool_cmeta]     8.00m ewi-ao---- /dev/sdf1(2)
+   lv               10.00g twi-a-tz-- lv_tdata(0)
+   [lv_tdata]       10.00g Cwi-aoC--- lv_tdata_corig(0)
+   [lv_tdata_corig] 10.00g owi-aoC--- /dev/sde1(0)
+   [lv_tmeta]       12.00m ewi-ao---- /dev/sdf1(1284)
+   [lvol0_pmspare]  12.00m ewi------- /dev/sdf1(0)
+   [lvol0_pmspare]  12.00m ewi------- /dev/sdf1(1287)</pre></li></ol></div><p>有关LVM缓存卷的更多信息，包括其他管理示例，请参见<code class="literal">lvmcache</code> （7）手册页。
 			</p></div></div></body></html>
