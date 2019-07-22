@@ -14,10 +14,37 @@
 				</p></div><p>要查看分配过程当前在任何特定情况下的工作方式，您可以阅读调试日志记录输出，例如通过向命令添加<code class="literal">-vvvv</code>选项。
 			</p></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_preventing-lvm-allocation-controlling-lvm-allocation"></a>防止在物理卷上分配</h1></div></div></div><p>您可以使用<code class="literal">pvchange</code>命令阻止在一个或多个物理卷的可用空间上分配物理扩展区。如果存在磁盘错误，或者您要删除物理卷，则可能需要执行此操作。
 			</p><p>以下命令不允许在<code class="literal">/dev/sdk1</code>上分配物理盘<code class="literal">/dev/sdk1</code> 。
-			</p><pre class="literallayout"><code class="literal">pvchange -xn /dev/sdk1</code></pre><p>您还可以使用<code class="literal">pvchange</code>命令的<code class="literal">-xy</code>参数来允许在之前不允许的位置进行分配。
+			</p><pre class="literallayout"># <code class="literal">pvchange -x n /dev/sdk1</code></pre><p>您还可以使用<code class="literal">pvchange</code>命令的<code class="literal">-xy</code>参数来允许在之前不允许的位置进行分配。
 			</p></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_extending-lvm-volume-with-cling-allocation-controlling-lvm-allocation"></a>使用<code class="literal">cling</code>分配策略扩展逻辑卷</h1></div></div></div><p>当扩展LVM卷，你可以使用<code class="literal">--alloc cling</code>的备选方案<code class="literal">lvextend</code>命令中指定<code class="literal">cling</code>分配策略。此策略将在与现有逻辑卷的最后一个段相同的物理卷上选择空间。如果物理卷上的空间不足并且在<code class="literal">/etc/lvm/lvm.conf</code>文件中定义了标记列表，LVM将检查是否有任何标记附加到物理卷并寻求匹配这些物理卷标记在现有范围和新范围之间。
-			</p><p>例如，如果您具有在单个卷组中的两个站点之间镜像的逻辑卷，则可以通过使用<code class="literal">@site1</code>和<code class="literal">@site2</code>标记标记物理卷来根据它们所处的位置标记物理卷。然后，您可以在<code class="literal">lvm.conf</code>文件中指定以下行：</p><pre class="literallayout">cling_tag_list = [“@ site1”，“@ site2”]</pre><p>在以下示例中，已修改<code class="literal">lvm.conf</code>文件以包含以下行：</p><pre class="literallayout">cling_tag_list = [“@ A”，“@ B”]</pre><p>同样在此示例中，创建了一个卷组<code class="literal">taft</code> ，其中包含物理卷<code class="literal">/dev/sdb1</code> ， <code class="literal">/dev/sdc1</code> ， <code class="literal">/dev/sdd1</code> ， <code class="literal">/dev/sde1</code> ， <code class="literal">/dev/sdf1</code> ， <code class="literal">/dev/sdg1</code>和<code class="literal">/dev/sdh1</code> 。这些物理卷已标记为标签<code class="literal">A</code> ， <code class="literal">B</code>和<code class="literal">C</code>该示例不使用<code class="literal">C</code>标记，但这将显示LVM使用标记选择要用于镜像腿的物理卷。
-			</p><pre class="literallayout">＃pvs -a -o + pv_tags / dev / sd [bcdefgh] PV VG Fmt Attr PSize PFree PV标签/ dev / sdb1 taft lvm2 a-- 15.00g 15.00g A / dev / sdc1 taft lvm2 a-- 15.00g 15.00g B / dev / sdd1 taft lvm2 a-- 15.00g 15.00g B / dev / sde1 taft lvm2 a-- 15.00g 15.00g C / dev / sdf1 taft lvm2 a-- 15.00g 15.00g C / dev / sdg1 taft lvm2 a -  15.00g 15.00g A / dev / sdh1 taft lvm2 a-- 15.00g 15.00g A</pre><p>以下命令从卷组<code class="literal">taft</code>创建10千兆字节的镜像卷。</p><pre class="literallayout"><code class="literal">lvcreate --type raid1 -m 1 -n mirror --nosync -L 10G taft</code>警告：新的raid1将不会同步。不读你不写的东西！创建逻辑卷“镜像”</pre><p>以下命令显示用于镜像支路和RAID元数据子卷的设备。
-			</p><pre class="literallayout">#lvs <code class="literal">lvs -a -o +devices</code> LV VG Attr LSize Log Cpy％Sync Devices mirror taft Rwi-ar --- 10.00g 100.00 mirror_rimage_0（0），mirror_rimage_1（0）[mirror_rimage_0] taft iwi-aor --- 10.00g / dev / sdb1（1）[mirror_rimage_1] taft iwi-aor --- 10.00g / dev / sdc1（1）[mirror_rmeta_0] taft ewi-aor --- 4.00m / dev / sdb1（0）[mirror_rmeta_1] taft ewi- aor --- 4.00m / dev / sdc1（0）</pre><p>以下命令扩展了镜像卷的大小，使用<code class="literal">cling</code>分配策略指示应使用具有相同标记的物理卷扩展镜像支路。
-			</p><pre class="literallayout"><code class="literal">lvextend --alloc cling -L +10G taft/mirror</code>扩展2个镜像。将逻辑卷镜像扩展到20.00 GiB逻辑卷镜像已成功调整大小</pre><p>以下显示命令显示镜腿已使用与腿标记相同的物理卷进行扩展。请注意，标记为<code class="literal">C</code>的物理卷被忽略。
-			</p><pre class="literallayout">#lvs <code class="literal">lvs -a -o +devices</code> LV VG Attr LSize Log Cpy％Sync Devices mirror taft Rwi-ar --- 20.00g 100.00 mirror_rimage_0（0），mirror_rimage_1（0）[mirror_rimage_0] taft iwi-aor --- 20.00g / dev / sdb1（1）[mirror_rimage_0] taft iwi-aor --- 20.00g / dev / sdg1（0）[mirror_rimage_1] taft iwi-aor --- 20.00g / dev / sdc1（1）[mirror_rimage_1] taft iwi- aor --- 20.00g / dev / sdd1（0）[mirror_rmeta_0] taft ewi-aor --- 4.00m / dev / sdb1（0）[mirror_rmeta_1] taft ewi-aor --- 4.00m / dev / sdc1（0 ）</pre></div></div></body></html>
+			</p><p>例如，如果您具有在单个卷组中的两个站点之间镜像的逻辑卷，则可以通过使用<code class="literal">@site1</code>和<code class="literal">@site2</code>标记标记物理卷来根据它们所处的位置标记物理卷。然后，您可以在<code class="literal">lvm.conf</code>文件中指定以下行：</p><pre class="literallayout">cling_tag_list = [ "@site1", "@site2" ]</pre><p>在以下示例中，已修改<code class="literal">lvm.conf</code>文件以包含以下行：</p><pre class="literallayout">cling_tag_list = [ "@A", "@B" ]</pre><p>同样在此示例中，创建了一个卷组<code class="literal">taft</code> ，其中包含物理卷<code class="literal">/dev/sdb1</code> ， <code class="literal">/dev/sdc1</code> ， <code class="literal">/dev/sdd1</code> ， <code class="literal">/dev/sde1</code> ， <code class="literal">/dev/sdf1</code> ， <code class="literal">/dev/sdg1</code>和<code class="literal">/dev/sdh1</code> 。这些物理卷已标记为标签<code class="literal">A</code> ， <code class="literal">B</code>和<code class="literal">C</code>该示例不使用<code class="literal">C</code>标记，但这将显示LVM使用标记选择要用于镜像腿的物理卷。
+			</p><pre class="literallayout"># pvs -a -o +pv_tags /dev/sd[bcdefgh]
+  PV         VG   Fmt  Attr PSize  PFree  PV Tags
+  /dev/sdb1  taft lvm2 a--  15.00g 15.00g A
+  /dev/sdc1  taft lvm2 a--  15.00g 15.00g B
+  /dev/sdd1  taft lvm2 a--  15.00g 15.00g B
+  /dev/sde1  taft lvm2 a--  15.00g 15.00g C
+  /dev/sdf1  taft lvm2 a--  15.00g 15.00g C
+  /dev/sdg1  taft lvm2 a--  15.00g 15.00g A
+  /dev/sdh1  taft lvm2 a--  15.00g 15.00g A</pre><p>以下命令从卷组<code class="literal">taft</code>创建10千兆字节的镜像卷。</p><pre class="literallayout"># <code class="literal">lvcreate --type raid1 -m 1 -n mirror --nosync -L 10G taft</code>
+  WARNING: New raid1 won't be synchronised. Don't read what you didn't write!
+  Logical volume "mirror" created</pre><p>以下命令显示用于镜像支路和RAID元数据子卷的设备。
+			</p><pre class="literallayout"># <code class="literal">lvs -a -o +devices</code>
+  LV                VG   Attr       LSize  Log Cpy%Sync Devices
+  mirror            taft Rwi-a-r--- 10.00g       100.00 mirror_rimage_0(0),mirror_rimage_1(0)
+  [mirror_rimage_0] taft iwi-aor--- 10.00g              /dev/sdb1(1)
+  [mirror_rimage_1] taft iwi-aor--- 10.00g              /dev/sdc1(1)
+  [mirror_rmeta_0]  taft ewi-aor---  4.00m              /dev/sdb1(0)
+  [mirror_rmeta_1]  taft ewi-aor---  4.00m              /dev/sdc1(0)</pre><p>以下命令扩展了镜像卷的大小，使用<code class="literal">cling</code>分配策略指示应使用具有相同标记的物理卷扩展镜像支路。
+			</p><pre class="literallayout"># <code class="literal">lvextend --alloc cling -L +10G taft/mirror</code>
+  Extending 2 mirror images.
+  Extending logical volume mirror to 20.00 GiB
+  Logical volume mirror successfully resized</pre><p>以下显示命令显示镜腿已使用与腿标记相同的物理卷进行扩展。请注意，标记为<code class="literal">C</code>的物理卷被忽略。
+			</p><pre class="literallayout"># <code class="literal">lvs -a -o +devices</code>
+  LV                VG   Attr       LSize  Log Cpy%Sync Devices
+  mirror            taft Rwi-a-r--- 20.00g       100.00 mirror_rimage_0(0),mirror_rimage_1(0)
+  [mirror_rimage_0] taft iwi-aor--- 20.00g              /dev/sdb1(1)
+  [mirror_rimage_0] taft iwi-aor--- 20.00g              /dev/sdg1(0)
+  [mirror_rimage_1] taft iwi-aor--- 20.00g              /dev/sdc1(1)
+  [mirror_rimage_1] taft iwi-aor--- 20.00g              /dev/sdd1(0)
+  [mirror_rmeta_0]  taft ewi-aor---  4.00m              /dev/sdb1(0)
+  [mirror_rmeta_1]  taft ewi-aor---  4.00m              /dev/sdc1(0)</pre></div></div></body></html>
