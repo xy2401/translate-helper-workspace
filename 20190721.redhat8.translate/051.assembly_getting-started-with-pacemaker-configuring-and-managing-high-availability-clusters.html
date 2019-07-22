@@ -6,50 +6,229 @@
 					</li></ul></div><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>确保您运行的节点的名称位于<code class="literal">/etc/hosts</code>文件中。
 				</p></div><p>通过此过程，您将学习如何使用Pacemaker设置群集，如何显示群集状态以及如何配置群集服务。此示例将Apache HTTP服务器创建为群集资源，并显示群集在资源发生故障时如何响应。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">从高可用性通道安装Red Hat High Availability Add-On软件包，然后启动并启用<code class="literal">pcsd</code>服务。
-					</p><pre class="literallayout"><code class="literal">yum install pcs pacemaker fence-agents-all</code> ...<code class="literal">systemctl start pcsd.service</code> <code class="literal">systemctl enable pcsd.service</code></pre><p class="simpara">如果您正在运行<code class="literal">firewalld</code>守护程序，请启用Red Hat High Availability Add-On所需的端口。
-					</p><pre class="literallayout"># <code class="literal">firewall-cmd --reload</code> <code class="literal">firewall-cmd --permanent --add-service=high-availability</code> ＃ <code class="literal">firewall-cmd --reload</code></pre></li><li class="listitem"><p class="simpara">在群集中的每个节点上为用户<code class="literal">hacluster</code>设置密码，并为将从中运行<code class="literal">pcs</code>命令的节点上的群集中的每个节点验证用户<code class="literal">hacluster</code> 。此示例仅使用单个节点，即运行命令的节点，但此步骤包含在此处，因为它是配置受支持的Red Hat High Availability多节点群集的必要步骤。
-					</p><pre class="literallayout"><code class="literal">passwd hacluster</code> ...<code class="literal">pcs host auth z1.example.com</code></pre></li><li class="listitem"><p class="simpara">使用一个成员创建名为<code class="literal">my_cluster</code>的集群，并检查集群的状态。此命令一步创建并启动集群。
-					</p><pre class="literallayout"><code class="literal">pcs cluster setup my_cluster --start z1.example.com</code> ...#pcs <code class="literal">pcs cluster status</code>群集状态：堆栈：corosync当前DC：z1.example.com（版本2.0.0-10.el8-b67d8d0de9） - 具有仲裁的分区上次更新时间：星期四10月11日16:11:18 2018最后更改：星期四Oct 11 16:11:00 2018 by hacluster via crmd on z1.example.com 1节点配置0资源配置PCSD状态：z1.example.com：在线</pre></li><li class="listitem"><p class="simpara">Red Hat高可用性群集要求您为群集配置防护。<a class="link" href="https://access.redhat.com/solutions/15575">红帽高可用性群集中的防护中</a>描述了此要求的原因。但是，对于此介绍，其仅用于显示如何使用基本Pacemaker命令，请通过将<code class="literal">stonith-enabled</code> cluster选项设置为<code class="literal">false</code>来禁用fencing。
+					</p><pre class="literallayout"># <code class="literal">yum install pcs pacemaker fence-agents-all</code>
+...
+# <code class="literal">systemctl start pcsd.service</code>
+# <code class="literal">systemctl enable pcsd.service</code></pre><p class="simpara">如果您正在运行<code class="literal">firewalld</code>守护程序，请启用Red Hat High Availability Add-On所需的端口。
+					</p><pre class="literallayout"># <code class="literal">firewall-cmd --permanent --add-service=high-availability</code>
+# <code class="literal">firewall-cmd --reload</code></pre></li><li class="listitem"><p class="simpara">在群集中的每个节点上为用户<code class="literal">hacluster</code>设置密码，并为将从中运行<code class="literal">pcs</code>命令的节点上的群集中的每个节点验证用户<code class="literal">hacluster</code> 。此示例仅使用单个节点，即运行命令的节点，但此步骤包含在此处，因为它是配置受支持的Red Hat High Availability多节点群集的必要步骤。
+					</p><pre class="literallayout"># <code class="literal">passwd hacluster</code>
+...
+# <code class="literal">pcs host auth z1.example.com</code></pre></li><li class="listitem"><p class="simpara">使用一个成员创建名为<code class="literal">my_cluster</code>的集群，并检查集群的状态。此命令一步创建并启动集群。
+					</p><pre class="literallayout"># <code class="literal">pcs cluster setup my_cluster --start z1.example.com</code>
+...
+# <code class="literal">pcs cluster status</code>
+Cluster Status:
+ Stack: corosync
+ Current DC: z1.example.com (version 2.0.0-10.el8-b67d8d0de9) - partition with quorum
+ Last updated: Thu Oct 11 16:11:18 2018
+ Last change: Thu Oct 11 16:11:00 2018 by hacluster via crmd on z1.example.com
+ 1 node configured
+ 0 resources configured
+
+PCSD Status:
+  z1.example.com: Online</pre></li><li class="listitem"><p class="simpara">Red Hat高可用性群集要求您为群集配置防护。<a class="link" href="https://access.redhat.com/solutions/15575">红帽高可用性群集中的防护中</a>描述了此要求的原因。但是，对于此介绍，其仅用于显示如何使用基本Pacemaker命令，请通过将<code class="literal">stonith-enabled</code> cluster选项设置为<code class="literal">false</code>来禁用fencing。
 					</p><div class="warning" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">警告</h3><p>使用<code class="literal">stonith-enabled=false</code>对于生产群集来说完全不合适。它告诉集群只是假装故障节点被安全地隔离。
-						</p></div><pre class="literallayout"><code class="literal">pcs property set stonith-enabled=false</code></pre></li><li class="listitem"><p class="simpara">在系统上配置Web浏览器并创建一个网页以显示简单的文本消息。如果您正在运行<code class="literal">firewalld</code>守护程序，请启用<code class="literal">httpd</code>所需的端口。
+						</p></div><pre class="literallayout"># <code class="literal">pcs property set stonith-enabled=false</code></pre></li><li class="listitem"><p class="simpara">在系统上配置Web浏览器并创建一个网页以显示简单的文本消息。如果您正在运行<code class="literal">firewalld</code>守护程序，请启用<code class="literal">httpd</code>所需的端口。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>不要使用<code class="literal">systemctl enable</code>来启用群集管理的任何服务以在系统引导时启动。
-						</p></div><pre class="literallayout"><code class="literal">yum install -y httpd wget</code> ...# <code class="literal">firewall-cmd --reload</code> <code class="literal">firewall-cmd --permanent --add-service=http</code> ＃ <code class="literal">firewall-cmd --reload</code> <code class="literal">cat &lt;&lt;-END &gt;/var/www/html/index.html</code> <code class="literal">&lt;html&gt;</code> <code class="literal">&lt;body&gt;My Test Site - $(hostname)&lt;/body&gt;</code> <code class="literal">&lt;/html&gt;</code> <code class="literal">END</code></pre><p class="simpara">为了使Apache资源代理获取Apache的状态，请在现有配置中添加以下内容以启用状态服务器URL。</p><pre class="literallayout"><code class="literal">SetHandler server-status</code> <code class="literal">cat &lt;&lt;-END &gt; /etc/httpd/conf.d/status.conf</code> <code class="literal">&lt;Location /server-status&gt;</code> <code class="literal">SetHandler server-status</code> <code class="literal">Order deny,allow</code> <code class="literal">Deny from all</code> <code class="literal">Allow from 127.0.0.1</code> <code class="literal">Allow from ::1</code> <code class="literal">&lt;/Location&gt;</code> <code class="literal">END</code></pre></li><li class="listitem"><p class="simpara">为要管理的集群创建<code class="literal">IPaddr2</code>和<code class="literal">apache</code>资源。“IPaddr2”资源是浮动IP地址，不能是已与物理节点关联的IP地址。如果未指定“IPaddr2”资源的NIC设备，则浮动IP必须与节点使用的静态分配的IP地址驻留在同一网络上。
-					</p><p class="simpara">您可以使用<code class="literal">pcs resource list</code>命令显示所有可用资源类型的<code class="literal">pcs resource list</code> 。您可以使用<code class="literal">pcs resource describe <span class="emphasis"><em>resourcetype</em></span></code>命令显示可以为指定资源类型设置的参数。例如，以下命令显示可以为<code class="literal">apache</code>类型的资源设置的参数：</p><pre class="literallayout"><code class="literal">pcs resource describe apache</code> ...</pre><p class="simpara">在此示例中，IP地址资源和apache资源都配置为名为<code class="literal">apachegroup</code>的组的<code class="literal">apachegroup</code> ，这可确保在配置工作多节点群集时将资源保持在一起以在同一节点上运行。
-					</p><pre class="literallayout"><code class="literal">pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.122.120 --group apachegroup</code> <code class="literal">pcs resource create WebSite ocf:heartbeat:apache configfile=/etc/httpd/conf/httpd.conf statusurl="http://localhost/server-status" --group apachegroup</code> ＃ <code class="literal">pcs status</code>群集名称：my_cluster堆栈：corosync当前DC：z1.example.com（版本2.0.0-10.el8-b67d8d0de9） - 具有仲裁的分区上次更新时间：星期五10月12日09： 2018年54:33最后修改：10月12日星期五09:54:30 2018由root通过cibadmin在z1.example.com上配置1个节点配置2个资源在线：[z1.example.com]资源组：资源组：apachegroup ClusterIP（ocf :: heartbeat：IPaddr2）：已启动z1.example.com WebSite（ocf :: heartbeat：apache）：已启动z1.example.com PCSD状态：z1.example.com：在线...</pre><p class="simpara">配置群集资源后，可以使用<code class="literal">pcs resource config</code>命令显示为该<code class="literal">pcs resource config</code>的选项。
-					</p><pre class="literallayout"><code class="literal">pcs resource config WebSite</code>资源：WebSite（class = ocf provider = heartbeat type = apache）属性：configfile = / etc / httpd / conf / httpd.conf statusurl = http：// localhost / server-status操作：start interval = 0s timeout = 40s（WebSite-start-interval-0s）stop interval = 0s timeout = 60s（WebSite-stop-interval-0s）monitor interval = 1min（WebSite-monitor-interval-1min）</pre></li><li class="listitem">使用您配置的浮动IP地址将浏览器指向您创建的网站。这应该显示您定义的文本消息。
+						</p></div><pre class="literallayout"># <code class="literal">yum install -y httpd wget</code>
+...
+# <code class="literal">firewall-cmd --permanent --add-service=http</code>
+# <code class="literal">firewall-cmd --reload</code>
+
+# <code class="literal">cat &lt;&lt;-END &gt;/var/www/html/index.html</code>
+<code class="literal">&lt;html&gt;</code>
+<code class="literal">&lt;body&gt;My Test Site - $(hostname)&lt;/body&gt;</code>
+<code class="literal">&lt;/html&gt;</code>
+<code class="literal">END</code></pre><p class="simpara">为了使Apache资源代理获取Apache的状态，请在现有配置中添加以下内容以启用状态服务器URL。</p><pre class="literallayout"># <code class="literal">cat &lt;&lt;-END &gt; /etc/httpd/conf.d/status.conf</code>
+<code class="literal">&lt;Location /server-status&gt;</code>
+<code class="literal">SetHandler server-status</code>
+<code class="literal">Order deny,allow</code>
+<code class="literal">Deny from all</code>
+<code class="literal">Allow from 127.0.0.1</code>
+<code class="literal">Allow from ::1</code>
+<code class="literal">&lt;/Location&gt;</code>
+<code class="literal">END</code></pre></li><li class="listitem"><p class="simpara">为要管理的集群创建<code class="literal">IPaddr2</code>和<code class="literal">apache</code>资源。“IPaddr2”资源是浮动IP地址，不能是已与物理节点关联的IP地址。如果未指定“IPaddr2”资源的NIC设备，则浮动IP必须与节点使用的静态分配的IP地址驻留在同一网络上。
+					</p><p class="simpara">您可以使用<code class="literal">pcs resource list</code>命令显示所有可用资源类型的<code class="literal">pcs resource list</code> 。您可以使用<code class="literal">pcs resource describe <span class="emphasis"><em>resourcetype</em></span></code>命令显示可以为指定资源类型设置的参数。例如，以下命令显示可以为<code class="literal">apache</code>类型的资源设置的参数：</p><pre class="literallayout"># <code class="literal">pcs resource describe apache</code>
+...</pre><p class="simpara">在此示例中，IP地址资源和apache资源都配置为名为<code class="literal">apachegroup</code>的组的<code class="literal">apachegroup</code> ，这可确保在配置工作多节点群集时将资源保持在一起以在同一节点上运行。
+					</p><pre class="literallayout"># <code class="literal">pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.122.120 --group apachegroup</code>
+
+# <code class="literal">pcs resource create WebSite ocf:heartbeat:apache configfile=/etc/httpd/conf/httpd.conf statusurl="http://localhost/server-status" --group apachegroup</code>
+
+# <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Stack: corosync
+Current DC: z1.example.com (version 2.0.0-10.el8-b67d8d0de9) - partition with quorum
+Last updated: Fri Oct 12 09:54:33 2018
+Last change: Fri Oct 12 09:54:30 2018 by root via cibadmin on z1.example.com
+
+1 node configured
+2 resources configured
+
+Online: [ z1.example.com ]
+
+Full list of resources:
+
+Resource Group: apachegroup
+    ClusterIP  (ocf::heartbeat:IPaddr2):       Started z1.example.com
+    WebSite    (ocf::heartbeat:apache):        Started z1.example.com
+
+PCSD Status:
+  z1.example.com: Online
+...</pre><p class="simpara">配置群集资源后，可以使用<code class="literal">pcs resource config</code>命令显示为该<code class="literal">pcs resource config</code>的选项。
+					</p><pre class="literallayout"># <code class="literal">pcs resource config WebSite</code>
+Resource: WebSite (class=ocf provider=heartbeat type=apache)
+ Attributes: configfile=/etc/httpd/conf/httpd.conf statusurl=http://localhost/server-status
+ Operations: start interval=0s timeout=40s (WebSite-start-interval-0s)
+             stop interval=0s timeout=60s (WebSite-stop-interval-0s)
+             monitor interval=1min (WebSite-monitor-interval-1min)</pre></li><li class="listitem">使用您配置的浮动IP地址将浏览器指向您创建的网站。这应该显示您定义的文本消息。
 					</li><li class="listitem"><p class="simpara">停止apache Web服务并检查群集状态。使用<code class="literal">killall -9</code>模拟应用程序级别的崩溃。
-					</p><pre class="literallayout"><code class="literal">killall -9 httpd</code></pre><p class="simpara">检查群集状态。您应该看到停止Web服务导致操作失败，但群集软件重新启动了该服务，您仍然可以访问该网站。
-					</p><pre class="literallayout">#pcs <code class="literal">pcs status</code>群集名称：my_cluster ...当前DC：z1.example.com（版本1.1.13-10.el7-44eb2dd） - 具有仲裁1节点和2个资源的分区在线：[z1.example.com]资源的完整列表：资源组：apachegroup ClusterIP（ ocf :: heartbeat：IPaddr2）：已启动z1.example.com WebSite（ocf :: heartbeat：apache）：已启动z1.example.com资源操作失败：* z1.example.com上的WebSite_monitor_60000'未运行'（7）： call = 13，status = complete，exitreason ='none'，last-rc-change ='Thu Oct 11 23:45:50 2016'，排队= 0ms，exec = 0ms PCSD状态：z1.example.com：在线</pre><p class="simpara">您可以清除服务启动并再次运行时失败的资源上的故障状态，并在查看群集状态时不再显示失败的操作通知。
-					</p><pre class="literallayout"><code class="literal">pcs resource cleanup WebSite</code></pre></li><li class="listitem"><p class="simpara">完成查看群集和群集状态后，停止节点上的群集服务。即使您只在一个节点上启动了此介绍的服务，也会包含<code class="literal">--all</code>参数，因为它会停止实际多节点集群上所有节点上的集群服务。
-					</p><pre class="literallayout"><code class="literal">pcs cluster stop --all</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_learning-to-configure-failover-getting-started-with-pacemaker"></a>学习配置故障转移</h1></div></div></div><p>此过程介绍如何创建运行服务的Pacemaker集群，该服务在运行服务的节点不可用时将从一个节点故障转移到另一个节点。通过此过程，您可以了解如何在双节点群集中创建服务，然后您可以观察该服务在运行它的节点上发生故障时会发生什么。
+					</p><pre class="literallayout"># <code class="literal">killall -9 httpd</code></pre><p class="simpara">检查群集状态。您应该看到停止Web服务导致操作失败，但群集软件重新启动了该服务，您仍然可以访问该网站。
+					</p><pre class="literallayout"># <code class="literal">pcs status</code>
+Cluster name: my_cluster
+...
+Current DC: z1.example.com (version 1.1.13-10.el7-44eb2dd) - partition with quorum
+1 node and 2 resources configured
+
+Online: [ z1.example.com ]
+
+Full list of resources:
+
+Resource Group: apachegroup
+    ClusterIP  (ocf::heartbeat:IPaddr2):       Started z1.example.com
+    WebSite    (ocf::heartbeat:apache):        Started z1.example.com
+
+Failed Resource Actions:
+* WebSite_monitor_60000 on z1.example.com 'not running' (7): call=13, status=complete, exitreason='none',
+    last-rc-change='Thu Oct 11 23:45:50 2016', queued=0ms, exec=0ms
+
+PCSD Status:
+    z1.example.com: Online</pre><p class="simpara">您可以清除服务启动并再次运行时失败的资源上的故障状态，并在查看群集状态时不再显示失败的操作通知。
+					</p><pre class="literallayout"># <code class="literal">pcs resource cleanup WebSite</code></pre></li><li class="listitem"><p class="simpara">完成查看群集和群集状态后，停止节点上的群集服务。即使您只在一个节点上启动了此介绍的服务，也会包含<code class="literal">--all</code>参数，因为它会停止实际多节点集群上所有节点上的集群服务。
+					</p><pre class="literallayout"># <code class="literal">pcs cluster stop --all</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_learning-to-configure-failover-getting-started-with-pacemaker"></a>学习配置故障转移</h1></div></div></div><p>此过程介绍如何创建运行服务的Pacemaker集群，该服务在运行服务的节点不可用时将从一个节点故障转移到另一个节点。通过此过程，您可以了解如何在双节点群集中创建服务，然后您可以观察该服务在运行它的节点上发生故障时会发生什么。
 			</p><p>此示例过程配置运行Apache HTTP服务器的双节点Pacemaker集群。然后，您可以在一个节点上停止Apache服务，以查看该服务是如何保持可用的。
 			</p><p>此过程要求您有两个运行Red Hat Enterprise Linux 8的节点可以相互通信，并且它需要一个浮动IP地址，该地址与节点的静态分配IP地址位于同一网络上。
 			</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">此示例中使用的节点是<code class="literal">z1.example.com</code>和<code class="literal">z2.example.com</code> 。
 					</li><li class="listitem">本例中使用的浮动IP地址为192.168.122.120。
 					</li></ul></div><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>确保您使用的节点的名称位于每个节点上的<code class="literal">/etc/hosts</code>文件中。
 				</p></div><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在两个节点上，从高可用性通道安装Red Hat High Availability Add-On软件包，然后启动并启用<code class="literal">pcsd</code>服务。
-					</p><pre class="literallayout"><code class="literal">yum install pcs pacemaker fence-agents-all</code> ...<code class="literal">systemctl start pcsd.service</code> <code class="literal">systemctl enable pcsd.service</code></pre><p class="simpara">如果您正在运行<code class="literal">firewalld</code>守护程序，则在两个节点上都会启用Red Hat High Availability Add-On所需的端口。
-					</p><pre class="literallayout"># <code class="literal">firewall-cmd --reload</code> <code class="literal">firewall-cmd --permanent --add-service=high-availability</code> ＃ <code class="literal">firewall-cmd --reload</code></pre></li><li class="listitem"><p class="simpara">在群集中的两个节点上，为用户<code class="literal">hacluster</code>设置密码。
-					</p><pre class="literallayout"><code class="literal">passwd hacluster</code></pre></li><li class="listitem"><p class="simpara">在将运行<code class="literal">pcs</code>命令的节点上为集群中的每个节点验证用户<code class="literal">hacluster</code> 。
-					</p><pre class="literallayout"><code class="literal">pcs host auth z1.example.com z2.example.com</code></pre></li><li class="listitem"><p class="simpara">创建名为<code class="literal">my_cluster</code>的集群，将两个节点都作为集群成员。此命令一步创建并启动集群。您只需要从群集中的一个节点运行此命令，因为<code class="literal">pcs</code>配置命令对整个群集生效。
+					</p><pre class="literallayout"># <code class="literal">yum install pcs pacemaker fence-agents-all</code>
+...
+# <code class="literal">systemctl start pcsd.service</code>
+# <code class="literal">systemctl enable pcsd.service</code></pre><p class="simpara">如果您正在运行<code class="literal">firewalld</code>守护程序，则在两个节点上都会启用Red Hat High Availability Add-On所需的端口。
+					</p><pre class="literallayout"># <code class="literal">firewall-cmd --permanent --add-service=high-availability</code>
+# <code class="literal">firewall-cmd --reload</code></pre></li><li class="listitem"><p class="simpara">在群集中的两个节点上，为用户<code class="literal">hacluster</code>设置密码。
+					</p><pre class="literallayout"># <code class="literal">passwd hacluster</code></pre></li><li class="listitem"><p class="simpara">在将运行<code class="literal">pcs</code>命令的节点上为集群中的每个节点验证用户<code class="literal">hacluster</code> 。
+					</p><pre class="literallayout"># <code class="literal">pcs host auth z1.example.com z2.example.com</code></pre></li><li class="listitem"><p class="simpara">创建名为<code class="literal">my_cluster</code>的集群，将两个节点都作为集群成员。此命令一步创建并启动集群。您只需要从群集中的一个节点运行此命令，因为<code class="literal">pcs</code>配置命令对整个群集生效。
 					</p><p class="simpara">在群集中的一个节点上，运行以下命令。
-					</p><pre class="literallayout"><code class="literal">pcs cluster setup my_cluster --start z1.example.com z2.example.com</code></pre></li><li class="listitem"><p class="simpara">Red Hat高可用性群集要求您为群集配置防护。<a class="link" href="https://access.redhat.com/solutions/15575">红帽高可用性群集中的防护中</a>描述了此要求的原因。但是，对于此简介，要仅显示故障转移在此配置中的工作方式，请通过将<code class="literal">stonith-enabled</code>群集选项设置为<code class="literal">false</code>来禁用防护
+					</p><pre class="literallayout"># <code class="literal">pcs cluster setup my_cluster --start z1.example.com z2.example.com</code></pre></li><li class="listitem"><p class="simpara">Red Hat高可用性群集要求您为群集配置防护。<a class="link" href="https://access.redhat.com/solutions/15575">红帽高可用性群集中的防护中</a>描述了此要求的原因。但是，对于此简介，要仅显示故障转移在此配置中的工作方式，请通过将<code class="literal">stonith-enabled</code>群集选项设置为<code class="literal">false</code>来禁用防护
 					</p><div class="warning" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">警告</h3><p>使用<code class="literal">stonith-enabled=false</code>对于生产群集来说完全不合适。它告诉集群只是假装故障节点被安全地隔离。
-						</p></div><pre class="literallayout"><code class="literal">pcs property set stonith-enabled=false</code></pre></li><li class="listitem"><p class="simpara">创建群集并禁用防护后，请检查群集的状态。
+						</p></div><pre class="literallayout"># <code class="literal">pcs property set stonith-enabled=false</code></pre></li><li class="listitem"><p class="simpara">创建群集并禁用防护后，请检查群集的状态。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>当您运行<code class="literal">pcs cluster status</code>命令时，它可能会显示与系统组件启动时的示例略有不同的输出。
-						</p></div><pre class="literallayout">#pcs <code class="literal">pcs cluster status</code>群集状态：堆栈：corosync当前DC：z1.example.com（版本2.0.0-10.el8-b67d8d0de9） - 具有仲裁的分区上次更新时间：星期四10月11日16:11:18 2018最后更改：星期四10月11日16:11:00 2018 by hacluster via crmd on z1.example.com 2个节点配置0资源配置PCSD状态：z1.example.com：在线z2.example.com：在线</pre></li><li class="listitem"><p class="simpara">在两个节点上，配置Web浏览器并创建一个网页以显示简单的文本消息。如果您正在运行<code class="literal">firewalld</code>守护程序，请启用<code class="literal">httpd</code>所需的端口。
+						</p></div><pre class="literallayout"># <code class="literal">pcs cluster status</code>
+Cluster Status:
+ Stack: corosync
+ Current DC: z1.example.com (version 2.0.0-10.el8-b67d8d0de9) - partition with quorum
+ Last updated: Thu Oct 11 16:11:18 2018
+ Last change: Thu Oct 11 16:11:00 2018 by hacluster via crmd on z1.example.com
+ 2 nodes configured
+ 0 resources configured
+
+PCSD Status:
+  z1.example.com: Online
+  z2.example.com: Online</pre></li><li class="listitem"><p class="simpara">在两个节点上，配置Web浏览器并创建一个网页以显示简单的文本消息。如果您正在运行<code class="literal">firewalld</code>守护程序，请启用<code class="literal">httpd</code>所需的端口。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>不要使用<code class="literal">systemctl enable</code>来启用群集管理的任何服务以在系统引导时启动。
-						</p></div><pre class="literallayout"><code class="literal">yum install -y httpd wget</code> ...# <code class="literal">firewall-cmd --reload</code> <code class="literal">firewall-cmd --permanent --add-service=http</code> ＃ <code class="literal">firewall-cmd --reload</code> <code class="literal">cat &lt;&lt;-END &gt;/var/www/html/index.html</code> <code class="literal">&lt;html&gt;</code> <code class="literal">&lt;body&gt;My Test Site - $(hostname)&lt;/body&gt;</code> <code class="literal">&lt;/html&gt;</code> <code class="literal">END</code></pre><p class="simpara">为了使Apache资源代理获取Apache的状态，请在群集中的每个节点上创建以下对现有配置的添加以启用状态服务器URL。</p><pre class="literallayout"><code class="literal">SetHandler server-status</code> <code class="literal">cat &lt;&lt;-END &gt; /etc/httpd/conf.d/status.conf</code> <code class="literal">&lt;Location /server-status&gt;</code> <code class="literal">SetHandler server-status</code> <code class="literal">Order deny,allow</code> <code class="literal">Deny from all</code> <code class="literal">Allow from 127.0.0.1</code> <code class="literal">Allow from ::1</code> <code class="literal">&lt;/Location&gt;</code> <code class="literal">END</code></pre></li><li class="listitem"><p class="simpara">为要管理的集群创建<code class="literal">IPaddr2</code>和<code class="literal">apache</code>资源。“IPaddr2”资源是浮动IP地址，不能是已与物理节点关联的IP地址。如果未指定“IPaddr2”资源的NIC设备，则浮动IP必须与节点使用的静态分配的IP地址驻留在同一网络上。
-					</p><p class="simpara">您可以使用<code class="literal">pcs resource list</code>命令显示所有可用资源类型的<code class="literal">pcs resource list</code> 。您可以使用<code class="literal">pcs resource describe <span class="emphasis"><em>resourcetype</em></span></code>命令显示可以为指定资源类型设置的参数。例如，以下命令显示可以为<code class="literal">apache</code>类型的资源设置的参数：</p><pre class="literallayout"><code class="literal">pcs resource describe apache</code> ...</pre><p class="simpara">在此示例中，IP地址资源和apache资源都配置为名为<code class="literal">apachegroup</code>的组的<code class="literal">apachegroup</code> ，这确保资源保持在一起以在同一节点上运行。
-					</p><p class="simpara">从群集中的一个节点运行以下命令：</p><pre class="literallayout"><code class="literal">pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.122.120 --group apachegroup</code> <code class="literal">pcs resource create WebSite ocf:heartbeat:apache configfile=/etc/httpd/conf/httpd.conf statusurl="http://localhost/server-status" --group apachegroup</code> ＃ <code class="literal">pcs status</code>群集名称：my_cluster堆栈：corosync当前DC：z1.example.com（版本2.0.0-10.el8-b67d8d0de9） - 具有仲裁的分区上次更新时间：星期五10月12日09： 2018年54:33最后修改：10月12日星期五09:54:30 2018 by root via cibadmin on z1.example.com 2个节点已配置2个资源在线配置：[z1.example.com z2.example.com]资源的完整列表：资源组：apachegroup ClusterIP（ocf :: heartbeat：IPaddr2）：已启动z1.example.com WebSite（ocf :: heartbeat：apache）：已启动z1.example.com PCSD状态：z1.example.com：在线z2.example .com：在线...</pre><p class="simpara">请注意，在此实例中， <code class="literal">apachegroup</code>服务正在节点z1.example.com上运行。
+						</p></div><pre class="literallayout"># <code class="literal">yum install -y httpd wget</code>
+...
+# <code class="literal">firewall-cmd --permanent --add-service=http</code>
+# <code class="literal">firewall-cmd --reload</code>
+
+# <code class="literal">cat &lt;&lt;-END &gt;/var/www/html/index.html</code>
+<code class="literal">&lt;html&gt;</code>
+<code class="literal">&lt;body&gt;My Test Site - $(hostname)&lt;/body&gt;</code>
+<code class="literal">&lt;/html&gt;</code>
+<code class="literal">END</code></pre><p class="simpara">为了使Apache资源代理获取Apache的状态，请在群集中的每个节点上创建以下对现有配置的添加以启用状态服务器URL。</p><pre class="literallayout"># <code class="literal">cat &lt;&lt;-END &gt; /etc/httpd/conf.d/status.conf</code>
+<code class="literal">&lt;Location /server-status&gt;</code>
+<code class="literal">SetHandler server-status</code>
+<code class="literal">Order deny,allow</code>
+<code class="literal">Deny from all</code>
+<code class="literal">Allow from 127.0.0.1</code>
+<code class="literal">Allow from ::1</code>
+<code class="literal">&lt;/Location&gt;</code>
+<code class="literal">END</code></pre></li><li class="listitem"><p class="simpara">为要管理的集群创建<code class="literal">IPaddr2</code>和<code class="literal">apache</code>资源。“IPaddr2”资源是浮动IP地址，不能是已与物理节点关联的IP地址。如果未指定“IPaddr2”资源的NIC设备，则浮动IP必须与节点使用的静态分配的IP地址驻留在同一网络上。
+					</p><p class="simpara">您可以使用<code class="literal">pcs resource list</code>命令显示所有可用资源类型的<code class="literal">pcs resource list</code> 。您可以使用<code class="literal">pcs resource describe <span class="emphasis"><em>resourcetype</em></span></code>命令显示可以为指定资源类型设置的参数。例如，以下命令显示可以为<code class="literal">apache</code>类型的资源设置的参数：</p><pre class="literallayout"># <code class="literal">pcs resource describe apache</code>
+...</pre><p class="simpara">在此示例中，IP地址资源和apache资源都配置为名为<code class="literal">apachegroup</code>的组的<code class="literal">apachegroup</code> ，这确保资源保持在一起以在同一节点上运行。
+					</p><p class="simpara">从群集中的一个节点运行以下命令：</p><pre class="literallayout"># <code class="literal">pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.122.120 --group apachegroup</code>
+
+# <code class="literal">pcs resource create WebSite ocf:heartbeat:apache configfile=/etc/httpd/conf/httpd.conf statusurl="http://localhost/server-status" --group apachegroup</code>
+
+# <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Stack: corosync
+Current DC: z1.example.com (version 2.0.0-10.el8-b67d8d0de9) - partition with quorum
+Last updated: Fri Oct 12 09:54:33 2018
+Last change: Fri Oct 12 09:54:30 2018 by root via cibadmin on z1.example.com
+
+2 nodes configured
+2 resources configured
+
+Online: [ z1.example.com z2.example.com ]
+
+Full list of resources:
+
+Resource Group: apachegroup
+    ClusterIP  (ocf::heartbeat:IPaddr2):       Started z1.example.com
+    WebSite    (ocf::heartbeat:apache):        Started z1.example.com
+
+PCSD Status:
+  z1.example.com: Online
+  z2.example.com: Online
+...</pre><p class="simpara">请注意，在此实例中， <code class="literal">apachegroup</code>服务正在节点z1.example.com上运行。
 					</p></li><li class="listitem"><p class="simpara">访问您创建的网站，在运行它的节点上停止服务，并记录服务如何故障转移到第二个节点。
 					</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem">使用您配置的浮动IP地址将浏览器指向您创建的网站。这应该显示您定义的文本消息，显示运行网站的节点的名称。
 							</li><li class="listitem"><p class="simpara">停止apache Web服务。使用<code class="literal">killall -9</code>模拟应用程序级别的崩溃。
-							</p><pre class="literallayout"><code class="literal">killall -9 httpd</code></pre><p class="simpara">检查群集状态。您应该看到停止Web服务导致操作失败，但是群集软件在运行它的节点上重新启动了该服务，您仍然可以访问Web浏览器。
-							</p><pre class="literallayout">#pcs <code class="literal">pcs status</code>群集名称：my_cluster堆栈：corosync当前DC：z1.example.com（版本2.0.0-10.el8-b67d8d0de9） - 具有法定人数的分区上次更新时间：星期五10月12日09:54:33 2018最后更改：星期五10月12日09:54:30 2018由root通过cibadmin在z1.example.com上配置2个节点配置2个资源在线：[z1.example.com z2.example.com]资源的完整列表：资源组：apachegroup ClusterIP（ocf :: heartbeat：IPaddr2）：已启动z1.example.com WebSite（ocf :: heartbeat：apache）：已启动z1.example.com资源操作失败：* z.sexample.com上的WebSite_monitor_60000'未运行'（7）：调用= 31，status =完成，exitreason ='none'，last-rc-change ='Fri Feb 5 21:01:41 2016'，排队= 0ms，exec = 0ms</pre><p class="simpara">服务启动并再次运行后，清除故障状态。
-							</p><pre class="literallayout"><code class="literal">pcs resource cleanup WebSite</code></pre></li><li class="listitem"><p class="simpara">将运行服务的节点置于待机模式。请注意，由于我们已禁用防护，因此无法有效模拟节点级故障（例如拔出电源线），因为群集需要进行防护才能从此类情况中恢复。
-							</p><pre class="literallayout"><code class="literal">pcs node standby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">检查群集的状态，并记下服务正在运行的位置。
-							</p><pre class="literallayout">#pcs <code class="literal">pcs status</code>群集名称：my_cluster堆栈：corosync当前DC：z1.example.com（版本2.0.0-10.el8-b67d8d0de9） - 具有法定人数的分区上次更新时间：星期五10月12日09:54:33 2018最后更改：星期五10月12日09:54:30 2018 by root via cibadmin on z1.example.com 2个节点已配置2个资源已配置节点z1.example.com：待机在线：[z2.example.com]资源完整列表：资源组：apachegroup ClusterIP（ocf :: heartbeat：IPaddr2）：已启动z2.example.com WebSite（ocf :: heartbeat：apache）：已启动z2.example.com</pre></li><li class="listitem">访问该网站。虽然显示消息应指示服务正在运行的节点，但不应该丢失服务。
+							</p><pre class="literallayout"># <code class="literal">killall -9 httpd</code></pre><p class="simpara">检查群集状态。您应该看到停止Web服务导致操作失败，但是群集软件在运行它的节点上重新启动了该服务，您仍然可以访问Web浏览器。
+							</p><pre class="literallayout"># <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Stack: corosync
+Current DC: z1.example.com (version 2.0.0-10.el8-b67d8d0de9) - partition with quorum
+Last updated: Fri Oct 12 09:54:33 2018
+Last change: Fri Oct 12 09:54:30 2018 by root via cibadmin on z1.example.com
+
+2 nodes configured
+2 resources configured
+
+Online: [ z1.example.com z2.example.com ]
+
+Full list of resources:
+
+Resource Group: apachegroup
+    ClusterIP  (ocf::heartbeat:IPaddr2):       Started z1.example.com
+    WebSite    (ocf::heartbeat:apache):        Started z1.example.com
+
+Failed Resource Actions:
+* WebSite_monitor_60000 on z1.example.com 'not running' (7): call=31, status=complete, exitreason='none',
+    last-rc-change='Fri Feb  5 21:01:41 2016', queued=0ms, exec=0ms</pre><p class="simpara">服务启动并再次运行后，清除故障状态。
+							</p><pre class="literallayout"># <code class="literal">pcs resource cleanup WebSite</code></pre></li><li class="listitem"><p class="simpara">将运行服务的节点置于待机模式。请注意，由于我们已禁用防护，因此无法有效模拟节点级故障（例如拔出电源线），因为群集需要进行防护才能从此类情况中恢复。
+							</p><pre class="literallayout"># <code class="literal">pcs node standby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">检查群集的状态，并记下服务正在运行的位置。
+							</p><pre class="literallayout"># <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Stack: corosync
+Current DC: z1.example.com (version 2.0.0-10.el8-b67d8d0de9) - partition with quorum
+Last updated: Fri Oct 12 09:54:33 2018
+Last change: Fri Oct 12 09:54:30 2018 by root via cibadmin on z1.example.com
+
+2 nodes configured
+2 resources configured
+
+Node z1.example.com: standby
+Online: [ z2.example.com ]
+
+Full list of resources:
+
+Resource Group: apachegroup
+    ClusterIP  (ocf::heartbeat:IPaddr2):       Started z2.example.com
+    WebSite    (ocf::heartbeat:apache):        Started z2.example.com</pre></li><li class="listitem">访问该网站。虽然显示消息应指示服务正在运行的节点，但不应该丢失服务。
 							</li></ol></div></li><li class="listitem"><p class="simpara">要将群集服务还原到第一个节点，请使节点退出待机模式。这不一定会将服务移回该节点。
-					</p><pre class="literallayout"><code class="literal">pcs cluster unstandby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">对于最终清理，请停止两个节点上的集群服务。
-					</p><pre class="literallayout"><code class="literal">pcs cluster stop --all</code></pre></li></ol></div></div></div></body></html>
+					</p><pre class="literallayout"># <code class="literal">pcs cluster unstandby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">对于最终清理，请停止两个节点上的集群服务。
+					</p><pre class="literallayout"># <code class="literal">pcs cluster stop --all</code></pre></li></ol></div></div></div></body></html>
