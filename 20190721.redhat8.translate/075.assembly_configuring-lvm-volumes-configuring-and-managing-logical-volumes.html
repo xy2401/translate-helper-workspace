@@ -2,14 +2,34 @@
 		</p><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_creating-an-LVM-volume-configuring-lvm-volumes"></a>在三个磁盘上创建LVM逻辑卷</h1></div></div></div><p>此示例过程创建一个名为<code class="literal">mylv</code>的LVM逻辑卷，该卷由<code class="literal">/dev/sda1</code> ， <code class="literal">/dev/sdb1</code>和<code class="literal">/dev/sdc1</code> 。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">要使用卷组中的磁盘，请使用<code class="literal">pvcreate</code>命令将它们标记为LVM物理卷。
 					</p><div class="warning" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">警告</h3><p>此命令会破坏<code class="literal">/dev/sda1</code> ， <code class="literal">/dev/sdb1</code>和<code class="literal">/dev/sdc1</code> 。
-						</p></div><pre class="literallayout"><code class="literal">pvcreate /dev/sda1 /dev/sdb1 /dev/sdc1</code>物理卷“/ dev / sda1”已成功创建物理卷“/ dev / sdb1”已成功创建物理卷“/ dev / sdc1”已成功创建</pre></li><li class="listitem"><p class="simpara">创建一个由您创建的LVM物理卷组成的卷组。以下命令将创建卷组<code class="literal">myvg</code> 。
-					</p><pre class="literallayout"><code class="literal">vgcreate myvg /dev/sda1 /dev/sdb1 /dev/sdc1</code>成功创建卷组“myvg”</pre><p class="simpara">您可以使用<code class="literal">vgs</code>命令显示新卷组的属性。
-					</p><pre class="literallayout"><code class="literal">vgs</code> #PV #LV #SN Attr VSize VFree myvg 3 0 0 wz  -  n- 51.45G 51.45G</pre></li><li class="listitem"><p class="simpara">从您创建的卷组创建逻辑卷。以下命令从卷组<code class="literal">myvg</code>创建逻辑卷<code class="literal">mylv</code> 。此示例创建一个使用2千兆字节卷组的逻辑卷。
-					</p><pre class="literallayout"><code class="literal">lvcreate -L 2G -n mylv myvg</code>创建逻辑卷“mylv”</pre></li><li class="listitem"><p class="simpara">在逻辑卷上创建文件系统。以下命令在逻辑卷上创建<code class="literal">ext4</code>文件系统。
-					</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/myvg/mylv</code> mke2fs 1。44。3（10-July-2018）使用524288 4k块和131072 inode创建文件系统文件系统UUID：616da032-8a48-4cd7-8705-bd94b7a1c8c4存储在块上的超级块备份：32768， 98304,163840,229376,294912分配组表：完成写入inode表：done创建日志（16384块）：done编写超级块和文件系统记帐信息：完成</pre><p class="simpara">以下命令装入逻辑卷并报告文件系统磁盘空间使用情况。
-					</p><pre class="literallayout"><code class="literal">mount /dev/myvg/mylv /mnt</code> <code class="literal">df</code>文件系统1K块使用可用使用％挂载/ dev / mapper / myvg-mylv 1998672 6144 1871288 1％/ mnt</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_creating-a-striped-logical-volume_configuring-lvm-volumes"></a>创建RAID0（条带化）逻辑卷</h1></div></div></div><p>RAID0逻辑卷以条带大小为单位跨多个数据子卷传播逻辑卷数据。
+						</p></div><pre class="literallayout"># <code class="literal">pvcreate /dev/sda1 /dev/sdb1 /dev/sdc1</code>
+  Physical volume "/dev/sda1" successfully created
+  Physical volume "/dev/sdb1" successfully created
+  Physical volume "/dev/sdc1" successfully created</pre></li><li class="listitem"><p class="simpara">创建一个由您创建的LVM物理卷组成的卷组。以下命令将创建卷组<code class="literal">myvg</code> 。
+					</p><pre class="literallayout"># <code class="literal">vgcreate myvg /dev/sda1 /dev/sdb1 /dev/sdc1</code>
+  Volume group "myvg" successfully created</pre><p class="simpara">您可以使用<code class="literal">vgs</code>命令显示新卷组的属性。
+					</p><pre class="literallayout"># <code class="literal">vgs</code>
+  VG   #PV #LV #SN Attr   VSize  VFree
+  myvg   3   0   0 wz--n- 51.45G 51.45G</pre></li><li class="listitem"><p class="simpara">从您创建的卷组创建逻辑卷。以下命令从卷组<code class="literal">myvg</code>创建逻辑卷<code class="literal">mylv</code> 。此示例创建一个使用2千兆字节卷组的逻辑卷。
+					</p><pre class="literallayout"># <code class="literal">lvcreate -L 2G -n mylv myvg</code>
+  Logical volume "mylv" created</pre></li><li class="listitem"><p class="simpara">在逻辑卷上创建文件系统。以下命令在逻辑卷上创建<code class="literal">ext4</code>文件系统。
+					</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/myvg/mylv</code>
+mke2fs 1.44.3 (10-July-2018)
+Creating filesystem with 524288 4k blocks and 131072 inodes
+Filesystem UUID: 616da032-8a48-4cd7-8705-bd94b7a1c8c4
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done</pre><p class="simpara">以下命令装入逻辑卷并报告文件系统磁盘空间使用情况。
+					</p><pre class="literallayout"># <code class="literal">mount /dev/myvg/mylv /mnt</code>
+# <code class="literal">df</code>
+Filesystem             1K-blocks     Used  Available Use% Mounted on
+/dev/mapper/myvg-mylv    1998672     6144    1871288   1% /mnt</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_creating-a-striped-logical-volume_configuring-lvm-volumes"></a>创建RAID0（条带化）逻辑卷</h1></div></div></div><p>RAID0逻辑卷以条带大小为单位跨多个数据子卷传播逻辑卷数据。
 			</p><p>创建RAID0卷的命令格式如下。
-			</p><pre class="literallayout">lvcreate --type raid0 [_meta] --stripes <span class="emphasis"><em>Stripes</em></span> --stripesize <span class="emphasis"><em>StripeSize</em></span> <span class="emphasis"><em>VolumeGroup</em></span> [ <span class="emphasis"><em>PhysicalVolumePath</em></span> ...]</pre><div class="table"><a id="idm140241337760304"></a><p class="title"><strong>表2.1。RAID0命令创建参数</strong></p><div class="table-contents"><table border="1" summary="RAID0 Command Creation parameters"><colgroup><col class="col_1"><col class="col_2"></colgroup><thead><tr><th valign="top" style="text-align:left">参数</th><th valign="top" style="text-align:left">描述</th></tr></thead><tbody><tr><td valign="top" style="text-align:left"> <p>
+			</p><pre class="literallayout">lvcreate --type raid0[_meta] --stripes <span class="emphasis"><em>Stripes</em></span> --stripesize <span class="emphasis"><em>StripeSize</em></span> <span class="emphasis"><em>VolumeGroup</em></span> [<span class="emphasis"><em>PhysicalVolumePath</em></span> ...]</pre><div class="table"><a id="idm140241337760304"></a><p class="title"><strong>表2.1。RAID0命令创建参数</strong></p><div class="table-contents"><table border="1" summary="RAID0 Command Creation parameters"><colgroup><col class="col_1"><col class="col_2"></colgroup><thead><tr><th valign="top" style="text-align:left">参数</th><th valign="top" style="text-align:left">描述</th></tr></thead><tbody><tr><td valign="top" style="text-align:left"> <p>
 								<code class="literal">--type raid0 [_meta]</code>
 							</p>
 							 </td><td valign="top" style="text-align:left"> <p>指定<code class="literal">raid0</code>会创建没有元数据卷的RAID0卷。指定<code class="literal">raid0_meta</code>会创建包含元数据卷的RAID0卷。由于RAID0是非弹性的，因此不必将任何镜像数据块存储为RAID1 / 10，也不必像RAID4 / 5/6那样计算和存储任何奇偶校验块。因此，它不需要元数据卷来保持镜像或奇偶校验块的重新同步进度的状态。但是，从RAID0到RAID4 / <code class="literal">raid0_meta</code>的转换时，元数据卷成为必需的，并且指定<code class="literal">raid0_meta</code>预先分配这些元数据卷以防止相应的分配失败。
@@ -36,49 +56,154 @@
 							 </td></tr></tbody></table></div></div><p>此示例过程创建一个名为<code class="literal">mylv</code>的LVM RAID0逻辑卷， <code class="literal">mylv</code>在<code class="literal">/dev/sda1</code> ， <code class="literal">/dev/sdb1</code>和<code class="literal">/dev/sdc1</code>的磁盘上对数据进行条<code class="literal">/dev/sdc1</code> 。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">使用<code class="literal">pvcreate</code>命令将要在卷组中使用的磁盘标记为LVM物理卷。
 					</p><div class="warning" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">警告</h3><p>此命令会破坏<code class="literal">/dev/sda1</code> ， <code class="literal">/dev/sdb1</code>和<code class="literal">/dev/sdc1</code> 。
-						</p></div><pre class="literallayout"><code class="literal">pvcreate /dev/sda1 /dev/sdb1 /dev/sdc1</code>物理卷“/ dev / sda1”已成功创建物理卷“/ dev / sdb1”已成功创建物理卷“/ dev / sdc1”已成功创建</pre></li><li class="listitem"><p class="simpara">创建卷组<code class="literal">myvg</code> 。以下命令将创建卷组<code class="literal">myvg</code> 。
-					</p><pre class="literallayout"><code class="literal">vgcreate myvg /dev/sda1 /dev/sdb1 /dev/sdc1</code>成功创建卷组“myvg”</pre><p class="simpara">您可以使用<code class="literal">vgs</code>命令显示新卷组的属性。
-					</p><pre class="literallayout"><code class="literal">vgs</code> #PV #LV #SN Attr VSize VFree myvg 3 0 0 wz  -  n- 51.45G 51.45G</pre></li><li class="listitem"><p class="simpara">从您创建的卷组创建RAID0逻辑卷。以下命令从卷组<code class="literal">myvg</code>创建RAID0卷<code class="literal">mylv</code> 。此示例创建一个大小为2千兆字节的逻辑卷，其中包含三个条带，条带大小为4千字节。
-					</p><pre class="literallayout"><code class="literal">lvcreate --type raid0 -L 2G --stripes 3 --stripesize 4 -n mylv myvg</code>舍入大小2.00 GiB（512范围）直到条带边界大小2.00 GiB（513范围）。创建了逻辑卷“mylv”。</pre></li><li class="listitem"><p class="simpara">在RAID0逻辑卷上创建文件系统。以下命令在逻辑卷上创建<code class="literal">ext4</code>文件系统。
-					</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/myvg/mylv</code> mke2fs 1.44.3（10-July-2018）使用525312 4k块和131376 inode创建文件系统Filesystem UUID：9d4c0704-6028-450a-8b0a-8875358c0511块上存储的超级块备份：32768， 98304,163840,229376,294912分配组表：完成写入inode表：done创建日志（16384块）：done编写超级块和文件系统记帐信息：完成</pre><p class="simpara">以下命令装入逻辑卷并报告文件系统磁盘空间使用情况。
-					</p><pre class="literallayout"><code class="literal">mount /dev/myvg/mylv /mnt</code> <code class="literal">df</code>文件系统1K块使用可用使用％挂载/ dev / mapper / myvg-mylv 2002684 6168 1875072 1％/ mnt</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_splitting-a-volume-group-configuring-lvm-volumes"></a>拆分卷组</h1></div></div></div><p>在此示例过程中，现有卷组由三个物理卷组成。如果物理卷上有足够的未使用空间，则可以在不添加新磁盘的情况下创建新卷组。
+						</p></div><pre class="literallayout"># <code class="literal">pvcreate /dev/sda1 /dev/sdb1 /dev/sdc1</code>
+  Physical volume "/dev/sda1" successfully created
+  Physical volume "/dev/sdb1" successfully created
+  Physical volume "/dev/sdc1" successfully created</pre></li><li class="listitem"><p class="simpara">创建卷组<code class="literal">myvg</code> 。以下命令将创建卷组<code class="literal">myvg</code> 。
+					</p><pre class="literallayout"># <code class="literal">vgcreate myvg /dev/sda1 /dev/sdb1 /dev/sdc1</code>
+  Volume group "myvg" successfully created</pre><p class="simpara">您可以使用<code class="literal">vgs</code>命令显示新卷组的属性。
+					</p><pre class="literallayout"># <code class="literal">vgs</code>
+  VG   #PV #LV #SN Attr   VSize  VFree
+  myvg   3   0   0 wz--n- 51.45G 51.45G</pre></li><li class="listitem"><p class="simpara">从您创建的卷组创建RAID0逻辑卷。以下命令从卷组<code class="literal">myvg</code>创建RAID0卷<code class="literal">mylv</code> 。此示例创建一个大小为2千兆字节的逻辑卷，其中包含三个条带，条带大小为4千字节。
+					</p><pre class="literallayout"># <code class="literal">lvcreate --type raid0 -L 2G --stripes 3 --stripesize 4 -n mylv myvg</code>
+  Rounding size 2.00 GiB (512 extents) up to stripe boundary size 2.00 GiB(513 extents).
+  Logical volume "mylv" created.</pre></li><li class="listitem"><p class="simpara">在RAID0逻辑卷上创建文件系统。以下命令在逻辑卷上创建<code class="literal">ext4</code>文件系统。
+					</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/myvg/mylv</code>
+mke2fs 1.44.3 (10-July-2018)
+Creating filesystem with 525312 4k blocks and 131376 inodes
+Filesystem UUID: 9d4c0704-6028-450a-8b0a-8875358c0511
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done</pre><p class="simpara">以下命令装入逻辑卷并报告文件系统磁盘空间使用情况。
+					</p><pre class="literallayout"># <code class="literal">mount /dev/myvg/mylv /mnt</code>
+# <code class="literal">df</code>
+Filesystem             1K-blocks     Used  Available Use% Mounted on
+/dev/mapper/myvg-mylv    2002684     6168    1875072   1% /mnt</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_splitting-a-volume-group-configuring-lvm-volumes"></a>拆分卷组</h1></div></div></div><p>在此示例过程中，现有卷组由三个物理卷组成。如果物理卷上有足够的未使用空间，则可以在不添加新磁盘的情况下创建新卷组。
 			</p><p>在初始设置中，逻辑卷<code class="literal">mylv</code>来自卷组<code class="literal">myvg</code> ，而卷组<code class="literal">myvg</code>又包含三个物理卷： <code class="literal">/dev/sda1</code> ， <code class="literal">/dev/sdb1</code>和<code class="literal">/dev/sdc1</code> 。
 			</p><p>完成此过程后，卷组<code class="literal">myvg</code>将包含<code class="literal">/dev/sda1</code>和<code class="literal">/dev/sdb1</code> 。第二个卷组<code class="literal">yourvg</code>将包含<code class="literal">/dev/sdc1</code> 。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">使用<code class="literal">pvscan</code>命令确定卷组中当前可用的可用空间量。
-					</p><pre class="literallayout"><code class="literal">pvscan</code> PV / dev / sda1 VG myvg lvm2 [17.15 GB / 0 free] PV / dev / sdb1 VG myvg lvm2 [17.15 GB / 12.15 GB free] PV / dev / sdc1 VG myvg lvm2 [17.15 GB / 15.80 GB free] Total ：3 [51.45 GB] /使用中：3 [51.45 GB] /无VG：0 [0]</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">pvmove</code>命令将<code class="literal">/dev/sdb1</code> <code class="literal">/dev/sdc1</code>所有使用的物理盘区移动到<code class="literal">/dev/sdb1</code> 。<code class="literal">pvmove</code>命令可能需要很长时间才能执行。
+					</p><pre class="literallayout"># <code class="literal">pvscan</code>
+  PV /dev/sda1  VG myvg   lvm2 [17.15 GB / 0    free]
+  PV /dev/sdb1  VG myvg   lvm2 [17.15 GB / 12.15 GB free]
+  PV /dev/sdc1  VG myvg   lvm2 [17.15 GB / 15.80 GB free]
+  Total: 3 [51.45 GB] / in use: 3 [51.45 GB] / in no VG: 0 [0   ]</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">pvmove</code>命令将<code class="literal">/dev/sdb1</code> <code class="literal">/dev/sdc1</code>所有使用的物理盘区移动到<code class="literal">/dev/sdb1</code> 。<code class="literal">pvmove</code>命令可能需要很长时间才能执行。
 					</p><p class="simpara">在集群中， <code class="literal">pvmove</code>命令只能移动仅在单个节点上处于活动状态的逻辑卷。
-					</p><pre class="literallayout"><code class="literal">pvmove /dev/sdc1 /dev/sdb1</code> / dev / sdc1：已移动：14.7％/ dev / sdc1：已移动：30.3％/ dev / sdc1：已移动：45.7％/ dev / sdc1：已移动：61.0％/ dev / sdc1 ：已移动：76.6％/ dev / sdc1：已移动：92.2％/ dev / sdc1：已移动：100.0％</pre><p class="simpara">移动数据后，您可以看到<code class="literal">/dev/sdc1</code>上的所有空间都是空闲的。
-					</p><pre class="literallayout"><code class="literal">pvscan</code> PV / dev / sda1 VG myvg lvm2 [17.15 GB / 0 free] PV / dev / sdb1 VG myvg lvm2 [17.15 GB / 10.80 GB free] PV / dev / sdc1 VG myvg lvm2 [17.15 GB / 17.15 GB free] Total ：3 [51.45 GB] /使用中：3 [51.45 GB] /无VG：0 [0]</pre></li><li class="listitem"><p class="simpara">要创建新卷组<code class="literal">yourvg</code> ，请使用<code class="literal">vgsplit</code>命令拆分卷组<code class="literal">myvg</code> 。
+					</p><pre class="literallayout"># <code class="literal">pvmove /dev/sdc1 /dev/sdb1</code>
+  /dev/sdc1: Moved: 14.7%
+  /dev/sdc1: Moved: 30.3%
+  /dev/sdc1: Moved: 45.7%
+  /dev/sdc1: Moved: 61.0%
+  /dev/sdc1: Moved: 76.6%
+  /dev/sdc1: Moved: 92.2%
+  /dev/sdc1: Moved: 100.0%</pre><p class="simpara">移动数据后，您可以看到<code class="literal">/dev/sdc1</code>上的所有空间都是空闲的。
+					</p><pre class="literallayout"># <code class="literal">pvscan</code>
+  PV /dev/sda1   VG myvg   lvm2 [17.15 GB / 0    free]
+  PV /dev/sdb1   VG myvg   lvm2 [17.15 GB / 10.80 GB free]
+  PV /dev/sdc1   VG myvg   lvm2 [17.15 GB / 17.15 GB free]
+  Total: 3 [51.45 GB] / in use: 3 [51.45 GB] / in no VG: 0 [0   ]</pre></li><li class="listitem"><p class="simpara">要创建新卷组<code class="literal">yourvg</code> ，请使用<code class="literal">vgsplit</code>命令拆分卷组<code class="literal">myvg</code> 。
 					</p><p class="simpara">以下命令将卷组<code class="literal">yourvg</code>与卷组<code class="literal">myvg</code>分开，将物理卷<code class="literal">/dev/sdc1</code>到新卷组<code class="literal">yourvg</code> 。
-					</p><pre class="literallayout"><code class="literal">lvchange -an /dev/myvg/mylv</code> <code class="literal">vgsplit myvg yourvg /dev/sdc1</code>卷组“yourvg”从“myvg”成功拆分</pre><p class="simpara">您可以使用<code class="literal">vgs</code>命令查看两个卷组的属性。
-					</p><pre class="literallayout"><code class="literal">vgs</code> #PV #LV #SN Attr VSize VFree myvg 2 1 0 wz  -  n- 34.30G 10.80G yourvg 1 0 0 wz  -  n- 17.15G 17.15G</pre></li><li class="listitem"><p class="simpara">创建新卷组后，创建新的逻辑卷<code class="literal">yourlv</code> 。</p><pre class="literallayout"><code class="literal">lvcreate -L 5G -n yourlv yourvg</code>逻辑卷“yourlv”已创建</pre></li><li class="listitem"><p class="simpara">在新逻辑卷上创建文件系统并装入它。
-					</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/yourvg/yourlv</code> mke2fs 1.44.3（10-July-2018）使用524288 4k块和131072 inode创建文件系统Filesystem UUID：616da032-8a48-4cd7-8705-bd94b7a1c8c4块上存储的超级块备份：32768， 98304,163840,229376,294912分配组表：完成写入inode表：done创建日志（16384块）：done编写超级块和文件系统记帐信息：完成<code class="literal">mount /dev/yourvg/yourlv /mnt</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_removing-a-disk-from-a-logical-volume-configuring-lvm-volumes"></a>从逻辑卷中删除磁盘</h1></div></div></div><p>这些示例过程说明了如何从现有逻辑卷中删除磁盘，以替换磁盘或将磁盘用作其他卷的一部分。要删除磁盘，必须先将LVM物理卷上的扩展区移动到其他磁盘或磁盘组。
+					</p><pre class="literallayout"># <code class="literal">lvchange -a n /dev/myvg/mylv</code>
+# <code class="literal">vgsplit myvg yourvg /dev/sdc1</code>
+  Volume group "yourvg" successfully split from "myvg"</pre><p class="simpara">您可以使用<code class="literal">vgs</code>命令查看两个卷组的属性。
+					</p><pre class="literallayout"># <code class="literal">vgs</code>
+  VG     #PV #LV #SN Attr   VSize  VFree
+  myvg     2   1   0 wz--n- 34.30G 10.80G
+  yourvg   1   0   0 wz--n- 17.15G 17.15G</pre></li><li class="listitem"><p class="simpara">创建新卷组后，创建新的逻辑卷<code class="literal">yourlv</code> 。</p><pre class="literallayout"># <code class="literal">lvcreate -L 5G -n yourlv yourvg</code>
+  Logical volume "yourlv" created</pre></li><li class="listitem"><p class="simpara">在新逻辑卷上创建文件系统并装入它。
+					</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/yourvg/yourlv</code>
+mke2fs 1.44.3 (10-July-2018)
+Creating filesystem with 524288 4k blocks and 131072 inodes
+Filesystem UUID: 616da032-8a48-4cd7-8705-bd94b7a1c8c4
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+# <code class="literal">mount /dev/yourvg/yourlv /mnt</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_removing-a-disk-from-a-logical-volume-configuring-lvm-volumes"></a>从逻辑卷中删除磁盘</h1></div></div></div><p>这些示例过程说明了如何从现有逻辑卷中删除磁盘，以替换磁盘或将磁盘用作其他卷的一部分。要删除磁盘，必须先将LVM物理卷上的扩展区移动到其他磁盘或磁盘组。
 			</p><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="move_exist_ex4"></a>将范围移动到现有物理卷</h2></div></div></div><p>在此示例中，逻辑卷分布在卷组<code class="literal">myvg</code>中的四个物理卷上。
-				</p><pre class="literallayout"><code class="literal">pvs -o+pv_used</code> PV VG <code class="literal">pvs -o+pv_used</code> Attr PSize PFree使用/ dev / sda1 myvg lvm2 a- 17.15G 12.15G 5.00G / dev / sdb1 myvg lvm2 a- 17.15G 12.15G 5.00G / dev / sdc1 myvg lvm2 a- 17.15 G 12.15G 5.00G / dev / sdd1 myvg lvm2 a- 17.15G 2.15G 15.00G</pre><p>此示例将范围移出<code class="literal">/dev/sdb1</code>以便可以从卷组中删除它。
+				</p><pre class="literallayout"># <code class="literal">pvs -o+pv_used</code>
+  PV         VG   Fmt  Attr PSize  PFree  Used
+  /dev/sda1  myvg lvm2 a-   17.15G 12.15G  5.00G
+  /dev/sdb1  myvg lvm2 a-   17.15G 12.15G  5.00G
+  /dev/sdc1  myvg lvm2 a-   17.15G 12.15G  5.00G
+  /dev/sdd1  myvg lvm2 a-   17.15G  2.15G 15.00G</pre><p>此示例将范围移出<code class="literal">/dev/sdb1</code>以便可以从卷组中删除它。
 				</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">如果卷组中的其他物理卷上有足够的可用扩展区，则可以在要删除的设备上执行<code class="literal">pvmove</code>命令而不使用其他选项，并且扩展区将分发到其他设备。
 						</p><p class="simpara">在集群中， <code class="literal">pvmove</code>命令只能移动仅在单个节点上处于活动状态的逻辑卷。
-						</p><pre class="literallayout"><code class="literal">pvmove /dev/sdb1</code> / dev / sdb1：已移动：2.0％.../ dev / sdb1：已移动：79.2％.../ dev / sdb1：已移动：100.0％</pre><p class="simpara"><code class="literal">pvmove</code>命令执行完毕后，扩展区的分布如下：</p><pre class="literallayout"><code class="literal">pvs -o+pv_used</code> PV VG <code class="literal">pvs -o+pv_used</code> Attr PSize PFree使用/ dev / sda1 myvg lvm2 a- 17.15G 7.15G 10.00G / dev / sdb1 myvg lvm2 a- 17.15G 17.15G 0 / dev / sdc1 myvg lvm2 a- 17.15G 12.15G 5.00G / dev / sdd1 myvg lvm2 a- 17.15G 2.15G 15.00G</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">vgreduce</code>命令从卷组中删除物理卷<code class="literal">/dev/sdb1</code> 。
-						</p><pre class="literallayout"><code class="literal">vgreduce myvg /dev/sdb1</code>从卷组“myvg”中删除“/ dev / sdb1”#pvs PV VG Fmt Attr PSize PFree / dev / sda1 myvg lvm2 a- 17.15G 7.15G / dev / sdb1 lvm2  -  17.15G 17.15 G / dev / sdc1 myvg lvm2 a- 17.15G 12.15G / dev / sdd1 myvg lvm2 a- 17.15G 2.15G</pre></li></ol></div><p>现在可以物理删除磁盘或将磁盘分配给其他用户。
-				</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="move_new_ex4"></a>将范围移动到新磁盘</h2></div></div></div><p>在此示例中，逻辑卷分布在卷组<code class="literal">myvg</code>中的三个物理卷上，如下所示：</p><pre class="literallayout"><code class="literal">pvs -o+pv_used</code> PV VG <code class="literal">pvs -o+pv_used</code> Attr PSize PFree使用/ dev / sda1 myvg lvm2 a- 17.15G 7.15G 10.00G / dev / sdb1 myvg lvm2 a- 17.15G 15.15G 2.00G / dev / sdc1 myvg lvm2 a- 17.15 G 15.15G 2.00G</pre><p>此示例过程将<code class="literal">/dev/sdb1</code>的范围移动到新设备<code class="literal">/dev/sdd1</code> 。
+						</p><pre class="literallayout"># <code class="literal">pvmove /dev/sdb1</code>
+  /dev/sdb1: Moved: 2.0%
+ ...
+  /dev/sdb1: Moved: 79.2%
+ ...
+  /dev/sdb1: Moved: 100.0%</pre><p class="simpara"><code class="literal">pvmove</code>命令执行完毕后，扩展区的分布如下：</p><pre class="literallayout"># <code class="literal">pvs -o+pv_used</code>
+  PV         VG   Fmt  Attr PSize  PFree  Used
+  /dev/sda1  myvg lvm2 a-   17.15G  7.15G 10.00G
+  /dev/sdb1  myvg lvm2 a-   17.15G 17.15G     0
+  /dev/sdc1  myvg lvm2 a-   17.15G 12.15G  5.00G
+  /dev/sdd1  myvg lvm2 a-   17.15G  2.15G 15.00G</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">vgreduce</code>命令从卷组中删除物理卷<code class="literal">/dev/sdb1</code> 。
+						</p><pre class="literallayout"># <code class="literal">vgreduce myvg /dev/sdb1</code>
+  Removed "/dev/sdb1" from volume group "myvg"
+# pvs
+  PV         VG   Fmt  Attr PSize  PFree
+  /dev/sda1  myvg lvm2 a-   17.15G  7.15G
+  /dev/sdb1       lvm2 --   17.15G 17.15G
+  /dev/sdc1  myvg lvm2 a-   17.15G 12.15G
+  /dev/sdd1  myvg lvm2 a-   17.15G  2.15G</pre></li></ol></div><p>现在可以物理删除磁盘或将磁盘分配给其他用户。
+				</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="move_new_ex4"></a>将范围移动到新磁盘</h2></div></div></div><p>在此示例中，逻辑卷分布在卷组<code class="literal">myvg</code>中的三个物理卷上，如下所示：</p><pre class="literallayout"># <code class="literal">pvs -o+pv_used</code>
+  PV         VG   Fmt  Attr PSize  PFree  Used
+  /dev/sda1  myvg lvm2 a-   17.15G  7.15G 10.00G
+  /dev/sdb1  myvg lvm2 a-   17.15G 15.15G  2.00G
+  /dev/sdc1  myvg lvm2 a-   17.15G 15.15G  2.00G</pre><p>此示例过程将<code class="literal">/dev/sdb1</code>的范围移动到新设备<code class="literal">/dev/sdd1</code> 。
 				</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">从<code class="literal">/dev/sdd1</code>创建一个新的物理卷。
-						</p><pre class="literallayout"><code class="literal">pvcreate /dev/sdd1</code> / dev / sdd1已成功创建物理卷“/ dev / sdd1”</pre></li><li class="listitem"><p class="simpara">将新物理卷<code class="literal">/dev/sdd1</code>到现有卷组<code class="literal">myvg</code> 。
-						</p><pre class="literallayout"><code class="literal">vgextend myvg /dev/sdd1</code>卷组“myvg”成功扩展<code class="literal">pvs -o+pv_used</code> PV VG Fmt Attr PSize PFree使用/ dev / sda1 myvg lvm2 a- 17.15G 7.15G 10.00G / dev / sdb1 myvg lvm2 a- 17.15 G 15.15G 2.00G / dev / sdc1 myvg lvm2 a- 17.15G 15.15G 2.00G / dev / sdd1 myvg lvm2 a- 17.15G 17.15G 0</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">pvmove</code>命令将数据从<code class="literal">/dev/sdb1</code>到<code class="literal">/dev/sdd1</code> 。
-						</p><pre class="literallayout"><code class="literal">pvmove /dev/sdb1 /dev/sdd1</code> / dev / sdb1：已移动：10.0％.../ dev / sdb1：已移动：79.7％.../ dev / sdb1：已移动：100.0％＃ <code class="literal">pvs -o+pv_used</code> PV VG Fmt Attr PSize PFree使用/ dev / sda1 myvg lvm2 a- 17.15G 7.15G 10.00G / dev / sdb1 myvg lvm2 a- 17.15G 17.15G 0 / dev / sdc1 myvg lvm2 a- 17.15G 15.15G 2.00G / dev / sdd1 myvg lvm2 a- 17.15G 15.15G 2.00G</pre></li><li class="listitem"><p class="simpara">从<code class="literal">/dev/sdb1</code>移除数据后，可以将其从卷组中删除。
-						</p><pre class="literallayout"><code class="literal">vgreduce myvg /dev/sdb1</code>从卷组“myvg”中删除了“/ dev / sdb1”</pre></li></ol></div><p>您现在可以将磁盘重新分配给另一个卷组，或从系统中删除该磁盘。
+						</p><pre class="literallayout"># <code class="literal">pvcreate /dev/sdd1</code>
+  Physical volume "/dev/sdd1" successfully created</pre></li><li class="listitem"><p class="simpara">将新物理卷<code class="literal">/dev/sdd1</code>到现有卷组<code class="literal">myvg</code> 。
+						</p><pre class="literallayout"># <code class="literal">vgextend myvg /dev/sdd1</code>
+  Volume group "myvg" successfully extended
+# <code class="literal">pvs -o+pv_used</code>
+  PV         VG   Fmt  Attr PSize  PFree  Used
+  /dev/sda1   myvg lvm2 a-   17.15G  7.15G 10.00G
+  /dev/sdb1   myvg lvm2 a-   17.15G 15.15G  2.00G
+  /dev/sdc1   myvg lvm2 a-   17.15G 15.15G  2.00G
+  /dev/sdd1   myvg lvm2 a-   17.15G 17.15G     0</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">pvmove</code>命令将数据从<code class="literal">/dev/sdb1</code>到<code class="literal">/dev/sdd1</code> 。
+						</p><pre class="literallayout"># <code class="literal">pvmove /dev/sdb1 /dev/sdd1</code>
+  /dev/sdb1: Moved: 10.0%
+...
+  /dev/sdb1: Moved: 79.7%
+...
+  /dev/sdb1: Moved: 100.0%
+
+# <code class="literal">pvs -o+pv_used</code>
+  PV          VG   Fmt  Attr PSize  PFree  Used
+  /dev/sda1   myvg lvm2 a-   17.15G  7.15G 10.00G
+  /dev/sdb1   myvg lvm2 a-   17.15G 17.15G     0
+  /dev/sdc1   myvg lvm2 a-   17.15G 15.15G  2.00G
+  /dev/sdd1   myvg lvm2 a-   17.15G 15.15G  2.00G</pre></li><li class="listitem"><p class="simpara">从<code class="literal">/dev/sdb1</code>移除数据后，可以将其从卷组中删除。
+						</p><pre class="literallayout"># <code class="literal">vgreduce myvg /dev/sdb1</code>
+  Removed "/dev/sdb1" from volume group "myvg"</pre></li></ol></div><p>您现在可以将磁盘重新分配给另一个卷组，或从系统中删除该磁盘。
 				</p></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_combining-volume-groups-configuring-lvm-volumes"></a>组合卷组</h1></div></div></div><p>要将两个卷组合并为一个卷组，请使用<code class="literal">vgmerge</code>命令。如果卷的物理盘区大小相等，并且两个卷组的物理和逻辑卷摘要都符合目标卷组限制，则可以将非活动“源”卷与活动或非活动“目标”卷合并。
 			</p><p>以下命令将非活动卷组<code class="literal">my_vg</code>合并到活动或非活动卷组<code class="literal">databases</code>从而提供详细的运行时信息。
-			</p><pre class="literallayout"><code class="literal">vgmerge -v databases my_vg</code></pre></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_moving-volume-group-to-another-system-configuring-lvm-volumes"></a>将卷组移动到另一个系统</h1></div></div></div><p>您可以将整个LVM卷组移动到另一个系统。建议您在执行此操作时使用<code class="literal">vgexport</code>和<code class="literal">vgimport</code>命令。
+			</p><pre class="literallayout"># <code class="literal">vgmerge -v databases my_vg</code></pre></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_moving-volume-group-to-another-system-configuring-lvm-volumes"></a>将卷组移动到另一个系统</h1></div></div></div><p>您可以将整个LVM卷组移动到另一个系统。建议您在执行此操作时使用<code class="literal">vgexport</code>和<code class="literal">vgimport</code>命令。
 			</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>您可以使用<code class="literal">vgimport</code>命令的<code class="literal">--force</code>参数。这允许您导入缺少物理卷的卷组，然后运行<code class="literal">vgreduce --removemissing</code>命令。
 				</p></div><p><code class="literal">vgexport</code>命令使系统无法访问非活动卷组，从而允许您分离其物理卷。在<code class="literal">vgexport</code>命令使其处于非活动状态后， <code class="literal">vgimport</code>命令使卷组可再次访问该卷组。
 			</p><p>要将卷组从一个系统移动到另一个系统，请执行以下步骤：</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem">确保没有用户访问卷组中活动卷上的文件，然后卸载逻辑卷。
 					</li><li class="listitem">使用<code class="literal">vgchange</code>命令的<code class="literal">-an</code>参数将卷组标记为非活动状态，这会阻止卷组上的任何进一步活动。
 					</li><li class="listitem"><p class="simpara">使用<code class="literal">vgexport</code>命令导出卷组。这可以防止您从中删除它的系统访问它。
 					</p><p class="simpara">导出卷组后，执行<code class="literal">pvscan</code>命令时，物理卷将显示为在导出的卷组中，如下例所示。
-					</p><pre class="literallayout"><code class="literal">pvscan</code> PV / dev / sda1在导出的VG myvg中[17.15 GB / 7.15 GB免费] PV / dev / sdc1在导出的VG myvg [17.15 GB / 15.15 GB free] PV / dev / sdd1在导出的VG myvg中[17.15] GB / 15.15 GB免费] ...</pre><p class="simpara">下次关闭系统时，您可以拔出构成卷组的磁盘并将它们连接到新系统。
+					</p><pre class="literallayout"># <code class="literal">pvscan</code>
+  PV /dev/sda1    is in exported VG myvg [17.15 GB / 7.15 GB free]
+  PV /dev/sdc1    is in exported VG myvg [17.15 GB / 15.15 GB free]
+  PV /dev/sdd1   is in exported VG myvg [17.15 GB / 15.15 GB free]
+  ...</pre><p class="simpara">下次关闭系统时，您可以拔出构成卷组的磁盘并将它们连接到新系统。
 					</p></li><li class="listitem">将磁盘插入新系统后，使用<code class="literal">vgimport</code>命令导入卷组，使新系统可以访问该卷组。
 					</li><li class="listitem">使用<code class="literal">vgchange</code>命令的<code class="literal">-ay</code>参数激活卷组。
 					</li><li class="listitem">挂载文件系统以使其可供使用。
-					</li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-persistent-lvm-device-numbers-configuring-lvm-volumes"></a>配置持久性设备号</h1></div></div></div><p>主要和次要设备编号在模块负载时动态分配。如果始终使用相同的设备（主要和次要）编号激活块设备，则某些应用程序的效果最佳。您可以使用以下参数使用<code class="literal">lvcreate</code>和<code class="literal">lvchange</code>命令指定它们：</p><pre class="literallayout">- 持续y  - <span class="emphasis"><em>主要</em></span> - <span class="emphasis"><em>少数</em></span></pre><p>使用较大的次要编号以确保它尚未动态分配给其他设备。
+					</li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-persistent-lvm-device-numbers-configuring-lvm-volumes"></a>配置持久性设备号</h1></div></div></div><p>主要和次要设备编号在模块负载时动态分配。如果始终使用相同的设备（主要和次要）编号激活块设备，则某些应用程序的效果最佳。您可以使用以下参数使用<code class="literal">lvcreate</code>和<code class="literal">lvchange</code>命令指定它们：</p><pre class="literallayout">--persistent y --major <span class="emphasis"><em>major</em></span> --minor <span class="emphasis"><em>minor</em></span></pre><p>使用较大的次要编号以确保它尚未动态分配给其他设备。
 			</p><p>如果使用NFS导出文件系统，则在导出文件中指定<code class="literal">fsid</code>参数可以避免在LVM中设置持久性设备编号。</p></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_specifying-lvm-extent-size-configuring-lvm-volumes"></a>指定LVM范围大小</h1></div></div></div><p>使用物理卷创建卷组时，默认情况下，其磁盘空间分为4MB扩展区。该范围是逻辑卷的大小可以增加或减少的最小量。大量扩展区不会影响逻辑卷的I / O性能。
 			</p><p>如果默认扩展区大小不合适，则可以使用<code class="literal">vgcreate</code>命令的<code class="literal">-s</code>选项指定扩展区大小。您可以使用<code class="literal">vgcreate</code>命令的<code class="literal">-p</code>和<code class="literal">-l</code>参数限制卷组可以拥有的物理卷或逻辑卷的数量。
 			</p></div></div></body></html>
