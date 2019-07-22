@@ -11,23 +11,53 @@
 				</p></div><p>以下过程创建LVM逻辑卷，然后在该卷上创建ext4文件系统，以便在Pacemaker集群中使用。在此示例中，共享分区<code class="literal">/dev/sdb1</code>用于存储将从中创建LVM逻辑卷的LVM物理卷。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在群集的两个节点上，执行以下步骤将LVM系统ID的值设置为系统的<code class="literal">uname</code>标识符的值。LVM系统ID将用于确保只有群集能够激活卷组。
 					</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">将<code class="literal">/etc/lvm/lvm.conf</code>配置文件中的<code class="literal">system_id_source</code>配置选项设置为<code class="literal">uname</code> 。
-							</p><pre class="literallayout">＃配置选项global / system_id_source。system_id_source =“uname”</pre></li><li class="listitem"><p class="simpara">验证节点上的LVM系统标识是否与节点的<code class="literal">uname</code>匹配。
-							</p><pre class="literallayout">＃ <code class="literal">lvm systemid</code>系统ID：z1.example.com＃ <code class="literal">uname -n</code> z1.example.com</pre></li></ol></div></li><li class="listitem"><p class="simpara">创建LVM卷并在该卷上创建ext4文件系统。由于<code class="literal">/dev/sdb1</code>分区是共享的存储，因此您只在一个节点上执行此部分过程。
+							</p><pre class="literallayout"># Configuration option global/system_id_source.
+system_id_source = "uname"</pre></li><li class="listitem"><p class="simpara">验证节点上的LVM系统标识是否与节点的<code class="literal">uname</code>匹配。
+							</p><pre class="literallayout"># <code class="literal">lvm systemid</code>
+  system ID: z1.example.com
+# <code class="literal">uname -n</code>
+  z1.example.com</pre></li></ol></div></li><li class="listitem"><p class="simpara">创建LVM卷并在该卷上创建ext4文件系统。由于<code class="literal">/dev/sdb1</code>分区是共享的存储，因此您只在一个节点上执行此部分过程。
 					</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在分区<code class="literal">/dev/sdb1</code>上创建LVM物理卷。
-							</p><pre class="literallayout"><code class="literal">pvcreate /dev/sdb1</code>成功创建物理卷“/ dev / sdb1”</pre></li><li class="listitem"><p class="simpara">创建由物理卷<code class="literal">/dev/sdb1</code>组成的卷组<code class="literal">my_vg</code> 。
-							</p><pre class="literallayout"><code class="literal">vgcreate my_vg /dev/sdb1</code>已成功创建卷组“my_vg”</pre></li><li class="listitem"><p class="simpara">验证新卷组是否具有您正在运行的节点的系统ID以及您从中创建卷组的系统ID。
-							</p><pre class="literallayout"><code class="literal">vgs -o+systemid</code> VG #PV #LV #SN Attr VSize VFree系统ID my_vg 1 0 0 wz  -  n- &lt;1.82t &lt;1.82t z1.example.com</pre></li><li class="listitem"><p class="simpara">使用卷组<code class="literal">my_vg</code>创建逻辑卷。
-							</p><pre class="literallayout"><code class="literal">lvcreate -L450 -n my_lv my_vg</code>将大小舍入为完整物理范围452.00 MiB逻辑卷“my_lv”已创建</pre><p class="simpara">您可以使用<code class="literal">lvs</code>命令显示逻辑卷。
-							</p><pre class="literallayout">＃ <code class="literal">lvs</code> LV VG的Attr LSIZE池源数据％移动日志复制％转换my_lv中my_vg -wi-A ----452.00米...</pre></li><li class="listitem"><p class="simpara">在逻辑卷<code class="literal">my_lv</code>上创建ext4文件系统。</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/my_vg/my_lv</code> mke2fs 1.44.3（10-July-2018）使用462848 1k块和115824 inode创建文件系统...</pre></li></ol></div></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-apache-http-web-server-configuring-ha-http"></a>配置Apache HTTP服务器</h1></div></div></div><p>以下过程配置Apache HTTP服务器。
+							</p><pre class="literallayout"># <code class="literal">pvcreate /dev/sdb1</code>
+  Physical volume "/dev/sdb1" successfully created</pre></li><li class="listitem"><p class="simpara">创建由物理卷<code class="literal">/dev/sdb1</code>组成的卷组<code class="literal">my_vg</code> 。
+							</p><pre class="literallayout"># <code class="literal">vgcreate my_vg /dev/sdb1</code>
+  Volume group "my_vg" successfully created</pre></li><li class="listitem"><p class="simpara">验证新卷组是否具有您正在运行的节点的系统ID以及您从中创建卷组的系统ID。
+							</p><pre class="literallayout"># <code class="literal">vgs -o+systemid</code>
+  VG    #PV #LV #SN Attr   VSize  VFree  System ID
+  my_vg   1   0   0 wz--n- &lt;1.82t &lt;1.82t z1.example.com</pre></li><li class="listitem"><p class="simpara">使用卷组<code class="literal">my_vg</code>创建逻辑卷。
+							</p><pre class="literallayout"># <code class="literal">lvcreate -L450 -n my_lv my_vg</code>
+  Rounding up size to full physical extent 452.00 MiB
+  Logical volume "my_lv" created</pre><p class="simpara">您可以使用<code class="literal">lvs</code>命令显示逻辑卷。
+							</p><pre class="literallayout"># <code class="literal">lvs</code>
+  LV      VG      Attr      LSize   Pool Origin Data%  Move Log Copy%  Convert
+  my_lv   my_vg   -wi-a---- 452.00m
+  ...</pre></li><li class="listitem"><p class="simpara">在逻辑卷<code class="literal">my_lv</code>上创建ext4文件系统。</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/my_vg/my_lv</code>
+mke2fs 1.44.3 (10-July-2018)
+Creating filesystem with 462848 1k blocks and 115824 inodes
+...</pre></li></ol></div></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-apache-http-web-server-configuring-ha-http"></a>配置Apache HTTP服务器</h1></div></div></div><p>以下过程配置Apache HTTP服务器。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">确保在群集中的每个节点上都安装了Apache HTTP服务器。您还需要在群集上安装<code class="literal">wget</code>工具才能检查Apache HTTP服务器的状态。
 					</p><p class="simpara">在每个节点上，执行以下命令。
-					</p><pre class="literallayout"><code class="literal">yum install -y httpd wget</code></pre><p class="simpara">如果您正在运行<code class="literal">firewalld</code>守护程序，则在群集中的每个节点上启用Red Hat High Availability Add-On所需的端口。
-					</p><pre class="literallayout"># <code class="literal">firewall-cmd --reload</code> <code class="literal">firewall-cmd --permanent --add-service=high-availability</code> ＃ <code class="literal">firewall-cmd --reload</code></pre></li><li class="listitem"><p class="simpara">为了使Apache资源代理获取Apache HTTP服务器的状态，请确保群集中每个节点上的<code class="literal">/etc/httpd/conf/httpd.conf</code>文件中都包含以下文本，并确保它没有被评论出来了。如果此文本尚不存在，请将文本添加到文件末尾。
-					</p><pre class="literallayout">&lt;位置/服务器状态&gt; SetHandler服务器状态需要本地&lt;/ Location&gt;</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">apache</code>资源代理管理Apache时，它不使用<code class="literal">systemd</code> 。因此，您必须编辑Apache提供的<code class="literal">logrotate</code>脚本，以便它不使用<code class="literal">systemctl</code>重新加载Apache。
+					</p><pre class="literallayout"># <code class="literal">yum install -y httpd wget</code></pre><p class="simpara">如果您正在运行<code class="literal">firewalld</code>守护程序，则在群集中的每个节点上启用Red Hat High Availability Add-On所需的端口。
+					</p><pre class="literallayout"># <code class="literal">firewall-cmd --permanent --add-service=high-availability</code>
+# <code class="literal">firewall-cmd --reload</code></pre></li><li class="listitem"><p class="simpara">为了使Apache资源代理获取Apache HTTP服务器的状态，请确保群集中每个节点上的<code class="literal">/etc/httpd/conf/httpd.conf</code>文件中都包含以下文本，并确保它没有被评论出来了。如果此文本尚不存在，请将文本添加到文件末尾。
+					</p><pre class="literallayout">&lt;Location /server-status&gt;
+    SetHandler server-status
+    Require local
+&lt;/Location&gt;</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">apache</code>资源代理管理Apache时，它不使用<code class="literal">systemd</code> 。因此，您必须编辑Apache提供的<code class="literal">logrotate</code>脚本，以便它不使用<code class="literal">systemctl</code>重新加载Apache。
 					</p><p class="simpara">删除群集中每个节点上的<code class="literal">/etc/logrotate.d/httpd</code>文件中的以下行。
-					</p><pre class="literallayout">/ bin / systemctl reload httpd.service&gt; / dev / null 2&gt; / dev / null ||真正</pre><p class="simpara">用以下行替换您删除的行。
-					</p><pre class="literallayout">/ usr / sbin / httpd -f /etc/httpd/conf/httpd.conf -c“PidFile /var/run/httpd.pid”-k graceful&gt; / dev / null 2&gt; / dev / null ||真正</pre></li><li class="listitem"><p class="simpara">创建一个Apache服务的网页。在群集中的一个节点上，装入您在<a class="link" href="assembly_configuring-active-passive-http-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-http" title="在Pacemaker集群中使用ext4文件系统配置LVM卷">使用ext4文件系统配置LVM卷时</a>创建的文件系统，在该文件系统上创建文件<code class="literal">index.html</code> ，然后卸载文件系统。
-					</p><pre class="literallayout"><code class="literal">mount /dev/my_vg/my_lv /var/www/</code> <code class="literal">mkdir /var/www/html</code> <code class="literal">mkdir /var/www/cgi-bin</code> <code class="literal">mkdir /var/www/error</code> <code class="literal">restorecon -R /var/www</code> <code class="literal">cat &lt;&lt;-END &gt;/var/www/html/index.html</code> <code class="literal">&lt;html&gt;</code> <code class="literal">&lt;body&gt;Hello&lt;/body&gt;</code> <code class="literal">&lt;/html&gt;</code> <code class="literal">END</code> ＃ <code class="literal">umount /var/www</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-resources-for-http-server-in-a-cluster-configuring-ha-http"></a>创建资源和资源组</h1></div></div></div><p>此用例要求您创建四个群集资源。要确保这些资源都在同一节点上运行，它们将配置为资源组<code class="literal">apachegroup</code> 。要创建的资源如下，按照它们开始的顺序列出。
+					</p><pre class="literallayout">/bin/systemctl reload httpd.service &gt; /dev/null 2&gt;/dev/null || true</pre><p class="simpara">用以下行替换您删除的行。
+					</p><pre class="literallayout">/usr/sbin/httpd -f /etc/httpd/conf/httpd.conf -c "PidFile /var/run/httpd.pid" -k graceful &gt; /dev/null 2&gt;/dev/null || true</pre></li><li class="listitem"><p class="simpara">创建一个Apache服务的网页。在群集中的一个节点上，装入您在<a class="link" href="assembly_configuring-active-passive-http-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-http" title="在Pacemaker集群中使用ext4文件系统配置LVM卷">使用ext4文件系统配置LVM卷时</a>创建的文件系统，在该文件系统上创建文件<code class="literal">index.html</code> ，然后卸载文件系统。
+					</p><pre class="literallayout"># <code class="literal">mount /dev/my_vg/my_lv /var/www/</code>
+# <code class="literal">mkdir /var/www/html</code>
+# <code class="literal">mkdir /var/www/cgi-bin</code>
+# <code class="literal">mkdir /var/www/error</code>
+# <code class="literal">restorecon -R /var/www</code>
+# <code class="literal">cat &lt;&lt;-END &gt;/var/www/html/index.html</code>
+<code class="literal">&lt;html&gt;</code>
+<code class="literal">&lt;body&gt;Hello&lt;/body&gt;</code>
+<code class="literal">&lt;/html&gt;</code>
+<code class="literal">END</code>
+# <code class="literal">umount /var/www</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-resources-for-http-server-in-a-cluster-configuring-ha-http"></a>创建资源和资源组</h1></div></div></div><p>此用例要求您创建四个群集资源。要确保这些资源都在同一节点上运行，它们将配置为资源组<code class="literal">apachegroup</code> 。要创建的资源如下，按照它们开始的顺序列出。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem">名为<code class="literal">my_lvm</code>的<code class="literal">LVM</code>资源，它使用您在<a class="link" href="assembly_configuring-active-passive-http-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-http" title="在Pacemaker集群中使用ext4文件系统配置LVM卷">使用ext4文件系统配置LVM卷时</a>创建的LVM卷组。
 					</li><li class="listitem">名为<code class="literal">my_fs</code>的<code class="literal">Filesystem</code>资源，它使用您在<a class="link" href="assembly_configuring-active-passive-http-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-http" title="在Pacemaker集群中使用ext4文件系统配置LVM卷">使用ext4文件系统配置LVM卷时</a>创建的文件系统设备<code class="literal">/dev/my_vg/my_lv</code> 。
 					</li><li class="listitem"><code class="literal">IPaddr2</code>资源，是<code class="literal">apachegroup</code>资源组的浮动IP地址。IP地址不能是已与物理节点关联的IP地址。如果未指定<code class="literal">IPaddr2</code>资源的NIC设备，则浮动IP必须与节点的静态分配的IP地址位于同一网络上，否则无法正确检测分配浮动IP地址的NIC设备。
@@ -35,17 +65,66 @@
 					</li></ol></div><p>以下过程将创建资源组<code class="literal">apachegroup</code>以及该组包含的资源。资源将按照您将它们添加到组中的顺序开始，并且它们将按照与添加到组中的相反顺序停止。仅从群集的一个节点运行此过程。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">以下命令创建<code class="literal">LVM-activate</code>资源<code class="literal">my_lvm</code> 。由于资源组<code class="literal">apachegroup</code>尚不存在，因此该命令将创建资源组。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>不要在主动/被动HA配置中配置多个使用相同LVM卷组的<code class="literal">LVM-activate</code>资源，因为这会冒数据损坏的风险。此外，请勿将<code class="literal">LVM-activate</code>资源配置为主动/被动HA配置中的克隆资源。
-						</p></div><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create my_lvm ocf:heartbeat:LVM-activate</code> <code class="literal">vg_access_mode=system_id --group apachegroup</code> <code class="literal">vgname=my_vg</code> <code class="literal">vg_access_mode=system_id --group apachegroup</code></pre><p class="simpara">创建资源时，资源会自动启动。您可以使用以下命令确认资源已创建并已启动。
-					</p><pre class="literallayout">#pcs <code class="literal">pcs resource status</code>资源组：apachegroup my_lvm（ocf :: heartbeat：LVM-activate）：已启动</pre><p class="simpara">您可以使用<code class="literal">pcs resource disable</code>和<code class="literal">pcs resource enable</code>命令手动停止和启动单个资源。
+						</p></div><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create my_lvm ocf:heartbeat:LVM-activate</code> <code class="literal">vgname=my_vg</code> <code class="literal">vg_access_mode=system_id --group apachegroup</code></pre><p class="simpara">创建资源时，资源会自动启动。您可以使用以下命令确认资源已创建并已启动。
+					</p><pre class="literallayout"># <code class="literal">pcs resource status</code>
+ Resource Group: apachegroup
+     my_lvm	(ocf::heartbeat:LVM-activate):	Started</pre><p class="simpara">您可以使用<code class="literal">pcs resource disable</code>和<code class="literal">pcs resource enable</code>命令手动停止和启动单个资源。
 					</p></li><li class="listitem"><p class="simpara">以下命令为配置创建剩余资源，并将它们添加到现有资源组<code class="literal">apachegroup</code> 。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create my_fs Filesystem</code> \ <code class="literal">device="/dev/my_vg/my_lv" directory="/var/www" fstype="ext4"</code> \ <code class="literal">--group apachegroup</code> [root @ z1~] <code class="literal">--group apachegroup</code> <code class="literal">pcs resource create VirtualIP IPaddr2 ip=198.51.100.3</code> \ <code class="literal">cidr_netmask=24 --group apachegroup</code> [root @ z1~] <code class="literal">cidr_netmask=24 --group apachegroup</code> <code class="literal">pcs resource create Website apache</code> \ <code class="literal">configfile="/etc/httpd/conf/httpd.conf"</code> \ <code class="literal">statusurl="http://127.0.0.1/server-status" --group apachegroup</code></pre></li><li class="listitem"><p class="simpara">创建资源和包含它们的资源组后，您可以检查群集的状态。请注意，所有四个资源都在同一节点上运行。
-					</p><pre class="literallayout">[root @ z1~] #pcs <code class="literal">pcs status</code>群集名称：my_cluster上次更新时间：2013年7月31日星期三16:38:51最后更改：2013年7月31日星期三16:42:14来自z1.example.com上的crm_attribute堆栈：corosync当前DC ：z2.example.com（2） - 具有仲裁的分区版本：1.1.10-5.el7-9abe687 2已配置的节点6在线配置的资源：[z1.example.com z2.example.com]完整资源列表：myapc （stonith：fence_apc_snmp）：已启动z1.example.com资源组：apachegroup my_lvm（ocf :: heartbeat：LVM）：已启动z1.example.com my_fs（ocf :: heartbeat：Filesystem）：已启动z1.example.com VirtualIP（ ocf :: heartbeat：IPaddr2）：已启动z1.example.com网站（ocf :: heartbeat：apache）：已启动z1.example.com</pre><p class="simpara">请注意，如果您尚未为群集配置防护设备，则默认情况下不会启动资源。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create my_fs Filesystem</code> \
+<code class="literal">device="/dev/my_vg/my_lv" directory="/var/www" fstype="ext4"</code> \
+<code class="literal">--group apachegroup</code>
+
+[root@z1 ~]# <code class="literal">pcs resource create VirtualIP IPaddr2 ip=198.51.100.3</code> \
+<code class="literal">cidr_netmask=24 --group apachegroup</code>
+
+[root@z1 ~]# <code class="literal">pcs resource create Website apache</code> \
+<code class="literal">configfile="/etc/httpd/conf/httpd.conf"</code> \
+<code class="literal">statusurl="http://127.0.0.1/server-status" --group apachegroup</code></pre></li><li class="listitem"><p class="simpara">创建资源和包含它们的资源组后，您可以检查群集的状态。请注意，所有四个资源都在同一节点上运行。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Last updated: Wed Jul 31 16:38:51 2013
+Last change: Wed Jul 31 16:42:14 2013 via crm_attribute on z1.example.com
+Stack: corosync
+Current DC: z2.example.com (2) - partition with quorum
+Version: 1.1.10-5.el7-9abe687
+2 Nodes configured
+6 Resources configured
+
+Online: [ z1.example.com z2.example.com ]
+
+Full list of resources:
+ myapc	(stonith:fence_apc_snmp):	Started z1.example.com
+ Resource Group: apachegroup
+     my_lvm	(ocf::heartbeat:LVM):	Started z1.example.com
+     my_fs	(ocf::heartbeat:Filesystem):	Started z1.example.com
+     VirtualIP	(ocf::heartbeat:IPaddr2):	Started z1.example.com
+     Website	(ocf::heartbeat:apache):	Started z1.example.com</pre><p class="simpara">请注意，如果您尚未为群集配置防护设备，则默认情况下不会启动资源。
 					</p></li><li class="listitem"><p class="simpara">群集启动并运行后，您可以将浏览器指向您定义为<code class="literal">IPaddr2</code>资源的IP地址，以查看示例显示，其中包含简单的单词“Hello”。
-					</p><pre class="literallayout">你好</pre><p class="simpara">如果发现配置的资源未运行，则可以运行<code class="literal">pcs resource debug-start <span class="emphasis"><em>resource</em></span></code>命令来测试资源配置。
+					</p><pre class="literallayout">Hello</pre><p class="simpara">如果发现配置的资源未运行，则可以运行<code class="literal">pcs resource debug-start <span class="emphasis"><em>resource</em></span></code>命令来测试资源配置。
 					</p></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_testing-resource-configuration-in-a-cluster-configuring-ha-http"></a>测试资源配置</h1></div></div></div><p>在<a class="link" href="assembly_configuring-active-passive-http-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-resources-for-http-server-in-a-cluster-configuring-ha-http" title="创建资源和资源组">创建资源和资源组中</a>显示的群集状态显示中，所有资源都在节点<code class="literal">z1.example.com</code>上运行。您可以使用以下过程将第一个节点置于<code class="literal">standby</code>模式，然后该节点将无法再承载资源，从而测试资源组是否故障转移到节点<code class="literal">z2.example.com</code> 。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">以下命令将节点<code class="literal">z1.example.com</code>置于<code class="literal">standby</code>模式。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs node standby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">将节点<code class="literal">z1</code>置于待机模式后，检查群集状态。请注意，资源现在应该都在<code class="literal">z2</code>上运行。
-					</p><pre class="literallayout">[root @ z1~] #pcs <code class="literal">pcs status</code>群集名称：my_cluster上次更新时间：2013年7月31日星期三17:16:17最后更改：2013年7月31日星期三17:18:34来自z1.example.com上的crm_attribute堆栈：corosync当前DC ：z2.example.com（2） - 具有仲裁的分区版本：1.1.10-5.el7-9abe687 2已配置的节点6已配置资源节点z1.example.com（1）：待机在线：[z2.example.com]完整资源列表：myapc（stonith：fence_apc_snmp）：已启动z1.example.com资源组：apachegroup my_lvm（ocf :: heartbeat：LVM）：已启动z2.example.com my_fs（ocf :: heartbeat：Filesystem）：已启动z2 .example.com VirtualIP（ocf :: heartbeat：IPaddr2）：已启动z2.example.com网站（ocf :: heartbeat：apache）：已启动z2.example.com</pre><p class="simpara">定义的IP地址的网站仍应显示，不会中断。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs node standby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">将节点<code class="literal">z1</code>置于待机模式后，检查群集状态。请注意，资源现在应该都在<code class="literal">z2</code>上运行。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Last updated: Wed Jul 31 17:16:17 2013
+Last change: Wed Jul 31 17:18:34 2013 via crm_attribute on z1.example.com
+Stack: corosync
+Current DC: z2.example.com (2) - partition with quorum
+Version: 1.1.10-5.el7-9abe687
+2 Nodes configured
+6 Resources configured
+
+Node z1.example.com (1): standby
+Online: [ z2.example.com ]
+
+Full list of resources:
+
+ myapc	(stonith:fence_apc_snmp):	Started z1.example.com
+ Resource Group: apachegroup
+     my_lvm	(ocf::heartbeat:LVM):	Started z2.example.com
+     my_fs	(ocf::heartbeat:Filesystem):	Started z2.example.com
+     VirtualIP	(ocf::heartbeat:IPaddr2):	Started z2.example.com
+     Website	(ocf::heartbeat:apache):	Started z2.example.com</pre><p class="simpara">定义的IP地址的网站仍应显示，不会中断。
 					</p></li><li class="listitem"><p class="simpara">要从<code class="literal">standby</code>模式中删除<code class="literal">z1</code> ，请输入以下命令。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs cluster unstandby z1.example.com</code></pre><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>从<code class="literal">standby</code>模式中删除节点本身并不会导致资源故障切换回该节点。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs cluster unstandby z1.example.com</code></pre><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>从<code class="literal">standby</code>模式中删除节点本身并不会导致资源故障切换回该节点。
 						</p></div></li></ol></div></div></div></body></html>
