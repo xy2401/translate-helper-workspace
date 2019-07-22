@@ -10,23 +10,35 @@
 					</li></ul></div><p>这些示例命令假定已将Apache服务的群集资源配置为每个群集的资源组<code class="literal">apachegroup</code>一部分。由于每个群集的Pacemaker实例是独立的，因此每个群集上的资源和资源组不需要相同，即可为这些资源配置故障单约束，但这是一种常见的故障转移方案。
 			</p><p>请注意，在配置过程中的任何时候，您都可以输入<code class="literal">pcs booth config</code>命令以显示当前节点或群集的booth配置，或者输入<code class="literal">pcs booth status</code>命令以显示本地节点上booth的当前状态。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在两个集群的每个节点上安装<code class="literal">booth-site</code> Booth票证管理器包。
-					</p><pre class="literallayout">[root @ cluster1-node1~] <code class="literal">yum install -y booth-site</code> [root @ cluster1-node2~] #yum <code class="literal">yum install -y booth-site</code> [root @ cluster2-node1~] #yum <code class="literal">yum install -y booth-site</code> [root @ cluster2-node2~] #yum <code class="literal">yum install -y booth-site</code></pre></li><li class="listitem"><p class="simpara">在仲裁节点上安装<code class="literal">pcs</code> ， <code class="literal">booth-core</code>和<code class="literal">booth-arbitrator</code>软件包。
-					</p><pre class="literallayout">[root @ arbitrator-node~] <code class="literal">yum install -y pcs booth-core booth-arbitrator</code></pre></li><li class="listitem"><p class="simpara">确保在所有群集节点和仲裁节点上都打开了端口9929 / tcp和9929 / udp。去做这个：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">在两个群集中的所有节点上运行以下命令。
+					</p><pre class="literallayout">[root@cluster1-node1 ~]# <code class="literal">yum install -y booth-site</code>
+[root@cluster1-node2 ~]# <code class="literal">yum install -y booth-site</code>
+[root@cluster2-node1 ~]# <code class="literal">yum install -y booth-site</code>
+[root@cluster2-node2 ~]# <code class="literal">yum install -y booth-site</code></pre></li><li class="listitem"><p class="simpara">在仲裁节点上安装<code class="literal">pcs</code> ， <code class="literal">booth-core</code>和<code class="literal">booth-arbitrator</code>软件包。
+					</p><pre class="literallayout">[root@arbitrator-node ~]# <code class="literal">yum install -y pcs booth-core booth-arbitrator</code></pre></li><li class="listitem"><p class="simpara">确保在所有群集节点和仲裁节点上都打开了端口9929 / tcp和9929 / udp。去做这个：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">在两个群集中的所有节点上运行以下命令。
 							</li><li class="listitem"><p class="simpara">此外，在仲裁节点上输入以下命令。
-							</p><pre class="literallayout">＃ <code class="literal">firewall-cmd --add-port=9929/udp</code> ＃ <code class="literal">firewall-cmd --add-port=9929/tcp</code> ＃ <code class="literal">firewall-cmd --add-port=9929/udp --permanent</code> <code class="literal">firewall-cmd --add-port=9929/tcp --permanent</code> ＃ <code class="literal">firewall-cmd --add-port=9929/tcp --permanent</code></pre></li></ul></div></li><li class="listitem"><p class="simpara">在一个集群的一个节点上创建Booth配置。为每个群集和仲裁程序指定的地址必须是IP地址。对于每个群集，您可以指定浮动IP地址。
-					</p><pre class="literallayout">[cluster1-node1~] <code class="literal">pcs booth setup sites 192.168.11.100 192.168.22.100 arbitrators 192.168.99.100</code></pre><p class="simpara">此命令在运行它的节点上创建配置文件<code class="literal">/etc/booth/booth.conf</code>和<code class="literal">/etc/booth/booth.key</code> 。
+							</p><pre class="literallayout"># <code class="literal">firewall-cmd --add-port=9929/udp</code>
+# <code class="literal">firewall-cmd --add-port=9929/tcp</code>
+# <code class="literal">firewall-cmd --add-port=9929/udp --permanent</code>
+# <code class="literal">firewall-cmd --add-port=9929/tcp --permanent</code></pre></li></ul></div></li><li class="listitem"><p class="simpara">在一个集群的一个节点上创建Booth配置。为每个群集和仲裁程序指定的地址必须是IP地址。对于每个群集，您可以指定浮动IP地址。
+					</p><pre class="literallayout">[cluster1-node1 ~] # <code class="literal">pcs booth setup sites 192.168.11.100 192.168.22.100 arbitrators 192.168.99.100</code></pre><p class="simpara">此命令在运行它的节点上创建配置文件<code class="literal">/etc/booth/booth.conf</code>和<code class="literal">/etc/booth/booth.key</code> 。
 					</p></li><li class="listitem"><p class="simpara">为Booth配置创建票证。这是您将用于定义资源约束的票证，该资源约束将允许资源仅在将此票证授予群集时运行。
 					</p><p class="simpara">此基本故障转移配置过程仅使用一个故障单，但您可以为更复杂的方案创建其他故障单，其中每个故障单与不同的资源或资源相关联。
-					</p><pre class="literallayout">[cluster1-node1~] <code class="literal">pcs booth ticket add apacheticket</code></pre></li><li class="listitem"><p class="simpara">将Booth配置同步到当前集群中的所有节点。
-					</p><pre class="literallayout">[cluster1-node1~] <code class="literal">pcs booth sync</code></pre></li><li class="listitem"><p class="simpara">从仲裁节点，将Booth配置拉到仲裁器。如果您之前没有这样做，则必须首先将<code class="literal">pcs</code>验证到从中提取配置的节点。
-					</p><pre class="literallayout">[arbitrator-node~] <code class="literal">pcs cluster auth cluster1-node1</code> [arbitrator-node~] <code class="literal">pcs booth pull cluster1-node1</code></pre></li><li class="listitem"><p class="simpara">将Booth配置拉到另一个集群并同步到该集群的所有节点。与仲裁程序节点一样，如果以前没有这样做，则必须首先将<code class="literal">pcs</code>验证到从中提取配置的节点。
-					</p><pre class="literallayout">[cluster2-node1~] #pcs <code class="literal">pcs cluster auth cluster1-node1</code> [cluster2-node1~] #pcs <code class="literal">pcs booth pull cluster1-node1</code> [cluster2-node1~] #pcs <code class="literal">pcs booth sync</code></pre></li><li class="listitem"><p class="simpara">在仲裁员上启动并启用Booth。
+					</p><pre class="literallayout">[cluster1-node1 ~] # <code class="literal">pcs booth ticket add apacheticket</code></pre></li><li class="listitem"><p class="simpara">将Booth配置同步到当前集群中的所有节点。
+					</p><pre class="literallayout">[cluster1-node1 ~] # <code class="literal">pcs booth sync</code></pre></li><li class="listitem"><p class="simpara">从仲裁节点，将Booth配置拉到仲裁器。如果您之前没有这样做，则必须首先将<code class="literal">pcs</code>验证到从中提取配置的节点。
+					</p><pre class="literallayout">[arbitrator-node ~] # <code class="literal">pcs cluster auth cluster1-node1</code>
+[arbitrator-node ~] # <code class="literal">pcs booth pull cluster1-node1</code></pre></li><li class="listitem"><p class="simpara">将Booth配置拉到另一个集群并同步到该集群的所有节点。与仲裁程序节点一样，如果以前没有这样做，则必须首先将<code class="literal">pcs</code>验证到从中提取配置的节点。
+					</p><pre class="literallayout">[cluster2-node1 ~] # <code class="literal">pcs cluster auth cluster1-node1</code>
+[cluster2-node1 ~] # <code class="literal">pcs booth pull cluster1-node1</code>
+[cluster2-node1 ~] # <code class="literal">pcs booth sync</code></pre></li><li class="listitem"><p class="simpara">在仲裁员上启动并启用Booth。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>您不能在群集的任何节点上手动启动或启用Booth，因为Booth在这些群集中作为Pacemaker资源运行。
-						</p></div><pre class="literallayout">[arbitrator-node~] <code class="literal">pcs booth start</code> [arbitrator-node~] <code class="literal">pcs booth enable</code></pre></li><li class="listitem"><p class="simpara">将Booth配置为在两个群集站点上作为群集资源运行。这将创建一个资源组，其<code class="literal">booth-ip</code>和<code class="literal">booth-service</code>作为该组的成员。
-					</p><pre class="literallayout">[cluster1-node1~] #pcs <code class="literal">pcs booth create ip 192.168.11.100</code> [cluster2-node1~] #pcs <code class="literal">pcs booth create ip 192.168.22.100</code></pre></li><li class="listitem"><p class="simpara">将票证约束添加到为每个集群定义的资源组。
-					</p><pre class="literallayout">[cluster1-node1~] <code class="literal">pcs constraint ticket add apacheticket apachegroup</code> [cluster2-node1~] <code class="literal">pcs constraint ticket add apacheticket apachegroup</code></pre><p class="simpara">您可以输入以下命令以显示当前配置的故障单约束。
-					</p><pre class="literallayout">pcs约束票[显示]</pre></li><li class="listitem"><p class="simpara">将为此设置创建的票证授予第一个群集。
+						</p></div><pre class="literallayout">[arbitrator-node ~] # <code class="literal">pcs booth start</code>
+[arbitrator-node ~] # <code class="literal">pcs booth enable</code></pre></li><li class="listitem"><p class="simpara">将Booth配置为在两个群集站点上作为群集资源运行。这将创建一个资源组，其<code class="literal">booth-ip</code>和<code class="literal">booth-service</code>作为该组的成员。
+					</p><pre class="literallayout">[cluster1-node1 ~] # <code class="literal">pcs booth create ip 192.168.11.100</code>
+[cluster2-node1 ~] # <code class="literal">pcs booth create ip 192.168.22.100</code></pre></li><li class="listitem"><p class="simpara">将票证约束添加到为每个集群定义的资源组。
+					</p><pre class="literallayout">[cluster1-node1 ~] # <code class="literal">pcs constraint ticket add apacheticket apachegroup</code>
+[cluster2-node1 ~] # <code class="literal">pcs constraint ticket add apacheticket apachegroup</code></pre><p class="simpara">您可以输入以下命令以显示当前配置的故障单约束。
+					</p><pre class="literallayout">pcs constraint ticket [show]</pre></li><li class="listitem"><p class="simpara">将为此设置创建的票证授予第一个群集。
 					</p><p class="simpara">请注意，在授予故障单之前不必定义故障单约束。最初将票证授予群集后，Booth将接管票证管理，除非您使用<code class="literal">pcs booth ticket revoke</code>命令手动覆盖此<code class="literal">pcs booth ticket revoke</code> 。有关信息<code class="literal">pcs booth</code>管理命令，请参阅该PCS帮助屏幕<code class="literal">pcs booth</code>命令。
-					</p><pre class="literallayout">[cluster1-node1~] <code class="literal">pcs booth ticket grant apacheticket</code></pre></li></ol></div><p>即使在完成此过程后，也可以随时添加或删除票证。但是，添加或删除故障单后，必须将配置文件同步到其他节点和群集以及仲裁程序，并按照此过程中所示授予故障单。
+					</p><pre class="literallayout">[cluster1-node1 ~] # <code class="literal">pcs booth ticket grant apacheticket</code></pre></li></ol></div><p>即使在完成此过程后，也可以随时添加或删除票证。但是，添加或删除故障单后，必须将配置文件同步到其他节点和群集以及仲裁程序，并按照此过程中所示授予故障单。
 			</p><p>有关可用于清理和删除Booth配置文件，故障单和资源的其他Booth管理命令的信息，请参阅<code class="literal">pcs booth</code>命令的PCS帮助屏幕。
 			</p></div></div></body></html>
