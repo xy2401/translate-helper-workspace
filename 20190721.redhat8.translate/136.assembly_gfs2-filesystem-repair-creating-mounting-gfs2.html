@@ -1,6 +1,8 @@
 ﻿<html  xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 9. GFS2文件系统修复</title><link rel="stylesheet" type="text/css" href="Common_Content/css/epub.css"><meta name="generator" content="DocBook XSL-NS Stylesheets V1.78.1"></head><body ><div class="chapter"><div class="titlepage"><div><div><h1 class="title">Chapter 9. GFS2文件系统修复</h1></div></div></div><p>当节点因安装文件系统而失败时，文件系统日记功能可以快速恢复。但是，如果存储设备断电或物理断开连接，则可能会发生文件系统损坏。（日记功能不能用于从存储子系统故障中恢复。）发生此类损坏时，可以使用<code class="literal">fsck.gfs2</code>命令恢复GFS2文件系统。
-		</p><div class="important" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">重要</h3><p>必须仅在从所有节点卸载的文件系统上运行<code class="literal">fsck.gfs2</code>命令。将文件系统作为Pacemaker群集资源进行管理时，可以禁用卸载文件系统的文件系统资源。运行<code class="literal">fsck.gfs2</code>命令后，再次启用文件系统资源。使用<code class="literal">pcs resource disable</code>的<code class="literal">--wait</code>选项指定的<span class="emphasis"><em>超时</em></span>值表示以秒为单位的值。
-			</p><pre class="literallayout">#pcs resource disable --wait = <span class="emphasis"><em>timeoutvalue</em></span> <span class="emphasis"><em>resource_id</em></span> [fsck.gfs2] <span class="emphasis"><em>#pcs</em></span> resource enable <span class="emphasis"><em>resource_id</em></span></pre></div><p>为了确保<code class="literal">fsck.gfs2</code>命令在启动时GFS2文件系统上不能运行，你可以设置<code class="literal">run_fsck</code>的参数<code class="literal">options</code>创建一个集群GFS2文件系统资源时的说法。指定<code class="literal">"run_fsck=no"</code>将指示您不应运行<code class="literal">fsck</code>命令。
+		</p><div class="important" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">重要</h3><p>必须仅在从所有节点卸载的文件系统上运行<code class="literal">fsck.gfs2</code>命令。将文件系统作为Pacemaker群集资源进行管理时，可以禁用卸载文件系统的文件系统资源。运行<code class="literal">fsck.gfs2</code>命令后，再次启用文件系统资源。使用<code class="literal">--wait</code>的<code class="literal">pcs resource disable</code>选项指定的<span class="emphasis"><em>超时</em></span>值表示以秒为单位的值。
+			</p><pre class="literallayout"># pcs resource disable --wait=<span class="emphasis"><em>timeoutvalue</em></span> <span class="emphasis"><em>resource_id</em></span>
+[fsck.gfs2]
+# pcs resource enable <span class="emphasis"><em>resource_id</em></span></pre></div><p>为了确保<code class="literal">fsck.gfs2</code>命令在启动时GFS2文件系统上不能运行，你可以设置<code class="literal">run_fsck</code>的参数<code class="literal">options</code>创建一个集群GFS2文件系统资源时的说法。指定<code class="literal">"run_fsck=no"</code>将指示您不应运行<code class="literal">fsck</code>命令。
 		</p><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_determining-needed-memory-for-fsckgfs2-gfs2-filesystem-repair"></a>确定运行fsck.gfs2所需的内存</h1></div></div></div><p>运行<code class="literal">fsck.gfs2</code>命令可能需要系统内存超出用于操作系统和内核的内存。特别是较大的文件系统可能需要额外的内存来运行此命令。
 			</p><p>下表显示了在块大小为4K的大小为1TB，10TB和100TB的GFS2文件系统上运行<code class="literal">fsck.gfs2</code>文件系统时可能需要的大致内存值。</p><div class="informaltable"><table border="1"><colgroup><col class="col_1"><col class="col_2"></colgroup><thead><tr><th valign="top" style="text-align:left">GFS2文件系统大小</th><th valign="top" style="text-align:left">运行<code class="literal">fsck.gfs2</code>所需的大致内存</th></tr></thead><tbody><tr><td valign="top" style="text-align:left"> <p>1 TB</p>
 							 </td><td valign="top" style="text-align:left"> <p>0.16 GB</p>
@@ -13,4 +15,26 @@
 			</p><pre class="literallayout">fsck.gfs2 -y <code class="literal">BlockDevice</code></pre><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">-y</code></span></dt><dd><code class="literal">-y</code>标志会使所有问题都回答为<code class="literal">yes</code> 。指定<code class="literal">-y</code>标志后， <code class="literal">fsck.gfs2</code>命令在进行更改之前不会提示您输入答案。
 						</dd><dt><span class="term"><code class="literal">BlockDevice</code></span></dt><dd>指定GFS2文件系统所在的块设备。
 						</dd></dl></div><p>在此示例中，修复驻留在块设备<code class="literal">/dev/testvg/testlv</code>上的GFS2文件系统。所有要修复的查询都会自动回答<code class="literal">yes</code> 。
-			</p><pre class="literallayout"># <code class="literal">fsck.gfs2 -y /dev/testvg/testlv</code>初始化fsck验证资源组索引。1级RG检查。（等级1通过）清算期刊（这可能需要一段时间）......期刊被清除。启动pass1 Pass1完成启动pass1b Pass1b完成启动pass1c Pass1c完成启动pass2完成Pass2完成启动pass3完成Pass3完成pass4完成pass5完成pass5完成将更改写入磁盘fsck.gfs2完成</pre></div></div></body></html>
+			</p><pre class="literallayout"># <code class="literal">fsck.gfs2 -y /dev/testvg/testlv</code>
+Initializing fsck
+Validating Resource Group index.
+Level 1 RG check.
+(level 1 passed)
+Clearing journals (this may take a while)...
+Journals cleared.
+Starting pass1
+Pass1 complete
+Starting pass1b
+Pass1b complete
+Starting pass1c
+Pass1c complete
+Starting pass2
+Pass2 complete
+Starting pass3
+Pass3 complete
+Starting pass4
+Pass4 complete
+Starting pass5
+Pass5 complete
+Writing changes to disk
+fsck.gfs2 complete</pre></div></div></body></html>
