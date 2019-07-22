@@ -1,14 +1,97 @@
 ﻿<html  xmlns="http://www.w3.org/1999/xhtml"><head><title>Chapter 9. 管理NVIDIA vGPU设备</title><link rel="stylesheet" type="text/css" href="Common_Content/css/epub.css"><meta name="generator" content="DocBook XSL-NS Stylesheets V1.78.1"></head><body ><div class="chapter"><div class="titlepage"><div><div><h1 class="title">Chapter 9. 管理NVIDIA vGPU设备</h1></div></div></div><p>vGPU功能可以将物理NVIDIA GPU设备划分为多个虚拟设备（称为<code class="literal">mediated devices</code> 。然后，可以将这些中介设备作为虚拟GPU分配给多个虚拟机（VM）。因此，这些VM共享单个物理GPU的性能。</p><p>但是，请注意，无论是否使用中介设备，将物理GPU分配给VM都会使主机无法使用GPU。</p><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_setting-up-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices"></a>设置NVIDIA vGPU设备</h1></div></div></div><p>要设置NVIDIA vGPU功能，您需要为GPU设备获取NVIDIA vGPU驱动程序，然后创建中介设备，并将它们分配给预期的虚拟机。有关详细说明，请参见下文：</p><h3><a id="prerequisites_47"></a>先决条件</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p class="simpara">只能在一组有限的NVIDIA GPU上创建中介vGPU设备。有关这些设备的最新列表，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/grid-vgpu-release-notes-red-hat-el-kvm/index.html#validated-platforms">NVIDIA GPU软件文档</a> 。
-					</p><p class="simpara">如果您不知道主机使用的是哪个GPU，请安装<span class="emphasis"><em>lshw</em></span>软件包并使用<code class="literal">lshw -C display</code>命令。以下示例显示系统正在使用与vGPU兼容的NVIDIA Tesla P4 GPU。</p><pre class="literallayout"><span class="strong"><strong>＃lshw -C display</strong></span> * -display description：3D控制器产品：GP104GL [特斯拉P4]供应商：NVIDIA公司物理ID：0总线信息：pci @ 0000：01：00.0版本：a1宽度：64位时钟：33MHz功能：pm msi pciexpress cap_list配置：driver = vfio-pci latency = 0资源：irq：16内存：f6000000-f6ffffff内存：e0000000-efffffff内存：f0000000-f1ffffff</pre></li></ul></div><h3><a id="procedure_58"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem">获取NVIDIA vGPU驱动程序并将其安装在您的系统上。有关说明，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/grid-software-quick-start-guide/index.html#getting-your-nvidia-grid-software">NVIDIA文档</a> 。
-					</li><li class="listitem"><p class="simpara">如果NVIDIA软件安装程序没有创建<span class="strong"><strong>/etc/modprobe.d/nvidia-installer-disable-nouveau.conf</strong></span>文件，创建一个<code class="literal">conf</code>在<span class="strong"><strong>/etc/modprobe.d/blacklist.local文件</strong></span>的任何名称的文件。然后，在文件中添加以下行：</p><pre class="literallayout">blacklist nouveau options nouveau modeset = 0</pre></li><li class="listitem"><p class="simpara">为当前内核重新生成初始ramdisk，然后重新启动。
-					</p><pre class="literallayout"><span class="strong"><strong>#dracut --force</strong></span> <span class="strong"><strong>#reboot</strong></span></pre><p class="simpara">如果您需要使用先前支持的内核版本和中介设备，请为所有已安装的内核版本重新生成初始ramdisk。
-					</p><pre class="literallayout"><span class="strong"><strong>#dracut --regenerate-all --force</strong></span> <span class="strong"><strong>#reboot</strong></span></pre></li><li class="listitem"><p class="simpara">检查内核是否已加载<code class="literal">nvidia_vgpu_vfio</code>模块，并且<code class="literal">nvidia-vgpu-mgr.service</code>服务正在运行。
-					</p><pre class="literallayout"><span class="strong"><strong>#lsmod | grep的nvidia_vgpu_vfio</strong></span> nvidia_vgpu_vfio 45011 0 NVIDIA 14333621 10 nvidia_vgpu_vfio MDEV 20414 2 vfio_mdev，nvidia_vgpu_vfio vfio 32695 3 <span class="strong"><strong>vfio_mdev，nvidia_vgpu_vfio，vfio_iommu_type1＃systemctl状态NVIDIA-VGPU-mgr.service</strong></span> NVIDIA-VGPU-mgr.service - NVIDIA的vGPU管理器守护程序加载：加载（/ usr / lib / systemd / system / nvidia-vgpu-mgr.service;启用;供应商预设：已禁用）活动：自2018-03-16 10:17:36 CET后激活（正在运行）; 5小时8分钟前主要PID：1553（nvidia-vgpu-mgr）[...]</pre></li><li class="listitem"><p class="simpara">将设备UUID写入<span class="strong"><strong>/ sys / class / mdev_bus / <code class="literal">pci_dev</code> / mdev_supported_types / <code class="literal">type-id</code> / create</strong></span>文件，其中<code class="literal">pci_dev</code>是主机GPU的PCI地址， <code class="literal">type-id</code>是主机GPU类型的ID。
-					</p><p class="simpara">以下示例显示如何在NVIDIA Tesla P4卡上创建<code class="literal">nvidia-63</code> vGPU类型的中介设备：</p><pre class="literallayout">＃ <span class="strong"><strong>的uuidgen</strong></span> 30820a6f-b1a5-4503-91ca-0c10ba58692a＃ <span class="strong"><strong>回声“30820a6f-b1a5-4503-91ca-0c10ba58692a”&gt; /sys/class/mdev_bus/0000:01:00.0/mdev_supported_types/nvidia-63/create</strong></span></pre><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>有关特定GPU设备的<code class="literal">type-id</code>值，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/grid-vgpu-user-guide/index.html#virtual-gpu-types-grid">虚拟GPU软件文档</a> 。请注意，在Linux VM上仅支持Q系列NVIDIA vGPU（例如GRID P4-2Q）作为中介设备GPU类型。</p></div></li><li class="listitem"><p class="simpara">将以下行添加到要共享vGPU资源的guest虚拟机的XML配置中的<span class="strong"><strong>&lt;devices /&gt;</strong></span>部分。使用上一步中<span class="strong"><strong>uuidgen</strong></span>命令生成的UUID值。每个UUID一次只能分配给一个访客。
-					</p><pre class="programlisting">&lt;hostdev mode ='subsystem'type ='mdev'managed ='no'mode ='vfio-pci'&gt; &lt;source&gt; &lt;address uuid ='30820a6f-b1a5-4503-91ca-0c10ba58692a'/&gt; &lt;/ source&gt; &lt; / hostdev&gt;</pre></li></ol></div><h3><a id="additional_resources_33"></a>其他资源</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">要使vGPU介导的设备在分配的guest虚拟机上正常工作，需要为guest虚拟机设置NVIDIA vGPU guest虚拟机许可。有关更多信息和说明，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/index.html#virtual-gpu-licensing">NVIDIA虚拟GPU软件文档</a> 。
-					</li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_removing-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices"></a>删除NVIDIA vGPU设备</h1></div></div></div><p>要更改已<a class="link" href="assembly_managing-nvidia-vgpu-devices_configuring-and-managing-virtualization.html#proc_setting-up-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices" title="Setting up NVIDIA vGPU devices">分配的vGPU介导设备</a>的配置，必须从分配的guest <a class="link" href="assembly_managing-nvidia-vgpu-devices_configuring-and-managing-virtualization.html#proc_setting-up-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices" title="设置NVIDIA vGPU设备">虚拟机</a>中删除现有设备。有关这样做的说明，请参阅以下内容：</p><h3><a id="procedure_59"></a>程序</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p class="simpara">要删除中介的vGPU设备，请在设备处于非活动状态时使用以下命令，并将<code class="literal">uuid</code>替换为设备的UUID，例如<code class="literal">30820a6f-b1a5-4503-91ca-0c10ba58692a</code> ：</p><pre class="literallayout"><span class="strong"><strong>#echo 1&gt; / sys / bus / mdev / devices / <code class="literal">uuid</code> / remove</strong></span></pre><p class="simpara">请注意，尝试删除当前正由VM使用的vGPU设备会触发以下错误：</p><pre class="literallayout">echo：写入错误：设备或资源繁忙</pre></li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_obtaining-nvidia-vgpu-information-about-your-system_assembly_managing-nvidia-vgpu-devices"></a>获取有关系统的NVIDIA vGPU信息</h1></div></div></div><p>要评估可用的vGPU功能的功能，您可以获取有关系统上的中介设备的其他信息，例如可以创建给定类型的中介设备的数量。
+					</p><p class="simpara">如果您不知道主机使用的是哪个GPU，请安装<span class="emphasis"><em>lshw</em></span>软件包并使用<code class="literal">lshw -C display</code>命令。以下示例显示系统正在使用与vGPU兼容的NVIDIA Tesla P4 GPU。</p><pre class="literallayout"># <span class="strong"><strong>lshw -C display</strong></span>
+
+*-display
+       description: 3D controller
+       product: GP104GL [Tesla P4]
+       vendor: NVIDIA Corporation
+       physical id: 0
+       bus info: pci@0000:01:00.0
+       version: a1
+       width: 64 bits
+       clock: 33MHz
+       capabilities: pm msi pciexpress cap_list
+       configuration: driver=vfio-pci latency=0
+       resources: irq:16 memory:f6000000-f6ffffff memory:e0000000-efffffff memory:f0000000-f1ffffff</pre></li></ul></div><h3><a id="procedure_58"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem">获取NVIDIA vGPU驱动程序并将其安装在您的系统上。有关说明，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/grid-software-quick-start-guide/index.html#getting-your-nvidia-grid-software">NVIDIA文档</a> 。
+					</li><li class="listitem"><p class="simpara">如果NVIDIA软件安装程序没有创建<span class="strong"><strong>/etc/modprobe.d/nvidia-installer-disable-nouveau.conf</strong></span>文件，创建一个<code class="literal">conf</code>在<span class="strong"><strong>/etc/modprobe.d/blacklist.local文件</strong></span>的任何名称的文件。然后，在文件中添加以下行：</p><pre class="literallayout">blacklist nouveau
+options nouveau modeset=0</pre></li><li class="listitem"><p class="simpara">为当前内核重新生成初始ramdisk，然后重新启动。
+					</p><pre class="literallayout"># <span class="strong"><strong>dracut --force</strong></span>
+# <span class="strong"><strong>reboot</strong></span></pre><p class="simpara">如果您需要使用先前支持的内核版本和中介设备，请为所有已安装的内核版本重新生成初始ramdisk。
+					</p><pre class="literallayout"># <span class="strong"><strong>dracut --regenerate-all --force</strong></span>
+# <span class="strong"><strong>reboot</strong></span></pre></li><li class="listitem"><p class="simpara">检查内核是否已加载<code class="literal">nvidia_vgpu_vfio</code>模块，并且<code class="literal">nvidia-vgpu-mgr.service</code>服务正在运行。
+					</p><pre class="literallayout"># <span class="strong"><strong>lsmod | grep nvidia_vgpu_vfio</strong></span>
+nvidia_vgpu_vfio 45011 0
+nvidia 14333621 10 nvidia_vgpu_vfio
+mdev 20414 2 vfio_mdev,nvidia_vgpu_vfio
+vfio 32695 3 vfio_mdev,nvidia_vgpu_vfio,vfio_iommu_type1
+# <span class="strong"><strong>systemctl status nvidia-vgpu-mgr.service</strong></span>
+nvidia-vgpu-mgr.service - NVIDIA vGPU Manager Daemon
+   Loaded: loaded (/usr/lib/systemd/system/nvidia-vgpu-mgr.service; enabled; vendor preset: disabled)
+   Active: active (running) since Fri 2018-03-16 10:17:36 CET; 5h 8min ago
+ Main PID: 1553 (nvidia-vgpu-mgr)
+ [...]</pre></li><li class="listitem"><p class="simpara">将设备UUID写入<span class="strong"><strong>/ sys / class / mdev_bus / <code class="literal">pci_dev</code> / mdev_supported_types / <code class="literal">type-id</code> / create</strong></span>文件，其中<code class="literal">pci_dev</code>是主机GPU的PCI地址， <code class="literal">type-id</code>是主机GPU类型的ID。
+					</p><p class="simpara">以下示例显示如何在NVIDIA Tesla P4卡上创建<code class="literal">nvidia-63</code> vGPU类型的中介设备：</p><pre class="literallayout"># <span class="strong"><strong>uuidgen</strong></span>
+30820a6f-b1a5-4503-91ca-0c10ba58692a
+# <span class="strong"><strong>echo "30820a6f-b1a5-4503-91ca-0c10ba58692a" &gt; /sys/class/mdev_bus/0000:01:00.0/mdev_supported_types/nvidia-63/create</strong></span></pre><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>有关特定GPU设备的<code class="literal">type-id</code>值，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/grid-vgpu-user-guide/index.html#virtual-gpu-types-grid">虚拟GPU软件文档</a> 。请注意，在Linux VM上仅支持Q系列NVIDIA vGPU（例如GRID P4-2Q）作为中介设备GPU类型。</p></div></li><li class="listitem"><p class="simpara">将以下行添加到要共享vGPU资源的guest虚拟机的XML配置中的<span class="strong"><strong>&lt;devices /&gt;</strong></span>部分。使用上一步中<span class="strong"><strong>uuidgen</strong></span>命令生成的UUID值。每个UUID一次只能分配给一个访客。
+					</p><pre class="programlisting">&lt;hostdev mode='subsystem' type='mdev' managed='no' model='vfio-pci'&gt;
+  &lt;source&gt;
+    &lt;address uuid='30820a6f-b1a5-4503-91ca-0c10ba58692a'/&gt;
+  &lt;/source&gt;
+&lt;/hostdev&gt;</pre></li></ol></div><h3><a id="additional_resources_33"></a>其他资源</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">要使vGPU介导的设备在分配的guest虚拟机上正常工作，需要为guest虚拟机设置NVIDIA vGPU guest虚拟机许可。有关更多信息和说明，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/index.html#virtual-gpu-licensing">NVIDIA虚拟GPU软件文档</a> 。
+					</li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_removing-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices"></a>删除NVIDIA vGPU设备</h1></div></div></div><p>要更改已<a class="link" href="assembly_managing-nvidia-vgpu-devices_configuring-and-managing-virtualization.html#proc_setting-up-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices" title="Setting up NVIDIA vGPU devices">分配的vGPU介导设备</a>的配置，必须从分配的guest <a class="link" href="assembly_managing-nvidia-vgpu-devices_configuring-and-managing-virtualization.html#proc_setting-up-nvidia-vgpu-devices_assembly_managing-nvidia-vgpu-devices" title="设置NVIDIA vGPU设备">虚拟机</a>中删除现有设备。有关这样做的说明，请参阅以下内容：</p><h3><a id="procedure_59"></a>程序</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p class="simpara">要删除中介的vGPU设备，请在设备处于非活动状态时使用以下命令，并将<code class="literal">uuid</code>替换为设备的UUID，例如<code class="literal">30820a6f-b1a5-4503-91ca-0c10ba58692a</code> ：</p><pre class="literallayout"># <span class="strong"><strong>echo 1 &gt; /sys/bus/mdev/devices/<code class="literal">uuid</code>/remove</strong></span></pre><p class="simpara">请注意，尝试删除当前正由VM使用的vGPU设备会触发以下错误：</p><pre class="literallayout">echo: write error: Device or resource busy</pre></li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_obtaining-nvidia-vgpu-information-about-your-system_assembly_managing-nvidia-vgpu-devices"></a>获取有关系统的NVIDIA vGPU信息</h1></div></div></div><p>要评估可用的vGPU功能的功能，您可以获取有关系统上的中介设备的其他信息，例如可以创建给定类型的中介设备的数量。
 			</p><h3><a id="procedure_60"></a>程序</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p class="simpara">使用<span class="strong"><strong>virsh nodedev-list --cap mdev_types</strong></span>和<span class="strong"><strong>virsh nodedev-dumpxml</strong></span>命令。
-					</p><p class="simpara">例如，如果您使用的是物理Tesla P4卡，则以下显示可用的vGPU类型：</p><pre class="literallayout"><span class="strong"><strong>$ virsh nodedev-list --cap mdev_types</strong></span> pci_0000_01_00_0 <span class="strong"><strong>$ virsh nodedev-dumpxml pci_0000_01_00_0</strong></span> &lt;...&gt; &lt;capability type ='mdev_types'&gt; &lt;type id ='nvidia-70'&gt; &lt;name&gt; GRID P4-8A &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 1 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia-69'&gt; &lt;name&gt; GRID P4-4A &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt; / deviceAPI&gt; &lt;availableInstances&gt; 2 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia-67'&gt; &lt;name&gt; GRID P4-1A &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 8 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia-65'&gt; &lt;name&gt; GRID P4-4Q &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 2 &lt;/ availableInstances&gt; &lt;/ type &gt; &lt;type id ='nvidia-63'&gt; &lt;name&gt; GRID P4-1Q &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 8 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia -71'&gt; &lt;name&gt; GRID P4-1B &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 8 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia-68'&gt; &lt;name&gt; GRID P4-2A &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInsta nces&gt; 4 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia-66'&gt; &lt;name&gt; GRID P4-8Q &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 1 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;type id ='nvidia-64'&gt; &lt;name&gt; GRID P4-2Q &lt;/ name&gt; &lt;deviceAPI&gt; vfio-pci &lt;/ deviceAPI&gt; &lt;availableInstances&gt; 4 &lt;/ availableInstances&gt; &lt;/ type&gt; &lt;/ capability &gt; &lt;/ ...&gt;</pre></li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="ref_remote-desktop-streaming-services-for-nvidia-vgpu_assembly_managing-nvidia-vgpu-devices"></a>适用于NVIDIA vGPU的远程桌面流媒体服务</h1></div></div></div><p>以下远程桌面流媒体服务已成功通过测试，可与RHEL 8主机中的NVIDIA vGPU功能配合使用：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
+					</p><p class="simpara">例如，如果您使用的是物理Tesla P4卡，则以下显示可用的vGPU类型：</p><pre class="literallayout"><span class="strong"><strong>$ virsh nodedev-list --cap mdev_types</strong></span>
+pci_0000_01_00_0
+<span class="strong"><strong>$ virsh nodedev-dumpxml pci_0000_01_00_0</strong></span>
+&lt;...&gt;
+  &lt;capability type='mdev_types'&gt;
+    &lt;type id='nvidia-70'&gt;
+      &lt;name&gt;GRID P4-8A&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;1&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-69'&gt;
+      &lt;name&gt;GRID P4-4A&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;2&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-67'&gt;
+      &lt;name&gt;GRID P4-1A&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;8&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-65'&gt;
+      &lt;name&gt;GRID P4-4Q&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;2&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-63'&gt;
+      &lt;name&gt;GRID P4-1Q&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;8&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-71'&gt;
+      &lt;name&gt;GRID P4-1B&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;8&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-68'&gt;
+      &lt;name&gt;GRID P4-2A&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;4&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-66'&gt;
+      &lt;name&gt;GRID P4-8Q&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;1&lt;/availableInstances&gt;
+    &lt;/type&gt;
+    &lt;type id='nvidia-64'&gt;
+      &lt;name&gt;GRID P4-2Q&lt;/name&gt;
+      &lt;deviceAPI&gt;vfio-pci&lt;/deviceAPI&gt;
+      &lt;availableInstances&gt;4&lt;/availableInstances&gt;
+    &lt;/type&gt;
+  &lt;/capability&gt;
+&lt;/...&gt;</pre></li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="ref_remote-desktop-streaming-services-for-nvidia-vgpu_assembly_managing-nvidia-vgpu-devices"></a>适用于NVIDIA vGPU的远程桌面流媒体服务</h1></div></div></div><p>以下远程桌面流媒体服务已成功通过测试，可与RHEL 8主机中的NVIDIA vGPU功能配合使用：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
 						<span class="strong"><strong>HP-RGS</strong></span> - 请注意，目前无法将HP-RGS与RHEL 8 VM配合使用。</li><li class="listitem">
 						<span class="strong"><strong>Mechdyne TGX</strong></span> - 请注意，目前无法将Mechdyne TGX与Windows Server 2016 VM配合使用。</li><li class="listitem">
 						<span class="strong"><strong>NICE DCV</strong></span> - 使用此流媒体服务时，Red Hat建议使用固定分辨率设置，因为在某些情况下使用动态分辨率会导致黑屏。此外，目前无法将NICE DCV与RHEL 8 VM一起使用。</li></ul></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="related-information-assembly_managing-nvidia-vgpu-devices"></a>相关信息</h1></div></div></div><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">有关在RHEL和KVM上使用NVIDA vGPU的更多信息，请参阅<a class="link" href="https://docs.nvidia.com/grid/latest/grid-vgpu-release-notes-red-hat-el-kvm/index.html#validated-platforms">NVIDIA GPU软件文档</a> 。
