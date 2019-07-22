@@ -24,10 +24,10 @@
 			</p><p>当邮件通过SMTP到达时，可以再次设置各个节点，以便默认情况下将某个用户的邮件传递给特定节点。如果默认节点未启动，则消息可以由接收节点直接保存到用户的邮件假脱机中。同样，此设计旨在使特定文件集在正常情况下仅缓存在一个节点上，但允许在节点故障的情况下直接访问。
 			</p><p>此设置允许最好地使用GFS2的页面缓存，并使故障对应用程序透明，无论是<code class="literal">imap</code>还是<code class="literal">smtp</code> 。
 			</p><p>备份通常是另一个棘手的领域。同样，如果可能的话，最好直接从缓存该特定inode集的节点备份每个节点的工作集。如果您有一个在常规时间点运行的备份脚本，并且这似乎与在GFS2上运行的应用程序的响应时间的峰值一致，那么集群很可能无法实现最高效率使用页面缓存。
-			</p><p>显然，如果您能够停止应用程序以执行备份，那么这不会是一个问题。另一方面，如果备份仅从一个节点运行，则在完成后，大部分文件系统将缓存在该节点上，对后续从其他节点的访问会带来性能损失。通过使用以下命令完成备份后，在备份节点上删除VFS页面缓存，可以在一定程度上缓解这种情况：</p><pre class="literallayout">echo -n 3&gt; / proc / sys / vm / drop_caches</pre><p>然而，这并不是一个好的解决方案，因为要注意确保每个节点上的工作集是共享的，大多数是在集群中只读，或者主要从单个节点访问。
+			</p><p>显然，如果您能够停止应用程序以执行备份，那么这不会是一个问题。另一方面，如果备份仅从一个节点运行，则在完成后，大部分文件系统将缓存在该节点上，对后续从其他节点的访问会带来性能损失。通过使用以下命令完成备份后，在备份节点上删除VFS页面缓存，可以在一定程度上缓解这种情况：</p><pre class="literallayout">echo -n 3 &gt;/proc/sys/vm/drop_caches</pre><p>然而，这并不是一个好的解决方案，因为要注意确保每个节点上的工作集是共享的，大多数是在集群中只读，或者主要从单个节点访问。
 			</p></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="con_gfs2-lockdump-gfs2-performance"></a>使用GFS2锁定转储对GFS2性能进行故障排除</h1></div></div></div><p>如果由于GFS2缓存的低效使用而导致集群性能下降，您可能会看到大量且不断增加的I / O等待时间。您可以使用GFS2的锁转储信息来确定问题的原因。
 			</p><p>本节概述了GFS2锁定转储。
-			</p><p>可以从<code class="literal">debugfs</code>文件中收集GFS2锁转储信息，该文件可以在以下路径名中找到，假设<code class="literal">debugfs</code>安装在<code class="literal">/sys/kernel/debug/</code> ：</p><pre class="literallayout">/ sys / kernel / debug / gfs2 / <span class="emphasis"><em>fsname</em></span> / glocks</pre><p>该文件的内容是一系列行。以G：开头的每一行代表一个glock，并且由单个空格缩进的以下行表示与文件中紧接在它们之前的glock有关的信息项。
+			</p><p>可以从<code class="literal">debugfs</code>文件中收集GFS2锁转储信息，该文件可以在以下路径名中找到，假设<code class="literal">debugfs</code>安装在<code class="literal">/sys/kernel/debug/</code> ：</p><pre class="literallayout">/sys/kernel/debug/gfs2/<span class="emphasis"><em>fsname</em></span>/glocks</pre><p>该文件的内容是一系列行。以G：开头的每一行代表一个glock，并且由单个空格缩进的以下行表示与文件中紧接在它们之前的glock有关的信息项。
 			</p><p>使用<code class="literal">debugfs</code>文件的最佳方法是使用<code class="literal">cat</code>命令获取文件的完整内容的副本（如果您有大量的RAM和大量缓存的inode，可能需要很长时间）遇到问题，然后在以后查看结果数据。
 			</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>制作<code class="literal">debugfs</code>文件的两个副本可能很有用，一个是几秒钟，一个是一两个接一个。通过比较与相同glock编号相关的两条跟踪中的持有者信息，您可以判断工作负载是否正在进展（它只是很慢）或是否已经卡住（这总是一个错误，应该报告给Red Hat立即支持）。
 				</p></div><p><code class="literal">debugfs</code>文件中以H开头的行:(持有者）表示已授予或等待授予的锁定请求。持有者行f：上的flags字段显示：'W'标志指的是等待请求，'H'标志指的是授权请求。具有大量等待请求的glock可能是正在经历特定争用的那些。
@@ -147,6 +147,15 @@
 			</p><p>依赖于<code class="literal">fsync()</code>来同步文件数据的应用程序可以通过使用数据<code class="literal">fsync()</code>来提高性能。可以为标记目录（及其所有子目录）中创建的任何GFS2文件自动启用数据日记功能。长度为零的现有文件也可以打开或关闭数据日记功能。
 			</p><p>在目录上启用数据日记功能会将目录设置为“inherit jdata”，这表示随后在该目录中创建的所有文件和目录都已记录。您可以使用<code class="literal">chattr</code>命令在文件上启用和禁用数据<code class="literal">chattr</code> 。
 			</p><p>以下命令在<code class="literal">/mnt/gfs2/gfs2_dir/newfile</code>文件上启用数据<code class="literal">/mnt/gfs2/gfs2_dir/newfile</code> ，然后检查该标志是否已正确设置。
-			</p><pre class="literallayout"><code class="literal">chattr +j /mnt/gfs2/gfs2_dir/newfile</code> <code class="literal">lsattr /mnt/gfs2/gfs2_dir</code> --------- j --- / mnt / gfs2 / gfs2_dir / newfile</pre><p>以下命令禁用<code class="literal">/mnt/gfs2/gfs2_dir/newfile</code>文件上的数据<code class="literal">/mnt/gfs2/gfs2_dir/newfile</code> ，然后检查该标志是否已正确设置。
-			</p><pre class="literallayout"><code class="literal">chattr -j /mnt/gfs2/gfs2_dir/newfile</code> <code class="literal">lsattr /mnt/gfs2/gfs2_dir</code> ------------- / mnt / gfs2 / gfs2_dir / newfile</pre><p>您还可以使用<code class="literal">chattr</code>命令在目录上设置<code class="literal">j</code>标志。为目录设置此标志时，后续在该目录中创建的所有文件和目录都会被记录。以下命令集在<code class="literal">gfs2_dir</code>目录中设置<code class="literal">j</code>标志，然后检查标志是否已正确设置。在此之后，这些命令在<code class="literal">/mnt/gfs2/gfs2_dir</code>目录中创建一个名为<code class="literal">newfile</code>的新文件，然后检查是否已为该文件设置了<code class="literal">j</code>标志。由于为目录设置了<code class="literal">j</code>标志，因此<code class="literal">newfile</code>也应该启用<code class="literal">newfile</code>功能。
-			</p><pre class="literallayout"><code class="literal">chattr -j /mnt/gfs2/gfs2_dir</code> <code class="literal">lsattr /mnt/gfs2</code> --------- j --- / mnt / gfs2 / gfs2_dir #touch <code class="literal">touch /mnt/gfs2/gfs2_dir/newfile</code> <code class="literal">lsattr /mnt/gfs2/gfs2_dir</code> --------- j --- / mnt / gfs2 / gfs2_dir / newfile</pre></div></div></body></html>
+			</p><pre class="literallayout"># <code class="literal">chattr +j /mnt/gfs2/gfs2_dir/newfile</code>
+# <code class="literal">lsattr /mnt/gfs2/gfs2_dir</code>
+---------j--- /mnt/gfs2/gfs2_dir/newfile</pre><p>以下命令禁用<code class="literal">/mnt/gfs2/gfs2_dir/newfile</code>文件上的数据<code class="literal">/mnt/gfs2/gfs2_dir/newfile</code> ，然后检查该标志是否已正确设置。
+			</p><pre class="literallayout"># <code class="literal">chattr -j /mnt/gfs2/gfs2_dir/newfile</code>
+# <code class="literal">lsattr /mnt/gfs2/gfs2_dir</code>
+------------- /mnt/gfs2/gfs2_dir/newfile</pre><p>您还可以使用<code class="literal">chattr</code>命令在目录上设置<code class="literal">j</code>标志。为目录设置此标志时，后续在该目录中创建的所有文件和目录都会被记录。以下命令集在<code class="literal">gfs2_dir</code>目录中设置<code class="literal">j</code>标志，然后检查标志是否已正确设置。在此之后，这些命令在<code class="literal">/mnt/gfs2/gfs2_dir</code>目录中创建一个名为<code class="literal">newfile</code>的新文件，然后检查是否已为该文件设置了<code class="literal">j</code>标志。由于为目录设置了<code class="literal">j</code>标志，因此<code class="literal">newfile</code>也应该启用<code class="literal">newfile</code>功能。
+			</p><pre class="literallayout"># <code class="literal">chattr -j /mnt/gfs2/gfs2_dir</code>
+# <code class="literal">lsattr /mnt/gfs2</code>
+---------j--- /mnt/gfs2/gfs2_dir
+# <code class="literal">touch /mnt/gfs2/gfs2_dir/newfile</code>
+# <code class="literal">lsattr /mnt/gfs2/gfs2_dir</code>
+---------j--- /mnt/gfs2/gfs2_dir/newfile</pre></div></div></body></html>
