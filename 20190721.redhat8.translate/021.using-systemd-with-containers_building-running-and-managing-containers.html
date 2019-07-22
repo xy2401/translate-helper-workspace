@@ -6,7 +6,27 @@
 				</li></ul></div><p>以下两节介绍如何以这些方式使用systemd容器。
 		</p><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="starting_containers_with_systemd"></a>使用systemd启动容器</h1></div></div></div><p>当您设置一个容器作为systemd服务启动时，您可以定义容器化服务运行的顺序，检查依赖关系（例如确保另一个服务正在运行，文件可用或资源已安装），甚至使用runc命令启动容器。
 			</p><p>本节提供了一个容器示例，该容器配置为直接在RHEL或RHEL Atomic主机系统上作为systemd服务运行。
-			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">获取要在系统上运行的图像。例如，要使用docker.io中的redis服务，请运行以下命令：</p><pre class="literallayout">#podman pull docker.io/redis</pre></li><li class="listitem"><p class="simpara">打开Selinux许可。如果在系统上启用了SELinux，则必须打开<code class="literal">container_manage_cgroup</code>布尔值以运行带有systemd的容器，如下所示（有关详细信息，请参阅<a class="link" href="https://access.redhat.com/solutions/3387631">运行systemd</a>解决方案的<a class="link" href="https://access.redhat.com/solutions/3387631">容器</a> ）：</p><pre class="literallayout">#setsebool -P container_manage_cgroup on</pre></li><li class="listitem"><p class="simpara">将映像作为容器运行，为其指定要在systemd服务文件中使用的名称。例如，要命名正在运行的redis容器redis_server，请键入以下内容：</p><pre class="literallayout">#podman run -d --name redis_server -p 6379：6379 redis</pre></li><li class="listitem"><p class="simpara">通过在<code class="literal">/etc/systemd/system/</code>目录中创建单元配置文件，将容器配置为systemd服务。例如，/ <code class="literal">/etc/systemd/system/redis-container.service</code> sysd / system / redis-container.service的内容可能如下所示（请注意，redis_server与您在<span class="strong"><strong>podman运行</strong></span>行上设置的名称相匹配）：</p><pre class="literallayout">[Unit]说明= Redis容器[Service] Restart = always ExecStart = / usr / bin / podman start -a redis_server ExecStop = / usr / bin / podman stop -t 2 redis_server [Install] WantedBy = local.target</pre></li><li class="listitem"><p class="simpara">创建单元文件后，要在引导时自动启动容器，请键入以下内容：</p><pre class="literallayout">#systemctl enable redis-container.service</pre></li><li class="listitem"><p class="simpara">启用该服务后，它将在引导时启动。要立即启动它并检查服务的状态，请键入以下内容：</p><pre class="literallayout">#systemctl start redis-container.service #systemctl status redis-container.service * redis-container.service  -  Redis容器已加载：已加载（/etc/systemd/system/redis-container.service;已启用;供应商预设：已禁用） ：自2019-03-15 16:22:55 EDT以来的活跃（运行）; 6s ago Main PID：1540（podman）任务：8（限制：2353）内存：7.7M CGroup：/system.slice/redis-container.service└--1540/ usr / bin / podman start -a redis_server 3月15日16： 22:55 localhost.localdomain systemd [1]：启动Redis容器。</pre></li></ol></div><p>要了解有关使用systemd配置服务的更多信息，请参阅“ <a class="link" href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html-single/System_Administrators_Guide/index.html#chap-Managing_Services_with_systemd">使用systemd管理服务”</a>的“系统管理员指南”一章。
+			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">获取要在系统上运行的图像。例如，要使用docker.io中的redis服务，请运行以下命令：</p><pre class="literallayout"># podman pull docker.io/redis</pre></li><li class="listitem"><p class="simpara">打开Selinux许可。如果在系统上启用了SELinux，则必须打开<code class="literal">container_manage_cgroup</code>布尔值以运行带有systemd的容器，如下所示（有关详细信息，请参阅<a class="link" href="https://access.redhat.com/solutions/3387631">运行systemd</a>解决方案的<a class="link" href="https://access.redhat.com/solutions/3387631">容器</a> ）：</p><pre class="literallayout"># setsebool -P container_manage_cgroup on</pre></li><li class="listitem"><p class="simpara">将映像作为容器运行，为其指定要在systemd服务文件中使用的名称。例如，要命名正在运行的redis容器redis_server，请键入以下内容：</p><pre class="literallayout"># podman run -d --name redis_server -p 6379:6379 redis</pre></li><li class="listitem"><p class="simpara">通过在<code class="literal">/etc/systemd/system/</code>目录中创建单元配置文件，将容器配置为systemd服务。例如，/ <code class="literal">/etc/systemd/system/redis-container.service</code> sysd / system / redis-container.service的内容可能如下所示（请注意，redis_server与您在<span class="strong"><strong>podman运行</strong></span>行上设置的名称相匹配）：</p><pre class="literallayout">[Unit]
+Description=Redis container
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/podman start -a redis_server
+ExecStop=/usr/bin/podman stop -t 2 redis_server
+
+[Install]
+WantedBy=local.target</pre></li><li class="listitem"><p class="simpara">创建单元文件后，要在引导时自动启动容器，请键入以下内容：</p><pre class="literallayout"># systemctl enable redis-container.service</pre></li><li class="listitem"><p class="simpara">启用该服务后，它将在引导时启动。要立即启动它并检查服务的状态，请键入以下内容：</p><pre class="literallayout"># systemctl start redis-container.service
+# systemctl status redis-container.service
+* redis-container.service - Redis container
+   Loaded: loaded (/etc/systemd/system/redis-container.service; enabled; vendor preset: disabled)
+   Active: active (running) since Fri 2019-03-15 16:22:55 EDT; 6s ago
+ Main PID: 1540 (podman)
+    Tasks: 8 (limit: 2353)
+   Memory: 7.7M
+   CGroup: /system.slice/redis-container.service
+           └─1540 /usr/bin/podman start -a redis_server
+
+Mar 15 16:22:55 localhost.localdomain systemd[1]: Started Redis container.</pre></li></ol></div><p>要了解有关使用systemd配置服务的更多信息，请参阅“ <a class="link" href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html-single/System_Administrators_Guide/index.html#chap-Managing_Services_with_systemd">使用systemd管理服务”</a>的“系统管理员指南”一章。
 			</p></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="starting_services_within_a_container_using_systemd"></a>使用systemd在容器内启动服务</h1></div></div></div><p>具有systemd初始化系统的软件包包含在名为registry.redhat.io/ubi8/ubi的官方Red Hat Enterprise Linux Init基础映像中。这意味着可以在容器内启动和管理使用systemd管理的应用程序。运行systemd的容器将：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">启动/ sbin / init进程（systemd服务）以在容器中作为PID 1运行。
 					</li><li class="listitem">按依赖项的顺序启动在容器中安装和启用的所有systemd服务。
 					</li><li class="listitem">允许systemd重新启动服务或终止容器内启动的服务的僵尸进程。
@@ -16,11 +36,19 @@
 					</li><li class="listitem">公开访问服务所需的任何端口。
 					</li><li class="listitem">将/ sbin / init设置为容器运行时启动的默认进程</li></ul></div><p>在此示例中，我们通过创建Dockerfile来构建容器，该Dockerfile安装并配置Web服务器（httpd），以便在主机系统上运行容器时由systemd服务（/ sbin / init）自动启动。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">
-						<span class="strong"><strong>创建Dockerfile</strong></span> ：在单独的目录中，使用以下内容创建名为Dockerfile的文件：</p><pre class="literallayout">来自ubi8 / ubi RUN yum -y install httpd; yum清洁所有; systemctl启用httpd; RUN echo“成功的Web服务器测试”&gt; /var/www/html/index.html RUN mkdir /etc/systemd/system/httpd.service.d/; echo -e'[Service] \ nRestart = always'&gt; /etc/systemd/system/httpd.service.d/httpd.conf EXPOSE 80 CMD [“/ sbin / init”]</pre><p class="simpara">Dockerfile安装httpd包，使httpd服务在启动时启动（即容器启动时），创建测试文件（index.html），将Web服务器暴露给主机（端口80），然后启动systemd容器启动时的init服务（/ sbin / init）。
+						<span class="strong"><strong>创建Dockerfile</strong></span> ：在单独的目录中，使用以下内容创建名为Dockerfile的文件：</p><pre class="literallayout">FROM ubi8/ubi
+RUN yum -y install httpd; yum clean all; systemctl enable httpd;
+RUN echo "Successful Web Server Test" &gt; /var/www/html/index.html
+RUN mkdir /etc/systemd/system/httpd.service.d/; echo -e '[Service]\nRestart=always' &gt; /etc/systemd/system/httpd.service.d/httpd.conf
+EXPOSE 80
+CMD [ "/sbin/init" ]</pre><p class="simpara">Dockerfile安装httpd包，使httpd服务在启动时启动（即容器启动时），创建测试文件（index.html），将Web服务器暴露给主机（端口80），然后启动systemd容器启动时的init服务（/ sbin / init）。
 					</p></li><li class="listitem"><p class="simpara">
-						<span class="strong"><strong>构建容器</strong></span> ：从包含Dockerfile的目录中，键入以下内容：</p><pre class="literallayout">#podman build --format = docker -t mysysd。</pre></li><li class="listitem"><p class="simpara">
-						<span class="strong"><strong>打开Selinux许可</strong></span> 。如果在系统上启用了SELinux，则必须打开<code class="literal">container_manage_cgroup</code>布尔值以运行带有systemd的容器，如下所示（有关详细信息，请参阅<a class="link" href="https://access.redhat.com/solutions/3387631">运行systemd</a>解决方案的<a class="link" href="https://access.redhat.com/solutions/3387631">容器</a> ）：</p><pre class="literallayout">#setsebool -P container_manage_cgroup 1</pre></li><li class="listitem"><p class="simpara">
-						<span class="strong"><strong>运行容器</strong></span> ：构建容器并命名为mysysd后，键入以下命令以运行容器：</p><pre class="literallayout">#podman run -d --name = mysysd_run -p 80:80 mysysd</pre><p class="simpara">在此命令中，mysysd映像作为守护进程作为mysysd_run容器运行，容器中的端口80暴露给主机系统上的端口80。
+						<span class="strong"><strong>构建容器</strong></span> ：从包含Dockerfile的目录中，键入以下内容：</p><pre class="literallayout"># podman build --format=docker -t mysysd .</pre></li><li class="listitem"><p class="simpara">
+						<span class="strong"><strong>打开Selinux许可</strong></span> 。如果在系统上启用了SELinux，则必须打开<code class="literal">container_manage_cgroup</code>布尔值以运行带有systemd的容器，如下所示（有关详细信息，请参阅<a class="link" href="https://access.redhat.com/solutions/3387631">运行systemd</a>解决方案的<a class="link" href="https://access.redhat.com/solutions/3387631">容器</a> ）：</p><pre class="literallayout"># setsebool -P container_manage_cgroup 1</pre></li><li class="listitem"><p class="simpara">
+						<span class="strong"><strong>运行容器</strong></span> ：构建容器并命名为mysysd后，键入以下命令以运行容器：</p><pre class="literallayout"># podman run -d --name=mysysd_run -p 80:80 mysysd</pre><p class="simpara">在此命令中，mysysd映像作为守护进程作为mysysd_run容器运行，容器中的端口80暴露给主机系统上的端口80。
 					</p></li><li class="listitem"><p class="simpara">
-						<span class="strong"><strong>检查容器是否正在运行</strong></span> ：要确保容器正在运行且服务正在运行，请键入以下命令：</p><pre class="literallayout">#podman ps | grep mysysd_run a282b0c2ad3d localhost / mysysd：latest / sbin / init 15秒前Up 14秒前0.0.0.0:80-&gt;80/tcp mysysd_run #curl localhost / index.html成功的Web服务器测试</pre></li></ol></div><p>此时，您有一个容器，它将Web服务器作为容器内的systemd服务启动。通过修改Dockerfile并根据需要配置数据和打开端口，以相同的方式安装和运行您喜欢的任何服务。
+						<span class="strong"><strong>检查容器是否正在运行</strong></span> ：要确保容器正在运行且服务正在运行，请键入以下命令：</p><pre class="literallayout"># podman ps | grep mysysd_run
+a282b0c2ad3d  localhost/mysysd:latest  /sbin/init  15 seconds ago  Up 14 seconds ago  0.0.0.0:80-&gt;80/tcp  mysysd_run
+# curl localhost/index.html
+Successful Web Server Test</pre></li></ol></div><p>此时，您有一个容器，它将Web服务器作为容器内的systemd服务启动。通过修改Dockerfile并根据需要配置数据和打开端口，以相同的方式安装和运行您喜欢的任何服务。
 			</p></div></div></body></html>
