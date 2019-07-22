@@ -11,51 +11,179 @@
 				</p></div><p>以下过程创建LVM逻辑卷，然后在该卷上创建ext4文件系统，以便在Pacemaker集群中使用。在此示例中，共享分区<code class="literal">/dev/sdb1</code>用于存储将从中创建LVM逻辑卷的LVM物理卷。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在群集的两个节点上，执行以下步骤将LVM系统ID的值设置为系统的<code class="literal">uname</code>标识符的值。LVM系统ID将用于确保只有群集能够激活卷组。
 					</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">将<code class="literal">/etc/lvm/lvm.conf</code>配置文件中的<code class="literal">system_id_source</code>配置选项设置为<code class="literal">uname</code> 。
-							</p><pre class="literallayout">＃配置选项global / system_id_source。system_id_source =“uname”</pre></li><li class="listitem"><p class="simpara">验证节点上的LVM系统标识是否与节点的<code class="literal">uname</code>匹配。
-							</p><pre class="literallayout">＃ <code class="literal">lvm systemid</code>系统ID：z1.example.com＃ <code class="literal">uname -n</code> z1.example.com</pre></li></ol></div></li><li class="listitem"><p class="simpara">创建LVM卷并在该卷上创建ext4文件系统。由于<code class="literal">/dev/sdb1</code>分区是共享的存储，因此您只在一个节点上执行此部分过程。
+							</p><pre class="literallayout"># Configuration option global/system_id_source.
+system_id_source = "uname"</pre></li><li class="listitem"><p class="simpara">验证节点上的LVM系统标识是否与节点的<code class="literal">uname</code>匹配。
+							</p><pre class="literallayout"># <code class="literal">lvm systemid</code>
+  system ID: z1.example.com
+# <code class="literal">uname -n</code>
+  z1.example.com</pre></li></ol></div></li><li class="listitem"><p class="simpara">创建LVM卷并在该卷上创建ext4文件系统。由于<code class="literal">/dev/sdb1</code>分区是共享的存储，因此您只在一个节点上执行此部分过程。
 					</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在分区<code class="literal">/dev/sdb1</code>上创建LVM物理卷。
-							</p><pre class="literallayout"><code class="literal">pvcreate /dev/sdb1</code>成功创建物理卷“/ dev / sdb1”</pre></li><li class="listitem"><p class="simpara">创建由物理卷<code class="literal">/dev/sdb1</code>组成的卷组<code class="literal">my_vg</code> 。
-							</p><pre class="literallayout"><code class="literal">vgcreate my_vg /dev/sdb1</code>已成功创建卷组“my_vg”</pre></li><li class="listitem"><p class="simpara">验证新卷组是否具有您正在运行的节点的系统ID以及您从中创建卷组的系统ID。
-							</p><pre class="literallayout"><code class="literal">vgs -o+systemid</code> VG #PV #LV #SN Attr VSize VFree系统ID my_vg 1 0 0 wz  -  n- &lt;1.82t &lt;1.82t z1.example.com</pre></li><li class="listitem"><p class="simpara">使用卷组<code class="literal">my_vg</code>创建逻辑卷。
-							</p><pre class="literallayout"><code class="literal">lvcreate -L450 -n my_lv my_vg</code>将大小舍入为完整物理范围452.00 MiB逻辑卷“my_lv”已创建</pre><p class="simpara">您可以使用<code class="literal">lvs</code>命令显示逻辑卷。
-							</p><pre class="literallayout">＃ <code class="literal">lvs</code> LV VG的Attr LSIZE池源数据％移动日志复制％转换my_lv中my_vg -wi-A ----452.00米...</pre></li><li class="listitem"><p class="simpara">在逻辑卷<code class="literal">my_lv</code>上创建ext4文件系统。</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/my_vg/my_lv</code> mke2fs 1.44.3（10-July-2018）使用462848 1k块和115824 inode创建文件系统...</pre></li></ol></div></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-nfs-share-configuring-ha-nfs"></a>配置NFS共享</h1></div></div></div><p>以下过程为NFS服务故障转移配置NFS共享。
+							</p><pre class="literallayout"># <code class="literal">pvcreate /dev/sdb1</code>
+  Physical volume "/dev/sdb1" successfully created</pre></li><li class="listitem"><p class="simpara">创建由物理卷<code class="literal">/dev/sdb1</code>组成的卷组<code class="literal">my_vg</code> 。
+							</p><pre class="literallayout"># <code class="literal">vgcreate my_vg /dev/sdb1</code>
+  Volume group "my_vg" successfully created</pre></li><li class="listitem"><p class="simpara">验证新卷组是否具有您正在运行的节点的系统ID以及您从中创建卷组的系统ID。
+							</p><pre class="literallayout"># <code class="literal">vgs -o+systemid</code>
+  VG    #PV #LV #SN Attr   VSize  VFree  System ID
+  my_vg   1   0   0 wz--n- &lt;1.82t &lt;1.82t z1.example.com</pre></li><li class="listitem"><p class="simpara">使用卷组<code class="literal">my_vg</code>创建逻辑卷。
+							</p><pre class="literallayout"># <code class="literal">lvcreate -L450 -n my_lv my_vg</code>
+  Rounding up size to full physical extent 452.00 MiB
+  Logical volume "my_lv" created</pre><p class="simpara">您可以使用<code class="literal">lvs</code>命令显示逻辑卷。
+							</p><pre class="literallayout"># <code class="literal">lvs</code>
+  LV      VG      Attr      LSize   Pool Origin Data%  Move Log Copy%  Convert
+  my_lv   my_vg   -wi-a---- 452.00m
+  ...</pre></li><li class="listitem"><p class="simpara">在逻辑卷<code class="literal">my_lv</code>上创建ext4文件系统。</p><pre class="literallayout"># <code class="literal">mkfs.ext4 /dev/my_vg/my_lv</code>
+mke2fs 1.44.3 (10-July-2018)
+Creating filesystem with 462848 1k blocks and 115824 inodes
+...</pre></li></ol></div></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring-nfs-share-configuring-ha-nfs"></a>配置NFS共享</h1></div></div></div><p>以下过程为NFS服务故障转移配置NFS共享。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在群集中的两个节点上，创建<code class="literal">/nfsshare</code>目录。
-					</p><pre class="literallayout"><code class="literal">mkdir /nfsshare</code></pre></li><li class="listitem"><p class="simpara">在群集中的一个节点上，执行以下过程。
+					</p><pre class="literallayout"># <code class="literal">mkdir /nfsshare</code></pre></li><li class="listitem"><p class="simpara">在群集中的一个节点上，执行以下过程。
 					</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在<code class="literal">/nfsshare</code>目录中挂载使用ext4文件系统<a class="link" href="assembly_configuring-active-passive-nfs-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-nfs" title="Configuring an LVM volume with an ext4 file system in a Pacemaker cluster">配置LVM卷时</a>创建<a class="link" href="assembly_configuring-active-passive-nfs-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-nfs" title="在Pacemaker集群中使用ext4文件系统配置LVM卷">的ext4文件系统</a> 。
-							</p><pre class="literallayout">[root @ z1~] <code class="literal">mount /dev/my_vg/my_lv /nfsshare</code></pre></li><li class="listitem"><p class="simpara">在<code class="literal">/nfsshare</code>目录中创建<code class="literal">exports</code>目录树。
-							</p><pre class="literallayout">[root @ z1~] <code class="literal">mkdir -p /nfsshare/exports</code> [root @ z1~] <code class="literal">mkdir -p /nfsshare/exports/export1</code> [root @ z1~] <code class="literal">mkdir -p /nfsshare/exports/export2</code></pre></li><li class="listitem"><p class="simpara">将文件放在<code class="literal">exports</code>目录中以供NFS客户端访问。对于此示例，我们将创建名为<code class="literal">clientdatafile1</code>和<code class="literal">clientdatafile2</code>测试文件。
-							</p><pre class="literallayout">[root @ z1~] <code class="literal">touch /nfsshare/exports/export1/clientdatafile1</code> [root @ z1~] <code class="literal">touch /nfsshare/exports/export2/clientdatafile2</code></pre></li><li class="listitem"><p class="simpara">卸载ext4文件系统并停用LVM卷组。
-							</p><pre class="literallayout">[root @ z1~] <code class="literal">umount /dev/my_vg/my_lv</code> [root @ z1~] <code class="literal">vgchange -an my_vg</code></pre></li></ol></div></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring_resources_for_nfs_server_in_a_cluster-configuring-ha-nfs"></a>配置集群中NFS服务器的资源和资源组</h1></div></div></div><p>本节提供了为此用例配置群集资源的过程。
+							</p><pre class="literallayout">[root@z1 ~]# <code class="literal">mount /dev/my_vg/my_lv /nfsshare</code></pre></li><li class="listitem"><p class="simpara">在<code class="literal">/nfsshare</code>目录中创建<code class="literal">exports</code>目录树。
+							</p><pre class="literallayout">[root@z1 ~]# <code class="literal">mkdir -p /nfsshare/exports</code>
+[root@z1 ~]# <code class="literal">mkdir -p /nfsshare/exports/export1</code>
+[root@z1 ~]# <code class="literal">mkdir -p /nfsshare/exports/export2</code></pre></li><li class="listitem"><p class="simpara">将文件放在<code class="literal">exports</code>目录中以供NFS客户端访问。对于此示例，我们将创建名为<code class="literal">clientdatafile1</code>和<code class="literal">clientdatafile2</code>测试文件。
+							</p><pre class="literallayout">[root@z1 ~]# <code class="literal">touch /nfsshare/exports/export1/clientdatafile1</code>
+[root@z1 ~]# <code class="literal">touch /nfsshare/exports/export2/clientdatafile2</code></pre></li><li class="listitem"><p class="simpara">卸载ext4文件系统并停用LVM卷组。
+							</p><pre class="literallayout">[root@z1 ~]# <code class="literal">umount /dev/my_vg/my_lv</code>
+[root@z1 ~]# <code class="literal">vgchange -an my_vg</code></pre></li></ol></div></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_configuring_resources_for_nfs_server_in_a_cluster-configuring-ha-nfs"></a>配置集群中NFS服务器的资源和资源组</h1></div></div></div><p>本节提供了为此用例配置群集资源的过程。
 			</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>如果尚未为群集配置防护设备，则默认情况下不会启动资源。
 				</p><p>如果发现配置的资源未运行，则可以运行<code class="literal">pcs resource debug-start <span class="emphasis"><em>resource</em></span></code>命令来测试资源配置。这将启动集群控制和知识之外的服务。在配置的资源再次运行时，运行<code class="literal">pcs resource cleanup <span class="emphasis"><em>resource</em></span></code>以使集群知道更新。
 				</p></div><p>以下过程配置系统资源。要确保这些资源都在同一节点上运行，它们将配置为资源组<code class="literal">nfsgroup</code> 。资源将按照您将它们添加到组中的顺序开始，并且它们将按照与添加到组中的相反顺序停止。仅从群集的一个节点运行此过程。
 			</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">创建名为<code class="literal">my_lvm</code>的LVM激活资源。由于资源组<code class="literal">nfsgroup</code>尚不存在，因此该命令将创建资源组。
 					</p><div class="warning" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">警告</h3><p>不要在主动/被动HA配置中配置多个使用相同LVM卷组的<code class="literal">LVM-activate</code>资源，因为这会冒数据损坏的风险。此外，请勿将<code class="literal">LVM-activate</code>资源配置为主动/被动HA配置中的克隆资源。
-						</p></div><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create my_lvm ocf:heartbeat:LVM-activate</code> <code class="literal">vg_access_mode=system_id --group nfsgroup</code> <code class="literal">vgname=my_vg</code> <code class="literal">vg_access_mode=system_id --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">检查群集的状态以验证资源是否正在运行。
-					</p><pre class="literallayout">root @ z1~] #pcs <code class="literal">pcs status</code>群集名称：my_cluster上次更新时间：2015年1月8日星期四11:13:17最后更改：2015年1月8日星期四11:13:08 Stack：corosync当前DC：z2.example.com（2） - 具有仲裁的分区版本：1.1.12-a14efad 2已配置的节点3在线配置的资源：[z1.example.com z2.example.com]资源的完整列表：myapc（stonith：fence_apc_snmp）：已启动z1.example.com资源组：nfsgroup my_lvm（ocf :: heartbeat：LVM）：已启动z1.example.com PCSD状态：z1.example.com：联机z2.example.com：联机守护程序状态：corosync：活动/已启用心脏起搏器：活动/已启用pcsd ：活动/启用</pre></li><li class="listitem"><p class="simpara">为群集配置<code class="literal">Filesystem</code>资源。
+						</p></div><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create my_lvm ocf:heartbeat:LVM-activate</code> <code class="literal">vgname=my_vg</code> <code class="literal">vg_access_mode=system_id --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">检查群集的状态以验证资源是否正在运行。
+					</p><pre class="literallayout">root@z1 ~]#  <code class="literal">pcs status</code>
+Cluster name: my_cluster
+Last updated: Thu Jan  8 11:13:17 2015
+Last change: Thu Jan  8 11:13:08 2015
+Stack: corosync
+Current DC: z2.example.com (2) - partition with quorum
+Version: 1.1.12-a14efad
+2 Nodes configured
+3 Resources configured
+
+Online: [ z1.example.com z2.example.com ]
+
+Full list of resources:
+ myapc  (stonith:fence_apc_snmp):       Started z1.example.com
+ Resource Group: nfsgroup
+     my_lvm     (ocf::heartbeat:LVM):   Started z1.example.com
+
+PCSD Status:
+  z1.example.com: Online
+  z2.example.com: Online
+
+Daemon Status:
+  corosync: active/enabled
+  pacemaker: active/enabled
+  pcsd: active/enabled</pre></li><li class="listitem"><p class="simpara">为群集配置<code class="literal">Filesystem</code>资源。
 					</p><p class="simpara">以下命令将名为<code class="literal">nfsshare</code>的ext4 <code class="literal">Filesystem</code>资源配置为<code class="literal">nfsgroup</code>资源组的一部分。此文件系统使用您在使用ext4文件系统<a class="link" href="assembly_configuring-active-passive-nfs-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-lvm-volume-with-ext4-file-system-configuring-ha-nfs" title="在Pacemaker集群中使用ext4文件系统配置LVM卷">配置LVM卷时</a>创建的LVM卷组和ext4文件系统，并将安装在您在<a class="link" href="assembly_configuring-active-passive-nfs-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-nfs-share-configuring-ha-nfs" title="配置NFS共享">配置NFS共享中</a>创建的<code class="literal">/nfsshare</code>目录中。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create nfsshare Filesystem</code> \ <code class="literal">device=/dev/my_vg/my_lv directory=/nfsshare</code> \ <code class="literal">fstype=ext4 --group nfsgroup</code></pre><p class="simpara">您可以使用<code class="literal">options= <span class="emphasis"><em>options</em></span></code>参数将mount选项指定为<code class="literal">Filesystem</code>资源的资源配置的一部分。运行<code class="literal">pcs resource describe Filesystem</code>命令以获取完整配置选项。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create nfsshare Filesystem</code> \
+<code class="literal">device=/dev/my_vg/my_lv directory=/nfsshare</code> \
+<code class="literal">fstype=ext4 --group nfsgroup</code></pre><p class="simpara">您可以使用<code class="literal">options= <span class="emphasis"><em>options</em></span></code>参数将mount选项指定为<code class="literal">Filesystem</code>资源的资源配置的一部分。运行<code class="literal">pcs resource describe Filesystem</code>命令以获取完整配置选项。
 					</p></li><li class="listitem"><p class="simpara">验证<code class="literal">my_lvm</code>和<code class="literal">nfsshare</code>资源是否正在运行。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs status</code> ...完整资源列表：myapc（stonith：fence_apc_snmp）：已启动z1.example.com资源组：nfsgroup my_lvm（ocf :: heartbeat：LVM）：已启动z1.example.com nfsshare（ocf :: heartbeat：Filesystem）：已启动z1 .example.com ...</pre></li><li class="listitem"><p class="simpara">创建名为<code class="literal">nfs-daemon</code>的<code class="literal">nfsserver</code>资源，作为资源组<code class="literal">nfsgroup</code> 。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs status</code>
+...
+Full list of resources:
+ myapc  (stonith:fence_apc_snmp):       Started z1.example.com
+ Resource Group: nfsgroup
+     my_lvm     (ocf::heartbeat:LVM):   Started z1.example.com
+     nfsshare   (ocf::heartbeat:Filesystem):    Started z1.example.com
+...</pre></li><li class="listitem"><p class="simpara">创建名为<code class="literal">nfs-daemon</code>的<code class="literal">nfsserver</code>资源，作为资源组<code class="literal">nfsgroup</code> 。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p><code class="literal">nfsserver</code>资源允许您指定<code class="literal">nfs_shared_infodir</code>参数，该参数是NFS服务器用于存储与NFS相关的有状态信息的目录。
 						</p><p>建议将此属性设置为您在此导出集合中创建的某个<code class="literal">Filesystem</code>资源的子目录。这可确保NFS服务器将其有状态信息存储在设备上，如果此资源组需要重定位，该设备将可用于另一个节点。在这个例子中;</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
 									<code class="literal">/nfsshare</code>是由<code class="literal">Filesystem</code>资源管理的共享存储目录</li><li class="listitem">
 									<code class="literal">/nfsshare/exports/export1</code>和<code class="literal">/nfsshare/exports/export2</code>是导出目录</li><li class="listitem">
-									<code class="literal">/nfsshare/nfsinfo</code>是<code class="literal">nfsserver</code>资源的共享信息目录</li></ul></div></div><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create nfs-daemon nfsserver</code> \ <code class="literal">nfs_shared_infodir=/nfsshare/nfsinfo nfs_no_notify=true</code> \ <code class="literal">--group nfsgroup</code> [root @ z1~] <code class="literal">--group nfsgroup</code> <code class="literal">pcs status</code> ...</pre></li><li class="listitem"><p class="simpara">添加<code class="literal">exportfs</code>资源以导出<code class="literal">/nfsshare/exports</code>目录。这些资源是资源组<code class="literal">nfsgroup</code> 。这将为NFSv4客户端构建虚拟目录。NFSv3客户端也可以访问这些导出。
+									<code class="literal">/nfsshare/nfsinfo</code>是<code class="literal">nfsserver</code>资源的共享信息目录</li></ul></div></div><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create nfs-daemon nfsserver</code> \
+<code class="literal">nfs_shared_infodir=/nfsshare/nfsinfo nfs_no_notify=true</code> \
+<code class="literal">--group nfsgroup</code>
+
+[root@z1 ~]# <code class="literal">pcs status</code>
+...</pre></li><li class="listitem"><p class="simpara">添加<code class="literal">exportfs</code>资源以导出<code class="literal">/nfsshare/exports</code>目录。这些资源是资源组<code class="literal">nfsgroup</code> 。这将为NFSv4客户端构建虚拟目录。NFSv3客户端也可以访问这些导出。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>仅当您要为NFSv4客户端创建虚拟目录时，才需要<code class="literal">fsid=0</code>选项。有关更多信息，请参阅<a class="link" href="https://access.redhat.com/solutions/548083/">如何在NFS服务器的/ etc / exports文件中配置fsid选项？</a> 。
-						</p></div><pre class="literallayout">[root @ z1~] <code class="literal">clientspec=192.168.122.0/255.255.255.0</code> <code class="literal">pcs resource create nfs-root exportfs</code> \ <code class="literal">clientspec=192.168.122.0/255.255.255.0</code> \ <code class="literal">options=rw,sync,no_root_squash</code> \ <code class="literal">directory=/nfsshare/exports</code> \ <code class="literal">fsid=0 --group nfsgroup</code> [root @ z1~] ## <code class="literal">pcs resource create nfs-export1 exportfs</code> \ <code class="literal">clientspec=192.168.122.0/255.255.255.0</code> \ <code class="literal">options=rw,sync,no_root_squash directory=/nfsshare/exports/export1</code> \ <code class="literal">fsid=1 --group nfsgroup</code> [root @ z1 〜] ## <code class="literal">pcs resource create nfs-export2 exportfs</code> \ <code class="literal">clientspec=192.168.122.0/255.255.255.0</code> \ <code class="literal">options=rw,sync,no_root_squash directory=/nfsshare/exports/export2</code> \ <code class="literal">fsid=2 --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">添加NFS客户端将用于访问NFS共享的浮动IP地址资源。此资源是资源组<code class="literal">nfsgroup</code> 。对于此示例部署，我们使用192.168.122.200作为浮动IP地址。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create nfs_ip IPaddr2</code> \ <code class="literal">ip=192.168.122.200 cidr_netmask=24 --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">整个NFS部署初始化后，添加<code class="literal">nfsnotify</code>资源以发送NFSv3重新启动通知。此资源是资源组<code class="literal">nfsgroup</code> 。
+						</p></div><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create nfs-root exportfs</code> \
+<code class="literal">clientspec=192.168.122.0/255.255.255.0</code> \
+<code class="literal">options=rw,sync,no_root_squash</code> \
+<code class="literal">directory=/nfsshare/exports</code> \
+<code class="literal">fsid=0 --group nfsgroup</code>
+
+[root@z1 ~]# # <code class="literal">pcs resource create nfs-export1 exportfs</code> \
+<code class="literal">clientspec=192.168.122.0/255.255.255.0</code> \
+<code class="literal">options=rw,sync,no_root_squash directory=/nfsshare/exports/export1</code> \
+<code class="literal">fsid=1 --group nfsgroup</code>
+
+[root@z1 ~]# # <code class="literal">pcs resource create nfs-export2 exportfs</code> \
+<code class="literal">clientspec=192.168.122.0/255.255.255.0</code> \
+<code class="literal">options=rw,sync,no_root_squash directory=/nfsshare/exports/export2</code> \
+<code class="literal">fsid=2 --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">添加NFS客户端将用于访问NFS共享的浮动IP地址资源。此资源是资源组<code class="literal">nfsgroup</code> 。对于此示例部署，我们使用192.168.122.200作为浮动IP地址。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create nfs_ip IPaddr2</code> \
+<code class="literal">ip=192.168.122.200 cidr_netmask=24 --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">整个NFS部署初始化后，添加<code class="literal">nfsnotify</code>资源以发送NFSv3重新启动通知。此资源是资源组<code class="literal">nfsgroup</code> 。
 					</p><div class="note" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">注意</h3><p>要正确处理NFS通知，浮动IP地址必须具有与之关联的主机名，并且在NFS服务器和NFS客户端上都是一致的。
-						</p></div><pre class="literallayout">[root @ z1~] <code class="literal">pcs resource create nfs-notify nfsnotify</code> \ <code class="literal">source_host=192.168.122.200 --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">创建资源和资源约束后，您可以检查群集的状态。请注意，所有资源都在同一节点上运行。
-					</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs status</code> ...完整资源列表：myapc（stonith：fence_apc_snmp）：已启动z1.example.com资源组：nfsgroup my_lvm（ocf :: heartbeat：LVM）：已启动z1.example.com nfsshare（ocf :: heartbeat：Filesystem）：已启动z1 .example.com nfs-daemon（ocf :: heartbeat：nfsserver）：已启动z1.example.com nfs-root（ocf :: heartbeat：exportfs）：已启动z1.example.com nfs-export1（ocf :: heartbeat：exportfs） ）：已启动z1.example.com nfs-export2（ocf :: heartbeat：exportfs）：已启动z1.example.com nfs_ip（ocf :: heartbeat：IPaddr2）：已启动z1.example.com nfs-notify（ocf :: heartbeat） ：nfsnotify）：启动z1.example.com ...</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_testing-nfs-resource-configuration-configuring-ha-nfs"></a>测试NFS资源配置</h1></div></div></div><p>您可以使用以下过程验证系统配置。您应该能够使用NFSv3或NFSv4挂载导出的文件系统。
+						</p></div><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs resource create nfs-notify nfsnotify</code> \
+<code class="literal">source_host=192.168.122.200 --group nfsgroup</code></pre></li><li class="listitem"><p class="simpara">创建资源和资源约束后，您可以检查群集的状态。请注意，所有资源都在同一节点上运行。
+					</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs status</code>
+...
+Full list of resources:
+ myapc  (stonith:fence_apc_snmp):       Started z1.example.com
+ Resource Group: nfsgroup
+     my_lvm     (ocf::heartbeat:LVM):   Started z1.example.com
+     nfsshare   (ocf::heartbeat:Filesystem):    Started z1.example.com
+     nfs-daemon (ocf::heartbeat:nfsserver):     Started z1.example.com
+     nfs-root   (ocf::heartbeat:exportfs):      Started z1.example.com
+     nfs-export1        (ocf::heartbeat:exportfs):      Started z1.example.com
+     nfs-export2        (ocf::heartbeat:exportfs):      Started z1.example.com
+     nfs_ip     (ocf::heartbeat:IPaddr2):       Started  z1.example.com
+     nfs-notify (ocf::heartbeat:nfsnotify):     Started z1.example.com
+...</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="proc_testing-nfs-resource-configuration-configuring-ha-nfs"></a>测试NFS资源配置</h1></div></div></div><p>您可以使用以下过程验证系统配置。您应该能够使用NFSv3或NFSv4挂载导出的文件系统。
 			</p><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="testing_the_nfs_export"></a>测试NFS导出</h2></div></div></div><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在群集外部的节点上，驻留在与部署相同的网络中，验证是否可以通过挂载NFS共享来查看NFS共享。在本例中，我们使用的是192.168.122.0/24网络。
-						</p><pre class="literallayout">#showmount <code class="literal">showmount -e 192.168.122.200</code>导出列表：/ nfsshare / exports / export1 192.168.122.0/255.255.255.0 / nfsshare / exports 192.168.122.0/255.255.255.0 / nfsshare / exports / export2 192.168.122.0/255.255。 255.0</pre></li><li class="listitem"><p class="simpara">要验证是否可以使用NFSv4装入NFS共享，请将NFS共享装载到客户机节点上的目录中。安装后，验证导出目录的内容是否可见。测试后卸载共享。
-						</p><pre class="literallayout"><code class="literal">mkdir nfsshare</code> <code class="literal">mount -o "vers=4" 192.168.122.200:export1 nfsshare</code> ＃ <code class="literal">ls nfsshare</code> clientdatafile1 <code class="literal">umount nfsshare</code></pre></li><li class="listitem"><p class="simpara">验证您是否可以使用NFSv3装载NFS共享。安装后，验证测试文件<code class="literal">clientdatafile1</code>是否可见。与NFSv4不同，由于NFSv3不使用虚拟文件系统，因此必须安装特定的导出。测试后卸载共享。
-						</p><pre class="literallayout"><code class="literal">mkdir nfsshare</code> <code class="literal">mount -o "vers=3" 192.168.122.200:/nfsshare/exports/export2 nfsshare</code> ＃ <code class="literal">ls nfsshare</code> clientdatafile2 <code class="literal">umount nfsshare</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="testing_for_failover"></a>测试故障转移</h2></div></div></div><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在群集外部的节点上，装入NFS共享并验证对我们在<a class="link" href="assembly_configuring-active-passive-nfs-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-nfs-share-configuring-ha-nfs" title="配置NFS共享">配置NFS共享中</a>创建的<code class="literal">clientdatafile1</code>访问
-						</p><pre class="literallayout"><code class="literal">mkdir nfsshare</code> <code class="literal">mount -o "vers=4" 192.168.122.200:export1 nfsshare</code> ＃ <code class="literal">ls nfsshare</code> clientdatafile1</pre></li><li class="listitem"><p class="simpara">从群集中的节点，确定群集中的哪个节点正在运行<code class="literal">nfsgroup</code> 。在这个例子中， <code class="literal">nfsgroup</code>上运行<code class="literal">z1.example.com</code> 。
-						</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs status</code> ...完整资源列表：myapc（stonith：fence_apc_snmp）：已启动z1.example.com资源组：nfsgroup my_lvm（ocf :: heartbeat：LVM）：已启动z1.example.com nfsshare（ocf :: heartbeat：Filesystem）：已启动z1 .example.com nfs-daemon（ocf :: heartbeat：nfsserver）：已启动z1.example.com nfs-root（ocf :: heartbeat：exportfs）：已启动z1.example.com nfs-export1（ocf :: heartbeat：exportfs） ）：已启动z1.example.com nfs-export2（ocf :: heartbeat：exportfs）：已启动z1.example.com nfs_ip（ocf :: heartbeat：IPaddr2）：已启动z1.example.com nfs-notify（ocf :: heartbeat） ：nfsnotify）：启动z1.example.com ...</pre></li><li class="listitem"><p class="simpara">从群集中的节点，将运行<code class="literal">nfsgroup</code>的节点置于待机模式。
-						</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs node standby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">验证<code class="literal">nfsgroup</code>是否已在其他群集节点上成功启动。
-						</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs status</code> ...完整资源列表：资源组：nfsgroup my_lvm（ocf :: heartbeat：LVM）：已启动z2.example.com nfsshare（ocf :: heartbeat：Filesystem）：已启动z2.example.com nfs-daemon（ocf :: heartbeat： nfsserver）：已启动z2.example.com nfs-root（ocf :: heartbeat：exportfs）：已启动z2.example.com nfs-export1（ocf :: heartbeat：exportfs）：已启动z2.example.com nfs-export2（ocf :: heartbeat：exportfs）：已启动z2.example.com nfs_ip（ocf :: heartbeat：IPaddr2）：已启动z2.example.com nfs-notify（ocf :: heartbeat：nfsnotify）：已启动z2.example.com ...</pre></li><li class="listitem"><p class="simpara">从已装入NFS共享的群集外部的节点，验证此外部节点是否仍然可以访问NFS装载中的测试文件。
-						</p><pre class="literallayout"><code class="literal">ls nfsshare</code> nfsshare clientdatafile1</pre><p class="simpara">在故障转移期间，客户端将短暂地丢失服务，但客户端应该在没有用户干预的情况下恢复它。默认情况下，使用NFSv4的客户端最多可能需要90秒才能恢复装载;此90秒表示服务器在启动时观察到的NFSv4文件租约宽限期。NFSv3客户端应该在几秒钟内恢复对安装的访问。
+						</p><pre class="literallayout"># <code class="literal">showmount -e 192.168.122.200</code>
+Export list for 192.168.122.200:
+/nfsshare/exports/export1 192.168.122.0/255.255.255.0
+/nfsshare/exports         192.168.122.0/255.255.255.0
+/nfsshare/exports/export2 192.168.122.0/255.255.255.0</pre></li><li class="listitem"><p class="simpara">要验证是否可以使用NFSv4装入NFS共享，请将NFS共享装载到客户机节点上的目录中。安装后，验证导出目录的内容是否可见。测试后卸载共享。
+						</p><pre class="literallayout"># <code class="literal">mkdir nfsshare</code>
+# <code class="literal">mount -o "vers=4" 192.168.122.200:export1 nfsshare</code>
+# <code class="literal">ls nfsshare</code>
+clientdatafile1
+# <code class="literal">umount nfsshare</code></pre></li><li class="listitem"><p class="simpara">验证您是否可以使用NFSv3装载NFS共享。安装后，验证测试文件<code class="literal">clientdatafile1</code>是否可见。与NFSv4不同，由于NFSv3不使用虚拟文件系统，因此必须安装特定的导出。测试后卸载共享。
+						</p><pre class="literallayout"># <code class="literal">mkdir nfsshare</code>
+# <code class="literal">mount -o "vers=3" 192.168.122.200:/nfsshare/exports/export2 nfsshare</code>
+# <code class="literal">ls nfsshare</code>
+clientdatafile2
+# <code class="literal">umount nfsshare</code></pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="testing_for_failover"></a>测试故障转移</h2></div></div></div><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在群集外部的节点上，装入NFS共享并验证对我们在<a class="link" href="assembly_configuring-active-passive-nfs-server-in-a-cluster-configuring-and-managing-high-availability-clusters.html#proc_configuring-nfs-share-configuring-ha-nfs" title="配置NFS共享">配置NFS共享中</a>创建的<code class="literal">clientdatafile1</code>访问
+						</p><pre class="literallayout"># <code class="literal">mkdir nfsshare</code>
+# <code class="literal">mount -o "vers=4" 192.168.122.200:export1 nfsshare</code>
+# <code class="literal">ls nfsshare</code>
+clientdatafile1</pre></li><li class="listitem"><p class="simpara">从群集中的节点，确定群集中的哪个节点正在运行<code class="literal">nfsgroup</code> 。在这个例子中， <code class="literal">nfsgroup</code>上运行<code class="literal">z1.example.com</code> 。
+						</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs status</code>
+...
+Full list of resources:
+ myapc  (stonith:fence_apc_snmp):       Started z1.example.com
+ Resource Group: nfsgroup
+     my_lvm     (ocf::heartbeat:LVM):   Started z1.example.com
+     nfsshare   (ocf::heartbeat:Filesystem):    Started z1.example.com
+     nfs-daemon (ocf::heartbeat:nfsserver):     Started z1.example.com
+     nfs-root   (ocf::heartbeat:exportfs):      Started z1.example.com
+     nfs-export1        (ocf::heartbeat:exportfs):      Started z1.example.com
+     nfs-export2        (ocf::heartbeat:exportfs):      Started z1.example.com
+     nfs_ip     (ocf::heartbeat:IPaddr2):       Started  z1.example.com
+     nfs-notify (ocf::heartbeat:nfsnotify):     Started z1.example.com
+...</pre></li><li class="listitem"><p class="simpara">从群集中的节点，将运行<code class="literal">nfsgroup</code>的节点置于待机模式。
+						</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs node standby z1.example.com</code></pre></li><li class="listitem"><p class="simpara">验证<code class="literal">nfsgroup</code>是否已在其他群集节点上成功启动。
+						</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs status</code>
+...
+Full list of resources:
+ Resource Group: nfsgroup
+     my_lvm     (ocf::heartbeat:LVM):   Started z2.example.com
+     nfsshare   (ocf::heartbeat:Filesystem):    Started z2.example.com
+     nfs-daemon (ocf::heartbeat:nfsserver):     Started z2.example.com
+     nfs-root   (ocf::heartbeat:exportfs):      Started z2.example.com
+     nfs-export1        (ocf::heartbeat:exportfs):      Started z2.example.com
+     nfs-export2        (ocf::heartbeat:exportfs):      Started z2.example.com
+     nfs_ip     (ocf::heartbeat:IPaddr2):       Started  z2.example.com
+     nfs-notify (ocf::heartbeat:nfsnotify):     Started z2.example.com
+...</pre></li><li class="listitem"><p class="simpara">从已装入NFS共享的群集外部的节点，验证此外部节点是否仍然可以访问NFS装载中的测试文件。
+						</p><pre class="literallayout"># <code class="literal">ls nfsshare</code>
+clientdatafile1</pre><p class="simpara">在故障转移期间，客户端将短暂地丢失服务，但客户端应该在没有用户干预的情况下恢复它。默认情况下，使用NFSv4的客户端最多可能需要90秒才能恢复装载;此90秒表示服务器在启动时观察到的NFSv4文件租约宽限期。NFSv3客户端应该在几秒钟内恢复对安装的访问。
 						</p></li><li class="listitem"><p class="simpara">从群集中的节点，从待机模式中删除最初运行<code class="literal">nfsgroup</code>的节点。这本身不会将群集资源移回此节点。
-						</p><pre class="literallayout">[root @ z1~] <code class="literal">pcs cluster unstandby z1.example.com</code></pre></li></ol></div></div></div></div></body></html>
+						</p><pre class="literallayout">[root@z1 ~]# <code class="literal">pcs cluster unstandby z1.example.com</code></pre></li></ol></div></div></div></div></body></html>
