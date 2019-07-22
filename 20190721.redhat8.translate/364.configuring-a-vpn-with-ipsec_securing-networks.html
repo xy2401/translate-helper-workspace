@@ -18,21 +18,144 @@
 			</p><p>
 				<code class="literal">Libreswan</code>不使用术语“源”和“目的地”或“服务器”和“客户端”，因为IKE / IPsec是对等协议。相反，它使用术语“左”和“右”来指代端点（主机）。这也允许您在大多数情况下在两个端点上使用相同的配置。但是，管理员通常选择始终对本地主机使用“left”，对远程主机使用“right”。 ：//包含在配置-vpn-with-ipsec中</p></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="installing-libreswan_configuring-a-vpn-with-ipsec"></a>安装Libreswan</h1></div></div></div><p>此过程描述了安装和启动<code class="literal">Libreswan</code> IPsec / IKE VPN实施的步骤。
 			</p><h3><a id="prerequisites"></a>先决条件</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><code class="literal">AppStream</code>存储库已启用。
-					</li></ul></div><h3><a id="procedure"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">安装<code class="literal">libreswan</code>包：</p><pre class="screen">#yum install libreswan</pre></li><li class="listitem"><p class="simpara">如果要重新安装<code class="literal">Libreswan</code> ，请删除其旧的数据库文件：</p><pre class="screen">#systemctl stop ipsec #rm /etc/ipsec.d/*db</pre><p class="simpara">要在FIPS模式下为<code class="literal">Libreswan</code>初始化<code class="literal">NSS</code>数据库，必须为其启用密码保护：</p><pre class="screen">certutil -N -d sql：/etc/ipsec.d</pre></li><li class="listitem"><p class="simpara">启动<code class="literal">ipsec</code>服务，并启用服务在启动时自动启动：</p><pre class="screen">#systemctl start ipsec #systemctl enable ipsec</pre></li><li class="listitem"><p class="simpara">通过添加<code class="literal">ipsec</code>服务，将防火墙配置为允许IKE，ESP和AH协议使用500和4500 / UDP端口：</p><pre class="screen">＃firewall-cmd --add-service =“ipsec”＃firewall-cmd --runtime-to-permanent</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="creating-a-host-to-host-vpn_configuring-a-vpn-with-ipsec"></a>创建主机到主机VPN</h1></div></div></div><p>要将<code class="literal">Libreswan</code>配置为在两个主机（称为<span class="emphasis"><em>左侧</em></span>和<span class="emphasis"><em>右侧）</em></span>之间创建主机到主机<code class="literal">IPsec</code> VPN，请在两个主机上输入以下命令：</p><h3><a id="procedure_2"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在每台主机上生成RSA密钥对：</p><pre class="screen">＃ipsec newhostkey --output /etc/ipsec.d/hostkey.secrets</pre></li><li class="listitem"><p class="simpara">上一步返回生成的密钥的<code class="literal">ckaid</code> 。在<span class="emphasis"><em>左侧</em></span>使用该<code class="literal">ckaid</code>和以下命令，例如：</p><pre class="screen">＃ipsec showhostkey --left --ckaid 2d3ea57b61c9419dfd6cf43a1eb6cb306c0e857d</pre><p class="simpara">上一个命令的输出生成了配置所需的<code class="literal">leftrsasigkey=</code>行。在第二个主机上执行相同操作（ <span class="emphasis"><em>右</em></span> ）：</p><pre class="screen">＃ipsec showhostkey --right --ckaid a9e1f6ce9ecd3608c24e8f701318383f41798f03</pre></li><li class="listitem"><p class="simpara">在<code class="literal">/etc/ipsec.d/</code>目录中，创建一个新的<code class="literal">my_host-to-host.conf</code>文件。将上一步中<code class="literal">ipsec showhostkey</code>命令输出的RSA主机密钥写入新文件。例如：</p><pre class="screen">conn mytunnel leftid = @ west left = 192.1.2.23 leftrsasigkey = 0sAQOrlo + hOafUZDlCQmXFrje / oZm [...]W2n417C / 4urYHQkCvuIQ == rightid = @ east right = 192.1.2.45 rightrsasigkey = 0sAQO3fwC6nSSGgt64DWiYZzuHbc4 [...]D / v8t5YTQ == authby = rsasig</pre></li><li class="listitem"><p class="simpara">启动<code class="literal">ipsec</code> ：</p><pre class="screen">#ipsec setup start</pre></li><li class="listitem"><p class="simpara">加载连接：</p><pre class="screen">#ipcc auto --add mytunnel</pre></li><li class="listitem"><p class="simpara">建立隧道：</p><pre class="screen">＃ipsec auto --up mytunnel</pre></li><li class="listitem"><p class="simpara">要在启动<code class="literal">ipsec</code>服务时自动启动隧道，请将以下行添加到连接定义中：</p><pre class="screen">汽车=启动</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="configuring-a-site-to-site-vpn_configuring-a-vpn-with-ipsec"></a>配置站点到站点VPN</h1></div></div></div><p>要创建站点到站点<code class="literal">IPsec</code> VPN，通过连接两个网络，将创建两个主机之间的<code class="literal">IPsec</code>隧道。因此，主机充当端点，其被配置为允许来自一个或多个子网的流量通过。因此，您可以将主机视为网络远程部分的网关。
+					</li></ul></div><h3><a id="procedure"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">安装<code class="literal">libreswan</code>包：</p><pre class="screen"># yum install libreswan</pre></li><li class="listitem"><p class="simpara">如果要重新安装<code class="literal">Libreswan</code> ，请删除其旧的数据库文件：</p><pre class="screen"># systemctl stop ipsec
+# rm /etc/ipsec.d/*db</pre><p class="simpara">要在FIPS模式下为<code class="literal">Libreswan</code>初始化<code class="literal">NSS</code>数据库，必须为其启用密码保护：</p><pre class="screen">certutil -N -d sql:/etc/ipsec.d</pre></li><li class="listitem"><p class="simpara">启动<code class="literal">ipsec</code>服务，并启用服务在启动时自动启动：</p><pre class="screen"># systemctl start ipsec
+# systemctl enable ipsec</pre></li><li class="listitem"><p class="simpara">通过添加<code class="literal">ipsec</code>服务，将防火墙配置为允许IKE，ESP和AH协议使用500和4500 / UDP端口：</p><pre class="screen"># firewall-cmd --add-service="ipsec"
+# firewall-cmd --runtime-to-permanent</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="creating-a-host-to-host-vpn_configuring-a-vpn-with-ipsec"></a>创建主机到主机VPN</h1></div></div></div><p>要将<code class="literal">Libreswan</code>配置为在两个主机（称为<span class="emphasis"><em>左侧</em></span>和<span class="emphasis"><em>右侧）</em></span>之间创建主机到主机<code class="literal">IPsec</code> VPN，请在两个主机上输入以下命令：</p><h3><a id="procedure_2"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在每台主机上生成RSA密钥对：</p><pre class="screen"># ipsec newhostkey --output /etc/ipsec.d/hostkey.secrets</pre></li><li class="listitem"><p class="simpara">上一步返回生成的密钥的<code class="literal">ckaid</code> 。在<span class="emphasis"><em>左侧</em></span>使用该<code class="literal">ckaid</code>和以下命令，例如：</p><pre class="screen"># ipsec showhostkey --left --ckaid 2d3ea57b61c9419dfd6cf43a1eb6cb306c0e857d</pre><p class="simpara">上一个命令的输出生成了配置所需的<code class="literal">leftrsasigkey=</code>行。在第二个主机上执行相同操作（ <span class="emphasis"><em>右</em></span> ）：</p><pre class="screen"># ipsec showhostkey --right --ckaid a9e1f6ce9ecd3608c24e8f701318383f41798f03</pre></li><li class="listitem"><p class="simpara">在<code class="literal">/etc/ipsec.d/</code>目录中，创建一个新的<code class="literal">my_host-to-host.conf</code>文件。将上一步中<code class="literal">ipsec showhostkey</code>命令输出的RSA主机密钥写入新文件。例如：</p><pre class="screen">conn mytunnel
+    leftid=@west
+    left=192.1.2.23
+    leftrsasigkey=0sAQOrlo+hOafUZDlCQmXFrje/oZm [...] W2n417C/4urYHQkCvuIQ==
+    rightid=@east
+    right=192.1.2.45
+    rightrsasigkey=0sAQO3fwC6nSSGgt64DWiYZzuHbc4 [...] D/v8t5YTQ==
+    authby=rsasig</pre></li><li class="listitem"><p class="simpara">启动<code class="literal">ipsec</code> ：</p><pre class="screen"># ipsec setup start</pre></li><li class="listitem"><p class="simpara">加载连接：</p><pre class="screen"># ipsec auto --add mytunnel</pre></li><li class="listitem"><p class="simpara">建立隧道：</p><pre class="screen"># ipsec auto --up mytunnel</pre></li><li class="listitem"><p class="simpara">要在启动<code class="literal">ipsec</code>服务时自动启动隧道，请将以下行添加到连接定义中：</p><pre class="screen">auto=start</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="configuring-a-site-to-site-vpn_configuring-a-vpn-with-ipsec"></a>配置站点到站点VPN</h1></div></div></div><p>要创建站点到站点<code class="literal">IPsec</code> VPN，通过连接两个网络，将创建两个主机之间的<code class="literal">IPsec</code>隧道。因此，主机充当端点，其被配置为允许来自一个或多个子网的流量通过。因此，您可以将主机视为网络远程部分的网关。
 			</p><p>站点到站点VPN的配置仅与主机到主机VPN的不同之处在于必须在配置文件中指定一个或多个网络或子网。
 			</p><h3><a id="prerequisites_2"></a>先决条件</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">已配置<a class="link" href="configuring-a-vpn-with-ipsec_securing-networks.html#creating-a-host-to-host-vpn_configuring-a-vpn-with-ipsec" title="创建主机到主机VPN">主机到主机VPN</a> 。
-					</li></ul></div><h3><a id="procedure_3"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">将具有主机到主机VPN配置的文件复制到新文件，例如：</p><pre class="screen">#cp /etc/ipsec.d/my_host-to-host.conf /etc/ipsec.d/my_site-to-site.conf</pre></li><li class="listitem"><p class="simpara">将子网配置添加到上一步中创建的文件中，例如：</p><pre class="screen">conn mysubnet还= mytunnel leftsubnet = 192.0.1.0 / 24 rightsubnet = 192.0.2.0 / 24 auto = start conn mysubnet6 also = mytunnel leftsubnet = 2001：db8：0：1 :: / 64 rightsubnet = 2001：db8：0：2： ：/ 64 auto = start＃配置文件的以下部分对于主机到主机和站点到站点的连接是相同的：conn mytunnel leftid = @ west left = 192.1.2.23 leftrsasigkey = 0sAQOrlo + hOafUZDlCQmXFrje / oZm [...]W2n417C / 4urYHQkCvuIQ == rightid = @ east right = 192.1.2.45 rightrsasigkey = 0sAQO3fwC6nSSGgt64DWiYZzuHbc4 [...]D / v8t5YTQ == authby = rsasig</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="configuring-a-remote-access-vpn_configuring-a-vpn-with-ipsec"></a>配置远程访问VPN</h1></div></div></div><p>公路战士正在为拥有动态分配IP地址的移动客户端的用户提供服务，例如笔记本电脑。移动客户端使用证书进行身份验证。
+					</li></ul></div><h3><a id="procedure_3"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">将具有主机到主机VPN配置的文件复制到新文件，例如：</p><pre class="screen"># cp /etc/ipsec.d/my_host-to-host.conf /etc/ipsec.d/my_site-to-site.conf</pre></li><li class="listitem"><p class="simpara">将子网配置添加到上一步中创建的文件中，例如：</p><pre class="screen">conn mysubnet
+     also=mytunnel
+     leftsubnet=192.0.1.0/24
+     rightsubnet=192.0.2.0/24
+     auto=start
+
+conn mysubnet6
+     also=mytunnel
+     leftsubnet=2001:db8:0:1::/64
+     rightsubnet=2001:db8:0:2::/64
+     auto=start
+
+# the following part of the configuration file is the same for both host-to-host and site-to-site connections:
+
+conn mytunnel
+    leftid=@west
+    left=192.1.2.23
+    leftrsasigkey=0sAQOrlo+hOafUZDlCQmXFrje/oZm [...] W2n417C/4urYHQkCvuIQ==
+    rightid=@east
+    right=192.1.2.45
+    rightrsasigkey=0sAQO3fwC6nSSGgt64DWiYZzuHbc4 [...] D/v8t5YTQ==
+    authby=rsasig</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="configuring-a-remote-access-vpn_configuring-a-vpn-with-ipsec"></a>配置远程访问VPN</h1></div></div></div><p>公路战士正在为拥有动态分配IP地址的移动客户端的用户提供服务，例如笔记本电脑。移动客户端使用证书进行身份验证。
 			</p><p>以下示例显示了<code class="literal">IKEv2</code>配置，并避免使用<code class="literal">IKEv1</code> XAUTH协议。
-			</p><p>在服务器上：</p><pre class="screen">conn roadwarriors ikev2 =坚持＃支持（漫游）MOBIKE客户端（RFC 4555）mobike = yes fragmentation = yes left = 1.2.3.4＃如果给出了对LAN的访问权限，启用此项，否则使用0.0.0.0 / 0＃leftsubnet = 10.10 .0.0 / 16 leftsubnet = 0.0.0.0 / 0 leftcert = gw.example.com leftid =％fromcert leftxauthserver = yes leftmodecfgserver = yes right =％any＃trust我们自己的证书代理权限rightca =％same＃选择要分配的IP地址池远程用户＃100.64.0.0/16阻止RFC1918冲突当远程用户落后于NAT rightaddresspool = 100.64.13.100-100.64.13.254＃如果您希望远程客户端使用某些本地DNS区域和服务器modecfgdns =“1.2.3.4,5.6。 7.8“modecfgdomains =”internal.company.com，corp“rightxauthclient = yes rightmodecfgclient = yes authby = rsasig＃可选，通过pam运行客户端X.509 ID以允许/拒绝客户端#pam-authorize = yes #load connection，don启动auto = add #kill消失的roadwarriors dpddelay = 1m dpdtimeout = 5m dpdaction =％clear</pre><p>在移动客户端上，road warrior的设备使用以前配置的略微变化：</p><pre class="screen">conn to -vpn-server ikev2 =坚持＃拿起我们的动态IP左=％defaultroute leftsubnet = 0.0.0.0 / 0 leftcert = myname.example.com leftid =％fromcert leftmodecfgclient = yes #right也可以是DNS主机名= 1.2.3.4＃如果需要访问远程LAN，启用此项，否则使用0.0.0.0/0＃rightsubnet = 10.10.0.0 / 16 rightsubnet = 0.0.0.0 / 0 fragmentation = yes＃trust我们自己的证书代理权限rightca =％相同的authby = rsasig＃允许缩小到服务器的建议分配的IP和远程子网缩小=是＃支持（漫游）MOBIKE客户端（RFC 4555）mobike = yes #Initiate connection auto = start</pre></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="configuring-a-mesh-vpn_configuring-a-vpn-with-ipsec"></a>配置Mesh VPN</h1></div></div></div><p>网状VPN网络（也称为<span class="emphasis"><em>任意到任意</em></span> VPN）是所有节点使用<code class="literal">IPsec</code>通信的网络。该配置允许不能使用<code class="literal">IPsec</code>节点的例外。网状VPN网络可以通过两种方式配置：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">要求<code class="literal">IPsec</code> 。
+			</p><p>在服务器上：</p><pre class="screen">conn roadwarriors
+    ikev2=insist
+    # Support (roaming) MOBIKE clients (RFC 4555)
+    mobike=yes
+    fragmentation=yes
+    left=1.2.3.4
+    # if access to the LAN is given, enable this, otherwise use 0.0.0.0/0
+    # leftsubnet=10.10.0.0/16
+    leftsubnet=0.0.0.0/0
+    leftcert=gw.example.com
+    leftid=%fromcert
+    leftxauthserver=yes
+    leftmodecfgserver=yes
+    right=%any
+    # trust our own Certificate Agency
+    rightca=%same
+    # pick an IP address pool to assign to remote users
+    # 100.64.0.0/16 prevents RFC1918 clashes when remote users are behind NAT
+    rightaddresspool=100.64.13.100-100.64.13.254
+    # if you want remote clients to use some local DNS zones and servers
+    modecfgdns="1.2.3.4, 5.6.7.8"
+    modecfgdomains="internal.company.com, corp"
+    rightxauthclient=yes
+    rightmodecfgclient=yes
+    authby=rsasig
+    # optionally, run the client X.509 ID through pam to allow/deny client
+    # pam-authorize=yes
+    # load connection, don't initiate
+    auto=add
+    # kill vanished roadwarriors
+    dpddelay=1m
+    dpdtimeout=5m
+    dpdaction=%clear</pre><p>在移动客户端上，road warrior的设备使用以前配置的略微变化：</p><pre class="screen">conn to-vpn-server
+    ikev2=insist
+    # pick up our dynamic IP
+    left=%defaultroute
+    leftsubnet=0.0.0.0/0
+    leftcert=myname.example.com
+    leftid=%fromcert
+    leftmodecfgclient=yes
+    # right can also be a DNS hostname
+    right=1.2.3.4
+    # if access to the remote LAN is required, enable this, otherwise use 0.0.0.0/0
+    # rightsubnet=10.10.0.0/16
+    rightsubnet=0.0.0.0/0
+    fragmentation=yes
+    # trust our own Certificate Agency
+    rightca=%same
+    authby=rsasig
+    # allow narrowing to the server’s suggested assigned IP and remote subnet
+    narrowing=yes
+    # Support (roaming) MOBIKE clients (RFC 4555)
+    mobike=yes
+    # Initiate connection
+    auto=start</pre></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="configuring-a-mesh-vpn_configuring-a-vpn-with-ipsec"></a>配置Mesh VPN</h1></div></div></div><p>网状VPN网络（也称为<span class="emphasis"><em>任意到任意</em></span> VPN）是所有节点使用<code class="literal">IPsec</code>通信的网络。该配置允许不能使用<code class="literal">IPsec</code>节点的例外。网状VPN网络可以通过两种方式配置：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">要求<code class="literal">IPsec</code> 。
 					</li><li class="listitem">更喜欢<code class="literal">IPsec</code>但允许回退到明文通信。
 					</li></ul></div><p>节点之间的身份验证可以基于X.509证书或DNS安全扩展（DNSSEC）。
 			</p><p>以下过程使用X.509证书。可以使用任何类型的证书颁发机构（CA）管理系统（例如Dogtag证书系统）生成这些证书。Dogtag假定每个节点的证书都以PKCS＃12格式（.p12文件）提供，其中包含私钥，节点证书和用于验证其他节点的X.509证书的根CA证书。
 			</p><p>每个节点都具有相同的配置，但X.509证书除外。这允许添加新节点而无需重新配置网络中的任何现有节点。PKCS＃12文件需要“友好名称”，我们使用名称“node”，以便引用友好名称的配置文件对于所有节点可以是相同的。
 			</p><h3><a id="prerequisites_3"></a>先决条件</h3><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
 						安装<code class="literal">Libreswan</code> ，并在每个节点上启动<code class="literal">ipsec</code>服务。
-					</li></ul></div><h3><a id="procedure_4"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在每个节点上，导入PKCS＃12文件。此步骤需要用于生成PKCS＃12文件的密码：</p><pre class="screen">#ipsec import nodeXXX.p12</pre></li><li class="listitem"><p class="simpara">为<code class="literal">IPsec required</code>的<code class="literal">IPsec required</code> （私有）， <code class="literal">IPsec optional</code> （私有或清除）和<code class="literal">No IPsec</code> （清除）配置文件创建以下三个连接定义：</p><pre class="screen">＃/ etc /ipsec.d / mesh.conf conn clear auto = ondemand type = passthrough authby = never left =％defaultroute right =％group conn private auto = ondemand type = transport authby = rsasig failureshunt = drop negotiationhunt = drop＃left left =％defaultroute leftcert = nodeXXXX leftid =％fromcert leftrsasigkey =％cert＃right rightrsasigkey =％cert rightid =％fromcert right =％opportunisticgroup conn private-or-clear auto = ondemand type = transport authby = rsasig failureshunt = passthrough negotiationhunt = passthrough＃左左=％defaultroute leftcert = nodeXXXX leftid =％fromcert leftrsasigkey =％cert＃right rightrsasigkey =％cert rightid =％fromcert right =％opportunisticgroup</pre></li><li class="listitem"><p class="simpara">在适当的类别中添加网络的IP地址。例如，如果所有节点都驻留在10.15.0.0/16网络中，并且所有节点都要求<code class="literal">IPsec</code>加密：</p><pre class="screen">#echo“10.15.0.0/16”&gt;&gt; /etc/ipsec.d/policies/private</pre></li><li class="listitem"><p class="simpara">要允许某些节点（例如10.15.34.0/24）使用和不使用<code class="literal">IPsec</code> ，请使用以下命令将这些节点添加到私有或清除组：</p><pre class="screen">#echo“10.15.34.0/24”&gt;&gt; /etc/ipsec.d/policies/private-or-clear</pre></li><li class="listitem"><p class="simpara">要定义一个主机，例如10.15.1.2，它不能将<code class="literal">IPsec</code>到clear组中，请使用：</p><pre class="screen">#echo“10.15.1.2/32”&gt;&gt; /etc/ipsec.d/policies/clear</pre><p class="simpara"><code class="literal">/etc/ipsec.d/policies</code>目录中的文件可以从每个新节点的模板创建，也可以使用Puppet或Ansible进行配置。
+					</li></ul></div><h3><a id="procedure_4"></a>程序</h3><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">在每个节点上，导入PKCS＃12文件。此步骤需要用于生成PKCS＃12文件的密码：</p><pre class="screen"># ipsec import nodeXXX.p12</pre></li><li class="listitem"><p class="simpara">为<code class="literal">IPsec required</code>的<code class="literal">IPsec required</code> （私有）， <code class="literal">IPsec optional</code> （私有或清除）和<code class="literal">No IPsec</code> （清除）配置文件创建以下三个连接定义：</p><pre class="screen"># /etc/ipsec.d/mesh.conf
+conn clear
+	auto=ondemand
+	type=passthrough
+	authby=never
+	left=%defaultroute
+	right=%group
+
+conn private
+	auto=ondemand
+	type=transport
+	authby=rsasig
+	failureshunt=drop
+	negotiationshunt=drop
+	# left
+	left=%defaultroute
+	leftcert=nodeXXXX
+	leftid=%fromcert
+        leftrsasigkey=%cert
+	# right
+	rightrsasigkey=%cert
+	rightid=%fromcert
+	right=%opportunisticgroup
+
+conn private-or-clear
+	auto=ondemand
+	type=transport
+	authby=rsasig
+	failureshunt=passthrough
+	negotiationshunt=passthrough
+	# left
+	left=%defaultroute
+	leftcert=nodeXXXX
+	leftid=%fromcert
+        leftrsasigkey=%cert
+	# right
+	rightrsasigkey=%cert
+	rightid=%fromcert
+	right=%opportunisticgroup</pre></li><li class="listitem"><p class="simpara">在适当的类别中添加网络的IP地址。例如，如果所有节点都驻留在10.15.0.0/16网络中，并且所有节点都要求<code class="literal">IPsec</code>加密：</p><pre class="screen"># echo "10.15.0.0/16" &gt;&gt; /etc/ipsec.d/policies/private</pre></li><li class="listitem"><p class="simpara">要允许某些节点（例如10.15.34.0/24）使用和不使用<code class="literal">IPsec</code> ，请使用以下命令将这些节点添加到私有或清除组：</p><pre class="screen"># echo "10.15.34.0/24" &gt;&gt; /etc/ipsec.d/policies/private-or-clear</pre></li><li class="listitem"><p class="simpara">要定义一个主机，例如10.15.1.2，它不能将<code class="literal">IPsec</code>到clear组中，请使用：</p><pre class="screen"># echo "10.15.1.2/32" &gt;&gt; /etc/ipsec.d/policies/clear</pre><p class="simpara"><code class="literal">/etc/ipsec.d/policies</code>目录中的文件可以从每个新节点的模板创建，也可以使用Puppet或Ansible进行配置。
 					</p><p class="simpara">请注意，每个节点都具有相同的异常列表或不同的流量预期。因此，两个节点可能无法通信，因为一个节点需要<code class="literal">IPsec</code>而另一个节点不能使用<code class="literal">IPsec</code> 。
-					</p></li><li class="listitem"><p class="simpara">重新启动节点以将其添加到配置的网格：</p><pre class="screen">#systemctl restart ipsec</pre></li><li class="listitem"><p class="simpara">完成添加节点后， <code class="literal">ping</code>命令就足以打开<code class="literal">IPsec</code>隧道。要查看节点已打开的隧道：</p><pre class="screen">＃ipsec trafficstatus</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="methods-of-authentication-used-in-libreswan_configuring-a-vpn-with-ipsec"></a> Libreswan中使用的身份验证方法</h1></div></div></div><p>您可以使用以下方法验证端点：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
+					</p></li><li class="listitem"><p class="simpara">重新启动节点以将其添加到配置的网格：</p><pre class="screen"># systemctl restart ipsec</pre></li><li class="listitem"><p class="simpara">完成添加节点后， <code class="literal">ping</code>命令就足以打开<code class="literal">IPsec</code>隧道。要查看节点已打开的隧道：</p><pre class="screen"># ipsec trafficstatus</pre></li></ol></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="methods-of-authentication-used-in-libreswan_configuring-a-vpn-with-ipsec"></a> Libreswan中使用的身份验证方法</h1></div></div></div><p>您可以使用以下方法验证端点：</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">
 						<span class="emphasis"><em>预共享密钥</em></span> （PSK）是最简单的身份验证方法。PSK应由随机字符组成，长度至少为20个字符。在FIPS模式下，PSK需要符合最小强度要求，具体取决于所使用的完整性算法。建议不要使用短于64个随机字符的PSK。
 					</li><li class="listitem">
 						<span class="emphasis"><em>原始RSA密钥</em></span>通常用于静态主机到主机或子网到子网<code class="literal">IPsec</code>配置。使用彼此的公共RSA密钥手动配置主机。当几十个或更多主机都需要相互建立<code class="literal">IPsec</code>隧道时，此方法无法很好地扩展。
@@ -41,7 +164,7 @@
 					</li><li class="listitem">
 						<span class="emphasis"><em>NULL身份验证</em></span>用于获取网格加密而无需身份验证。它可以防止被动攻击，但不能防止主动攻击。但是，由于<code class="literal">IKEv2</code>允许非对称身份验证方法，因此NULL身份验证也可用于Internet规模机会性IPsec，其中客户端对服务器进行身份验证，但服务器不对客户端进行身份验证。此模型类似于使用<code class="literal">TLS</code>安全网站。</li></ul></div><div class="title"><strong>防止量子计算机</strong></div><p>除了这些身份验证方法之外，您还可以使用<span class="emphasis"><em>Postquantum预共享密钥</em></span> （PPK）方法来防止量子计算机可能发生的攻击。通过指定与带外配置的PreShared密钥对应的（PPKID），各个客户端或客户端组可以使用自己的PPK。
 				</p><p>将<code class="literal">IKEv1</code>与PreShared Keys配合使用可提供针对量子攻击者的保护。<code class="literal">IKEv2</code>的重新设计本身不提供这种保护。<code class="literal">Libreswan</code>提供使用<span class="emphasis"><em>Postquantum预共享密钥</em></span> （PPK）来保护<code class="literal">IKEv2</code>连接免受量子攻击。
-			</p><p>要启用可选的PPK支持，请在连接定义中添加<code class="literal">ppk=yes</code> 。要求PPK，请添加<code class="literal">ppk=insist</code> 。然后，可以给每个客户端一个PPK ID，该PPK ID具有带外通信的秘密值（并且最好是量子安全的）。PPK的随机性应该非常强，而不是基于字典词。PPK ID和PPK数据本身存储在<code class="literal">ipsec.secrets</code> ，例如：</p><pre class="screen">@west @east：PPKS“user1”“thestringismeanttobearandomstr”</pre><p><code class="literal">PPKS</code>选项指的是静态PPK。实验功能使用基于一次性垫的动态PPK。在每次连接时，一次性垫的新部分用作PPK。使用时，文件内部的动态PPK部分将被零覆盖，以防止重复使用。如果没有剩余的一次性垫材料，则连接失败。有关更多信息，请参见<code class="literal">ipsec.secrets(5)</code>手册页。
+			</p><p>要启用可选的PPK支持，请在连接定义中添加<code class="literal">ppk=yes</code> 。要求PPK，请添加<code class="literal">ppk=insist</code> 。然后，可以给每个客户端一个PPK ID，该PPK ID具有带外通信的秘密值（并且最好是量子安全的）。PPK的随机性应该非常强，而不是基于字典词。PPK ID和PPK数据本身存储在<code class="literal">ipsec.secrets</code> ，例如：</p><pre class="screen">@west @east : PPKS "user1" "thestringismeanttobearandomstr"</pre><p><code class="literal">PPKS</code>选项指的是静态PPK。实验功能使用基于一次性垫的动态PPK。在每次连接时，一次性垫的新部分用作PPK。使用时，文件内部的动态PPK部分将被零覆盖，以防止重复使用。如果没有剩余的一次性垫材料，则连接失败。有关更多信息，请参见<code class="literal">ipsec.secrets(5)</code>手册页。
 			</p><div class="warning" style="margin-left:0.5in;margin-right:0.5in"><h3 class="title">警告</h3><p>动态PPK的实现是作为技术预览提供的，应谨慎使用此功能。
 				</p></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="related-information-configuring-a-vpn-with-ipsec"></a>相关信息</h1></div></div></div><p>以下资源提供有关<code class="literal">Libreswan</code>和<code class="literal">ipsec</code>守护程序的其他信息。
 			</p><div class="itemizedlist"><p class="title"><strong>已安装的文档</strong></p><ul class="itemizedlist"><li class="listitem">
