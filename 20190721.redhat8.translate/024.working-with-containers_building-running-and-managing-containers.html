@@ -4,22 +4,127 @@
 					</li></ul></div><p>如果要从容器可用的主机创建目录，将网络端口从容器映射到主机，限制容器可以使用的内存量，或者扩展容器可用的CPU份额，就可以执行这些操作从<code class="literal">podman run</code>命令行。以下是启用不同功能的<code class="literal">podman run</code>命令行的一些示例。
 			</p><p>
 				<span class="strong"><strong>示例＃1（运行快速命令）</strong></span> ：此podman命令运行<code class="literal">cat /etc/os-release</code>命令以查看用作容器基础的操作系统的类型。容器运行命令后，容器退出并被删除（ <code class="literal">--rm</code> ）。
-			</p><pre class="literallayout">#podman run --rm registry.redhat.io/ubi8/ubi cat / etc / os-release NAME =“Red Hat Enterprise Linux”VERSION =“8.0（Ootpa）”ID =“rhel”ID_LIKE =“fedora”VERSION_ID = “8.0”PLATFORM_ID =“platform：el8”PRETTY_NAME =“Red Hat Enterprise Linux 8.0（Ootpa）”ANSI_COLOR =“0; 31”CPE_NAME =“cpe：/ o：redhat：enterprise_linux：8.0：latest”HOME_URL =“https： //www.redhat.com/“BUG_REPORT_URL =”https://bugzilla.redhat.com/“REDHAT_BUGZILLA_PRODUCT =”Red Hat Enterprise Linux 8“REDHAT_BUGZILLA_PRODUCT_VERSION = 8.0 REDHAT_SUPPORT_PRODUCT =”Red Hat Enterprise Linux“REDHAT_SUPPORT_PRODUCT_VERSION =”8.0“.. 。</pre><p>
+			</p><pre class="literallayout"># podman run --rm registry.redhat.io/ubi8/ubi cat /etc/os-release
+NAME="Red Hat Enterprise Linux"
+VERSION="8.0 (Ootpa)"
+ID="rhel"
+ID_LIKE="fedora"
+VERSION_ID="8.0"
+PLATFORM_ID="platform:el8"
+PRETTY_NAME="Red Hat Enterprise Linux 8.0 (Ootpa)"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:redhat:enterprise_linux:8.0:latest"
+HOME_URL="https://www.redhat.com/"
+BUG_REPORT_URL="https://bugzilla.redhat.com/"
+
+REDHAT_BUGZILLA_PRODUCT="Red Hat Enterprise Linux 8"
+REDHAT_BUGZILLA_PRODUCT_VERSION=8.0
+REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux"
+REDHAT_SUPPORT_PRODUCT_VERSION="8.0"
+...</pre><p>
 				<span class="strong"><strong>示例＃2（查看容器中的Dockerfile）</strong></span> ：这是运行快速命令以从主机检查容器内容的另一个示例。Red Hat提供的所有分层映像都包含Dockerfile，它们是在<code class="literal">/root/buildinfo</code> 。在这种情况下，您无需从主机安装任何卷。
-			</p><pre class="literallayout">#podman run --rm registry.access.redhat.com/rhel8/rsyslog ls / root / buildinfo Dockerfile-rhel8-rsyslog-8</pre><p>现在您知道了Dockerfile的调用内容，您可以列出其内容：</p><pre class="literallayout">#podman run --rm registry.access.redhat.com/rhel8/rsyslog \ cat / root / buildinfo / Dockerfile-rhel8-rsyslog-8 FROM sha256：eb205f07ce7d0bb63bfe560 ...LABEL maintainer =“Red Hat，Inc。” RUN INSTALL_PKGS =“\ rsyslog \ rsyslog-gnutls \ rsyslog -gssapi \ rsyslog-mysql \ rsyslog-pgsql \ rsyslog-relp \”&amp;&amp; yum -y install $ INSTALL_PKGS &amp;&amp; rpm -V --nosize --nofiledigest --nomtime  - nomode $ INSTALL_PKGS &amp;&amp; yum clean all LABEL com.redhat.component =“rsyslog-container”LABEL name =“rhel8 / rsyslog”LABEL version =“8.0”...</pre><p>
+			</p><pre class="literallayout"># podman run --rm registry.access.redhat.com/rhel8/rsyslog  ls /root/buildinfo
+Dockerfile-rhel8-rsyslog-8</pre><p>现在您知道了Dockerfile的调用内容，您可以列出其内容：</p><pre class="literallayout"># podman run --rm registry.access.redhat.com/rhel8/rsyslog \
+    cat /root/buildinfo/Dockerfile-rhel8-rsyslog-8
+FROM sha256:eb205f07ce7d0bb63bfe560...
+LABEL maintainer="Red Hat, Inc."
+
+RUN INSTALL_PKGS="\
+rsyslog \
+rsyslog-gnutls \
+rsyslog-gssapi \
+rsyslog-mysql \
+rsyslog-pgsql \
+rsyslog-relp \
+" &amp;&amp; yum -y install $INSTALL_PKGS &amp;&amp; rpm -V --nosize
+    --nofiledigest --nomtime --nomode $INSTALL_PKGS &amp;&amp; yum clean all
+LABEL com.redhat.component="rsyslog-container"
+LABEL name="rhel8/rsyslog"
+LABEL version="8.0"
+...</pre><p>
 				<span class="strong"><strong>示例＃3（在容器内运行shell）</strong></span> ：使用容器启动bash shell，可以查看容器内部并更改内容。这<code class="literal">mybash</code>容器的名称设置为<code class="literal">mybash</code> 。<code class="literal">-i</code>创建交互式会话， <code class="literal">-t</code>打开终端会话。如果没有<code class="literal">-i</code> ，shell将打开然后退出。如果没有<code class="literal">-t</code> ，shell将保持打开状态，但您无法在shell中键入任何内容。
-			</p><p>运行该命令后，将显示一个shell提示符，您可以从容器内部开始运行命令：</p><pre class="literallayout">#podman run --name = mybash -it registry.redhat.io/ubi8/ubi / bin / bash [root @ ed904b8f2d5c /] #yum install procps-ng [root @ ed904b8f2d5c /] #ps -ef UID PID PPID C STIME TTY TIME CMD root 1 0 0 00:46 pts / 0 00:00:00 / bin / bash root 35 1 0 00:51 pts / 0 00:00:00 ps -ef [root @ 49830c4f9cc4 /] #exit</pre><p>虽然退出后容器不再运行，但容器仍然存在，但仍安装了新的软件包。使用<code class="literal">podman ps -a</code>列出容器：</p><pre class="literallayout">＃podman ps -a CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES IS INFRA 1ca061b47bd7 ... / ubi8 / ubi：latest / bin / bash 8分钟前退出12秒前musing_brown false ...</pre><p>您可以使用带有<code class="literal">-ai</code>选项的<code class="literal">podman start</code>再次启动该容器。例如：</p><pre class="literallayout">#podman start -ai mybash [root @ ed904b8f2d5c /]＃</pre><p>
+			</p><p>运行该命令后，将显示一个shell提示符，您可以从容器内部开始运行命令：</p><pre class="literallayout"># podman run --name=mybash -it registry.redhat.io/ubi8/ubi /bin/bash
+[root@ed904b8f2d5c/]#  yum install procps-ng
+[root@ed904b8f2d5c/]#  ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 00:46 pts/0    00:00:00 /bin/bash
+root        35     1  0 00:51 pts/0    00:00:00 ps -ef
+[root@49830c4f9cc4/]# exit</pre><p>虽然退出后容器不再运行，但容器仍然存在，但仍安装了新的软件包。使用<code class="literal">podman ps -a</code>列出容器：</p><pre class="literallayout"># podman ps -a
+CONTAINER ID IMAGE                 COMMAND   CREATED        STATUS                PORTS NAMES        IS INFRA
+1ca061b47bd7 .../ubi8/ubi:latest   /bin/bash 8 minutes ago  Exited 12 seconds ago       musing_brown false
+...</pre><p>您可以使用带有<code class="literal">-ai</code>选项的<code class="literal">podman start</code>再次启动该容器。例如：</p><pre class="literallayout"># podman start -ai mybash
+[root@ed904b8f2d5c/]#</pre><p>
 				<span class="strong"><strong>示例＃4（绑定挂载日志文件）</strong></span> ：从主机系统可用的容器内部生成日志消息的一种方法是将主机的/ dev / log设备绑定到容器内。此示例说明如何在名为<code class="literal">log_test</code>的RHEL容器中运行应用程序，该容器生成日志消息（在本例中仅为logger命令），并将这些消息定向到从主机安装在容器中的/ dev / log设备。<code class="literal">--rm</code>选项在运行后删除容器。
-			</p><pre class="literallayout">#podman run --name =“log_test”-v / dev / log：/ dev / log --rm \ registry.redhat.io/ubi8/ubi logger“测试记录到主机”＃journalctl -b | grep Testing 11月12日20:00:10 ubi8 root [17210]：测试记录到主机</pre></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="investigating-running-and-stopped-containers_building-running-and-managing-containers"></a>调查运行和停止的容器</h1></div></div></div><p>拥有一些正在运行的容器后，您可以列出仍在运行的容器以及使用<code class="literal">podman ps</code>命令退出或停止的<code class="literal">podman ps</code> 。您还可以使用<code class="literal">podman inspect</code>来查看这些容器中的特定信息。
+			</p><pre class="literallayout"># podman run --name="log_test" -v /dev/log:/dev/log --rm \
+     registry.redhat.io/ubi8/ubi logger "Testing logging to the host"
+# journalctl -b | grep Testing
+Nov 12 20:00:10 ubi8 root[17210]: Testing logging to the host</pre></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="investigating-running-and-stopped-containers_building-running-and-managing-containers"></a>调查运行和停止的容器</h1></div></div></div><p>拥有一些正在运行的容器后，您可以列出仍在运行的容器以及使用<code class="literal">podman ps</code>命令退出或停止的<code class="literal">podman ps</code> 。您还可以使用<code class="literal">podman inspect</code>来查看这些容器中的特定信息。
 			</p><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="listing-containers_building-running-and-managing-containers"></a>列出容器</h2></div></div></div><p>假设您在主机上运行了一个或多个容器。要使用主机系统中的容器，可以打开shell并尝试以下某些命令。
 				</p><p>
-					<code class="literal">podman ps</code> ：ps选项显示当前正在运行的所有容器：</p><pre class="literallayout">#podman run -d registry.redhat.io/rhel8/rsyslog#podman ps CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES 74b1da000a11 rhel8 / rsyslog /bin/rsyslog.sh 2分钟前大约一分钟musing_brown</pre><p>如果存在未运行但未被删除的容器（--rm选项），则容器仍然会挂起并且可以重新启动。<code class="literal">podman ps -a</code>命令显示正在运行或已停止的所有容器。
-				</p><pre class="literallayout">＃podman ps -a容器ID图像命令创建状态端口名称为INFRA d65aecc325a4 ubi8 / ubi / bin / bash 3秒前退出（0）5秒前peaceful_hopper false 74b1da000a11 rhel8 / rsyslog rsyslog.sh 2分钟前上传大约一分钟musing_brown假</pre></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="inspecting-containers_building-running-and-managing-containers"></a>检查容器</h2></div></div></div><p>要检查现有容器的元数据，请使用<code class="literal">podman inspect</code>命令。您可以显示容器的所有元数据或仅显示所选元数据。例如，要显示所选容器的所有元数据，请键入：</p><pre class="literallayout">#podman inspect 74b1da000a11 ...“ID”：“74b1da000a114015886c557deec8bed9dfb80c888097aa83f30ca4074ff55fb2”，“Created”：“2018-11-13T10：30：31.884673073-05：00”，“Path”：“/ bin / rsyslog.sh”，“Args”：[“/ bin / rsyslog.sh“]，”State“：{OciVersion”：“1.0.1-dev”，Status“：”running“，Running”：true，...</pre><p>您还可以使用inspect从容器中提取特定信息。信息存储在层次结构中。因此，要查看容器的IP地址（NetworkSettings下的IPAddress），请使用<code class="literal">--format</code>选项和容器的标识。例如：</p><pre class="literallayout">#podman inspect --format ='{{。NetworkSettings。IPAddress}}'74b1da000a11 10.88.0.31</pre><p>您可能想要检查的其他信息的示例包括。路径（查看与容器一起运行的命令）,.Args（命令的参数）,.配置。ExposedPorts（从容器中暴露的TCP或UDP端口）,.州。Pid（查看容器的进程ID）和。hostconfig中。PortBindings（从容器到主机的端口映射）。这是一个例子。州。Pid和。州。StartedAt：</p><pre class="literallayout">#podman inspect --format ='{{。州。Pid}}'74b1da000a11 19593＃ps -ef | grep 19593 root 19593 19583 0 10:30？00:00:00 / usr / sbin / rsyslogd -n＃podman inspect --format ='{{。州。StartedAt}} '74b1da000a11 2018-11-13 10：30：35.358175255 -0500 EST</pre><p>在第一个示例中，您可以在主机系统上查看容器化可执行文件的进程ID（PID 19593）。<code class="literal">ps -ef</code>命令确认它是运行的rsyslogd守护程序。第二个示例显示了容器运行的日期和时间。
+					<code class="literal">podman ps</code> ：ps选项显示当前正在运行的所有容器：</p><pre class="literallayout"># podman run -d registry.redhat.io/rhel8/rsyslog
+# podman ps
+CONTAINER ID IMAGE              COMMAND         CREATED       STATUS            PORTS NAMES
+74b1da000a11 rhel8/rsyslog /bin/rsyslog.sh 2 minutes ago Up About a minute       musing_brown</pre><p>如果存在未运行但未被删除的容器（--rm选项），则容器仍然会挂起并且可以重新启动。<code class="literal">podman ps -a</code>命令显示正在运行或已停止的所有容器。
+				</p><pre class="literallayout"># podman ps -a
+CONTAINER ID IMAGE         COMMAND    CREATED    STATUS                PORTS NAMES     IS INFRA
+d65aecc325a4 ubi8/ubi      /bin/bash  3 secs ago Exited (0) 5 secs ago peaceful_hopper false
+74b1da000a11 rhel8/rsyslog rsyslog.sh 2 mins ago Up About a minute     musing_brown    false</pre></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="inspecting-containers_building-running-and-managing-containers"></a>检查容器</h2></div></div></div><p>要检查现有容器的元数据，请使用<code class="literal">podman inspect</code>命令。您可以显示容器的所有元数据或仅显示所选元数据。例如，要显示所选容器的所有元数据，请键入：</p><pre class="literallayout"># podman inspect 74b1da000a11
+    ...
+  "ID": "74b1da000a114015886c557deec8bed9dfb80c888097aa83f30ca4074ff55fb2",
+  "Created": "2018-11-13T10:30:31.884673073-05:00",
+  "Path": "/bin/rsyslog.sh",
+  "Args": [
+       "/bin/rsyslog.sh"
+  ],
+  "State": {
+       OciVersion": "1.0.1-dev",
+       Status": "running",
+       Running": true,
+    ...</pre><p>您还可以使用inspect从容器中提取特定信息。信息存储在层次结构中。因此，要查看容器的IP地址（NetworkSettings下的IPAddress），请使用<code class="literal">--format</code>选项和容器的标识。例如：</p><pre class="literallayout"># podman inspect --format='{{.NetworkSettings.IPAddress}}' 74b1da000a11
+10.88.0.31</pre><p>您可能想要检查的其他信息的示例包括。路径（查看与容器一起运行的命令）,.Args（命令的参数）,.配置。ExposedPorts（从容器中暴露的TCP或UDP端口）,.州。Pid（查看容器的进程ID）和。hostconfig中。PortBindings（从容器到主机的端口映射）。这是一个例子。州。Pid和。州。StartedAt：</p><pre class="literallayout"># podman inspect --format='{{.State.Pid}}' 74b1da000a11
+19593
+# ps -ef | grep 19593
+root     19593 19583  0 10:30 ?        00:00:00 /usr/sbin/rsyslogd -n
+# podman inspect --format='{{.State.StartedAt}}' 74b1da000a11
+2018-11-13 10:30:35.358175255 -0500 EST</pre><p>在第一个示例中，您可以在主机系统上查看容器化可执行文件的进程ID（PID 19593）。<code class="literal">ps -ef</code>命令确认它是运行的rsyslogd守护程序。第二个示例显示了容器运行的日期和时间。
 				</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="investigating-within-a-container_building-running-and-managing-containers"></a>在容器内调查</h2></div></div></div><p>要在正在运行的容器中进行调查，可以使用<code class="literal">podman exec</code>命令。使用<code class="literal">podman exec</code> ，您可以运行命令（例如<code class="literal">/bin/bash</code> ）来输入正在运行的容器进程来调查该容器。
 				</p><p>使用<code class="literal">podman exec</code>而不是仅仅将容器启动到bash shell中的原因是，您可以在容器运行其预期应用程序时对其进行调查。通过在执行其预期任务时附加到容器，您可以更好地查看容器实际执行的操作，而不必中断容器的活动。
 				</p><p>下面是一个使用<code class="literal">podman exec</code>查看正在运行的<code class="literal">podman exec</code>的示例，然后在该容器内查看。
 				</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p class="simpara">
-							<code class="literal">Launch a container</code> ：启动一个容器，例如前面描述的rsyslog容器映像。<code class="literal">podman ps</code>以确保它正在运行：</p><pre class="literallayout">#podman ps CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES 74b1da000a11 rsyslog：latest“/usr/rsyslog.sh 6分钟前最多6分钟rsyslog</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">podman exec</code>输入容器：使用容器ID或名称打开bash shell以访问正在运行的容器。然后，您可以调查容器的属性，如下所示：</p><pre class="literallayout">#podman exec -it 74b1da000a11 / bin / bash [root @ 74b1da000a11 /] #cat / etc / redhat-release Red Hat Enterprise Linux 8.0版[root @ 74b1da000a11 /] #yum install procps-ng [root @ 74b1da000a11 /] #ps -ef UID PID PPID C STIME TTY TIME CMD root 1 0 0 15:30？00:00:00 / usr / sbin / rsyslogd -n root 8 0 6 16:01 pts / 0 00:00:00 / bin / bash root 21 8 0 16:01 pts / 0 00:00:00 ps -ef [root @ 74b1da000a11 /] #df -h文件系统大小使用可用使用％挂载覆盖39G 2.5G 37G 7％/ tmpfs 64M 0 64M 0％/ dev tmpfs 1.5G 8.7M 1.5G 1％/ etc / hosts shm 63M 0 63M 0％/ dev / shm tmpfs 1.5G 0 1.5G 0％/ sys / fs / cgroup tmpfs 1.5G 0 1.5G 0％/ proc / acpi tmpfs 1.5G 0 1.5G 0％/ proc / scsi tmpfs 1.5G 0 1.5 G 0％/ sys / firmware [root @ 74b1da000a11 /] #uname -r 4.18.0-80.1.2.el8_0.x86_64 [root @ 74b1da000a11 /] #rpm -qa |更多redhat-release-8.0-0.44.el8.x86_64 filesystem-3.8-2.el8.x86_64 basesystem-11-5.el8.noarch ncurses-base-6.1-7.20180224.el8.noarch ...bash-4.2＃free -m总共使用免费共享buff /缓存Mem：1941 560 139 10 1241 1189交换：1023 15 1008 [root @ 74b1da000a11 /] #exit</pre></li></ol></div><p>从bash shell运行的命令（在容器内运行）向您展示了几件事。
+							<code class="literal">Launch a container</code> ：启动一个容器，例如前面描述的rsyslog容器映像。<code class="literal">podman ps</code>以确保它正在运行：</p><pre class="literallayout"># podman ps
+CONTAINER ID   IMAGE           COMMAND           CREATED       STATUS        PORTS   NAMES
+74b1da000a11   rsyslog:latest "/usr/rsyslog.sh   6 minutes ago Up 6 minutes          rsyslog</pre></li><li class="listitem"><p class="simpara">使用<code class="literal">podman exec</code>输入容器：使用容器ID或名称打开bash shell以访问正在运行的容器。然后，您可以调查容器的属性，如下所示：</p><pre class="literallayout"># podman exec -it 74b1da000a11 /bin/bash
+[root@74b1da000a11 /]# cat /etc/redhat-release
+Red Hat Enterprise Linux release 8.0
+[root@74b1da000a11 /]# yum install procps-ng
+[root@74b1da000a11 /]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 15:30 ?        00:00:00 /usr/sbin/rsyslogd -n
+root         8     0  6 16:01 pts/0    00:00:00 /bin/bash
+root        21     8  0 16:01 pts/0    00:00:00 ps -ef
+[root@74b1da000a11 /]# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay          39G  2.5G   37G   7% /
+tmpfs            64M     0   64M   0% /dev
+tmpfs           1.5G  8.7M  1.5G   1% /etc/hosts
+shm              63M     0   63M   0% /dev/shm
+tmpfs           1.5G     0  1.5G   0% /sys/fs/cgroup
+tmpfs           1.5G     0  1.5G   0% /proc/acpi
+tmpfs           1.5G     0  1.5G   0% /proc/scsi
+tmpfs           1.5G     0  1.5G   0% /sys/firmware
+[root@74b1da000a11 /]# uname -r
+4.18.0-80.1.2.el8_0.x86_64
+[root@74b1da000a11 /]# rpm -qa | more
+redhat-release-8.0-0.44.el8.x86_64
+filesystem-3.8-2.el8.x86_64
+basesystem-11-5.el8.noarch
+ncurses-base-6.1-7.20180224.el8.noarch
+...
+bash-4.2# free -m
+              total        used        free      shared  buff/cache   available
+Mem:           1941         560         139          10        1241        1189
+Swap:          1023          15        1008
+[root@74b1da000a11 /]# exit</pre></li></ol></div><p>从bash shell运行的命令（在容器内运行）向您展示了几件事。
 				</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem">容器是从RHEL 8.0版映像构建的。
 						</li><li class="listitem">进程表（ps -ef）显示/ usr / sbin / rsyslogd命令是进程ID 1。
 						</li><li class="listitem">无法从容器中看到在主机进程表中运行的进程。虽然可以在主机进程表上看到rsyslogd进程（它是主机上的进程ID 19593）。
@@ -27,5 +132,9 @@
 						</li><li class="listitem">rpm -qa命令可以让您查看容器中包含的RPM包。换句话说，容器内部有一个RPM数据库。
 						</li><li class="listitem">查看内存（free -m）显示主机上的可用内存（尽管可以使用cgroup限制容器实际可以使用的内容）。
 						</li></ul></div></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="starting-and-stopping-containers_building-running-and-managing-containers"></a>启动和停止容器</h1></div></div></div><p>如果您运行了一个容器，但未将其删除（ <code class="literal">--rm</code> ），则该容器将存储在您的本地系统上并准备再次运行。要启动先前运行的未删除的容器，请使用<code class="literal">start</code>选项。要停止正在运行的容器，请使用<code class="literal">stop</code>选项。
-			</p><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="starting-containers_building-running-and-managing-containers"></a>启动容器</h2></div></div></div><p>在仅使用<code class="literal">start</code>选项和容器ID或名称停止后，有时可以重新启动不需要以交互方式运行的容器。例如：</p><pre class="literallayout">#podman start myrhel_httpd myrhel_httpd</pre><p>要启动容器以便可以从本地shell使用它，请使用-a（attach）和-i（交互式）选项。bash shell启动后，在容器中运行所需的命令，然后键入exit以终止shell并停止容器。
-				</p><pre class="literallayout">#podman start -a -i agitated_hopper [root @ d65aecc325a4 /] #exit</pre></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="stopping-containers_building-running-and-managing-containers"></a>停止容器</h2></div></div></div><p>要停止未连接到终端会话的正在运行的容器，请使用stop选项和容器ID或编号。例如：</p><pre class="literallayout">#podman stop 74b1da000a11 74b1da000a114015886c557deec8bed9dfb80c888097aa83f30ca4074ff55fb2</pre><p><code class="literal">stop</code>选项发送SIGTERM信号以终止正在运行的容器。如果容器在宽限期（默认为10秒）后没有停止，则<code class="literal">podman</code>发送SIGKILL信号。您还可以使用<code class="literal">podman kill</code>命令<code class="literal">podman kill</code>容器（SIGKILL）或向容器发送不同的信号。以下是向容器发送SIGHUP信号的示例（如果应用程序支持，则SIGHUP会导致应用程序重新读取其配置文件）：</p><pre class="literallayout">#podman kill --signal =“SIGHUP”74b1da000a11 74b1da000a114015886c557deec8bed9dfb80c888097aa83f30ca4074ff55fb2</pre></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="removing-containers_building-running-and-managing-containers"></a>删除容器</h1></div></div></div><p>要查看仍在系统中挂起的容器列表，请运行<code class="literal">podman ps -a</code>命令。要删除不再需要的容器，请使用<code class="literal">podman rm</code>命令，并将容器ID或名称作为选项。这是一个例子：</p><pre class="literallayout">#podman rm goofy_wozniak</pre><p>您可以在同一命令行中删除多个容器：</p><pre class="literallayout">#podman rm clever_yonath furious_shockley drunk_newton</pre><p>如果要清除所有容器，可以使用如下命令从本地系统中删除所有容器（而不是图像）（在执行此操作之前确保您的意思！）：</p><pre class="literallayout">#podman rm $（podman ps -a -q）</pre></div></div></body></html>
+			</p><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="starting-containers_building-running-and-managing-containers"></a>启动容器</h2></div></div></div><p>在仅使用<code class="literal">start</code>选项和容器ID或名称停止后，有时可以重新启动不需要以交互方式运行的容器。例如：</p><pre class="literallayout"># podman start myrhel_httpd
+myrhel_httpd</pre><p>要启动容器以便可以从本地shell使用它，请使用-a（attach）和-i（交互式）选项。bash shell启动后，在容器中运行所需的命令，然后键入exit以终止shell并停止容器。
+				</p><pre class="literallayout"># podman start -a -i agitated_hopper
+[root@d65aecc325a4 /]#  exit</pre></div><div class="section"><div class="titlepage"><div><div><h2 class="title"><a id="stopping-containers_building-running-and-managing-containers"></a>停止容器</h2></div></div></div><p>要停止未连接到终端会话的正在运行的容器，请使用stop选项和容器ID或编号。例如：</p><pre class="literallayout"># podman stop 74b1da000a11
+74b1da000a114015886c557deec8bed9dfb80c888097aa83f30ca4074ff55fb2</pre><p><code class="literal">stop</code>选项发送SIGTERM信号以终止正在运行的容器。如果容器在宽限期（默认为10秒）后没有停止，则<code class="literal">podman</code>发送SIGKILL信号。您还可以使用<code class="literal">podman kill</code>命令<code class="literal">podman kill</code>容器（SIGKILL）或向容器发送不同的信号。以下是向容器发送SIGHUP信号的示例（如果应用程序支持，则SIGHUP会导致应用程序重新读取其配置文件）：</p><pre class="literallayout"># podman kill --signal="SIGHUP" 74b1da000a11
+74b1da000a114015886c557deec8bed9dfb80c888097aa83f30ca4074ff55fb2</pre></div></div><div class="section"><div class="titlepage"><div><div><h1 class="title"><a id="removing-containers_building-running-and-managing-containers"></a>删除容器</h1></div></div></div><p>要查看仍在系统中挂起的容器列表，请运行<code class="literal">podman ps -a</code>命令。要删除不再需要的容器，请使用<code class="literal">podman rm</code>命令，并将容器ID或名称作为选项。这是一个例子：</p><pre class="literallayout"># podman rm goofy_wozniak</pre><p>您可以在同一命令行中删除多个容器：</p><pre class="literallayout"># podman rm clever_yonath furious_shockley drunk_newton</pre><p>如果要清除所有容器，可以使用如下命令从本地系统中删除所有容器（而不是图像）（在执行此操作之前确保您的意思！）：</p><pre class="literallayout"># podman rm $(podman ps -a -q)</pre></div></div></body></html>
