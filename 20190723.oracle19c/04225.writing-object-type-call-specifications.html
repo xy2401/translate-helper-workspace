@@ -1,0 +1,421 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Writing Object Type Call Specifications</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Java Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Java Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="java-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T00:55:24-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96468-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="writing-packaged-call-specifications.html" title="Previous" type="text/html">
+      <link rel="next" href="calling-stored-procedures.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Java Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JJDEV">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="writing-packaged-call-specifications.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="calling-stored-procedures.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Java Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="publishing-Java-classes.html" property="item" typeof="WebPage"><span property="name"> Publishing Java Classes With Call Specifications</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Writing Object Type Call Specifications</li>
+            </ol>
+            <a id="GUID-46277858-79F1-4150-A283-C9C630548329" name="GUID-46277858-79F1-4150-A283-C9C630548329"></a><a id="JJDEV13271"></a>
+            
+            <h2 id="JJDEV-GUID-46277858-79F1-4150-A283-C9C630548329" class="sect2"><span class="enumeration_section">7.5 </span>Writing Object Type Call Specifications
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div class="section">
+                  <p><a id="d28754e93" class="indexterm-anchor"></a>In SQL, object-oriented programming is based on object types, which are user-defined composite data types that encapsulate a data structure along with the functions and procedures required to manipulate the data. The variables that form the data structure are known as a<a id="d28754e98" class="indexterm-anchor"></a>ttributes. The functions and procedures that characterize the behavior of the object type are known as <a id="d28754e101" class="indexterm-anchor"></a>methods, which can be written in Java.
+                  </p>
+                  <p>As with a package, an object type has two parts: a specification and a <a id="d28754e106" class="indexterm-anchor"></a>body. The specification is the interface to your applications and declares a data structure, which is a set of attributes, along with the operations or methods required to manipulate the data. The body implements the specification by defining PL/SQL subprogram bodies or call specifications.
+                  </p>
+                  <p>If the specification declares only attributes or call specifications, then the body is not required. If you implement all your methods in Java, then you can place their call specifications in the specification part of the object type and omit the body part.</p>
+                  <p>In SQL*Plus, you can define SQL object types interactively, using the following syntax:</p><pre class="oac_no_warn" dir="ltr">CREATE [OR REPLACE] TYPE type_name
+  [AUTHID {CURRENT_USER | DEFINER}] {IS | AS} OBJECT (
+  attribute_name data_type[, attribute_name data_type]...
+  [{MAP | ORDER} MEMBER {function_spec | call_spec},]
+  [{MEMBER | STATIC} {subprogram_spec | call_spec}
+  [, {MEMBER | STATIC} {subprogram_spec | call_spec}]...]
+);
+
+[CREATE [OR REPLACE] TYPE BODY type_name {IS | AS}
+  { {MAP | ORDER} MEMBER function_body;
+   | {MEMBER | STATIC} {subprogram_body | call_spec};}
+  [{MEMBER | STATIC} {subprogram_body | call_spec};]...
+END;]
+</pre><p>The <a id="d28754e119" class="indexterm-anchor"></a><code class="codeph">AUTHID</code> clause determines whether all member methods of the type run with the privileges of their definer (<code class="codeph">AUTHID</code> <code class="codeph">DEFINER</code>), which is the default, or invoker (<code class="codeph">AUTHID</code> <code class="codeph">CURRENT_USER</code>). It also determines whether unqualified references to schema objects are resolved in the schema of the definer or invoker.
+                  </p>
+                  <p>This section covers the following topics:</p>
+               </div>
+               <!-- class="section" -->
+               <div class="section">
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="writing-object-type-call-specifications.html#GUID-41299187-192A-4EF9-BBF9-C87F5ABA5952">About Attributes</a></p>
+                     </li>
+                     <li>
+                        <p><a href="writing-object-type-call-specifications.html#GUID-C28007E4-364E-4143-91DA-C29374AD87B2">Declaring Methods</a></p>
+                     </li>
+                  </ul>
+               </div>
+               <!-- class="section" -->
+            </div><a id="JJDEV13272"></a><div class="props_rev_3"><a id="GUID-41299187-192A-4EF9-BBF9-C87F5ABA5952" name="GUID-41299187-192A-4EF9-BBF9-C87F5ABA5952"></a><h3 id="JJDEV-GUID-41299187-192A-4EF9-BBF9-C87F5ABA5952" class="sect3"><span class="enumeration_section">7.5.1 </span>About Attributes
+               </h3>
+               <div>
+                  <p>In an object type specification, all attributes must be declared before any methods are. In addition, you must declare at least one attribute. The maximum number of attributes that can be declared is 1000. Methods are optional.</p>
+                  <p>As with a Java variable, you declare an attribute with a name and data type. The name must be unique within the object type, but can be reused in other object types. The data type can be any SQL type, except <code class="codeph">LONG</code>, <code class="codeph">LONG RAW</code>, <code class="codeph">NCHAR</code>, <code class="codeph">NVARCHAR2</code>, <code class="codeph">NCLOB</code>, <code class="codeph">ROWID</code>, and <code class="codeph">UROWID</code>.
+                  </p>
+                  <p>You cannot initialize an attribute in its declaration using the assignment operator or <code class="codeph">DEFAULT</code> clause. Furthermore, you cannot impose the <code class="codeph">NOT NULL</code> constraint on an attribute. However, objects can be stored in database tables on which you can impose constraints.
+                  </p>
+               </div>
+            </div><a id="JJDEV13273"></a><div class="props_rev_3"><a id="GUID-C28007E4-364E-4143-91DA-C29374AD87B2" name="GUID-C28007E4-364E-4143-91DA-C29374AD87B2"></a><h3 id="JJDEV-GUID-C28007E4-364E-4143-91DA-C29374AD87B2" class="sect3"><span class="enumeration_section">7.5.2 </span>Declaring Methods
+               </h3>
+               <div>
+                  <div class="section">
+                     <p>After declaring attributes, you can declare methods. <code class="codeph">MEMBER</code> methods accept a built-in parameter known as <code class="codeph">SELF</code>, which is an instance of the object type. Whether declared implicitly or explicitly, it is always the first parameter passed to a <code class="codeph">MEMBER</code> method. In the method body, <code class="codeph">SELF</code> denotes the object whose method was called. <code class="codeph">MEMBER</code> methods are called on instances, as follows:
+                     </p><pre class="oac_no_warn" dir="ltr">instance_expression.method()
+</pre><p><code class="codeph">STATIC</code> methods, which cannot accept or reference <code class="codeph">SELF</code>, are invoked on the object type and not its instances, as follows:
+                     </p><pre class="oac_no_warn" dir="ltr">object_type_name.method()
+</pre><p>If you want to call a Java method that is not <code class="codeph">static</code>, then you must specify the keyword <code class="codeph">MEMBER</code> in its call specification. Similarly, if you want to call a <code class="codeph">static</code> Java method, then you must specify the keyword <code class="codeph">STATIC</code> in its call specification.
+                     </p>
+                     <p>This section contains the following topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="writing-object-type-call-specifications.html#GUID-E14506D4-69C9-4FAA-B719-C454257D36D9">Map and Order Methods</a></p>
+                        </li>
+                        <li>
+                           <p><a href="writing-object-type-call-specifications.html#GUID-3D32D85F-7DE2-4500-92BB-9E3F67310AB9">Constructor Methods</a></p>
+                        </li>
+                        <li>
+                           <p><a href="writing-object-type-call-specifications.html#GUID-3D25C5B9-61C1-419E-AF6B-934505301115">Examples</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="JJDEV13274"></a><div class="props_rev_3"><a id="GUID-E14506D4-69C9-4FAA-B719-C454257D36D9" name="GUID-E14506D4-69C9-4FAA-B719-C454257D36D9"></a><h4 id="JJDEV-GUID-E14506D4-69C9-4FAA-B719-C454257D36D9" class="sect4"><span class="enumeration_section">7.5.2.1 </span>Map and Order Methods
+                  </h4>
+                  <div>
+                     <p>The values of a SQL scalar data type, such as <code class="codeph">CHAR</code>, have a predefined order and, therefore, can be compared with other values. However, instances of an object type have no predefined order. To put them in order, SQL calls a user-defined <code class="codeph">map</code> method.
+                     </p>
+                     <p>SQL uses the ordering to evaluate boolean expressions, such as <code class="codeph">x &gt; y</code>, and to make comparisons implied by the <code class="codeph">DISTINCT</code>, <code class="codeph">GROUP BY</code>, and <code class="codeph">ORDER BY</code> clauses. A map method returns the relative position of an object in the ordering of all such objects. An object type can contain only one map method, which must be a function without any parameters and with one of the following return types: <code class="codeph">DATE</code>, <code class="codeph">NUMBER</code>, or <code class="codeph">VARCHAR2</code>.
+                     </p>
+                     <p>Alternatively, you can supply SQL with an <code class="codeph">order</code> method, which compares two objects. An <code class="codeph">order</code> method takes only two parameters: the built-in parameter, <code class="codeph">SELF</code>, and another object of the same type. If <code class="codeph">o1</code> and <code class="codeph">o2</code> are objects, then a comparison, such as <code class="codeph">o1 &gt; o2</code>, calls the <code class="codeph">order</code> method automatically. The method returns a negative number, zero, or a positive number signifying that <code class="codeph">SELF</code> is less than, equal to, or greater than the other parameter, respectively. An object type can contain only one <code class="codeph">order</code> method, which must be a function that returns a numeric result.
+                     </p>
+                     <p>You can declare a <code class="codeph">map</code> method or an <code class="codeph">order</code> method, but not both. If you declare either of these methods, then you can compare objects in SQL and PL/SQL. However, if you do not declare both methods, then you can compare objects only in SQL and solely for equality or inequality.
+                     </p>
+                     <div class="infoboxnote" id="GUID-E14506D4-69C9-4FAA-B719-C454257D36D9__GUID-2DD7BDCC-4C1C-4C6F-AD20-A306BE9CCF37">
+                        <p class="notep1">Note:</p>
+                        <p>Two objects of the same type are equal if the values of their corresponding attributes are equal.</p>
+                     </div>
+                  </div>
+               </div><a id="JJDEV13275"></a><div class="props_rev_3"><a id="GUID-3D32D85F-7DE2-4500-92BB-9E3F67310AB9" name="GUID-3D32D85F-7DE2-4500-92BB-9E3F67310AB9"></a><h4 id="JJDEV-GUID-3D32D85F-7DE2-4500-92BB-9E3F67310AB9" class="sect4"><span class="enumeration_section">7.5.2.2 </span>Constructor Methods
+                  </h4>
+                  <div>
+                     <p>Every object type has a constructor, which is a system-defined function with the same name as the object type. The constructor initializes and returns an instance of that object type.</p>
+                     <p>Oracle Database generates a default constructor for every object type. The formal parameters of the constructor match the attributes of the object type. That is, the parameters and attributes are declared in the same order and have the same names and data types. SQL never calls a constructor implicitly. As a result, you must call it explicitly. Constructor calls are allowed wherever function calls are allowed.</p>
+                     <div class="infoboxnote" id="GUID-3D32D85F-7DE2-4500-92BB-9E3F67310AB9__GUID-F24D930E-AE9C-4AEA-9238-5E698489AB6E">
+                        <p class="notep1">Note:</p>
+                        <p>To invoke a Java constructor from SQL, you must wrap calls to it in a <code class="codeph">static</code> method and declare the corresponding call specification as a <code class="codeph">STATIC</code> member of the object type.
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="JJDEV13277"></a><a id="JJDEV13278"></a><a id="JJDEV13279"></a><a id="JJDEV13276"></a><div class="props_rev_3"><a id="GUID-3D25C5B9-61C1-419E-AF6B-934505301115" name="GUID-3D25C5B9-61C1-419E-AF6B-934505301115"></a><h4 id="JJDEV-GUID-3D25C5B9-61C1-419E-AF6B-934505301115" class="sect4"><span class="enumeration_section">7.5.2.3 </span>Examples
+                  </h4>
+                  <div>
+                     <div class="section">
+                        <p>In this section, each example builds on the previous one. To begin, you create two SQL object types to represent departments and employees. First, you write the specification <a id="d28754e804" class="indexterm-anchor"></a>for the object type <code class="codeph">Department</code>. The body is not required, because the specification declares only attributes. The specification is as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TYPE Department AS OBJECT ( 
+deptno NUMBER(2),
+dname VARCHAR2(14),
+loc VARCHAR2(13)
+);
+</pre><p>Then, you create the object type <code class="codeph">Employee</code>. The <code class="codeph">deptno</code> attribute stores a handle, called a <code class="codeph">REF</code>, to objects of the type <code class="codeph">Department</code>. A <code class="codeph">REF</code> indicates the location of an object in an object table, which is a database table that stores instances of an object type. The <code class="codeph">REF</code> does not point to a specific instance copy in memory. To declare a <code class="codeph">REF</code>, you specify the data type <code class="codeph">REF</code> and the object type that <code class="codeph">REF</code> targets. The <code class="codeph">Employee</code> type is created as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TYPE Employee AS OBJECT (
+empno NUMBER(4),
+ename VARCHAR2(10),
+job VARCHAR2(9),
+mgr NUMBER(4),
+hiredate DATE,
+sal NUMBER(7,2),
+comm NUMBER(7,2),
+deptno REF Department
+);
+</pre><p>Next, you create the SQL object tables to hold objects of type <code class="codeph">Department</code> and <code class="codeph">Employee</code>. Create the <code class="codeph">depts</code> object table, which will hold objects of the <code class="codeph">Department</code> type. Populate the object table by selecting data from the <code class="codeph">dept</code> relational table and passing it to a constructor, which is a system-defined function with the same name as the object type. Use the constructor to initialize and return an instance of that object type. The <code class="codeph">depts</code> table is created as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE depts OF Department AS
+SELECT Department(deptno, dname, loc) FROM dept;
+</pre><p>Create the <code class="codeph">emps</code> object table, which will hold objects of type <code class="codeph">Employee</code>. The last column in the <code class="codeph">emps</code> object table, which corresponds to the last attribute of the <code class="codeph">Employee</code> object type, holds references to objects of type <code class="codeph">Department</code>. To fetch the references into this column, use the operator <code class="codeph">REF</code>, which takes a table alias associated with a row in an object table as its argument. The <code class="codeph">emps</code> table is created as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE emps OF Employee AS
+SELECT Employee(e.employee_id, e.first_name, e.job_id, e.manager_id, e.hire_date, e.salary, e.commission_pct, 
+(SELECT REF(d) FROM departments d WHERE d.department_id = e.department_id))
+FROM employees e;
+</pre><p>Selecting a <code class="codeph">REF</code> returns a handle to an object. It does not materialize the object itself. To do that, you can use methods in the <code class="codeph">oracle.sql.REF</code> class, which supports Oracle object references. This class, which is a subclass of <code class="codeph">oracle.sql.Datum</code>, extends the standard JDBC interface, <code class="codeph">oracle.jdbc2.Ref</code>.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3D25C5B9-61C1-419E-AF6B-934505301115__GUID-A91AA3DC-2FFA-492D-ADAE-070BF459D636">Using Class oracle.sql.STRUCT</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>To continue, you write a Java stored procedure. The <code class="codeph">Paymaster</code> class has one method, which computes an employee's wages. The <code class="codeph">getAttributes()</code> method defined in the <code class="codeph">oracle.sql.STRUCT</code> class uses the default JDBC mappings for the attribute types. For example, <code class="codeph">NUMBER</code> maps to <code class="codeph">BigDecimal</code>. The <code class="codeph">Paymaster</code> class is created as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">import java.sql.*;
+import java.io.*;
+import oracle.sql.*;
+import oracle.jdbc.*;
+import oracle.oracore.*;
+import oracle.jdbc2.*;
+import java.math.*;
+
+public class Paymaster
+{
+  public static BigDecimal wages(STRUCT e) throws java.sql.SQLException
+  {
+    // Get the attributes of the Employee object.
+    Object[] attribs = e.getAttributes();
+    // Must use numeric indexes into the array of attributes.
+    BigDecimal sal = (BigDecimal)(attribs[5]); // [5] = sal
+    BigDecimal comm = (BigDecimal)(attribs[6]); // [6] = comm
+    BigDecimal pay = sal;
+    if (comm != null)
+      pay = pay.add(comm);
+    return pay;
+  }
+}
+</pre><p>Because the <code class="codeph">wages()</code> method returns a value, you write a function call specification for it, as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE FUNCTION wages (e Employee) RETURN NUMBER AS
+LANGUAGE JAVA
+NAME 'Paymaster.wages(oracle.sql.STRUCT) return BigDecimal';
+</pre><p>This is a top-level call specification, because it is not defined inside a package or object type.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3D25C5B9-61C1-419E-AF6B-934505301115__GUID-E39054F1-6857-4E3A-BBE3-534D4F07EE32">Implementing the SQLData Interface</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>To make access to object attributes more natural, create a Java class that implements the <code class="codeph">SQLData</code> interface. To do so, you must provide the <code class="codeph">readSQL()</code> and <code class="codeph">writeSQL()</code> methods as defined by the <code class="codeph">SQLData</code> interface. The JDBC driver calls the <code class="codeph">readSQL()</code> method to read a stream of database values and populate an instance of your Java class. In the following example, you revise <code class="codeph">Paymaster</code> by adding a second method, <code class="codeph">raiseSal()</code>:
+                        </p><pre class="oac_no_warn" dir="ltr">import java.sql.*;
+import java.io.*;
+import oracle.sql.*;
+import oracle.jdbc.*;
+import oracle.oracore.*;
+import oracle.jdbc2.*;
+import java.math.*;
+
+public class Paymaster implements SQLData
+{
+  // Implement the attributes and operations for this type.
+  private BigDecimal empno;
+  private String ename;
+  private String job;
+  private BigDecimal mgr;
+  private Date hiredate;
+  private BigDecimal sal;
+  private BigDecimal comm;
+  private Ref dept;
+
+  public static BigDecimal wages(Paymaster e)
+  {
+    BigDecimal pay = e.sal;
+    if (e.comm != null)
+      pay = pay.add(e.comm);
+    return pay;
+  }
+
+  public static void raiseSal(Paymaster[] e, BigDecimal amount)
+  {
+    e[0].sal = // IN OUT passes [0]
+    e[0].sal.add(amount); // increase salary by given amount
+  }
+
+  // Implement SQLData interface.
+
+  private String sql_type;
+
+  public String getSQLTypeName() throws SQLException
+  {
+    return sql_type;
+  }
+
+  public void readSQL(SQLInput stream, String typeName) throws SQLException
+  {
+    sql_type = typeName;
+    empno = stream.readBigDecimal();
+    ename = stream.readString();
+    job = stream.readString();
+    mgr = stream.readBigDecimal();
+    hiredate = stream.readDate();
+    sal = stream.readBigDecimal();
+    comm = stream.readBigDecimal();
+    dept = stream.readRef();
+  }
+
+  public void writeSQL(SQLOutput stream) throws SQLException
+  {
+    stream.writeBigDecimal(empno);
+    stream.writeString(ename);
+    stream.writeString(job);
+    stream.writeBigDecimal(mgr);
+    stream.writeDate(hiredate);
+    stream.writeBigDecimal(sal);
+    stream.writeBigDecimal(comm);
+    stream.writeRef(dept);
+  }
+}
+</pre><p>You must revise the call specification for <code class="codeph">wages()</code>, as follows, because its parameter has changed from <code class="codeph">oracle.sql.STRUCT</code> to <code class="codeph">Paymaster</code>:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE FUNCTION wages (e Employee) RETURN NUMBER AS
+LANGUAGE JAVA
+NAME 'Paymaster.wages(Paymaster) return BigDecimal';
+</pre><p>Because the new method, <code class="codeph">raiseSal()</code>, is <code class="codeph">void</code>, write a procedure call specification for it, as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE PROCEDURE raise_sal (e IN OUT Employee, r NUMBER)
+AS LANGUAGE JAVA
+NAME 'Paymaster.raiseSal(Paymaster[], java.math.BigDecimal)';
+</pre><p>Again, this is a top-level call specification.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-3D25C5B9-61C1-419E-AF6B-934505301115__BABDJIHE">
+                        <p class="subhead3" id="GUID-3D25C5B9-61C1-419E-AF6B-934505301115__GUID-88928B33-FB76-4A4D-9A4C-2939F1AFE256">Implementing Object Type Methods</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>Assume you decide to drop the top-level call specifications <code class="codeph">wages</code> and <code class="codeph">raise_sal</code> and redeclare them as methods of the object type <code class="codeph">Employee</code>. In an object type specification, all methods must be declared after the attributes. The body of the object type is not required, because the specification declares only attributes and call specifications. The <code class="codeph">Employee</code> object type can be re-created as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TYPE Employee AS OBJECT (
+empno NUMBER(4),
+ename VARCHAR2(10),
+job VARCHAR2(9),
+mgr NUMBER(4),
+hiredate DATE,
+sal NUMBER(7,2),
+comm NUMBER(7,2),
+deptno REF Department
+MEMBER FUNCTION wages RETURN NUMBER
+AS LANGUAGE JAVA
+NAME 'Paymaster.wages() return java.math.BigDecimal',
+MEMBER PROCEDURE raise_sal (r NUMBER)
+AS LANGUAGE JAVA
+NAME 'Paymaster.raiseSal(java.math.BigDecimal)'
+);
+</pre><p>Then, you revise <code class="codeph">Paymaster</code> accordingly. You need not pass an array to <code class="codeph">raiseSal()</code>, because the SQL parameter <code class="codeph">SELF</code> corresponds directly to the Java parameter <code class="codeph">this</code>, even when <code class="codeph">SELF</code> is declared as <code class="codeph">IN OUT</code>, which is the default for procedures.
+                        </p><pre class="oac_no_warn" dir="ltr">
+import java.sql.*;
+import java.io.*;
+import oracle.sql.*;
+import oracle.jdbc.*;
+import oracle.oracore.*;
+import oracle.jdbc2.*;
+import java.math.*;
+
+public class Paymaster implements SQLData
+{
+  // Implement the attributes and operations for this type.
+  private BigDecimal empno;
+  private String ename;
+  private String job;
+  private BigDecimal mgr;
+  private Date hiredate;
+  private BigDecimal sal;
+  private BigDecimal comm;
+  private Ref dept;
+
+  public BigDecimal wages()
+  {
+    BigDecimal pay = sal;
+    if (comm != null)
+      pay = pay.add(comm);
+    return pay;
+  }
+
+  public void raiseSal(BigDecimal amount)
+  {
+    // For SELF/this, even when IN OUT, no array is needed.
+    sal = sal.add(amount);
+  }
+
+  // Implement SQLData interface.
+
+  String sql_type;
+
+  public String getSQLTypeName() throws SQLException
+  {
+    return sql_type;
+  }
+
+  public void readSQL(SQLInput stream, String typeName) throws SQLException
+  {
+    sql_type = typeName;
+    empno = stream.readBigDecimal();
+    ename = stream.readString();
+    job = stream.readString();
+    mgr = stream.readBigDecimal();
+    hiredate = stream.readDate();
+    sal = stream.readBigDecimal();
+    comm = stream.readBigDecimal();
+    dept = stream.readRef();
+  }
+
+  public void writeSQL(SQLOutput stream) throws SQLException
+  {
+    stream.writeBigDecimal(empno);
+    stream.writeString(ename);
+    stream.writeString(job);
+    stream.writeBigDecimal(mgr);
+    stream.writeDate(hiredate);
+    stream.writeBigDecimal(sal);
+    stream.writeBigDecimal(comm);
+    stream.writeRef(dept);
+  }
+}
+</pre></div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

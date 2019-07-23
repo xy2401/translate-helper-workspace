@@ -1,0 +1,916 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="When creating a composite partitioned table, you use the PARTITION and SUBPARTITION clauses of the CREATE TABLE SQL statement.">
+      <meta name="description" content="When creating a composite partitioned table, you use the PARTITION and SUBPARTITION clauses of the CREATE TABLE SQL statement.">
+      <title>Specifying Composite Partitioning When Creating Tables</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="VLDB and Partitioning Guide">
+      <meta property="og:description" content="When creating a composite partitioned table, you use the PARTITION and SUBPARTITION clauses of the CREATE TABLE SQL statement.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="VLDB and Partitioning Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="vldb-and-partitioning-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-23T18:05:22-07:00">
+      <meta name="dcterms.title" content="VLDB and Partitioning Guide">
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96199-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="partition-create-tables-indexes.html" title="Previous" type="text/html">
+      <link rel="next" href="maintenance-partition-can-be-performed.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="VLDBG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="partition-create-tables-indexes.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="maintenance-partition-can-be-performed.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">VLDB and Partitioning Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="partition-admin.html" property="item" typeof="WebPage"><span property="name">Partition Administration</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Specifying Composite Partitioning When Creating Tables</li>
+            </ol>
+            <a id="GUID-CB1047B0-EBD7-4919-AC77-346BB48A98C4" name="GUID-CB1047B0-EBD7-4919-AC77-346BB48A98C4"></a><a id="VLDBG1094"></a>
+            
+            <h2 id="VLDBG-GUID-CB1047B0-EBD7-4919-AC77-346BB48A98C4" class="sect2">Specifying Composite Partitioning When Creating Tables</h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>When creating a composite partitioned table, you use the <code class="codeph">PARTITION</code> and <code class="codeph">SUBPARTITION</code> clauses of the <code class="codeph">CREATE TABLE</code> SQL statement.
+               </p>
+               <p>To create a composite partitioned table, you start by using the <code class="codeph">PARTITION</code> <code class="codeph">BY</code> {<code class="codeph">HASH</code> | <code class="codeph">RANGE</code> [<code class="codeph">INTERVAL</code>]| <code class="codeph">LIST</code>} clause of a <code class="codeph">CREATE TABLE</code> statement. Next, you specify a <code class="codeph">SUBPARTITION BY</code> clause that follows similar syntax and rules as the <code class="codeph">PARTITION BY</code> clause. 
+               </p>
+               <p>The following topics are discussed:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="create-composite-partition-table.html#GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C" title="Composite hash-* partitioning enables hash partitioning along two dimensions.">Creating Composite Hash-* Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="create-composite-partition-table.html#GUID-92F34170-30CD-40E3-9899-67A2DA49429F" title="The concepts of interval-* composite partitioning are similar to the concepts for range-* partitioning.">Creating Composite Interval-* Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="create-composite-partition-table.html#GUID-795E1D0E-A298-404B-B66C-4832A63264F1" title="The concepts of list-hash, list-list, and list-range composite partitioning are similar to the concepts for range-hash, range-list, and range-range partitioning.">Creating Composite List-* Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="create-composite-partition-table.html#GUID-BFBFC6FA-65FD-4FFA-A6F3-47FB4ACEE60C" title="The methods for creating composite range-* partitioned tables are introduced in this topic.">Creating Composite Range-* Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a></p>
+                  </li>
+               </ul>
+            </div>
+            <div class="sect2"><a id="GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C" name="GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C"></a><h3 id="VLDBG-GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C" class="sect3">Creating Composite Hash-* Partitioned Tables</h3>
+               <div>
+                  <p>Composite hash-* partitioning enables hash partitioning along two dimensions. </p>
+                  <p>The composite hash-hash partitioning strategy has the most business value of the composite hash-* partitioned tables. This technique is beneficial to enable partition-wise joins along two dimensions.</p>
+                  <p>In the following example, the number of subpartitions is specified when creating a composite hash-hash partitioned table; however, names are not specified. System generated names are assigned to partitions and subpartitions, which are stored in the default tablespace of the table.</p>
+                  <div class="infoboxnote" id="GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C__VIEWANDRUNARELATEDEXAMPLEONORACLELI-6582E293">
+                     <p class="notep1">Live SQL:</p>
+                     <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/composite-hash-hash-partitioning-example.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a Composite Hash-Hash Partition Table</span></a>.
+                     </p>
+                  </div>
+                  <div class="example" id="GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C__GUID-38047322-24F3-4BEB-81B1-B27068465524">
+                     <p class="titleinexample">Example 4-17 Creating a composite hash-hash partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE departments_courses_hash (
+             department_id NUMBER(4) NOT NULL, 
+             department_name VARCHAR2(30),
+             course_id NUMBER(4) NOT NULL)
+     PARTITION BY HASH(department_id)
+     SUBPARTITION BY HASH (course_id) SUBPARTITIONS 32 PARTITIONS 16;</pre></div>
+                  <!-- class="example" -->
+                  <div class="section">
+                     <div class="infoboxnotealso" id="GUID-9ECF0F94-57BB-45F8-824F-48B320F23D9C__TOLEARNMOREABOUTHOWTOUSEASUBPARTITI-AFD0459F">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="VLDBG1102"></a><div class="props_rev_3"><a id="GUID-92F34170-30CD-40E3-9899-67A2DA49429F" name="GUID-92F34170-30CD-40E3-9899-67A2DA49429F"></a><h3 id="VLDBG-GUID-92F34170-30CD-40E3-9899-67A2DA49429F" class="sect3">Creating Composite Interval-* Partitioned Tables</h3>
+               <div>
+                  <p>The concepts of interval-* composite partitioning are similar to the concepts for range-* partitioning.</p>
+                  <p>However, you extend the <code class="codeph">PARTITION BY RANGE</code> clause to include the <code class="codeph">INTERVAL</code> definition. You must specify at least one range partition using the <code class="codeph">PARTITION</code> clause. The range partitioning key value determines the high value of the range partitions, which is called the transition point, and the database automatically creates interval partitions for data beyond that transition point.
+                  </p>
+                  <p>The subpartitions for intervals in an interval-* partitioned table are created when the database creates the interval. You can specify the definition of future subpartitions only with a subpartition template. </p>
+                  <p>The following topics show examples for the different interval-* composite partitioning methods.</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-EC3C51AF-2F56-4617-A12B-4540D5C17F33" title="You can create an interval-hash partitioned table with multiple hash partitions by specifying multiple hash partitions in the PARTITION clause or by using a subpartition template.">Creating Composite Interval-Hash Partitioned Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-8F38C8B0-3999-4F4E-8AF2-F41C2F764F47" title="To define list subpartitions for future interval-list partitions, you must use the subpartition template.">Creating Composite Interval-List Partitioned Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-E204E851-9B8F-4283-B7D5-88D93DE09B14" title="To define range subpartitions for future interval-range partitions, you must use the subpartition template.">Creating Composite Interval-Range Partitioned Tables</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-92F34170-30CD-40E3-9899-67A2DA49429F__GUID-A751E780-EB0C-4F06-B52C-A7EE182126C2">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                     </p>
+                  </div>
+               </div><a id="VLDBG1103"></a><div class="props_rev_3"><a id="GUID-EC3C51AF-2F56-4617-A12B-4540D5C17F33" name="GUID-EC3C51AF-2F56-4617-A12B-4540D5C17F33"></a><h4 id="VLDBG-GUID-EC3C51AF-2F56-4617-A12B-4540D5C17F33" class="sect4">Creating Composite Interval-Hash Partitioned Tables</h4>
+                  <div>
+                     <p>You can create an interval-hash partitioned table with multiple hash partitions by specifying multiple hash partitions in the <code class="codeph">PARTITION</code> clause or by using a subpartition template.
+                     </p>
+                     <div class="section">
+                        <p>If you do not use either of these methods, then future interval partitions get only a single hash subpartition.</p>
+                        <p>The following example shows the <code class="codeph">sales</code> table, interval partitioned using monthly intervals on <code class="codeph">time_id</code>, with hash subpartitions by <code class="codeph">cust_id</code>. This example specifies multiple hash partitions, without any specific tablespace assignment to the individual hash partitions.
+                        </p>
+                        <div class="infoboxnote" id="GUID-EC3C51AF-2F56-4617-A12B-4540D5C17F33__VIEWANDRUNARELATEDEXAMPLEONORACLELI-65836DC7">
+                           <p class="notep1">Live SQL:</p>
+                           <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/composite-interval-hash-partitioning-example.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a Composite Interval-Hash Partitioned Table</span></a>.
+                           </p>
+                        </div><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6)
+  , cust_id       NUMBER
+  , time_id       DATE
+  , channel_id    CHAR(1)
+  , promo_id      NUMBER(6)
+  , quantity_sold NUMBER(3)
+  , amount_sold   NUMBER(10,2)
+  )
+ PARTITION BY RANGE (time_id) INTERVAL (NUMTOYMINTERVAL(1,'MONTH'))
+ SUBPARTITION BY HASH (cust_id) SUBPARTITIONS 4
+ (PARTITION before_2000 VALUES LESS THAN (TO_DATE('01-JAN-2000','dd-MON-yyyy'))
+  )
+PARALLEL;
+</pre><p>This next example shows the same <code class="codeph">sales</code> table, interval partitioned using monthly intervals on <code class="codeph">time_id</code>, again with hash subpartitions by <code class="codeph">cust_id</code>. This time, however, individual hash partitions are stored in separate tablespaces. The subpartition template is used to define the tablespace assignment for future hash subpartitions. 
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6)
+  , cust_id       NUMBER
+  , time_id       DATE
+  , channel_id    CHAR(1)
+  , promo_id      NUMBER(6)
+  , quantity_sold NUMBER(3)
+  , amount_sold   NUMBER(10,2)
+  )
+ PARTITION BY RANGE (time_id) INTERVAL (NUMTOYMINTERVAL(1,'MONTH'))
+ SUBPARTITION BY hash(cust_id)
+   SUBPARTITION template
+   ( SUBPARTITION p1 TABLESPACE ts1
+   , SUBPARTITION p2 TABLESPACE ts2
+   , SUBPARTITION p3 TABLESPACE ts3
+   , SUBPARTITION P4 TABLESPACE ts4
+   )
+ (PARTITION before_2000 VALUES LESS THAN (TO_DATE('01-JAN-2000','dd-MON-yyyy'))
+  )
+PARALLEL;
+</pre></div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="VLDBG14055"></a><a id="VLDBG1104"></a><div class="props_rev_3"><a id="GUID-8F38C8B0-3999-4F4E-8AF2-F41C2F764F47" name="GUID-8F38C8B0-3999-4F4E-8AF2-F41C2F764F47"></a><h4 id="VLDBG-GUID-8F38C8B0-3999-4F4E-8AF2-F41C2F764F47" class="sect4">Creating Composite Interval-List Partitioned Tables</h4>
+                  <div>
+                     <p>To define list subpartitions for future interval-list partitions, you must use the subpartition template.</p>
+                     <div class="section">
+                        <p>If you do not use the subpartitioning template, then the only subpartition that are created for every interval partition is a <code class="codeph">DEFAULT</code> subpartition. 
+                        </p>
+                        <p><a href="create-composite-partition-table.html#GUID-8F38C8B0-3999-4F4E-8AF2-F41C2F764F47__CHDCJDAD">Example 4-18</a> shows the <code class="codeph">sales_interval_list</code> table, interval partitioned using monthly intervals on <code class="codeph">sales_date</code>, with list subpartitions by <code class="codeph">channel_id</code>.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-8F38C8B0-3999-4F4E-8AF2-F41C2F764F47__CHDCJDAD">
+                        <p class="titleinexample">Example 4-18 Creating a composite interval-list partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_interval_list
+  ( product_id       NUMBER(6)
+  , customer_id      NUMBER
+  , channel_id       CHAR(1)
+  , promo_id         NUMBER(6)
+  , sales_date       DATE
+  , quantity_sold    INTEGER
+  , amount_sold      NUMBER(10,2)
+  )
+ PARTITION BY RANGE (sales_date) INTERVAL (NUMTOYMINTERVAL(1,'MONTH'))
+ SUBPARTITION BY LIST (channel_id)
+   SUBPARTITION TEMPLATE
+   ( SUBPARTITION p_catalog VALUES ('C')
+   , SUBPARTITION p_internet VALUES ('I')
+   , SUBPARTITION p_partners VALUES ('P')
+   , SUBPARTITION p_direct_sales VALUES ('S')
+   , SUBPARTITION p_tele_sales VALUES ('T')
+   )
+ (PARTITION before_2017 VALUES LESS THAN (TO_DATE('01-JAN-2017','dd-MON-yyyy'))
+  )
+PARALLEL;
+
+SELECT TABLE_NAME, PARTITION_NAME, SUBPARTITION_NAME FROM USER_TAB_SUBPARTITIONS WHERE TABLE_NAME ='SALES_INTERVAL_LIST';
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14056"></a><a id="VLDBG1105"></a><div class="props_rev_3"><a id="GUID-E204E851-9B8F-4283-B7D5-88D93DE09B14" name="GUID-E204E851-9B8F-4283-B7D5-88D93DE09B14"></a><h4 id="VLDBG-GUID-E204E851-9B8F-4283-B7D5-88D93DE09B14" class="sect4">Creating Composite Interval-Range Partitioned Tables</h4>
+                  <div>
+                     <p>To define range subpartitions for future interval-range partitions, you must use the subpartition template.</p>
+                     <div class="section">
+                        <p>If you do not use the subpartition template, then the only subpartition that is created for every interval partition is a range subpartition with the <code class="codeph">MAXVALUE</code> upper boundary. 
+                        </p>
+                        <p><a href="create-composite-partition-table.html#GUID-E204E851-9B8F-4283-B7D5-88D93DE09B14__CHDIFGBB">Example 4-19</a> shows the <code class="codeph">sales</code> table, interval partitioned using daily intervals on <code class="codeph">time_id</code>, with range subpartitions by <code class="codeph">amount_sold</code>.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-E204E851-9B8F-4283-B7D5-88D93DE09B14__CHDIFGBB">
+                        <p class="titleinexample">Example 4-19 Creating a composite interval-range partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6)
+  , cust_id       NUMBER
+  , time_id       DATE
+  , channel_id    CHAR(1)
+  , promo_id      NUMBER(6)
+  , quantity_sold NUMBER(3)
+  , amount_sold   NUMBER(10,2)
+  )
+ PARTITION BY RANGE (time_id) INTERVAL (NUMTODSINTERVAL(1,'DAY'))
+SUBPARTITION BY RANGE(amount_sold)
+   SUBPARTITION TEMPLATE
+   ( SUBPARTITION p_low VALUES LESS THAN (1000)
+   , SUBPARTITION p_medium VALUES LESS THAN (4000)
+   , SUBPARTITION p_high VALUES LESS THAN (8000)
+   , SUBPARTITION p_ultimate VALUES LESS THAN (maxvalue)
+   )
+ (PARTITION before_2000 VALUES LESS THAN (TO_DATE('01-JAN-2000','dd-MON-yyyy'))
+  )
+PARALLEL;</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG1098"></a><div class="props_rev_3"><a id="GUID-795E1D0E-A298-404B-B66C-4832A63264F1" name="GUID-795E1D0E-A298-404B-B66C-4832A63264F1"></a><h3 id="VLDBG-GUID-795E1D0E-A298-404B-B66C-4832A63264F1" class="sect3">Creating Composite List-* Partitioned Tables</h3>
+               <div>
+                  <p>The concepts of list-hash, list-list, and list-range composite partitioning are similar to the concepts for range-hash, range-list, and range-range partitioning.</p>
+                  <p>However, for list-* composite partitioning you specify <code class="codeph">PARTITION BY LIST</code> to define the partitioning strategy.
+                  </p>
+                  <p>The list partitions of a list-* composite partitioned table are similar to non-composite range partitioned tables. This organization enables optional subclauses of a <code class="codeph">PARTITION</code> clause to specify physical and other attributes, including tablespace, specific to a partition segment. If not overridden at the partition level, then partitions inherit the attributes of their underlying table.
+                  </p>
+                  <p>The subpartition descriptions, in the <code class="codeph">SUBPARTITION</code> or <code class="codeph">SUBPARTITIONS</code> clauses, are similar to range-* composite partitioning methods.
+                  </p>
+                  <p>The following topics show examples for the different list-* composite partitioning methods.</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-E4131251-C76F-4DA0-8235-294C40F836B1" title="The example in this topic shows how to create a composite list-hash partitioned table.">Creating Composite List-Hash Partitioned Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-7854B907-B11C-41A6-A7AC-E01D063198B6" title="The example in this topic shows how to create a composite list-list partitioned table.">Creating Composite List-List Partitioned Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-84DF5438-912C-40FD-895B-B624C57C1862" title="The example in this topic shows how to create a composite list-range partitioned table.">Creating Composite List-Range Partitioned Tables</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-795E1D0E-A298-404B-B66C-4832A63264F1__TOLEARNMOREABOUTHOWTOUSEASUBPARTITI-AFD1687A">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-A87BDD8B-45E9-4910-8BE4-7747C3AE4449" title="The partitions of a range-hash partitioned table are logical structures only, because their data is stored in the segments of their subpartitions.">About Creating Composite Range-Hash Partitioned Tables</a> for more information about the subpartition definition of a list-hash composite partitioning method
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-BE937517-A04E-45B9-A5C9-D7957B8D65F3" title="The range partitions of a range-list composite partitioned table are described as the same for non-composite range partitioned tables.">About Creating Composite Range-List Partitioned Tables</a> for more information about the subpartition definition of a list-list composite partitioning method
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-C1FA4836-206B-40E2-AEB9-05D4A85A6B61" title="The range partitions of a range-range composite partitioned table are similar to non-composite range partitioned tables.">Creating Composite Range-Range Partitioned Tables</a> for more information about the subpartition definition of a list-range composite partitioning method 
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="VLDBG14051"></a><a id="VLDBG1099"></a><div class="props_rev_3"><a id="GUID-E4131251-C76F-4DA0-8235-294C40F836B1" name="GUID-E4131251-C76F-4DA0-8235-294C40F836B1"></a><h4 id="VLDBG-GUID-E4131251-C76F-4DA0-8235-294C40F836B1" class="sect4">Creating Composite List-Hash Partitioned Tables</h4>
+                  <div>
+                     <p>The example in this topic shows how to create a composite list-hash partitioned table.</p>
+                     <div class="section">
+                        <p><a href="create-composite-partition-table.html#GUID-E4131251-C76F-4DA0-8235-294C40F836B1__CHDJFCCD">Example 4-20</a> shows an <code class="codeph">accounts</code> table that is list partitioned by region and subpartitioned using hash by customer identifier.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-E4131251-C76F-4DA0-8235-294C40F836B1__CHDJFCCD">
+                        <p class="titleinexample">Example 4-20 Creating a composite list-hash partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE accounts
+( id             NUMBER
+ , account_number NUMBER
+ , customer_id    NUMBER
+ , balance        NUMBER
+ , branch_id      NUMBER
+ , region         VARCHAR(2)
+ , status         VARCHAR2(1)
+)
+PARTITION BY LIST (region)
+SUBPARTITION BY HASH (customer_id) SUBPARTITIONS 8
+( PARTITION p_northwest VALUES ('OR', 'WA')
+ , PARTITION p_southwest VALUES ('AZ', 'UT', 'NM')
+ , PARTITION p_northeast VALUES ('NY', 'VM', 'NJ')
+ , PARTITION p_southeast VALUES ('FL', 'GA')
+ , PARTITION p_northcentral VALUES ('SD', 'WI')
+ , PARTITION p_southcentral VALUES ('OK', 'TX')
+);
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14052"></a><a id="VLDBG1100"></a><div class="props_rev_3"><a id="GUID-7854B907-B11C-41A6-A7AC-E01D063198B6" name="GUID-7854B907-B11C-41A6-A7AC-E01D063198B6"></a><h4 id="VLDBG-GUID-7854B907-B11C-41A6-A7AC-E01D063198B6" class="sect4">Creating Composite List-List Partitioned Tables</h4>
+                  <div>
+                     <p>The example in this topic shows how to create a composite list-list partitioned table.</p>
+                     <div class="section">
+                        <p><a href="create-composite-partition-table.html#GUID-7854B907-B11C-41A6-A7AC-E01D063198B6__CHDGDCID">Example 4-21</a> shows an <code class="codeph">accounts</code> table that is list partitioned by region and subpartitioned using list by account status.
+                        </p>
+                        <div class="infoboxnote" id="GUID-7854B907-B11C-41A6-A7AC-E01D063198B6__VIEWANDRUNARELATEDEXAMPLEONORACLELI-6B564683">
+                           <p class="notep1">Live SQL:</p>
+                           <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/composite-list-list-partitioning-example.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a Composite List-List Partitioned Table</span></a>.
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-7854B907-B11C-41A6-A7AC-E01D063198B6__CHDGDCID">
+                        <p class="titleinexample">Example 4-21 Creating a composite list-list partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE accounts
+( id             NUMBER
+, account_number NUMBER
+, customer_id    NUMBER
+, balance        NUMBER
+, branch_id      NUMBER
+, region         VARCHAR(2)
+, status         VARCHAR2(1)
+)
+PARTITION BY LIST (region)
+SUBPARTITION BY LIST (status)
+( PARTITION p_northwest VALUES ('OR', 'WA')
+  ( SUBPARTITION p_nw_bad VALUES ('B')
+  , SUBPARTITION p_nw_average VALUES ('A')
+  , SUBPARTITION p_nw_good VALUES ('G')
+  )
+, PARTITION p_southwest VALUES ('AZ', 'UT', 'NM')
+  ( SUBPARTITION p_sw_bad VALUES ('B')
+  , SUBPARTITION p_sw_average VALUES ('A')
+  , SUBPARTITION p_sw_good VALUES ('G')
+  )
+, PARTITION p_northeast VALUES ('NY', 'VM', 'NJ')
+  ( SUBPARTITION p_ne_bad VALUES ('B')
+  , SUBPARTITION p_ne_average VALUES ('A')
+  , SUBPARTITION p_ne_good VALUES ('G')
+  )
+, PARTITION p_southeast VALUES ('FL', 'GA')
+  ( SUBPARTITION p_se_bad VALUES ('B')
+  , SUBPARTITION p_se_average VALUES ('A')
+  , SUBPARTITION p_se_good VALUES ('G')
+  )
+, PARTITION p_northcentral VALUES ('SD', 'WI')
+  ( SUBPARTITION p_nc_bad VALUES ('B')
+  , SUBPARTITION p_nc_average VALUES ('A')
+  , SUBPARTITION p_nc_good VALUES ('G')
+  )
+, PARTITION p_southcentral VALUES ('OK', 'TX')
+  ( SUBPARTITION p_sc_bad VALUES ('B')
+  , SUBPARTITION p_sc_average VALUES ('A')
+  , SUBPARTITION p_sc_good VALUES ('G')
+  )
+);
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14053"></a><a id="VLDBG1101"></a><div class="props_rev_3"><a id="GUID-84DF5438-912C-40FD-895B-B624C57C1862" name="GUID-84DF5438-912C-40FD-895B-B624C57C1862"></a><h4 id="VLDBG-GUID-84DF5438-912C-40FD-895B-B624C57C1862" class="sect4">Creating Composite List-Range Partitioned Tables</h4>
+                  <div>
+                     <p>The example in this topic shows how to create a composite list-range partitioned table.</p>
+                     <div class="section">
+                        <p><a href="create-composite-partition-table.html#GUID-84DF5438-912C-40FD-895B-B624C57C1862__CHDEAECF">Example 4-22</a> shows an <code class="codeph">accounts</code> table that is list partitioned by region and subpartitioned using range by account balance, and row movement is enabled. Subpartitions for different list partitions could have different ranges specified.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-84DF5438-912C-40FD-895B-B624C57C1862__CHDEAECF">
+                        <p class="titleinexample">Example 4-22 Creating a composite list-range partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE accounts
+( id             NUMBER
+, account_number NUMBER
+, customer_id    NUMBER
+, balance        NUMBER
+, branch_id      NUMBER
+, region         VARCHAR(2)
+, status         VARCHAR2(1)
+)
+PARTITION BY LIST (region)
+SUBPARTITION BY RANGE (balance)
+( PARTITION p_northwest VALUES ('OR', 'WA')
+  ( SUBPARTITION p_nw_low VALUES LESS THAN (1000)
+  , SUBPARTITION p_nw_average VALUES LESS THAN (10000)
+  , SUBPARTITION p_nw_high VALUES LESS THAN (100000)
+  , SUBPARTITION p_nw_extraordinary VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_southwest VALUES ('AZ', 'UT', 'NM')
+  ( SUBPARTITION p_sw_low VALUES LESS THAN (1000)
+  , SUBPARTITION p_sw_average VALUES LESS THAN (10000)
+  , SUBPARTITION p_sw_high VALUES LESS THAN (100000)
+  , SUBPARTITION p_sw_extraordinary VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_northeast VALUES ('NY', 'VM', 'NJ')
+  ( SUBPARTITION p_ne_low VALUES LESS THAN (1000)
+  , SUBPARTITION p_ne_average VALUES LESS THAN (10000)
+  , SUBPARTITION p_ne_high VALUES LESS THAN (100000)
+  , SUBPARTITION p_ne_extraordinary VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_southeast VALUES ('FL', 'GA')
+  ( SUBPARTITION p_se_low VALUES LESS THAN (1000)
+  , SUBPARTITION p_se_average VALUES LESS THAN (10000)
+  , SUBPARTITION p_se_high VALUES LESS THAN (100000)
+  , SUBPARTITION p_se_extraordinary VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_northcentral VALUES ('SD', 'WI')
+  ( SUBPARTITION p_nc_low VALUES LESS THAN (1000)
+  , SUBPARTITION p_nc_average VALUES LESS THAN (10000)
+  , SUBPARTITION p_nc_high VALUES LESS THAN (100000)
+  , SUBPARTITION p_nc_extraordinary VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_southcentral VALUES ('OK', 'TX')
+  ( SUBPARTITION p_sc_low VALUES LESS THAN (1000)
+  , SUBPARTITION p_sc_average VALUES LESS THAN (10000)
+  , SUBPARTITION p_sc_high VALUES LESS THAN (100000)
+  , SUBPARTITION p_sc_extraordinary VALUES LESS THAN (MAXVALUE)
+  )
+) ENABLE ROW MOVEMENT;
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div>
+            <div class="sect2"><a id="GUID-BFBFC6FA-65FD-4FFA-A6F3-47FB4ACEE60C" name="GUID-BFBFC6FA-65FD-4FFA-A6F3-47FB4ACEE60C"></a><h3 id="VLDBG-GUID-BFBFC6FA-65FD-4FFA-A6F3-47FB4ACEE60C" class="sect3">Creating Composite Range-* Partitioned Tables</h3>
+               <div>
+                  <p>The methods for creating composite range-* partitioned tables are introduced in this topic.</p>
+                  <p>The following topics show examples of the different range-* composite partitioning methods.</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-A87BDD8B-45E9-4910-8BE4-7747C3AE4449" title="The partitions of a range-hash partitioned table are logical structures only, because their data is stored in the segments of their subpartitions.">About Creating Composite Range-Hash Partitioned Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-BE937517-A04E-45B9-A5C9-D7957B8D65F3" title="The range partitions of a range-list composite partitioned table are described as the same for non-composite range partitioned tables.">About Creating Composite Range-List Partitioned Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-C1FA4836-206B-40E2-AEB9-05D4A85A6B61" title="The range partitions of a range-range composite partitioned table are similar to non-composite range partitioned tables.">Creating Composite Range-Range Partitioned Tables</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-BFBFC6FA-65FD-4FFA-A6F3-47FB4ACEE60C__TOLEARNMOREABOUTHOWTOUSEASUBPARTITI-AFD25FB4">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                     </p>
+                  </div>
+               </div><a id="VLDBG1095"></a><div class="props_rev_3"><a id="GUID-A87BDD8B-45E9-4910-8BE4-7747C3AE4449" name="GUID-A87BDD8B-45E9-4910-8BE4-7747C3AE4449"></a><h4 id="VLDBG-GUID-A87BDD8B-45E9-4910-8BE4-7747C3AE4449" class="sect4">About Creating Composite Range-Hash Partitioned Tables</h4>
+                  <div>
+                     <p>The partitions of a range-hash partitioned table are logical structures only, because their data is stored in the segments of their subpartitions.</p>
+                     <p>As with partitions, these subpartitions share the same logical attributes. Unlike range partitions in a range-partitioned table, the subpartitions cannot have different physical attributes from the owning partition, although they are not required to reside in the same tablespace.</p>
+                     <p>The following topics are discussed:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-A596B6B1-62C7-4701-A872-BDC5632CEE43" title="The example in this topic shows how to create a composite range-hash partitioned table using the same tablespaces.">Creating a Composite Range-Hash Partitioned Table With the Same Tablespaces</a></p>
+                        </li>
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-143C7E5F-11D4-4E61-9024-4BB40FF85A14" title="The example in this topic shows how to create a composite range-hash partitioned table using varying tablespaces.">Creating a Composite Range-Hash Partitioned Table With Varying Tablespaces</a></p>
+                        </li>
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-C59B7CCE-B946-4545-B234-1C54CBAC323D" title="The example in this topic shows how to create a local index across multiple tablespaces.">Creating a Local Index Across Multiple Tablespaces</a></p>
+                        </li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-A87BDD8B-45E9-4910-8BE4-7747C3AE4449__TOLEARNHOWUSINGASUBPARTITIONTEMPLAT-AFD34188">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                        </p>
+                     </div>
+                  </div><a id="VLDBG14048"></a><div class="props_rev_3"><a id="GUID-A596B6B1-62C7-4701-A872-BDC5632CEE43" name="GUID-A596B6B1-62C7-4701-A872-BDC5632CEE43"></a><h5 id="VLDBG-GUID-A596B6B1-62C7-4701-A872-BDC5632CEE43" class="sect5">Creating a Composite Range-Hash Partitioned Table With the Same Tablespaces</h5>
+                     <div>
+                        <p>The example in this topic shows how to create a composite range-hash partitioned table using the same tablespaces.</p>
+                        <div class="section">
+                           <p> The statement in <a href="create-composite-partition-table.html#GUID-A596B6B1-62C7-4701-A872-BDC5632CEE43__CHDGECFB">Example 4-23</a> creates a range-hash partitioned table. Four range partitions are created, each containing eight subpartitions. Because the subpartitions are not named, system generated names are assigned, but the <code class="codeph">STORE IN</code> clause distributes them across the 4 specified tablespaces (<code class="codeph">ts1</code>, <code class="codeph">ts2</code>, <code class="codeph">ts3</code>,<code class="codeph">ts4</code>).
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-A596B6B1-62C7-4701-A872-BDC5632CEE43__CHDGECFB">
+                           <p class="titleinexample">Example 4-23 Creating a composite range-hash partitioned table using one STORE IN clause</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6)
+  , cust_id       NUMBER
+  , time_id       DATE
+  , channel_id    CHAR(1)
+  , promo_id      NUMBER(6)
+  , quantity_sold NUMBER(3)
+  , amount_sold   NUMBER(10,2)
+  )
+ PARTITION BY RANGE (time_id) SUBPARTITION BY HASH (cust_id)
+  SUBPARTITIONS 8 STORE IN (ts1, ts2, ts3, ts4)
+ ( PARTITION sales_q1_2006 VALUES LESS THAN (TO_DATE('01-APR-2006','dd-MON-yyyy'))
+  , PARTITION sales_q2_2006 VALUES LESS THAN (TO_DATE('01-JUL-2006','dd-MON-yyyy'))
+  , PARTITION sales_q3_2006 VALUES LESS THAN (TO_DATE('01-OCT-2006','dd-MON-yyyy'))
+  , PARTITION sales_q4_2006 VALUES LESS THAN (TO_DATE('01-JAN-2007','dd-MON-yyyy'))
+ );
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-143C7E5F-11D4-4E61-9024-4BB40FF85A14" name="GUID-143C7E5F-11D4-4E61-9024-4BB40FF85A14"></a><h5 id="VLDBG-GUID-143C7E5F-11D4-4E61-9024-4BB40FF85A14" class="sect5">Creating a Composite Range-Hash Partitioned Table With Varying Tablespaces</h5>
+                     <div>
+                        <p>The example in this topic shows how to create a composite range-hash partitioned table using varying tablespaces.</p>
+                        <div class="section">
+                           <p>Attributes specified for a range partition apply to all subpartitions of that partition. You can specify different attributes for each range partition, and you can specify a <code class="codeph">STORE IN</code> clause at the partition level if the list of tablespaces across which the subpartitions of that partition should be spread is different from those of other partitions. This is illustrated in the following example.
+                           </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE employees_range_hash 
+         (department_id NUMBER(4) NOT NULL, 
+          last_name VARCHAR2(25), 
+          job_id VARCHAR2(10))   
+     PARTITION BY RANGE(department_id) SUBPARTITION BY HASH(last_name)
+        SUBPARTITIONS 8 STORE IN (ts1, ts3, ts5, ts7)
+    (PARTITION p1 VALUES LESS THAN (1000),
+     PARTITION p2 VALUES LESS THAN (2000)
+        STORE IN (ts2, ts4, ts6, ts8),
+     PARTITION p3 VALUES LESS THAN (MAXVALUE)
+       (SUBPARTITION p3_s1 TABLESPACE ts4,
+        SUBPARTITION p3_s2 TABLESPACE ts5));
+</pre></div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-C59B7CCE-B946-4545-B234-1C54CBAC323D" name="GUID-C59B7CCE-B946-4545-B234-1C54CBAC323D"></a><h5 id="VLDBG-GUID-C59B7CCE-B946-4545-B234-1C54CBAC323D" class="sect5">Creating a Local Index Across Multiple Tablespaces</h5>
+                     <div>
+                        <p>The example in this topic shows how to create a local index across multiple tablespaces.</p>
+                        <div class="section">
+                           <p>The following statement is an example of creating a local index on a table where the index segments are spread across tablespaces <code class="codeph">ts7</code>, <code class="codeph">ts8</code>, and <code class="codeph">ts9</code>.
+                           </p><pre class="oac_no_warn" dir="ltr">CREATE INDEX employee_ix ON employees_range_hash(department_id)
+     LOCAL STORE IN (ts7, ts8, ts9);
+</pre><p>This local index is equipartitioned with the base table so that it consists of as many partitions as the base table. Each index partition consists of as many subpartitions as the corresponding base table partition. Index entries for rows in a given subpartition of the base table are stored in the corresponding subpartition of the index.</p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div><a id="VLDBG1096"></a><div class="props_rev_3"><a id="GUID-BE937517-A04E-45B9-A5C9-D7957B8D65F3" name="GUID-BE937517-A04E-45B9-A5C9-D7957B8D65F3"></a><h4 id="VLDBG-GUID-BE937517-A04E-45B9-A5C9-D7957B8D65F3" class="sect4">About Creating Composite Range-List Partitioned Tables</h4>
+                  <div>
+                     <p>The range partitions of a range-list composite partitioned table are described as the same for non-composite range partitioned tables.</p>
+                     <p>This organization enables optional subclauses of a <code class="codeph">PARTITION</code> clause to specify physical and other attributes, including tablespace, specific to a partition segment. If not overridden at the partition level, partitions inherit the attributes of their underlying table.
+                     </p>
+                     <p>The list subpartition descriptions, in the <code class="codeph">SUBPARTITION</code> clauses, are described as for non-composite list partitions, except the only physical attribute that can be specified is a tablespace (optional). Subpartitions inherit all other physical attributes from the partition description.
+                     </p>
+                     <p>The following topics are discussed:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-50581F67-E90A-49E4-A445-2332910D8608" title="The example in this topic shows how to create a composite range-list partitioned table.">Creating a Composite Range-List Partitioned Table</a></p>
+                        </li>
+                        <li>
+                           <p><a href="create-composite-partition-table.html#GUID-9028BE6A-9CC3-4625-83D6-7A6233477176" title="The example in this topic shows how to create a composite range-list partitioned table while specifying tablespaces.">Creating a Composite Range-List Partitioned Table Specifying Tablespaces</a></p>
+                        </li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-BE937517-A04E-45B9-A5C9-D7957B8D65F3__GUID-F85C82F0-1A72-412C-A50F-82BE92771665">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                        </p>
+                     </div>
+                  </div><a id="VLDBG14049"></a><div class="props_rev_3"><a id="GUID-50581F67-E90A-49E4-A445-2332910D8608" name="GUID-50581F67-E90A-49E4-A445-2332910D8608"></a><h5 id="VLDBG-GUID-50581F67-E90A-49E4-A445-2332910D8608" class="sect5">Creating a Composite Range-List Partitioned Table</h5>
+                     <div>
+                        <p>The example in this topic shows how to create a composite range-list partitioned table.</p>
+                        <div class="section">
+                           <p><a href="create-composite-partition-table.html#GUID-50581F67-E90A-49E4-A445-2332910D8608__CHDFIFJG">Example 4-24</a> illustrates how range-list partitioning might be used. The example tracks sales data of products by quarters and within each quarter, groups it by specified states.
+                           </p>
+                           <p>A row is mapped to a partition by checking whether the value of the partitioning column for a row falls within a specific partition range. The row is then mapped to a subpartition within that partition by identifying the subpartition whose descriptor value list contains a value matching the subpartition column value. For example, the following list describes how some sample rows are inserted.</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>(10, 4532130, '23-Jan-1999', 8934.10, 'WA') maps to subpartition <code class="codeph">q1_1999_northwest</code></p>
+                              </li>
+                              <li>
+                                 <p>(20, 5671621, '15-May-1999', 49021.21, 'OR') maps to subpartition <code class="codeph">q2_1999_northwest</code></p>
+                              </li>
+                              <li>
+                                 <p>(30, 9977612, '07-Sep-1999', 30987.90, 'FL') maps to subpartition <code class="codeph">q3_1999_southeast</code></p>
+                              </li>
+                              <li>
+                                 <p>(40, 9977612, '29-Nov-1999', 67891.45, 'TX') maps to subpartition <code class="codeph">q4_1999_southcentral</code></p>
+                              </li>
+                              <li>
+                                 <p>(40, 4532130, '5-Jan-2000', 897231.55, 'TX') does not map to any partition in the table and displays an error</p>
+                              </li>
+                              <li>
+                                 <p>(50, 5671621, '17-Dec-1999', 76123.35, 'CA') does not map to any subpartition in the table and displays an error</p>
+                              </li>
+                           </ul>
+                           <div class="infoboxnote" id="GUID-50581F67-E90A-49E4-A445-2332910D8608__VIEWANDRUNARELATEDEXAMPLEONORACLELI-2CE23B0B">
+                              <p class="notep1">Live SQL:</p>
+                              <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/composite-range-list-partitioning-example.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a Composite Range-List Partitioned Table</span></a>.
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-50581F67-E90A-49E4-A445-2332910D8608__CHDFIFJG">
+                           <p class="titleinexample">Example 4-24 Creating a composite range-list partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE quarterly_regional_sales
+      (deptno number, item_no varchar2(20),
+       txn_date date, txn_amount number, state varchar2(2))
+  TABLESPACE ts4
+  PARTITION BY RANGE (txn_date)
+    SUBPARTITION BY LIST (state)
+      (PARTITION q1_1999 VALUES LESS THAN (TO_DATE('1-APR-1999','DD-MON-YYYY'))
+         (SUBPARTITION q1_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q1_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q1_1999_northeast VALUES ('NY', 'VM', 'NJ'),
+          SUBPARTITION q1_1999_southeast VALUES ('FL', 'GA'),
+          SUBPARTITION q1_1999_northcentral VALUES ('SD', 'WI'),
+          SUBPARTITION q1_1999_southcentral VALUES ('OK', 'TX')
+         ),
+       PARTITION q2_1999 VALUES LESS THAN ( TO_DATE('1-JUL-1999','DD-MON-YYYY'))
+         (SUBPARTITION q2_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q2_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q2_1999_northeast VALUES ('NY', 'VM', 'NJ'),
+          SUBPARTITION q2_1999_southeast VALUES ('FL', 'GA'),
+          SUBPARTITION q2_1999_northcentral VALUES ('SD', 'WI'),
+          SUBPARTITION q2_1999_southcentral VALUES ('OK', 'TX')
+         ),
+       PARTITION q3_1999 VALUES LESS THAN (TO_DATE('1-OCT-1999','DD-MON-YYYY'))
+         (SUBPARTITION q3_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q3_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q3_1999_northeast VALUES ('NY', 'VM', 'NJ'),
+          SUBPARTITION q3_1999_southeast VALUES ('FL', 'GA'),
+          SUBPARTITION q3_1999_northcentral VALUES ('SD', 'WI'),
+          SUBPARTITION q3_1999_southcentral VALUES ('OK', 'TX')
+         ),
+       PARTITION q4_1999 VALUES LESS THAN ( TO_DATE('1-JAN-2000','DD-MON-YYYY'))
+         (SUBPARTITION q4_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q4_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q4_1999_northeast VALUES ('NY', 'VM', 'NJ'),
+          SUBPARTITION q4_1999_southeast VALUES ('FL', 'GA'),
+          SUBPARTITION q4_1999_northcentral VALUES ('SD', 'WI'),
+          SUBPARTITION q4_1999_southcentral VALUES ('OK', 'TX')
+         )
+      );
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-9028BE6A-9CC3-4625-83D6-7A6233477176" name="GUID-9028BE6A-9CC3-4625-83D6-7A6233477176"></a><h5 id="VLDBG-GUID-9028BE6A-9CC3-4625-83D6-7A6233477176" class="sect5">Creating a Composite Range-List Partitioned Table Specifying Tablespaces</h5>
+                     <div>
+                        <p>The example in this topic shows how to create a composite range-list partitioned table while specifying tablespaces.</p>
+                        <div class="section">
+                           <p>The partitions of a range-list partitioned table are logical structures only, because their data is stored in the segments of their subpartitions. The list subpartitions have the same characteristics as list partitions. You can specify a default subpartition, just as you specify a default partition for list partitioning.</p>
+                           <p>The following example creates a table that specifies a tablespace at the partition and subpartition levels. The number of subpartitions within each partition varies, and default subpartitions are specified. This example results in the following subpartition descriptions:</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>All subpartitions inherit their physical attributes, other than tablespace, from tablespace level defaults. This is because the only physical attribute that has been specified for partitions or subpartitions is tablespace. There are no table level physical attributes specified, thus tablespace level defaults are inherited at all levels. </p>
+                              </li>
+                              <li>
+                                 <p>The first 4 subpartitions of partition <code class="codeph">q1_1999</code> are all contained in <code class="codeph">tbs_1</code>, except for the subpartition <code class="codeph">q1_others</code>, which is stored in <code class="codeph">tbs_4</code> and contains all rows that do not map to any of the other partitions. 
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>The 6 subpartitions of partition <code class="codeph">q2_1999</code> are all stored in <code class="codeph">tbs_2</code>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>The first 2 subpartitions of partition <code class="codeph">q3_1999</code> are all contained in <code class="codeph">tbs_3</code>, except for the subpartition <code class="codeph">q3_others</code>, which is stored in <code class="codeph">tbs_4</code> and contains all rows that do not map to any of the other partitions.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>There is no subpartition description for partition <code class="codeph">q4_1999</code>. This results in one default subpartition being created and stored in <code class="codeph">tbs_4</code>. The subpartition name is system generated in the form <code class="codeph">SYS_SUBP</code><span class="italic"><code class="codeph">n</code></span>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section"><pre class="oac_no_warn" dir="ltr">CREATE TABLE sample_regional_sales
+      (deptno number, item_no varchar2(20),
+       txn_date date, txn_amount number, state varchar2(2))
+  PARTITION BY RANGE (txn_date)
+    SUBPARTITION BY LIST (state)
+      (PARTITION q1_1999 VALUES LESS THAN (TO_DATE('1-APR-1999','DD-MON-YYYY'))
+          TABLESPACE tbs_1
+         (SUBPARTITION q1_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q1_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q1_1999_northeast VALUES ('NY', 'VM', 'NJ'),
+          SUBPARTITION q1_1999_southeast VALUES ('FL', 'GA'),
+          SUBPARTITION q1_others VALUES (DEFAULT) TABLESPACE tbs_4
+         ),
+       PARTITION q2_1999 VALUES LESS THAN ( TO_DATE('1-JUL-1999','DD-MON-YYYY'))
+          TABLESPACE tbs_2
+         (SUBPARTITION q2_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q2_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q2_1999_northeast VALUES ('NY', 'VM', 'NJ'),
+          SUBPARTITION q2_1999_southeast VALUES ('FL', 'GA'),
+          SUBPARTITION q2_1999_northcentral VALUES ('SD', 'WI'),
+          SUBPARTITION q2_1999_southcentral VALUES ('OK', 'TX')
+         ),
+       PARTITION q3_1999 VALUES LESS THAN (TO_DATE('1-OCT-1999','DD-MON-YYYY'))
+          TABLESPACE tbs_3
+         (SUBPARTITION q3_1999_northwest VALUES ('OR', 'WA'),
+          SUBPARTITION q3_1999_southwest VALUES ('AZ', 'UT', 'NM'),
+          SUBPARTITION q3_others VALUES (DEFAULT) TABLESPACE tbs_4
+         ),
+       PARTITION q4_1999 VALUES LESS THAN ( TO_DATE('1-JAN-2000','DD-MON-YYYY'))
+          TABLESPACE tbs_4
+      );
+</pre></div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div><a id="VLDBG14050"></a><a id="VLDBG1097"></a><div class="props_rev_3"><a id="GUID-C1FA4836-206B-40E2-AEB9-05D4A85A6B61" name="GUID-C1FA4836-206B-40E2-AEB9-05D4A85A6B61"></a><h4 id="VLDBG-GUID-C1FA4836-206B-40E2-AEB9-05D4A85A6B61" class="sect4">Creating Composite Range-Range Partitioned Tables</h4>
+                  <div>
+                     <p>The range partitions of a range-range composite partitioned table are similar to non-composite range partitioned tables. </p>
+                     <div class="section">
+                        <p>This organization enables optional subclauses of a <code class="codeph">PARTITION</code> clause to specify physical and other attributes, including tablespace, specific to a partition segment. If not overridden at the partition level, then partitions inherit the attributes of their underlying table.
+                        </p>
+                        <p>The range subpartition descriptions, in the <code class="codeph">SUBPARTITION</code> clauses, are similar to non-composite range partitions, except the only physical attribute that can be specified is an optional tablespace. Subpartitions inherit all other physical attributes from the partition description.
+                        </p>
+                        <p>The following example illustrates how range-range partitioning might be used. The example tracks shipments. The service level agreement with the customer states that every order is delivered in the calendar month after the order was placed. The following types of orders are identified:</p>
+                        <p>A row is mapped to a partition by checking whether the value of the partitioning column for a row falls within a specific partition range. The row is then mapped to a subpartition within that partition by identifying whether the value of the subpartitioning column falls within a specific range. For example, a shipment with an order date in September 2006 and a delivery date of October 28, 2006 falls in partition <code class="codeph">p06_oct_a</code>.
+                        </p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>E (EARLY): orders that are delivered before the middle of the next month after the order was placed. These orders likely exceed customers' expectations.</p>
+                           </li>
+                           <li>
+                              <p>A (AGREED): orders that are delivered in the calendar month after the order was placed (but not early orders).</p>
+                           </li>
+                           <li>
+                              <p>L (LATE): orders that were only delivered starting the second calendar month after the order was placed.</p>
+                           </li>
+                        </ul><pre class="oac_no_warn" dir="ltr">CREATE TABLE shipments
+( order_id      NUMBER NOT NULL
+, order_date    DATE NOT NULL
+, delivery_date DATE NOT NULL
+, customer_id   NUMBER NOT NULL
+, sales_amount  NUMBER NOT NULL
+)
+PARTITION BY RANGE (order_date)
+SUBPARTITION BY RANGE (delivery_date)
+( PARTITION p_2006_jul VALUES LESS THAN (TO_DATE('01-AUG-2006','dd-MON-yyyy'))
+  ( SUBPARTITION p06_jul_e VALUES LESS THAN (TO_DATE('15-AUG-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_jul_a VALUES LESS THAN (TO_DATE('01-SEP-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_jul_l VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_2006_aug VALUES LESS THAN (TO_DATE('01-SEP-2006','dd-MON-yyyy'))
+  ( SUBPARTITION p06_aug_e VALUES LESS THAN (TO_DATE('15-SEP-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_aug_a VALUES LESS THAN (TO_DATE('01-OCT-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_aug_l VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_2006_sep VALUES LESS THAN (TO_DATE('01-OCT-2006','dd-MON-yyyy'))
+  ( SUBPARTITION p06_sep_e VALUES LESS THAN (TO_DATE('15-OCT-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_sep_a VALUES LESS THAN (TO_DATE('01-NOV-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_sep_l VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_2006_oct VALUES LESS THAN (TO_DATE('01-NOV-2006','dd-MON-yyyy'))
+  ( SUBPARTITION p06_oct_e VALUES LESS THAN (TO_DATE('15-NOV-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_oct_a VALUES LESS THAN (TO_DATE('01-DEC-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_oct_l VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_2006_nov VALUES LESS THAN (TO_DATE('01-DEC-2006','dd-MON-yyyy'))
+  ( SUBPARTITION p06_nov_e VALUES LESS THAN (TO_DATE('15-DEC-2006','dd-MON-yyyy'))
+  , SUBPARTITION p06_nov_a VALUES LESS THAN (TO_DATE('01-JAN-2007','dd-MON-yyyy'))
+  , SUBPARTITION p06_nov_l VALUES LESS THAN (MAXVALUE)
+  )
+, PARTITION p_2006_dec VALUES LESS THAN (TO_DATE('01-JAN-2007','dd-MON-yyyy'))
+  ( SUBPARTITION p06_dec_e VALUES LESS THAN (TO_DATE('15-JAN-2007','dd-MON-yyyy'))
+  , SUBPARTITION p06_dec_a VALUES LESS THAN (TO_DATE('01-FEB-2007','dd-MON-yyyy'))
+  , SUBPARTITION p06_dec_l VALUES LESS THAN (MAXVALUE)
+  )
+);
+</pre></div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <div class="infoboxnotealso" id="GUID-C1FA4836-206B-40E2-AEB9-05D4A85A6B61__GUID-5040BD31-1B3D-4180-826D-88DEA656B626">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="create-composite-partition-table.html#GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" title="You can create subpartitions in a composite partitioned table using a subpartition template.">Specifying Subpartition Templates to Describe Composite Partitioned Tables</a> to learn how using a subpartition template can simplify the specification of a composite partitioned table
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG1106"></a><div class="props_rev_3"><a id="GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" name="GUID-03D5C9BE-54AE-4156-B462-90E41757AE93"></a><h3 id="VLDBG-GUID-03D5C9BE-54AE-4156-B462-90E41757AE93" class="sect3">Specifying Subpartition Templates to Describe Composite Partitioned Tables</h3>
+               <div>
+                  <p>You can create subpartitions in a composite partitioned table using a subpartition template.</p>
+                  <p>A subpartition template simplifies the specification of subpartitions by not requiring that a subpartition descriptor be specified for every partition in the table. Instead, you describe subpartitions only one time in a template, then apply that subpartition template to every partition in the table. For interval-* composite partitioned tables, the subpartition template is the only way to define subpartitions for interval partitions. </p>
+                  <p>The subpartition template is used whenever a subpartition descriptor is not specified for a partition. If a subpartition descriptor is specified, then it is used instead of the subpartition template for that partition. If no subpartition template is specified, and no subpartition descriptor is supplied for a partition, then a single default subpartition is created. </p>
+                  <p>The following topics are discussed:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-9292A7DD-1EA0-4838-B8F3-D3233FFCDABD" title="For range-hash, interval-hash, and list-hash partitioned tables, the subpartition template can describe the subpartitions in detail, or it can specify just the number of hash subpartitions.">Specifying a Subpartition Template for a *-Hash Partitioned Table</a></p>
+                     </li>
+                     <li>
+                        <p><a href="create-composite-partition-table.html#GUID-870510CA-5AF0-4E8F-8864-730819A0EB4A" title="For -list partitioned tables, the subpartition template can describe the subpartitions in detail.">Specifying a Subpartition Template for a *-List Partitioned Table</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG14057"></a><a id="VLDBG1107"></a><div class="props_rev_3"><a id="GUID-9292A7DD-1EA0-4838-B8F3-D3233FFCDABD" name="GUID-9292A7DD-1EA0-4838-B8F3-D3233FFCDABD"></a><h4 id="VLDBG-GUID-9292A7DD-1EA0-4838-B8F3-D3233FFCDABD" class="sect4">Specifying a Subpartition Template for a *-Hash Partitioned Table</h4>
+                  <div>
+                     <p>For range-hash, interval-hash, and list-hash partitioned tables, the subpartition template can describe the subpartitions in detail, or it can specify just the number of hash subpartitions.</p>
+                     <div class="section">
+                        <p><a href="create-composite-partition-table.html#GUID-9292A7DD-1EA0-4838-B8F3-D3233FFCDABD__CHDCGBAB">Example 4-25</a> creates a range-hash partitioned table using a subpartition template and displays the subpartition names and tablespaces.
+                        </p>
+                        <p>The example produces a table with the following description.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Every partition has four subpartitions as described in the subpartition template.</p>
+                           </li>
+                           <li>
+                              <p>Each subpartition has a tablespace specified. It is required that if a tablespace is specified for one subpartition in a subpartition template, then one must be specified for all.</p>
+                           </li>
+                           <li>
+                              <p>The names of the subpartitions, unless you use interval-* subpartitioning, are generated by concatenating the partition name with the subpartition name in the form:</p>
+                              <p><span class="italic">partition name</span>_<span class="italic">subpartition name</span></p>
+                              <p>For interval-* subpartitioning, the subpartition names are system-generated in the form:</p>
+                              <p><code class="codeph">SYS_SUBP</code><span class="italic"><code class="codeph">n</code></span></p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-9292A7DD-1EA0-4838-B8F3-D3233FFCDABD__CHDCGBAB">
+                        <p class="titleinexample">Example 4-25 Creating a range-hash partitioned table with a subpartition template</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE employees_sub_template (department_id NUMBER(4) NOT NULL, 
+             last_name VARCHAR2(25), job_id VARCHAR2(10))   
+     PARTITION BY RANGE(department_id) SUBPARTITION BY HASH(last_name)
+     SUBPARTITION TEMPLATE
+         (SUBPARTITION a TABLESPACE ts1,
+          SUBPARTITION b TABLESPACE ts2,
+          SUBPARTITION c TABLESPACE ts3,
+          SUBPARTITION d TABLESPACE ts4
+         )
+    (PARTITION p1 VALUES LESS THAN (1000),
+     PARTITION p2 VALUES LESS THAN (2000),
+     PARTITION p3 VALUES LESS THAN (MAXVALUE)
+    );
+
+SQL&gt; SELECT TABLESPACE_NAME, PARTITION_NAME, SUBPARTITION_NAME
+  2  FROM DBA_TAB_SUBPARTITIONS WHERE TABLE_NAME='EMPLOYEEES_SUB_TEMPLATE'
+  3  ORDER BY TABLESPACE_NAME;
+
+TABLESPACE_NAME PARTITION_NAME  SUBPARTITION_NAME
+--------------- --------------- ------------------
+TS1             P1              P1_A
+TS1             P2              P2_A
+TS1             P3              P3_A
+TS2             P1              P1_B
+TS2             P2              P2_B
+TS2             P3              P3_B
+TS3             P1              P1_C
+TS3             P2              P2_C
+TS3             P3              P3_C
+TS4             P1              P1_D
+TS4             P2              P2_D
+TS4             P3              P3_D
+
+12 rows selected.</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14058"></a><a id="VLDBG1108"></a><div class="props_rev_3"><a id="GUID-870510CA-5AF0-4E8F-8864-730819A0EB4A" name="GUID-870510CA-5AF0-4E8F-8864-730819A0EB4A"></a><h4 id="VLDBG-GUID-870510CA-5AF0-4E8F-8864-730819A0EB4A" class="sect4">Specifying a Subpartition Template for a *-List Partitioned Table</h4>
+                  <div>
+                     <p>For -list partitioned tables, the subpartition template can describe the subpartitions in detail.</p>
+                     <div class="section">
+                        <p><a href="create-composite-partition-table.html#GUID-870510CA-5AF0-4E8F-8864-730819A0EB4A__CHDDADIE">Example 4-26</a>, for a range-list partitioned table, illustrates how using a subpartition template can help you stripe data across tablespaces. In this example, a table is created where the table subpartitions are vertically striped, meaning that subpartition <span class="italic">n</span> from every partition is in the same tablespace.
+                        </p>
+                        <p>If you specified the tablespaces at the partition level (for example, <code class="codeph">tbs_1</code> for partition <code class="codeph">q1_1999</code>, <code class="codeph">tbs_2</code> for partition <code class="codeph">q2_1999</code>, <code class="codeph">tbs_3</code> for partition <code class="codeph">q3_1999</code>, and <code class="codeph">tbs_4</code> for partition <code class="codeph">q4_1999</code>) and not in the subpartition template, then the table would be horizontally striped. All subpartitions would be in the tablespace of the owning partition. 
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-870510CA-5AF0-4E8F-8864-730819A0EB4A__CHDDADIE">
+                        <p class="titleinexample">Example 4-26 Creating a range-list partitioned table with a subpartition template</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE stripe_regional_sales
+            ( deptno number, item_no varchar2(20),
+              txn_date date, txn_amount number, state varchar2(2))
+   PARTITION BY RANGE (txn_date)
+   SUBPARTITION BY LIST (state)
+   SUBPARTITION TEMPLATE 
+      (SUBPARTITION northwest VALUES ('OR', 'WA') TABLESPACE tbs_1,
+       SUBPARTITION southwest VALUES ('AZ', 'UT', 'NM') TABLESPACE tbs_2,
+       SUBPARTITION northeast VALUES ('NY', 'VM', 'NJ') TABLESPACE tbs_3,
+       SUBPARTITION southeast VALUES ('FL', 'GA') TABLESPACE tbs_4,
+       SUBPARTITION midwest VALUES ('SD', 'WI') TABLESPACE tbs_5,
+       SUBPARTITION south VALUES ('AL', 'AK') TABLESPACE tbs_6,
+       SUBPARTITION others VALUES (DEFAULT ) TABLESPACE tbs_7
+      )
+  (PARTITION q1_1999 VALUES LESS THAN ( TO_DATE('01-APR-1999','DD-MON-YYYY')),
+   PARTITION q2_1999 VALUES LESS THAN ( TO_DATE('01-JUL-1999','DD-MON-YYYY')),
+   PARTITION q3_1999 VALUES LESS THAN ( TO_DATE('01-OCT-1999','DD-MON-YYYY')),
+   PARTITION q4_1999 VALUES LESS THAN ( TO_DATE('1-JAN-2000','DD-MON-YYYY'))
+  );
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

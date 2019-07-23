@@ -1,0 +1,582 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Backup and recovery is a crucial and important job for a DBA to protect business data.">
+      <meta name="description" content="Backup and recovery is a crucial and important job for a DBA to protect business data.">
+      <title>Backing Up and Recovering VLDBs</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="VLDB and Partitioning Guide">
+      <meta property="og:description" content="Backup and recovery is a crucial and important job for a DBA to protect business data.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="VLDB and Partitioning Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="vldb-and-partitioning-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-23T18:05:22-07:00">
+      <meta name="dcterms.title" content="VLDB and Partitioning Guide">
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96199-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="parallel-exec-tips.html" title="Previous" type="text/html">
+      <link rel="next" href="vldb-storage.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="VLDBG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="parallel-exec-tips.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="vldb-storage.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">VLDB and Partitioning Guide</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Backing Up and Recovering VLDBs</li>
+            </ol>
+            <a id="GUID-8B6DB99C-5265-480B-B227-DBCFBCBD4D98" name="GUID-8B6DB99C-5265-480B-B227-DBCFBCBD4D98"></a><a id="VLDBG008"></a>
+            
+            <h2 id="VLDBG-GUID-8B6DB99C-5265-480B-B227-DBCFBCBD4D98" class="sect2"><span class="enumeration_chapter">9 </span>Backing Up and Recovering VLDBs
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Backup and recovery is a crucial and important job for a DBA to protect business data.</p>
+               <p>As data storage grows larger each year, DBAs are continually challenged to ensure that critical data is backed up and that it can be recovered quickly and easily to meet business needs. Very large databases are unique in that they are large and data may come from many resources. OLTP and data warehouse systems have some distinct characteristics. Generally, the availability considerations for a very large OLTP system are no different from the considerations for a small OLTP system. Assuming a fixed allowed downtime, a large OLTP system requires more hardware resources than a small OLTP system.</p>
+               <p>This chapter proposes an efficient backup and recovery strategy for very large databases to reduce the overall resources necessary to support backup and recovery by using some special characteristics that differentiate data warehouses from OLTP systems. </p>
+               <p>This chapter contains the following sections:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="vldb-backup.html#GUID-836E38BE-FD44-42FC-AB7C-FD58108DC83C" title="A data warehouse is a system that is designed to support analysis and decision-making.">Data Warehouses</a></p>
+                  </li>
+                  <li>
+                     <p><a href="vldb-backup.html#GUID-9FA8366F-9413-4239-9FF3-CB492686C8BA" title="In general, backup and recovery refers to the various strategies and procedures involved in protecting your database against data loss and reconstructing the database after any kind of data loss.">Oracle Backup and Recovery</a></p>
+                  </li>
+                  <li>
+                     <p><a href="vldb-backup.html#GUID-79223C42-48E1-4036-AD74-4856A24935D5" title="Data warehouse recovery is similar to that of an OLTP system.">Data Warehouse Backup and Recovery</a></p>
+                  </li>
+                  <li>
+                     <p><a href="vldb-backup.html#GUID-E6542B38-2388-4152-AFBC-C1CA03837D93" title="Devising a backup and recovery strategy can be a complicated and challenging task.">The Data Warehouse Recovery Methodology</a></p>
+                  </li>
+               </ul>
+            </div><a id="VLDBG1552"></a><div class="props_rev_3"><a id="GUID-836E38BE-FD44-42FC-AB7C-FD58108DC83C" name="GUID-836E38BE-FD44-42FC-AB7C-FD58108DC83C"></a><h3 id="VLDBG-GUID-836E38BE-FD44-42FC-AB7C-FD58108DC83C" class="sect3">Data Warehouses</h3>
+               <div>
+                  <p>A data warehouse is a system that is designed to support analysis and decision-making.</p>
+                  <p>In a typical enterprise, hundreds or thousands of users may rely on the data warehouse to provide the information to help them understand their business and make better decisions. Therefore, availability is a key requirement for data warehousing. This chapter discusses one key aspect of data warehouse availability: the recovery of data after a data loss.</p>
+                  <p>Before looking at the backup and recovery techniques in detail, it is important to discuss specific techniques for backup and recovery of a data warehouse. In particular, one legitimate question might be: Should a data warehouse backup and recovery strategy be just like that of every other database system?</p>
+                  <p>A DBA should initially approach the task of data warehouse backup and recovery by applying the same techniques that are used in OLTP systems: the DBA must decide what information to protect and quickly recover when media recovery is required, prioritizing data according to its importance and the degree to which it changes. However, the issue that commonly arises for data warehouses is that an approach that is efficient and cost-effective for a 100 GB OLTP system may not be viable for a 10 TB data warehouse. The backup and recovery may take 100 times longer or require 100 times more storage.</p>
+                  <div class="infoboxnotealso" id="GUID-836E38BE-FD44-42FC-AB7C-FD58108DC83C__GUID-DE3EC844-6FCC-4CB4-81D1-DB543B28F90C">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="../dwhsg/introduction-data-warehouse-concepts.html#DWHSG-GUID-452FBA23-6976-4590-AA41-1369647AD14D" target="_blank"><span><cite>Oracle Database Data Warehousing Guide</cite></span></a> for more information about data warehouses
+                     </p>
+                  </div>
+               </div><a id="VLDBG1553"></a><div class="props_rev_3"><a id="GUID-38705383-2C31-48BE-8EA5-ECAD0F479B89" name="GUID-38705383-2C31-48BE-8EA5-ECAD0F479B89"></a><h4 id="VLDBG-GUID-38705383-2C31-48BE-8EA5-ECAD0F479B89" class="sect4">Data Warehouse Characteristics</h4>
+                  <div>
+                     <p>There are several key differences between data warehouses and OLTP systems that have significant impacts on backup and recovery.</p>
+                     <p>These differences are:</p>
+                     <ol>
+                        <li>
+                           <p>A data warehouse is typically much larger than an OLTP system. Data warehouses over 10's of terabytes are not uncommon and the largest data warehouses grow to orders of magnitude larger. Thus, scalability is a particularly important consideration for data warehouse backup and recovery.</p>
+                        </li>
+                        <li>
+                           <p>A data warehouse often has lower availability requirements than an OLTP system. While data warehouses are critical to businesses, there is also a significant cost associated with the ability to recover multiple terabytes in a few hours compared to recovering in a day. Some organizations may determine that in the unlikely event of a failure requiring the recovery of a significant portion of the data warehouse, they may tolerate an outage of a day or more if they can save significant expenditures in backup hardware and storage.</p>
+                        </li>
+                        <li>
+                           <p>A data warehouse is typically updated through a controlled process called the ETL (Extract, Transform, Load) process, unlike in OLTP systems where users are modifying data themselves. Because the data modifications are done in a controlled process, the updates to a data warehouse are often known and reproducible from sources other than redo logs.</p>
+                        </li>
+                        <li>
+                           <p>A data warehouse contains historical information, and often, significant portions of the older data in a data warehouse are static. For example, a data warehouse may track five years of historical sales data. While the most recent year of data may still be subject to modifications (due to returns, restatements, and so on), the last four years of data may be entirely static. The advantage of static data is that it does not need to be backed up frequently.</p>
+                        </li>
+                     </ol>
+                     <p>These four characteristics are key considerations when devising a backup and recovery strategy that is optimized for data warehouses.</p>
+                  </div>
+               </div>
+            </div><a id="VLDBG1554"></a><div class="props_rev_3"><a id="GUID-9FA8366F-9413-4239-9FF3-CB492686C8BA" name="GUID-9FA8366F-9413-4239-9FF3-CB492686C8BA"></a><h3 id="VLDBG-GUID-9FA8366F-9413-4239-9FF3-CB492686C8BA" class="sect3">Oracle Backup and Recovery</h3>
+               <div>
+                  <p>In general, backup and recovery refers to the various strategies and procedures involved in protecting your database against data loss and reconstructing the database after any kind of data loss.</p>
+                  <p>A backup is a representative copy of data. This copy can include important parts of a database such as the control file, archived redo logs, and data files. A backup protects data from application error and acts as a safeguard against unexpected data loss, by providing a way to restore original data.</p>
+                  <p>This section contains the following topics:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-8B4CA295-6392-48C3-868E-0C5BD687FDCC" title="Before you begin to think seriously about a backup and recovery strategy, the physical data structures relevant for backup and recovery operations must be identified.">Physical Database Structures Used in Recovering Data</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-E037DA35-38AD-42D2-8D6D-D66568333429" title="Backups are divided into physical backups and logical backups.">Backup Type</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-003FB14B-0FD7-4E45-A136-854803A2702B" title="Oracle Database provides several tools to manage backup and recovery of Oracle Databases.">Backup Tools</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1555"></a><div class="props_rev_3"><a id="GUID-8B4CA295-6392-48C3-868E-0C5BD687FDCC" name="GUID-8B4CA295-6392-48C3-868E-0C5BD687FDCC"></a><h4 id="VLDBG-GUID-8B4CA295-6392-48C3-868E-0C5BD687FDCC" class="sect4">Physical Database Structures Used in Recovering Data</h4>
+                  <div>
+                     <p>Before you begin to think seriously about a backup and recovery strategy, the physical data structures relevant for backup and recovery operations must be identified.</p>
+                     <p>These components include the files and other structures that constitute data for an Oracle data store and safeguard the data store against possible failures. Three basic components are required for the recovery of Oracle Database:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-32A8CC6B-E800-4EC8-B1B9-A10638848BD0" title="Oracle Database consists of one or more logical storage units called tablespaces. Each tablespace in Oracle Database consists of one or more files called data files, which are physical files located on or attached to the host operating system in which Oracle Database is running.">Data files</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-862076BF-4F81-44BC-BEB3-2180785888D4" title="Redo logs record all changes made to a database's data files.">Redo Logs</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-1624A713-7AC0-4647-96AE-48E67FCF5079" title="The control file contains a crucial record of the physical structures of the database and their status.">Control Files</a></p>
+                        </li>
+                     </ul>
+                  </div><a id="VLDBG1556"></a><div class="props_rev_3"><a id="GUID-32A8CC6B-E800-4EC8-B1B9-A10638848BD0" name="GUID-32A8CC6B-E800-4EC8-B1B9-A10638848BD0"></a><h5 id="VLDBG-GUID-32A8CC6B-E800-4EC8-B1B9-A10638848BD0" class="sect5">Data files</h5>
+                     <div>
+                        <p>Oracle Database consists of one or more logical storage units called tablespaces. Each tablespace in Oracle Database consists of one or more files called data files, which are physical files located on or attached to the host operating system in which Oracle Database is running.</p>
+                        <p>The data in a database is collectively stored in the data files that constitute each tablespace of the database. The simplest Oracle Database would have one tablespace, stored in one data file. Copies of the data files of a database are a critical part of any backup strategy. The sheer size of the data files is the main challenge from a VLDB backup and recovery perspective.</p>
+                     </div>
+                  </div><a id="VLDBG1557"></a><div class="props_rev_3"><a id="GUID-862076BF-4F81-44BC-BEB3-2180785888D4" name="GUID-862076BF-4F81-44BC-BEB3-2180785888D4"></a><h5 id="VLDBG-GUID-862076BF-4F81-44BC-BEB3-2180785888D4" class="sect5">Redo Logs</h5>
+                     <div>
+                        <p>Redo logs record all changes made to a database's data files.</p>
+                        <p>With a complete set of redo logs and an older copy of a data file, Oracle can reapply the changes recorded in the redo logs to re-create the database at any point between the backup time and the end of the last redo log. Each time data is changed in Oracle Database, that change is recorded in the online redo log first, before it is applied to the data files.</p>
+                        <p>Oracle Database requires at least two online redo log groups. In each group, there is at least one online redo log member, an individual redo log file where the changes are recorded. At intervals, Oracle Database rotates through the online redo log groups, storing changes in the current online redo log while the groups not in use can be copied to an archive location, where they are called archived redo logs (or, collectively, the archived redo log). For high availability reasons, production systems should always use multiple online redo members per group, preferably on different storage systems. Preserving the archived redo log is a major part of your backup strategy, as it contains a record of all updates to data files. Backup strategies often involve copying the archived redo logs to disk or tape for longer-term storage.</p>
+                     </div>
+                  </div><a id="VLDBG1558"></a><div class="props_rev_3"><a id="GUID-1624A713-7AC0-4647-96AE-48E67FCF5079" name="GUID-1624A713-7AC0-4647-96AE-48E67FCF5079"></a><h5 id="VLDBG-GUID-1624A713-7AC0-4647-96AE-48E67FCF5079" class="sect5">Control Files</h5>
+                     <div>
+                        <p>The control file contains a crucial record of the physical structures of the database and their status.</p>
+                        <p>Several types of information stored in the control file are related to backup and recovery:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Database information required to recover from failures or to perform media recovery</p>
+                           </li>
+                           <li>
+                              <p>Database structure information, such as data file details</p>
+                           </li>
+                           <li>
+                              <p>Redo log details</p>
+                           </li>
+                           <li>
+                              <p>Archived log records</p>
+                           </li>
+                           <li>
+                              <p>A record of past RMAN backups</p>
+                           </li>
+                        </ul>
+                        <p>Oracle Database data file recovery process is in part guided by status information in the control file, such as the database checkpoints, current online redo log file, and the data file header checkpoints. Loss of the control file makes recovery from a data loss much more difficult. The control file should be backed up regularly, to preserve the latest database structural changes, and to simplify recovery.</p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1559"></a><div class="props_rev_3"><a id="GUID-E037DA35-38AD-42D2-8D6D-D66568333429" name="GUID-E037DA35-38AD-42D2-8D6D-D66568333429"></a><h4 id="VLDBG-GUID-E037DA35-38AD-42D2-8D6D-D66568333429" class="sect4">Backup Type</h4>
+                  <div>
+                     <p>Backups are divided into physical backups and logical backups.</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><span class="bold">Physical</span> <span class="bold">backups</span> are backups of the physical files used in storing and recovering your database, such as data files, control files, and archived redo logs. Ultimately, every physical backup is a copy of files storing database information to some other location, whether on disk or offline storage, such as tape.
+                           </p>
+                        </li>
+                        <li>
+                           <p><span class="bold">Logical</span> <span class="bold">backups</span> contain logical data (for example, tables or stored procedures) extracted from a database with Oracle Data Pump (export/import) utilities. The data is stored in a binary file that can be imported into Oracle Database.
+                           </p>
+                        </li>
+                     </ul>
+                     <p>Physical backups are the foundation of any backup and recovery strategy. Logical backups are a useful supplement to physical backups in many circumstances but are not sufficient protection against data loss without physical backups.</p>
+                     <p>Reconstructing the contents of all or part of a database from a backup typically involves two phases: retrieving a copy of the data file from a backup, and reapplying changes to the file since the backup, from the archived and online redo logs, to bring the database to the desired recovery point in time. To restore a data file or control file from backup is to retrieve the file from the backup location on tape, disk, or other media, and make it available to Oracle Database. To recover a data file, is to take a restored copy of the data file and apply to it the changes recorded in the database's redo logs. To recover a whole database is to perform recovery on each of its data files.</p>
+                  </div>
+               </div><a id="VLDBG1560"></a><div class="props_rev_3"><a id="GUID-003FB14B-0FD7-4E45-A136-854803A2702B" name="GUID-003FB14B-0FD7-4E45-A136-854803A2702B"></a><h4 id="VLDBG-GUID-003FB14B-0FD7-4E45-A136-854803A2702B" class="sect4">Backup Tools</h4>
+                  <div>
+                     <p>Oracle Database provides several tools to manage backup and recovery of Oracle Databases.</p>
+                     <p>Each tool gives you a choice of several basic methods for making backups. The methods include:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-69A6FC62-06CB-48BD-AAC6-F5F1BE00E504" title="Oracle Recovery Manager (RMAN), a command-line is the Oracle-preferred method for efficiently backing up and recovering Oracle Database.">Oracle Recovery Manager (RMAN)</a></p>
+                           <p>RMAN reduces the administration work associated with your backup strategy by maintaining an extensive record of metadata about all backups and needed recovery-related files. In restore and recovery operations, RMAN uses this information to eliminate the need for the user to identify needed files. RMAN is efficient, supporting file multiplexing and parallel streaming, and verifies blocks for physical and (optionally) logical corruptions, on backup and restore.</p>
+                           <p>Backup activity reports can be generated using <code class="codeph">V$BACKUP</code> views.
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-BEF89467-A14D-4B90-A6C6-37BDAABFE2F9" title="Physical backups can be supplemented by using the Oracle Data Pump (export/import) utilities to make logical backups of data.">Oracle Data Pump</a></p>
+                           <p>Oracle Data Pump provides high speed, parallel, bulk data and metadata movement of Oracle Database contents. This utility makes logical backups by writing data from Oracle Database to operating system files. This data can later be imported into Oracle Database.</p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-E2A62C86-11FB-4B51-89F9-326228ABB228" title="If you do not want to use Recovery Manager, you can use operating system commands, such as the UNIX dd or tar commands, to make backups.">User-Managed Backups</a></p>
+                           <p>The database is backed up manually by executing commands specific to your operating system.</p>
+                        </li>
+                     </ul>
+                  </div><a id="VLDBG1561"></a><div class="props_rev_3"><a id="GUID-69A6FC62-06CB-48BD-AAC6-F5F1BE00E504" name="GUID-69A6FC62-06CB-48BD-AAC6-F5F1BE00E504"></a><h5 id="VLDBG-GUID-69A6FC62-06CB-48BD-AAC6-F5F1BE00E504" class="sect5">Oracle Recovery Manager (RMAN)</h5>
+                     <div>
+                        <p>Oracle Recovery Manager (RMAN), a command-line is the Oracle-preferred method for efficiently backing up and recovering Oracle Database.</p>
+                        <p>RMAN is designed to work intimately with the server, providing block-level corruption detection during backup and recovery. RMAN optimizes performance and space consumption during backup with file multiplexing and backup set compression, and integrates with leading tape and storage media products with the supplied Media Management Library (MML) API.</p>
+                        <p>RMAN takes care of all underlying database procedures before and after backup or recovery, freeing dependency on operating system and SQL*Plus scripts. It provides a common interface for backup tasks across different host operating systems, and offers features not available through user-managed methods, such as data file and tablespace-level backup and recovery, parallelization of backup and recovery data streams, incremental backups, automatic backup of the control file on database structural changes, backup retention policy, and detailed history of all backups.</p>
+                        <div class="infoboxnotealso" id="GUID-69A6FC62-06CB-48BD-AAC6-F5F1BE00E504__GUID-09BEB90C-9B5C-40E9-88B1-3E7E090B609B">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/vldbg&amp;id=BRADV8001" target="_blank"><span><cite>Oracle Database Backup and Recovery User’s Guide</cite></span></a> for more information about RMAN
+                           </p>
+                        </div>
+                     </div>
+                  </div><a id="VLDBG1564"></a><div class="props_rev_3"><a id="GUID-BEF89467-A14D-4B90-A6C6-37BDAABFE2F9" name="GUID-BEF89467-A14D-4B90-A6C6-37BDAABFE2F9"></a><h5 id="VLDBG-GUID-BEF89467-A14D-4B90-A6C6-37BDAABFE2F9" class="sect5">Oracle Data Pump</h5>
+                     <div>
+                        <p>Physical backups can be supplemented by using the Oracle Data Pump (export/import) utilities to make logical backups of data.</p>
+                        <p>Logical backups store information about the schema objects created for a database. Oracle Data Pump loads data and metadata into a set of operating system files that can be imported on the same system or moved to another system and imported there.</p>
+                        <p>The dump file set is made up of one or more disk files that contain table data, database object metadata, and control information. The files are written in a binary format. During an import operation, the Data Pump Import utility uses these files to locate each database object in the dump file set.</p>
+                     </div>
+                  </div><a id="VLDBG1565"></a><div class="props_rev_3"><a id="GUID-E2A62C86-11FB-4B51-89F9-326228ABB228" name="GUID-E2A62C86-11FB-4B51-89F9-326228ABB228"></a><h5 id="VLDBG-GUID-E2A62C86-11FB-4B51-89F9-326228ABB228" class="sect5">User-Managed Backups</h5>
+                     <div>
+                        <p>If you do not want to use Recovery Manager, you can use operating system commands, such as the UNIX <code class="codeph">dd</code> or <code class="codeph">tar</code> commands, to make backups. 
+                        </p>
+                        <p>To create a user-managed online backup, the database must manually be placed into hot backup mode. Hot backup mode causes additional write operations to the online log files, increasing their size.</p>
+                        <p>Backup operations can also be automated by writing scripts. You can make a backup of the entire database immediately, or back up individual tablespaces, data files, control files, or archived logs. An entire database backup can be supplemented with backups of individual tablespaces, data files, control files, and archived logs.</p>
+                        <p>Operating system commands or third-party backup software can perform database backups. Conversely, the third-party software must be used to restore the backups of the database.</p>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="VLDBG1566"></a><div class="props_rev_3"><a id="GUID-79223C42-48E1-4036-AD74-4856A24935D5" name="GUID-79223C42-48E1-4036-AD74-4856A24935D5"></a><h3 id="VLDBG-GUID-79223C42-48E1-4036-AD74-4856A24935D5" class="sect3">Data Warehouse Backup and Recovery</h3>
+               <div>
+                  <p>Data warehouse recovery is similar to that of an OLTP system.</p>
+                  <p>However, a data warehouse may not require all of the data to be recovered from a backup, or for a complete failure, restoring the entire database before user access can commence. An efficient and fast recovery of a data warehouse begins with a well-planned backup.</p>
+                  <p>The next several sections help you to identify what data should be backed up and guide you to the method and tools that enable you to recover critical data in the shortest amount of time.</p>
+                  <p>This section contains the following topics:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-76435B39-EF7E-418B-9C33-0C43B088178A" title="A Recovery Time Objective (RTO) is the time duration in which you want to be able to recover your data.">Recovery Time Objective (RTO)</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-AD7289B0-0D01-4382-AA5D-CBE458ADDF91" title="A Recovery Point Objective, or RPO, is the maximum amount of data that can be lost before causing detrimental harm to the organization.">Recovery Point Objective (RPO)</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1567"></a><div class="props_rev_3"><a id="GUID-76435B39-EF7E-418B-9C33-0C43B088178A" name="GUID-76435B39-EF7E-418B-9C33-0C43B088178A"></a><h4 id="VLDBG-GUID-76435B39-EF7E-418B-9C33-0C43B088178A" class="sect4">Recovery Time Objective (RTO)</h4>
+                  <div>
+                     <p>A <span class="bold">Recovery</span> <span class="bold">Time</span> <span class="bold">Objective</span> (RTO) is the time duration in which you want to be able to recover your data.
+                     </p>
+                     <p> Your backup and recovery plan should be designed to meet RTOs your company chooses for its data warehouse. For example, you may determine that 5% of the data must be available within 12 hours, 50% of the data must be available after a complete loss of the database within 2 days, and the remainder of the data be available within 5 days. In this case you have two RTOs. Your total RTO is 7.5 days.</p>
+                     <p>To determine what your RTO should be, you must first identify the impact of the data not being available. To establish an RTO, follow these four steps:</p>
+                     <ol>
+                        <li>
+                           <p>Analyze and identify: Understand your recovery readiness, risk areas, and the business costs of unavailable data. In a data warehouse, you should identify critical data that must be recovered in the <span class="italic">n</span> days after an outage.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Design: Transform the recovery requirements into backup and recovery strategies. This can be accomplished by organizing the data into logical relationships and criticality.</p>
+                        </li>
+                        <li>
+                           <p>Build and integrate: Deploy and integrate the solution into your environment to back up and recover your data. Document the backup and recovery plan.</p>
+                        </li>
+                        <li>
+                           <p>Manage and evolve: Test your recovery plans at regular intervals. Implement change management processes to refine and update the solution as your data, IT infrastructure, and business processes change.</p>
+                        </li>
+                     </ol>
+                  </div>
+               </div><a id="VLDBG1568"></a><div class="props_rev_3"><a id="GUID-AD7289B0-0D01-4382-AA5D-CBE458ADDF91" name="GUID-AD7289B0-0D01-4382-AA5D-CBE458ADDF91"></a><h4 id="VLDBG-GUID-AD7289B0-0D01-4382-AA5D-CBE458ADDF91" class="sect4">Recovery Point Objective (RPO)</h4>
+                  <div>
+                     <p>A Recovery Point Objective, or RPO, is the maximum amount of data that can be lost before causing detrimental harm to the organization.</p>
+                     <p>RPO indicates the data loss tolerance of a business process or an organization in general. This data loss is often measured in terms of time, for example, 5 hours or 2 days worth of data loss. A zero RPO means that no committed data should be lost when media loss occurs, while a 24 hour RPO can tolerate a day's worth of data loss.</p>
+                     <p>This section contains the following topics:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-1EC8332F-35B1-4441-8E03-67D29247E526" title="The most obvious characteristic of the data warehouse is the size of the database.">More Data Means a Longer Backup Window</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-E573779F-B18F-4080-A60E-5C33E36F129C" title="In a data warehouse, there may be times when the database is not being fully used.">Divide and Conquer</a></p>
+                        </li>
+                     </ul>
+                  </div><a id="VLDBG1569"></a><div class="props_rev_3"><a id="GUID-1EC8332F-35B1-4441-8E03-67D29247E526" name="GUID-1EC8332F-35B1-4441-8E03-67D29247E526"></a><h5 id="VLDBG-GUID-1EC8332F-35B1-4441-8E03-67D29247E526" class="sect5">More Data Means a Longer Backup Window</h5>
+                     <div>
+                        <p>The most obvious characteristic of the data warehouse is the size of the database.</p>
+                        <p>This can be upward of 100's of terabytes. Hardware is the limiting factor to a fast backup and recovery. However, today's tape storage continues to evolve to accommodate the amount of data that must be offloaded to tape (for example, advent of Virtual Tape Libraries which use disks internally with the standard tape access interface). RMAN can fully use, in parallel, all available tape devices to maximize backup and recovery performance.</p>
+                        <p>Essentially, the time required to back up a large database can be derived from the minimum throughput among: production disk, host bus adapter (HBA) and network to tape devices, and tape drive streaming specifications * the number of tape drives. The host CPU can also be a limiting factor to overall backup performance, if RMAN backup encryption or compression is used. Backup and recovery windows can be adjusted to fit any business requirements, given adequate hardware resources.</p>
+                     </div>
+                  </div><a id="VLDBG1570"></a><div class="props_rev_3"><a id="GUID-E573779F-B18F-4080-A60E-5C33E36F129C" name="GUID-E573779F-B18F-4080-A60E-5C33E36F129C"></a><h5 id="VLDBG-GUID-E573779F-B18F-4080-A60E-5C33E36F129C" class="sect5">Divide and Conquer</h5>
+                     <div>
+                        <p>In a data warehouse, there may be times when the database is not being fully used. </p>
+                        <p>While this window of time may be several contiguous hours, it is not enough to back up the entire database. You may want to consider breaking up the database backup over several days. RMAN enables you to specify how long a given backup job is allowed to run. When using <code class="codeph">BACKUP</code> <code class="codeph">DURATION</code>, you can choose between running the backup to completion as quickly as possible and running it more slowly to minimize the load the backup may impose on your database.
+                        </p>
+                        <p>In the following example, RMAN backs up all database files that have not been backed up in the last 7 days first, runs for 4 hours, and reads the blocks as fast as possible.</p><pre class="oac_no_warn" dir="ltr">BACKUP DATABASE NOT BACKED UP SINCE 'sysdate - 7' 
+  PARTIAL DURATION 4:00 MINIMIZE TIME;
+</pre><p>Each time this RMAN command is run, it backs up the data files that have not been backed up in the last 7 days first. You do not need to manually specify the tablespaces or data files to be backed up each night. Over the course of several days, all of your database files are backed up.</p>
+                        <p>While this is a simplistic approach to database backup, it is easy to implement and provides more flexibility in backing up large amounts of data. During recovery, RMAN may point you to multiple different storage devices to perform the restore operation. Consequently, your recovery time may be longer.</p>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="VLDBG1571"></a><div class="props_rev_3"><a id="GUID-E6542B38-2388-4152-AFBC-C1CA03837D93" name="GUID-E6542B38-2388-4152-AFBC-C1CA03837D93"></a><h3 id="VLDBG-GUID-E6542B38-2388-4152-AFBC-C1CA03837D93" class="sect3">The Data Warehouse Recovery Methodology</h3>
+               <div>
+                  <p>Devising a backup and recovery strategy can be a complicated and challenging task.</p>
+                  <p>When you have hundreds of terabytes of data that must be protected and recovered for a failure, the strategy can be very complex. This section contains several best practices that can be implemented to ease the administration of backup and recovery.</p>
+                  <p>This section contains the following topics:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-DE407D9D-F392-4436-89B8-960ADD4AE300" title="Archived redo logs are crucial for recovery when no data can be lost because they constitute a record of changes to the database.">Best Practice 1: Use ARCHIVELOG Mode</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-6AF7DEE0-8916-42C6-8EDA-A0464C5DA57B" title="Many data warehouses, which were developed on earlier releases of Oracle Database, may not have integrated RMAN for backup and recovery.">Best Practice 2: Use RMAN</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-6D73D7DA-7F4F-4CC3-A4EC-7A84F7ACF2B7" title="Enabling block change tracking allows incremental backups to be completed faster, by reading and writing only the changed blocks since the last full or incremental backup.">Best Practice 3: Use Block Change Tracking</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-FA70B6EF-0C8B-435B-98C9-CDEBCDCED145" title="With the advent of big file tablespaces, data warehouses have the opportunity to consolidate a large number of data files into fewer, better managed data files.">Best Practice 4: Use RMAN Multisection Backups</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-70595966-7453-4EAD-AE6F-6CDEF4C7049F" title="An important issue facing a data warehouse is the sheer size of a typical data warehouse. Even with powerful backup hardware, backups may still take several hours.">Best Practice 5: Leverage Read-Only Tablespaces</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-42825ED1-C4C5-449B-870F-D2C8627CBF86" title="In general, a high priority for a data warehouse is performance. Not only must the data warehouse provide good query performance for online users, but the data warehouse must also be efficient during the extract, transform, and load (ETL) process so that large amounts of data can be loaded in the shortest amount of time. One common optimization used by data warehouses is to execute bulk-data operations using the NOLOGGING mode.">Best Practice 6: Plan for NOLOGGING Operations in Your Backup/Recovery Strategy</a></p>
+                     </li>
+                     <li>
+                        <p><a href="vldb-backup.html#GUID-12293CA0-65A8-469F-BEDE-4D502B250724" title="Not all of the tablespaces in a data warehouse are equally significant from a backup and recovery perspective.">Best Practice 7: Not All Tablespaces Should Be Treated Equally</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1572"></a><div class="props_rev_3"><a id="GUID-DE407D9D-F392-4436-89B8-960ADD4AE300" name="GUID-DE407D9D-F392-4436-89B8-960ADD4AE300"></a><h4 id="VLDBG-GUID-DE407D9D-F392-4436-89B8-960ADD4AE300" class="sect4">Best Practice 1: Use ARCHIVELOG Mode</h4>
+                  <div>
+                     <p>Archived redo logs are crucial for recovery when no data can be lost because they constitute a record of changes to the database. </p>
+                     <p>Oracle Database can be run in either of two modes:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><code class="codeph">ARCHIVELOG</code></p>
+                           <p>Oracle Database archives the filled online redo log files before reusing them in the cycle.</p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">NOARCHIVELOG</code></p>
+                           <p>Oracle Database does not archive the filled online redo log files before reusing them in the cycle.</p>
+                        </li>
+                     </ul>
+                     <p>Running the database in <code class="codeph">ARCHIVELOG</code> mode has the following benefits:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The database can be recovered from both instance and media failure.</p>
+                        </li>
+                        <li>
+                           <p>Backups can be performed while the database is open and available for use.</p>
+                        </li>
+                        <li>
+                           <p>Oracle Database supports multiplexed archive logs to avoid any possible single point of failure on the archive logs.</p>
+                        </li>
+                        <li>
+                           <p>More recovery options are available, such as the ability to perform tablespace point-in-time recovery (TSPITR).</p>
+                        </li>
+                        <li>
+                           <p>Archived redo logs can be transmitted and applied to the physical standby database, which is an exact replica of the primary database.</p>
+                        </li>
+                     </ul>
+                     <p>Running the database in <code class="codeph">NOARCHIVELOG</code> mode has the following consequences:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The database can be backed up only while it is closed after a clean shutdown.</p>
+                        </li>
+                        <li>
+                           <p>Typically, the only media recovery option is to restore the whole database to the point-in-time in which the full or incremental backups were made, which can result in the loss of recent transactions.</p>
+                        </li>
+                     </ul>
+                  </div><a id="VLDBG1573"></a><div class="props_rev_3"><a id="GUID-5905FBA5-9F21-4FAC-AA64-71FCF074635D" name="GUID-5905FBA5-9F21-4FAC-AA64-71FCF074635D"></a><h5 id="VLDBG-GUID-5905FBA5-9F21-4FAC-AA64-71FCF074635D" class="sect5">Is Downtime Acceptable?</h5>
+                     <div>
+                        <p> It is important to design a backup plan to minimize database interruptions.</p>
+                        <p>Oracle Database backups can be made while the database is open or closed. Planned downtime of the database can be disruptive to operations, especially in global enterprises that support users in multiple time zones, up to 24-hours per day.</p>
+                        <p>Depending on the business, some enterprises can afford downtime. If the overall business strategy requires little or no downtime, then the backup strategy should implement an online backup. The database never needs to be taken down for a backup. An online backup requires the database to be in <code class="codeph">ARCHIVELOG</code> mode.
+                        </p>
+                        <p>Given the size of a data warehouse (and consequently the amount of time to back up a data warehouse), it is generally not viable to make an offline backup of a data warehouse, which would be necessitated if one were using <code class="codeph">NOARCHIVELOG</code> mode.
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1574"></a><div class="props_rev_3"><a id="GUID-6AF7DEE0-8916-42C6-8EDA-A0464C5DA57B" name="GUID-6AF7DEE0-8916-42C6-8EDA-A0464C5DA57B"></a><h4 id="VLDBG-GUID-6AF7DEE0-8916-42C6-8EDA-A0464C5DA57B" class="sect4">Best Practice 2: Use RMAN</h4>
+                  <div>
+                     <p>Many data warehouses, which were developed on earlier releases of Oracle Database, may not have integrated RMAN for backup and recovery.</p>
+                     <p>However, just as there are many reasons to leverage <code class="codeph">ARCHIVELOG</code> mode, there is a similarly compelling list of reasons to adopt RMAN. Consider the following:
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Trouble-free backup and recovery</p>
+                        </li>
+                        <li>
+                           <p>Corrupt block detection</p>
+                        </li>
+                        <li>
+                           <p>Archive log validation and management</p>
+                        </li>
+                        <li>
+                           <p>Block Media Recovery (BMR)</p>
+                        </li>
+                        <li>
+                           <p>Easily integrates with Media Managers</p>
+                        </li>
+                        <li>
+                           <p>Backup and restore optimization</p>
+                        </li>
+                        <li>
+                           <p>Backup and restore validation</p>
+                        </li>
+                        <li>
+                           <p>Downtime-free backups</p>
+                        </li>
+                        <li>
+                           <p>Incremental backups</p>
+                        </li>
+                        <li>
+                           <p>Extensive reporting</p>
+                        </li>
+                     </ol>
+                  </div>
+               </div><a id="VLDBG1575"></a><div class="props_rev_3"><a id="GUID-6D73D7DA-7F4F-4CC3-A4EC-7A84F7ACF2B7" name="GUID-6D73D7DA-7F4F-4CC3-A4EC-7A84F7ACF2B7"></a><h4 id="VLDBG-GUID-6D73D7DA-7F4F-4CC3-A4EC-7A84F7ACF2B7" class="sect4">Best Practice 3: Use Block Change Tracking</h4>
+                  <div>
+                     <p>Enabling block change tracking allows incremental backups to be completed faster, by reading and writing only the changed blocks since the last full or incremental backup.</p>
+                     <p>For data warehouses, this can be extremely helpful if the database typically undergoes a low to medium percentage of changes.</p>
+                     <div class="infoboxnotealso" id="GUID-6D73D7DA-7F4F-4CC3-A4EC-7A84F7ACF2B7__GUID-FDE85183-87ED-491F-8258-DC122A535892">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/vldbg&amp;id=BRADV8001" target="_blank"><span><cite>Oracle Database Backup and Recovery User’s Guide</cite></span></a> for more information about block change tracking
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1576"></a><div class="props_rev_3"><a id="GUID-FA70B6EF-0C8B-435B-98C9-CDEBCDCED145" name="GUID-FA70B6EF-0C8B-435B-98C9-CDEBCDCED145"></a><h4 id="VLDBG-GUID-FA70B6EF-0C8B-435B-98C9-CDEBCDCED145" class="sect4">Best Practice 4: Use RMAN Multisection Backups</h4>
+                  <div>
+                     <p>With the advent of big file tablespaces, data warehouses have the opportunity to consolidate a large number of data files into fewer, better managed data files.</p>
+                     <p>For backing up very large data files, RMAN provides multisection backups as a way to parallelize the backup operation within the file itself, such that sections of a file are backed up in parallel, rather than backing up on a per-file basis.</p>
+                     <p>For example, a one TB data file can be sectioned into ten 100 GB backup pieces, with each section backed up in parallel, rather than the entire one TB file backed up as one file. The overall backup time for large data files can be dramatically reduced.</p>
+                     <div class="infoboxnotealso" id="GUID-FA70B6EF-0C8B-435B-98C9-CDEBCDCED145__GUID-F28215A7-7FFF-46F5-A141-CC01F58F4CD8">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/vldbg&amp;id=BRADV8001" target="_blank"><span><cite>Oracle Database Backup and Recovery User’s Guide</cite></span></a> for more information about configuring multisection backups
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1577"></a><div class="props_rev_3"><a id="GUID-70595966-7453-4EAD-AE6F-6CDEF4C7049F" name="GUID-70595966-7453-4EAD-AE6F-6CDEF4C7049F"></a><h4 id="VLDBG-GUID-70595966-7453-4EAD-AE6F-6CDEF4C7049F" class="sect4">Best Practice 5: Leverage Read-Only Tablespaces</h4>
+                  <div>
+                     <p>An important issue facing a data warehouse is the sheer size of a typical data warehouse. Even with powerful backup hardware, backups may still take several hours.</p>
+                     <p>One important consideration in improving backup performance is minimizing the amount of data to be backed up. Read-only tablespaces are the simplest mechanism to reduce the amount of data to be backed up in a data warehouse. Even with incremental backups, both backup and recovery are faster if tablespaces are set to read-only.</p>
+                     <p>The advantage of a read-only tablespace is that data must be backed up only one time. If a data warehouse contains five years of historical data and the first four years of data can be made read-only, then theoretically the regular backup of the database would back up only 20% of the data. This can dramatically reduce the amount of time required to back up the data warehouse.</p>
+                     <p>Most data warehouses store their data in tables that have been range-partitioned by time. In a typical data warehouse, data is generally active for a period ranging anywhere from 30 days to one year. During this period, the historical data can still be updated and changed (for example, a retailer may accept returns up to 30 days beyond the date of purchase, so that sales data records could change during this period). However, after data reaches a certain age, it is often known to be static.</p>
+                     <p>By taking advantage of partitioning, users can make the static portions of their data read-only. Currently, Oracle supports read-only tablespaces rather than read-only partitions or tables. To take advantage of the read-only tablespaces and reduce the backup window, a strategy of storing constant data partitions in a read-only tablespace should be devised. Here are two strategies for implementing a rolling window:</p>
+                     <ol>
+                        <li>
+                           <p>When the data in a partition matures to the point where it is entirely static, implement a regularly scheduled process to move the partition from the current read-write tablespace to a tablespace that can then be made read-only.</p>
+                        </li>
+                        <li>
+                           <p>Create a series of tablespaces, each containing a small number of partitions, and regularly modify a tablespace from read-write to read-only as the data in that tablespace ages.</p>
+                        </li>
+                     </ol>
+                     <p>One consideration is that backing up data is only half the recovery process. If you configure a tape system so that it can back up the read-write portions of a data warehouse in 4 hours, the corollary is that a tape system might take 20 hours to recover the database if a complete recovery is necessary when 80% of the database is read-only.</p>
+                  </div>
+               </div><a id="VLDBG1578"></a><div class="props_rev_3"><a id="GUID-42825ED1-C4C5-449B-870F-D2C8627CBF86" name="GUID-42825ED1-C4C5-449B-870F-D2C8627CBF86"></a><h4 id="VLDBG-GUID-42825ED1-C4C5-449B-870F-D2C8627CBF86" class="sect4">Best Practice 6: Plan for NOLOGGING Operations in Your Backup/Recovery Strategy</h4>
+                  <div>
+                     <p>In general, a high priority for a data warehouse is performance. Not only must the data warehouse provide good query performance for online users, but the data warehouse must also be efficient during the extract, transform, and load (ETL) process so that large amounts of data can be loaded in the shortest amount of time. One common optimization used by data warehouses is to execute bulk-data operations using the <code class="codeph">NOLOGGING</code> mode.
+                     </p>
+                     <p></p>
+                     <p> The database operations that support <code class="codeph">NOLOGGING</code> modes are direct-path load and insert operations, index creation, and table creation. When an operation runs in <code class="codeph">NOLOGGING</code> mode, data is not written to the redo log (or more precisely, only a small set of metadata is written to the redo log). This mode is widely used within data warehouses and can improve the performance of bulk data operations by up to 50%.
+                     </p>
+                     <p>However, the tradeoff is that a <code class="codeph">NOLOGGING</code> operation cannot be recovered using conventional recovery mechanisms, because the necessary data to support the recovery was never written to the log file. Moreover, subsequent operations to the data upon which a <code class="codeph">NOLOGGING</code> operation has occurred also cannot be recovered even if those operations were not using <code class="codeph">NOLOGGING</code> mode. Because of the performance gains provided by <code class="codeph">NOLOGGING</code> operations, it is generally recommended that data warehouses use <code class="codeph">NOLOGGING</code> mode in their ETL process.
+                     </p>
+                     <p>The presence of <code class="codeph">NOLOGGING</code> operations must be taken into account when devising the backup and recovery strategy. When a database is relying on <code class="codeph">NOLOGGING</code> operations, the conventional recovery strategy (of recovering from the latest tape backup and applying the archived log files) is no longer applicable because the log files are not able to recover the <code class="codeph">NOLOGGING</code> operation.
+                     </p>
+                     <p>The first principle to remember is, do not make a backup when a <code class="codeph">NOLOGGING</code> operation is occurring. Oracle Database does not currently enforce this rule, so DBAs must schedule the backup jobs and the ETL jobs such that the <code class="codeph">NOLOGGING</code> operations do not overlap with backup operations.
+                     </p>
+                     <p>There are two approaches to backup and recovery in the presence of <code class="codeph">NOLOGGING</code> operations: ETL or incremental backups. If you are not using <code class="codeph">NOLOGGING</code> operations in your data warehouse, then you do not have to choose either option: you can recover your data warehouse using archived logs. However, the options may offer some performance benefits over an archive log-based approach for a recovery. You can also use flashback logs and guaranteed restore points to flashback your database to a previous point in time.
+                     </p>
+                     <p>This section contains the following topics:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-D4A6BA18-4B9D-4C8A-9228-A7A347B6EB42" title="The ETL process uses several Oracle features and a combination of methods to load (re-load) data into a data warehouse.">Extract, Transform, and Load</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-894D16AF-2719-4C42-95D0-9A8E0E156343" title="One approach is to take regular database backups and also store the necessary data files to re-create the ETL process for that entire week.">The Extract, Transform, and Load Strategy</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-8BB8C9D9-FF95-49B5-9E3B-F768459AB3EA" title="A more automated backup and recovery strategy in the presence of NOLOGGING operations uses RMAN's incremental backup capability.">Incremental Backup</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-4FDB71A7-3761-4899-9BCA-1E97FB17BF9B" title="A typical backup and recovery strategy using this approach is to back up the data warehouse every weekend, and then take incremental backups of the data warehouse every night following the completion of the ETL process.">The Incremental Approach</a></p>
+                        </li>
+                        <li>
+                           <p><a href="vldb-backup.html#GUID-F4F3145C-A462-4963-ACF6-BA66C5E9DD70" title="Flashback Database is a fast, continuous point-in-time recovery method to repair widespread logical errors.">Flashback Database and Guaranteed Restore Points</a></p>
+                        </li>
+                     </ul>
+                  </div><a id="VLDBG1579"></a><div class="props_rev_3"><a id="GUID-D4A6BA18-4B9D-4C8A-9228-A7A347B6EB42" name="GUID-D4A6BA18-4B9D-4C8A-9228-A7A347B6EB42"></a><h5 id="VLDBG-GUID-D4A6BA18-4B9D-4C8A-9228-A7A347B6EB42" class="sect5">Extract, Transform, and Load</h5>
+                     <div>
+                        <p>The ETL process uses several Oracle features and a combination of methods to load (re-load) data into a data warehouse.</p>
+                        <p>These features consist of:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Transportable tablespaces</p>
+                              <p>Transportable tablespaces allow users to quickly move a tablespace across Oracle Databases. It is the most efficient way to move bulk data between databases. Oracle Database provides the ability to transport tablespaces across platforms. If the source platform and the target platform are of different endianness, then RMAN converts the tablespace being transported to the target format.</p>
+                           </li>
+                           <li>
+                              <p>SQL*Loader</p>
+                              <p>SQL*Loader loads data from external flat files into tables of Oracle Database. It has a powerful data parsing engine that puts little limitation on the format of the data in the data file.</p>
+                           </li>
+                           <li>
+                              <p>Data Pump (export/import)</p>
+                              <p>Oracle Data Pump enables high-speed movement of data and metadata from one database to another. This technology is the basis for the Oracle Data Pump Export and Data Pump Import utilities.</p>
+                           </li>
+                           <li>
+                              <p>External tables</p>
+                              <p>The external tables feature is a complement to existing SQL*Loader functionality. It enables you to access data in external sources as if it were in a table in the database. External tables can also be used with the Data Pump driver to export data from a database, using <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> <code class="codeph">AS</code> <code class="codeph">SELECT</code> <code class="codeph">*</code> <code class="codeph">FROM</code>, and then import data into Oracle Database.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div><a id="VLDBG1580"></a><div class="props_rev_3"><a id="GUID-894D16AF-2719-4C42-95D0-9A8E0E156343" name="GUID-894D16AF-2719-4C42-95D0-9A8E0E156343"></a><h5 id="VLDBG-GUID-894D16AF-2719-4C42-95D0-9A8E0E156343" class="sect5">The Extract, Transform, and Load Strategy</h5>
+                     <div>
+                        <p>One approach is to take regular database backups and also store the necessary data files to re-create the ETL process for that entire week.</p>
+                        <p>In the event where a recovery is necessary, the data warehouse could be recovered from the most recent backup. Then, instead of rolling forward by applying the archived redo logs (as would be done in a conventional recovery scenario), the data warehouse could be rolled forward by rerunning the ETL processes. This paradigm assumes that the ETL processes can be easily replayed, which would typically involve storing a set of extract files for each ETL process.</p>
+                        <p>A sample implementation of this approach is to make a backup of the data warehouse every weekend, and then store the necessary files to support the ETL process each night. At most, 7 days of ETL processing must be reapplied to recover a database. The data warehouse administrator can easily project the length of time to recover the data warehouse, based upon the recovery speeds from tape and performance data from previous ETL runs.</p>
+                        <p>Essentially, the data warehouse administrator is gaining better performance in the ETL process with <code class="codeph">NOLOGGING</code> operations, at a price of slightly more complex and a less automated recovery process. Many data warehouse administrators have found that this is a desirable trade-off.
+                        </p>
+                        <p>One downside to this approach is that the burden is on the data warehouse administrator to track all of the relevant changes that have occurred in the data warehouse. This approach does not capture changes that fall outside of the ETL process. For example, in some data warehouses, users may create their own tables and data structures. Those changes are lost during a recovery.</p>
+                        <p>This restriction must be conveyed to the end-users. Alternatively, one could also mandate that end-users create all private database objects in a separate tablespace, and during recovery, the DBA could recover this tablespace using conventional recovery while recovering the rest of the database using the approach of rerunning the ETL process.</p>
+                     </div>
+                  </div><a id="VLDBG1581"></a><div class="props_rev_3"><a id="GUID-8BB8C9D9-FF95-49B5-9E3B-F768459AB3EA" name="GUID-8BB8C9D9-FF95-49B5-9E3B-F768459AB3EA"></a><h5 id="VLDBG-GUID-8BB8C9D9-FF95-49B5-9E3B-F768459AB3EA" class="sect5">Incremental Backup</h5>
+                     <div>
+                        <p>A more automated backup and recovery strategy in the presence of <code class="codeph">NOLOGGING</code> operations uses RMAN's incremental backup capability. 
+                        </p>
+                        <p>Incremental backups provide the capability to back up only the changed blocks since the previous backup. Incremental backups of data files capture data changes on a block-by-block basis, rather than requiring the backup of all used blocks in a data file. The resulting backup sets are generally smaller and more efficient than full data file backups, unless every block in the data file is changed.</p>
+                        <p>When you enable block change tracking, Oracle Database tracks the physical location of all database changes. RMAN automatically uses the change tracking file to determine which blocks must be read during an incremental backup. The block change tracking file is approximately 1/30000 of the total size of the database.</p>
+                        <div class="infoboxnotealso" id="GUID-8BB8C9D9-FF95-49B5-9E3B-F768459AB3EA__GUID-15C766EE-97C7-456A-880F-59ADC195C6A1">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/vldbg&amp;id=BRADV8001" target="_blank"><span><cite>Oracle Database Backup and Recovery User’s Guide</cite></span></a> for more information about block change tracking and how to enable it
+                           </p>
+                        </div>
+                     </div>
+                  </div><a id="VLDBG1582"></a><div class="props_rev_3"><a id="GUID-4FDB71A7-3761-4899-9BCA-1E97FB17BF9B" name="GUID-4FDB71A7-3761-4899-9BCA-1E97FB17BF9B"></a><h5 id="VLDBG-GUID-4FDB71A7-3761-4899-9BCA-1E97FB17BF9B" class="sect5">The Incremental Approach</h5>
+                     <div>
+                        <p>A typical backup and recovery strategy using this approach is to back up the data warehouse every weekend, and then take incremental backups of the data warehouse every night following the completion of the ETL process. </p>
+                        <p>Incremental backups, like conventional backups, must not be run concurrently with <code class="codeph">NOLOGGING</code> operations. To recover the data warehouse, the database backup would be restored, and then each night's incremental backups would be reapplied.
+                        </p>
+                        <p>Although the <code class="codeph">NOLOGGING</code> operations were not captured in the archive logs, the data from the <code class="codeph">NOLOGGING</code> operations is present in the incremental backups. Moreover, unlike the previous approach, this backup and recovery strategy can be managed using RMAN.
+                        </p>
+                     </div>
+                  </div><a id="VLDBG1583"></a><div class="props_rev_3"><a id="GUID-F4F3145C-A462-4963-ACF6-BA66C5E9DD70" name="GUID-F4F3145C-A462-4963-ACF6-BA66C5E9DD70"></a><h5 id="VLDBG-GUID-F4F3145C-A462-4963-ACF6-BA66C5E9DD70" class="sect5">Flashback Database and Guaranteed Restore Points</h5>
+                     <div>
+                        <p>Flashback Database is a fast, continuous point-in-time recovery method to repair widespread logical errors. </p>
+                        <p>Flashback Database relies on additional logging, called flashback logs, which are created in the fast recovery area and retained for a user-defined time interval according to the recovery needs. These logs track the original block images when they are updated.</p>
+                        <p>When a Flashback Database operation is executed, just the block images corresponding to the changed data are restored and recovered, versus traditional data file restore where all blocks from the backup must be restored before recovery can start. Flashback logs are created proportionally to redo logs.</p>
+                        <p>For very large and active databases, it may not be feasible to keep all needed flashback logs for continuous point-in-time recovery. However, there may be a requirement to create a specific point-in-time snapshot (for example, right before a nightly batch job) for logical errors during the batch run. For this scenario, guaranteed restore points can be created without enabling flashback logging.</p>
+                        <p>When the guaranteed restore points are created, flashback logs are maintained just to satisfy Flashback Database to the guaranteed restore points and no other point in time, thus saving space. For example, guaranteed restore points can be created followed by a nologging batch job. As long as there are no previous nologging operations within the last hour of the creation time of the guaranteed restore points, Flashback Database to the guaranteed restore points undoes the nologging batch job. To flash back to a time after the nologging batch job finishes, then create the guaranteed restore points at least one hour away from the end of the batch job.</p>
+                        <p>Estimating flashback log space for guaranteed restore points in this scenario depends on how much of the database changes over the number of days you intend to keep guaranteed restore points. For example, to keep guaranteed restore points for 2 days and you expect 100 GB of the database to change, then plan for 100 GB for the flashback logs. The 100 GB refers to the subset of the database changed after the guaranteed restore points are created and not the frequency of changes.</p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1584"></a><div class="props_rev_3"><a id="GUID-12293CA0-65A8-469F-BEDE-4D502B250724" name="GUID-12293CA0-65A8-469F-BEDE-4D502B250724"></a><h4 id="VLDBG-GUID-12293CA0-65A8-469F-BEDE-4D502B250724" class="sect4">Best Practice 7: Not All Tablespaces Should Be Treated Equally</h4>
+                  <div>
+                     <p>Not all of the tablespaces in a data warehouse are equally significant from a backup and recovery perspective.</p>
+                     <p>Database administrators can use this information to devise more efficient backup and recovery strategies when necessary. The basic granularity of backup and recovery is a tablespace, so different tablespaces can potentially have different backup and recovery strategies.</p>
+                     <p>On the most basic level, temporary tablespaces never need to be backed up (a rule which RMAN enforces). Moreover, in some data warehouses, there may be tablespaces dedicated to scratch space for users to store temporary tables and incremental results. These tablespaces are not explicit temporary tablespaces but are essentially functioning as temporary tablespaces. Depending upon the business requirements, these tablespaces may not need to be backed up and restored; instead, for a loss of these tablespaces, the users would re-create their own data objects.</p>
+                     <p>In many data warehouses, some data is more important than other data. For example, the sales data in a data warehouse may be crucial and in a recovery situation this data must be online as soon as possible. But, in the same data warehouse, a table storing clickstream data from the corporate website may be much less critical to businesses. The business may tolerate this data being offline for a few days or may even be able to accommodate the loss of several days of clickstream data if there is a loss of database files. In this scenario, the tablespaces containing sales data must be backed up often, while the tablespaces containing clickstream data need to be backed up only once every week or two weeks.</p>
+                     <p>While the simplest backup and recovery scenario is to treat every tablespace in the database the same, Oracle Database provides the flexibility for a DBA to devise a backup and recovery scenario for each tablespace as needed.</p>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

@@ -1,0 +1,2066 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Database In-Memory provides optimizations to speed up aggregation and arithmetic.">
+      <meta name="description" content="Database In-Memory provides optimizations to speed up aggregation and arithmetic.">
+      <title>Optimizing Aggregation</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Database In-Memory Guide">
+      <meta property="og:description" content="Database In-Memory provides optimizations to speed up aggregation and arithmetic.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Database In-Memory Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="database-memory-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-22T09:02:38-07:00">
+      <meta name="dcterms.title" content="Database In-Memory Guide">
+      <meta name="dcterms.dateCopyrighted" content="2016, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96137-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="optimizing-queries-with-join-groups.html" title="Previous" type="text/html">
+      <link rel="next" href="repopulation-and-dml.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="INMEM">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="optimizing-queries-with-join-groups.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="repopulation-and-dml.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Database In-Memory Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="advanced-optimizations-for-in-memory-queries.html" property="item" typeof="WebPage"><span property="name">Optimizing In-Memory Queries</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Optimizing Aggregation</li>
+            </ol>
+            <a id="GUID-A9E6044E-DC81-44C7-8D0C-E77502722388" name="GUID-A9E6044E-DC81-44C7-8D0C-E77502722388"></a>
+            
+            <h2 id="INMEM-GUID-A9E6044E-DC81-44C7-8D0C-E77502722388" class="sect2"><span class="enumeration_chapter">9 </span>Optimizing Aggregation
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Database In-Memory provides optimizations to speed up aggregation and arithmetic.</p>
+               <p>This chapter contains the following topics:</p>
+            </div>
+            <div>
+               <ul class="ullinks">
+                  <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077">Optimizing Joins with In-Memory Aggregation</a><br>Starting with <span>Oracle Database 12c</span> Release 1 (12.1.0.2), <strong class="term">In-Memory Aggregation (IM aggregation)</strong> enables queries to aggregate while scanning.
+                  </li>
+                  <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-4321558D-853B-41A0-9098-4A45204F21BD">Optimizing In-Memory Arithmetic</a><br><span>In-Memory Optimized Arithmetic</span>&nbsp;uses an optimized <code class="codeph">NUMBER</code> format for fast calculations using SIMD hardware.
+                  </li>
+               </ul>
+               <div class="familylinks">
+                  <div class="parentlink">
+                     <p><strong>Parent topic:</strong> <a href="advanced-optimizations-for-in-memory-queries.html#GUID-33034151-7BD7-4186-B336-C693FBB27634" title="This Part explains how to optimize queries using In-Memory Expressions, join groups, and In-Memory aggregation. It also explains how the IM column store repopulates modified data.">Optimizing In-Memory Queries</a></p>
+                  </div>
+               </div>
+            </div>
+            
+            <div class="props_rev_3"><a id="GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" name="GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077"></a><h3 id="INMEM-GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" class="sect3"><span class="enumeration_section">9.1 </span>Optimizing Joins with In-Memory Aggregation
+               </h3>
+               <div>
+                  <p>Starting with <span>Oracle Database 12c</span> Release 1 (12.1.0.2), <strong class="term">In-Memory Aggregation (IM aggregation)</strong> enables queries to aggregate while scanning.
+                  </p>
+                  <p>This section contains the following topics:</p>
+               </div>
+               <div>
+                  <ul class="ullinks">
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-C0C57677-E420-432C-9E1F-271011F0C775">About IM Aggregation</a><br>IM aggregation optimizes query blocks involving aggregation and joins from a large table to multiple small tables.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F">Purpose of IM Aggregation</a><br>IM aggregation preprocesses the small tables to accelerate the per-row work performed on the large table.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED">How IM Aggregation Works</a><br>A typical analytic query distributes rows among processing stages.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-FA953802-7768-49D5-B70C-C057076F1F4A">Controls for IM Aggregation</a><br> IM aggregation is integrated with the optimizer. No new SQL or initialization parameters are required. IM aggregation does not need additional indexes, foreign keys, or dimensions.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-5AB9792F-8030-4D13-BC12-8DB598A15459">In-Memory Aggregation: Example</a><br>In this example, the business question is "How many products were sold in each category in each calendar year?"
+                     </li>
+                  </ul>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-A9E6044E-DC81-44C7-8D0C-E77502722388" title="Database In-Memory provides optimizations to speed up aggregation and arithmetic.">Optimizing Aggregation</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+               <div class="props_rev_3"><a id="GUID-C0C57677-E420-432C-9E1F-271011F0C775" name="GUID-C0C57677-E420-432C-9E1F-271011F0C775"></a><h4 id="INMEM-GUID-C0C57677-E420-432C-9E1F-271011F0C775" class="sect4"><span class="enumeration_section">9.1.1 </span>About IM Aggregation
+                  </h4>
+                  <div>
+                     <p>IM aggregation optimizes query blocks involving aggregation and joins from a large table to multiple small tables.</p>
+                     <p>The <code class="codeph">KEY VECTOR</code> and <code class="codeph">VECTOR GROUP BY</code> operations use efficient arrays for joins and aggregation. The optimizer chooses <code class="codeph">VECTOR GROUP BY</code> for <code class="codeph">GROUP BY</code> operations based on cost. The optimizer does not choose <code class="codeph">VECTOR GROUP BY</code> aggregations for <code class="codeph">GROUP BY ROLLUP</code>, <code class="codeph">GROUPING SETS</code>, or <code class="codeph">CUBE</code> operations.
+                     </p>
+                     <div class="infoboxnote" id="GUID-C0C57677-E420-432C-9E1F-271011F0C775__GUID-7B26F550-A64E-4A4B-AB77-5905B1AC317A">
+                        <p class="notep1">Note:</p>
+                        <p>IM aggregation is also called <span class="italic">vector aggregation</span> and <span class="italic"><code class="codeph">VECTOR GROUP BY</code> aggregation</span>.
+                        </p>
+                     </div>
+                     <p>IM aggregation requires <code class="codeph">INMEMORY_SIZE</code> to be set to a nonzero value. However, IM aggregation does not require that the referenced tables be <span class="italic">populated</span> in the IM column store.
+                     </p>
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-C0C57677-E420-432C-9E1F-271011F0C775__GUID-DDD0D536-D149-4E5D-A47F-D56ACE4E0B97">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><span class="q">"<a href="enabling-the-im-column-store.html#GUID-6A220D69-66BA-4C50-8FAB-D5004C96B215" title="Before tables or materialized views can be populated into the IM column store, you must enable the IM column store for the database.">Enabling the IM Column Store for a Database</a>"</span></p>
+                           </li>
+                           <li>
+                              <p></p>
+                              <p><a href="../dwhsg/sql-aggregation-data-warehouses.html#GUID-E051A04E-0C53-491D-9B16-B71BA00B80C2" target="_blank"><span><cite>Oracle Database Data Warehousing Guide</cite></span></a> to learn more about SQL aggregation
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" title="Starting with Oracle Database 12c Release 1 (12.1.0.2), In-Memory Aggregation (IM aggregation) enables queries to aggregate while scanning.">Optimizing Joins with In-Memory Aggregation</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+               <div class="props_rev_3"><a id="GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F" name="GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F"></a><h4 id="INMEM-GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F" class="sect4"><span class="enumeration_section">9.1.2 </span>Purpose of IM Aggregation
+                  </h4>
+                  <div>
+                     <p>IM aggregation preprocesses the small tables to accelerate the per-row work performed on the large table.</p>
+                     <p>A typical analytic query aggregates from a fact table, and joins it to dimension tables. This type of query scans a large volume of data, with optional filtering, and performs a <code class="codeph">GROUP BY</code> of between 1 and 40 columns. The first aggregation on the fact table processes the most rows. 
+                     </p>
+                     <p>Before <span>Oracle Database 12c</span>, the only <code class="codeph">GROUP BY</code> operations were <code class="codeph">HASH</code> and <code class="codeph">SORT</code>. The <code class="codeph">VECTOR GROUP BY</code> is an additional cost-based transformation that transforms a join between a dimension and fact table into a filter. The database can apply this filter during the fact table scan. The joins use key vectors, which are similar to Bloom filters, and the aggregation uses a <code class="codeph">VECTOR GROUP BY</code>.
+                     </p>
+                     <div class="infoboxnote" id="GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F__GUID-A7D51459-AC5C-4135-A9C7-70E0A8D2F25C">
+                        <p class="notep1">Note:</p>
+                        <p>Although vector transformations are independent of the IM column store, they can be applied very efficiently to In-Memory data through SIMD vector processing. </p>
+                     </div>
+                     <p>IM aggregation enables vector joins and <code class="codeph">GROUP BY</code> operations to occur <span class="italic">simultaneously</span> with the scan of the large table. Thus, these operations aggregate as they scan, and do not need to wait for table scans and join operations to complete. IM aggregation optimizes CPU usage, especially the CPU cache.
+                     </p>
+                     <p>IM aggregation can greatly improve query performance. The database can create a report outline dynamically, and then fill in report details during the scan of the fact table.</p>
+                     <p>This section contains the following topics:</p>
+                  </div>
+                  <div>
+                     <ul class="ullinks">
+                        <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-0E4F30FE-674F-4284-90F7-520ED1DB427E">When IM Aggregation Is Useful</a><br>IM aggregation improves performance of queries that join relatively small tables to a relatively large fact table, and aggregate data in the fact table. This typically occurs in a star or snowflake query.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-278FB268-D892-4556-BF7F-9F3EAD93B6A9">When IM Aggregation Is Not Beneficial</a><br>IM aggregation benefits certain star queries when sufficient system resources exist. Other queries may receive little or no benefit.
+                        </li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F__GUID-A7740FE2-955E-45D9-80A6-065B2CF88E83">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-8DCA5CC5-69F6-4F26-AE94-49810F742310" title="For data that is populated in the IM column store, the database uses SIMD (single instruction, multiple data) vector processing.">CPU Architecture: SIMD Vector Processing</a>"</span></p>
+                           </li>
+                           <li>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=GUID-B2914447-CD6D-411C-8467-6E10E78F3DE0" target="_blank"><span><cite>Oracle Database SQL Tuning Guide</cite></span></a> to learn more about query transformations
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" title="Starting with Oracle Database 12c Release 1 (12.1.0.2), In-Memory Aggregation (IM aggregation) enables queries to aggregate while scanning.">Optimizing Joins with In-Memory Aggregation</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+                  <div class="props_rev_3"><a id="GUID-0E4F30FE-674F-4284-90F7-520ED1DB427E" name="GUID-0E4F30FE-674F-4284-90F7-520ED1DB427E"></a><h5 id="INMEM-GUID-0E4F30FE-674F-4284-90F7-520ED1DB427E" class="sect5"><span class="enumeration_section">9.1.2.1 </span>When IM Aggregation Is Useful
+                     </h5>
+                     <div>
+                        <p>IM aggregation improves performance of queries that join relatively small tables to a relatively large fact table, and aggregate data in the fact table. This typically occurs in a star or snowflake query.</p>
+                        <p>Both row-store tables and tables in the IM column store can benefit from IM aggregation.</p>
+                        <div class="example" id="GUID-0E4F30FE-674F-4284-90F7-520ED1DB427E__GUID-6D6E31CD-017C-4AC1-9420-FAE23E04A7CF">
+                           <p class="titleinexample">Example 9-1 VECTOR GROUP BY</p>
+                           <p>Consider the following query, which performs a join of the <code class="codeph">customers</code> dimension table with the <code class="codeph">sales</code> fact table:
+                           </p><pre class="pre codeblock"><code>SELECT c.customer_id, s.quantity_sold, s.amount_sold 
+FROM   customers c, sales s
+WHERE  c.customer_id = s.customer_id 
+AND    c.country_id = 'FR';
+</code></pre><p>When both tables are populated in the IM column store, the database can use SIMD vector processing to scan the row sets and apply filters. The following figure shows how the query uses vector joins. The optimizer converts the predicate on the <code class="codeph">customers</code> table, <code class="codeph">c.country_id='FR'</code> into a filter on the <code class="codeph">sales</code> fact table. The filter is <code class="codeph">country_id='FR'</code>. Because <code class="codeph">sales</code> is stored in columnar format, the query only needs to scan one column to determine the result.
+                           </p>
+                           <div class="figure" id="GUID-0E4F30FE-674F-4284-90F7-520ED1DB427E__CIHDIHCE">
+                              <p class="titleinfigure">Figure 9-1 Vector Joins Using In-Memory Column Store</p><img src="img/in_mem_joins.gif" alt="Description of Figure 9-1 follows" title="Description of Figure 9-1 follows" longdesc="img_text/in_mem_joins.html"><br><a href="img_text/in_mem_joins.html">Description of "Figure 9-1 Vector Joins Using In-Memory Column Store"</a></div>
+                           <!-- class="figure" -->
+                        </div>
+                        <!-- class="example" -->
+                     </div>
+                     <div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F" title="IM aggregation preprocesses the small tables to accelerate the per-row work performed on the large table.">Purpose of IM Aggregation</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-278FB268-D892-4556-BF7F-9F3EAD93B6A9" name="GUID-278FB268-D892-4556-BF7F-9F3EAD93B6A9"></a><h5 id="INMEM-GUID-278FB268-D892-4556-BF7F-9F3EAD93B6A9" class="sect5"><span class="enumeration_section">9.1.2.2 </span>When IM Aggregation Is Not Beneficial
+                     </h5>
+                     <div>
+                        <p>IM aggregation benefits certain star queries when sufficient system resources exist. Other queries may receive little or no benefit.</p>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-278FB268-D892-4556-BF7F-9F3EAD93B6A9__GUID-47B7E0AA-A956-438E-8583-2B1B932E20C6">Situations Where VECTOR GROUP BY Aggregation Is Not Advantageous</p>
+                           <p>Specifically, <code class="codeph">VECTOR GROUP BY</code> aggregation does not benefit performance in the following scenarios:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Joins are performed between two very large tables.</p>
+                                 <p>By default, the optimizer chooses a <code class="codeph">VECTOR GROUP BY</code> transformation only if a relatively small table is joined to a relatively large table.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Dimensions contain more than 2 billion rows.</p>
+                                 <p>The <code class="codeph">VECTOR GROUP BY</code> transformation is not used if a dimension contains more than 2 billion rows.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>The system does not have sufficient memory.</p>
+                                 <p>Most databases that use the IM column store benefit from IM aggregation.</p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                     <div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-378D5929-2D9E-4211-B9E6-4EFA9CC42B7F" title="IM aggregation preprocesses the small tables to accelerate the per-row work performed on the large table.">Purpose of IM Aggregation</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED" name="GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED"></a><h4 id="INMEM-GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED" class="sect4"><span class="enumeration_section">9.1.3 </span>How IM Aggregation Works
+                  </h4>
+                  <div>
+                     <p>A typical analytic query distributes rows among processing stages.</p>
+                     <p>The stages are as follows:</p>
+                     <ol>
+                        <li>
+                           <p>Filtering tables and producing row sets</p>
+                        </li>
+                        <li>
+                           <p>Joining row sets</p>
+                        </li>
+                        <li>
+                           <p>Aggregating rows</p>
+                        </li>
+                     </ol>
+                     <p>The <code class="codeph">VECTOR GROUP BY</code> transformation combines the work in the different stages, converting joins to filters and aggregating while scanning the fact table.
+                     </p>
+                     <p>The unit of work between stages is called a <a href="glossary.html#GUID-0BD22576-DD42-44E5-B1AD-CFF3B9D74E42"><span class="xrefglossterm">data flow operator (DFO)</span></a>. <code class="codeph">VECTOR GROUP BY</code> aggregation uses a DFO for each dimension to create a key vector structure and temporary table. When aggregating measure columns from the fact table, the database uses this key vector to translate a fact join key to its dense grouping key. The late materialization step joins on the dense grouping keys to the temporary tables.
+                     </p>
+                     <p>This section contains the following topics:</p>
+                  </div>
+                  <div>
+                     <ul class="ullinks">
+                        <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056">When the Optimizer Chooses IM Aggregation</a><br>The optimizer decides whether to use vector transformation based on the size of the key vector (that is, the distinct join keys), the number of distinct grouping keys, and other factors. The optimizer tends to choose this transformation when dimension join keys have low cardinality.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-7A06072C-CC6A-4E47-B122-B9D74B3F2C68">Key Vector</a><br>A <strong class="term">key vector</strong> is a data structure that maps between dense join keys and dense grouping keys.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF">Two Phases of IM Aggregation</a><br>Typically, <code class="codeph">VECTOR GROUP BY</code> aggregation processes each dimension in sequence, and then processes the fact table.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454">IM Aggregation: Scenario</a><br>This section gives a conceptual example of how <code class="codeph">VECTOR</code> <code class="codeph">GROUP BY</code> aggregation works. 
+                        </li>
+                     </ul>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" title="Starting with Oracle Database 12c Release 1 (12.1.0.2), In-Memory Aggregation (IM aggregation) enables queries to aggregate while scanning.">Optimizing Joins with In-Memory Aggregation</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+                  <div class="props_rev_3"><a id="GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056" name="GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056"></a><h5 id="INMEM-GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056" class="sect5"><span class="enumeration_section">9.1.3.1 </span>When the Optimizer Chooses IM Aggregation
+                     </h5>
+                     <div>
+                        <p>The optimizer decides whether to use vector transformation based on the size of the key vector (that is, the distinct join keys), the number of distinct grouping keys, and other factors. The optimizer tends to choose this transformation when dimension join keys have low cardinality.</p>
+                        <p>Oracle Database uses <code class="codeph">VECTOR GROUP BY</code> aggregation to perform data aggregation when the following conditions are met:
+                        </p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>The queries or subqueries aggregate data from a fact table and join the fact table to one or more dimensions.</p>
+                              <p>Multiple fact tables joined to the same dimensions are also supported assuming that these fact tables are connected only through joins to the dimension. In this case, <code class="codeph">VECTOR GROUP BY</code> aggregates fact table separately and then joins the results on the grouping keys.
+                              </p>
+                           </li>
+                           <li>
+                              <p>The dimensions and fact table are connected to each other only through join columns.</p>
+                              <p>Specifically, the query must not have any other predicates that refer to columns across multiple dimensions or from both a dimension and the fact table. If a query performs a join between two or more tables and then joins the result to the fact, then <code class="codeph">VECTOR GROUP BY</code> aggregation treats the multiple dimensions as a single dimension.
+                              </p>
+                           </li>
+                        </ul>
+                        <div class="infoboxnote" id="GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056__GUID-C185D25C-F53D-411C-880C-5681F76C1322">
+                           <p class="notep1">Note:</p>
+                           <p>You can direct the database to use <code class="codeph">VECTOR GROUP BY</code> aggregation for a query by using query block hints or table hints.
+                           </p>
+                        </div>
+                        <p><code class="codeph">VECTOR GROUP BY</code> aggregation does not support the following:
+                        </p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Semi-joins and anti-joins across multiple dimensions or between a dimension and the fact table</p>
+                           </li>
+                           <li>
+                              <p>Equijoins across multiple dimensions</p>
+                           </li>
+                           <li>
+                              <p>Aggregations performed using the <code class="codeph">DISTINCT</code> function
+                              </p>
+                           </li>
+                        </ul>
+                        <div class="infoboxnote" id="GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056__GUID-96D596AA-2156-4F5F-8A83-A831F664FA2A">
+                           <p class="notep1">Note:</p>
+                           <p>Bloom filters and <code class="codeph">VECTOR GROUP BY</code> aggregation and are mutually exclusive. Therefore, if a query uses Bloom filters to join row sets, then <code class="codeph">VECTOR GROUP BY</code> aggregation is not applicable to the processing of this query.
+                           </p>
+                        </div>
+                     </div>
+                     <div>
+                        <div class="infoboxnotealso" id="GUID-C3786D7D-0FD6-44F7-93FD-468F3FA02056__GUID-C058C9AE-1CE2-497A-984F-36AEFF1C23BB">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="../dwhsg/sql-aggregation-data-warehouses.html#GUID-E051A04E-0C53-491D-9B16-B71BA00B80C2" target="_blank"><span><cite>Oracle Database Data Warehousing Guide</cite></span></a> to learn more about SQL aggregation
+                           </p>
+                        </div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED" title="A typical analytic query distributes rows among processing stages.">How IM Aggregation Works</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-7A06072C-CC6A-4E47-B122-B9D74B3F2C68" name="GUID-7A06072C-CC6A-4E47-B122-B9D74B3F2C68"></a><h5 id="INMEM-GUID-7A06072C-CC6A-4E47-B122-B9D74B3F2C68" class="sect5"><span class="enumeration_section">9.1.3.2 </span>Key Vector
+                     </h5>
+                     <div>
+                        <p>A <strong class="term">key vector</strong> is a data structure that maps between dense join keys and dense grouping keys.
+                        </p>
+                        <p>A <a href="glossary.html#GUID-E610A374-ADFA-4BD2-ACD2-A5DBAE073DF1"><span class="xrefglossterm">dense key</span></a> is a numeric key that is stored as a native integer and has a range of values. A <a href="glossary.html#GUID-ED23F776-3D5C-430B-9677-3F575BCE2BA3"><span class="xrefglossterm">dense join key</span></a> represents all join keys whose join columns come from a particular fact table or dimension. A <a href="glossary.html#GUID-23ED77DA-9711-400E-A789-13B5B3FA7C78"><span class="xrefglossterm">dense grouping key</span></a> represents all grouping keys whose grouping columns come from a particular fact table or dimension. A key vector enables fast lookups.
+                        </p>
+                        <div class="example" id="GUID-7A06072C-CC6A-4E47-B122-B9D74B3F2C68__GUID-11AAE4FC-D3EA-4423-BD62-FA8EA689E325">
+                           <p class="titleinexample">Example 9-2 Key Vector</p>
+                           <p>Assume that the <code class="codeph">hr.locations</code> tables has values for <code class="codeph">country_id</code> as shown (only the first few results are shown):
+                           </p><pre class="pre codeblock"><code>SQL&gt; SELECT country_id FROM locations;
+ 
+CO
+--
+IT
+IT
+JP
+JP
+US
+US
+US
+US
+CA
+CA
+CN
+</code></pre><p>A complex analytic query applies the filter <code class="codeph">WHERE country_id='US'</code> to the <code class="codeph">locations</code> table. A key vector for this filter might look like the following one-dimensional array:
+                           </p><pre class="pre codeblock"><code>0
+0
+0
+0
+1
+1
+1
+1
+0
+0
+0
+</code></pre><p>In the preceding array, <code class="codeph">1</code> is the dense grouping key for  <code class="codeph">country_id='US'</code>. The <code class="codeph">0</code> values indicate rows in <code class="codeph">locations</code> that do not match this filter. If a query uses the filter <code class="codeph">WHERE country_id IN ('US','JP')</code>, then the array might look as follows, where <code class="codeph">2</code> is the dense grouping key for <code class="codeph">JP</code> and <code class="codeph">1</code> is the dense grouping key for <code class="codeph">US</code>:
+                           </p><pre class="pre codeblock"><code>0
+0
+2
+2
+1
+1
+1
+1
+0
+0
+0</code></pre></div>
+                        <!-- class="example" -->
+                     </div>
+                     <div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED" title="A typical analytic query distributes rows among processing stages.">How IM Aggregation Works</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF" name="GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF"></a><h5 id="INMEM-GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF" class="sect5"><span class="enumeration_section">9.1.3.3 </span>Two Phases of IM Aggregation
+                     </h5>
+                     <div>
+                        <p>Typically, <code class="codeph">VECTOR GROUP BY</code> aggregation processes each dimension in sequence, and then processes the fact table.
+                        </p>
+                        <p>When performing IM aggregation, the database proceeds as follows:</p>
+                        <ol>
+                           <li>
+                              <p>Process each dimension sequentially as follows:</p>
+                              <ol type="a">
+                                 <li>
+                                    <p>Find the unique dense grouping keys.</p>
+                                 </li>
+                                 <li>
+                                    <p>Create a key vector.</p>
+                                 </li>
+                                 <li>
+                                    <p>Create a temporary table (<code class="codeph">CURSOR DURATION MEMORY</code>).
+                                    </p>
+                                 </li>
+                              </ol>
+                              <p>The following figure illustrates the steps in this phase, beginning with the scan of the dimension table in DFO 0, and ending with the creation of a temporary table. In the simplest form of parallel <code class="codeph">GROUP BY</code> or join processing, the database processes each join or <code class="codeph">GROUP BY</code> in its own DFO.
+                              </p>
+                              <div class="figure" id="GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF__BABICEAH">
+                                 <p class="titleinfigure">Figure 9-2 Phase 1 of In-Memory Aggregation</p><img src="img/tgsql_vm_079.png" alt="Description of Figure 9-2 follows" title="Description of Figure 9-2 follows" longdesc="img_text/tgsql_vm_079.html"><br><a href="img_text/tgsql_vm_079.html">Description of "Figure 9-2 Phase 1 of In-Memory Aggregation"</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Process the fact table.</p>
+                              <ol type="a">
+                                 <li>
+                                    <p>Process all the joins and aggregations using the key vectors created in the preceding phase.</p>
+                                 </li>
+                                 <li>
+                                    <p>Join back the results to each temporary table.</p>
+                                 </li>
+                              </ol>
+                              <p><a href="optimizing-in-memory-aggregation.html#GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF__BABEIJEA">Figure 9-3</a> illustrates phase 2 in a join of the fact table with two dimensions. In DFO 0, the database performs a full scan of the fact table, and then uses the key vectors for each dimension to filter out nonmatching rows. DFO 2 joins the results of DFO 0 with DFO 1. DFO 4 joins the result of DFO 2 with DFO 3.
+                              </p>
+                              <div class="figure" id="GUID-5FE79500-B8C5-4DD7-A2DD-BDA83340B5FF__BABEIJEA">
+                                 <p class="titleinfigure">Figure 9-3 Phase 2 of In-Memory Aggregation</p><img src="img/tgsql_vm_078.png" alt="Description of Figure 9-3 follows" title="Description of Figure 9-3 follows" longdesc="img_text/tgsql_vm_078.html"><br><a href="img_text/tgsql_vm_078.html">Description of "Figure 9-3 Phase 2 of In-Memory Aggregation"</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                        </ol>
+                     </div>
+                     <div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED" title="A typical analytic query distributes rows among processing stages.">How IM Aggregation Works</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="props_rev_3"><a id="GUID-C425C017-8505-4924-A7AE-308C9BAF2454" name="GUID-C425C017-8505-4924-A7AE-308C9BAF2454"></a><h5 id="INMEM-GUID-C425C017-8505-4924-A7AE-308C9BAF2454" class="sect5"><span class="enumeration_section">9.1.3.4 </span>IM Aggregation: Scenario
+                     </h5>
+                     <div>
+                        <p>This section gives a conceptual example of how <code class="codeph">VECTOR</code> <code class="codeph">GROUP BY</code> aggregation works. 
+                        </p>
+                        <div class="infoboxnote" id="GUID-C425C017-8505-4924-A7AE-308C9BAF2454__GUID-2E7C6D38-81E5-4A68-B3EF-6FB8B276CCF3">
+                           <p class="notep1">Note:</p>
+                           <p>The scenario does not use the sample schema tables or show an actual execution plan.</p>
+                        </div>
+                        <p>This section contains the following topics:</p>
+                     </div>
+                     <div>
+                        <ul class="ullinks">
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE">Sample Analytic Query of a Star Schema</a><br>This sample star schema in this scenario contains the <code class="codeph">sales_online</code> fact table and two dimension tables: <code class="codeph">geography</code> and <code class="codeph">products</code>. 
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-C739095A-8522-4748-8988-CE7E594E2B39">Step 1: Key Vector and Temporary Table Creation for geography Dimension</a><br>In the first phase of <code class="codeph">VECTOR GROUP BY</code> aggregation for this query, the database creates a dense grouping key for each city/state combination for cities in the states of Washington or California. 
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94">Step 2: Key Vector and Temporary Table Creation for products Dimension</a><br>The database creates a dense grouping key for each distinct category/subcategory combination of an Acme product.
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-1FC11741-E3D2-458F-9442-96E9247954CC">Step 3: Key Vector Query Transformation</a><br>In this phase, the database processes the fact table. 
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5">Step 4: Row Filtering from Fact Table</a><br>This phase obtains the amount sold for each combination of grouping keys.
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-6A98F912-9D04-4570-99D9-A3D50E171186">Step 5: Aggregation Using an Array</a><br>The database uses a multidimensional array to perform the aggregation. 
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-699A1CCA-8324-4049-AFD3-457ADBF1D81A">Step 6: Join Back to Temporary Tables</a><br>In the final stage of processing, the database uses the dense grouping keys to join back the rows to the temporary tables to obtain the names of the regions and categories. 
+                           </li>
+                        </ul>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-59C1A480-4977-4635-9C5F-FEDD195F44ED" title="A typical analytic query distributes rows among processing stages.">How IM Aggregation Works</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                     <div class="props_rev_3"><a id="GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE" name="GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE"></a><h6 id="INMEM-GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE" class="sect6"><span class="enumeration_section">9.1.3.4.1 </span>Sample Analytic Query of a Star Schema
+                        </h6>
+                        <div>
+                           <p>This sample star schema in this scenario contains the <code class="codeph">sales_online</code> fact table and two dimension tables: <code class="codeph">geography</code> and <code class="codeph">products</code>. 
+                           </p>
+                           <p>Each row in <code class="codeph">geography</code> is uniquely identified by the <code class="codeph">geog_id</code> column. Each row in <code class="codeph">products</code> is uniquely identified by the <code class="codeph">prod_id</code> column. Each row in <code class="codeph">sales_online</code> is uniquely identified by the <code class="codeph">geog_id</code>, <code class="codeph">prod_id</code>, and amount sold.
+                           </p>
+                           <div class="tblformal" id="GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE__GUID-157E6B61-DDCA-405A-B870-34346844295F">
+                              <p class="titleintable">Table 9-1 Sample Rows in geography Table</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Sample Rows in geography Table" summary="Sample rows in geography table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="23%" id="d27228e1982">country</th>
+                                       <th align="left" valign="bottom" width="25%" id="d27228e1985">state</th>
+                                       <th align="left" valign="bottom" width="25%" id="d27228e1988">city</th>
+                                       <th align="left" valign="bottom" width="27%" id="d27228e1991">geog_id</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e1996" headers="d27228e1982 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e1996 d27228e1985 ">
+                                          <p>WA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e1996 d27228e1988 ">
+                                          <p>seattle</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e1996 d27228e1991 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2009" headers="d27228e1982 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e2009 d27228e1985 ">
+                                          <p>WA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e2009 d27228e1988 ">
+                                          <p>spokane</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e2009 d27228e1991 ">
+                                          <p>3</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2022" headers="d27228e1982 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e2022 d27228e1985 ">
+                                          <p>CA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e2022 d27228e1988 ">
+                                          <p>SF</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e2022 d27228e1991 ">
+                                          <p>7</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2035" headers="d27228e1982 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e2035 d27228e1985 ">
+                                          <p>CA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e2035 d27228e1988 ">
+                                          <p>LA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e2035 d27228e1991 ">
+                                          <p>8</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <div class="tblformal" id="GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE__GUID-B70191EF-AA11-498B-BC66-4F97C46F7228">
+                              <p class="titleintable">Table 9-2 Sample Rows in products Table</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Sample Rows in products Table" summary="Sample rows in products table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="23%" id="d27228e2059">manuf</th>
+                                       <th align="left" valign="bottom" width="26%" id="d27228e2062">category</th>
+                                       <th align="left" valign="bottom" width="26%" id="d27228e2065">subcategory</th>
+                                       <th align="left" valign="bottom" width="26%" id="d27228e2068">prod_id</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2073" headers="d27228e2059 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2073 d27228e2062 ">
+                                          <p>sport</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2073 d27228e2065 ">
+                                          <p>bike</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2073 d27228e2068 ">
+                                          <p>4</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2086" headers="d27228e2059 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2086 d27228e2062 ">
+                                          <p>sport</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2086 d27228e2065 ">
+                                          <p>ball</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2086 d27228e2068 ">
+                                          <p>3</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2099" headers="d27228e2059 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2099 d27228e2062 ">
+                                          <p>electric</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2099 d27228e2065 ">
+                                          <p>bulb</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2099 d27228e2068 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="23%" id="d27228e2112" headers="d27228e2059 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2112 d27228e2062 ">
+                                          <p>electric</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2112 d27228e2065 ">
+                                          <p>switch</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e2112 d27228e2068 ">
+                                          <p>8</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <div class="tblformal" id="GUID-DDD8CDE8-85B4-4644-83FC-0E339CBEE8AE__GUID-3176F3DD-6D28-43E4-BA5D-9FCF9BADF8F9">
+                              <p class="titleintable">Table 9-3 Sample Rows in sales_online Table</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Sample Rows in sales_online Table" summary="Sample rows in sales_online table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="33%" id="d27228e2135">prod_id</th>
+                                       <th align="left" valign="bottom" width="34%" id="d27228e2138">geog_id</th>
+                                       <th align="left" valign="bottom" width="33%" id="d27228e2141">amount</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2146" headers="d27228e2135 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2146 d27228e2138 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2146 d27228e2141 ">
+                                          <p>100</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2156" headers="d27228e2135 ">
+                                          <p>9</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2156 d27228e2138 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2156 d27228e2141 ">
+                                          <p>150</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2166" headers="d27228e2135 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2166 d27228e2138 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2166 d27228e2141 ">
+                                          <p>100</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2176" headers="d27228e2135 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2176 d27228e2138 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2176 d27228e2141 ">
+                                          <p>110</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2186" headers="d27228e2135 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2186 d27228e2138 ">
+                                          <p>30</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2186 d27228e2141 ">
+                                          <p>130</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2196" headers="d27228e2135 ">
+                                          <p>6</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2196 d27228e2138 ">
+                                          <p>20</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2196 d27228e2141 ">
+                                          <p>400</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2206" headers="d27228e2135 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2206 d27228e2138 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2206 d27228e2141 ">
+                                          <p>100</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2216" headers="d27228e2135 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2216 d27228e2138 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2216 d27228e2141 ">
+                                          <p>120</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2226" headers="d27228e2135 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2226 d27228e2138 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2226 d27228e2141 ">
+                                          <p>130</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e2236" headers="d27228e2135 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2236 d27228e2138 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e2236 d27228e2141 ">
+                                          <p>200</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <p>A manager asks the business question, "How many Acme products in each subcategory were sold online in Washington, and how many were sold in California?" To answer this question, an analytic query of the <code class="codeph">sales_online</code> fact table joins the <code class="codeph">products</code> and <code class="codeph">geography</code> dimension tables as follows:
+                           </p><pre class="pre codeblock"><code>SELECT p.category, p.subcategory, g.country, g.state, SUM(s.amount)
+FROM   sales_online s, products p, geography g
+WHERE  s.geog_id = g.geog_id 
+AND    s.prod_id = p.prod_id
+AND    g.state IN ('WA','CA')
+AND    p.manuf = 'ACME'
+GROUP BY category, subcategory, country, state</code></pre></div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="props_rev_3"><a id="GUID-C739095A-8522-4748-8988-CE7E594E2B39" name="GUID-C739095A-8522-4748-8988-CE7E594E2B39"></a><h6 id="INMEM-GUID-C739095A-8522-4748-8988-CE7E594E2B39" class="sect6"><span class="enumeration_section">9.1.3.4.2 </span>Step 1: Key Vector and Temporary Table Creation for geography Dimension
+                        </h6>
+                        <div>
+                           <p>In the first phase of <code class="codeph">VECTOR GROUP BY</code> aggregation for this query, the database creates a dense grouping key for each city/state combination for cities in the states of Washington or California. 
+                           </p>
+                           <p>In <a href="optimizing-in-memory-aggregation.html#GUID-C739095A-8522-4748-8988-CE7E594E2B39__BABIFBJI" title="Temporary table for geography">Table 9-6</a>, the <code class="codeph">1</code> is the <code class="codeph">USA,WA</code> grouping key, and the <code class="codeph">2</code> is the <code class="codeph">USA,CA</code> grouping key.
+                           </p>
+                           <div class="tblformal" id="GUID-C739095A-8522-4748-8988-CE7E594E2B39__GUID-599445B0-236C-463C-BCFB-FF5FB67B7C7C">
+                              <p class="titleintable">Table 9-4 Dense Grouping Key for geography</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Dense Grouping Key for geography" summary="Dense grouping key for geography table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="14%" id="d27228e2399">country</th>
+                                       <th align="left" valign="bottom" width="13%" id="d27228e2402">state</th>
+                                       <th align="left" valign="bottom" width="19%" id="d27228e2405">city</th>
+                                       <th align="left" valign="bottom" width="19%" id="d27228e2408">geog_id</th>
+                                       <th align="left" valign="bottom" width="34%" id="d27228e2411">dense_gr_key_geog</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="14%" id="d27228e2416" headers="d27228e2399 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="13%" headers="d27228e2416 d27228e2402 ">
+                                          <p>WA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2416 d27228e2405 ">
+                                          <p>seattle</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2416 d27228e2408 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2416 d27228e2411 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="14%" id="d27228e2432" headers="d27228e2399 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="13%" headers="d27228e2432 d27228e2402 ">
+                                          <p>WA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2432 d27228e2405 ">
+                                          <p>spokane</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2432 d27228e2408 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2432 d27228e2411 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="14%" id="d27228e2448" headers="d27228e2399 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="13%" headers="d27228e2448 d27228e2402 ">
+                                          <p>CA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2448 d27228e2405 ">
+                                          <p>SF</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2448 d27228e2408 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2448 d27228e2411 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="14%" id="d27228e2464" headers="d27228e2399 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="13%" headers="d27228e2464 d27228e2402 ">
+                                          <p>CA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2464 d27228e2405 ">
+                                          <p>LA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="19%" headers="d27228e2464 d27228e2408 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="34%" headers="d27228e2464 d27228e2411 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <p>A key vector for the <code class="codeph">geography</code> table looks like the array represented by the final column in <a href="optimizing-in-memory-aggregation.html#GUID-C739095A-8522-4748-8988-CE7E594E2B39__BABDBJAA" title="XLATE for geography table">Table 9-5</a>. The values are the <code class="codeph">geography</code> dense grouping keys. Thus, the key vector indicates which rows in <code class="codeph">sales_online</code> meet the <code class="codeph">geography.state</code> filter criteria (a sale made in the state of <code class="codeph">CA</code> or <code class="codeph">WA</code>) and which country/state group each row belongs to (either the <code class="codeph">USA,WA</code> group or <code class="codeph">USA,CA</code> group).
+                           </p>
+                           <div class="tblformal" id="GUID-C739095A-8522-4748-8988-CE7E594E2B39__BABDBJAA">
+                              <p class="titleintable">Table 9-5 Online Sales</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Online Sales" summary="XLATE for geography table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="20%" id="d27228e2523">prod_id</th>
+                                       <th align="left" valign="bottom" width="22%" id="d27228e2526">geog_id</th>
+                                       <th align="left" valign="bottom" width="22%" id="d27228e2529">amount</th>
+                                       <th align="left" valign="bottom" width="35%" id="d27228e2532">key vector for geography</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2537" headers="d27228e2523 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2537 d27228e2526 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2537 d27228e2529 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2537 d27228e2532 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2550" headers="d27228e2523 ">
+                                          <p>9</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2550 d27228e2526 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2550 d27228e2529 ">
+                                          <p>150</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2550 d27228e2532 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2563" headers="d27228e2523 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2563 d27228e2526 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2563 d27228e2529 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2563 d27228e2532 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2576" headers="d27228e2523 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2576 d27228e2526 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2576 d27228e2529 ">
+                                          <p>110</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2576 d27228e2532 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2589" headers="d27228e2523 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2589 d27228e2526 ">
+                                          <p>30</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2589 d27228e2529 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2589 d27228e2532 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2602" headers="d27228e2523 ">
+                                          <p>6</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2602 d27228e2526 ">
+                                          <p>20</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2602 d27228e2529 ">
+                                          <p>400</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2602 d27228e2532 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2615" headers="d27228e2523 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2615 d27228e2526 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2615 d27228e2529 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2615 d27228e2532 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2628" headers="d27228e2523 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2628 d27228e2526 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2628 d27228e2529 ">
+                                          <p>120</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2628 d27228e2532 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2641" headers="d27228e2523 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2641 d27228e2526 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2641 d27228e2529 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2641 d27228e2532 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2654" headers="d27228e2523 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2654 d27228e2526 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2654 d27228e2529 ">
+                                          <p>200</p>
+                                       </td>
+                                       <td align="left" valign="top" width="35%" headers="d27228e2654 d27228e2532 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <p>Internally, the database creates a temporary table similar to the following:</p><pre class="oac_no_warn" dir="ltr">CREATE TEMPORARY TABLE tt_geography AS
+SELECT MAX(country), MAX(state), KEY_VECTOR_CREATE(...) dense_gr_key_geog
+FROM   geography
+WHERE  state IN ('WA','CA')
+GROUP BY country, state
+</pre><p><a href="optimizing-in-memory-aggregation.html#GUID-C739095A-8522-4748-8988-CE7E594E2B39__BABIFBJI" title="Temporary table for geography">Table 9-6</a> shows rows in the <code class="codeph">tt_geography</code> temporary table. The dense grouping key for the <code class="codeph">USA,WA</code> combination is <code class="codeph">1</code>, and the dense grouping key for the <code class="codeph">USA,CA</code> combination is <code class="codeph">2</code>.
+                           </p>
+                           <div class="tblformal" id="GUID-C739095A-8522-4748-8988-CE7E594E2B39__BABIFBJI">
+                              <p class="titleintable">Table 9-6 tt_geography</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="tt_geography" summary="Temporary table for geography" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="20%" id="d27228e2702">country</th>
+                                       <th align="left" valign="bottom" width="20%" id="d27228e2705">state</th>
+                                       <th align="left" valign="bottom" width="60%" id="d27228e2708">dense_gr_key_geog</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2713" headers="d27228e2702 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d27228e2713 d27228e2705 ">
+                                          <p>WA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="60%" headers="d27228e2713 d27228e2708 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d27228e2723" headers="d27228e2702 ">
+                                          <p>USA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d27228e2723 d27228e2705 ">
+                                          <p>CA</p>
+                                       </td>
+                                       <td align="left" valign="top" width="60%" headers="d27228e2723 d27228e2708 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                        </div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="props_rev_3"><a id="GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94" name="GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94"></a><h6 id="INMEM-GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94" class="sect6"><span class="enumeration_section">9.1.3.4.3 </span>Step 2: Key Vector and Temporary Table Creation for products Dimension
+                        </h6>
+                        <div>
+                           <p>The database creates a dense grouping key for each distinct category/subcategory combination of an Acme product.</p>
+                           <p>For example, in <a href="optimizing-in-memory-aggregation.html#GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94__BABHFGEJ" title="Sample rows in products table">Table 9-7</a>, the <code class="codeph">4</code> is the dense grouping key for an Acme electric switch.
+                           </p>
+                           <div class="tblformal" id="GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94__BABHFGEJ">
+                              <p class="titleintable">Table 9-7 Sample Rows in products Table</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Sample Rows in products Table" summary="Sample rows in products table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="16%" id="d27228e2860">manuf</th>
+                                       <th align="left" valign="bottom" width="18%" id="d27228e2863">category</th>
+                                       <th align="left" valign="bottom" width="18%" id="d27228e2866">subcategory</th>
+                                       <th align="left" valign="bottom" width="17%" id="d27228e2869">prod_id</th>
+                                       <th align="left" valign="bottom" width="31%" id="d27228e2872">dense_gr_key_prod</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e2877" headers="d27228e2860 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2877 d27228e2863 ">
+                                          <p>sport</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2877 d27228e2866 ">
+                                          <p>bike</p>
+                                       </td>
+                                       <td align="left" valign="top" width="17%" headers="d27228e2877 d27228e2869 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="31%" headers="d27228e2877 d27228e2872 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e2893" headers="d27228e2860 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2893 d27228e2863 ">
+                                          <p>sport</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2893 d27228e2866 ">
+                                          <p>ball</p>
+                                       </td>
+                                       <td align="left" valign="top" width="17%" headers="d27228e2893 d27228e2869 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="31%" headers="d27228e2893 d27228e2872 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e2909" headers="d27228e2860 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2909 d27228e2863 ">
+                                          <p>electric</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2909 d27228e2866 ">
+                                          <p>bulb</p>
+                                       </td>
+                                       <td align="left" valign="top" width="17%" headers="d27228e2909 d27228e2869 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="31%" headers="d27228e2909 d27228e2872 ">
+                                          <p>3</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e2925" headers="d27228e2860 ">
+                                          <p>Acme</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2925 d27228e2863 ">
+                                          <p>electric</p>
+                                       </td>
+                                       <td align="left" valign="top" width="18%" headers="d27228e2925 d27228e2866 ">
+                                          <p>switch</p>
+                                       </td>
+                                       <td align="left" valign="top" width="17%" headers="d27228e2925 d27228e2869 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="31%" headers="d27228e2925 d27228e2872 ">
+                                          <p>4</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <p>A key vector for the <code class="codeph">products</code> table might look like the array represented by the final column in <a href="optimizing-in-memory-aggregation.html#GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94__BABEBAFF" title="XLATE for products">Table 9-8</a>. The values represent the <code class="codeph">products</code> dense grouping key. For example, the <code class="codeph">4</code> represents the online sale of an Acme electric switch. Thus, the key vector indicates which rows in <code class="codeph">sales_online</code> meet the <code class="codeph">products</code> filter criteria (a sale of an Acme product).
+                           </p>
+                           <div class="tblformal" id="GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94__BABEBAFF">
+                              <p class="titleintable">Table 9-8 Key Vector</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Key Vector" summary="XLATE for products" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="22%" id="d27228e2975">prod_id</th>
+                                       <th align="left" valign="bottom" width="22%" id="d27228e2978">geog_id</th>
+                                       <th align="left" valign="bottom" width="28%" id="d27228e2981">amount</th>
+                                       <th align="left" valign="bottom" width="28%" id="d27228e2984">key vector for products</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e2989" headers="d27228e2975 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e2989 d27228e2978 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e2989 d27228e2981 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e2989 d27228e2984 ">
+                                          <p>4</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3002" headers="d27228e2975 ">
+                                          <p>9</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3002 d27228e2978 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3002 d27228e2981 ">
+                                          <p>150</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3002 d27228e2984 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3015" headers="d27228e2975 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3015 d27228e2978 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3015 d27228e2981 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3015 d27228e2984 ">
+                                          <p>4</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3028" headers="d27228e2975 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3028 d27228e2978 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3028 d27228e2981 ">
+                                          <p>110</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3028 d27228e2984 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3041" headers="d27228e2975 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3041 d27228e2978 ">
+                                          <p>30</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3041 d27228e2981 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3041 d27228e2984 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3054" headers="d27228e2975 ">
+                                          <p>6</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3054 d27228e2978 ">
+                                          <p>20</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3054 d27228e2981 ">
+                                          <p>400</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3054 d27228e2984 ">
+                                          <p>0</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3067" headers="d27228e2975 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3067 d27228e2978 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3067 d27228e2981 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3067 d27228e2984 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3080" headers="d27228e2975 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3080 d27228e2978 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3080 d27228e2981 ">
+                                          <p>120</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3080 d27228e2984 ">
+                                          <p>3</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3093" headers="d27228e2975 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3093 d27228e2978 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3093 d27228e2981 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3093 d27228e2984 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="22%" id="d27228e3106" headers="d27228e2975 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="22%" headers="d27228e3106 d27228e2978 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3106 d27228e2981 ">
+                                          <p>200</p>
+                                       </td>
+                                       <td align="left" valign="top" width="28%" headers="d27228e3106 d27228e2984 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <p>Internally, the database creates a temporary table similar to the following:</p><pre class="oac_no_warn" dir="ltr">CREATE TEMPORTARY TABLE tt_products AS
+SELECT MAX(category), MAX(subcategory), KEY_VECTOR_CREATE(...) dense_gr_key_prod
+FROM   products
+WHERE  manuf = 'ACME'
+GROUP BY category, subcategory
+</pre><p><a href="optimizing-in-memory-aggregation.html#GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94__BABCAGGI" title="Temporary table for products">Table 9-9</a> shows rows in this temporary table.
+                           </p>
+                           <div class="tblformal" id="GUID-E22A075D-D027-4EEE-B670-B2D2DF50ED94__BABCAGGI">
+                              <p class="titleintable">Table 9-9 tt_products</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="tt_products" summary="Temporary table for products" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="33%" id="d27228e3139">category</th>
+                                       <th align="left" valign="bottom" width="33%" id="d27228e3142">subcategory</th>
+                                       <th align="left" valign="bottom" width="33%" id="d27228e3145">dense_gr_key_prod</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e3150" headers="d27228e3139 ">
+                                          <p>sport</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3150 d27228e3142 ">
+                                          <p>bike</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3150 d27228e3145 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e3160" headers="d27228e3139 ">
+                                          <p>sport</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3160 d27228e3142 ">
+                                          <p>ball</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3160 d27228e3145 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e3170" headers="d27228e3139 ">
+                                          <p>electric</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3170 d27228e3142 ">
+                                          <p>bulb</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3170 d27228e3145 ">
+                                          <p>3</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="33%" id="d27228e3180" headers="d27228e3139 ">
+                                          <p>electric</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3180 d27228e3142 ">
+                                          <p>switch</p>
+                                       </td>
+                                       <td align="left" valign="top" width="33%" headers="d27228e3180 d27228e3145 ">
+                                          <p>4</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                        </div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="props_rev_3"><a id="GUID-1FC11741-E3D2-458F-9442-96E9247954CC" name="GUID-1FC11741-E3D2-458F-9442-96E9247954CC"></a><h6 id="INMEM-GUID-1FC11741-E3D2-458F-9442-96E9247954CC" class="sect6"><span class="enumeration_section">9.1.3.4.4 </span>Step 3: Key Vector Query Transformation
+                        </h6>
+                        <div>
+                           <p>In this phase, the database processes the fact table. </p>
+                           <p>The optimizer transforms the original query into the following equivalent query, which accesses the key vectors: </p><pre class="pre codeblock"><code>SELECT KEY_VECTOR_PROD(prod_id),
+       KEY_VECTOR_GEOG(geog_id),
+       SUM(amount)
+FROM   sales_online
+WHERE  KEY_VECTOR_PROD_FILTER(prod_id) IS NOT NULL 
+AND    KEY_VECTOR_GEOG_FILTER(geog_id) IS NOT NULL 
+GROUP BY KEY_VECTOR_PROD(prod_id), KEY_VECTOR_GEOG(geog_id)
+</code></pre><p>The preceding transformation is not an exact rendition of the internal SQL, which is much more complicated, but a conceptual representation designed to illustrate the basic concept.</p>
+                        </div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="props_rev_3"><a id="GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5" name="GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5"></a><h6 id="INMEM-GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5" class="sect6"><span class="enumeration_section">9.1.3.4.5 </span>Step 4: Row Filtering from Fact Table
+                        </h6>
+                        <div>
+                           <p>This phase obtains the amount sold for each combination of grouping keys.</p>
+                           <p>The database uses the key vectors to filter out unwanted rows from the fact table. In <a href="optimizing-in-memory-aggregation.html#GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5__BABBFFGG" title="Dense grouping keys for sales_online">Table 9-10</a>, the first three columns represent the <code class="codeph">sales_online</code> table. The last two columns provide the dense grouping keys for the <code class="codeph">geography</code> and <code class="codeph">products</code> tables.
+                           </p>
+                           <div class="tblformal" id="GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5__BABBFFGG">
+                              <p class="titleintable">Table 9-10 Dense Grouping Keys for the sales_online Table</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Dense Grouping Keys for the sales_online Table" summary="Dense grouping keys for sales_online" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="16%" id="d27228e3435">prod_id</th>
+                                       <th align="left" valign="bottom" width="16%" id="d27228e3438">geog_id</th>
+                                       <th align="left" valign="bottom" width="16%" id="d27228e3441">amount</th>
+                                       <th align="left" valign="bottom" width="26%" id="d27228e3444">dense_gr_key_prod</th>
+                                       <th align="left" valign="bottom" width="26%" id="d27228e3447">dense_gr_key_geog</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3452" headers="d27228e3435 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3452 d27228e3438 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3452 d27228e3441 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3452 d27228e3444 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3452 d27228e3447 ">
+                                          <p></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3467" headers="d27228e3435 ">
+                                          <p>9</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3467 d27228e3438 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3467 d27228e3441 ">
+                                          <p>150</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3467 d27228e3444 ">
+                                          <p></p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3467 d27228e3447 ">
+                                          <p></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3481" headers="d27228e3435 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3481 d27228e3438 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3481 d27228e3441 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3481 d27228e3444 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3481 d27228e3447 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3497" headers="d27228e3435 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3497 d27228e3438 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3497 d27228e3441 ">
+                                          <p>110</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3497 d27228e3444 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3497 d27228e3447 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3513" headers="d27228e3435 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3513 d27228e3438 ">
+                                          <p>30</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3513 d27228e3441 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3513 d27228e3444 ">
+                                          <p></p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3513 d27228e3447 ">
+                                          <p></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3527" headers="d27228e3435 ">
+                                          <p>6</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3527 d27228e3438 ">
+                                          <p>20</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3527 d27228e3441 ">
+                                          <p>400</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3527 d27228e3444 ">
+                                          <p></p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3527 d27228e3447 ">
+                                          <p></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3541" headers="d27228e3435 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3541 d27228e3438 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3541 d27228e3441 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3541 d27228e3444 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3541 d27228e3447 ">
+                                          <p></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3556" headers="d27228e3435 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3556 d27228e3438 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3556 d27228e3441 ">
+                                          <p>120</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3556 d27228e3444 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3556 d27228e3447 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3572" headers="d27228e3435 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3572 d27228e3438 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3572 d27228e3441 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3572 d27228e3444 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3572 d27228e3447 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="16%" id="d27228e3588" headers="d27228e3435 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3588 d27228e3438 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3588 d27228e3441 ">
+                                          <p>200</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3588 d27228e3444 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="26%" headers="d27228e3588 d27228e3447 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                           <p>As shown in <a href="optimizing-in-memory-aggregation.html#GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5__BABEHIAG" title="Filtered rows from sales_online table">Table 9-11</a>, the database retrieves only those rows from <code class="codeph">sales_online</code> with non-null values for both dense grouping keys, indicating rows that satisfy all the filtering criteria.
+                           </p>
+                           <div class="tblformal" id="GUID-F41F2AD3-3AA9-4702-8E90-3EAB8E3453E5__BABEHIAG">
+                              <p class="titleintable">Table 9-11 Filtered Rows from sales_online Table</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Filtered Rows from sales_online Table" summary="Filtered rows from sales_online table" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="17%" id="d27228e3626">geog_id</th>
+                                       <th align="left" valign="bottom" width="15%" id="d27228e3629">prod_id</th>
+                                       <th align="left" valign="bottom" width="16%" id="d27228e3632">amount</th>
+                                       <th align="left" valign="bottom" width="27%" id="d27228e3635">dense_gr_key_prod</th>
+                                       <th align="left" valign="bottom" width="25%" id="d27228e3638">dense_gr_key_geog</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="17%" id="d27228e3643" headers="d27228e3626 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="15%" headers="d27228e3643 d27228e3629 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3643 d27228e3632 ">
+                                          <p>100</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e3643 d27228e3635 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e3643 d27228e3638 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="17%" id="d27228e3659" headers="d27228e3626 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="15%" headers="d27228e3659 d27228e3629 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3659 d27228e3632 ">
+                                          <p>110</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e3659 d27228e3635 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e3659 d27228e3638 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="17%" id="d27228e3675" headers="d27228e3626 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="15%" headers="d27228e3675 d27228e3629 ">
+                                          <p>4</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3675 d27228e3632 ">
+                                          <p>200</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e3675 d27228e3635 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e3675 d27228e3638 ">
+                                          <p>1</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="17%" id="d27228e3691" headers="d27228e3626 ">
+                                          <p>7</p>
+                                       </td>
+                                       <td align="left" valign="top" width="15%" headers="d27228e3691 d27228e3629 ">
+                                          <p>1</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3691 d27228e3632 ">
+                                          <p>120</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e3691 d27228e3635 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e3691 d27228e3638 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="17%" id="d27228e3707" headers="d27228e3626 ">
+                                          <p>8</p>
+                                       </td>
+                                       <td align="left" valign="top" width="15%" headers="d27228e3707 d27228e3629 ">
+                                          <p>3</p>
+                                       </td>
+                                       <td align="left" valign="top" width="16%" headers="d27228e3707 d27228e3632 ">
+                                          <p>130</p>
+                                       </td>
+                                       <td align="left" valign="top" width="27%" headers="d27228e3707 d27228e3635 ">
+                                          <p>2</p>
+                                       </td>
+                                       <td align="left" valign="top" width="25%" headers="d27228e3707 d27228e3638 ">
+                                          <p>2</p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                        </div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="props_rev_3"><a id="GUID-6A98F912-9D04-4570-99D9-A3D50E171186" name="GUID-6A98F912-9D04-4570-99D9-A3D50E171186"></a><h6 id="INMEM-GUID-6A98F912-9D04-4570-99D9-A3D50E171186" class="sect6"><span class="enumeration_section">9.1.3.4.6 </span>Step 5: Aggregation Using an Array
+                        </h6>
+                        <div>
+                           <p>The database uses a multidimensional array to perform the aggregation. </p>
+                           <p>In <a href="optimizing-in-memory-aggregation.html#GUID-6A98F912-9D04-4570-99D9-A3D50E171186__BABHIGIA" title="Shows an aggregation array. The first column heading is “dgkp/dgkg.” The second column heading is “1,” and the second column heading is “2.”">Table 9-12</a>, the <code class="codeph">geography</code> grouping keys are horizontal, and the <code class="codeph">products</code> grouping keys are vertical. The database adds the values in the intersection of each dense grouping key combination. For example, for the intersection of the <code class="codeph">geography</code> grouping key <code class="codeph">1</code> and the <code class="codeph">products</code> grouping key <code class="codeph">1</code>, the sum of <code class="codeph">110</code> and <code class="codeph">200</code> is <code class="codeph">310</code>.
+                           </p>
+                           <div class="tblformal" id="GUID-6A98F912-9D04-4570-99D9-A3D50E171186__BABHIGIA">
+                              <p class="titleintable">Table 9-12 Aggregation Array</p>
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="Aggregation Array" summary="Shows an aggregation array. The first column heading is “dgkp/dgkg.” The second column heading is “1,” and the second column heading is “2.”" width="100%" frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="24%" id="d27228e3873"> dgkp/dgkg</th>
+                                       <th align="left" valign="bottom" width="38%" id="d27228e3876">1</th>
+                                       <th align="left" valign="bottom" width="38%" id="d27228e3879">2</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="24%" id="d27228e3884" headers="d27228e3873 ">
+                                          <p><span class="bold">1</span></p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3884 d27228e3876 ">
+                                          <p><code class="codeph">110,200</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3884 d27228e3879 ">
+                                          <p> </p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="24%" id="d27228e3896" headers="d27228e3873 ">
+                                          <p><span class="bold">2</span></p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3896 d27228e3876 ">
+                                          <p> </p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3896 d27228e3879 ">
+                                          <p><code class="codeph">130</code></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="24%" id="d27228e3908" headers="d27228e3873 ">
+                                          <p><span class="bold">3</span></p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3908 d27228e3876 ">
+                                          <p> </p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3908 d27228e3879 ">
+                                          <p><code class="codeph">120</code></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="24%" id="d27228e3920" headers="d27228e3873 ">
+                                          <p><span class="bold">4</span></p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3920 d27228e3876 ">
+                                          <p><code class="codeph">100</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="38%" headers="d27228e3920 d27228e3879 ">
+                                          <p></p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                        </div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="props_rev_3"><a id="GUID-699A1CCA-8324-4049-AFD3-457ADBF1D81A" name="GUID-699A1CCA-8324-4049-AFD3-457ADBF1D81A"></a><h6 id="INMEM-GUID-699A1CCA-8324-4049-AFD3-457ADBF1D81A" class="sect6"><span class="enumeration_section">9.1.3.4.7 </span>Step 6: Join Back to Temporary Tables
+                        </h6>
+                        <div>
+                           <p>In the final stage of processing, the database uses the dense grouping keys to join back the rows to the temporary tables to obtain the names of the regions and categories. </p>
+                           <p>The results look as follows:</p><pre class="pre codeblock"><code>CATEGORY SUBCATEGORY COUNTRY STATE AMOUNT
+-------- ----------- ------- ----- ------
+electric bulb        USA     CA    120
+electric switch      USA     WA    100
+sport    ball        USA     CA    130
+sport    bike        USA     WA    310 </code></pre></div>
+                        <div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-C425C017-8505-4924-A7AE-308C9BAF2454" title="This section gives a conceptual example of how VECTOR GROUP BY aggregation works.">IM Aggregation: Scenario</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-FA953802-7768-49D5-B70C-C057076F1F4A" name="GUID-FA953802-7768-49D5-B70C-C057076F1F4A"></a><h4 id="INMEM-GUID-FA953802-7768-49D5-B70C-C057076F1F4A" class="sect4"><span class="enumeration_section">9.1.4 </span>Controls for IM Aggregation
+                  </h4>
+                  <div>
+                     <p> IM aggregation is integrated with the optimizer. No new SQL or initialization parameters are required. IM aggregation does not need additional indexes, foreign keys, or dimensions.</p>
+                     <p>You can use the following pairs of hints:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Query block hints</p>
+                           <p><code class="codeph">VECTOR_TRANSFORM</code> enables the vector transformation on the specified query block, regardless of costing. <code class="codeph">NO_VECTOR_TRANSFORM</code> disables the vector transformation from engaging on the specified query block.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Table hints</p>
+                           <p>You can use the following pairs of hints:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">VECTOR_TRANSFORM_FACT</code> includes the specified <code class="codeph">FROM</code> expressions in the fact table generated by the vector transformation. <code class="codeph">NO_VECTOR_TRANSFORM_FACT</code> excludes the specified <code class="codeph">FROM</code> expressions from the fact table generated by the vector transformation.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">VECTOR_TRANSFORM_DIMS</code> includes the specified <code class="codeph">FROM</code> expressions in enabled dimensions generated by the vector transformation. <code class="codeph">NO_VECTOR_TRANSFORM_DIMS</code> excludes the specified from expressions from enabled dimensions generated by the vector transformation.
+                                 </p>
+                              </li>
+                           </ul>
+                        </li>
+                     </ul>
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-FA953802-7768-49D5-B70C-C057076F1F4A__GUID-8C17C610-DCF3-4C3F-A54F-0A3842FB08C6">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=SQLRF00219" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> to learn more about the <code class="codeph">VECTOR_TRANSFORM_FACT</code> and <code class="codeph">VECTOR_TRANSFORM_DIMS</code> hints
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" title="Starting with Oracle Database 12c Release 1 (12.1.0.2), In-Memory Aggregation (IM aggregation) enables queries to aggregate while scanning.">Optimizing Joins with In-Memory Aggregation</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+               <div class="props_rev_3"><a id="GUID-5AB9792F-8030-4D13-BC12-8DB598A15459" name="GUID-5AB9792F-8030-4D13-BC12-8DB598A15459"></a><h4 id="INMEM-GUID-5AB9792F-8030-4D13-BC12-8DB598A15459" class="sect4"><span class="enumeration_section">9.1.5 </span>In-Memory Aggregation: Example
+                  </h4>
+                  <div>
+                     <p>In this example, the business question is "How many products were sold in each category in each calendar year?"</p>
+                     <div class="section">
+                        <p>You write the following query, which joins the <code class="codeph">times</code>, <code class="codeph">products</code>, and <code class="codeph">sales</code> tables:
+                        </p><pre class="pre codeblock"><code>SELECT t.calendar_year, p.prod_category, SUM(quantity_sold)
+FROM   times t, products p, sales s
+WHERE  t.time_id = s.time_id
+AND    p.prod_id = s.prod_id
+GROUP BY t.calendar_year, p.prod_category;
+</code></pre></div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-5AB9792F-8030-4D13-BC12-8DB598A15459__BABEDJED">
+                        <p class="titleinexample">Example 9-3 VECTOR GROUP BY Execution Plan</p>       
+                        <p>The following example shows the execution plan contained in the current cursor. Steps 4 and 8 show the creation of the key vectors for the dimension tables <code class="codeph">times</code> and <code class="codeph">products</code>. Steps 17 and 18 show the use of the previously created key vectors. Step 15 shows the <code class="codeph">VECTOR GROUP BY</code> operation.
+                        </p><pre class="pre codeblock"><code>----------------------------------------------------------
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 2093829546
+
+-------------------------------------------------------------------------------------------------------------------
+|Id| Operation                               | Name                   |Rows|Bytes|Cost(%CPU)|Time | Pstart| Pstop |
+-------------------------------------------------------------------------------------------------------------------
+|0 |SELECT STATEMENT                         |                        | 18 | 1116|302(90)|00:00:01|       |       |
+|1 | TEMP TABLE TRANSFORMATION               |                        |    |     |       |        |       |       |
+|2 |  LOAD AS SELECT (CURSOR DURATION MEMORY)|SYS_TEMP_0FD9D6608_F6A13|    |     |       |        |       |       |
+|3 |   HASH GROUP BY                         |                        |  5 |  80 | 3 (67)|00:00:01|       |       |
+|4 |    KEY VECTOR CREATE BUFFERED           | :KV0000                |  5 |  80 | 2 (50)|00:00:01|       |       |
+|5 |     TABLE ACCESS INMEMORY FULL          | TIMES                  |1826|21912| 2 (50)|00:00:01|       |       |
+|6 |  LOAD AS SELECT (CURSOR DURATION MEMORY)|SYS_TEMP_0FD9D6607_F6A13|    |     |       |        |       |       |
+|7 |   HASH GROUP BY                         |                        |  5 | 125 | 2 (50)|00:00:01|       |       |
+|8 |    KEY VECTOR CREATE BUFFERED           | :KV0001                |  5 | 125 | 1  (0)|00:00:01|       |       |
+|9 |     TABLE ACCESS INMEMORY FULL          | PRODUCTS               | 72 |1512 | 1  (0)|00:00:01|       |       |
+|10|  HASH GROUP BY                          |                        | 18 |1116 |297(91)|00:00:01|       |       |
+|11|   HASH JOIN                             |                        | 18 |1116 |296(91)|00:00:01|       |       |
+|12|    HASH JOIN                            |                        | 18 | 666 |294(91)|00:00:01|       |       |
+|13|     TABLE ACCESS FULL                   |SYS_TEMP_0FD9D6608_F6A13|  5 |  80 | 2  (0)|00:00:01|       |       |
+|14|     VIEW                                | VW_VT_0737CF93         | 18 | 378 |291(92)|00:00:01|       |       |
+|15|      VECTOR GROUP BY                    |                        | 18 | 414 |291(92)|00:00:01|       |       |
+|16|       HASH GROUP BY                     |                        | 18 | 414 |291(92)|00:00:01|       |       |
+|17|        KEY VECTOR USE                   | :KV0000                |918K| 20M |285(92)|00:00:01|       |       |
+|18|         KEY VECTOR USE                  | :KV0001                |918K| 16M |284(92)|00:00:01|       |       |
+|19|          PARTITION RANGE ITERATOR       |                        |918K| 13M |282(92)|00:00:01|:KV0000|:KV0000|
+|20|           TABLE ACCESS INMEMORY FULL    | SALES                  |918K| 13M |282(92)|00:00:01|:KV0000|:KV0000|
+|21|    TABLE ACCESS FULL                    |SYS_TEMP_0FD9D6607_F6A13|  5 | 125 | 2  (0)|00:00:01|       |       |
+-------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+  11 - access("ITEM_9"=INTERNAL_FUNCTION("C0"))
+  12 - access("ITEM_8"=INTERNAL_FUNCTION("C0"))
+  20 - inmemory(SYS_OP_KEY_VECTOR_FILTER("S"."PROD_ID",:KV0001) AND SYS_OP_KEY_VECTOR_FILTER("S"."TIME_ID",:KV0000))
+       filter(SYS_OP_KEY_VECTOR_FILTER("S"."PROD_ID",:KV0001) AND SYS_OP_KEY_VECTOR_FILTER("S"."TIME_ID",:KV0000))
+
+Note
+-----
+   - vector transformation used for this statement
+
+
+Statistics
+----------------------------------------------------------
+         26  recursive calls
+         13  db block gets
+        124  consistent gets
+         67  physical reads
+       2200  redo size
+       1454  bytes sent via SQL*Net to client
+        634  bytes received via SQL*Net from client
+          3  SQL*Net roundtrips to/from client
+          2  sorts (memory)
+          0  sorts (disk)
+         20  rows processed</code></pre>     </div>
+                     <!-- class="example" -->
+                  </div>
+                  <div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-2C4FA6C6-3DA8-4CEA-9EF0-294396D15077" title="Starting with Oracle Database 12c Release 1 (12.1.0.2), In-Memory Aggregation (IM aggregation) enables queries to aggregate while scanning.">Optimizing Joins with In-Memory Aggregation</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+            </div>
+            <div class="sect2"><a id="GUID-4321558D-853B-41A0-9098-4A45204F21BD" name="GUID-4321558D-853B-41A0-9098-4A45204F21BD"></a><h3 id="INMEM-GUID-4321558D-853B-41A0-9098-4A45204F21BD" class="sect3"><span class="enumeration_section">9.2 </span>Optimizing In-Memory Arithmetic
+               </h3>
+               <div>
+                  <p><span>In-Memory Optimized Arithmetic</span>&nbsp;uses an optimized <code class="codeph">NUMBER</code> format for fast calculations using SIMD hardware.
+                  </p>
+                  <p>This section contains the following topics:</p>
+               </div>
+               <div>
+                  <ul class="ullinks">
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-1B4840FF-8917-4616-9768-82D39BB9D10F">About In-Memory Optimized Arithmetic</a><br>The In-Memory optimized <code class="codeph">NUMBER</code> format enables fast calculations using SIMD hardware.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-aggregation.html#GUID-892AB0EB-2960-4D51-A2C1-9D9F291BAEFD">Enabling and Disabling In-Memory Optimized Arithmetic</a><br>Control the feature by setting the initialization parameter <code class="codeph">INMEMORY_OPTIMIZED_ARITHMETIC</code> to <code class="codeph">DISABLE</code> (default) or <code class="codeph">ENABLE</code>. 
+                     </li>
+                  </ul>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-A9E6044E-DC81-44C7-8D0C-E77502722388" title="Database In-Memory provides optimizations to speed up aggregation and arithmetic.">Optimizing Aggregation</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+               <div class="sect3"><a id="GUID-1B4840FF-8917-4616-9768-82D39BB9D10F" name="GUID-1B4840FF-8917-4616-9768-82D39BB9D10F"></a><h4 id="INMEM-GUID-1B4840FF-8917-4616-9768-82D39BB9D10F" class="sect4"><span class="enumeration_section">9.2.1 </span>About <span>In-Memory Optimized Arithmetic</span></h4>
+                  <div>
+                     <p>The In-Memory optimized <code class="codeph">NUMBER</code> format enables fast calculations using SIMD hardware.
+                     </p>
+                     <p><span id="GUID-1B4840FF-8917-4616-9768-82D39BB9D10F__d5e1600">For tables compressed with <code class="codeph">QUERY LOW</code>, <code class="codeph">NUMBER</code> columns are encoded using an optimized format that enables native calculations in hardware.</span> <span id="GUID-1B4840FF-8917-4616-9768-82D39BB9D10F__d5e1609">SIMD vector processing enables simple aggregations, <code class="codeph">GROUP BY</code> aggregations, and arithmetic operations to benefit significantly. The performance improvement depends on the amount of time the aggregation spends on arithmetic computation. Some aggregations may benefit by up to a factor of 9.</span></p>
+                     <p>Not all row sources in the query processing engine have support for the In-Memory optimized number format. Therefore, the IM column store must store both the traditional Oracle Database <code class="codeph">NUMBER</code> data type and the In-Memory optimized number type. This dual storage increases space overhead, sometimes up to 15%.
+                     </p>
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-1B4840FF-8917-4616-9768-82D39BB9D10F__GUID-030B9E2F-6B03-41EA-B921-D06537C82147">
+                        <p class="notep1">See Also:</p>
+                        <p><span class="q">"<a href="enabling-the-im-column-store.html#GUID-C8BE1A75-CD24-4573-9747-C25D88E3106F" title="Estimate the size of the IM column store based on your requirements, and then resize the IM column store to meet those requirements. Applying compression can reduce memory size.">Estimating the Required Size of the IM Column Store</a>"</span></p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-4321558D-853B-41A0-9098-4A45204F21BD" title="In-Memory Optimized Arithmetic&nbsp;uses an optimized NUMBER format for fast calculations using SIMD hardware.">Optimizing In-Memory Arithmetic</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+               <div class="sect3"><a id="GUID-892AB0EB-2960-4D51-A2C1-9D9F291BAEFD" name="GUID-892AB0EB-2960-4D51-A2C1-9D9F291BAEFD"></a><h4 id="INMEM-GUID-892AB0EB-2960-4D51-A2C1-9D9F291BAEFD" class="sect4"><span class="enumeration_section">9.2.2 </span>Enabling and Disabling <span>In-Memory Optimized Arithmetic</span></h4>
+                  <div>
+                     <p>Control the feature by setting the initialization parameter <code class="codeph">INMEMORY_OPTIMIZED_ARITHMETIC</code> to <code class="codeph">DISABLE</code> (default) or <code class="codeph">ENABLE</code>. 
+                     </p>
+                     <div class="section">
+                        <p>When set to <code class="codeph">ENABLE</code>, Oracle Database uses an In-Memory optimized encoding for <code class="codeph">NUMBER</code> columns in tables that use <code class="codeph">FOR QUERY LOW</code> compression. When set to <code class="codeph">DISABLE</code>, the database does not use the optimized encoding. 
+                        </p>
+                        <p>Switching from <code class="codeph">ENABLE</code> to <code class="codeph">DISABLE</code> does not drop the optimized number encoding for existing IMCUs immediately. Instead, as the IM column store repopulates IMCUs, the new IMCUs do not use the optimized encoding.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-892AB0EB-2960-4D51-A2C1-9D9F291BAEFD__GUID-CAEDBE0D-C6CE-46EE-B27F-85641F8634BE">To enable and disable <span>In-Memory Optimized Arithmetic</span>:
+                        </p>
+                        <ol>
+                           <li>
+                              <p>In SQL*Plus or SQL Developer, log in to the database as a user with the necessary privileges.</p>
+                           </li>
+                           <li>
+                              <p>Specify <code class="codeph">INMEMORY_OPTIMIZED_ARITHMETIC</code> using the <code class="codeph">ALTER SYSTEM</code> statement.
+                              </p>
+                              <p>The following example enables <span>In-Memory Optimized Arithmetic</span>:
+                              </p><pre class="pre codeblock"><code>ALTER SYSTEM SET INMEMORY_OPTIMIZED_ARITHMETIC = 'ENABLE' SCOPE=BOTH;</code></pre></li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-892AB0EB-2960-4D51-A2C1-9D9F291BAEFD__GUID-030B9E2F-6B03-41EA-B921-D06537C82147">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../refrn/INMEMORY_OPTIMIZED_ARITHMETIC.html#REFRN-GUID-7321D23C-A75B-4830-9375-99E5B06E06EB" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> to learn more about the <code class="codeph">INMEMORY_OPTIMIZED_ARITHMETIC</code> initialization parameter
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-aggregation.html#GUID-4321558D-853B-41A0-9098-4A45204F21BD" title="In-Memory Optimized Arithmetic&nbsp;uses an optimized NUMBER format for fast calculations using SIMD hardware.">Optimizing In-Memory Arithmetic</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

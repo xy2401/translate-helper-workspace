@@ -1,0 +1,99 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Two-Tier Duration for Java Session State</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Java Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Java Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="java-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T00:55:24-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96468-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="enabling-Java-client.html" title="Previous" type="text/html">
+      <link rel="next" href="setting-system-properties.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Java Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JJDEV">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="enabling-Java-client.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="setting-system-properties.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Java Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="installation-and-configuration.html" property="item" typeof="WebPage"><span property="name"> Java Installation and Configuration </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Two-Tier Duration for Java Session State</li>
+            </ol>
+            <a id="GUID-3C54310C-CFD0-4831-AF45-3A23C6EE567E" name="GUID-3C54310C-CFD0-4831-AF45-3A23C6EE567E"></a><a id="JJDEV13227"></a>
+            
+            <h2 id="JJDEV-GUID-3C54310C-CFD0-4831-AF45-3A23C6EE567E" class="sect2"><span class="enumeration_section">4.5 </span>Two-Tier Duration for Java Session State
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Prior to 11<span class="italic">g</span> release 1 (11.1), Java session state was single-tier, which included all values associated with running Java, such as System property values and static variable values, the set of classes loaded during the session and so on. The duration of this state used to start with the first invocation of a Java method in the RDBMS session and it used to last till JVM exited, either due to a call to <code class="codeph">java.lang.System.exit</code> or similar <code class="codeph">OracleRuntime</code> methods, an uncaught exception, a fatal error, or the end of the RDBMS session. This required modifying Java code and also failed to fully complete the termination of the session before the end of the RDBMS call. This made it impossible to start a new Java session within the same call.
+               </p>
+               <p>Starting with 11<span class="italic">g</span> release 1 (11.1), Java session state is split into two tiers. One tier has a longer duration and it encompasses the duration of the other tier. The duration of the shorter tier is the same as before, that is, it starts when a Java method is invoked and ends when JVM exits. The duration of the longer tier starts when a Java method is invoked in the RDBMS session for the first time. This session lasts until the RDBMS session ends or the session is explicitly terminated by a call to the function <code class="codeph">dbms_java.endsession_and_related_state</code>. This is addressed by the addition of the following two PL/SQL functions to the <code class="codeph">DBMS_JAVA</code> package, which account for the two kinds of Java session duration:
+               </p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><code class="codeph">FUNCTION endsession RETURN VARCHAR2;</code></p>
+                     <p>This function clears any Java session state remaining from previous execution of Java in the current RDBMS session. The return value is a message indicating the action taken.</p>
+                  </li>
+                  <li>
+                     <p><code class="codeph">FUNCTION endsession_and_related_state RETURN VARCHAR2;</code></p>
+                     <p>This function clears any Java session state remaining from previous execution of Java in the current RDBMS session and all supporting data related to running Java, such as property settings and output specifications. The return value is a message indicating the action taken.</p>
+                  </li>
+               </ul>
+               <p>Most of the values associated with running Java remain in the shorter tier. The values that can be useful for multiple invocations of JVM have been moved to the longer tier. For example, the system property values established by <code class="codeph">dbms_java.set_property</code> and the output redirection specifications.
+               </p>
+            </div>
+            <div>
+               <div class="relinfo">
+                  <p><strong>Related Topics</strong></p>
+                  <ul>
+                     <li><a href="setting-system-properties.html#GUID-502B50E9-27AA-436F-BB9C-29B4DBC1E66F">About Setting System Properties</a></li>
+                     <li><a href="redirecting-server-output.html#GUID-9045D497-CD72-43B7-B566-685EC301C654">About Redirecting Output on the Server</a></li>
+                  </ul>
+               </div>
+            </div>
+            
+         </div>
+      </article>
+   </body>
+</html>

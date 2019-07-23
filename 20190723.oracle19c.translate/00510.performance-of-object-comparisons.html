@@ -1,0 +1,86 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Performance of Object Comparisons</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Object-Relational Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Object-Relational Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="object-relational-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T02:05:10-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1996, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96436-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="general-storage-considerations-for-objects.html" title="Previous" type="text/html">
+      <link rel="next" href="design-considerations-for-REFs.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Object-Relational Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="ADOBJ">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="general-storage-considerations-for-objects.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="design-considerations-for-REFs.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Object-Relational Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="design-considerations-for-oracle-objects.html" property="item" typeof="WebPage"><span property="name"> Design Considerations for Oracle Objects </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Performance of Object Comparisons</li>
+            </ol>
+            <a id="GUID-AED31F4F-5049-4BD3-BEB7-694682DC414F" name="GUID-AED31F4F-5049-4BD3-BEB7-694682DC414F"></a><a id="ADOBJ00803"></a>
+            
+            <h2 id="ADOBJ-GUID-AED31F4F-5049-4BD3-BEB7-694682DC414F" class="sect2"><span class="enumeration_section">9.2 </span>Performance of Object Comparisons
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>You can compare objects by invoking either a map or order method.</p>
+               <p>A map method converts objects into scalar values while preserving the ordering of the objects. Using a map method is preferable because it allows the system to efficiently order objects. </p>
+               <div class="infoboxnote" id="GUID-AED31F4F-5049-4BD3-BEB7-694682DC414F__GUID-0D6A3CBE-593C-4AC5-9072-F17B8B4D6613">
+                  <p class="notep1">Note:</p>
+                  <p>For any one object type, you can implement either a map or an order method, but not both. Neither are required.</p>
+               </div>
+               <p>The way objects are mapped has significant performance implications when sorting the objects using <code class="codeph">ORDER</code> <code class="codeph">BY</code> or <code class="codeph">GROUP</code> <code class="codeph">BY</code> processes. An object may need to be compared to other objects many times, and it is much more efficient if the objects can be mapped to scalar values first (the map method). If the comparison semantics are extremely complex, or if the objects cannot be mapped to scalar values for comparison, you can define an order method that, given two objects, returns the ordering determined by the object implementor. Order methods are not as efficient as map methods, so performance may suffer if you use order methods. 
+               </p>
+               <p>Consider an object type <code class="codeph">address</code> consisting of four character attributes: <code class="codeph">street</code>, <code class="codeph">city</code>, <code class="codeph">state</code>, and <code class="codeph">zipcode</code>. Here, the most efficient comparison method is a map method because each object can be converted easily into scalar values. For example, you might define a map method that orders all of the objects by state.
+               </p>
+               <p>On the other hand, suppose you want to compare binary objects, such as images. In this case, the comparison semantics may be too complex to use a map method; if so, you can use an order method to perform comparisons. For example, you could create an order method that compares images according to brightness or the number of pixels in each image.</p>
+               <p>If an object type does not have either a map or order method, only equality comparisons are allowed on objects of that type. In this case, Oracle performs the comparison by doing a field-by-field comparison of the corresponding object attributes, in the order they are defined. If the comparison fails at any point, a <code class="codeph">FALSE</code> value is returned. If the comparison matches at every point, a <code class="codeph">TRUE</code> value is returned. However, if an object has a LOB or <code class="codeph">ANYDATA</code> attributes, then Oracle does not compare the object on a field-by-field basis. Such objects must have a map or order method to perform comparisons.
+               </p>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

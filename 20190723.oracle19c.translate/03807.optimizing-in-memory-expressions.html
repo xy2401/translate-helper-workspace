@@ -1,0 +1,1105 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">
+      <meta name="description" content="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">
+      <title>Optimizing Queries with In-Memory Expressions</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Database In-Memory Guide">
+      <meta property="og:description" content="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Database In-Memory Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="database-memory-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-22T09:02:38-07:00">
+      <meta name="dcterms.title" content="Database In-Memory Guide">
+      <meta name="dcterms.dateCopyrighted" content="2016, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96137-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="advanced-optimizations-for-in-memory-queries.html" title="Previous" type="text/html">
+      <link rel="next" href="optimizing-queries-with-join-groups.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="INMEM">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="advanced-optimizations-for-in-memory-queries.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="optimizing-queries-with-join-groups.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Database In-Memory Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="advanced-optimizations-for-in-memory-queries.html" property="item" typeof="WebPage"><span property="name">Optimizing In-Memory Queries</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Optimizing Queries with In-Memory Expressions</li>
+            </ol>
+            <a id="GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8" name="GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8"></a>
+            
+            <h2 id="INMEM-GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8" class="sect2"><span class="enumeration_chapter">7 </span>Optimizing Queries with In-Memory Expressions
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>In the context of the IM column store, an <span class="bold">expression</span> is a combination of one or more values, operators, and SQL or PL/SQL functions (<code class="codeph">DETERMINISTIC</code> only) that resolve to a value.
+               </p>
+               <p>The <a href="glossary.html#GUID-B960FD8D-DE6F-44DD-BA36-43A72EB5611A"><span class="xrefglossterm">Expression Statistics Store (ESS)</span></a> automatically tracks the results of frequently evaluated (“hot”) expressions. You can use the <code class="codeph">DBMS_INMEMORY_ADMIN</code> package to capture hot expressions and populate them as hidden virtual columns, or drop some or all of them.
+               </p>
+               <p>This section contains the following topics:</p>
+            </div>
+            <div>
+               <ul class="ullinks">
+                  <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-1B849DAF-277E-4B09-8275-367592115B06">About IM Expressions</a><br>By default, the <code class="codeph">DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS</code> procedure identifies and populates “hot” expressions, called <strong class="term">In-Memory Expressions (IM expressions)</strong>.  
+                  </li>
+                  <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC">Configuring IM Expression Usage</a><br>Optionally, use <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> to choose which types of IM expressions are eligible for population, or to disable population of all IM expressions.
+                  </li>
+                  <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974">Capturing and Populating IM Expressions</a><br>The <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure <span>captures the 20 most frequently accessed (“hottest”) expressions in the database in the specified time interval.</span> The <code class="codeph">IME_POPULATE_EXPRESSIONS</code> procedure <span>forces the population of expressions captured in the latest invocation of <code class="codeph">DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS</code>.</span></li>
+                  <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857">Dropping IM Expressions</a><br>The <code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code> procedure <span>drops all <code class="codeph">SYS_IME</code> expression virtual columns in the database.</span> The <code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code> procedure <span>drops a specified set of <code class="codeph">SYS_IME</code> virtual columns from a table.</span></li>
+               </ul>
+               <div class="familylinks">
+                  <div class="parentlink">
+                     <p><strong>Parent topic:</strong> <a href="advanced-optimizations-for-in-memory-queries.html#GUID-33034151-7BD7-4186-B336-C693FBB27634" title="This Part explains how to optimize queries using In-Memory Expressions, join groups, and In-Memory aggregation. It also explains how the IM column store repopulates modified data.">Optimizing In-Memory Queries</a></p>
+                  </div>
+               </div>
+            </div>
+            
+            <div class="sect2"><a id="GUID-1B849DAF-277E-4B09-8275-367592115B06" name="GUID-1B849DAF-277E-4B09-8275-367592115B06"></a><h3 id="INMEM-GUID-1B849DAF-277E-4B09-8275-367592115B06" class="sect3"><span class="enumeration_section">7.1 </span>About IM Expressions
+               </h3>
+               <div>
+                  <p>By default, the <code class="codeph">DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS</code> procedure identifies and populates “hot” expressions, called <strong class="term">In-Memory Expressions (IM expressions)</strong>.  
+                  </p>
+                  <p>An IM expression is materialized as a hidden <a href="glossary.html#GUID-DB2ADC54-6222-48C2-90EF-E191CF63FD2D"><span class="xrefglossterm">virtual column</span></a> in a heap-organized table, but is accessed in the same way as a non-virtual column. To store the materialized expressions, the IM column store uses special compression formats such as fixed-width vectors and dictionary encoding with fixed-width codes.
+                  </p>
+                  <div class="infoboxnote" id="GUID-1B849DAF-277E-4B09-8275-367592115B06__GUID-C9B769FF-163E-413D-9DE6-1D7B89C6AD62">
+                     <p class="notep1">Note:</p>
+                     <p>IM expressions are not supported for external tables.</p>
+                  </div>
+                  <p>Oracle Database automatically identifies the expressions that are candidates for population in the IM column store. In <code class="codeph">DBA_IM_EXPRESSIONS.COLUMN_NAME</code>, IM expression columns have the prefix <code class="codeph">SYS_IME</code>. You cannot create <code class="codeph">SYS_IME</code> columns directly. For example, consider the following query, which specifies two expressions, aliased <code class="codeph">weekly_sal</code> and <code class="codeph">ann_comp</code>:
+                  </p><pre class="pre codeblock"><code>SELECT employee_id, last_name, salary, commission_pct,
+       ROUND(salary*12/52,2) as "weekly_sal",
+       12*(salary*NVL(commission_pct,0)+salary) as "ann_comp"
+FROM   employees
+ORDER BY ann_comp;</code></pre><p>The arithmetical expressions <code class="codeph">ROUND(salary*12/52,2)</code> and <code class="codeph">12*(salary*NVL(commission_pct,0)+salary)</code> are computationally intensive and frequently accessed, which makes them candidates for hidden IM expression columns.
+                  </p>
+                  <p>The <code class="codeph">DBMS_INMEMORY_ADMIN</code> package is the primary interface for managing IM expressions:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>To induce the database to identify IM expressions and add them to their respective tables during the next <a href="glossary.html#GUID-9168517C-C8A2-4433-946A-037631B840E2"><span class="xrefglossterm">repopulation</span></a>, use <code class="codeph">IME_CAPTURE_EXPRESSIONS</code>.
+                        </p>
+                     </li>
+                     <li>
+                        <p>To force immediate population of IM expressions, use <code class="codeph">IME_POPULATE_EXPRESSIONS</code>.
+                        </p>
+                     </li>
+                     <li>
+                        <p>To drop <code class="codeph">SYS_IME</code> columns, use <code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code> or <code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code>.
+                        </p>
+                     </li>
+                  </ul>
+                  <p>This section contains the following topics:</p>
+               </div>
+               <div>
+                  <ul class="ullinks">
+                     <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-C241A1F0-2DC7-46F9-8CB8-F72ABE2C4081">Purpose of IM Expressions</a><br>IM expressions speed queries of large data sets by precomputing computationally intensive expressions. 
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-0F5B137B-A900-4946-ADDF-75AD3055802F">How IM Expressions Work</a><br>To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-F823DF2B-2FD0-4E81-AB55-B06A52B098B7">User Interfaces for IM Expressions</a><br>The <code class="codeph">DBMS_INMEMORY_ADMIN</code> package, <code class="codeph">DBMS_INMEMORY</code> package, and <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter control the behavior of IM expressions.
+                     </li>
+                     <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-5D07375B-1F63-49BD-80E0-28B5363607A2">Basic Tasks for IM Expressions</a><br>The default setting of <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> enables the database to use both dynamic and static IM expressions. You must use <code class="codeph">DBMS_INMEMORY_ADMIN</code> to populate the expressions in the IM column store.
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-1B849DAF-277E-4B09-8275-367592115B06__ORACLEDATABASEREFERENCETOLEARNABOUT-FA093721">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><span class="q">"<a href="populating-objects-in-memory.html#GUID-37E2E218-33A2-490E-891D-B627906DE16B" title="To make external tables eligible for population, specify the EXTERNAL ... INMEMORY clause in CREATE TABLE or ALTER TABLE.">In-Memory External Tables</a>"</span></p>
+                        </li>
+                        <li>
+                           <p><a href="../sqlrf/Expressions.html#SQLRF004" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> to learn more about expressions
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../arpls/DBMS_INMEMORY_ADMIN.html#ARPLS-GUID-94B7C99C-BB9D-46E4-9E16-5E466D99FAA6" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn more about <code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                        </li>
+                        <li>
+                           <p><a href="../refrn/DBA_IM_EXPRESSIONS.html#GUID-44900E64-09C8-40AD-BC7A-A59DC70E0EDA" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> to learn more about the <code class="codeph">DBA_IM_EXPRESSIONS</code> view
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8" title="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">Optimizing Queries with In-Memory Expressions</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+               <div class="sect3"><a id="GUID-C241A1F0-2DC7-46F9-8CB8-F72ABE2C4081" name="GUID-C241A1F0-2DC7-46F9-8CB8-F72ABE2C4081"></a><h4 id="INMEM-GUID-C241A1F0-2DC7-46F9-8CB8-F72ABE2C4081" class="sect4"><span class="enumeration_section">7.1.1 </span>Purpose of IM Expressions
+                  </h4>
+                  <div>
+                     <p>IM expressions speed queries of large data sets by precomputing computationally intensive expressions. </p>
+                     <p>IM expressions especially benefit frequently executed table joins, projections, and predicate evaluations. The primary advantages of IM expressions are as follows:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>A query does not need to recalculate the expressions every time. If the IM column store does not populate the expression results, then the database must compute them for every row, which can be resource intensive. The database incurs the CPU overhead during the population.</p>
+                        </li>
+                        <li>
+                           <p>The materialization of IM expressions enables the database to take advantage of performance-enhancing features such as SIMD vector processing and <a href="glossary.html#GUID-824EDD0E-2FF3-411E-A2B2-C7B542EADFDC"><span class="xrefglossterm">IMCU pruning</span></a>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The database, rather than the user, tracks which expressions are most active within a user-specified <span>expression capture window</span>.
+                           </p>
+                        </li>
+                     </ul>
+                     <p>IM expressions and materialized views address the same problem: how to avoid repeatedly evaluating expressions. However, IM expressions have advantages over materialized views:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>IM expressions can capture data that is not persistently stored.</p>
+                           <p>For example, the IM column store can automatically cache internal computations based on expressions in the query.</p>
+                        </li>
+                        <li>
+                           <p>To be used effectively, a materialized view must have all columns listed in the query, or the query must join the view and the base tables. In contrast, any query containing an IM expression can benefit.</p>
+                        </li>
+                        <li>
+                           <p>The database identifies and creates IM expressions automatically, unlike materialized views, which are user-created objects.</p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-C241A1F0-2DC7-46F9-8CB8-F72ABE2C4081__GUID-BFE8EBEC-3555-4FBF-84C1-68B64FAC2FD9">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-A38FF2B6-506E-412A-9FE5-1CE709556379" title="Every IMCU header automatically creates and manages In-Memory Storage Indexes (IM storage indexes) for its CUs. An IM storage index stores the minimum and maximum for all columns within the IMCU.">In-Memory Storage Indexes</a>"</span></p>
+                           </li>
+                           <li>
+                              <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-BF90E4D7-DA7B-4B2B-A0BB-AE88E0C39757" title="The Expression Statistics Store (ESS) is a repository maintained by the optimizer to store statistics about expression evaluation. The ESS resides in the SGA and persists on disk.">Expression Statistics Store (ESS)</a>"</span></p>
+                           </li>
+                           <li>
+                              <p><a href="../dwhsg/basic-materialized-views.html#GUID-A7AE8E5D-68A5-4519-81EB-252EAAF0ADFF" target="_blank"><span><cite>Oracle Database Data Warehousing Guide</cite></span></a> to learn more about materialized views
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-1B849DAF-277E-4B09-8275-367592115B06" title="By default, the DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS procedure identifies and populates “hot” expressions, called In-Memory Expressions (IM expressions).">About IM Expressions</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+               <div class="sect3"><a id="GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" name="GUID-0F5B137B-A900-4946-ADDF-75AD3055802F"></a><h4 id="INMEM-GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" class="sect4"><span class="enumeration_section">7.1.2 </span>How IM Expressions Work
+                  </h4>
+                  <div>
+                     <p>To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.</p>
+                     <p>This section contains the following topics:</p>
+                  </div>
+                  <div>
+                     <ul class="ullinks">
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46">IM Expressions Infrastructure</a><br>The IM expressions infrastructure is responsible for computing and populating the results of IM expressions, IM virtual columns, and any other useful internal computations in the IM column store. These optimizations primarily benefit analytic queries.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-B9E46C0C-F076-4651-A476-4B137A0E8A71">Capture of IM Expressions</a><br>When you invoke the <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure, the database queries the ESS, and identifies the 20 most frequently accessed (“hottest”) expressions in the specified time range.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B">How the ESS Works</a><br>The ESS is a repository maintained by the optimizer to store statistics about expression evaluation.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-5ECB1746-6616-48D2-899C-55338628A871">How the Database Populates IM Expressions</a><br>Under the direction of In-Memory Coordinator Process (IMCO), Space Management Worker Processes (W<span class="italic">nnn</span>) load IM expressions into IMEUs automatically.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-576D47DF-3B3C-4162-B193-65DC01AC797B">How IMEUs Relate to IMCUs</a><br>For any row, the physical columns reside in the IMCU, and the virtual columns reside in an associated IMEU. The IMEU is read-only and columnar, just like the IMCU.
+                        </li>
+                     </ul>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-1B849DAF-277E-4B09-8275-367592115B06" title="By default, the DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS procedure identifies and populates “hot” expressions, called In-Memory Expressions (IM expressions).">About IM Expressions</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+                  <div class="sect4"><a id="GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46" name="GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46"></a><h5 id="INMEM-GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46" class="sect5"><span class="enumeration_section">7.1.2.1 </span>IM Expressions Infrastructure
+                     </h5>
+                     <div>
+                        <p>The IM expressions infrastructure is responsible for computing and populating the results of IM expressions, IM virtual columns, and any other useful internal computations in the IM column store. These optimizations primarily benefit analytic queries.</p>
+                        <p>Populated results can include function evaluations on columns used in project, scan, or join expressions. The IM column store can automatically cache internal computations based on the expressions evaluated by the SQL runtime engine during query evaluation.</p>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46__GUID-F9864E8C-F2EE-49F1-83C6-337A28DBD204">Virtual Columns</p>
+                           <p>Besides populating an IM expression, the IM column store can populate an <a href="glossary.html#GUID-14ED4E9B-C17D-46B4-9E03-538CA90448CC"><span class="xrefglossterm">In-Memory virtual column</span></a>. The underlying mechanism is the same: an IM expression is a virtual column. However, IM virtual columns are user-created and exposed, whereas IM expressions are database-created and hidden.
+                           </p>
+                           <div class="infoboxnotealso" id="GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46__GUID-487D9DD4-6835-41C7-8DB8-2E0A1CC8CE4A">
+                              <p class="notep1">See Also:</p>
+                              <p><span class="q">"<a href="populating-objects-in-memory.html#GUID-452D19AE-EB5F-44AC-A1AD-70CF10D2D347" title="You can specify the INMEMORY clause for individual columns in an internal table. External tables do not support specifying INMEMORY at the column level.">Enabling and Disabling Columns for In-Memory Tables</a>"</span></p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46__GUID-3677A454-08F3-4ADF-B349-14A27600BDA3">Static Expressions: Binary JSON Columns</p>
+                           <p>The IM expressions infrastructure supports both dynamic expressions (IM expressions and virtual columns) and static expressions. </p>
+                           <p>Starting in <span>Oracle Database 12c</span> Release 2 (12.2), the IM column store supports <a href="glossary.html#GUID-96C1EFE2-69DD-4E78-97DA-25253A51E3A5"><span class="xrefglossterm">OSON</span></a>, which is a binary JSON format that performs better than row-oriented JSON text storage. Queries access the actual JSON data, but use optimized virtual columns to speed access.
+                           </p>
+                           <p>The database uses the IM expression infrastructure to load an efficient binary representation of JSON text columns as virtual columns. If the <code class="codeph">MAX_STRING_SIZE</code> initialization parameter is set to <code class="codeph">EXTENDED</code> for the <code class="codeph">VARCHAR2</code> data type, then the IM column store can store OSON virtual columns up to 32 KB.
+                           </p>
+                           <p>Oracle Database supports multiple JSON functions: <code class="codeph">JSON_TABLE</code>, <code class="codeph">JSON_VALUE</code>, and <code class="codeph">JSON_EXISTS</code>. The <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter controls the behavior of both dynamic expressions and static expressions.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                     <div>
+                        <div class="infoboxnotealso" id="GUID-FDA8B0D3-6339-4E19-8D2D-EEA0A7529B46__GUID-99E22AAA-823C-45EB-86EE-F9A35BB93788">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="../adjsn/in-memory-json-data.html#ADJSN-GUID-857A2E95-28AB-4314-B654-4CB05C50D9CF" target="_blank"><span><cite>Oracle Database JSON Developer’s Guide</cite></span></a> to learn more about using JSON with Database In-Memory
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><span><cite>Oracle Database Reference</cite></span> to learn about <a href="../refrn/INMEMORY_EXPRESSIONS_USAGE.html#REFRN-GUID-9B926459-CA8A-4843-B9A1-4DE6F630EB45" target="_blank"><code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> </a>, <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=GUID-0FEC03C4-8F07-47C0-8FC0-A771EBF5D057" target="_blank"><code class="codeph">ALL_JSON_COLUMNS</code> </a>, and <a href="../refrn/MAX_STRING_SIZE.html#GUID-D424D23B-0933-425F-BC69-9C0E6724693C" target="_blank"><code class="codeph">MAX_STRING_SIZE</code> </a></p>
+                              </li>
+                           </ul>
+                        </div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" title="To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.">How IM Expressions Work</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="sect4"><a id="GUID-B9E46C0C-F076-4651-A476-4B137A0E8A71" name="GUID-B9E46C0C-F076-4651-A476-4B137A0E8A71"></a><h5 id="INMEM-GUID-B9E46C0C-F076-4651-A476-4B137A0E8A71" class="sect5"><span class="enumeration_section">7.1.2.2 </span>Capture of IM Expressions
+                     </h5>
+                     <div>
+                        <p>When you invoke the <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure, the database queries the ESS, and identifies the 20 most frequently accessed (“hottest”) expressions in the specified time range.
+                        </p>
+                        <p>The time range is either a user-specified time window, the past 24 hours, or since database creation. The database only considers expressions on tables that are at least partially populated in the IM column store.</p>
+                        <p>This section contains the following topics:</p>
+                     </div>
+                     <div>
+                        <ul class="ullinks">
+                           <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-8A7D3942-774D-4143-A087-81DBCD2C176B">Expression Capture Interval</a><br>The <strong class="term">expression capture interval</strong> is the period in which the database evaluates expressions for possible capture.
+                           </li>
+                           <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-05B20684-447D-40A0-974D-665893F00695">Hidden SYS_IME Virtual Columns</a><br>During capture, the database adds the 20 hottest expressions to their respective tables as hidden <code class="codeph">SYS_IME</code> virtual columns and applies the default <code class="codeph">INMEMORY</code> column compression clause.
+                           </li>
+                        </ul>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" title="To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.">How IM Expressions Work</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                     <div class="sect5"><a id="GUID-8A7D3942-774D-4143-A087-81DBCD2C176B" name="GUID-8A7D3942-774D-4143-A087-81DBCD2C176B"></a><h6 id="INMEM-GUID-8A7D3942-774D-4143-A087-81DBCD2C176B" class="sect6"><span class="enumeration_section">7.1.2.2.1 </span>Expression Capture Interval
+                        </h6>
+                        <div>
+                           <p>The <strong class="term">expression capture interval</strong> is the period in which the database evaluates expressions for possible capture.
+                           </p>
+                           <p>Starting in <span>Oracle Database 18c</span>, the <code class="codeph">snapshot</code> parameter of the <code class="codeph">DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS</code> procedure accepts the following values that define the expression capture interval:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">CUMULATIVE</code></p>
+                                 <p>The database considers all expression statistics since the creation of the database.</p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">CURRENT</code></p>
+                                 <p>The database considers only expression statistics from the past 24 hours.</p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">WINDOW</code></p>
+                                 <p>The database adds hidden virtual columns for expressions tracked in the most recent user-specified <span>expression capture window</span>. This window opens with the manual invocation of the <code class="codeph">IME_OPEN_CAPTURE_WINDOW</code> procedure, and then closes with the manual invocation of the <code class="codeph">IME_CLOSE_CAPTURE_WINDOW</code> procedure. 
+                                 </p>
+                                 <p>If the capture window is currently open, then the database considers all expressions tracked in the current window up until this point, and then materializes the hottest expressions. To list the expressions that have been tracked in the current window, query <code class="codeph">DBA_EXPRESSION_STATISTICS</code> with <code class="codeph">SNAPSHOT = 'WINDOW'</code>.
+                                 </p>
+                              </li>
+                           </ul>
+                           <p>A user-defined time interval (<code class="codeph">snapshot='WINDOW'</code>) is useful for ensuring that only expressions occurring within this window are considered for materialization. This mechanism is especially useful when a short interval is representative of the entire workload. For example, during the trading window, a brokerage firm can gather the set of expressions, and materialize them in the IM column store to speed-up future query processing for the entire workload.
+                           </p>
+                        </div>
+                        <div>
+                           <div class="infoboxnotealso" id="GUID-8A7D3942-774D-4143-A087-81DBCD2C176B__GUID-6BC08ACB-70EA-4DA4-A6CA-2D4023CEA439">
+                              <p class="notep1">See Also:</p>
+                              <p><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span> to learn more about <a href="../arpls/DBMS_INMEMORY_ADMIN.html#ARPLS-GUID-C75097B2-961E-4824-A6F3-319AB0CC513B" target="_blank"><code class="codeph">IME_OPEN_CAPTURE_WINDOW</code></a>, <a href="../arpls/DBMS_INMEMORY_ADMIN.html#ARPLS-GUID-2809E03B-5367-4C18-97E4-16C62F77C343" target="_blank"><code class="codeph">IME_CLOSE_CAPTURE_WINDOW</code></a>, and <a href="../arpls/DBMS_INMEMORY_ADMIN.html#ARPLS-GUID-70CDDB1F-A928-4AD5-9632-5F1C5DEF5DC9" target="_blank"><code class="codeph">IME_CAPTURE_EXPRESSIONS</code></a></p>
+                           </div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-B9E46C0C-F076-4651-A476-4B137A0E8A71" title="When you invoke the IME_CAPTURE_EXPRESSIONS procedure, the database queries the ESS, and identifies the 20 most frequently accessed (“hottest”) expressions in the specified time range.">Capture of IM Expressions</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                     <div class="sect5"><a id="GUID-05B20684-447D-40A0-974D-665893F00695" name="GUID-05B20684-447D-40A0-974D-665893F00695"></a><h6 id="INMEM-GUID-05B20684-447D-40A0-974D-665893F00695" class="sect6"><span class="enumeration_section">7.1.2.2.2 </span>Hidden SYS_IME Virtual Columns
+                        </h6>
+                        <div>
+                           <p>During capture, the database adds the 20 hottest expressions to their respective tables as hidden <code class="codeph">SYS_IME</code> virtual columns and applies the default <code class="codeph">INMEMORY</code> column compression clause.
+                           </p>
+                           <p> If <code class="codeph">SYS_IME</code> columns added during a previous invocation no longer appear in the latest expression list, then their attribute changes to <code class="codeph">NO INMEMORY</code>.
+                           </p>
+                           <div class="figure" id="GUID-05B20684-447D-40A0-974D-665893F00695__GUID-7E513557-3F84-4D51-B688-411A830AD122">
+                              <p class="titleinfigure">Figure 7-1 Defining Hidden SYS_IME Virtual Columns</p><img src="img/inmem_3v_031.png" alt="Description of Figure 7-1 follows" title="Description of Figure 7-1 follows" longdesc="img_text/inmem_3v_031.html"><br><a href="img_text/inmem_3v_031.html">Description of "Figure 7-1 Defining Hidden SYS_IME Virtual Columns"</a></div>
+                           <!-- class="figure" -->
+                           <p>The maximum number of <code class="codeph">SYS_IME</code> columns for a table is 50, regardless of whether the attribute is <code class="codeph">INMEMORY</code>. After a table reaches the 50-expression limit, the database does not add new <code class="codeph">SYS_IME</code> columns. To permit new expressions, you must drop <code class="codeph">SYS_IME</code> columns with the <code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code> or <code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code> procedures.
+                           </p>
+                           <p>Both <code class="codeph">SYS_IME</code> virtual columns and user-defined virtual columns count toward the 1000-column limit for a table. For example, if a table contains 980 non-virtual (on-disk) columns, then you can add only 20 virtual columns.
+                           </p>
+                        </div>
+                        <div>
+                           <div class="infoboxnotealso" id="GUID-05B20684-447D-40A0-974D-665893F00695__GUID-375CF065-97BA-478F-8AE9-AFC098BEF298">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=ARPLS-GUID-70CDDB1F-A928-4AD5-9632-5F1C5DEF5DC9" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn more about <code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                           </div>
+                           <div class="familylinks">
+                              <div class="parentlink">
+                                 <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-B9E46C0C-F076-4651-A476-4B137A0E8A71" title="When you invoke the IME_CAPTURE_EXPRESSIONS procedure, the database queries the ESS, and identifies the 20 most frequently accessed (“hottest”) expressions in the specified time range.">Capture of IM Expressions</a></p>
+                              </div>
+                           </div>
+                        </div>
+                        
+                     </div>
+                  </div>
+                  <div class="sect4"><a id="GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B" name="GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B"></a><h5 id="INMEM-GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B" class="sect5"><span class="enumeration_section">7.1.2.3 </span>How the ESS Works
+                     </h5>
+                     <div>
+                        <p>The ESS is a repository maintained by the optimizer to store statistics about expression evaluation.</p>
+                        <p>For each table, the ESS maintains expression statistics such as frequency of execution and cost of evaluation. When evaluating predicates, Oracle Database tracks and provides run-time feedback on evaluation counts and the dynamic costs of expressions. Based on the ESS statistics, the database may decide that queries would perform better if a specific expression were an IM expression.</p>
+                        <div class="infoboxnote" id="GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B__GUID-07679A2D-C373-44E6-9A40-2687A094C57A">
+                           <p class="notep1">Note:</p>
+                           <p>Expressions cached in the ESS for a specific table only involve columns of this table. This rule is especially important when Oracle Database identifies deterministic PL/SQL functions as candidates for IM expressions.</p>
+                        </div>
+                        <div class="figure" id="GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B__GUID-36A4A20C-B391-417E-BB98-3685B7DFEA1E">
+                           <p class="titleinfigure">Figure 7-2 ESS and IM Expressions</p>
+                           <p>In this graphic, the ESS has determined two commonly used expressions on the <code class="codeph">employees</code> table: <code class="codeph">ROUND(salary*12/52,2)</code> and <code class="codeph">12*(salary*NVL(commission_pct,0)+salary)</code>. When the database populates <code class="codeph">employees</code> in the IM column store, two IMCUs store the columnar data. Each IMCU is associated with its only IMEU, which contains the derived values for the two commonly used expressions for the rows in that IMCU.
+                           </p><img src="img/cncpt_vm_381.png" alt="Description of Figure 7-2 follows" title="Description of Figure 7-2 follows" longdesc="img_text/cncpt_vm_381.html"><br><a href="img_text/cncpt_vm_381.html">Description of "Figure 7-2 ESS and IM Expressions"</a></div>
+                        <!-- class="figure" -->
+                        <p>Not every expression is a candidate for an IM expression. The database only considers expressions that will be accessed frequently. Because IM expressions are implemented as hidden virtual columns, they must also meet the restrictions for virtual columns.</p>
+                        <p>Although the IM column store is a client of the ESS, the ESS is independent of Database In-Memory features. Other clients can also use ESS statistics, including the optimizer itself.</p>
+                     </div>
+                     <div>
+                        <div class="infoboxnotealso" id="GUID-3E1BF45A-7BB3-4B7E-A4FE-819FE22D232B__GUID-BBCE7467-15C4-4420-B60E-6CF6B7BAE549">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-BF90E4D7-DA7B-4B2B-A0BB-AE88E0C39757" title="The Expression Statistics Store (ESS) is a repository maintained by the optimizer to store statistics about expression evaluation. The ESS resides in the SGA and persists on disk.">Expression Statistics Store (ESS)</a>"</span></p>
+                              </li>
+                              <li>
+                                 <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=GUID-38DBFC2E-FC6C-46E2-A7A1-6FA703F9DC01" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> to learn more about virtual columns
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" title="To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.">How IM Expressions Work</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="sect4"><a id="GUID-5ECB1746-6616-48D2-899C-55338628A871" name="GUID-5ECB1746-6616-48D2-899C-55338628A871"></a><h5 id="INMEM-GUID-5ECB1746-6616-48D2-899C-55338628A871" class="sect5"><span class="enumeration_section">7.1.2.4 </span>How the Database Populates IM Expressions
+                     </h5>
+                     <div>
+                        <p>Under the direction of In-Memory Coordinator Process (IMCO), Space Management Worker Processes (W<span class="italic">nnn</span>) load IM expressions into IMEUs automatically.
+                        </p>
+                        <p>The database augments every <a href="glossary.html#GUID-7AEF93DF-0F39-4B5D-BFEE-DD3FDBD86398"><span class="xrefglossterm">In-Memory Compression Unit (IMCU)</span></a> population or repopulation task with information about which virtual columns, either user-defined or IM expressions, to populate. The decision depends on the settings of the <code class="codeph">INMEMORY_EXPRESSION_USAGE</code> and <code class="codeph">INMEMORY_VIRTUAL_COLUMNS</code> initialization parameters.
+                        </p>
+                        <div class="infoboxnote" id="GUID-5ECB1746-6616-48D2-899C-55338628A871__GUID-164C823E-52C8-4FED-98AF-CBB4A3DF9980">
+                           <p class="notep1">Note:</p>
+                           <p>The <code class="codeph">DBMS_INMEMORY.IME_CAPTURE_EXPRESSIONS</code> procedure adds automatically detected expressions as hidden virtual columns.
+                           </p>
+                        </div>
+                        <p>The W<span class="italic">nnn</span> processes create the IMCUs. To create the IMEUs, the processes perform the following additional steps:
+                        </p>
+                        <ol>
+                           <li>
+                              <p>Create the expression values</p>
+                           </li>
+                           <li>
+                              <p>Convert the values into columnar format, and compress them into In-Memory Expression Units (IMEUs)</p>
+                           </li>
+                           <li>
+                              <p>Link each IMEU to its associated IMCU</p>
+                           </li>
+                        </ol>
+                        <div class="infoboxnote" id="GUID-5ECB1746-6616-48D2-899C-55338628A871__GUID-DA830FF2-0B6A-4391-A38B-76E4AF38F0E9">
+                           <p class="notep1">Note:</p>
+                           <p>As the number of expressions to store in IMEUs goes up, the worker processes may consume slightly more CPU to compute the expression values. This overhead may increase population time.</p>
+                        </div>
+                     </div>
+                     <div>
+                        <div class="infoboxnotealso" id="GUID-5ECB1746-6616-48D2-899C-55338628A871__GUID-767295ED-5DFD-403E-A108-D99E9DE91C0A">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-BF90E4D7-DA7B-4B2B-A0BB-AE88E0C39757" title="The Expression Statistics Store (ESS) is a repository maintained by the optimizer to store statistics about expression evaluation. The ESS resides in the SGA and persists on disk.">Expression Statistics Store (ESS)</a>"</span></p>
+                              </li>
+                              <li>
+                                 <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-C91A11F9-CFB7-4919-A8D7-8572ED1CAEF3" title="Space Management Worker Processes (Wnnn) populate or repopulate data on behalf of IMCO.">Space Management Worker Processes (Wnnn)</a>"</span></p>
+                              </li>
+                              <li>
+                                 <p><span class="q">"<a href="in-memory-column-store-architecture.html#GUID-E1A74436-E719-4FC3-A141-41B160792E51" title="An In-Memory Expression Unit (IMEU) is a storage container for materialized In-Memory Expressions (IM expressions) and user-defined virtual columns.">In-Memory Expression Units (IMEUs)</a>"</span></p>
+                              </li>
+                              <li>
+                                 <p><a href="../arpls/DBMS_INMEMORY_ADMIN.html#GUID-70CDDB1F-A928-4AD5-9632-5F1C5DEF5DC9" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn more about the <code class="codeph">DBMS_INMEMORY.IME_CAPTURE_EXPRESSIONS</code> procedure
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" title="To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.">How IM Expressions Work</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="sect4"><a id="GUID-576D47DF-3B3C-4162-B193-65DC01AC797B" name="GUID-576D47DF-3B3C-4162-B193-65DC01AC797B"></a><h5 id="INMEM-GUID-576D47DF-3B3C-4162-B193-65DC01AC797B" class="sect5"><span class="enumeration_section">7.1.2.5 </span>How IMEUs Relate to IMCUs
+                     </h5>
+                     <div>
+                        <p>For any row, the physical columns reside in the IMCU, and the virtual columns reside in an associated IMEU. The IMEU is read-only and columnar, just like the IMCU.</p>
+                        <p>Because IMEUs are logical extensions of IMCUs created for a particular <code class="codeph">INMEMORY</code> segment, by default they inherit the <code class="codeph">INMEMORY</code> clause, and Oracle Real Applications Cluster (Oracle RAC) properties such as <code class="codeph">DISTRIBUTE</code> and <code class="codeph">DUPLICATE</code>. An IMEU is associated with one and only one IMCU. The database manages IMEUs as separate structures, making them easier to add and drop.
+                        </p>
+                        <div class="infoboxnote" id="GUID-576D47DF-3B3C-4162-B193-65DC01AC797B__GUID-0572EB70-DCD8-4FDF-8AD4-77BFB53061B8">
+                           <p class="notep1">Note:</p>
+                           <p>The IMEUs also contain user-created IM virtual columns.</p>
+                        </div>
+                        <p>If the source data changes, then the database changes the derived data in the IM expression during <a href="glossary.html#GUID-9168517C-C8A2-4433-946A-037631B840E2"><span class="xrefglossterm">repopulation</span></a>. For example, if a transaction updates 100 salary values in a table, then the Space Management Worker Processes (W<span class="italic">nnn</span>) automatically update all IM expression values that are derived from these 100 changed values. The database repopulates an IMCU and its associated IMEUs together rather than first repopulating all IMCUs and then repopulating all IMEUs. IMEUs remain available for queries during IMCU repopulation.
+                        </p>
+                     </div>
+                     <div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-0F5B137B-A900-4946-ADDF-75AD3055802F" title="To identify expressions as candidates for IM expressions, the database queries the ESS. The optimizer uses the ESS to maintain statistics about expression evaluation for a heap-organized table.">How IM Expressions Work</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+               </div>
+               <div class="sect3"><a id="GUID-F823DF2B-2FD0-4E81-AB55-B06A52B098B7" name="GUID-F823DF2B-2FD0-4E81-AB55-B06A52B098B7"></a><h4 id="INMEM-GUID-F823DF2B-2FD0-4E81-AB55-B06A52B098B7" class="sect4"><span class="enumeration_section">7.1.3 </span>User Interfaces for IM Expressions
+                  </h4>
+                  <div>
+                     <p>The <code class="codeph">DBMS_INMEMORY_ADMIN</code> package, <code class="codeph">DBMS_INMEMORY</code> package, and <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter control the behavior of IM expressions.
+                     </p>
+                     <p>This section contains the following topics:</p>
+                  </div>
+                  <div>
+                     <ul class="ullinks">
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408">INMEMORY_EXPRESSIONS_USAGE</a><br>The <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter determines which type of IM expression is populated. The <code class="codeph">INMEMORY_VIRTUAL_COLUMNS</code> initialization parameter controls the population of normal (non-hidden) virtual columns.
+                        </li>
+                        <li class="ulchildlink"><a href="optimizing-in-memory-expressions.html#GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C">DBMS_INMEMORY_ADMIN and DBMS_INMEMORY</a><br>To manage IM expressions, use the <code class="codeph">DBMS_INMEMORY_ADMIN</code> and <code class="codeph">DBMS_INMEMORY</code> packages.
+                        </li>
+                     </ul>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-1B849DAF-277E-4B09-8275-367592115B06" title="By default, the DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS procedure identifies and populates “hot” expressions, called In-Memory Expressions (IM expressions).">About IM Expressions</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+                  <div class="sect4"><a id="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408" name="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408"></a><h5 id="INMEM-GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408" class="sect5"><span class="enumeration_section">7.1.3.1 </span>INMEMORY_EXPRESSIONS_USAGE
+                     </h5>
+                     <div>
+                        <p>The <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter determines which type of IM expression is populated. The <code class="codeph">INMEMORY_VIRTUAL_COLUMNS</code> initialization parameter controls the population of normal (non-hidden) virtual columns.
+                        </p>
+                        <div class="section">
+                           <p>When the IM column store is enabled (<code class="codeph">INMEMORY_SIZE</code> is nonzero), <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> controls the type of IM expression that the database populates. The <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter has the following options:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">ENABLE</code></p>
+                                 <p id="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408__d5e292">The database populates both static and dynamic IM expressions into the IM column store. Setting this value increases the In-Memory footprint for some tables. This is the default.</p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">STATIC_ONLY</code></p>
+                                 <p id="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408__d5e298">A static configuration enables the IM column store to cache OSON (binary JSON) columns, which are marked with an <code class="codeph">IS_JSON</code> check constraint. Internally, an OSON column is a hidden virtual column named <code class="codeph">SYS_IME_OSON</code>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">DYNAMIC_ONLY</code></p>
+                                 <p id="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408__d5e310">The database only populates frequently used or “hot” expressions that have been added to the table as <code class="codeph">SYS_IME</code> hidden virtual columns. Setting this value increases the In-Memory footprint for some tables.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">DISABLE</code></p>
+                                 <p id="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408__d5e319">The database does not populate any IM expressions, whether static or dynamic, into the IM column store.</p>
+                              </li>
+                           </ul>
+                           <p>Changing the value of <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> does not have an immediate effect on the IM expressions currently populated in the IM column store. For example, if you change <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> from <code class="codeph">DYNAMIC_ONLY</code> to <code class="codeph">DISABLE</code>, then the database does not immediately remove the stored IM expressions. Rather, the next repopulation excludes the disabled IM expressions, which effectively removes them.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                     <div>
+                        <div class="infoboxnotealso" id="GUID-F74CB689-DE3A-4A5B-AD34-816002DD6408__GUID-99E22AAA-823C-45EB-86EE-F9A35BB93788">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=ADJSN-GUID-857A2E95-28AB-4314-B654-4CB05C50D9CF" target="_blank"><span class="italic">Oracle Database JSON Developer's Guide</span></a> to learn more about using JSON with Database In-Memory
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><span><cite>Oracle Database Reference</cite></span> to learn about <a href="../refrn/INMEMORY_EXPRESSIONS_USAGE.html#REFRN-GUID-9B926459-CA8A-4843-B9A1-4DE6F630EB45" target="_blank"><code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> </a> and <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=GUID-0FEC03C4-8F07-47C0-8FC0-A771EBF5D057" target="_blank"><code class="codeph">ALL_JSON_COLUMNS</code> </a></p>
+                              </li>
+                           </ul>
+                        </div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-F823DF2B-2FD0-4E81-AB55-B06A52B098B7" title="The DBMS_INMEMORY_ADMIN package, DBMS_INMEMORY package, and INMEMORY_EXPRESSIONS_USAGE initialization parameter control the behavior of IM expressions.">User Interfaces for IM Expressions</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+                  <div class="sect4"><a id="GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C" name="GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C"></a><h5 id="INMEM-GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C" class="sect5"><span class="enumeration_section">7.1.3.2 </span>DBMS_INMEMORY_ADMIN and DBMS_INMEMORY
+                     </h5>
+                     <div>
+                        <p>To manage IM expressions, use the <code class="codeph">DBMS_INMEMORY_ADMIN</code> and <code class="codeph">DBMS_INMEMORY</code> packages.
+                        </p>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C__GUID-5D2A4069-017B-4D77-A340-AA5DF7993D83">PL/SQL Procedures for Managing IM Expressions</p>
+                           <div class="tblformal" id="GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C__GUID-C1FDB104-9B32-47C0-B4AC-D263D7288856">
+                              <table cellpadding="4" cellspacing="0" class="Formal" title="" summary="This table describes procedures in the DBMS_INMEMORY_ADMIN and DBMS_INMEMORY packages that relate to IM expressions." frame="hsides" border="1" rules="rows">
+                                 <thead>
+                                    <tr align="left" valign="top">
+                                       <th align="left" valign="bottom" width="20%" id="d21514e2590">Package</th>
+                                       <th align="left" valign="bottom" width="20%" id="d21514e2593">Procedure</th>
+                                       <th align="left" valign="bottom" width="20%" id="d21514e2596">Description</th>
+                                    </tr>
+                                 </thead>
+                                 <tbody>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2601" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2601 d21514e2593 ">
+                                          <p><code class="codeph">IME_OPEN_CAPTURE_WINDOW</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2601 d21514e2596 ">
+                                          <p><span>This procedure signals the beginning of an expression capture window.</span></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2614" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2614 d21514e2593 ">
+                                          <p><code class="codeph">IME_CLOSE_CAPTURE_WINDOW</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2614 d21514e2596 ">
+                                          <p><span>This procedure signals the end of the current expression capture window.</span></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2627" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2627 d21514e2593 ">
+                                          <p><code class="codeph">IME_GET_CAPTURE_STATE</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2627 d21514e2596 ">
+                                          <p><span>This procedure returns the current capture state of the expression capture window and the timestamp of the most recent modification.</span></p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2640" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2640 d21514e2593 ">
+                                          <p><code class="codeph">IME_CAPTURE_EXPRESSIONS</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2640 d21514e2596 ">
+                                          <p>This procedure captures the 20 most frequently accessed (“hottest”) expressions in the database in the specified time range.</p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2652" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2652 d21514e2593 ">
+                                          <p><code class="codeph">IME_POPULATE_EXPRESSIONS</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2652 d21514e2596 ">
+                                          <p>This procedure forces the population of IM expressions captured in the latest invocation of the <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure.
+                                          </p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2667" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY_ADMIN</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2667 d21514e2593 ">
+                                          <p><code class="codeph">IME_DROP_ALL_EXPRESSIONS</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2667 d21514e2596 ">
+                                          <p>This procedure drops all <code class="codeph">SYS_IME</code> virtual columns in the database.
+                                          </p>
+                                       </td>
+                                    </tr>
+                                    <tr align="left" valign="top">
+                                       <td align="left" valign="top" width="20%" id="d21514e2682" headers="d21514e2590 ">
+                                          <p><code class="codeph">DBMS_INMEMORY</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2682 d21514e2593 ">
+                                          <p><code class="codeph">IME_DROP_EXPRESSIONS</code></p>
+                                       </td>
+                                       <td align="left" valign="top" width="20%" headers="d21514e2682 d21514e2596 ">
+                                          <p>This procedure drops a specified set of <code class="codeph">SYS_IME</code> virtual columns from a table.
+                                          </p>
+                                       </td>
+                                    </tr>
+                                 </tbody>
+                              </table>
+                           </div>
+                           <!-- class="inftblhruleinformal" -->
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                     <div>
+                        <div class="infoboxnotealso" id="GUID-7D9F419F-A787-4BE7-A277-EF0EDCADE49C__GUID-4A6A7977-B430-4484-9EE2-5D16C90BAFF7">
+                           <p class="notep1">See Also:</p>
+                           <p><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span> to learn more about the <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=ARPLS-GUID-2333DC40-794B-434B-9B1F-9A0AF8356515" target="_blank"><code class="codeph">DBMS_INMEMORY</code></a> and <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=ARPLS-GUID-398720DF-7D8D-4418-B395-5F7C5FC85BC5" target="_blank"><code class="codeph">DBMS_INMEMORY_ADMIN</code></a> packages
+                           </p>
+                        </div>
+                        <div class="familylinks">
+                           <div class="parentlink">
+                              <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-F823DF2B-2FD0-4E81-AB55-B06A52B098B7" title="The DBMS_INMEMORY_ADMIN package, DBMS_INMEMORY package, and INMEMORY_EXPRESSIONS_USAGE initialization parameter control the behavior of IM expressions.">User Interfaces for IM Expressions</a></p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                  </div>
+               </div>
+               <div class="sect3"><a id="GUID-5D07375B-1F63-49BD-80E0-28B5363607A2" name="GUID-5D07375B-1F63-49BD-80E0-28B5363607A2"></a><h4 id="INMEM-GUID-5D07375B-1F63-49BD-80E0-28B5363607A2" class="sect4"><span class="enumeration_section">7.1.4 </span>Basic Tasks for IM Expressions
+                  </h4>
+                  <div>
+                     <p>The default setting of <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> enables the database to use both dynamic and static IM expressions. You must use <code class="codeph">DBMS_INMEMORY_ADMIN</code> to populate the expressions in the IM column store.
+                     </p>
+                     <p>Typically, you perform IM expression tasks in the following sequence:</p>
+                     <ol>
+                        <li>
+                           <p>Optionally, change the type of IM expression that the database can use.</p>
+                           <p>See <span class="q">"<a href="optimizing-in-memory-expressions.html#GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC" title="Optionally, use INMEMORY_EXPRESSIONS_USAGE to choose which types of IM expressions are eligible for population, or to disable population of all IM expressions.">Configuring IM Expression Usage</a>"</span>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Capture and populate IM expressions.</p>
+                           <p>See <span class="q">"<a href="optimizing-in-memory-expressions.html#GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974" title="The IME_CAPTURE_EXPRESSIONS procedure captures the 20 most frequently accessed (“hottest”) expressions in the database in the specified time interval. The IME_POPULATE_EXPRESSIONS procedure forces the population of expressions captured in the latest invocation of DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS.">Capturing and Populating IM Expressions</a>"</span>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Optionally, drop some or all IM expressions.</p>
+                           <p>See <span class="q">"<a href="optimizing-in-memory-expressions.html#GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857" title="The DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS procedure drops all SYS_IME expression virtual columns in the database. The DBMS_INMEMORY.IME_DROP_EXPRESSIONS procedure drops a specified set of SYS_IME virtual columns from a table.">Dropping IM Expressions</a>"</span>.
+                           </p>
+                        </li>
+                     </ol>
+                  </div>
+                  <div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-1B849DAF-277E-4B09-8275-367592115B06" title="By default, the DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS procedure identifies and populates “hot” expressions, called In-Memory Expressions (IM expressions).">About IM Expressions</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+            </div>
+            <div class="sect2"><a id="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC" name="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC"></a><h3 id="INMEM-GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC" class="sect3"><span class="enumeration_section">7.2 </span>Configuring IM Expression Usage
+               </h3>
+               <div>
+                  <p>Optionally, use <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> to choose which types of IM expressions are eligible for population, or to disable population of all IM expressions.
+                  </p>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC__GUID-7635209B-AEDE-4D20-9AA0-5E378E596C6E">Prerequisites</p>
+                     <p>To enable the database to use IM expressions, the following conditions must be true:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The <code class="codeph">INMEMORY_SIZE</code> initialization parameter is set to a non-zero value.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The value for the initialization parameter <code class="codeph">COMPATIBLE</code> is set to 12.2.0 or higher.
+                           </p>
+                        </li>
+                     </ul>
+                     <div class="infoboxnote" id="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC__GUID-26692CA0-5664-44C1-87D4-729659C739A4">
+                        <p class="notep1">Note:</p>
+                        <p>In an Oracle Real Applications Cluster (RAC) database, the <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter does not require the same value on every database instance. Each IMCU independently lists virtual columns. Each IMCU could materialize different expressions based on the initialization parameter value and the virtual columns that existed when the IMCU was populated or repopulated.
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC__GUID-78AAF319-F973-4BAB-BFF2-49C295CBAB34">To configure IM expression usage:</p>
+                     <ol>
+                        <li>
+                           <p>Log in to the database as a user with the appropriate privileges.</p>
+                        </li>
+                        <li>
+                           <p>To configure IM expression usage, use an <code class="codeph">ALTER SYSTEM</code> statement to set <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> to any of the following values:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">ENABLE</code> (default) — Enable dynamic and static IM expressions
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">STATIC_ONLY</code> — Enable only static IM expressions
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">DYNAMIC_ONLY</code> — Enable only dynamic IM expressions
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">DISABLE</code> — Disable all IM expressions
+                                 </p>
+                              </li>
+                           </ul>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="example" id="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC__GUID-01D0598F-5BA4-488F-8681-CD0425A4C2ED">
+                     <p class="titleinexample">Example 7-1 Disabling IM Expressions</p>
+                     <p>The following statement disables storage of IM expressions in the IM column store:</p><pre class="pre codeblock"><code>ALTER SYSTEM SET INMEMORY_EXPRESSIONS_USAGE='DISABLE';</code></pre></div>
+                  <!-- class="example" -->
+               </div>
+               <div>
+                  <div class="infoboxnotealso" id="GUID-B2342B74-D67D-4B16-9CC7-C31CA69903CC__GUID-CE107926-9332-4F2C-A5DD-639E146A756D">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=GUID-9B926459-CA8A-4843-B9A1-4DE6F630EB45" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> to learn more about <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> 
+                     </p>
+                  </div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8" title="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">Optimizing Queries with In-Memory Expressions</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div>
+            <div class="sect2"><a id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974" name="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974"></a><h3 id="INMEM-GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974" class="sect3"><span class="enumeration_section">7.3 </span>Capturing and Populating IM Expressions
+               </h3>
+               <div>
+                  <p>The <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure <span>captures the 20 most frequently accessed (“hottest”) expressions in the database in the specified time interval.</span> The <code class="codeph">IME_POPULATE_EXPRESSIONS</code> procedure <span>forces the population of expressions captured in the latest invocation of <code class="codeph">DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS</code>.</span></p>
+                  <div class="section">
+                     <p>Whenever you invoke the <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure, the database queries the Expression Statistics Store (ESS), and considers only expressions on heap-organized tables that are at least partially populated in the IM column store. The database adds the 20 hottest expressions to their respective tables as hidden virtual columns, prefixed with the string <code class="codeph">SYS_IME</code>, and applies the default <code class="codeph">INMEMORY</code> column compression clause. If <code class="codeph">SYS_IME</code> columns added during a previous invocation are no longer in the latest top 20 list, then their attribute changes to <code class="codeph">NO INMEMORY</code>.
+                     </p>
+                     <p>If you do not invoke <code class="codeph">IME_POPULATE_EXPRESSIONS</code>, then the database gradually repopulates <code class="codeph">SYS_IME</code> columns when their parent IMCUs are repopulated. If a table is not repopulated, then the database does not repopulate new <code class="codeph">SYS_IME</code> columns captured by the <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> procedure. <code class="codeph">IME_POPULATE_EXPRESSIONS</code> solves this problem by forcing repopulation.
+                     </p>
+                     <p>Internally, the <code class="codeph">IME_POPULATE_EXPRESSIONS</code> procedure invokes <code class="codeph">DBMS_INMEMORY.REPOPULATE</code> for all tables that have <code class="codeph">SYS_IME</code> columns with the <code class="codeph">INMEMORY</code> attribute. To populate  <code class="codeph">SYS_IME</code> columns in a specified subset of tables, use <code class="codeph">DBMS_INMEMORY.REPOPULATE</code> instead of <code class="codeph">DBMS_INMEMORY_ADMIN.IME_POPULATE_EXPRESSIONS</code>.
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-F1F326B7-FD24-4ABA-BCF4-0A8B3234071B">Prerequisites</p>
+                     <p>To enable the database to capture IM expressions, the following conditions must be true:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter must be set to a value other than <code class="codeph">DISABLE</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The <code class="codeph">INMEMORY_SIZE</code> initialization parameter is set to a non-zero value.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The value for the initialization parameter <code class="codeph">COMPATIBLE</code> must be set to 12.2.0 or higher.
+                           </p>
+                        </li>
+                        <li>
+                           <p>To specify an <span>expression capture window</span> of arbitrary length (rather than the predetermined time span of 24 hours or forever), you must open the window with <code class="codeph">DBMS_INMEMORY_ADMIN.IME_OPEN_CAPTURE_WINDOW</code> and close it with <code class="codeph">IME_CLOSE_CAPTURE_WINDOW</code>. The window is global across all instances in an Oracle RAC database.
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-311480FE-47D3-4430-AB93-3E8B8DF65BD2">To capture and populate IM expressions:</p>
+                     <ol>
+                        <li>
+                           <p>In SQL*Plus or SQL Developer, log in to the database as a user with the necessary privileges.</p>
+                        </li>
+                        <li>
+                           <p>If you want to specify the length of the window (rather than a predetermined time span), then execute <code class="codeph">DBMS_INMEMORY_ADMIN.IME_OPEN_CAPTURE_WINDOW</code> as follows:
+                           </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_OPEN_CAPTURE_WINDOW();</code></pre><div class="infoboxnote" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-4990F32E-3D07-47C6-9414-5FF2BDF52AF6">
+                              <p class="notep1">Note:</p>
+                              <p>To check whether any expression capture windows are currently open, execute <code class="codeph">DBMS_INMEMORY_ADMIN.IME_GET_CAPTURE_STATE</code>.
+                              </p>
+                           </div>
+                        </li>
+                        <li>
+                           <p>If you opened a window with <code class="codeph">IME_OPEN_CAPTURE_WINDOW</code> in the preceding step, then close it with <code class="codeph">IME_CLOSE_CAPTURE_WINDOW</code> as follows:
+                           </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_CLOSE_CAPTURE_WINDOW();</code></pre></li>
+                        <li>
+                           <p>Execute <code class="codeph">DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS</code>, setting the <code class="codeph">interval</code> parameter to any of the following values:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">CUMULATIVE</code></p>
+                                 <p>The database considers all expression statistics since the creation of the database.</p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">CURRENT</code></p>
+                                 <p>The database considers only expression statistics from the past 24 hours.</p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">WINDOW</code></p>
+                                 <p>The database adds hidden virtual columns for expressions tracked in the most recent user-specified <span>expression capture window</span>. This window opens with the manual invocation of the <code class="codeph">IME_OPEN_CAPTURE_WINDOW</code> procedure, and then closes with the manual invocation of the <code class="codeph">IME_CLOSE_CAPTURE_WINDOW</code> procedure. 
+                                 </p>
+                                 <p>If the capture window is currently open, then the database considers all expressions tracked in the current window up until this point, and then materializes the hottest expressions. To list the expressions that have been tracked in the current window, query <code class="codeph">DBA_EXPRESSION_STATISTICS</code> with <code class="codeph">SNAPSHOT = 'WINDOW'</code>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </li>
+                        <li>
+                           <p>Optionally, to force immediate population of all captured IM expressions, execute <code class="codeph">DBMS_INMEMORY_ADMIN.IME_POPULATE_EXPRESSIONS</code> as follows:
+                           </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_POPULATE_EXPRESSIONS();</code></pre></li>
+                     </ol>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="example" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-10AD4194-6DD7-456B-8B20-B754FF0253FF">
+                     <p class="titleinexample">Example 7-2 Capturing Expressions in a User-Defined Window</p>
+                     <p>This example demonstrates use of the <code class="codeph">WINDOW</code> capture mode. Your goal is to open and close an expression capture window, and then capture all expressions that the database tracked during this window. You perform the following steps:
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Open an <span>expression capture window</span>, generate expressions, and then close the window:
+                           </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_OPEN_CAPTURE_WINDOW();
+-- Generate expressions for the database to track
+EXEC DBMS_INMEMORY_ADMIN.IME_CLOSE_CAPTURE_WINDOW();
+</code></pre></li>
+                        <li>
+                           <p>Query <code class="codeph">DBA_EXPRESSION_STATICS</code> (sample output included):
+                           </p><pre class="pre codeblock"><code>COL OWNER FORMAT A6
+COL TABLE_NAME FORMAT A9
+COL COUNT FORMAT 99999
+COL CREATED FORMAT A10
+COL EXPRESSION_TEXT FORMAT A29
+
+SELECT OWNER, TABLE_NAME, EVALUATION_COUNT AS COUNT, 
+       CREATED, EXPRESSION_TEXT 
+FROM   DBA_EXPRESSION_STATISTICS 
+WHERE  SNAPSHOT = 'WINDOW'
+AND    OWNER = 'SH';
+
+OWNER  TABLE_NAM  COUNT CREATED    EXPRESSION_TEXT
+------ --------- ------ ---------- -------------------------
+SH     SALES       4702 09-OCT-17  "QUANTITY_SOLD"
+SH     SALES       4702 09-OCT-17  "QUANTITY_SOLD"*"AMOUNT_SOLD"
+SH     SALES       4702 09-OCT-17  "PROD_ID"
+SH     SALES       4702 09-OCT-17  "CUST_ID"
+SH     SALES       4702 09-OCT-17  "CHANNEL_ID"
+SH     SALES       4702 09-OCT-17  "AMOUNT_SOLD"
+</code></pre><p>The preceding query shows both the columns tracked in the ESS and the expressions captured during the window for queries in the <code class="codeph">sh</code> schema. During the most recent window, the database captured one expression: <code class="codeph">QUANTITY_SOLD*AMOUNT_SOLD</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Use <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> to make the database consider all expressions in the current window for materialization:
+                           </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS('WINDOW');</code></pre></li>
+                        <li>
+                           <p>Query <code class="codeph">DBA_IM_EXPRESSIONS</code> (sample output included):
+                           </p><pre class="pre codeblock"><code>COL OWNER FORMAT a6
+COL TABLE_NAME FORMAT a9
+COL COLUMN_NAME FORMAT a25
+SET LONG 50
+SET LINESIZE 150
+
+SELECT OWNER, TABLE_NAME, COLUMN_NAME, SQL_EXPRESSION
+FROM   DBA_IM_EXPRESSIONS;
+
+OWNER  TABLE_NAM COLUMN_NAME               SQL_EXPRESSION
+------ --------- ------------------------- -----------------------------
+SH     SALES     SYS_IME000100000025201B   "QUANTITY_SOLD"*"AMOUNT_SOLD"
+</code></pre><p>The preceding output shows all virtual columns that were added to the table and marked <code class="codeph">INMEMORY</code> as part of the latest <code class="codeph">IME_CAPTURE_EXPRESSIONS</code> invocation. The database gradually populates the captured expressions into the IM column store when it repopulates different IMCUs of the table.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Execute the following procedure to explicitly force a population of all captured IM expressions:</p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_POPULATE_EXPRESSIONS();</code></pre><p>Note that you can populate IM expressions from a specific table by executing the <code class="codeph">DBMS_INMEMORY.REPOPULATE</code> procedure with the <code class="codeph">force</code> parameter set to <code class="codeph">TRUE</code>.
+                           </p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-BF872C60-D950-4159-AC34-66BACABB49A0">
+                     <p class="titleinexample">Example 7-3 Determining the State of an Expression Capture Window</p>
+                     <p>This example opens an <span>expression capture window</span>, and then determines its capture state.
+                     </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_OPEN_CAPTURE_WINDOW();
+
+VARIABLE b_state VARCHAR2(25)
+VARIABLE b_time  VARCHAR2(10)
+EXECUTE DBMS_INMEMORY_ADMIN.IME_GET_CAPTURE_STATE(:b_state, :b_time)
+PRINT b_state b_time
+</code></pre><p>The following sample output indicates that an <span>expression capture window</span> is currently open:
+                     </p><pre class="pre codeblock"><code>B_STATE
+--------------------------------------------------
+OPEN
+
+B_TIME
+--------------------------------------------------
+09-OCT-17</code></pre></div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-AE693889-DE28-48C7-BB51-3FA5B86349C0">
+                     <p class="titleinexample">Example 7-4 Capturing the Top 20 IM Expressions in the Past 24 Hours</p>
+                     <p>This example captures IM expressions using only the statistics gathered during the last day, and then forces immediate population:</p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY_ADMIN.IME_CAPTURE_EXPRESSIONS('CURRENT');
+EXEC DBMS_INMEMORY_ADMIN.IME_POPULATE_EXPRESSIONS();</code></pre><p>The following query of <code class="codeph">DBA_IM_EXPRESSIONS</code> shows all IME virtual columns that are marked <code class="codeph">INMEMORY</code> (sample output provided):
+                     </p><pre class="pre codeblock"><code>COL OWNER FORMAT a6 
+COL TABLE_NAME FORMAT a9 
+COL COLUMN_NAME FORMAT a25
+SET LONG 50
+SET LINESIZE 150
+
+SELECT OWNER, TABLE_NAME, 
+       COLUMN_NAME, SQL_EXPRESSION
+FROM   DBA_IM_EXPRESSIONS;
+
+OWNER  TABLE_NAM COLUMN_NAME               SQL_EXPRESSION
+------ --------- ------------------------- ---------------------------------------------
+HR     EMPLOYEES SYS_IME00010000001746FD   12*("SALARY"*NVL("COMMISSION_PCT",0)+"SALARY")
+HR     EMPLOYEES SYS_IME00010000001746FE   ROUND("SALARY"*12/52,2)
+</code></pre></div>
+                  <!-- class="example" -->
+               </div>
+               <div>
+                  <div class="infoboxnotealso" id="GUID-DE164F9A-64E9-4A28-B906-A8CDEC0C1974__GUID-DD77FE84-B8D6-4D9B-8F64-6ACD13C6DD33">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span> to learn more about <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=ARPLS-GUID-70CDDB1F-A928-4AD5-9632-5F1C5DEF5DC9" target="_blank"><code class="codeph">IME_CAPTURE_EXPRESSIONS</code></a> and <a href="../arpls/DBMS_INMEMORY_ADMIN.html#GUID-ED6D684C-39B3-449F-ADE3-4D6FA4294A28" target="_blank"><code class="codeph">IME_POPULATE_EXPRESSIONS</code></a></p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/inmem&amp;id=GUID-44900E64-09C8-40AD-BC7A-A59DC70E0EDA" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> to learn more about the <code class="codeph">DBA_IM_EXPRESSIONS</code> view
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8" title="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">Optimizing Queries with In-Memory Expressions</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div>
+            <div class="sect2"><a id="GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857" name="GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857"></a><h3 id="INMEM-GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857" class="sect3"><span class="enumeration_section">7.4 </span>Dropping IM Expressions
+               </h3>
+               <div>
+                  <p>The <code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code> procedure <span>drops all <code class="codeph">SYS_IME</code> expression virtual columns in the database.</span> The <code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code> procedure <span>drops a specified set of <code class="codeph">SYS_IME</code> virtual columns from a table.</span></p>
+                  <div class="section">
+                     <p>Typical reasons for dropping <code class="codeph">SYS_IME</code> columns are space and performance. The maximum number of <code class="codeph">SYS_IME</code> columns for a table, regardless of whether the attribute is <code class="codeph">INMEMORY</code> or <code class="codeph">NO INMEMORY</code>, is 50. After the 50-expression limit is reached for a table, the database will not add new <code class="codeph">SYS_IME</code> columns. To make space for new expressions, you must manually drop <code class="codeph">SYS_IME</code> columns with the <code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code> or <code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code> procedures.
+                     </p>
+                     <p>The <code class="codeph">IME_DROP_ALL_EXPRESSIONS</code> procedure drops all <code class="codeph">SYS_IME</code> columns from all tables, regardless of whether they have the <code class="codeph">INMEMORY</code> attribute. In effect, the procedure acts as a database-wide reset button.
+                     </p>
+                     <p>Using <code class="codeph">IME_DROP_ALL_EXPRESSIONS</code> triggers a drop of all IMEUs <span class="italic">and</span> IMCUs for segments that have <code class="codeph">SYS_IME</code> columns. For example, if 50 populated tables have one <code class="codeph">SYS_IME</code> column each, then <code class="codeph">IME_DROP_ALL_EXPRESSIONS</code> removes all 50 tables from the IM column store. To populate these segments again, you must use the <code class="codeph">DBMS_INMEMORY.POPULATE</code> procedure or perform a full table scan.
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857__GUID-7DB405C1-5EE8-4601-9AAF-399F807F31DD">Prerequisites</p>
+                     <p>To drop IM expressions, the following conditions must be true:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter is set to a value other than <code class="codeph">DISABLE</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The <code class="codeph">INMEMORY_SIZE</code> initialization parameter is set to a nonzero value.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The <code class="codeph">COMPATIBLE</code> initialization parameter is set to 12.2.0 or higher.
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857__GUID-57DA7CD0-9610-4F7C-AC0C-4F0792667860">To drop IM expressions:</p>
+                     <ol>
+                        <li>
+                           <p>In SQL*Plus or SQL Developer, log in to the database as a user with the necessary privileges.</p>
+                        </li>
+                        <li>
+                           <p>Execute either <code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code> or <code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code>. 
+                           </p>
+                           <p>If you execute <code class="codeph">IME_DROP_EXPRESSIONS</code>, then specify the following parameters:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">schema_name </code>— The name of the schema that contains the In-Memory table
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">table_name</code> — The name of the In-Memory table
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">column_name</code> — The name of the <code class="codeph">SYS_IME</code> column. By default, this value is null, which specifies all <code class="codeph">SYS_IME</code> columns in this table.
+                                 </p>
+                              </li>
+                           </ul>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="example" id="GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857__GUID-A715D936-76A0-4FDE-B6B0-71BC54D3ECE1">
+                     <p class="titleinexample">Example 7-5 Dropping All IM Expressions in a Table</p>
+                     <p>This example drops all IM expressions in the <code class="codeph">hr.employees</code> table:
+                     </p><pre class="pre codeblock"><code>EXEC DBMS_INMEMORY.IME_DROP_EXPRESSIONS('hr', 'employees');</code></pre></div>
+                  <!-- class="example" -->
+               </div>
+               <div>
+                  <div class="infoboxnotealso" id="GUID-581C803B-56F2-4FD6-95DB-40B6B85DE857__GUID-CCB265C9-F817-4B83-8D2B-DF63A39C0C34">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="../refrn/INMEMORY_EXPRESSIONS_USAGE.html#GUID-9B926459-CA8A-4843-B9A1-4DE6F630EB45" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> to learn more about the <code class="codeph">INMEMORY_EXPRESSIONS_USAGE</code> initialization parameter
+                           </p>
+                        </li>
+                        <li>
+                           <p><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span> to learn more about <a href="../arpls/DBMS_INMEMORY.html#ARPLS-GUID-F6699783-90CD-4411-AD54-1DADBD8E2BFD" target="_blank"><code class="codeph">DBMS_INMEMORY.IME_DROP_EXPRESSIONS</code></a> and <a href="../arpls/DBMS_INMEMORY_ADMIN.html#ARPLS-GUID-68438F17-9806-418A-B92A-E029284D3D73" target="_blank"><code class="codeph">DBMS_INMEMORY_ADMIN.IME_DROP_ALL_EXPRESSIONS</code></a></p>
+                        </li>
+                        <li>
+                           <p><a href="../refrn/DBA_IM_EXPRESSIONS.html#GUID-44900E64-09C8-40AD-BC7A-A59DC70E0EDA" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> to learn more about the <code class="codeph">DBA_IM_EXPRESSIONS</code> data dictionary view
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="optimizing-in-memory-expressions.html#GUID-5F82168D-A024-4F96-B3AF-7DA4C52908B8" title="In the context of the IM column store, an expression is a combination of one or more values, operators, and SQL or PL/SQL functions (DETERMINISTIC only) that resolve to a value.">Optimizing Queries with In-Memory Expressions</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

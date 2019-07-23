@@ -1,0 +1,1570 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Maintaining Data Integrity in Database Applications</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Database Development Guide">
+      <meta property="og:description" content="">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Database Development Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="database-development-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-31T23:23:15-08:00">
+      <meta name="dcterms.title" content="Database Development Guide">
+      <meta name="dcterms.dateCopyrighted" content="1996, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96334-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="indexes.html" title="Previous" type="text/html">
+      <link rel="next" href="plsql-for-application-developers.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="ADFNS">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="indexes.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="plsql-for-application-developers.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Database Development Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="sql-for-application-developers.html" property="item" typeof="WebPage"><span property="name">SQL for Application Developers</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Maintaining Data Integrity in Database Applications</li>
+            </ol>
+            <a id="GUID-398ECF26-572D-49D4-B957-803A962A8BE8" name="GUID-398ECF26-572D-49D4-B957-803A962A8BE8"></a><a id="ADFNS1023"></a><a id="ADFNS004"></a>
+            
+            <h2 id="ADFNS-GUID-398ECF26-572D-49D4-B957-803A962A8BE8" class="sect2"><span class="enumeration_chapter">12 </span>Maintaining Data Integrity in Database Applications
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>In a database application, <span class="bold">maintaining data integrity</span> means ensuring that the data in the tables that the application manipulates conform to the appropriate business rules. A <span class="bold">business rule</span> specifies a condition or relationship that must always be true or must always be false. For example, a business rule might be that no employee can have a salary over $100,000 or that every employee in the <code class="codeph">EMPLOYEES</code> table must belong to a department in the <code class="codeph">DEPARTMENTS</code> table. Business rules vary from company to company, because each company defines its own policies about salaries, employee numbers, inventory tracking, and so on.
+               </p>
+               <p>There are several ways to ensure data integrity, and the one to use whenever possible is the <span class="bold">integrity constraint</span> (or <span class="bold">constraint</span>).
+               </p>
+               <p>This chapter supplements this information:</p>
+               <div class="infoboxnote" id="GUID-398ECF26-572D-49D4-B957-803A962A8BE8__GUID-B6C051EE-FAA7-4B89-A44B-5706FDF281A1">
+                  <p class="notep1">Note:</p>
+                  <p>This chapter applies to only to constraints on tables. Constraints on views do not help maintain data integrity or have associated indexes. Instead, they enable query rewrites on queries involving views, thereby improving performance when using materialized views and other data warehousing features.</p>
+               </div>
+               <div class="infoboxnotealso" id="GUID-398ECF26-572D-49D4-B957-803A962A8BE8__ORACLEDATABASECONCEPTSFORINFORMATIO-CA456CAE">
+                  <p class="notep1">See Also:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=CNCPT021" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for information about data integrity and constraints
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../admin/managing-schema-objects.html#ADMIN11537" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for more information about managing constraints
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../sqlrf/constraint.html#SQLRF52180" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for the syntactic and semantic information about constraints 
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../sqlrf/constraint.html#SQLRF52181" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about constraints on views
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../dwhsg/index.html" target="_blank"><span class="italic">Oracle Database Data Warehousing Guide</span></a> for information about using constraints in data warehouses
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="sql-data-types.html#GUID-A3D8B49A-EEE1-4B76-BEC0-6FF821BBE005">How the Correct Data Type Increases Data Integrity</a> for more information about the role that data type plays in data integrity
+                        </p>
+                     </li>
+                  </ul>
+               </div>
+               <div class="section">
+                  <p class="subhead1" id="GUID-398ECF26-572D-49D4-B957-803A962A8BE8__GUID-C88BEE2C-D2BD-4E37-A993-C09573828915">Topics:</p>
+               </div>
+               <!-- class="section" -->
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="data-integrity.html#GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8">Enforcing Business Rules with Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD">Enforcing Business Rules with Both Constraints and Application Code</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-0F5F8C2B-07D2-4D25-AEF1-3B9B6480949E">Creating Indexes for Use with Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D">When to Use NOT NULL Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99">When to Use Default Column Values</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-E9BD1A8C-4E1E-4342-ABC7-7853B67FDF88">Choosing a Primary Key for a Table (PRIMARY KEY Constraint)</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7">When to Use UNIQUE Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53">Enforcing Referential Integrity with FOREIGN KEY Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-E1566FC6-C8EE-481D-8119-2E7C4E3200BA">Minimizing Space and Time Overhead for Indexes Associated with Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-7234B3F8-761F-429F-AF1A-BDB5804463A7">Guidelines for Indexing Foreign Keys</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-4C164755-6CE2-4E72-B323-9CEB2A2374A1">Referential Integrity in a Distributed Database</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-8F512577-F51D-4309-B987-C364D1D71779">When to Use CHECK Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8">Examples of Defining Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-42D44B4C-DA38-4334-AADE-40DE556EF8CD">Enabling and Disabling Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0">Modifying Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-65CF33C0-03C2-408A-86D5-56C9A17B1E5D">Renaming Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-64DAF3ED-702F-4D3A-8703-1EB917DCC8AC">Dropping Constraints</a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-CF3CFAA8-CB91-4AA6-9740-9F682ABD52C2">Managing FOREIGN KEY Constraints </a></p>
+                  </li>
+                  <li>
+                     <p><a href="data-integrity.html#GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4">Viewing Information About Constraints</a></p>
+                  </li>
+               </ul>
+            </div><a id="ADFNS1024"></a><a id="ADFNS262"></a><div class="sect2"><a id="GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8" name="GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8"></a><h3 id="ADFNS-GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8" class="sect3">Enforcing Business Rules with Constraints</h3>
+               <div>
+                  <p>Whenever possible, enforce business rules with constraints. Constraints have the advantage of speed: Oracle Database can check that all the data in a table obeys a constraint faster than application code can do the equivalent checking.</p>
+                  <p><a href="data-integrity.html#GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8__BEIIEFFJ">Example 12-1</a> creates a table of departments, a table of employees, a constraint to enforce the rule that all values in the department table are unique, and a constraint to enforce the rule that every employee must work for a valid department.
+                  </p>
+                  <div class="example" id="GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8__BEIIEFFJ">
+                     <p class="titleinexample">Example 12-1 Enforcing Business Rules with Constraints</p>
+                     <p>Create table of departments:</p><pre class="oac_no_warn" dir="ltr">DROP TABLE dept_tab;
+CREATE TABLE dept_tab (
+  deptname VARCHAR2(20),
+  deptno   INTEGER
+);
+ </pre><p>Create table of employees:</p><pre class="oac_no_warn" dir="ltr">DROP TABLE emp_tab;
+CREATE TABLE emp_tab (
+  empname VARCHAR2(80),
+  empno   INTEGER,
+  deptno  INTEGER
+);
+</pre><p>Create constraint to enforce rule that all values in department table are unique:</p><pre class="oac_no_warn" dir="ltr">ALTER TABLE dept_tab ADD PRIMARY KEY (deptno);
+</pre><p>Create constraint to enforce rule that every employee must work for a valid department:</p><pre class="oac_no_warn" dir="ltr">ALTER TABLE emp_tab ADD FOREIGN KEY (deptno) REFERENCES dept_tab(deptno);
+</pre><p>Now, whenever you insert an employee record into <code class="codeph">emp_tab</code>, Oracle Database checks that its <code class="codeph">deptno</code> value appears in <code class="codeph">dept_tab</code>.
+                     </p>
+                  </div>
+                  <!-- class="example" -->
+                  <p>Suppose that instead of using a constraint to enforce the rule that every employee must work for a valid department, you use a trigger that queries <code class="codeph">dept_tab</code> to check that it contains the <code class="codeph">deptno</code> value of the employee record to be inserted into <code class="codeph">emp_tab</code>. Because the query uses consistent read (CR), it might miss uncommitted changes from other transactions.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8__GUID-8FE26EA1-8EDF-4ADF-A3CA-BFE833BD9E1C">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="../sqlrf/constraint.html#SQLRF52180" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for syntactic and semantic information about constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../cncpt/data-integrity.html#CNCPT33334" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for the complete list of advantages of integrity constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../cncpt/server-side-programming.html#CNCPT88945" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for more information about using triggers to enforce business rules
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS1025"></a><a id="ADFNS263"></a><div class="sect2"><a id="GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD" name="GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD"></a><h3 id="ADFNS-GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD" class="sect3">Enforcing Business Rules with Both Constraints and Application Code</h3>
+               <div>
+                  <p>Enforcing business rules with both constraints and application code is recommended when application code can determine that data values are invalid without querying tables. The application code can provide immediate feedback to the user and reduce the load on the database by preventing attempts to insert invalid data into tables.</p>
+                  <p>For <a href="data-integrity.html#GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD__BEIHIABH">Example 12-2</a>, assume that <a href="data-integrity.html#GUID-FA138F6B-D3BC-4A1E-9BB8-23AC93BEDCC8__BEIIEFFJ">Example 12-1</a> was run and then this column was added to the table <code class="codeph">emp_tab</code>:
+                  </p><pre class="oac_no_warn" dir="ltr">empgender VARCHAR2(1)
+</pre><p>The only valid values for <code class="codeph">empgender</code> are <code class="codeph">'M'</code> and <code class="codeph">'F'</code>. When someone tries to insert a row into <code class="codeph">emp_tab</code> or update the value of <code class="codeph">emp_tab</code>.<code class="codeph">empgender</code>, application code can determine whether the new value for <code class="codeph">emp_tab</code>.<code class="codeph">empgender</code> is valid without querying a table. If the value is invalid, the application code can notify the user instead of trying to insert the invalid value, as in <a href="data-integrity.html#GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD__BEIHIABH">Example 12-2</a>.
+                  </p>
+                  <div class="example" id="GUID-E1BCFA31-E22F-4536-B382-C61FA7ADF5CD__BEIHIABH">
+                     <p class="titleinexample">Example 12-2 Enforcing Business Rules with Both Constraints and Application Code</p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE PROCEDURE add_employee (
+  e_name   emp_tab.empname%TYPE,
+  e_gender emp_tab.empgender%TYPE,
+  e_number emp_tab.empno%TYPE,
+  e_dept   emp_tab.deptno%TYPE
+) AUTHID DEFINER IS
+BEGIN
+  <span class="bold">IF UPPER(e_gender) IN ('M','F') THEN</span>
+    <span class="bold">INSERT INTO emp_tab VALUES (e_name, e_gender, e_number, e_dept);</span>
+  <span class="bold">ELSE</span>
+    <span class="bold">DBMS_OUTPUT.PUT_LINE('Gender must be M or F.');</span>
+  <span class="bold">END IF;</span>
+END;
+/
+ 
+BEGIN
+  add_employee ('Smith', <span class="bold">'H'</span>, 356, 20);
+END;
+/
+</pre><p>Result:</p><pre class="oac_no_warn" dir="ltr"><span class="bold">Gender must be M or F.</span></pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="ADFNS264"></a><div class="sect2"><a id="GUID-0F5F8C2B-07D2-4D25-AEF1-3B9B6480949E" name="GUID-0F5F8C2B-07D2-4D25-AEF1-3B9B6480949E"></a><h3 id="ADFNS-GUID-0F5F8C2B-07D2-4D25-AEF1-3B9B6480949E" class="sect3">Creating Indexes for Use with Constraints</h3>
+               <div>
+                  <p>When a unique or primary key constraint is enabled, Oracle Database creates an index automatically, but Oracle recommends that you create these indexes explicitly. If you want to use an index with a foreign key constraint, then you must create the index explicitly.</p>
+                  <p>When a constraint can use an existing index, Oracle Database does not create an index for that constraint. Note that:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>A unique or primary key constraint can use either a unique index, an entire nonunique index, or the first few columns of a nonunique index.</p>
+                     </li>
+                     <li>
+                        <p>If a unique or primary key constraint uses a nonunique index, then no other unique or primary key constraint can use that nonunique index.</p>
+                     </li>
+                     <li>
+                        <p>The column order in the constraint and index need not match.</p>
+                     </li>
+                     <li>
+                        <p>The object number of the index used by a unique or primary key constraint is stored in <code class="codeph">CDEF$</code>.<code class="codeph">ENABLED</code> for that constraint. No static data dictionary view or dynamic performance view shows this information.
+                        </p>
+                        <p>If an enabled unique or primary key constraint is using an index, you cannot drop only the index. To drop the index, you must either drop the constraint itself or disable the constraint and then drop the index.</p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-0F5F8C2B-07D2-4D25-AEF1-3B9B6480949E__GUID-10A66D65-6174-4F8C-B8A5-66553DB6A389">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="../admin/managing-indexes.html#ADMIN11725" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for more information about indexes associated with constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../admin/managing-schema-objects.html#ADMIN11546" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for information about disabling and dropping constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../admin/managing-indexes.html#ADMIN11723" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for information about creating indexes explicitly
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="indexes.html#GUID-5C53546D-8C54-4F38-B472-835F94030016" title="You can create composite indexes to computer arithmetic expressions.You can use the NLSSORT API for language-dependent sorting.">Using Indexes in Database Applications</a></p>
+                        </li>
+                        <li>
+                           <p><a href="../sqlrf/CREATE-INDEX.html#SQLRF01209" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about creating indexes explicitly
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS266"></a><a id="ADFNS265"></a><div class="sect2"><a id="GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D" name="GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D"></a><h3 id="ADFNS-GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D" class="sect3">When to Use NOT NULL Constraints</h3>
+               <div>
+                  <p>By default, a column can contain a <code class="codeph">NULL</code> value. To ensure that the column never contains a <code class="codeph">NULL</code> value, use the <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint.
+                  </p>
+                  <p>Use a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint in both of these situations:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>A column must contain a non-<code class="codeph">NULL</code> value.
+                        </p>
+                        <p>For example, in the table <code class="codeph">HR</code>.<code class="codeph">EMPLOYEES</code>, each employee must have an employee ID. Therefore, the column <code class="codeph">HR</code>.<code class="codeph">EMPLOYEES</code>.<code class="codeph">EMPLOYEE_ID</code> has a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint, and nobody can insert a new employee record into <code class="codeph">HR</code>.<code class="codeph">EMPLOYEES</code> without specifying a non-<code class="codeph">NULL</code> value for <code class="codeph">EMPLOYEE_ID</code>. You <span class="italic">can</span> insert a new employee record into <code class="codeph">HR</code>.<code class="codeph">EMPLOYEES</code> without specifying a salary; therefore, the column <code class="codeph">HR</code>.<code class="codeph">EMPLOYEES</code>.<code class="codeph">SALARY</code> does <span class="italic">not</span> have a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint.
+                        </p>
+                     </li>
+                     <li>
+                        <p>You want to allow index scans of the table, or allow an operation that requires indexing all rows.</p>
+                        <p>Oracle Database indexes do not store keys whose values are all <code class="codeph">NULL</code>. Therefore, for the preceding kinds of operations, at least one indexed column must have a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint.
+                        </p>
+                     </li>
+                  </ul>
+                  <p><a href="data-integrity.html#GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D__CHDFBFDH">Example 12-3</a> uses the SQL*Plus command <code class="codeph">DESCRIBE</code> to show which columns of the <code class="codeph">DEPARTMENTS</code> table have <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints, and then shows what happens if you try to insert <code class="codeph">NULL</code> values in columns that have <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints.
+                  </p>
+                  <div class="example" id="GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D__CHDFBFDH">
+                     <p class="titleinexample">Example 12-3 Inserting NULL Values into Columns with NOT NULL Constraints</p><pre class="oac_no_warn" dir="ltr">DESCRIBE DEPARTMENTS;
+</pre><p>Result:</p><pre class="oac_no_warn" dir="ltr"> Name                                      Null?    Type
+ ----------------------------------------- -------- ------------
+ 
+ DEPARTMENT_ID                             NOT NULL NUMBER(4)
+ DEPARTMENT_NAME                           NOT NULL VARCHAR2(30)
+ MANAGER_ID                                         NUMBER(6)
+ LOCATION_ID                                        NUMBER(4)
+</pre><p>Try to insert <code class="codeph">NULL</code> into <code class="codeph">DEPARTMENT_ID</code> column:
+                     </p><pre class="oac_no_warn" dir="ltr">INSERT INTO DEPARTMENTS (
+ <span class="bold">DEPARTMENT_ID</span>, DEPARTMENT_NAME, MANAGER_ID, LOCATION_ID
+)
+VALUES (<span class="bold">NULL</span>, 'Sales', 200, 1700);
+</pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">VALUES (NULL, 'Sales', 200, 1700)
+        *
+ERROR at line 4:
+ORA-01400: cannot insert NULL into ("HR"."DEPARTMENTS"."DEPARTMENT_ID")
+</pre><p>Omitting a value for a column that cannot be <code class="codeph">NULL</code> is the same as assigning it the value <code class="codeph">NULL</code>:
+                     </p><pre class="oac_no_warn" dir="ltr">INSERT INTO DEPARTMENTS (
+  DEPARTMENT_NAME, MANAGER_ID, LOCATION_ID
+)
+VALUES ('Sales', 200, 1700);
+</pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">INSERT INTO DEPARTMENTS (
+*
+ERROR at line 1:
+ORA-01400: cannot insert NULL into ("HR"."DEPARTMENTS"."DEPARTMENT_ID")
+</pre></div>
+                  <!-- class="example" -->
+                  <p>You can prevent the preceding error by giving <code class="codeph">DEPARTMENT_ID</code> a non-<code class="codeph">NULL</code> default value.
+                  </p>
+                  <p>You can combine <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints with other constraints to further restrict the values allowed in specific columns. For example, the combination of <code class="codeph">NOT</code> <code class="codeph">NULL</code> and <code class="codeph">UNIQUE</code> constraints forces the input of values in the <code class="codeph">UNIQUE</code> key, eliminating the possibility that data in a new conflicts with data in an existing row.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D__GUID-779D7FAC-A3D4-45CA-9088-8833F65CCFC6">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="../sqlrf/constraint.html#SQLRF30038" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="data-integrity.html#GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99">When to Use Default Column Values</a> for more information about the usage of default column values
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="data-integrity.html#GUID-526C89D0-35BF-4854-8B57-06192FC34CB1__BEIBDAJJ">UNIQUE and NOT NULL Constraints on the Foreign Key</a></p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS267"></a><div class="sect2"><a id="GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99" name="GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99"></a><h3 id="ADFNS-GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99" class="sect3">When to Use Default Column Values</h3>
+               <div>
+                  <p>When an <code class="codeph">INSERT</code> statement does not specify a value for a specific column, that column receives its default value. By default, that default value is <code class="codeph">NULL</code>. You can change the default value when you define the column while creating the table or when you alter the column using the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement.
+                  </p>
+                  <div class="infoboxnote" id="GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99__GUID-CB68FE82-4942-4FE9-B7E7-4343BFCE20D9">
+                     <p class="notep1">Note:</p>
+                     <p>Giving a column a non-<code class="codeph">NULL</code> default value does not ensure that the value of the column will never have the value <code class="codeph">NULL</code>, as the <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint does.
+                     </p>
+                  </div>
+                  <p>Use a default column value in these situations:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>The column has a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint.
+                        </p>
+                        <p>Giving the column a non-<code class="codeph">NULL</code> default value prevents the error that would occur if someone inserted a row without specifying a value for the column.
+                        </p>
+                     </li>
+                     <li>
+                        <p>There is a most common value for the column.</p>
+                        <p>For example, if most departments in the company are in New York, then set the default value of the column <code class="codeph">DEPARTMENTS</code>.<code class="codeph">LOCATION</code> to <code class="codeph">'NEW YORK'</code>.
+                        </p>
+                     </li>
+                     <li>
+                        <p>There is a non-<code class="codeph">NULL</code> value that signifies no entry.
+                        </p>
+                        <p>For example, if the value zero in the column <code class="codeph">EMPLOYEES</code>.<code class="codeph">SALARY</code> means that the salary has not yet been determined, then set the default value of that column to zero.
+                        </p>
+                        <p>A default column value that signifies no entry can simplify testing. For example, it lets you change this test:</p><pre class="oac_no_warn" dir="ltr"><code class="codeph">IF (employees.salary IS NOT NULL) AND (employees.salary &lt; 50000)</code>
+</pre><p>To this test:</p><pre class="oac_no_warn" dir="ltr"><code class="codeph">IF employees.salary &lt; 50000</code>
+</pre></li>
+                     <li>
+                        <p>You want to automatically record the names of users who modify a table.</p>
+                        <p>For example, suppose that you allow users to insert rows into a table through a view. You give the base table a column named <code class="codeph">inserter</code> (which need not be included in the definition of the view), to store the name of the user who inserted the row. To record the user name automatically, define a default value that invokes the <code class="codeph">USER</code> function. For example:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE audit_trail (
+  value1   NUMBER,
+  value2   VARCHAR2(32),
+  inserter VARCHAR2(30) <span class="bold"><code class="codeph">DEFAULT USER</code></span>);</pre></li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-F35511AE-AC47-4F13-8962-1A83FFF04E99__GUID-4E04CB40-6E3D-48AE-9C83-52D55FA94298">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01604" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about the <code class="codeph">INSERT</code> statement
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01402" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> statement
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01001" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="data-integrity.html#GUID-4D3BFEF0-A09C-4237-8EB7-9BE3A42E7C8D">When to Use NOT NULL Constraints</a> for information about the <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS99957"></a><div class="sect2"><a id="GUID-E9BD1A8C-4E1E-4342-ABC7-7853B67FDF88" name="GUID-E9BD1A8C-4E1E-4342-ABC7-7853B67FDF88"></a><h3 id="ADFNS-GUID-E9BD1A8C-4E1E-4342-ABC7-7853B67FDF88" class="sect3">Choosing a Primary Key for a Table (PRIMARY KEY Constraint)</h3>
+               <div>
+                  <p>The primary key of a table uniquely identifies each row and ensures that no duplicate rows exist (and typically, this is its only purpose). Therefore, a primary key value cannot be <code class="codeph">NULL</code>.
+                  </p>
+                  <p>A table can have at most one primary key, but that key can have multiple columns (that is, it can be a composite key). To designate a primary key, use the <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> constraint.
+                  </p>
+                  <p>Whenever practical, choose as the primary key a single column whose values are generated by a sequence.</p>
+                  <p>The second-best choice for a primary key is a single column whose values are all of the following:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Unique</p>
+                     </li>
+                     <li>
+                        <p>Never changed</p>
+                     </li>
+                     <li>
+                        <p>Never <code class="codeph">NULL</code></p>
+                     </li>
+                     <li>
+                        <p>Short and numeric (and therefore easy to type)</p>
+                     </li>
+                  </ul>
+                  <p>Minimize your use of composite primary keys, whose values are long and cannot be generated by a sequence.</p>
+                  <div class="infoboxnotealso" id="GUID-E9BD1A8C-4E1E-4342-ABC7-7853B67FDF88__GUID-07E2D26A-A822-4FA2-8F6E-0ECC777AC790">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=CNCPT1646" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for general information about primary key constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF52197" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for complete information about primary key constraints, including restrictions
+                           </p>
+                        </li>
+                        <li>
+                           <p> <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF00253" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about sequences
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS270"></a><a id="ADFNS269"></a><div class="sect2"><a id="GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7" name="GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7"></a><h3 id="ADFNS-GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7" class="sect3">When to Use UNIQUE Constraints</h3>
+               <div>
+                  <p>Use a <code class="codeph">UNIQUE</code> constraint (which designates a unique key) on any column or combination of columns (except the primary key) where duplicate non-<code class="codeph">NULL</code> values are not allowed. For example:
+                  </p>
+                  <div class="tblformal" id="GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7__GUID-A74054A1-8C71-401E-9FF2-12EB66D7AC71">
+                     <table cellpadding="4" cellspacing="0" class="Formal" title="" summary="This table shows four examples of unique keys and primary keys in the same table." width="100%" frame="hsides" border="1" rules="rows">
+                        <thead>
+                           <tr align="left" valign="top">
+                              <th align="left" valign="bottom" width="75%" id="d53462e1721">Unique Key</th>
+                              <th align="left" valign="bottom" width="25%" id="d53462e1724">Primary Key</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="75%" id="d53462e1729" headers="d53462e1721 ">
+                                 <p>Employee Social Security Number</p>
+                              </td>
+                              <td align="left" valign="top" width="25%" headers="d53462e1729 d53462e1724 ">
+                                 <p>Employee number</p>
+                              </td>
+                           </tr>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="75%" id="d53462e1736" headers="d53462e1721 ">
+                                 <p>Truck license plate number</p>
+                              </td>
+                              <td align="left" valign="top" width="25%" headers="d53462e1736 d53462e1724 ">
+                                 <p>Truck number</p>
+                              </td>
+                           </tr>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="75%" id="d53462e1743" headers="d53462e1721 ">
+                                 <p>Customer phone number (country code column, area code column, and local phone number column)</p>
+                              </td>
+                              <td align="left" valign="top" width="25%" headers="d53462e1743 d53462e1724 ">
+                                 <p>Customer number</p>
+                              </td>
+                           </tr>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="75%" id="d53462e1750" headers="d53462e1721 ">
+                                 <p>Department name column and location column</p>
+                              </td>
+                              <td align="left" valign="top" width="25%" headers="d53462e1750 d53462e1724 ">
+                                 <p>Department number</p>
+                              </td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+                  <!-- class="inftblhruleinformal" -->
+                  <p><a href="data-integrity.html#GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7__I1015083">Figure 12-1</a> shows a table with a <code class="codeph">UNIQUE</code> constraint, a row that violates the constraint, and a row that satisfies it.
+                  </p>
+                  <div class="figure" id="GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7__I1015083">
+                     <p class="titleinfigure">Figure 12-1 Rows That Violate and Satisfy a UNIQUE Constraint</p><img src="img/adfns039.gif" alt="Description of Figure 12-1 follows" title="Description of Figure 12-1 follows" longdesc="img_text/adfns039.html"><br><a href="img_text/adfns039.html">Description of "Figure 12-1 Rows That Violate and Satisfy a UNIQUE Constraint"</a></div>
+                  <!-- class="figure" -->
+                  <div class="infoboxnotealso" id="GUID-EB003FA6-EC6B-45DC-9CC5-6C633C3CC8B7__GUID-09C6DF38-5184-4DBE-992D-EAF49C91BE04">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=CNCPT1642" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for general information about <code class="codeph">UNIQUE</code> constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF52195" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for complete information about <code class="codeph">UNIQUE</code> constraints, including restrictions
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS272"></a><a id="ADFNS1026"></a><a id="ADFNS00602"></a><div class="sect2"><a id="GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53" name="GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53"></a><h3 id="ADFNS-GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53" class="sect3">Enforcing Referential Integrity with FOREIGN KEY Constraints</h3>
+               <div>
+                  <p>When two tables share one or more columns, you use can use a <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint to enforce referential integrity—that is, to ensure that the shared columns always have the same values in both tables.
+                  </p>
+                  <div class="infoboxnote" id="GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__GUID-F2C9CAC7-869F-41F9-9BB4-1395E94F14F0">
+                     <p class="notep1">Note:</p>
+                     <p>A <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint is also called a <span class="bold">referential integrity constraint</span>, and its <code class="codeph">CONSTRAINT_TYPE</code> is <code class="codeph">R</code> in the static data dictionary views <code class="codeph">*_CONSTRAINTS</code>.
+                     </p>
+                  </div>
+                  <p>Designate one table as the <span class="bold">referenced or parent table</span> and the other as the <span class="bold">dependent or child table</span>. In the parent table, define either a <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> or <code class="codeph">UNIQUE</code> constraint on the shared columns. In the child table, define a <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint on the shared columns. The shared columns now comprise a <span class="bold">foreign key</span>. Defining additional constraints on the foreign key affects the parent-child relationship.
+                  </p>
+                  <p><a href="data-integrity.html#GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__I1011998">Figure 12-2</a> shows a foreign key defined on the department number. It guarantees that every value in this column must match a value in the primary key of the department table. This constraint prevents erroneous department numbers from getting into the employee table.
+                  </p>
+                  <p><a href="data-integrity.html#GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__I1011998">Figure 12-2</a> shows parent and child tables that share one column, a row that violates the <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint, and a row that satisfies it.
+                  </p>
+                  <div class="figure" id="GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__I1011998">
+                     <p class="titleinfigure">Figure 12-2 Rows That Violate and Satisfy a FOREIGN KEY Constraint</p><img src="img/adfns040.gif" width="610" alt="Description of Figure 12-2 follows" title="Description of Figure 12-2 follows" longdesc="img_text/adfns040.html"><br><a href="img_text/adfns040.html">Description of "Figure 12-2 Rows That Violate and Satisfy a FOREIGN KEY Constraint"</a></div>
+                  <!-- class="figure" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__GUID-A67BAE8C-0AB4-432E-B4FA-37B2DE7C4E63">Topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="data-integrity.html#GUID-70F1D209-144D-4479-ABB8-559734B11E00">FOREIGN KEY Constraints and NULL Values</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-526C89D0-35BF-4854-8B57-06192FC34CB1">Defining Relationships Between Parent and Child Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-B21CC0C9-F2AD-4E60-923E-5B8355341185">Rules for Multiple FOREIGN KEY Constraints </a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB">Deferring Constraint Checks</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__GUID-4CFA9458-B6F5-4854-951A-FEC75F96FA70">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=CNCPT1649" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for general information about foreign key constraints
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF52199" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for complete information about foreign key constraints, including restrictions
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="data-integrity.html#GUID-526C89D0-35BF-4854-8B57-06192FC34CB1">Defining Relationships Between Parent and Child Tables</a></p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="ADFNS273"></a><div class="sect3"><a id="GUID-70F1D209-144D-4479-ABB8-559734B11E00" name="GUID-70F1D209-144D-4479-ABB8-559734B11E00"></a><h4 id="ADFNS-GUID-70F1D209-144D-4479-ABB8-559734B11E00" class="sect4">FOREIGN KEY Constraints and NULL Values</h4>
+                  <div>
+                     <p>Foreign keys allow key values that are all <code class="codeph">NULL</code>, even if there are no matching <code class="codeph">PRIMARY</code> or <code class="codeph">UNIQUE</code> keys.
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>By default (without any <code class="codeph">NOT</code> <code class="codeph">NULL</code> or <code class="codeph">CHECK</code> clauses), the <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint enforces the <span class="bold">match</span> <span class="bold">none</span> rule for composite foreign keys in the ANSI/ISO standard.
+                           </p>
+                        </li>
+                        <li>
+                           <p>To enforce the <span class="bold">match</span> <span class="bold">full</span> rule for <code class="codeph">NULL</code> values in composite foreign keys, which requires that all components of the key be <code class="codeph">NULL</code> or all be non-<code class="codeph">NULL</code>, define a <code class="codeph">CHECK</code> constraint that allows only all <code class="codeph">NULL</code> or all non-<code class="codeph">NULL</code> values in the composite foreign key. For example, with a composite key comprised of columns <code class="codeph">A</code>, <code class="codeph">B</code>, and <code class="codeph">C</code>:
+                           </p><pre class="oac_no_warn" dir="ltr">CHECK ((A IS NULL AND B IS NULL AND C IS NULL) OR
+       (A IS NOT NULL AND B IS NOT NULL AND C IS NOT NULL))
+</pre></li>
+                        <li>
+                           <p>In general, it is not possible to use declarative referential integrity to enforce the <span class="bold">match</span> <span class="bold">partial</span> rule for <code class="codeph">NULL</code> values in composite foreign keys, which requires the non-<code class="codeph">NULL</code> portions of the key to appear in the corresponding portions in the primary or unique key of a single row in the referenced table. You can often use triggers to handle this case.
+                           </p>
+                           <div class="infoboxnotealso" id="GUID-70F1D209-144D-4479-ABB8-559734B11E00__NOTE-13233-CA500E1F">
+                              <p class="notep1">See Also:</p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=LNPLS020" target="_blank"><span class="italic">Oracle Database PL/SQL Language Reference</span></a> for more information about triggers
+                           </div>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="ADFNS275"></a><a id="ADFNS276"></a><a id="ADFNS277"></a><a id="ADFNS278"></a><a id="ADFNS274"></a><div class="sect3"><a id="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1" name="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1"></a><h4 id="ADFNS-GUID-526C89D0-35BF-4854-8B57-06192FC34CB1" class="sect4">Defining Relationships Between Parent and Child Tables</h4>
+                  <div>
+                     <p>Several relationships between parent and child tables can be determined by the other types of constraints defined on the foreign key in the child table.</p>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1__GUID-02C5A3CA-2F05-484C-B628-2FE27964DBA3">No Constraints on the Foreign Key</p>
+                     </div>
+                     <!-- class="section" -->
+                     <p>When no other constraints are defined on the foreign key, any number of rows in the child table can reference the same parent key value. This model allows nulls in the foreign key.</p>
+                     <p>This model establishes a one-to-many relationship between the parent and foreign keys that allows undetermined values (nulls) in the foreign key. An example of such a relationship is shown in <a href="data-integrity.html#GUID-4E2BB957-8F1D-425E-B225-579D4DBD9D53__I1011998">Figure 12-2</a> between the <code class="codeph">employee</code> and <code class="codeph">department</code> tables. Each department (parent key) has many employees (foreign key), and some employees might not be in a department (nulls in the foreign key).
+                     </p>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1__GUID-3FC115F4-021B-4DCE-989B-9D63A5220947">NOT NULL Constraint on the Foreign Key</p>
+                     </div>
+                     <!-- class="section" -->
+                     <p>When nulls are not allowed in a foreign key, each row in the child table must explicitly reference a value in the parent key because nulls are not allowed in the foreign key. </p>
+                     <p>Any number of rows in the child table can reference the same parent key value, so this model establishes a one-to-many relationship between the parent and foreign keys. However, each row in the child table must have a reference to a parent key value; the absence of a value (a null) in the foreign key is not allowed. The same example in the previous section illustrates such a relationship. However, in this case, employees must have a reference to a specific department.</p>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1__GUID-31DBD38C-DC6C-46B3-9D4A-48F9D14E35A3">UNIQUE Constraint on the Foreign Key</p>
+                     </div>
+                     <!-- class="section" -->
+                     <p>When a <code class="codeph">UNIQUE</code> constraint is defined on the foreign key, only one row in the child table can reference a given parent key value. This model allows nulls in the foreign key.
+                     </p>
+                     <p>This model establishes a one-to-one relationship between the parent and foreign keys that allows undetermined values (nulls) in the foreign key. For example, assume that the employee table had a column named <code class="codeph">MEMBERNO</code>, referring to an employee membership number in the company insurance plan. Also, a table named <code class="codeph">INSURANCE</code> has a primary key named <code class="codeph">MEMBERNO</code>, and other columns of the table keep respective information relating to an employee insurance policy. The <code class="codeph">MEMBERNO</code> in the employee table must be both a foreign key and a unique key:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>To enforce referential integrity rules between the <code class="codeph">EMP_TAB</code> and <code class="codeph">INSURANCE</code> tables (the <code class="codeph">FOREIGN KEY</code> constraint) 
+                           </p>
+                        </li>
+                        <li>
+                           <p>To guarantee that each employee has a unique membership number (the <code class="codeph">UNIQUE</code> key constraint)
+                           </p>
+                        </li>
+                     </ul>
+                     <div class="section" id="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1__BEIBDAJJ">
+                        <p class="subhead3" id="GUID-526C89D0-35BF-4854-8B57-06192FC34CB1__GUID-0F1F2E73-5917-416A-BEDC-BA8F519054B6">UNIQUE and NOT NULL Constraints on the Foreign Key</p>
+                     </div>
+                     <!-- class="section" -->
+                     <p>When both <code class="codeph">UNIQUE</code> and <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints are defined on the foreign key, only one row in the child table can reference a given parent key value, and because <code class="codeph">NULL</code> values are not allowed in the foreign key, each row in the child table must explicitly reference a value in the parent key.
+                     </p>
+                     <p>This model establishes a one-to-one relationship between the parent and foreign keys that does not allow undetermined values (nulls) in the foreign key. If you expand the previous example by adding a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint on the <code class="codeph">MEMBERNO</code> column of the employee table, in addition to guaranteeing that each employee has a unique membership number, you also ensure that no undetermined values (nulls) are allowed in the <code class="codeph">MEMBERNO</code> column of the employee table.
+                     </p>
+                  </div>
+               </div><a id="ADFNS279"></a><div class="sect3"><a id="GUID-B21CC0C9-F2AD-4E60-923E-5B8355341185" name="GUID-B21CC0C9-F2AD-4E60-923E-5B8355341185"></a><h4 id="ADFNS-GUID-B21CC0C9-F2AD-4E60-923E-5B8355341185" class="sect4">Rules for Multiple FOREIGN KEY Constraints </h4>
+                  <div>
+                     <p>Oracle Database allows a column to be referenced by multiple <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraints; there is no limit on the number of dependent keys. This situation might be present if a single column is part of two different composite foreign keys. 
+                     </p>
+                  </div>
+               </div><a id="ADFNS281"></a><a id="ADFNS280"></a><div class="sect3"><a id="GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB" name="GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB"></a><h4 id="ADFNS-GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB" class="sect4">Deferring Constraint Checks</h4>
+                  <div>
+                     <p>When Oracle Database checks a constraint, it signals an error if the constraint is not satisfied. To defer checking constraints until the end of the current transaction, use the <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> statement.
+                     </p>
+                     <div class="infoboxnote" id="GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB__GUID-AC2C9A69-091E-479D-A23E-978564EE8DEE">
+                        <p class="notep1">Note:</p>
+                        <p>You cannot use the <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> statement inside a trigger.
+                        </p>
+                     </div>
+                     <p>When deferring constraint checks:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Select appropriate data.</p>
+                           <p>You might want to defer constraint checks on <code class="codeph">UNIQUE</code> and <code class="codeph">FOREIGN</code> keys if the data you are working with has any of these characteristics:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Tables are snapshots.</p>
+                              </li>
+                              <li>
+                                 <p>Some tables contain a large amount of data being manipulated by another application, which might not return the data in the same order.</p>
+                              </li>
+                           </ul>
+                        </li>
+                        <li>
+                           <p>Update cascade operations on foreign keys.</p>
+                        </li>
+                        <li>
+                           <p>Ensure that constraints are deferrable.</p>
+                           <p>After identifying the appropriate tables, ensure that their <code class="codeph">FOREIGN</code>, <code class="codeph">UNIQUE</code> and <code class="codeph">PRIMARY</code> key constraints are created <code class="codeph">DEFERRABLE</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Within the application that manipulates the data, set all constraints deferred before you begin processing any data, as follows:</p><pre class="oac_no_warn" dir="ltr">SET CONSTRAINTS ALL DEFERRED;</pre></li>
+                        <li>
+                           <p>(Optional) Check for constraint violations immediately before committing the transaction.</p>
+                           <p>Immediately before the <code class="codeph">COMMIT</code> statement, run the <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> <code class="codeph">ALL</code> <code class="codeph">IMMEDIATE</code> statement. If there are any problems with a constraint, this statement fails, and identifies the constraint that caused the error. If you commit while constraints are violated, the transaction rolls back and you get an error message.
+                           </p>
+                        </li>
+                     </ul>
+                     <p>In <a href="data-integrity.html#GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB__BEICHCGC">Example 12-4</a>, the <code class="codeph">PRIMARY</code> and <code class="codeph">FOREIGN</code> keys of the table <code class="codeph">emp</code> are created <code class="codeph">DEFERRABLE</code> and then deferred.
+                     </p>
+                     <div class="example" id="GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB__BEICHCGC">
+                        <p class="titleinexample">Example 12-4 Deferring Constraint Checks</p><pre class="oac_no_warn" dir="ltr">DROP TABLE dept; 
+CREATE TABLE dept (
+  deptno NUMBER PRIMARY KEY,
+  dname  VARCHAR2 (30)
+);
+ 
+DROP TABLE emp; 
+CREATE TABLE emp (
+  empno  NUMBER,
+  ename  VARCHAR2(30),
+  deptno NUMBER,
+  <span class="bold">CONSTRAINT pk_emp_empno PRIMARY KEY (empno) DEFERRABLE,</span>
+  <span class="bold">CONSTRAINT fk_emp_deptno FOREIGN KEY (deptno)</span>
+<span class="bold">  REFERENCES dept(deptno) DEFERRABLE</span>);
+ 
+INSERT INTO dept (deptno, dname) VALUES (10, 'Accounting');
+INSERT INTO dept (deptno, dname) VALUES (20, 'SALES');
+ 
+INSERT INTO emp (empno, ename, deptno) VALUES (1, 'Corleone', 10);
+INSERT INTO emp (empno, ename, deptno) VALUES (2, 'Costanza', 20);
+COMMIT;
+ 
+<span class="bold">SET CONSTRAINTS ALL DEFERRED;</span>
+ 
+UPDATE dept
+SET deptno = deptno + 10
+WHERE deptno = 20;
+ </pre><p>Query:</p><pre class="oac_no_warn" dir="ltr">SELECT * from dept
+ORDER BY deptno;
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">    DEPTNO DNAME
+---------- ------------------------------
+        10 Accounting
+        30 SALES
+ 
+2 rows selected.
+ </pre><p>Update:</p><pre class="oac_no_warn" dir="ltr">UPDATE emp
+SET deptno = deptno + 10
+WHERE deptno = 20;
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">1 row updated.
+ </pre><p>Query:</p><pre class="oac_no_warn" dir="ltr">SELECT * from emp
+ORDER BY deptno;
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">     EMPNO ENAME                              DEPTNO
+---------- ------------------------------ ----------
+         1 Corleone                               10
+         2 Costanza                               30
+ 
+2 rows selected.
+</pre></div>
+                     <!-- class="example" -->
+                     <p>The <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> applies only to the current transaction, and its setting lasts for the duration of the transaction, or until another <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> statement resets the mode. The <code class="codeph">ALTER</code> <code class="codeph">SESSION</code> <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> statement applies only for the current session. The defaults specified when you create a constraint remain while the constraint exists.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-E68565EE-A5A8-4056-80B3-05C6B95FECCB__GUID-E4FBD308-1ADB-449B-95A8-42C6BB633413">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01703" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about the <code class="codeph">SET</code> <code class="codeph">CONSTRAINTS</code> statement
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="ADFNS00603"></a><div class="sect2"><a id="GUID-E1566FC6-C8EE-481D-8119-2E7C4E3200BA" name="GUID-E1566FC6-C8EE-481D-8119-2E7C4E3200BA"></a><h3 id="ADFNS-GUID-E1566FC6-C8EE-481D-8119-2E7C4E3200BA" class="sect3">Minimizing Space and Time Overhead for Indexes Associated with Constraints</h3>
+               <div>
+                  <p>When you create a <code class="codeph">UNIQUE</code> or <code class="codeph">PRIMARY</code> key, Oracle Database checks to see if an existing index enforces uniqueness for the constraint. If there is no such index, the database creates one.
+                  </p>
+                  <p>When Oracle Database uses a unique index to enforce a constraint, and constraints associated with the unique index are dropped or disabled, the index is dropped. To preserve the statistics associated with the index (which would take a long time to re-create), specify the <code class="codeph">KEEP</code> <code class="codeph">INDEX</code> clause on the <code class="codeph">DROP</code> <code class="codeph">CONSTRAINT</code> statement.
+                  </p>
+                  <p>While enabled foreign keys reference a <code class="codeph">PRIMARY</code> or <code class="codeph">UNIQUE</code> key, you cannot disable or drop the <code class="codeph">PRIMARY</code> or <code class="codeph">UNIQUE</code> key constraint or the index.
+                  </p>
+                  <div class="infoboxnote" id="GUID-E1566FC6-C8EE-481D-8119-2E7C4E3200BA__GUID-975A9C57-91BD-4EC3-9803-3F77B057CB8D">
+                     <p class="notep1">Note:</p>
+                     <p><code class="codeph">UNIQUE</code> and <code class="codeph">PRIMARY</code> keys with deferrable constraints must all use nonunique indexes.
+                     </p>
+                  </div>
+                  <p>To use existing indexes when creating unique and primary key constraints, include <code class="codeph">USING</code> <code class="codeph">INDEX</code> in the <code class="codeph">CONSTRAINT</code> clause.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-E1566FC6-C8EE-481D-8119-2E7C4E3200BA__NOTE-136-CA5097EC">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF52180" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more details and examples of integrity constraints
+                     </p>
+                  </div>
+               </div>
+            </div><a id="ADFNS00604"></a><div class="sect2"><a id="GUID-7234B3F8-761F-429F-AF1A-BDB5804463A7" name="GUID-7234B3F8-761F-429F-AF1A-BDB5804463A7"></a><h3 id="ADFNS-GUID-7234B3F8-761F-429F-AF1A-BDB5804463A7" class="sect3">Guidelines for Indexing Foreign Keys</h3>
+               <div>
+                  <p>Index foreign keys unless the matching unique or primary key is never updated or deleted.</p>
+                  <div class="infoboxnotealso" id="GUID-7234B3F8-761F-429F-AF1A-BDB5804463A7__GUID-90A0F7D4-2DA4-41BD-9D04-80811BF4F63A">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=CNCPT1657" target="_blank"><span class="italic">Oracle Database Concepts</span></a> for more information about indexing foreign keys
+                     </p>
+                  </div>
+               </div>
+            </div><a id="ADFNS00605"></a><div class="sect2"><a id="GUID-4C164755-6CE2-4E72-B323-9CEB2A2374A1" name="GUID-4C164755-6CE2-4E72-B323-9CEB2A2374A1"></a><h3 id="ADFNS-GUID-4C164755-6CE2-4E72-B323-9CEB2A2374A1" class="sect3">Referential Integrity in a Distributed Database</h3>
+               <div>
+                  <p>The declaration of a referential constraint cannot specify a foreign key that references a primary or unique key of a remote table.</p>
+                  <p>However, you can maintain parent/child table relationships across nodes using triggers.</p>
+                  <div class="infoboxnotealso" id="GUID-4C164755-6CE2-4E72-B323-9CEB2A2374A1__GUID-7CB93855-BEAA-4FA2-B280-A42E948D4FAE">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=LNPLS020" target="_blank"><span class="italic">Oracle Database PL/SQL Language Reference</span></a> for more information about triggers that enforce referential integrity
+                     </p>
+                  </div>
+                  <div class="infoboxnote" id="GUID-4C164755-6CE2-4E72-B323-9CEB2A2374A1__GUID-1320A8F9-DDF2-4231-8C09-A8937D134D1F">
+                     <p class="notep1">Note:</p>
+                     <p><span class="italic"> </span>If you decide to define referential integrity across the nodes of a distributed database using triggers, be aware that network failures can make both the parent table and the child table inaccessible. 
+                     </p>
+                     <p>For example, assume that the child table is in the <code class="codeph">SALES</code> database, and the parent table is in the <code class="codeph">HQ</code> database. 
+                     </p>
+                     <p>If the network connection between the two databases fails, then some data manipulation language (DML) statements against the child table (those that insert rows or update a foreign key value) cannot proceed, because the referential integrity triggers must have access to the parent table in the <code class="codeph">HQ</code> database.
+                     </p>
+                  </div>
+               </div>
+            </div><a id="ADFNS00606"></a><div class="sect2"><a id="GUID-8F512577-F51D-4309-B987-C364D1D71779" name="GUID-8F512577-F51D-4309-B987-C364D1D71779"></a><h3 id="ADFNS-GUID-8F512577-F51D-4309-B987-C364D1D71779" class="sect3">When to Use CHECK Constraints</h3>
+               <div>
+                  <p>Use <code class="codeph">CHECK</code> constraints when you must enforce integrity rules based on logical expressions, such as comparisons. Never use <code class="codeph">CHECK</code> constraints when any of the other types of constraints can provide the necessary checking.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-8F512577-F51D-4309-B987-C364D1D71779__GUID-DBF2799C-63F9-4581-9D8B-045124655B6F">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="data-integrity.html#GUID-95CFBA08-8408-4B83-BA5E-87EFA7A8DFCC">Choosing Between CHECK and NOT NULL Constraints</a></p>
+                  </div>
+                  <p>Examples of <code class="codeph">CHECK</code> constraints include:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>A <code class="codeph">CHECK</code> constraint on employee salaries so that no salary value is greater than 10000.
+                        </p>
+                     </li>
+                     <li>
+                        <p>A <code class="codeph">CHECK</code> constraint on department locations so that only the locations "<code class="codeph">BOSTON</code>", "<code class="codeph">NEW</code> <code class="codeph">YORK</code>", and "<code class="codeph">DALLAS</code>" are allowed.
+                        </p>
+                     </li>
+                     <li>
+                        <p>A <code class="codeph">CHECK</code> constraint on the salary and commissions columns to prevent the commission from being larger than the salary.
+                        </p>
+                     </li>
+                  </ul>
+               </div><a id="ADFNS282"></a><div class="sect3"><a id="GUID-56B3A4F1-68CD-459E-98EC-A5035795D142" name="GUID-56B3A4F1-68CD-459E-98EC-A5035795D142"></a><h4 id="ADFNS-GUID-56B3A4F1-68CD-459E-98EC-A5035795D142" class="sect4">Restrictions on CHECK Constraints</h4>
+                  <div>
+                     <p>A <code class="codeph">CHECK</code> constraint requires that a condition be true or unknown for every row of the table. If a statement causes the condition to evaluate to false, then the statement is rolled back. The condition of a <code class="codeph">CHECK</code> constraint has these limitations:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The condition must be a Boolean expression that can be evaluated using the values in the row being inserted or updated. </p>
+                        </li>
+                        <li>
+                           <p>The condition cannot contain subqueries or sequences. </p>
+                        </li>
+                        <li>
+                           <p>The condition cannot include the <code class="codeph">SYSDATE</code>, <code class="codeph">UID</code>, <code class="codeph">USER</code>, or <code class="codeph">USERENV</code> SQL functions.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The condition cannot contain the pseudocolumns <code class="codeph">LEVEL</code> or <code class="codeph">ROWNUM</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The condition cannot contain the <code class="codeph">PRIOR</code> operator.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The condition cannot contain a user-defined function.</p>
+                        </li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-56B3A4F1-68CD-459E-98EC-A5035795D142__GUID-F49FE81A-C35E-483F-B6CC-204DE9C4749E">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF00251" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about the <code class="codeph">LEVEL</code> pseudocolumn
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF00255" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about the <code class="codeph">ROWNUM</code> pseudocolumn
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF007" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about the <code class="codeph">PRIOR</code> operator (used in hierarchical queries)
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="ADFNS283"></a><div class="sect3"><a id="GUID-E8C8FD21-9AEA-48FB-880E-05D488D27671" name="GUID-E8C8FD21-9AEA-48FB-880E-05D488D27671"></a><h4 id="ADFNS-GUID-E8C8FD21-9AEA-48FB-880E-05D488D27671" class="sect4">Designing CHECK Constraints</h4>
+                  <div>
+                     <p>When using <code class="codeph">CHECK</code> constraints, remember that a <code class="codeph">CHECK</code> constraint is violated only if the condition evaluates to false; true and unknown values (such as comparisons with nulls) do not violate a check condition. Ensure that any <code class="codeph">CHECK</code> constraint that you define is specific enough to enforce the rule.
+                     </p>
+                     <p>For example, consider this <code class="codeph">CHECK</code> constraint:
+                     </p><pre class="oac_no_warn" dir="ltr">CHECK (Sal &gt; 0 OR Comm &gt;= 0)
+</pre><p>At first glance, this rule may be interpreted as "do not allow a row in the employee table unless the employee salary is greater than zero or the employee commission is greater than or equal to zero." But if a row is inserted with a null salary, that row does not violate the <code class="codeph">CHECK</code> constraint, regardless of whether the commission value is valid, because the entire check condition is evaluated as unknown. In this case, you can prevent such violations by placing <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints on both the <code class="codeph">SAL</code> and <code class="codeph">COMM</code> columns. 
+                     </p>
+                     <div class="infoboxnote" id="GUID-E8C8FD21-9AEA-48FB-880E-05D488D27671__GUID-D136E229-B588-4AD7-9D9B-6042A7EF4F34">
+                        <p class="notep1">Note:</p>
+                        <p>If you are not sure when unknown values result in <code class="codeph">NULL</code> conditions, review the truth tables for the logical conditions in <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF005" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a></p>
+                     </div>
+                  </div>
+               </div><a id="ADFNS284"></a><div class="sect3"><a id="GUID-7B6F6D8F-9891-4C9D-A020-9E1683AC9CA6" name="GUID-7B6F6D8F-9891-4C9D-A020-9E1683AC9CA6"></a><h4 id="ADFNS-GUID-7B6F6D8F-9891-4C9D-A020-9E1683AC9CA6" class="sect4">Rules for Multiple CHECK Constraints</h4>
+                  <div>
+                     <p>A single column can have multiple <code class="codeph">CHECK</code> constraints that reference the column in its definition. There is no limit to the number of <code class="codeph">CHECK</code> constraints that can be defined that reference a column.
+                     </p>
+                     <p>The order in which the constraints are evaluated is not defined, so be careful not to rely on the order or to define multiple constraints that conflict with each other.</p>
+                  </div>
+               </div><a id="ADFNS285"></a><div class="sect3"><a id="GUID-95CFBA08-8408-4B83-BA5E-87EFA7A8DFCC" name="GUID-95CFBA08-8408-4B83-BA5E-87EFA7A8DFCC"></a><h4 id="ADFNS-GUID-95CFBA08-8408-4B83-BA5E-87EFA7A8DFCC" class="sect4">Choosing Between CHECK and NOT NULL Constraints</h4>
+                  <div>
+                     <p>According to the ANSI/ISO standard, a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint is an example of a <code class="codeph">CHECK</code> constraint, where the condition is:
+                     </p><pre class="oac_no_warn" dir="ltr">CHECK (<span class="italic">column_name</span> IS NOT NULL)
+</pre><p>Therefore, you can write <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints for a single column using either a <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint or a <code class="codeph">CHECK</code> constraint. The <code class="codeph">NOT</code> <code class="codeph">NULL</code> constraint is easier to use than the <code class="codeph">CHECK</code> constraint.
+                     </p>
+                     <p>In the case where a composite key can allow only all <code class="codeph">NULL</code> or all non-<code class="codeph">NULL</code> values, you must use a <code class="codeph">CHECK</code> constraint. For example, this <code class="codeph">CHECK</code> constraint allows a key value in the composite key made up of columns <code class="codeph">C1</code> and <code class="codeph">C2</code> to contain either all nulls or all values:
+                     </p><pre class="oac_no_warn" dir="ltr">CHECK ((C1 IS NULL AND C2 IS NULL) OR (C1 IS NOT NULL AND C2 IS NOT NULL))</pre></div>
+               </div>
+            </div><a id="ADFNS286"></a><a id="ADFNS287"></a><a id="ADFNS00607"></a><div class="sect2"><a id="GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8" name="GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8"></a><h3 id="ADFNS-GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8" class="sect3">Examples of Defining Constraints</h3>
+               <div>
+                  <p><a href="data-integrity.html#GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__BEICHGDE">Example 12-5</a> and <a href="data-integrity.html#GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__BEIDBAAF">Example 12-6</a> show how to create simple constraints during the prototype phase of your database design. In these examples, each constraint is given a name. Naming the constraints prevents the database from creating multiple copies of the same constraint, with different system-generated names, if the data definition language (DDL) statement runs multiple times.
+                  </p>
+                  <p><a href="data-integrity.html#GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__BEICHGDE">Example 12-5</a> creates tables and their constraints at the same time, using the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> statement.
+                  </p>
+                  <div class="example" id="GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__BEICHGDE">
+                     <p class="titleinexample">Example 12-5 Defining Constraints with the CREATE TABLE Statement</p><pre class="oac_no_warn" dir="ltr">DROP TABLE DeptTab;
+CREATE TABLE DeptTab (
+  Deptno  NUMBER(3) <span class="bold">CONSTRAINT pk_DeptTab_Deptno PRIMARY KEY</span>,
+  Dname   VARCHAR2(15),
+  Loc     VARCHAR2(15),
+  <span class="bold">CONSTRAINT u_DeptTab_Dname_Loc UNIQUE (Dname, Loc)</span>,
+  <span class="bold">CONSTRAINT c_DeptTab_Loc</span>
+    <span class="bold">CHECK (Loc IN ('NEW YORK', 'BOSTON', 'CHICAGO')))</span>;
+ 
+DROP TABLE EmpTab;
+CREATE TABLE EmpTab (
+  Empno    NUMBER(5) <span class="bold">CONSTRAINT pk_EmpTab_Empno PRIMARY KEY</span>,
+  Ename    VARCHAR2(15) <span class="bold">NOT NULL</span>,
+  Job      VARCHAR2(10),
+  Mgr      NUMBER(5) <span class="bold">CONSTRAINT r_EmpTab_Mgr REFERENCES EmpTab</span>,
+  Hiredate DATE,
+  Sal      NUMBER(7,2),
+  Comm     NUMBER(5,2),
+  Deptno   NUMBER(3) <span class="bold">NOT NULL</span>
+  <span class="bold">CONSTRAINT r_EmpTab_DeptTab REFERENCES DeptTab ON DELETE CASCADE</span>);
+</pre></div>
+                  <!-- class="example" -->
+                  <p><a href="data-integrity.html#GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__BEIDBAAF">Example 12-6</a> creates constraints for existing tables, using the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement.
+                  </p>
+                  <p>You cannot create a validated constraint on a table if the table contains rows that violate the constraint.</p>
+                  <div class="example" id="GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__BEIDBAAF">
+                     <p class="titleinexample">Example 12-6 Defining Constraints with the ALTER TABLE Statement</p><pre class="oac_no_warn" dir="ltr">-- Create tables without constraints:
+
+DROP TABLE DeptTab; 
+CREATE TABLE DeptTab (
+  Deptno  NUMBER(3),
+  Dname   VARCHAR2(15),
+  Loc     VARCHAR2(15)
+);
+ 
+DROP TABLE EmpTab; 
+CREATE TABLE EmpTab (
+  Empno    NUMBER(5),
+  Ename    VARCHAR2(15),
+  Job      VARCHAR2(10),
+  Mgr      NUMBER(5),
+  Hiredate DATE,
+  Sal      NUMBER(7,2),
+  Comm     NUMBER(5,2),
+  Deptno   NUMBER(3)
+);
+ 
+<span class="bold">--Define constraints with the ALTER TABLE statement:</span>
+
+<span class="bold">ALTER TABLE DeptTab</span>
+<span class="bold">ADD CONSTRAINT pk_DeptTab_Deptno PRIMARY KEY (Deptno);</span>
+ 
+<span class="bold">ALTER TABLE EmpTab</span>
+<span class="bold">ADD CONSTRAINT fk_DeptTab_Deptno</span>
+<span class="bold">FOREIGN KEY (Deptno) REFERENCES DeptTab;</span>
+ 
+<span class="bold">ALTER TABLE EmpTab MODIFY (Ename VARCHAR2(15) NOT NULL);</span></pre></div>
+                  <!-- class="example" -->
+                  <div class="infoboxnotealso" id="GUID-BD33E259-FCAD-4904-885D-8BDC0EBA65D8__GUID-A71D6534-18C3-488D-AAB5-6FFCA09CAA74">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ADMIN11537" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for information about creating and maintaining constraints for a large production database
+                     </p>
+                  </div>
+               </div><a id="ADFNS288"></a><div class="sect3"><a id="GUID-EFD9F9F7-A5F8-4EAF-BB65-EF5533D0C3EE" name="GUID-EFD9F9F7-A5F8-4EAF-BB65-EF5533D0C3EE"></a><h4 id="ADFNS-GUID-EFD9F9F7-A5F8-4EAF-BB65-EF5533D0C3EE" class="sect4">Privileges Needed to Define Constraints</h4>
+                  <div>
+                     <p>If you have the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> or <code class="codeph">CREATE</code> <code class="codeph">ANY</code> <code class="codeph">TABLE</code> system privilege, then you can define constraints on the tables that you create.
+                     </p>
+                     <p>If you have the <code class="codeph">ALTER</code> <code class="codeph">ANY</code> <code class="codeph">TABLE</code> system privilege, then you can define constraints on any existing table.
+                     </p>
+                     <p>If you have the <code class="codeph">ALTER</code> object privilege for a specific table, then you can define constraints on that table.
+                     </p>
+                     <p><code class="codeph">UNIQUE</code> and <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> constraints require that the table owner has either the <code class="codeph">UNLIMITED</code> <code class="codeph">TABLESPACE</code> system privilege or a quota for the tablespace that contains the associated index.
+                     </p>
+                     <p>You can define <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraints if the parent table or view is in your schema or you have the <code class="codeph">REFERENCES</code> privilege on the columns of the referenced key in the parent table or view.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-EFD9F9F7-A5F8-4EAF-BB65-EF5533D0C3EE__NOTE-136-CA50E8EC">
+                        <p class="notep1">See Also:</p><a href="data-integrity.html#GUID-3D911857-CCB1-43F6-BCDD-B334125E3AAB">Privileges Required to Create FOREIGN KEY Constraints</a></div>
+                  </div>
+               </div><a id="ADFNS289"></a><div class="sect3"><a id="GUID-26C98424-D3D8-4D46-A190-0B7DB12DC9C4" name="GUID-26C98424-D3D8-4D46-A190-0B7DB12DC9C4"></a><h4 id="ADFNS-GUID-26C98424-D3D8-4D46-A190-0B7DB12DC9C4" class="sect4">Naming Constraints </h4>
+                  <div>
+                     <p>Assign names to constraints <code class="codeph">NOT</code> <code class="codeph">NULL</code>, <code class="codeph">UNIQUE</code>, <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code>, <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code>, and <code class="codeph">CHECK</code> using the <code class="codeph">CONSTRAINT</code> option of the constraint clause. This name must be unique among the constraints that you own. If you do not specify a constraint name, one is assigned automatically by Oracle Database.
+                     </p>
+                     <p>Choosing your own name makes error messages for constraint violations more understandable, and prevents the creation of duplicate constraints with different names if the SQL statements are run more than once.</p>
+                     <p>See the previous examples of the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> and <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statements for examples of the <code class="codeph">CONSTRAINT</code> option of the <code class="codeph">constraint</code> clause. The name of each constraint is included with other information about the constraint in the data dictionary. 
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-26C98424-D3D8-4D46-A190-0B7DB12DC9C4__GUID-1C7DABF8-2805-4CF6-B755-8B5A3C31C33E">
+                        <p class="notep1">See Also:</p>
+                        <p><span class="q">"<a href="data-integrity.html#GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4">Viewing Information About Constraints</a>"</span> for examples of static data dictionary views
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="ADFNS1027"></a><a id="ADFNS00608"></a><div class="sect2"><a id="GUID-42D44B4C-DA38-4334-AADE-40DE556EF8CD" name="GUID-42D44B4C-DA38-4334-AADE-40DE556EF8CD"></a><h3 id="ADFNS-GUID-42D44B4C-DA38-4334-AADE-40DE556EF8CD" class="sect3">Enabling and Disabling Constraints</h3>
+               <div>
+                  <p>This section explains the mechanisms and procedures for manually enabling and disabling constraints.</p>
+                  <p><strong class="term">enabled constraint</strong>. When a constraint is enabled, the corresponding rule is enforced on the data values in the associated columns. The definition of the constraint is stored in the data dictionary. 
+                  </p>
+                  <p><strong class="term">disabled constraint</strong>. When a constraint is disabled, the corresponding rule is not enforced. The definition of the constraint is still stored in the data dictionary.
+                  </p>
+                  <p>An integrity constraint represents an assertion about the data in a database. This assertion is always true when the constraint is enabled. The assertion might not be true when the constraint is disabled, because data that violates the integrity constraint can be in the database.</p>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-42D44B4C-DA38-4334-AADE-40DE556EF8CD__GUID-764D3D99-D557-410C-8D71-1ABD65B4F122">Topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="data-integrity.html#GUID-5A594C99-6BCA-423E-85B9-D239AFD15D20">Why Disable Constraints?</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948">Creating Enabled Constraints (Default)</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-32182C58-2918-431F-A1A3-F33BFE764C4D">Creating Disabled Constraints</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-63DF885E-A240-47BA-9BA3-151EF4233F15">Enabling Existing Constraints</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-E24C0A56-6BE7-465A-9D7A-71C55EBBA5F6">Disabling Existing Constraints</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-E8DF7A23-0866-4C62-8120-DF52D4E0BEFA">Guidelines for Enabling and Disabling Key Constraints</a></p>
+                     </li>
+                     <li>
+                        <p><a href="data-integrity.html#GUID-15695420-BD41-4572-90A5-3452EEFF167F">Fixing Constraint Exceptions</a></p>
+                     </li>
+                  </ul>
+               </div><a id="ADFNS290"></a><div class="sect3"><a id="GUID-5A594C99-6BCA-423E-85B9-D239AFD15D20" name="GUID-5A594C99-6BCA-423E-85B9-D239AFD15D20"></a><h4 id="ADFNS-GUID-5A594C99-6BCA-423E-85B9-D239AFD15D20" class="sect4">Why Disable Constraints?</h4>
+                  <div>
+                     <p>During day-to-day operations, keep constraints enabled. In certain situations, temporarily disabling the constraints of a table makes sense for performance reasons. For example:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>When loading large amounts of data into a table using SQL*Loader</p>
+                        </li>
+                        <li>
+                           <p>When performing batch operations that make massive changes to a table (such as changing each employee number by adding 1000 to the existing number)</p>
+                        </li>
+                        <li>
+                           <p>When importing or exporting one table at a time</p>
+                        </li>
+                     </ul>
+                     <p>Temporarily turning off constraints can speed up these operations.</p>
+                  </div>
+               </div><a id="ADFNS292"></a><a id="ADFNS291"></a><div class="sect3"><a id="GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948" name="GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948"></a><h4 id="ADFNS-GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948" class="sect4">Creating Enabled Constraints (Default)</h4>
+                  <div>
+                     <p>When you define an integrity constraint (using either <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> or <code class="codeph">ALTER</code> <code class="codeph">TABLE</code>), Oracle Database enables the constraint by default. For code clarity, you can explicitly enable the constraint by including the <code class="codeph">ENABLE</code> clause in its definition, as in <a href="data-integrity.html#GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948__BEIEHFFC">Example 12-7</a>.
+                     </p>
+                     <div class="example" id="GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948__BEIEHFFC">
+                        <p class="titleinexample">Example 12-7 Creating Enabled Constraints</p><pre class="oac_no_warn" dir="ltr">/* Use CREATE TABLE statement to create enabled constraint
+   (ENABLE keyword is optional): */
+ 
+DROP TABLE t1; 
+CREATE TABLE t1 (Empno NUMBER(5) PRIMARY KEY <span class="bold">ENABLE</span>);
+ 
+/* Create table without constraint
+   and then use ALTER TABLE statement to add enabled constraint
+   (ENABLE keyword is optional): */
+
+DROP TABLE t2;
+CREATE TABLE t2 (Empno NUMBER(5));
+ 
+ALTER TABLE t2 ADD PRIMARY KEY (Empno) <span class="bold">ENABLE</span>;
+</pre></div>
+                     <!-- class="example" -->
+                     <p>Include the <code class="codeph">ENABLE</code> clause when defining a constraint for a table to be populated a row at a time by individual transactions. This ensures that data is always consistent, and reduces the performance overhead of each DML statement.
+                     </p>
+                     <p>An <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement that tries to enable an integrity constraint fails if an existing row of the table violates the integrity constraint. The statement rolls back and the constraint definition is neither stored nor enabled.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-F015285D-CC4F-4145-8F8A-2C59E5BD7948__GUID-78173330-E758-485F-B0D2-E3027C869C94">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="data-integrity.html#GUID-15695420-BD41-4572-90A5-3452EEFF167F">Fixing Constraint Exceptions</a>, for more information about rows that violate constraints
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="ADFNS294"></a><a id="ADFNS293"></a><div class="sect3"><a id="GUID-32182C58-2918-431F-A1A3-F33BFE764C4D" name="GUID-32182C58-2918-431F-A1A3-F33BFE764C4D"></a><h4 id="ADFNS-GUID-32182C58-2918-431F-A1A3-F33BFE764C4D" class="sect4">Creating Disabled Constraints</h4>
+                  <div>
+                     <p>You define and disable an integrity constraint (using either <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> or <code class="codeph">ALTER</code> <code class="codeph">TABLE</code>), by including the <code class="codeph">DISABLE</code> clause in its definition, as in <a href="data-integrity.html#GUID-32182C58-2918-431F-A1A3-F33BFE764C4D__BEIDJABH">Example 12-8</a>.
+                     </p>
+                     <div class="example" id="GUID-32182C58-2918-431F-A1A3-F33BFE764C4D__BEIDJABH">
+                        <p class="titleinexample">Example 12-8 Creating Disabled Constraints</p><pre class="oac_no_warn" dir="ltr">/* Use CREATE TABLE statement to create disabled constraint */
+ 
+DROP TABLE t1; 
+CREATE TABLE t1 (Empno NUMBER(5) PRIMARY KEY <span class="bold">DISABLE</span>);
+ 
+/* Create table without constraint
+   and then use ALTER TABLE statement to add disabled constraint */
+ 
+DROP TABLE t2; 
+CREATE TABLE t2 (Empno NUMBER(5));
+ 
+ALTER TABLE t2 ADD PRIMARY KEY (Empno) <span class="bold">DISABLE</span>;
+</pre></div>
+                     <!-- class="example" -->
+                     <p>Include the <code class="codeph">DISABLE</code> clause when defining a constraint for a table to have large amounts of data inserted before anybody else accesses it, particularly if you must cleanse data after inserting it, or must fill empty columns with sequence numbers or parent/child relationships.
+                     </p>
+                     <p>An <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement that defines and disables a constraint never fails, because its rule is not enforced.
+                     </p>
+                  </div>
+               </div><a id="ADFNS296"></a><a id="ADFNS295"></a><div class="sect3"><a id="GUID-63DF885E-A240-47BA-9BA3-151EF4233F15" name="GUID-63DF885E-A240-47BA-9BA3-151EF4233F15"></a><h4 id="ADFNS-GUID-63DF885E-A240-47BA-9BA3-151EF4233F15" class="sect4">Enabling Existing Constraints</h4>
+                  <div>
+                     <p>After you have cleansed the data and filled the empty columns, you can enable constraints that were disabled during data insertion.</p>
+                     <p>To enable an existing constraint, use the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement with the <code class="codeph">ENABLE</code> clause, as in <a href="data-integrity.html#GUID-63DF885E-A240-47BA-9BA3-151EF4233F15__BEIFJEII">Example 12-9</a>.
+                     </p>
+                     <div class="example" id="GUID-63DF885E-A240-47BA-9BA3-151EF4233F15__BEIFJEII">
+                        <p class="titleinexample">Example 12-9 Enabling Existing Constraints</p><pre class="oac_no_warn" dir="ltr">-- Create table with disabled constraints:
+ 
+DROP TABLE DeptTab;
+CREATE TABLE DeptTab (
+  Deptno  NUMBER(3) PRIMARY KEY DISABLE,
+  Dname   VARCHAR2(15),
+  Loc     VARCHAR2(15),
+  CONSTRAINT uk_DeptTab_Dname_Loc UNIQUE (Dname, Loc) DISABLE,
+  CONSTRAINT c_DeptTab_Loc
+  CHECK (Loc IN ('NEW YORK', 'BOSTON', 'CHICAGO')) DISABLE
+);
+ 
+<span class="bold">-- Enable constraints:</span>
+ 
+ ALTER TABLE DeptTab
+<span class="bold">ENABLE PRIMARY KEY</span>
+<span class="bold">ENABLE CONSTRAINT uk_DeptTab_Dname_Loc</span>
+<span class="bold">ENABLE CONSTRAINT c_DeptTab_Loc;</span>
+</pre></div>
+                     <!-- class="example" -->
+                     <p>An <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement that attempts to enable an integrity constraint fails if any of the table rows violate the integrity constraint. The statement is rolled back and the constraint is not enabled.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-63DF885E-A240-47BA-9BA3-151EF4233F15__GUID-2499668D-6CF2-496E-B269-D139DA7C724B">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="data-integrity.html#GUID-15695420-BD41-4572-90A5-3452EEFF167F">Fixing Constraint Exceptions</a>, for more information about rows that violate constraints
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="ADFNS298"></a><a id="ADFNS297"></a><div class="sect3"><a id="GUID-E24C0A56-6BE7-465A-9D7A-71C55EBBA5F6" name="GUID-E24C0A56-6BE7-465A-9D7A-71C55EBBA5F6"></a><h4 id="ADFNS-GUID-E24C0A56-6BE7-465A-9D7A-71C55EBBA5F6" class="sect4">Disabling Existing Constraints</h4>
+                  <div>
+                     <p>If you must perform a large insert or update when a table contains data, you can temporarily disable constraints to improve performance of the bulk operation.</p>
+                     <p>To disable an existing constraint, use the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement with the <code class="codeph">DISABLE</code> clause, as in <a href="data-integrity.html#GUID-E24C0A56-6BE7-465A-9D7A-71C55EBBA5F6__BEIBEAEF">Example 12-10</a>.
+                     </p>
+                     <div class="example" id="GUID-E24C0A56-6BE7-465A-9D7A-71C55EBBA5F6__BEIBEAEF">
+                        <p class="titleinexample">Example 12-10 Disabling Existing Constraints</p><pre class="oac_no_warn" dir="ltr">-- Create table with enabled constraints:
+ 
+DROP TABLE DeptTab; 
+CREATE TABLE DeptTab (
+  Deptno  NUMBER(3) PRIMARY KEY ENABLE,
+  Dname   VARCHAR2(15),
+  Loc     VARCHAR2(15),
+  CONSTRAINT uk_DeptTab_Dname_Loc UNIQUE (Dname, Loc) ENABLE,
+  CONSTRAINT c_DeptTab_Loc
+  CHECK (Loc IN ('NEW YORK', 'BOSTON', 'CHICAGO')) ENABLE
+);
+ 
+<span class="bold">-- Disable constraints:</span>
+ 
+ALTER TABLE DeptTab
+<span class="bold">DISABLE PRIMARY KEY</span>
+<span class="bold">DISABLE CONSTRAINT uk_DeptTab_Dname_Loc</span>
+<span class="bold">DISABLE CONSTRAINT c_DeptTab_Loc;</span></pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="ADFNS299"></a><div class="sect3"><a id="GUID-E8DF7A23-0866-4C62-8120-DF52D4E0BEFA" name="GUID-E8DF7A23-0866-4C62-8120-DF52D4E0BEFA"></a><h4 id="ADFNS-GUID-E8DF7A23-0866-4C62-8120-DF52D4E0BEFA" class="sect4">Guidelines for Enabling and Disabling Key Constraints</h4>
+                  <div>
+                     <p>When enabling or disabling <code class="codeph">UNIQUE</code>, <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code>, and <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraints, be aware of several important issues and prerequisites. <code class="codeph">UNIQUE</code> key and <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> constraints are usually managed by the database administrator.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-E8DF7A23-0866-4C62-8120-DF52D4E0BEFA__GUID-892A2B9A-F56B-497C-BD34-99C580436903">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ADMIN11537" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> and <a href="data-integrity.html#GUID-CF3CFAA8-CB91-4AA6-9740-9F682ABD52C2">Managing FOREIGN KEY Constraints </a></p>
+                     </div>
+                  </div>
+               </div><a id="ADFNS300"></a><div class="sect3"><a id="GUID-15695420-BD41-4572-90A5-3452EEFF167F" name="GUID-15695420-BD41-4572-90A5-3452EEFF167F"></a><h4 id="ADFNS-GUID-15695420-BD41-4572-90A5-3452EEFF167F" class="sect4">Fixing Constraint Exceptions</h4>
+                  <div>
+                     <p>If a row of a table disobeys an integrity constraint, then this row is in violation of the constraint and is called an <strong class="term">exception</strong> to the constraint. If any exceptions exist, then the constraint cannot be enabled. The rows that violate the constraint must be updated or deleted before the constraint can be enabled.
+                     </p>
+                     <p>You can identify exceptions for a specific integrity constraint as you try to enable the constraint.</p>
+                     <div class="infoboxnotealso" id="GUID-15695420-BD41-4572-90A5-3452EEFF167F__GUID-C7912A98-43BA-4660-98A1-5D04C94A7E3E">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="data-integrity.html#GUID-15695420-BD41-4572-90A5-3452EEFF167F">Fixing Constraint Exceptions</a>, for more information about this procedure
+                        </p>
+                     </div>
+                     <p>When you try to create or enable a constraint, and the statement fails because integrity constraint exceptions exist, the statement is rolled back. You cannot enable the constraint until all exceptions are either updated or deleted. To determine which rows violate the integrity constraint, include the <code class="codeph">EXCEPTIONS</code> option in the <code class="codeph">ENABLE</code> clause of a <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> or <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-15695420-BD41-4572-90A5-3452EEFF167F__GUID-A6B8720D-6220-47FB-92FA-FCFC0CCF998B">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ADMIN11537" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for more information about responding to constraint exceptions
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="ADFNS301"></a><a id="ADFNS00609"></a><div class="sect2"><a id="GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0" name="GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0"></a><h3 id="ADFNS-GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0" class="sect3">Modifying Constraints</h3>
+               <div>
+                  <p>Starting with Oracle8<span class="italic">i</span>, you can modify an existing constraint with the <code class="codeph">MODIFY</code> <code class="codeph">CONSTRAINT</code> clause, as in <a href="data-integrity.html#GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0__BEIJBACB">Example 12-11</a>.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0__GUID-B3EFD7FA-4782-4D55-8781-2C001CBE6A07">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01001" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about the parameters you can modify
+                     </p>
+                  </div>
+                  <div class="example" id="GUID-6DD75EB0-2F91-45F4-A3E7-7B0FC60643E0__BEIJBACB">
+                     <p class="titleinexample">Example 12-11 Modifying Constraints</p><pre class="oac_no_warn" dir="ltr">/* Create &amp; then modify a CHECK constraint: */
+ 
+DROP TABLE X1Tab;
+CREATE TABLE X1Tab (
+  a1 NUMBER
+  CONSTRAINT c_X1Tab_a1 CHECK (a1&gt;3)
+  DEFERRABLE DISABLE
+);
+ 
+ALTER TABLE X1Tab
+<span class="bold">MODIFY CONSTRAINT c_X1Tab_a1 ENABLE</span>;
+ 
+ALTER TABLE X1Tab
+<span class="bold">MODIFY CONSTRAINT c_X1Tab_a1 RELY</span>;
+ 
+ALTER TABLE X1Tab
+<span class="bold">MODIFY CONSTRAINT c_X1Tab_a1 INITIALLY DEFERRED</span>;
+ 
+ALTER TABLE X1Tab
+<span class="bold">MODIFY CONSTRAINT c_X1Tab_a1 ENABLE NOVALIDATE</span>;
+ 
+/* Create &amp; then modify a PRIMARY KEY constraint: */
+ 
+DROP TABLE t1; 
+CREATE TABLE t1 (a1 INT, b1 INT);
+ 
+ALTER TABLE t1
+ADD CONSTRAINT pk_t1_a1 PRIMARY KEY(a1) DISABLE;
+ 
+ALTER TABLE t1
+<span class="bold">MODIFY PRIMARY KEY INITIALLY IMMEDIATE</span>
+<span class="bold">USING INDEX PCTFREE = 30 ENABLE NOVALIDATE</span>;
+ 
+ALTER TABLE t1
+<span class="bold">MODIFY PRIMARY KEY ENABLE NOVALIDATE</span>;</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="ADFNS303"></a><a id="ADFNS302"></a><div class="sect2"><a id="GUID-65CF33C0-03C2-408A-86D5-56C9A17B1E5D" name="GUID-65CF33C0-03C2-408A-86D5-56C9A17B1E5D"></a><h3 id="ADFNS-GUID-65CF33C0-03C2-408A-86D5-56C9A17B1E5D" class="sect3">Renaming Constraints</h3>
+               <div>
+                  <p>One property of a constraint that you can modify is its name. Situations in which you would rename a constraint include:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>You want to clone a table and its constraints.</p>
+                        <p>Constraint names must be unique, even across multiple schemas. Therefore, the constraints in the original table cannot have the same names as those in the cloned table.</p>
+                     </li>
+                     <li>
+                        <p>You created a constraint with a default system-generated name, and now you want to give it a name that is easy to remember, so that you can easily enable and disable it.</p>
+                     </li>
+                  </ul>
+                  <p><a href="data-integrity.html#GUID-65CF33C0-03C2-408A-86D5-56C9A17B1E5D__BEIBIHGF">Example 12-12</a> shows how to find the system-generated name of a constraint and change it.
+                  </p>
+                  <div class="example" id="GUID-65CF33C0-03C2-408A-86D5-56C9A17B1E5D__BEIBIHGF">
+                     <p class="titleinexample">Example 12-12 Renaming a Constraint</p><pre class="oac_no_warn" dir="ltr">DROP TABLE T;
+CREATE TABLE T (
+  C1 NUMBER PRIMARY KEY,
+  C2 NUMBER
+);
+ </pre><p>Query:</p><pre class="oac_no_warn" dir="ltr">SELECT CONSTRAINT_NAME FROM USER_CONSTRAINTS
+WHERE TABLE_NAME = 'T'
+AND CONSTRAINT_TYPE = 'P';
+ </pre><p>Result (system-generated name of constraint name varies):</p><pre class="oac_no_warn" dir="ltr">CONSTRAINT_NAME
+------------------------------
+<span class="bold">SYS_C0013059</span>
+ 
+1 row selected.
+ </pre><p>Rename constraint from name reported in preceding query to <code class="codeph">T_C1_PK</code>:
+                     </p><pre class="oac_no_warn" dir="ltr">ALTER TABLE T
+RENAME CONSTRAINT SYS_C0013059
+TO T_C1_PK;
+ </pre><p>Query:</p><pre class="oac_no_warn" dir="ltr">SELECT CONSTRAINT_NAME FROM USER_CONSTRAINTS
+WHERE TABLE_NAME = 'T'
+AND CONSTRAINT_TYPE = 'P';
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">CONSTRAINT_NAME
+------------------------------
+T_C1_PK
+ 
+1 row selected.</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="ADFNS304"></a><a id="ADFNS00610"></a><div class="sect2"><a id="GUID-64DAF3ED-702F-4D3A-8703-1EB917DCC8AC" name="GUID-64DAF3ED-702F-4D3A-8703-1EB917DCC8AC"></a><h3 id="ADFNS-GUID-64DAF3ED-702F-4D3A-8703-1EB917DCC8AC" class="sect3">Dropping Constraints</h3>
+               <div>
+                  <p>You can drop a constraint using the <code class="codeph">DROP</code> clause of the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement. Situations in which you would drop a constraint include:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>The constraint enforces a rule that is no longer true.</p>
+                     </li>
+                     <li>
+                        <p>The constraint is no longer needed.</p>
+                     </li>
+                  </ul>
+                  <p>To drop a constraint and all other integrity constraints that depend on it, specify <code class="codeph">CASCADE</code>.
+                  </p>
+                  <div class="example" id="GUID-64DAF3ED-702F-4D3A-8703-1EB917DCC8AC__GUID-29E0B450-3E16-4D79-9A0C-CDCB4EA9B106">
+                     <p class="titleinexample">Example 12-13 Dropping Constraints</p><pre class="oac_no_warn" dir="ltr">-- Create table with constraints:
+
+DROP TABLE DeptTab; 
+CREATE TABLE DeptTab (
+  Deptno  NUMBER(3) PRIMARY KEY,
+  Dname   VARCHAR2(15),
+  Loc     VARCHAR2(15),
+  CONSTRAINT uk_DeptTab_Dname_Loc UNIQUE (Dname, Loc),
+  CONSTRAINT c_DeptTab_Loc
+  CHECK (Loc IN ('NEW YORK', 'BOSTON', 'CHICAGO'))
+);
+ 
+-- Drop constraints:
+ 
+ALTER TABLE DeptTab
+<span class="bold">DROP PRIMARY KEY</span>
+<span class="bold">DROP CONSTRAINT uk_DeptTab_Dname_Loc</span>
+<span class="bold">DROP CONSTRAINT c_DeptTab_Loc</span>;
+</pre></div>
+                  <!-- class="example" -->
+                  <p>When dropping <code class="codeph">UNIQUE</code>, <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code>, and <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraints, be aware of several important issues and prerequisites. <code class="codeph">UNIQUE</code> and <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> constraints are usually managed by the database administrator.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-64DAF3ED-702F-4D3A-8703-1EB917DCC8AC__GUID-E1A0CA84-313A-436F-B73B-A67088931762">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01001" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for more information about the <code class="codeph">DROP</code> clause of the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> statement.
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ADMIN11549" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for more information about dropping constraints.
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=SQLRF01806" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for information about the <code class="codeph">CASCADE</code> <code class="codeph">CONSTRAINTS</code> clause of the <code class="codeph">DROP</code> <code class="codeph">TABLE</code> statement, which drops all referential integrity constraints that refer to primary and unique keys in the dropped table
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS00611"></a><div class="sect2"><a id="GUID-CF3CFAA8-CB91-4AA6-9740-9F682ABD52C2" name="GUID-CF3CFAA8-CB91-4AA6-9740-9F682ABD52C2"></a><h3 id="ADFNS-GUID-CF3CFAA8-CB91-4AA6-9740-9F682ABD52C2" class="sect3">Managing FOREIGN KEY Constraints </h3>
+               <div>
+                  <p><code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraints enforce relationships between columns in different tables. Therefore, they cannot be enabled if the constraint of the referenced primary or unique key is not present or not enabled.
+                  </p>
+               </div><a id="ADFNS305"></a><div class="sect3"><a id="GUID-C86E69EC-35E8-4440-8444-443085384D7F" name="GUID-C86E69EC-35E8-4440-8444-443085384D7F"></a><h4 id="ADFNS-GUID-C86E69EC-35E8-4440-8444-443085384D7F" class="sect4">Data Types and Names for Foreign Key Columns</h4>
+                  <div>
+                     <p>You must use the same data type for corresponding columns in the dependent and referenced tables. The column names need not match.</p>
+                  </div>
+               </div><a id="ADFNS306"></a><div class="sect3"><a id="GUID-A47FF2B5-4283-4F06-802D-EBE1F4D07579" name="GUID-A47FF2B5-4283-4F06-802D-EBE1F4D07579"></a><h4 id="ADFNS-GUID-A47FF2B5-4283-4F06-802D-EBE1F4D07579" class="sect4">Limit on Columns in Composite Foreign Keys</h4>
+                  <div>
+                     <p>Because foreign keys reference primary and unique keys of the parent table, and <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> and <code class="codeph">UNIQUE</code> key constraints are enforced using indexes, composite foreign keys are limited to 32 columns. 
+                     </p>
+                  </div>
+               </div><a id="ADFNS307"></a><div class="sect3"><a id="GUID-202DA05E-17A5-4DF4-8A33-DB5BE4694618" name="GUID-202DA05E-17A5-4DF4-8A33-DB5BE4694618"></a><h4 id="ADFNS-GUID-202DA05E-17A5-4DF4-8A33-DB5BE4694618" class="sect4">Foreign Key References Primary Key by Default</h4>
+                  <div>
+                     <p>If the column list is not included in the <code class="codeph">REFERENCES</code> option when defining a <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint (single column or composite), then Oracle Database assumes that you intend to reference the primary key of the specified table. Alternatively, you can explicitly specify the column(s) to reference in the parent table within parentheses. Oracle Database automatically checks to verify that this column list references a primary or unique key of the parent table. If it does not, then an informative error is returned.
+                     </p>
+                  </div>
+               </div><a id="ADFNS308"></a><div class="sect3"><a id="GUID-3D911857-CCB1-43F6-BCDD-B334125E3AAB" name="GUID-3D911857-CCB1-43F6-BCDD-B334125E3AAB"></a><h4 id="ADFNS-GUID-3D911857-CCB1-43F6-BCDD-B334125E3AAB" class="sect4">Privileges Required to Create FOREIGN KEY Constraints</h4>
+                  <div>
+                     <p>To create a <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint, the creator of the constraint must have privileged access to the parent and child tables.
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><strong class="term">Parent Table</strong> The creator of the referential integrity constraint must own the parent table or have <code class="codeph">REFERENCES</code> object privileges on the columns that constitute the parent key of the parent table. 
+                           </p>
+                        </li>
+                        <li>
+                           <p><strong class="term">Child Table</strong> The creator of the referential integrity constraint must have the ability to create tables (that is, the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> or <code class="codeph">CREATE</code> <code class="codeph">ANY</code> <code class="codeph">TABLE</code> system privilege) or the ability to alter the child table (that is, the <code class="codeph">ALTER</code> object privilege for the child table or the <code class="codeph">ALTER</code> <code class="codeph">ANY</code> <code class="codeph">TABLE</code> system privilege).
+                           </p>
+                        </li>
+                     </ul>
+                     <p>In both cases, necessary privileges cannot be obtained through a role; they must be explicitly granted to the creator of the constraint.</p>
+                     <p>These restrictions allow:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The owner of the child table to explicitly decide which constraints are enforced and which other users can create constraints</p>
+                        </li>
+                        <li>
+                           <p>The owner of the parent table to explicitly decide if foreign keys can depend on the primary and unique keys in her tables</p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="ADFNS309"></a><div class="sect3"><a id="GUID-F8D4553F-02C3-40A8-8AB4-ABBFD28FB640" name="GUID-F8D4553F-02C3-40A8-8AB4-ABBFD28FB640"></a><h4 id="ADFNS-GUID-F8D4553F-02C3-40A8-8AB4-ABBFD28FB640" class="sect4">Choosing How Foreign Keys Enforce Referential Integrity</h4>
+                  <div>
+                     <p>Oracle Database allows different types of referential integrity actions to be enforced, as specified with the definition of a <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><strong class="term">Prevent Delete or Update of Parent Key</strong> The default setting prevents the deletion or update of a parent key if there is a row in the child table that references the key. For example:
+                           </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE Emp_tab (
+FOREIGN KEY (Deptno) REFERENCES Dept_tab);
+ </pre></li>
+                        <li>
+                           <p><strong class="term">Delete Child Rows When Parent Key Deleted</strong> The <code class="codeph">ON</code> <code class="codeph">DELETE</code> <code class="codeph">CASCADE</code> action allows parent key data that is referenced from the child table to be deleted, but not updated. When data in the parent key is deleted, all rows in the child table that depend on the deleted parent key values are also deleted. To specify this referential action, include the <code class="codeph">ON</code> <code class="codeph">DELETE</code> <code class="codeph">CASCADE</code> option in the definition of the <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint. For example:
+                           </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE Emp_tab (
+FOREIGN KEY (Deptno) REFERENCES Dept_tab
+ON DELETE CASCADE);
+</pre></li>
+                        <li>
+                           <p><strong class="term">Set Foreign Keys to Null When Parent Key Deleted</strong> The <code class="codeph">ON</code> <code class="codeph">DELETE</code> <code class="codeph">SET</code> <code class="codeph">NULL</code> action allows data that references the parent key to be deleted, but not updated. When referenced data in the parent key is deleted, all rows in the child table that depend on those parent key values have their foreign keys set to <code class="codeph">NULL</code>. To specify this referential action, include the <code class="codeph">ON</code> <code class="codeph">DELETE</code> <code class="codeph">SET</code> <code class="codeph">NULL</code> option in the definition of the <code class="codeph">FOREIGN</code> <code class="codeph">KEY</code> constraint. For example:
+                           </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE Emp_tab (
+FOREIGN KEY (Deptno) REFERENCES Dept_tab  
+ON DELETE SET NULL); </pre></li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="ADFNS310"></a><a id="ADFNS00613"></a><div class="sect2"><a id="GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4" name="GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4"></a><h3 id="ADFNS-GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4" class="sect3">Viewing Information About Constraints</h3>
+               <div>
+                  <p>To find the names of constraints, what columns they affect, and other information to help you manage them, query the static data dictionary views <code class="codeph">*_CONSTRAINTS</code> and <code class="codeph">*_CONS_COLUMNS</code>, as in <a href="data-integrity.html#GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4__BEIHBHDA">Example 12-14</a>.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4__GUID-E81487D7-E2FB-4B6D-AEAE-11D4FCB1AC75">
+                     <p class="notep1">See Also:</p>
+                     <p> <span class="italic">Oracle Database Reference</span> for information about <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=REFRN20047" target="_blank"><code class="codeph">*_CONSTRAINTS</code></a> and <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=REFRN20045" target="_blank"><code class="codeph">*_CONS_COLUMNS</code></a></p>
+                  </div>
+                  <div class="example" id="GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4__BEIHBHDA">
+                     <p class="titleinexample">Example 12-14 Viewing Information About Constraints</p><pre class="oac_no_warn" dir="ltr">DROP TABLE DeptTab;
+CREATE TABLE DeptTab (
+  Deptno  NUMBER(3) PRIMARY KEY,
+  Dname   VARCHAR2(15),
+  Loc     VARCHAR2(15),
+  CONSTRAINT uk_DeptTab_Dname_Loc UNIQUE (Dname, Loc),
+  CONSTRAINT c_DeptTab_Loc
+  CHECK (Loc IN ('NEW YORK', 'BOSTON', 'CHICAGO'))
+);
+ 
+DROP TABLE EmpTab; 
+CREATE TABLE EmpTab (
+  Empno    NUMBER(5) PRIMARY KEY,
+  Ename    VARCHAR2(15) NOT NULL,
+  Job      VARCHAR2(10),
+  Mgr      NUMBER(5) CONSTRAINT r_EmpTab_Mgr
+             REFERENCES EmpTab ON DELETE CASCADE,
+  Hiredate DATE,
+  Sal      NUMBER(7,2),
+  Comm     NUMBER(5,2),
+  Deptno   NUMBER(3) NOT NULL
+  CONSTRAINT r_EmpTab_Deptno REFERENCES DeptTab
+);
+ 
+-- Format columns (optional):
+ 
+COLUMN CONSTRAINT_NAME   FORMAT A20;
+COLUMN CONSTRAINT_TYPE   FORMAT A4 HEADING 'TYPE';
+COLUMN TABLE_NAME        FORMAT A10;
+COLUMN R_CONSTRAINT_NAME FORMAT A17;
+COLUMN SEARCH_CONDITION  FORMAT A40;
+COLUMN COLUMN_NAME       FORMAT A12;
+</pre><p>List accessible constraints in DeptTab and EmpTab:</p><pre class="oac_no_warn" dir="ltr">SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE, TABLE_NAME, R_CONSTRAINT_NAME
+FROM USER_CONSTRAINTS
+WHERE (TABLE_NAME = 'DEPTTAB' OR TABLE_NAME = 'EMPTAB')
+ORDER BY CONSTRAINT_NAME;
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">CONSTRAINT_NAME      TYPE TABLE_NAME R_CONSTRAINT_NAME
+-------------------- ---- ---------- -----------------
+C_DEPTTAB_LOC        C    DEPTTAB
+R_EMPTAB_DEPTNO      R    EMPTAB     SYS_C006286
+R_EMPTAB_MGR         R    EMPTAB     SYS_C006290
+SYS_C006286          P    DEPTTAB
+SYS_C006288          C    EMPTAB
+SYS_C006289          C    EMPTAB
+SYS_C006290          P    EMPTAB
+UK_DEPTTAB_DNAME_LOC U    DEPTTAB
+ 
+8 rows selected.
+ </pre><p>Distinguish between <code class="codeph">NOT</code> <code class="codeph">NULL</code> and <code class="codeph">CHECK</code> constraints in <code class="codeph">DeptTab</code> and <code class="codeph">EmpTab</code>:
+                     </p><pre class="oac_no_warn" dir="ltr">SELECT CONSTRAINT_NAME, SEARCH_CONDITION
+FROM USER_CONSTRAINTS
+WHERE (TABLE_NAME = 'DEPTTAB' OR TABLE_NAME = 'EMPTAB')
+AND CONSTRAINT_TYPE = 'C'
+ORDER BY CONSTRAINT_NAME;
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">CONSTRAINT_NAME      SEARCH_CONDITION
+-------------------- ----------------------------------------
+C_DEPTTAB_LOC        Loc IN ('NEW YORK', 'BOSTON', 'CHICAGO')
+SYS_C006288          "ENAME" IS NOT NULL
+SYS_C006289          "DEPTNO" IS NOT NULL
+ 
+3 rows selected.
+ </pre><p>For <code class="codeph">DeptTab</code> and <code class="codeph">EmpTab</code>, list columns that constitute constraints:
+                     </p><pre class="oac_no_warn" dir="ltr">SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME
+FROM USER_CONS_COLUMNS
+WHERE (TABLE_NAME = 'DEPTTAB' OR TABLE_NAME = 'EMPTAB')
+ORDER BY CONSTRAINT_NAME;
+ </pre><p>Result:</p><pre class="oac_no_warn" dir="ltr">CONSTRAINT_NAME      TABLE_NAME COLUMN_NAME
+-------------------- ---------- ------------
+C_DEPTTAB_LOC        DEPTTAB    LOC
+R_EMPTAB_DEPTNO      EMPTAB     DEPTNO
+R_EMPTAB_MGR         EMPTAB     MGR
+SYS_C006286          DEPTTAB    DEPTNO
+SYS_C006288          EMPTAB     ENAME
+SYS_C006289          EMPTAB     DEPTNO
+SYS_C006290          EMPTAB     EMPNO
+UK_DEPTTAB_DNAME_LOC DEPTTAB    LOC
+UK_DEPTTAB_DNAME_LOC DEPTTAB    DNAME
+ 
+9 rows selected.
+</pre></div>
+                  <!-- class="example" -->
+                  <p>Note that:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Some constraint names are user specified (such as <code class="codeph">UK_DEPTTAB_DNAME_LOC</code>), while others are system specified (such as <code class="codeph">SYS_C006290</code>). 
+                        </p>
+                     </li>
+                     <li>
+                        <p>Each constraint type is denoted with a different character in the <code class="codeph">CONSTRAINT_TYPE</code> column. This table summarizes the characters used for each constraint type:
+                        </p>
+                        <div class="tblformal" id="GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4__GUID-16980D4A-4238-4CF5-BFD0-B4044854E0B3">
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="" summary="This table summarizes CONSTRAINT_TYPE column characters." width="90%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="23%" id="d53462e7288">Constraint Type</th>
+                                    <th align="left" valign="bottom" width="77%" id="d53462e7291">Character</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="23%" id="d53462e7296" headers="d53462e7288 ">
+                                       <p><code class="codeph">PRIMARY</code> <code class="codeph">KEY</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="77%" headers="d53462e7296 d53462e7291 ">
+                                       <p><code class="codeph">P</code></p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="23%" id="d53462e7308" headers="d53462e7288 ">
+                                       <p><code class="codeph">UNIQUE</code> <code class="codeph">KEY</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="77%" headers="d53462e7308 d53462e7291 ">
+                                       <p><code class="codeph">U</code></p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="23%" id="d53462e7320" headers="d53462e7288 ">
+                                       <p><code class="codeph">FOREIGN</code> <code class="codeph">KEY</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="77%" headers="d53462e7320 d53462e7291 ">
+                                       <p><code class="codeph">R</code></p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="23%" id="d53462e7332" headers="d53462e7288 ">
+                                       <p><code class="codeph">CHECK</code>, <code class="codeph">NOT</code> <code class="codeph">NULL</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="77%" headers="d53462e7332 d53462e7291 ">
+                                       <p><code class="codeph">C</code></p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <div class="infoboxnote" id="GUID-7366FD3D-373F-4862-8334-8CAEAE6189F4__GUID-1723DC4B-8D01-4201-89BA-6C27F8F20F67">
+                           <p class="notep1">Note:</p>
+                           <p>An additional constraint type is indicated by the character "<code class="codeph">V</code>" in the <code class="codeph">CONSTRAINT_TYPE</code> column. This constraint type corresponds to constraints created using the <code class="codeph">WITH</code> <code class="codeph">CHECK</code> <code class="codeph">OPTION</code> for views.
+                           </p>
+                        </div>
+                     </li>
+                  </ul>
+                  <p>These constraints are explicitly listed in the <code class="codeph">SEARCH_CONDITION</code> column:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><code class="codeph">NOT</code> <code class="codeph">NULL</code> constraints
+                        </p>
+                     </li>
+                     <li>
+                        <p>The conditions for user-defined <code class="codeph">CHECK</code> constraints 
+                        </p>
+                     </li>
+                  </ul>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

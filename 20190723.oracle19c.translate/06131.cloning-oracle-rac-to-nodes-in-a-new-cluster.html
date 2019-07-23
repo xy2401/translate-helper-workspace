@@ -1,0 +1,531 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="This chapter describes how to clone Oracle Real Application Clusters (Oracle RAC) database homes on Linux and UNIX systems to nodes in a new cluster.">
+      <meta name="description" content="This chapter describes how to clone Oracle Real Application Clusters (Oracle RAC) database homes on Linux and UNIX systems to nodes in a new cluster.">
+      <title>Cloning Oracle RAC to Nodes in a New Cluster</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Real Application Clusters Administration and Deployment Guide">
+      <meta property="og:description" content="This chapter describes how to clone Oracle Real Application Clusters (Oracle RAC) database homes on Linux and UNIX systems to nodes in a new cluster.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Real Application Clusters Administration and Deployment Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="real-application-clusters-administration-and-deployment-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-25T14:02:30-07:00">
+      <meta name="dcterms.title" content="Real Application Clusters Administration and Deployment Guide">
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E95728-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="managing-backup-and-recovery.html" title="Previous" type="text/html">
+      <link rel="next" href="using-cloning-to-extend-oracle-rac-to-nodes-in-the-same-cluster.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="RACAD">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="managing-backup-and-recovery.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="using-cloning-to-extend-oracle-rac-to-nodes-in-the-same-cluster.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Real Application Clusters Administration and Deployment Guide</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Cloning Oracle RAC to Nodes in a New Cluster</li>
+            </ol>
+            <a id="GUID-8444F1C2-5F67-46B4-ABDE-18D3AFF42D55" name="GUID-8444F1C2-5F67-46B4-ABDE-18D3AFF42D55"></a><a id="RACAD03202"></a>
+            
+            <h2 id="RACAD-GUID-8444F1C2-5F67-46B4-ABDE-18D3AFF42D55" class="sect2"><span class="enumeration_chapter">9 </span>Cloning Oracle RAC to Nodes in a New Cluster
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>This chapter describes how to clone Oracle Real Application Clusters (Oracle RAC) database homes on Linux and UNIX systems to nodes in a new cluster.</p>
+               <p>This chapter describes a noninteractive cloning technique that you implement with scripts. The cloning techniques described in this chapter are best suited for performing multiple simultaneous cluster installations. Creating the scripts is a manual process and can be error prone. If you only have one cluster to install, then you should use the traditional automated and interactive installation methods, such as Oracle Universal Installer, or the Provisioning Pack feature of Oracle Enterprise Manager.</p>
+               <div class="infoboxnote" id="GUID-8444F1C2-5F67-46B4-ABDE-18D3AFF42D55__GUID-9507ADCC-E679-42BF-B9B5-060B6F7A1DD5">
+                  <p class="notep1">Note:</p>
+                  <p>Cloning is not a replacement for Oracle Enterprise Manager cloning that is a part of the Provisioning Pack. During Oracle Enterprise Manager cloning, the provisioning process interactively asks you the details about the Oracle home (such as the location to which you want to deploy the clone, the name of the Oracle Database home, a list of the nodes in the cluster, and so on).</p>
+                  <p>The Provisioning Pack feature of Oracle Enterprise Manager Cloud Control provides a framework to make it easy for you to automate the provisioning of new nodes and clusters.   For data centers with many Oracle RAC clusters, the investment in creating a cloning procedure to easily provision new clusters and new nodes to existing clusters is worth the effort.</p>
+               </div>
+               <p>This chapter includes the following topics:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-9DEEF6F5-CA37-465E-9648-69A945614998">Introduction to Cloning Oracle RAC</a></p>
+                  </li>
+                  <li>
+                     <p><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7" title="Use this overview to understand the procedures you use to clone Oracle RAC.">Preparing to Clone Oracle RAC</a></p>
+                  </li>
+                  <li>
+                     <p><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-6294EEDD-73B1-4116-8068-D2D198F21297">Deploying Oracle RAC Clone to Nodes in a Cluster</a></p>
+                  </li>
+                  <li>
+                     <p><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-CE9D8B63-6877-448B-8689-CAE658771A7C" title="The cloning script runs multiple tools, each of which may generate its own log files.">Locating and Viewing Log Files Generated During Cloning</a></p>
+                  </li>
+               </ul>
+            </div>
+            <div>
+               <div class="relinfo">
+                  <p><strong>Related Topics</strong></p>
+                  <ul>
+                     <li><a href="using-cloning-to-extend-oracle-rac-to-nodes-in-the-same-cluster.html#GUID-CCD518C7-4E15-46C5-92CA-89F6DA3A7019" title="Add nodes to existing Oracle RAC environments by cloning a local (non-shared) Oracle home in Linux and UNIX system environments.Add nodes to existing Oracle RAC environments by cloning a shared Oracle home in Linux and UNIX system environments.Add nodes to existing Oracle RAC environments by cloning a shared or local Oracle home in Windows system environments.">Using Cloning to Extend Oracle RAC to Nodes in the Same Cluster</a></li>
+                  </ul>
+               </div>
+            </div><a id="RACAD7331"></a><div class="sect2"><a id="GUID-9DEEF6F5-CA37-465E-9648-69A945614998" name="GUID-9DEEF6F5-CA37-465E-9648-69A945614998"></a><h3 id="RACAD-GUID-9DEEF6F5-CA37-465E-9648-69A945614998" class="sect3">Introduction to Cloning Oracle RAC</h3>
+               <div>
+                  <p>Cloning is the process of copying an existing Oracle RAC installation to a different location and updating the copied bits to work in the new environment. The changes made by one-off patches applied on the source Oracle home, would also be present after the clone operation. The source and the destination path (host to be cloned) need not be the same.</p>
+                  <p>Some situations in which cloning is useful are<a id="d36824e342" class="indexterm-anchor"></a>:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Cloning provides a way to prepare an Oracle home once and deploy it to many hosts simultaneously. You can complete the installation silently, as a noninteractive process. You do not need to use a graphical user interface (GUI) console and you can perform cloning from a Secure Shell (SSH) terminal session, if required.</p>
+                     </li>
+                     <li>
+                        <p>Cloning enables you to create an installation (copy of a production, test, or development installation) with all patches applied to it in a single step. Once you have performed the base installation and applied all patch sets and patches on the source system, the clone performs all of these individual steps as a single procedure. This is in contrast to going through the installation process to perform the separate steps to install, configure, and patch the installation on each node in the cluster.</p>
+                     </li>
+                     <li>
+                        <p>Installing Oracle RAC by cloning is a very quick process. For example, cloning an Oracle home to a new cluster of more than two nodes requires a few minutes to install the Oracle base software, plus a few minutes more for each node (approximately the amount of time it takes to run the <code class="codeph">root.sh</code> script).
+                        </p>
+                     </li>
+                  </ul>
+                  <p>The cloned installation behaves the same as the source installation. For example, the cloned Oracle home can be removed using Oracle Universal Installer or patched using OPatch. You can also use the cloned Oracle home as the source for another cloning operation. You can create a cloned copy of a test, development, or production installation by using the command-line cloning scripts. The default cloning procedure is adequate for most usage cases. However, you can also customize various aspects of cloning, for example, to specify custom port assignments, or to preserve custom settings. </p>
+                  <p>The cloning process works by copying all of the files from the source Oracle home to the destination Oracle home. Thus, any files used by the source instance that are located outside the source Oracle home's directory structure are not copied to the destination location. </p>
+                  <p>The <a id="d36824e366" class="indexterm-anchor"></a>size of the binaries at the source and the destination may differ because these are relinked as part of the clone operation and the operating system patch levels may also differ between these two locations. Additionally, the number of files in the cloned home would increase because several files copied from the source, specifically those being instantiated, are backed up as part of the clone operation.
+                  </p>
+               </div>
+            </div><a id="RACAD8335"></a><a id="RACAD8336"></a><a id="RACAD8337"></a><a id="RACAD7332"></a><div class="sect2"><a id="GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7" name="GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7"></a><h3 id="RACAD-GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7" class="sect3">Preparing to Clone Oracle RAC</h3>
+               <div>
+                  <p>Use this overview to understand the procedures you use to clone Oracle RAC. </p>
+                  <p>In the preparation phase, you create a copy of an Oracle home that you then use to perform the cloning procedure on one or more nodes. You also install Oracle Clusterware.</p>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7__GUID-3F46F840-FB38-4AB4-B7DF-480E09C8DC78">Install Oracle RAC</p>
+                     <p>Use the detailed instructions in <cite>Oracle Real Application Clusters Installation Guide</cite> for your platform for your platform to install the Oracle RAC software and patches:
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Install Oracle RAC and choose the <span class="uicontrol bold">Software only</span> installation option.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Patch the release to the required level (for example, 12.1.0.<span class="italic">n</span>).
+                           </p>
+                        </li>
+                        <li>
+                           <p>Apply one-off patches, if necessary.</p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7__GUID-E9DDB2C5-4EEA-4224-A960-3F83830E0B03">Create a backup of the source home</p>
+                     <p>Create a copy of the Oracle RAC home. Use this file to copy the Oracle RAC home to each node in the cluster.</p>
+                     <p>When creating the backup (tar) file, the best practice is to include the release number in the name of the file. For example:</p><pre class="pre codeblock"><code># cd /opt/oracle/product/12c/db_1
+# tar &#x2013;zcvf /<span class="variable" translate="no">pathname</span>/db1120.tgz .</code></pre></div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7__GUID-6EDC804C-8EA7-43EB-9E0D-0927BF6571FC">Install and start Oracle Clusterware</p>
+                     <p>Before you can use cloning to create an Oracle RAC home, you must first install and start Oracle Clusterware on the node or nodes to which you want to copy a cloned Oracle RAC home. In other words, you configure an Oracle RAC home that you cloned from a source cluster onto the nodes in a target cluster in the same order that you installed the Oracle Clusterware and Oracle RAC software components on the original nodes.</p>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+               <div>
+                  <div class="relinfo">
+                     <p><strong>Related Topics</strong></p>
+                     <ul>
+                        <li><a href="../install-and-upgrade.html" target="_blank"><span><cite>Oracle Real Application Clusters Installation Guide</cite></span></a></li>
+                        <li><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-6294EEDD-73B1-4116-8068-D2D198F21297">Deploying Oracle RAC Clone to Nodes in a Cluster</a></li>
+                        <li><a href="../cwadd/cloning-oracle-clusterware.html#CWADD-GUID-502ABA1D-8246-4A13-BE72-3E806B77AB8F" target="_blank"><span><cite>Oracle Clusterware Administration and Deployment Guide</cite></span></a></li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="RACAD8338"></a><a id="RACAD8339"></a><a id="RACAD8340"></a><a id="RACAD7900"></a><a id="RACAD7703"></a><a id="RACAD7704"></a><a id="RACAD8341"></a><a id="RACAD8342"></a><a id="RACAD7701"></a><a id="RACAD7702"></a><a id="RACAD7333"></a><div class="sect2"><a id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297" name="GUID-6294EEDD-73B1-4116-8068-D2D198F21297"></a><h3 id="RACAD-GUID-6294EEDD-73B1-4116-8068-D2D198F21297" class="sect3">Deploying Oracle RAC Clone to Nodes in a Cluster</h3>
+               <div>
+                  <p>After you complete the prerequisite tasks described in <span class="q">"Preparing to Clone Oracle RAC"</span>, you can deploy cloned Oracle homes.
+                  </p>
+                  <p>Deploy the Oracle RAC database home to a cluster, as follows:</p>
+                  <ol>
+                     <li>
+                        <p>Perform any Oracle RAC preinstallation tasks, as described in your platform-specific Oracle RAC installation guide, to prepare the new cluster nodes, such things as:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Specify the kernel parameters.</p>
+                           </li>
+                           <li>
+                              <p>Ensure Oracle Clusterware is active.</p>
+                           </li>
+                           <li>
+                              <p>Ensure that Oracle ASM is active and that at least one Oracle ASM disk group exists and is mounted.</p>
+                           </li>
+                        </ul>
+                     </li>
+                     <li>
+                        <p>Deploy the Oracle RAC database software, as follows:</p>
+                        <ol type="a">
+                           <li>
+                              <p>Copy the clone of the Oracle home to all nodes. For example:</p><pre class="pre codeblock"><code>[root@node1 root]# mkdir -p /opt/oracle/product/12c/db
+[root@node1 root]# cd /opt/oracle/product/12c/db
+[root@node1 db]# tar &#x2013;zxvf /<span class="variable" translate="no">path_name</span>/db1120.tgz</code></pre><p>When providing the home location and <code class="codeph"><span class="variable" translate="no">path_name</span></code>, the home location can be in the same directory path or in a different directory path from the source home that you used to create the tar.
+                              </p>
+                           </li>
+                           <li>
+                              <p>If either the <code class="codeph">oracle</code> user or the <code class="codeph">oinstall</code> group, or both is different between the source and destination nodes, then change the ownership of the Oracle Inventory files, as follows:
+                              </p><pre class="pre codeblock"><code>[root@node1]# chown -R oracle:oinstall /opt/oracle/product/12c/db</code></pre><p>When you run the preceding command on the Oracle RAC home, it clears <code class="codeph">setuid</code> and <code class="codeph">setgid</code> information from the Oracle binary.
+                              </p>
+                              <div class="infoboxnote" id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__GUID-262DBDAC-EFAD-42AB-8840-30FEB2D34A53">
+                                 <p class="notep1">Note:</p>
+                                 <p>You can perform this step at the same time you perform Step <a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-6294EEDD-73B1-4116-8068-D2D198F21297__RUNTHECLONE.PLSCRIPTONEACHNODEWHICH-35657A88">3</a> and Step <a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-6294EEDD-73B1-4116-8068-D2D198F21297__THISSTEPAPPLIESTOLINUXANDUNIXINSTAL-35662A38">4</a> to run the <code class="codeph">clone.pl</code> and <code class="codeph">$ORACLE_HOME/root.sh</code> scripts on each cluster node.
+                                 </p>
+                              </div>
+                           </li>
+                        </ol>
+                     </li>
+                     <li id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__RUNTHECLONE.PLSCRIPTONEACHNODEWHICH-35657A88">
+                        <p>Run the <code class="codeph">clone.pl</code> script on each node, which performs the main Oracle RAC cloning tasks, as follows:
+                        </p>
+                        <ol type="a">
+                           <li>
+                              <p>Supply the environment variables and cloning parameters in the <code class="codeph">start.sh</code> script, as described in <a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-6294EEDD-73B1-4116-8068-D2D198F21297__CHDICHEI" title="Describes the three environment variables that you must pass to the clone.pl script.">Table 9-2</a> and <a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-6294EEDD-73B1-4116-8068-D2D198F21297__CHDIADDC" title="Describes the cloning parameters that are passed to the clone.pl script.">Table 9-3</a>. Because the <code class="codeph">clone.pl</code> script is sensitive to the parameters being passed to it, you must be accurate in your use of brackets, single quotation marks, and double quotation marks.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Run the script as <code class="codeph">oracle</code> or the user that owns the Oracle RAC software.
+                              </p>
+                           </li>
+                        </ol>
+                        <p>The following table lists and describes the <code class="codeph">clone.pl</code> script parameters:
+                        </p>
+                        <div class="tblformal" id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__BABHJGAI">
+                           <p class="titleintable">Table 9-1 clone.pl Script Parameters</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="clone.pl Script Parameters" summary="Describes parameters used with the clone.pl script." width="90%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="29%" id="d36824e931">Parameter</th>
+                                    <th align="left" valign="bottom" width="71%" id="d36824e933">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e937" headers="d36824e931 "><code class="codeph">ORACLE_HOME=<span class="variable" translate="no">Oracle_home</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e937 d36824e933 ">
+                                       <p>The complete path to the Oracle home you want to clone. If you specify an invalid path, then the script exits. This parameter is required.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e946" headers="d36824e931 "><code class="codeph">ORACLE_BASE=<span class="variable" translate="no">ORACLE_BASE</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e946 d36824e933 ">
+                                       <p>The complete path to the Oracle base you want to clone. If you specify an invalid path, then the script exits. This parameter is required.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e955" headers="d36824e931 "><code class="codeph">ORACLE_HOME_NAME=
+<span class="variable" translate="no">Oracle_home_name</span> | -defaultHomeName</code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e955 d36824e933 ">
+                                       <p>The Oracle home name of the home you want to clone. Optionally, you can specify the <code class="codeph">-defaultHomeName</code> flag. This parameter is optional.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e968" headers="d36824e931 "><code class="codeph">ORACLE_HOME_USER=<span class="variable" translate="no">Oracle_home_user</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e968 d36824e933 ">
+                                       <p>The OracleHomeUser for Windows services. This parameter is applicable to Windows only and is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e977" headers="d36824e931 "><code class="codeph">OSDBA_GROUP=<span class="variable" translate="no">group_name</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e977 d36824e933 ">
+                                       <p>Specify the operating system group you want to use as the OSDBA privileged group. This parameter is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e986" headers="d36824e931 "><code class="codeph">OSOPER_GROUP=<span class="variable" translate="no">group_name</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e986 d36824e933 ">
+                                       <p>Specify the operating system group you want to use as the OSOPER privileged group. This parameter is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e995" headers="d36824e931 "><code class="codeph">OSASM_GROUP=<span class="variable" translate="no">group_name</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e995 d36824e933 ">
+                                       <p>Specify the operating system group you want to use as the OSASM privileged group. This parameter is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e1004" headers="d36824e931 "><code class="codeph">OSBACKUPDBA_GROUP=<span class="codeinlineitalic">group_name</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e1004 d36824e933 ">
+                                       <p>Specify the operating system group you want to use as the OSBACKUPDBA privileged group. This parameter is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e1013" headers="d36824e931 "><code class="codeph">OSDGDBA_GROUP=<span class="variable" translate="no">group_name</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e1013 d36824e933 ">
+                                       <p>Specify the operating system group you want to use as the OSDGDBA privileged group. This parameter is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e1022" headers="d36824e931 "><code class="codeph">OSKMDBA_GROUP=<span class="variable" translate="no">group_name</span></code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e1022 d36824e933 ">
+                                       <p>Specify the operating system group you want to use as the OSKMDBA privileged group. This parameter is optional.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e1031" headers="d36824e931 "><code class="codeph">-debug</code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e1031 d36824e933 ">
+                                       <p>Specify this option to run the <code class="codeph">clone.pl</code> script in debug mode
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="29%" id="d36824e1042" headers="d36824e931 "><code class="codeph">-help</code></td>
+                                    <td align="left" valign="top" width="71%" headers="d36824e1042 d36824e933 ">
+                                       <p>Specify this option to obtain help for the <code class="codeph">clone.pl</code> script.
+                                       </p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <p>The following example shows an excerpt from the <code class="codeph">start.sh</code> script that calls the <code class="codeph">clone.pl</code> script:
+                        </p><pre class="pre codeblock"><code>ORACLE_BASE=/opt/oracle
+ORACLE_HOME=/opt/oracle/product/12c/db
+cd $ORACLE_HOME/clone
+THISNODE='<span class="variable" translate="no">host_name</span>'
+
+<span class="bold">E01</span>=ORACLE_HOME=/opt/oracle/product/12c/db
+<span class="bold">E02</span>=ORACLE_HOME_NAME=OraDBRAC
+<span class="bold">E03</span>=ORACLE_BASE=/opt/oracle
+<span class="bold">C01</span>="-O CLUSTER_NODES={node1,node2}"
+<span class="bold">C02</span>="-O LOCAL_NODE=$THISNODE"
+
+perl $ORACLE_HOME/clone/bin/clone.pl $E01 $E02 $E03 $C01 $C02</code></pre><p>The following table lists and describes the environment variables E01, E02, and E03 that are shown in bold typeface in the preceding example:</p>
+                        <div class="tblformal" id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__CHDICHEI">
+                           <p class="titleintable">Table 9-2 Environment Variables Passed to the clone.pl Script</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="Environment Variables Passed to the clone.pl Script" summary="Describes the three environment variables that you must pass to the clone.pl script." width="90%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="11%" id="d36824e1093">Symbol</th>
+                                    <th align="left" valign="bottom" width="21%" id="d36824e1095">Variable</th>
+                                    <th align="left" valign="bottom" width="68%" id="d36824e1097">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="11%" id="d36824e1101" headers="d36824e1093 ">
+                                       <p>E01</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1101 d36824e1095 "><code class="codeph">ORACLE_HOME</code></td>
+                                    <td align="left" valign="top" width="68%" headers="d36824e1101 d36824e1097 ">
+                                       <p>The location of the Oracle RAC database home. This directory location must exist and must be owned by the Oracle operating system group: <code class="codeph">oinstall</code>.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="11%" id="d36824e1114" headers="d36824e1093 ">
+                                       <p>E02</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1114 d36824e1095 "><code class="codeph">ORACLE_HOME_NAME</code></td>
+                                    <td align="left" valign="top" width="68%" headers="d36824e1114 d36824e1097 ">
+                                       <p>The name of the Oracle home for the Oracle RAC database. This is stored in the Oracle Inventory.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="11%" id="d36824e1124" headers="d36824e1093 ">
+                                       <p>E03</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1124 d36824e1095 "><code class="codeph">ORACLE_BASE</code></td>
+                                    <td align="left" valign="top" width="68%" headers="d36824e1124 d36824e1097 ">
+                                       <p>The location of the Oracle Base directory.</p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <p>The following table lists and describes the cloning parameters C01 and C02, that are shown in bold typeface in the preceding example:</p>
+                        <div class="tblformal" id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__CHDIADDC">
+                           <p class="titleintable">Table 9-3 Cloning Parameters Passed to the clone.pl Script.</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="Cloning Parameters Passed to the clone.pl Script." summary="Describes the cloning parameters that are passed to the clone.pl script." width="90%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="11%" id="d36824e1147">Variable</th>
+                                    <th align="left" valign="bottom" width="21%" id="d36824e1149">Name</th>
+                                    <th align="left" valign="bottom" width="21%" id="d36824e1151">Parameter</th>
+                                    <th align="left" valign="bottom" width="46%" id="d36824e1153">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="11%" id="d36824e1157" headers="d36824e1147 ">
+                                       <p>C01</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1157 d36824e1149 ">
+                                       <p>Cluster Nodes</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1157 d36824e1151 "><code class="codeph">CLUSTER_NODES</code></td>
+                                    <td align="left" valign="top" width="46%" headers="d36824e1157 d36824e1153 ">
+                                       <p>Lists the nodes in the cluster.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="11%" id="d36824e1170" headers="d36824e1147 ">
+                                       <p>C02</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1170 d36824e1149 ">
+                                       <p>Local Node</p>
+                                    </td>
+                                    <td align="left" valign="top" width="21%" headers="d36824e1170 d36824e1151 "><code class="codeph">LOCAL_NODE</code></td>
+                                    <td align="left" valign="top" width="46%" headers="d36824e1170 d36824e1153 ">
+                                       <p>The name of the local node.</p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <p>The following example shows an excerpt from the <code class="codeph">start.bat</code> script that the user must create that calls the <code class="codeph">clone.pl</code> script:
+                        </p><pre class="pre codeblock"><code>set ORACLE_home=C:\oracle\product\12c\db1
+cd %ORACLE_home%\clone\bin
+set THISNODE=%hostname%
+set E01=ORACLE_HOME=%ORACLE_home%
+set E02=ORACLE_HOME_NAME=OraDBRAC
+set E03=ORACLE_BASE=<span class="variable" translate="no">Oracle_Base</span>
+set C01="CLUSTER_NODES={node1,node2}"
+set C02="-O LOCAL_NODE=%THISNODE%"
+perl clone.pl %E01% %E02% %E03% %C01% %C02%</code></pre></li>
+                     <li id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__THISSTEPAPPLIESTOLINUXANDUNIXINSTAL-35662A38">
+                        <div class="infoboxnote" id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__GUID-E5B727DD-6EA9-4E3E-AC1A-1EF8384951A4">
+                           <p class="notep1">Note:</p>
+                           <p>This step applies to Linux and UNIX installations, only.</p>
+                        </div>
+                        <p>Run the <code class="codeph">$ORACLE_HOME/root.sh</code> as the <code class="codeph">root</code> operating system user as soon as the <code class="codeph">clone.pl</code> procedure completes on the node.
+                        </p><pre class="pre codeblock"><code>[root@node1 root]# /opt/oracle/product/12c/db/root.sh -silent</code></pre><p>Note that you can run the script on each node simultaneously:</p><pre class="pre codeblock"><code>[root@node2 root]# /opt/oracle/product/12c/db/root.sh -silent</code></pre><p>Ensure the script has completed on each node before proceeding to the next step.</p>
+                     </li>
+                     <li>
+                        <div class="infoboxnote" id="GUID-6294EEDD-73B1-4116-8068-D2D198F21297__GUID-029FE802-8FC0-475E-BDDE-5705024BFD8E">
+                           <p class="notep1">Note:</p>
+                           <p>You need only run DBCA on one node in the cluster to create Oracle RAC instances on all nodes.</p>
+                        </div>
+                        <p>This step shows how to run DBCA in silent mode and provide response file input to create the Oracle RAC instances.</p>
+                        <p>The following example creates an Oracle RAC database named ERI on each node, creates database instances on each node, registers the instances in OCR, creates the database files in the Oracle ASM disk group called <code class="codeph">DATA</code>, and creates sample schemas. It also sets the <code class="codeph">SYS</code>, <code class="codeph">SYSTEM</code>, <code class="codeph">SYSMAN</code> and <code class="codeph">DBSNMP</code> passwords to <span class="italic"><code class="codeph">password</code></span>, which is the password for each account:
+                        </p><pre class="pre codeblock"><code>[oracle@node1 oracle]$ export ORACLE_HOME=/opt/oracle/product/12c/db
+[oracle@node1 oracle]$ cd $ORACLE_HOME/bin/
+[oracle@node1 bin]$./dbca -silent -createDatabase -templateName General_Purpose.dbc \
+-gdbName ERI -sid ERI \
+-sysPassword <span class="variable" translate="no">password</span> -systemPassword <span class="variable" translate="no">password</span> \
+-sysmanPassword <span class="variable" translate="no">password</span> -dbsnmpPassword <span class="variable" translate="no">password</span> \
+-emConfiguration LOCAL \
+-storageType ASM -diskGroupName DATA \
+-datafileJarLocation $ORACLE_HOME/assistants/dbca/templates \
+-nodelist node1,node2 -characterset WE8ISO8859P1 \
+-obfuscatedPasswords false -sampleSchema true</code></pre></li>
+                  </ol>
+               </div>
+               <div>
+                  <div class="relinfo">
+                     <p><strong>Related Topics</strong></p>
+                     <ul>
+                        <li><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-39DC544C-810D-40C6-BDB7-EFCF2C8619C7" title="Use this overview to understand the procedures you use to clone Oracle RAC.">Preparing to Clone Oracle RAC</a></li>
+                        <li><a href="../install-and-upgrade.html" target="_blank"><span><cite>Oracle Real Application Clusters Installation Guide</cite></span></a></li>
+                        <li><a href="../admqs/installing-oracle-database-creating-database.html#ADMQS-GUID-2A1B1AF2-CC36-405A-89EB-72E7A33F7E2B" target="_blank"><span><cite>Oracle Database 2 Day DBA</cite></span></a></li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="RACAD7705"></a><a id="RACAD7336"></a><div class="sect2"><a id="GUID-CE9D8B63-6877-448B-8689-CAE658771A7C" name="GUID-CE9D8B63-6877-448B-8689-CAE658771A7C"></a><h3 id="RACAD-GUID-CE9D8B63-6877-448B-8689-CAE658771A7C" class="sect3">Locating and Viewing Log Files Generated During Cloning</h3>
+               <div>
+                  <p>The cloning script runs multiple tools, each of which may generate its own log files.</p>
+                  <p>After the <code class="codeph">clone.pl</code> script finishes running, you can view log files to obtain more information about the cloning process. 
+                  </p>
+                  <p>The following log files that are generated during cloning are the key log files of interest for diagnostic purposes:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><code class="codeph"><span class="variable" translate="no">Central_Inventory</span>/logs/cloneActions<span class="variable" translate="no">timestamp</span>.log</code></p>
+                        <p>Contains a detailed log of the actions that occur during the Oracle Universal Installer part of the cloning.</p>
+                     </li>
+                     <li>
+                        <p><code class="codeph"><span class="variable" translate="no">Central_Inventory</span>/logs/oraInstall<span class="variable" translate="no">timestamp</span>.err</code></p>
+                        <p>Contains information about errors that occur when Oracle Universal Installer is running.</p>
+                     </li>
+                     <li>
+                        <p><code class="codeph"><span class="variable" translate="no">Central_Inventory</span>/logs/oraInstall<span class="variable" translate="no">timestamp</span>.out</code></p>
+                        <p>Contains other miscellaneous messages generated by Oracle Universal Installer.</p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">$ORACLE_HOME/clone/logs/clone<span class="variable" translate="no">timestamp</span>.log</code></p>
+                        <p>Contains a detailed log of the actions that occur before cloning and during the cloning operations.</p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">$ORACLE_HOME/clone/logs/error<span class="variable" translate="no">timestamp</span>.log</code></p>
+                        <p>Contains information about errors that occur before cloning and during cloning operations.</p>
+                     </li>
+                  </ul>
+                  <p><a href="cloning-oracle-rac-to-nodes-in-a-new-cluster.html#GUID-CE9D8B63-6877-448B-8689-CAE658771A7C__BABHHGBH" title="This table describes how to find the location of the Oracle inventory directory">Table 9-4</a> describes how to find the location of the Oracle inventory directory.
+                  </p>
+                  <div class="tblformal" id="GUID-CE9D8B63-6877-448B-8689-CAE658771A7C__BABHHGBH">
+                     <p class="titleintable">Table 9-4 Finding the Location of the Oracle Inventory Directory</p>
+                     <table cellpadding="4" cellspacing="0" class="Formal" title="Finding the Location of the Oracle Inventory Directory" summary="This table describes how to find the location of the Oracle inventory directory" width="100%" frame="hsides" border="1" rules="rows">
+                        <thead>
+                           <tr align="left" valign="top">
+                              <th align="left" valign="bottom" width="29%" id="d36824e1506">Type of System... </th>
+                              <th align="left" valign="bottom" width="71%" id="d36824e1509">Location of the Oracle Inventory Directory</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="29%" id="d36824e1514" headers="d36824e1506 ">
+                                 <p>All UNIX computers except Linux and IBM AIX</p>
+                              </td>
+                              <td align="left" valign="top" width="71%" headers="d36824e1514 d36824e1509 ">
+                                 <p><code class="codeph">/var/opt/oracle/oraInst.loc</code></p>
+                              </td>
+                           </tr>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="29%" id="d36824e1522" headers="d36824e1506 ">
+                                 <p>IBM AIX and Linux</p>
+                              </td>
+                              <td align="left" valign="top" width="71%" headers="d36824e1522 d36824e1509 ">
+                                 <p><code class="codeph">/etc/oraInst.loc</code> file.
+                                 </p>
+                              </td>
+                           </tr>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="29%" id="d36824e1531" headers="d36824e1506 ">
+                                 <p>Windows</p>
+                              </td>
+                              <td align="left" valign="top" width="71%" headers="d36824e1531 d36824e1509 ">
+                                 <p><code class="codeph">C:\Program Files\Oracle\Inventory</code></p>
+                              </td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+                  <!-- class="inftblhruleinformal" -->
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Defining Complex Relationships in Object Views</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Object-Relational Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Object-Relational Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="object-relational-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T02:05:10-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1996, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96436-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="applying-the-object-model-to-remote-tables.html" title="Previous" type="text/html">
+      <link rel="next" href="object-vew-hierarchies.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Object-Relational Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="ADOBJ">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="applying-the-object-model-to-remote-tables.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="object-vew-hierarchies.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Object-Relational Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="applying-an-object-model-to-relational-data.html" property="item" typeof="WebPage"><span property="name"> Applying an Object Model to Relational Data</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Defining Complex Relationships in Object Views</li>
+            </ol>
+            <a id="GUID-6F53BC3E-7EF9-4AB1-8E09-154A4A72DD3B" name="GUID-6F53BC3E-7EF9-4AB1-8E09-154A4A72DD3B"></a><a id="ADOBJ00525"></a>
+            
+            <h2 id="ADOBJ-GUID-6F53BC3E-7EF9-4AB1-8E09-154A4A72DD3B" class="sect2"><span class="enumeration_section">6.13 </span>Defining Complex Relationships in Object Views
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div class="section">
+                  <p>You can define circular references in object views using the <code class="codeph">MAKE_REF</code> operator: <code class="codeph">view_A</code> can refer to <code class="codeph">view_B</code> which in turn can refer to <code class="codeph">view_A</code>. This allows an object view to synthesize a complex structure such as a graph from relational data.
+                  </p>
+                  <p>For example, in the case of the department and employee, the department object currently includes a list of employees. To conserve space, you may want to put references to the employee objects inside the department object, instead of materializing all the employees within the department object. You can construct (pin) the references to employee objects, and later follow the references using the dot notation to extract employee information.</p>
+                  <p>Because the employee object already has a reference to the department in which the employee works, an object view over this model contains circular references between the department view and the employee view.</p>
+                  <p>You can create circular references between object views in two different ways: </p>
+                  <div class="infoboxnote" id="GUID-6F53BC3E-7EF9-4AB1-8E09-154A4A72DD3B__GUID-8F6EF286-37ED-4A05-AECE-DF28847A77FF">
+                     <p class="notep1">Note:</p>
+                     <p>Both ways to create circular references require the setup described in <span class="q">"<a href="defining-complex-relationships-in-object-views.html#GUID-75437F45-A78E-437F-B4EE-1D7BD04E19EB">Tables and Types to Demonstrate Circular View References</a>"</span>.
+                     </p>
+                  </div>
+               </div>
+               <!-- class="section" -->
+               <div class="section">
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>First View After Second View</p>
+                        <ol>
+                           <li>
+                              <p>Create view A without any reference to view B.</p>
+                           </li>
+                           <li>
+                              <p>Create view B, which includes a reference to view A.</p>
+                           </li>
+                           <li>
+                              <p>Replace view A with a new definition that includes the reference to view B.</p>
+                           </li>
+                        </ol>
+                        <p>See the example in <span class="q">"<a href="defining-complex-relationships-in-object-views.html#GUID-755C767D-E996-4319-9DEF-2781D12728CD" title="You can recreate the first view after creating the second view.">Method 1: Re-create First View After Creating Second View</a>"</span></p>
+                     </li>
+                     <li>
+                        <p> First View Using the <code class="codeph">FORCE</code> Keyword
+                        </p>
+                        <ol>
+                           <li>
+                              <p>Create view A with a reference to view B using the <code class="codeph">FORCE</code> keyword.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Create view B with a reference to view A. When view A is used, it is validated and re-compiled.</p>
+                           </li>
+                        </ol>
+                        <p>See the example in <span class="q">"<a href="defining-complex-relationships-in-object-views.html#GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F" title="You can force creation of a first view even if the other view does not yet exist.">Method 2: Create First View Using FORCE Keyword</a>"</span></p>
+                     </li>
+                  </ul>
+                  <p>Method 2 has fewer steps, but the <code class="codeph">FORCE</code> keyword may hide errors in the view creation. You need to query the <code class="codeph">USER_ERRORS</code> catalog view to see if there were any errors during the view creation. Use this method only if you are sure that there are no errors in the view creation statement.
+                  </p>
+                  <p>Also, if errors prevent the views from being recompiled upon use, you must recompile them manually using the <code class="codeph">ALTER</code> <code class="codeph">VIEW</code> <code class="codeph">COMPILE</code> command.
+                  </p>
+                  <p>Perform the setup described next before attempting to use either method of creating circular view references.</p>
+               </div>
+               <!-- class="section" -->
+            </div><a id="ADOBJ7332"></a><a id="ADOBJ7331"></a><div class="props_rev_3"><a id="GUID-75437F45-A78E-437F-B4EE-1D7BD04E19EB" name="GUID-75437F45-A78E-437F-B4EE-1D7BD04E19EB"></a><h3 id="ADOBJ-GUID-75437F45-A78E-437F-B4EE-1D7BD04E19EB" class="sect3"><span class="enumeration_section">6.13.1 </span>Tables and Types to Demonstrate Circular View References
+               </h3>
+               <div>
+                  <p>First, you need set up some relational tables and associated object types. Although the tables contain some objects, they are not object tables. To access the data objects, you will create object views later.</p>
+                  <p>The <code class="codeph">emp</code> table stores the employee information:
+                  </p>
+                  <div class="example" id="GUID-75437F45-A78E-437F-B4EE-1D7BD04E19EB__CHDBBAGE">
+                     <p class="titleinexample">Example 6-10 Creating emp table to demonstrate circular references </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE emp
+(  empno    NUMBER PRIMARY KEY,
+   empname  VARCHAR2(20),
+   salary   NUMBER,
+   deptno   NUMBER );
+
+-- first create a dummy, that is, incomplete, department type, so emp_t type
+-- created later will succeed 
+
+CREATE TYPE dept_t;
+/
+
+-- Create the employee type with a reference to the department, <code class="codeph">dept_t</code>:
+CREATE TYPE emp_t AS OBJECT
+( eno NUMBER,
+  ename VARCHAR2(20),
+  salary  NUMBER,
+  deptref REF dept_t );
+/
+
+-- Represent the list of references to employees as a nested table:
+CREATE TYPE employee_list_ref_t AS TABLE OF REF emp_t;
+/
+
+-- Create the department table as a relational table
+CREATE TABLE dept
+(   deptno        NUMBER PRIMARY KEY,
+    deptname      VARCHAR2(20),
+    deptstreet    VARCHAR2(20),
+    deptcity      VARCHAR2(10),
+    deptstate     CHAR(2),
+    deptzip       VARCHAR2(10) );
+
+-- Create object types that map to columns from the relational tables:
+CREATE TYPE address_t AS OBJECT 
+( street        VARCHAR2(20),
+   city         VARCHAR2(10),
+   state        CHAR(2),
+   zip          VARCHAR2(10));
+/
+
+-- Fill in the definition for <code class="codeph">dept_t</code>, the incomplete type you previously created:
+CREATE OR REPLACE TYPE dept_t AS OBJECT
+( dno           NUMBER,
+  dname         VARCHAR2(20),
+  deptaddr      address_t,
+  empreflist    employee_list_ref_t);
+/
+</pre></div>
+                  <!-- class="example" -->
+                  <div class="section">
+                     <p>As <a href="defining-complex-relationships-in-object-views.html#GUID-75437F45-A78E-437F-B4EE-1D7BD04E19EB__CHDBBAGE">Example 6-10</a> indicates, you must create the <code class="codeph">emp</code> table, then create a dummy department type, <code class="codeph">dept_t</code> which will enable the <code class="codeph">emp_t</code> type to succeed once you create it. After that, create <code class="codeph">emp_t</code> with a reference to <code class="codeph">dept_t</code>. Create a list of references to employees as a nested table, <code class="codeph">employee_list_ref_t</code> and create the department table, <code class="codeph">dept</code>. Then create an object type, <code class="codeph">address_t</code> that has columns mapping to the relational tables, and finally fill in the definition for the incomplete <code class="codeph">dept_t</code>.
+                     </p>
+                     <p>The following is example data you could use:</p><pre class="oac_no_warn" dir="ltr">insert into emp values(1,'John','900',100);
+insert into emp values(2,'james','1000',100);
+insert into emp values(3,'jack',2000,200);</pre></div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="ADOBJ7334"></a><a id="ADOBJ7336"></a><a id="ADOBJ7335"></a><a id="ADOBJ7337"></a><a id="ADOBJ7338"></a><a id="ADOBJ7339"></a><a id="ADOBJ7340"></a><a id="ADOBJ7333"></a><div class="props_rev_3"><a id="GUID-07C733A5-F2AB-45F8-84F7-9CACAF331122" name="GUID-07C733A5-F2AB-45F8-84F7-9CACAF331122"></a><h3 id="ADOBJ-GUID-07C733A5-F2AB-45F8-84F7-9CACAF331122" class="sect3"><span class="enumeration_section">6.13.2 </span>Creating Object Views with Circular References
+               </h3>
+               <div>
+                  <p>You can create object views with circular references.</p>
+                  <div class="section">
+                     <p>If you have established the underlying relational table definitions, as described in <a href="defining-complex-relationships-in-object-views.html#GUID-6F53BC3E-7EF9-4AB1-8E09-154A4A72DD3B" title="You can create object views with circular references.You can recreate the first view after creating the second view.You can force creation of a first view even if the other view does not yet exist.">Defining Complex Relationships in Object Views</a>, you can create the object views on top of them.
+                     </p>
+                     <p>Topics:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="defining-complex-relationships-in-object-views.html#GUID-755C767D-E996-4319-9DEF-2781D12728CD" title="You can recreate the first view after creating the second view.">Method 1: Re-create First View After Creating Second View</a></p>
+                        </li>
+                        <li>
+                           <p><a href="defining-complex-relationships-in-object-views.html#GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F" title="You can force creation of a first view even if the other view does not yet exist.">Method 2: Create First View Using FORCE Keyword</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+               <div class="sect3"><a id="GUID-755C767D-E996-4319-9DEF-2781D12728CD" name="GUID-755C767D-E996-4319-9DEF-2781D12728CD"></a><h4 id="ADOBJ-GUID-755C767D-E996-4319-9DEF-2781D12728CD" class="sect4"><span class="enumeration_section">6.13.2.1 </span>Method 1: Re-create First View After Creating Second View
+                  </h4>
+                  <div>
+                     <p>You can recreate the first view after creating the second view.</p>
+                     <p>First create the employee view with a null in the <code class="codeph">deptref</code> column. Later, you can turn that column into a reference.
+                     </p>
+                     <p>Next, create the department view, which includes references to the employee objects. This creates a list of references to employee objects, instead of including the entire employee object. </p>
+                     <p>Next, re-create the employee view with the reference to the department view.</p>
+                     <div class="example" id="GUID-755C767D-E996-4319-9DEF-2781D12728CD__CHDHCJJJ">
+                        <p class="titleinexample">Example 6-11 Creating an Object View with a Circular Reference, Method 1</p><pre class="oac_no_warn" dir="ltr">-- Requires Ex. 6-10 
+CREATE VIEW emp_view OF emp_t WITH OBJECT IDENTIFIER(eno)
+   AS SELECT e.empno, e.empname, e.salary, NULL
+         FROM emp e;
+
+-- create department view, including references to the employee objects
+CREATE VIEW dept_view OF dept_t WITH OBJECT IDENTIFIER(dno) 
+   AS SELECT d.deptno, d.deptname, 
+                address_t(d.deptstreet,d.deptcity,d.deptstate,d.deptzip),
+                CAST( MULTISET (
+                           SELECT MAKE_REF(emp_view, e.empno)
+                           FROM emp e 
+                           WHERE e.deptno = d.deptno) 
+                        AS employee_list_ref_t)
+   FROM dept d; 
+</pre><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE VIEW emp_view OF emp_t WITH OBJECT IDENTIFIER(eno)
+   AS SELECT e.empno, e.empname, e.salary, 
+                       MAKE_REF(dept_view, e.deptno)
+         FROM emp e;
+</pre><p>This creates the views.</p>
+                     </div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+               <div class="sect3"><a id="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F" name="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F"></a><h4 id="ADOBJ-GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F" class="sect4"><span class="enumeration_section">6.13.2.2 </span>Method 2: Create First View Using FORCE Keyword
+                  </h4>
+                  <div>
+                     <p>You can force creation of a first view even if the other view does not yet exist.</p>
+                     <div class="section">
+                        <p>If you are sure that the view creation statement has no syntax errors, you can use the <code class="codeph">FORCE</code> keyword to force the creation of the first view without the other view being present.
+                        </p>
+                        <p>First, create an employee view that includes a reference to the department view, which does not exist at this point. This view cannot be queried until the department view is created properly.</p>
+                        <p>Next, create a department view that includes references to the employee objects. You do not have to use the <code class="codeph">FORCE</code> keyword here, because <code class="codeph">emp_view</code> already exists. This allows you to query the department view, getting the employee object by dereferencing the employee reference from the nested table <code class="codeph">empreflist</code>.
+                        </p>
+                        <div class="infoboxnote" id="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F__GUID-973273CB-7DA7-4E00-8A54-4EC9D35E469C">
+                           <p class="notep1">Note:</p>
+                           <p>If you previously ran <a href="defining-complex-relationships-in-object-views.html#GUID-755C767D-E996-4319-9DEF-2781D12728CD__CHDHCJJJ">Example 6-11</a>, remove the views you created before running <a href="defining-complex-relationships-in-object-views.html#GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F__CHDDJHAG">Example 6-12</a>.
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F__CHDDJHAG">
+                        <p class="titleinexample">Example 6-12 Creating view with FORCE Method 2 </p><pre class="oac_no_warn" dir="ltr">-- Requires Ex. 6-10
+-- create employee view
+CREATE OR REPLACE FORCE VIEW emp_view OF emp_t WITH OBJECT IDENTIFIER(eno)
+   AS SELECT e.empno, e.empname, e.salary, 
+                       MAKE_REF(dept_view, e.deptno)
+         FROM emp e;
+
+-- create a department view that includes references to the employee objects
+CREATE OR REPLACE VIEW dept_view OF dept_t WITH OBJECT IDENTIFIER(dno) 
+   AS SELECT d.deptno, d.deptname, 
+                address_t(d.deptstreet,d.deptcity,d.deptstate,d.deptzip),
+                CAST( MULTISET (
+                           SELECT MAKE_REF(emp_view, e.empno)
+                           FROM emp e 
+                           WHERE e.deptno = d.deptno) 
+                        AS employee_list_ref_t)
+   FROM   dept d; 
+
+-- Querying with DEREF method 
+SELECT DEREF(e.COLUMN_VALUE)
+  FROM TABLE( SELECT e.empreflist FROM dept_view e WHERE e.dno = 100) e;
+</pre><p><code class="codeph">COLUMN_VALUE</code> is a special name that represents the scalar value in a scalar nested table. In this case, <code class="codeph">COLUMN_VALUE</code> denotes the reference to the employee objects in the nested table <code class="codeph">empreflist</code>.
+                        </p>
+                        <p>You can also access the employee number only, for all those employees whose name begins with <code class="codeph">John</code>.
+                        </p>
+                     </div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F__GUID-8A4A33BD-DB60-4C25-BA5A-BD8EE02D4C28">
+                        <p class="titleinexample">Example 6-13 Querying with COLUMN_VALUE </p><pre class="oac_no_warn" dir="ltr">-- Requires Ex. 6-10 and 6-12
+SELECT e.COLUMN_VALUE.eno
+  FROM TABLE(SELECT e.empreflist FROM dept_view e WHERE e.dno = 100) e
+ WHERE e.COLUMN_VALUE.ename like 'John%';
+</pre><p>To get a tabular output, unnest the list of references by joining the department table with the items in its nested table:</p>
+                     </div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F__GUID-15FFD57C-5819-4446-B2C3-364B04196459">
+                        <p class="titleinexample">Example 6-14 Querying with COLUMN_VALUE, Unnesting References</p><pre class="oac_no_warn" dir="ltr">-- Requires Ex. 6-10 and 6-12 
+SELECT d.dno, e.COLUMN_VALUE.eno, e.COLUMN_VALUE.ename
+  FROM dept_view d, TABLE(d.empreflist) e
+ WHERE e.COLUMN_VALUE.ename like 'John%' 
+  AND d.dno = 100;
+</pre><p>Finally, you can rewrite the preceding query to use the <code class="codeph">emp_view</code> instead of the <code class="codeph">dept_view</code> to show how to navigate from one view to the other:
+                        </p>
+                     </div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-6F3C9031-708B-4C94-A94A-80D48DE98F7F__GUID-2C836592-8E6E-4BA3-B413-D87DAC062470">
+                        <p class="titleinexample">Example 6-15 Querying with COLUMN_VALUE, Querying emp_view </p><pre class="oac_no_warn" dir="ltr">-- Requires Ex. 6-10 and 6-12
+SELECT e.deptref.dno, DEREF(f.COLUMN_VALUE)
+  FROM emp_view e, TABLE(e.deptref.empreflist) f
+ WHERE e.deptref.dno = 100 
+  AND f.COLUMN_VALUE.ename like 'John%';</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

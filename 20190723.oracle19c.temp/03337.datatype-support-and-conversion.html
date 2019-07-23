@@ -1,0 +1,1916 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Datatype Support and Conversion in Oracle Database Provider for DRDA</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="User's Guide">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="User's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="provider-drda-users-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T01:34:46-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2011, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96456-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="diagnostics-and-maintenance.html" title="Previous" type="text/html">
+      <link rel="next" href="data-dictionary.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Provider for DRDA User's Guide">
+    <meta name="dcterms.isVersionOf" content="DRDAS">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="diagnostics-and-maintenance.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="data-dictionary.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">User's Guide</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Datatype Support and Conversion in Oracle Database Provider for DRDA </li>
+            </ol>
+            <a id="GUID-06245143-5F0C-4A75-BD03-CB1E07CB4DAA" name="GUID-06245143-5F0C-4A75-BD03-CB1E07CB4DAA"></a><a id="DRDAS241"></a>
+            
+            <h2 id="DRDAS-GUID-06245143-5F0C-4A75-BD03-CB1E07CB4DAA" class="sect2"><span class="enumeration_chapter">7 </span>Datatype Support and Conversion in Oracle Database Provider for DRDA 
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Consider datatype support in Oracle, and conversion between Oracle and DRDA datatypes.</p>
+            </div><a id="DRDAS242"></a><div class="props_rev_3"><a id="GUID-8253E8E4-AB81-441D-B1A5-84348C930C5C" name="GUID-8253E8E4-AB81-441D-B1A5-84348C930C5C"></a><h3 id="DRDAS-GUID-8253E8E4-AB81-441D-B1A5-84348C930C5C" class="sect3">Overview of Datatype Conversion</h3>
+               <div>
+                  <p>DRDA utilizes <span class="italic">Formatted Data Object Content Architecture (FD:OCA)</span> for datatype encoding. Several types do not have a direct analog to Oracle native types, and require conversion. Also, some Oracle datatypes have no direct encoding support in FD:OCA.For example, consider Oracle <code class="codeph">NUMBER</code>, which may contain a wide range of values, both <span class="italic">integers</span> and <span class="italic">floating point</span>. This duality prevents it from being mapped to a specific DRDA type, to mitigate loss of value of the number. Any choice of type will have some loss of either precision or scale at extreme ranges of value.
+                  </p>
+                  <p>There are two datatype conversions used by Oracle Database Provider for DRDA: conversion of DRDA MetaData Descriptors to Oracle OCI interface types, and conversion of Oracle column types to DRDA MetaData Descriptors. For application programmers, these are described through the SQL Type of the bind variable or described column type. See sections “Conversion between DRDA Datatypes to Oracle Datatypes” and “Conversion of Oracle Datatype to DRDA.”</p>
+                  <p>A general mechanism for mapping Oracle <code class="codeph">NUMBER</code> is covered in section “Datatype Equivalence and Remapping”.
+                  </p>
+               </div>
+               <div>
+                  <div class="relinfo">
+                     <p><strong>Related Topics</strong></p>
+                     <ul>
+                        <li><a href="datatype-support-and-conversion.html#GUID-73C081C2-5659-4F20-895F-3C1D0373E2E5">Conversion between DRDA Datatypes to Oracle Datatypes</a></li>
+                        <li><a href="datatype-support-and-conversion.html#GUID-D4FA2095-27FC-4A95-8C7C-89CB20E7B7E5">Conversion of Oracle Datatype to DRDA</a></li>
+                        <li><a href="datatype-support-and-conversion.html#GUID-34EE673C-D932-45E9-B876-0EC6B9F8ECE1">Datatype Equivalence and Remapping</a></li>
+                     </ul>
+                  </div>
+               </div>
+               
+            </div><a id="DRDAS243"></a><div class="props_rev_3"><a id="GUID-15EAEB41-1C68-4DD5-B196-E004A6B34780" name="GUID-15EAEB41-1C68-4DD5-B196-E004A6B34780"></a><h3 id="DRDAS-GUID-15EAEB41-1C68-4DD5-B196-E004A6B34780" class="sect3">Numerical Range Considerations; General</h3>
+               <div>
+                  <p>When converting between Oracle <code class="codeph">NUMBER</code>, IEEE floating point, IBM Hexadecimal floating point (HEX floating point, S390 or System390 floating point), and Decimal floating point (<code class="codeph">DECFLOAT</code>) datatypes, note that they have different ranges and capabilities. For example, all values of <code class="codeph">IBM HEX FLOAT</code> bind variables in a client-side program fit in an Oracle <code class="codeph">NUMBER</code>, but not all values of Oracle <code class="codeph">NUMBER</code> may be returned correctly in an <code class="codeph">IBM HEX FLOAT</code>; <code class="codeph">DECFLOAT34</code> is a better choice.
+                  </p>
+                  <p>Some other considerations include the following:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><span class="bold">Infinities.</span> Some floating point types support positive and negative infinities.
+                        </p>
+                        <p>When infinities are used for datatypes that don't support them, the highest possible number for positive infinities and its negative for negative infinities is used.</p>
+                     </li>
+                     <li>
+                        <p><span class="bold">Floating Point.</span> IEEE <code class="codeph">FLOAT</code> columns may be defined in Oracle with types of <code class="codeph">BINARY_FLOAT</code> and <code class="codeph">BINARY_DOUBLE</code>. In DB2 z/OS the floating point types (<code class="codeph">REAL</code>, <code class="codeph">FLOAT</code>, <code class="codeph">DOUBLE</code> and <code class="codeph">DOUBLE PRECISION</code>) are IBM HEX floating point. In DB2/400 and DB2 LUW, the floating point types (<code class="codeph">REAL</code>, <code class="codeph">FLOAT</code>, <code class="codeph">DOUBLE</code> and <code class="codeph">DOUBLE PRECISION</code>) are IEEE floating point.
+                        </p>
+                     </li>
+                     <li>
+                        <p><span class="bold">Not a Number.</span> Some datatypes support Not A Number (NAN), a special value to indicate either that no value was assigned, or the result of a computation is invalid or undefined.
+                        </p>
+                     </li>
+                  </ul>
+               </div><a id="DRDAS245"></a><a id="DRDAS246"></a><a id="DRDAS247"></a><a id="DRDAS248"></a><a id="DRDAS244"></a><div class="props_rev_3"><a id="GUID-89213067-1FE9-4557-8C7B-D350401CBA8D" name="GUID-89213067-1FE9-4557-8C7B-D350401CBA8D"></a><h4 id="DRDAS-GUID-89213067-1FE9-4557-8C7B-D350401CBA8D" class="sect4">Oracle NUMBER</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle <code class="codeph">NUMBER</code> has the following characteristics:
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-89213067-1FE9-4557-8C7B-D350401CBA8D__GUID-1D697CA8-401D-4F75-8994-FFAE98D52BA2">Lower Range</p>
+                        <p>1E-130</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-89213067-1FE9-4557-8C7B-D350401CBA8D__GUID-E953CD8F-56BC-47DE-A092-1D2A6E9CBCCE">Upper Range</p>
+                        <p>9.999 999 999 999 999 999 999 999 999 999 999 999 9E+125</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-89213067-1FE9-4557-8C7B-D350401CBA8D__GUID-56FFBCD3-557A-49D9-9D01-01F858258538">Infinity</p>
+                        <p>Supported for both negative and positive infinity</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-89213067-1FE9-4557-8C7B-D350401CBA8D__GUID-03346494-DB1B-44DB-891A-81D4F50DC607">Not A Number</p>
+                        <p>Not supported</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS250"></a><a id="DRDAS251"></a><a id="DRDAS252"></a><a id="DRDAS253"></a><a id="DRDAS249"></a><div class="props_rev_3"><a id="GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C" name="GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C"></a><h4 id="DRDAS-GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C" class="sect4">FLOAT (IBM HEX or S390)</h4>
+                  <div>
+                     <div class="section">
+                        <p>The following characteristics apply to <code class="codeph">FLOAT</code>, <code class="codeph">DOUBLE</code> and <code class="codeph">LONG DOUBLE</code> sub datatypes.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C__GUID-EBEC64BD-28F3-4439-A935-9E3CF0618749">Lower Range</p>
+                        <p>5.397605 x 10<sup>-79</sup></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C__GUID-FEB241C3-73D4-41B1-9795-A28241D1C9E2">Upper Range</p>
+                        <p>7.237005 x 10<sup>+75</sup></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C__GUID-5A6A0FA6-76CA-4C57-B281-A463E18A027D">Infinity</p>
+                        <p>Not supported</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-F09EA00C-3AA9-45CA-82E6-F4C644F3546C__GUID-5F0003C6-BF22-4599-BC0C-553FF6D5B356">Not A Number</p>
+                        <p>Not supported</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS255"></a><a id="DRDAS256"></a><a id="DRDAS257"></a><a id="DRDAS258"></a><a id="DRDAS254"></a><div class="props_rev_3"><a id="GUID-4145C103-BAD7-4865-85B5-887F03EC4B85" name="GUID-4145C103-BAD7-4865-85B5-887F03EC4B85"></a><h4 id="DRDAS-GUID-4145C103-BAD7-4865-85B5-887F03EC4B85" class="sect4">FLOAT (IEEE)</h4>
+                  <div>
+                     <div class="section">
+                        <p>The following characteristics apply to <code class="codeph">FLOAT </code>(Oracle <code class="codeph">BINARY_FLOAT</code>), <code class="codeph">DOUBLE</code> (Oracle <code class="codeph">BINARY_DOUBLE</code>), and <code class="codeph">LONG DOUBLE</code> sub datatypes.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4145C103-BAD7-4865-85B5-887F03EC4B85__GUID-FF458F06-92D7-4388-BB3C-251492D86A05">Infinity</p>
+                        <p>Supported for both positive and negative infinity</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4145C103-BAD7-4865-85B5-887F03EC4B85__GUID-E05F90BD-ABB9-42CB-9B33-A49465F43594">Not A Number</p>
+                        <p>Supported</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>The bounds for the subtypes follow:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4145C103-BAD7-4865-85B5-887F03EC4B85__GUID-6A6F4ED2-E755-4D05-A4CD-09FBA39114F0">Lower Range</p>
+                        <p><code class="codeph">FLOAT</code> (Oracle <code class="codeph">BINARY_FLOAT</code>): 1.175 494 x 10<sup>-38</sup></p>
+                        <p><code class="codeph">DOUBLE</code> (Oracle <code class="codeph">BINARY_DOUBLE</code>): 2.225 074 x 10<sup>-308</sup></p>
+                        <p><code class="codeph">LONG DOUBLE</code>: 3.362 103 x 10<sup>-4932</sup></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4145C103-BAD7-4865-85B5-887F03EC4B85__GUID-1AF64FCD-D333-4866-9202-AC3DDD835A89">Upper Range</p>
+                        <p><code class="codeph">FLOAT </code>(Oracle <code class="codeph">BINARY_FLOAT</code>): 3.402 823 x 10<sup>+38</sup></p>
+                        <p><code class="codeph">DOUBLE</code> (Oracle <code class="codeph">BINARY_DOUBLE</code>): 1.797 693 x 10<sup>+308</sup></p>
+                        <p><code class="codeph">LONG DOUBLE</code>: 1.189 731 x 10<sup>+4932</sup></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS260"></a><a id="DRDAS261"></a><a id="DRDAS262"></a><a id="DRDAS263"></a><a id="DRDAS259"></a><div class="props_rev_3"><a id="GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B" name="GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B"></a><h4 id="DRDAS-GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B" class="sect4">DECFLOAT</h4>
+                  <div>
+                     <div class="section">
+                        <p>The following characteristics apply to <code class="codeph">DECFLOAT7</code>, <code class="codeph">DECFLOAT16</code>, and <code class="codeph">DECFLOAT34</code> sub datatypes.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B__GUID-D03FE71A-0FB4-48DF-BA4A-090686C77CB0">Infinity</p>
+                        <p>Supported for both positive and negative infinity</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B__GUID-5284029B-F27F-4257-B61C-F091B866A35D">Not A Number</p>
+                        <p>Supported</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>The bounds for the subtypes follow:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B__GUID-B3375B02-9ABC-4639-9A50-7364BD5FFD77">Lower Range</p>
+                        <p><code class="codeph">DECFLOAT7</code>: 0.000 001 x 10<sup>-95</sup></p>
+                        <p><code class="codeph">DECFLOAT16</code>: 0.000 000 000 000 001 x 10<sup>-383</sup></p>
+                        <p><code class="codeph">DECFLOAT34</code>: 0.000 000 000 000 000 000 000 000 000 000 001 x 10<sup>-6143</sup></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A5F9F4DF-A5CF-4E34-B4E6-0C3B85468C6B__GUID-3A1B73B1-1F62-48B9-AE06-39A224CC1671">Upper Range</p>
+                        <p><code class="codeph">DECFLOAT7</code>: 9.999 999 x 10<sup>+96</sup></p>
+                        <p><code class="codeph">DECFLOAT16</code>: 9.999 999 999 999 999 x 10<sup>+384</sup></p>
+                        <p><code class="codeph">DECFLOAT34</code>: 9.999 999 999 999 999 999 999 999 999 999 999 x 10<sup>+6144</sup></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="DRDAS265"></a><a id="DRDAS266"></a><a id="DRDAS264"></a><div class="props_rev_3"><a id="GUID-FBC821C2-8739-49D2-B671-558955179D7C" name="GUID-FBC821C2-8739-49D2-B671-558955179D7C"></a><h3 id="DRDAS-GUID-FBC821C2-8739-49D2-B671-558955179D7C" class="sect3">Numerical Range Considerations, for COBOL Users</h3>
+               <div>
+                  <p>DRDA databases offer three options for integer types: <code class="codeph">SMALLINT</code> (2 binary bytes), <code class="codeph">INTEGER</code> (4 binary bytes), and <code class="codeph">BIGINT</code> (8 binary bytes). During conversion, Oracle columns that hold equivalent values must be defined based on usage rather than on the type used in the DB2 <code class="codeph">CREATE TABLE</code> definition.
+                  </p>
+                  <p>The actual range of DRDA <code class="codeph">SMALLINT</code>, <code class="codeph">INTEGER</code> and <code class="codeph">BIGINT</code> follows:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><code class="codeph">SMALLINT</code> has a lower bound of <code class="codeph">-32,768</code> and an upper bound of <code class="codeph">32,767</code></p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">INTEGER</code> has a lower bound of <code class="codeph">-2,147,483,648</code> and an upper bound of <code class="codeph">2,147,483,647</code></p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">BIGINT</code> has a lower bound of <code class="codeph">-9,223,372,036,854,775,808</code> and an upper bound of <code class="codeph">9,223,372,036,854,775,807</code></p>
+                     </li>
+                  </ul>
+                  <p>However, at the level of the application, the COBOL variables that hold these DRDA column values may be declared either with a fixed number of decimal digits, or with the full binary precision of the corresponding DRDA integer datatypes. </p>
+                  <p>In COBOL, the equivalent binary integer datatypes are defined as follows:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><code class="codeph">USAGE</code> of <code class="codeph">BINARY</code>, <code class="codeph">COMPUTATIONAL</code>, <code class="codeph">COMP</code>, <code class="codeph">COMPUTATIONAL-4</code>, and <code class="codeph">COMP-4</code>; these are equivalent
+                        </p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">PICTURE</code> of <code class="codeph">S9(1-4)</code> for a 2-byte integer, <code class="codeph">S9(5-9)</code> for a 4-byte integer, and <code class="codeph">S9(10-18)</code> for an 8-byte integer. 
+                        </p>
+                     </li>
+                  </ul>
+                  <p>The value is normally limited to the number of digits in the picture. </p>
+                  <p>For example <code class="codeph">PICTURE S9(4) COMP</code> is a 2-byte integer that normally ranges from <code class="codeph">-32,768</code> to <code class="codeph">+32,767</code>. However, the generated COBOL code only allows the value to range from <code class="codeph">-9,999</code> to <code class="codeph">+9,999</code>. When using these types of bind variables exclusively to access and update DRDA <code class="codeph">SMALLINT</code>, <code class="codeph">INTEGER</code>, and <code class="codeph">BIGINT</code> columns, define the columns in Oracle as <code class="codeph">NUMBER(</code><span class="italic"><code class="codeph">n</code></span><code class="codeph">)</code>, where <span class="italic"><code class="codeph">n</code></span> matches the above <code class="codeph">PICTURE S9(</code><span class="italic"><code class="codeph">n</code></span><code class="codeph">)</code> definition.
+                  </p>
+                  <p>When using <code class="codeph">BINARY</code>, <code class="codeph">COMPUTATIONAL</code>, <code class="codeph">COMP</code>, <code class="codeph">COMPUTATIONAL-4</code>, and <code class="codeph">COMP-4</code> COBOL variables with the <code class="codeph">TRUNC(BIN)</code> COBOL compiler option, the binary integers may range to the full bounds of the datatype. Using <code class="codeph">COMPUTATIONAL-5</code> or <code class="codeph">COMP-5</code> has the same effect, regardless whether the <code class="codeph">TRUNC</code> compiler option is in effect. When programming in COBOL, C, PL/I, or Assembler with a full range of the binary integers, define the Oracle column as <code class="codeph">NUMBER(</code><span class="italic"><code class="codeph">n</code></span><code class="codeph">+1)</code>, where <span class="italic"><code class="codeph">n</code></span> matches the above <code class="codeph">PICTURE S9(</code><span class="italic"><code class="codeph">n</code></span><code class="codeph">)</code> definition.
+                  </p>
+                  <p>Based on datatype and usage in DRDA, here are the recommended substitute Oracle datatypes:</p>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-FBC821C2-8739-49D2-B671-558955179D7C__GUID-A0091ADB-79D7-4772-966E-08DCC5B3E0F7">Used with COBOL COMP:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><code class="codeph">SMALLINT</code> should be converted to Oracle <code class="codeph">NUMBER(4)</code></p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">INTEGER</code> should be converted to Oracle <code class="codeph">NUMBER(9)</code></p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">BIGINT</code> should be converted to Oracle <code class="codeph">NUMBER(18)</code></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-FBC821C2-8739-49D2-B671-558955179D7C__GUID-EF9D588F-3C6E-4A44-8E1F-5136954956F8">Used with COBOL COMP, TRUNC(BIN), COMP-5, C, PL/I, or Assembler binary integer variables:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><code class="codeph">SMALLINT</code> should be converted to Oracle <code class="codeph">NUMBER(5)</code></p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">INTEGER</code> should be converted to Oracle <code class="codeph">NUMBER(10)</code></p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">BIGINT</code> should be converted to Oracle <code class="codeph">NUMBER(19)</code></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="DRDAS267"></a><div class="props_rev_3"><a id="GUID-283BBA84-5D78-42B3-9814-4CE8FC92443A" name="GUID-283BBA84-5D78-42B3-9814-4CE8FC92443A"></a><h4 id="DRDAS-GUID-283BBA84-5D78-42B3-9814-4CE8FC92443A" class="sect4">Constraining Oracle NUMBER</h4>
+                  <div>
+                     <div class="section">
+                        <p>When using the full range of binary integer values, it is advisable to implement Oracle constraints and limit the value to the range of the corresponding datatype. </p>
+                        <p>For example, a DRDA <code class="codeph">SMALLINT</code> gets an equivalent Oracle <code class="codeph">NUMBER</code> column that supports a full range of <code class="codeph">SMALLINT</code> values, only, as demonstrated in <a href="datatype-support-and-conversion.html#GUID-283BBA84-5D78-42B3-9814-4CE8FC92443A__CDEJDADG">Example 7-1</a>.
+                        </p>
+                        <p>Note however that there is a performance penalty for specifying this type of check constraint, Oracle verifies all constraints every time the column is updated.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-283BBA84-5D78-42B3-9814-4CE8FC92443A__CDEJDADG">
+                        <p class="titleinexample">Example 7-1 Constraining Oracle NUMBER to Exactly Match DRDA SMALLINT</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE smint_tab
+&nbsp;&nbsp;(smint NUMBER(5) 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONSTRAINT check_smallint CHECK (smint BETWEEN -32768 AND 32767)
+&nbsp;&nbsp;)</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div><a id="DRDAS268"></a><div class="props_rev_3"><a id="GUID-73C081C2-5659-4F20-895F-3C1D0373E2E5" name="GUID-73C081C2-5659-4F20-895F-3C1D0373E2E5"></a><h3 id="DRDAS-GUID-73C081C2-5659-4F20-895F-3C1D0373E2E5" class="sect3">Conversion between DRDA Datatypes to Oracle Datatypes</h3>
+               <div>
+                  <div class="section">
+                     <p>Consider the mappings between DRDA and Oracle datatypes.</p>
+                     <p>Note the following abbreviations:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>In a Single Byte Character Set (SBCS), the column can only contain single byte data.</p>
+                        </li>
+                        <li>
+                           <p>In a Multi-Byte Character Set (MBCS), the column may contain a combination of single-byte and multi-byte characters.</p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="DRDAS270"></a><a id="DRDAS271"></a><a id="DRDAS272"></a><a id="DRDAS269"></a><div class="props_rev_3"><a id="GUID-A6ADF30D-147C-45C8-BEDC-35534AB6E46D" name="GUID-A6ADF30D-147C-45C8-BEDC-35534AB6E46D"></a><h4 id="DRDAS-GUID-A6ADF30D-147C-45C8-BEDC-35534AB6E46D" class="sect4">INTEGER</h4>
+                  <div>
+                     <div class="section">
+                        <p>4-byte binary number</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A6ADF30D-147C-45C8-BEDC-35534AB6E46D__GUID-10F854CD-2278-4EC9-90C5-B8FA537C6FA8">SQL Type</p>
+                        <p>496, 497</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A6ADF30D-147C-45C8-BEDC-35534AB6E46D__GUID-6B3621CC-83BC-452C-B2D6-E65AB134EB8A">Size</p>
+                        <p>4 bytes</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A6ADF30D-147C-45C8-BEDC-35534AB6E46D__GUID-08AFA701-46A7-4A1C-83DE-F952E8833BF8">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(10)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS274"></a><a id="DRDAS275"></a><a id="DRDAS276"></a><a id="DRDAS273"></a><div class="props_rev_3"><a id="GUID-20CE8B1A-FA2F-4A2E-B22F-194F28CBE6A9" name="GUID-20CE8B1A-FA2F-4A2E-B22F-194F28CBE6A9"></a><h4 id="DRDAS-GUID-20CE8B1A-FA2F-4A2E-B22F-194F28CBE6A9" class="sect4">SMALLINT</h4>
+                  <div>
+                     <div class="section">
+                        <p>2-byte binary number</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-20CE8B1A-FA2F-4A2E-B22F-194F28CBE6A9__GUID-A9444994-CFBF-44E0-B08C-B50B0E8FEBC4">SQL Type</p>
+                        <p>500, 501</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-20CE8B1A-FA2F-4A2E-B22F-194F28CBE6A9__GUID-AE8FB712-E0D3-45D0-BF4E-1679B65EC497">Size</p>
+                        <p>2 bytes</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-20CE8B1A-FA2F-4A2E-B22F-194F28CBE6A9__GUID-96F2A33C-BF88-4C15-8538-629641FB1A4B">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(5)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS278"></a><a id="DRDAS279"></a><a id="DRDAS280"></a><a id="DRDAS277"></a><div class="props_rev_3"><a id="GUID-7D3124CE-E46F-4783-8544-A49F8E8512C9" name="GUID-7D3124CE-E46F-4783-8544-A49F8E8512C9"></a><h4 id="DRDAS-GUID-7D3124CE-E46F-4783-8544-A49F8E8512C9" class="sect4">BIGINT</h4>
+                  <div>
+                     <div class="section">
+                        <p>8-byte binary number</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-7D3124CE-E46F-4783-8544-A49F8E8512C9__GUID-0A95A064-9965-4959-A07E-45B720783F5B">SQL Type</p>
+                        <p>492, 493</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-7D3124CE-E46F-4783-8544-A49F8E8512C9__GUID-9CFDACF9-00CB-4B52-A1B7-9DF1C4D67E4E">Size</p>
+                        <p>8 bytes</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-7D3124CE-E46F-4783-8544-A49F8E8512C9__GUID-9EBFF7BC-B612-4351-970A-DEF5C66F21D9">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(19)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS282"></a><a id="DRDAS283"></a><a id="DRDAS284"></a><a id="DRDAS281"></a><div class="props_rev_3"><a id="GUID-769BBC4F-457B-433D-BB65-4B986B9956CC" name="GUID-769BBC4F-457B-433D-BB65-4B986B9956CC"></a><h4 id="DRDAS-GUID-769BBC4F-457B-433D-BB65-4B986B9956CC" class="sect4">float</h4>
+                  <div>
+                     <div class="section">
+                        <p>long double-precision (16 bytes)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-769BBC4F-457B-433D-BB65-4B986B9956CC__GUID-D7E86665-3733-46CB-B9E2-C0C80C64695D">SQL Type</p>
+                        <p>480, 481</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-769BBC4F-457B-433D-BB65-4B986B9956CC__GUID-632FB26F-BEA9-472A-911B-AB92BE37CE77">Range</p>
+                        <p><code class="codeph">54≤ b≤126</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-769BBC4F-457B-433D-BB65-4B986B9956CC__GUID-88A7A6FE-B912-4C0F-86FE-4BA1046F399F">Oracle Type</p>
+                        <p><code class="codeph">NUMBER</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS286"></a><a id="DRDAS287"></a><a id="DRDAS288"></a><a id="DRDAS285"></a><div class="props_rev_3"><a id="GUID-07F0CFD8-1C58-410A-A87A-976287FB188D" name="GUID-07F0CFD8-1C58-410A-A87A-976287FB188D"></a><h4 id="DRDAS-GUID-07F0CFD8-1C58-410A-A87A-976287FB188D" class="sect4">DOUBLE PRECISION or FLOAT(b)</h4>
+                  <div>
+                     <div class="section">
+                        <p>double-precision (8 bytes)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-07F0CFD8-1C58-410A-A87A-976287FB188D__GUID-9DAF4491-75D7-425F-94CE-4C8B77A890F4">SQL Type</p>
+                        <p>480, 481</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-07F0CFD8-1C58-410A-A87A-976287FB188D__GUID-F0392078-EC98-4083-899A-C2CA3EECD13D">Range</p>
+                        <p><code class="codeph">22≤ b≤ 53</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-07F0CFD8-1C58-410A-A87A-976287FB188D__GUID-6B12CD5A-D4DB-432F-A693-F6D0F84856A3">Oracle Type</p>
+                        <p><code class="codeph">BINARY_DOUBLE</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS290"></a><a id="DRDAS291"></a><a id="DRDAS292"></a><a id="DRDAS289"></a><div class="props_rev_3"><a id="GUID-8C9F0804-F66D-479C-BC48-5333FEC82A6C" name="GUID-8C9F0804-F66D-479C-BC48-5333FEC82A6C"></a><h4 id="DRDAS-GUID-8C9F0804-F66D-479C-BC48-5333FEC82A6C" class="sect4">REAL or FLOAT(b)</h4>
+                  <div>
+                     <div class="section">
+                        <p>Single-precision (4 bytes)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8C9F0804-F66D-479C-BC48-5333FEC82A6C__GUID-D78D09EF-09E4-45ED-B3B8-E49BE251301C">SQL Type</p>
+                        <p>480, 481</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8C9F0804-F66D-479C-BC48-5333FEC82A6C__GUID-76C7F2D2-6F4D-4656-BCA8-CEF46F222DC0">Range</p>
+                        <p><code class="codeph">1≤b≤21</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8C9F0804-F66D-479C-BC48-5333FEC82A6C__GUID-47B0F46B-87CA-4E86-94A7-C9290B5B8859">Oracle Type</p>
+                        <p><code class="codeph">BINARY_FLOAT</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS294"></a><a id="DRDAS295"></a><a id="DRDAS296"></a><a id="DRDAS293"></a><div class="props_rev_3"><a id="GUID-E8904D9B-CA3E-4D01-907F-91A503DB66BF" name="GUID-E8904D9B-CA3E-4D01-907F-91A503DB66BF"></a><h4 id="DRDAS-GUID-E8904D9B-CA3E-4D01-907F-91A503DB66BF" class="sect4">DECIMAL(p,s)</h4>
+                  <div>
+                     <div class="section">
+                        <p>precision and scale packed decimal</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E8904D9B-CA3E-4D01-907F-91A503DB66BF__GUID-6073858C-6C74-45D9-AEEF-626E553FF81C">SQL Type</p>
+                        <p>484, 485</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E8904D9B-CA3E-4D01-907F-91A503DB66BF__GUID-A6095AE2-4874-4FCF-B328-DEF1FCE31ED5">Range</p>
+                        <p><code class="codeph">1≤p≤31</code>, <code class="codeph">1≤s≤31</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E8904D9B-CA3E-4D01-907F-91A503DB66BF__GUID-3EB0FE82-5956-499E-B4CE-5F322666F658">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(p,s)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS298"></a><a id="DRDAS299"></a><a id="DRDAS300"></a><a id="DRDAS297"></a><div class="props_rev_3"><a id="GUID-DA0A4D4B-2016-4762-8B35-C6E4598E9232" name="GUID-DA0A4D4B-2016-4762-8B35-C6E4598E9232"></a><h4 id="DRDAS-GUID-DA0A4D4B-2016-4762-8B35-C6E4598E9232" class="sect4">DECIMAL(p,s) zoned</h4>
+                  <div>
+                     <div class="section">
+                        <p>precision and scale zoned decimal</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-DA0A4D4B-2016-4762-8B35-C6E4598E9232__GUID-5072D618-D010-4C4B-BCCC-9D98E23F0857">SQL Type</p>
+                        <p>488, 489</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-DA0A4D4B-2016-4762-8B35-C6E4598E9232__GUID-BF947125-EACD-4526-AD51-C25FEB836B4D">Range</p>
+                        <p><code class="codeph">1≤p≤31</code>, <code class="codeph">1≤s≤31</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-DA0A4D4B-2016-4762-8B35-C6E4598E9232__GUID-87A7FCB6-85B5-4A54-B40E-E902C7702927">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(p,s)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS302"></a><a id="DRDAS303"></a><a id="DRDAS304"></a><a id="DRDAS301"></a><div class="props_rev_3"><a id="GUID-01A46283-3183-4268-8362-03BD6C0E0C51" name="GUID-01A46283-3183-4268-8362-03BD6C0E0C51"></a><h4 id="DRDAS-GUID-01A46283-3183-4268-8362-03BD6C0E0C51" class="sect4">NUMERIC(p,s)</h4>
+                  <div>
+                     <div class="section">
+                        <p>precision and scale character decimal</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-01A46283-3183-4268-8362-03BD6C0E0C51__GUID-8D0B3B33-7916-4F27-BB50-663FF12E1F87">SQL Type</p>
+                        <p>504, 505</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-01A46283-3183-4268-8362-03BD6C0E0C51__GUID-63606915-8924-47B1-9C0D-7DA7B09AB5EB">Range</p>
+                        <p><code class="codeph">1≤p≤31</code>, <code class="codeph">1≤s≤31</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-01A46283-3183-4268-8362-03BD6C0E0C51__GUID-A10F09E3-DBC3-4736-B2D0-B35CF8B912E9">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(p,s)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS306"></a><a id="DRDAS307"></a><a id="DRDAS308"></a><a id="DRDAS305"></a><div class="props_rev_3"><a id="GUID-5643A46E-925F-4701-B152-C33A2EA50EB1" name="GUID-5643A46E-925F-4701-B152-C33A2EA50EB1"></a><h4 id="DRDAS-GUID-5643A46E-925F-4701-B152-C33A2EA50EB1" class="sect4">DECFLOAT(n=34)</h4>
+                  <div>
+                     <div class="section">
+                        <p>precision and scale, with exponent; subject to loss</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-5643A46E-925F-4701-B152-C33A2EA50EB1__GUID-679C22DC-ED71-45AC-8A50-C595BBC66D8C">SQL Type</p>
+                        <p>996, 997</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-5643A46E-925F-4701-B152-C33A2EA50EB1__GUID-EEFDE9AE-67C7-4AE3-81C2-0850914B56CC">Range</p>
+                        <p>n=34</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-5643A46E-925F-4701-B152-C33A2EA50EB1__GUID-B2DC971C-3DB3-4B73-BBED-A7A3D2EDCF16">Oracle Type</p>
+                        <p><code class="codeph">NUMBER</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS310"></a><a id="DRDAS311"></a><a id="DRDAS312"></a><a id="DRDAS309"></a><div class="props_rev_3"><a id="GUID-3D614C28-EC9E-4674-A5C5-B159EB34D9AE" name="GUID-3D614C28-EC9E-4674-A5C5-B159EB34D9AE"></a><h4 id="DRDAS-GUID-3D614C28-EC9E-4674-A5C5-B159EB34D9AE" class="sect4">DECFLOAT(n=16)</h4>
+                  <div>
+                     <div class="section">
+                        <p>precision and scale, with exponent; subject to loss</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3D614C28-EC9E-4674-A5C5-B159EB34D9AE__GUID-1F0D5987-5A5E-4D02-B451-1CFA8DCBA1D1">SQL Type</p>
+                        <p>996, 997</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3D614C28-EC9E-4674-A5C5-B159EB34D9AE__GUID-D1049400-A6E1-4400-9FDA-EC03E5359EFB">Range</p>
+                        <p>n=16</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3D614C28-EC9E-4674-A5C5-B159EB34D9AE__GUID-004FAEEE-E6B7-478B-B500-3C8BBCCD7B59">Oracle Type</p>
+                        <p><code class="codeph">NUMBER</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS314"></a><a id="DRDAS315"></a><a id="DRDAS316"></a><a id="DRDAS313"></a><div class="props_rev_3"><a id="GUID-37AF5CC6-1920-4A98-BF5F-A8347CEE098C" name="GUID-37AF5CC6-1920-4A98-BF5F-A8347CEE098C"></a><h4 id="DRDAS-GUID-37AF5CC6-1920-4A98-BF5F-A8347CEE098C" class="sect4">CHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>sbcs and mixed</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-37AF5CC6-1920-4A98-BF5F-A8347CEE098C__GUID-24B1AEEF-5DE9-41B2-9F49-F549B04EF185">SQL Type</p>
+                        <p>452,453</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-37AF5CC6-1920-4A98-BF5F-A8347CEE098C__GUID-19B4319B-F461-408F-B5BD-AC1E876A8869">Range</p>
+                        <p>1≤ n≤255</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-37AF5CC6-1920-4A98-BF5F-A8347CEE098C__GUID-662E29B6-BAA3-4BF5-9C25-CB25D7E09AAE">Oracle Type</p>
+                        <p><code class="codeph">CHAR</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS318"></a><a id="DRDAS319"></a><a id="DRDAS320"></a><a id="DRDAS317"></a><div class="props_rev_3"><a id="GUID-D4AFB2E7-C8D9-43D5-B557-986144AB775F" name="GUID-D4AFB2E7-C8D9-43D5-B557-986144AB775F"></a><h4 id="DRDAS-GUID-D4AFB2E7-C8D9-43D5-B557-986144AB775F" class="sect4">CHAR(n) for Bit Data</h4>
+                  <div>
+                     <div class="section">
+                        <p>byte</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D4AFB2E7-C8D9-43D5-B557-986144AB775F__GUID-B2226ACF-8370-403E-A002-EF2C5E5F321A">SQL Type</p>
+                        <p>452,453</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D4AFB2E7-C8D9-43D5-B557-986144AB775F__GUID-D481C795-7097-45DB-9943-C5FF261A4227">Range</p>
+                        <p>1≤ n≤255</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D4AFB2E7-C8D9-43D5-B557-986144AB775F__GUID-621CF5F3-5F27-4D67-B4A9-762A2A57B320">Oracle Type</p>
+                        <p><code class="codeph">RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS322"></a><a id="DRDAS324"></a><a id="DRDAS321"></a><div class="props_rev_3"><a id="GUID-2BDA4899-9437-49FA-9A3A-8D35E161F83C" name="GUID-2BDA4899-9437-49FA-9A3A-8D35E161F83C"></a><h4 id="DRDAS-GUID-2BDA4899-9437-49FA-9A3A-8D35E161F83C" class="sect4">VARCHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>sbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2BDA4899-9437-49FA-9A3A-8D35E161F83C__GUID-D17EC4E0-405E-42A0-9777-85D22D75FE30">SQL Type</p>
+                        <p>448,449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2BDA4899-9437-49FA-9A3A-8D35E161F83C__GUID-E399F103-7F4D-4610-9269-50CD434D362C">Oracle Type</p>
+                        <p>VARCHAR2</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS326"></a><a id="DRDAS328"></a><a id="DRDAS325"></a><div class="props_rev_3"><a id="GUID-1DD08898-FC2D-456E-817D-CFF9B8AB79B9" name="GUID-1DD08898-FC2D-456E-817D-CFF9B8AB79B9"></a><h4 id="DRDAS-GUID-1DD08898-FC2D-456E-817D-CFF9B8AB79B9" class="sect4">VARCHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>mixed</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-1DD08898-FC2D-456E-817D-CFF9B8AB79B9__GUID-A6360F93-B206-4F55-A18B-0AE29E1A2433">SQL Type</p>
+                        <p>448,449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-1DD08898-FC2D-456E-817D-CFF9B8AB79B9__GUID-A079E296-0979-4527-8A38-30C8FAB03F99">Oracle Type</p>
+                        <p><code class="codeph">VARCHAR2</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS330"></a><a id="DRDAS331"></a><a id="DRDAS332"></a><a id="DRDAS329"></a><div class="props_rev_3"><a id="GUID-2AE971A3-68B4-4677-B159-1D0E102C480D" name="GUID-2AE971A3-68B4-4677-B159-1D0E102C480D"></a><h4 id="DRDAS-GUID-2AE971A3-68B4-4677-B159-1D0E102C480D" class="sect4">VARCHAR(n) for Bit Data</h4>
+                  <div>
+                     <div class="section">
+                        <p>byte</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2AE971A3-68B4-4677-B159-1D0E102C480D__GUID-6AB83A6F-C65C-4949-A784-CEAB36E5524C">SQL Type</p>
+                        <p>448,449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2AE971A3-68B4-4677-B159-1D0E102C480D__GUID-89DE3FB4-50A3-48ED-8BF1-809F480677A3">Range</p>
+                        <p>1≤ n≤2000</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2AE971A3-68B4-4677-B159-1D0E102C480D__GUID-CA7EA0A6-DDCB-4761-AB10-3ED3CFA8DFBE">Oracle Type</p>
+                        <p><code class="codeph">RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS334"></a><a id="DRDAS335"></a><a id="DRDAS336"></a><a id="DRDAS333"></a><div class="props_rev_3"><a id="GUID-BF706550-A588-4D4C-9170-4EACCF2C5296" name="GUID-BF706550-A588-4D4C-9170-4EACCF2C5296"></a><h4 id="DRDAS-GUID-BF706550-A588-4D4C-9170-4EACCF2C5296" class="sect4">VARCHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>sbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BF706550-A588-4D4C-9170-4EACCF2C5296__GUID-016FBCA4-5FB0-4765-AAD5-C7C0D5D70A21">SQL Type</p>
+                        <p>456,457</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BF706550-A588-4D4C-9170-4EACCF2C5296__GUID-4E8C0E57-5E0B-4764-A15E-32882AD53493">Range</p>
+                        <p>1≤ n≤32767</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BF706550-A588-4D4C-9170-4EACCF2C5296__GUID-65A7AC60-AE9A-4138-B3D3-D3F40B779F2F">Oracle Type</p>
+                        <p><code class="codeph">LONG</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS338"></a><a id="DRDAS339"></a><a id="DRDAS340"></a><a id="DRDAS337"></a><div class="props_rev_3"><a id="GUID-59A39899-F7D4-4FA3-90C0-0213CE5F8421" name="GUID-59A39899-F7D4-4FA3-90C0-0213CE5F8421"></a><h4 id="DRDAS-GUID-59A39899-F7D4-4FA3-90C0-0213CE5F8421" class="sect4">VARCHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>mixed</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-59A39899-F7D4-4FA3-90C0-0213CE5F8421__GUID-248A1C29-2192-49E7-BE1F-D36396E963F1">SQL Type</p>
+                        <p>456,457</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-59A39899-F7D4-4FA3-90C0-0213CE5F8421__GUID-B019770E-2594-4A9D-B6F1-D11300F80256">Range</p>
+                        <p>1≤ n≤32767</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-59A39899-F7D4-4FA3-90C0-0213CE5F8421__GUID-1DE5F65B-A9BD-4848-BE83-AFCF5A81FCE3">Oracle Type</p>
+                        <p><code class="codeph">LONG</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS342"></a><a id="DRDAS343"></a><a id="DRDAS344"></a><a id="DRDAS341"></a><div class="props_rev_3"><a id="GUID-AF0766C4-50E3-499C-9604-C49B2D1EA1EA" name="GUID-AF0766C4-50E3-499C-9604-C49B2D1EA1EA"></a><h4 id="DRDAS-GUID-AF0766C4-50E3-499C-9604-C49B2D1EA1EA" class="sect4">VARCHAR(n) for Bit Data</h4>
+                  <div>
+                     <div class="section">
+                        <p>byte</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-AF0766C4-50E3-499C-9604-C49B2D1EA1EA__GUID-5BE4BFBB-E730-4CD1-976E-C7A4BB2EF869">SQL Type</p>
+                        <p>456,457</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-AF0766C4-50E3-499C-9604-C49B2D1EA1EA__GUID-177E4B82-FB75-4446-B75B-57A511B7770E">Range</p>
+                        <p>1≤ n≤32767</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-AF0766C4-50E3-499C-9604-C49B2D1EA1EA__GUID-78F14960-E5CB-4714-A158-FEF494D3373A">Oracle Type</p>
+                        <p><code class="codeph">LONG RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS346"></a><a id="DRDAS347"></a><a id="DRDAS348"></a><a id="DRDAS345"></a><div class="props_rev_3"><a id="GUID-888757C7-AAC3-49DB-BCAB-A877ED616300" name="GUID-888757C7-AAC3-49DB-BCAB-A877ED616300"></a><h4 id="DRDAS-GUID-888757C7-AAC3-49DB-BCAB-A877ED616300" class="sect4">char(n+1)</h4>
+                  <div>
+                     <div class="section">
+                        <p>sbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-888757C7-AAC3-49DB-BCAB-A877ED616300__GUID-8934F07C-2981-4CD9-BF03-74D5EED5A3E6">SQL Type</p>
+                        <p>460,461</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-888757C7-AAC3-49DB-BCAB-A877ED616300__GUID-BC3FB6EB-6C83-4C00-A2C5-6E65AB4CB118">Range</p>
+                        <p>1≤ n≤4000</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-888757C7-AAC3-49DB-BCAB-A877ED616300__GUID-F3D22217-057E-479F-9CD7-A08356B8B069">Oracle Type</p>
+                        <p><code class="codeph">CHAR</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS350"></a><a id="DRDAS351"></a><a id="DRDAS352"></a><a id="DRDAS349"></a><div class="props_rev_3"><a id="GUID-31AC5946-EAE0-4A17-BE8D-07E2C0FEFC1F" name="GUID-31AC5946-EAE0-4A17-BE8D-07E2C0FEFC1F"></a><h4 id="DRDAS-GUID-31AC5946-EAE0-4A17-BE8D-07E2C0FEFC1F" class="sect4">char(n+1)</h4>
+                  <div>
+                     <div class="section">
+                        <p>mixed</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-31AC5946-EAE0-4A17-BE8D-07E2C0FEFC1F__GUID-85554E96-367D-49BF-B8C7-14C1FAFF141E">SQL Type</p>
+                        <p>460,461</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-31AC5946-EAE0-4A17-BE8D-07E2C0FEFC1F__GUID-3F84A037-39E4-4260-B361-E92A5151831A">Range</p>
+                        <p>1≤ n≤2000</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-31AC5946-EAE0-4A17-BE8D-07E2C0FEFC1F__GUID-C99FA2AC-44DE-41FF-928F-474FEC6EEBF7">Oracle Type</p>
+                        <p><code class="codeph">CHAR</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS354"></a><a id="DRDAS355"></a><a id="DRDAS356"></a><a id="DRDAS353"></a><div class="props_rev_3"><a id="GUID-EECB9682-D1B7-4651-B97D-BFE8B29C9649" name="GUID-EECB9682-D1B7-4651-B97D-BFE8B29C9649"></a><h4 id="DRDAS-GUID-EECB9682-D1B7-4651-B97D-BFE8B29C9649" class="sect4">char(n) for Bit Data</h4>
+                  <div>
+                     <div class="section">
+                        <p>byte</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-EECB9682-D1B7-4651-B97D-BFE8B29C9649__GUID-FE75E5EE-F757-400E-A1E9-695813D70BD8">SQL Type</p>
+                        <p>460,461</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-EECB9682-D1B7-4651-B97D-BFE8B29C9649__GUID-7260FEE9-45B6-4DA2-83AC-67FA7C8B1F8A">Range</p>
+                        <p>1≤ n≤2000</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-EECB9682-D1B7-4651-B97D-BFE8B29C9649__GUID-B55C585B-C4C2-4249-8BEC-ACBF93AFEEDB">Oracle Type</p>
+                        <p><code class="codeph">RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS358"></a><a id="DRDAS359"></a><a id="DRDAS360"></a><a id="DRDAS357"></a><div class="props_rev_3"><a id="GUID-558F6C70-5E54-4A6E-9574-7FE29C0263AA" name="GUID-558F6C70-5E54-4A6E-9574-7FE29C0263AA"></a><h4 id="DRDAS-GUID-558F6C70-5E54-4A6E-9574-7FE29C0263AA" class="sect4">VARGRAPHIC(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>dbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-558F6C70-5E54-4A6E-9574-7FE29C0263AA__GUID-751CEBC1-62BD-4E52-AD72-251A8D7CB067">SQL Type</p>
+                        <p>464,465</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-558F6C70-5E54-4A6E-9574-7FE29C0263AA__GUID-E9462FB9-DE42-4A1F-A4A8-2EAC5C81854D">Range</p>
+                        <p>1≤ n≤2000</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-558F6C70-5E54-4A6E-9574-7FE29C0263AA__GUID-BD1067AF-AC2F-4342-B1BF-1FE4E9F6E014">Oracle Type</p>
+                        <p><code class="codeph">NVARCHAR2</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS362"></a><a id="DRDAS363"></a><a id="DRDAS364"></a><a id="DRDAS361"></a><div class="props_rev_3"><a id="GUID-5969F992-A464-4A10-BB82-56FC275050BC" name="GUID-5969F992-A464-4A10-BB82-56FC275050BC"></a><h4 id="DRDAS-GUID-5969F992-A464-4A10-BB82-56FC275050BC" class="sect4">GRAPHIC(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>dbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-5969F992-A464-4A10-BB82-56FC275050BC__GUID-A2CA8CAA-A125-4D48-8503-5D1539A477A5">SQL Type</p>
+                        <p>468,469</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-5969F992-A464-4A10-BB82-56FC275050BC__GUID-36DDAB40-8E76-4899-9B6E-3B5F68DC6348">Range</p>
+                        <p>1≤ n≤127</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-5969F992-A464-4A10-BB82-56FC275050BC__GUID-EA4F23AF-98CD-46FF-845C-7F261CDC1A08">Oracle Type</p>
+                        <p><code class="codeph">NCHAR</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS366"></a><a id="DRDAS367"></a><a id="DRDAS368"></a><a id="DRDAS365"></a><div class="props_rev_3"><a id="GUID-3157EBCE-1104-4BCC-BCEC-1513FE4DFAFC" name="GUID-3157EBCE-1104-4BCC-BCEC-1513FE4DFAFC"></a><h4 id="DRDAS-GUID-3157EBCE-1104-4BCC-BCEC-1513FE4DFAFC" class="sect4">VARGRAPHIC(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>dbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3157EBCE-1104-4BCC-BCEC-1513FE4DFAFC__GUID-BE2C8B73-3433-47F6-B2B9-73E746337F3B">SQL Type</p>
+                        <p>472,473</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3157EBCE-1104-4BCC-BCEC-1513FE4DFAFC__GUID-D78F85DB-A3CB-4B9F-9617-E6B8CBBEE489">Range</p>
+                        <p>1≤ n≤2000</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3157EBCE-1104-4BCC-BCEC-1513FE4DFAFC__GUID-E44C3600-7193-4352-B39B-363AAB607432">Oracle Type</p>
+                        <p><code class="codeph">NVARCHAR2</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS370"></a><a id="DRDAS371"></a><a id="DRDAS372"></a><a id="DRDAS369"></a><div class="props_rev_3"><a id="GUID-9EA05081-1773-4290-8569-A94FB0C8888E" name="GUID-9EA05081-1773-4290-8569-A94FB0C8888E"></a><h4 id="DRDAS-GUID-9EA05081-1773-4290-8569-A94FB0C8888E" class="sect4">char(n) (Pascal L String)</h4>
+                  <div>
+                     <div class="section">
+                        <p>byte</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9EA05081-1773-4290-8569-A94FB0C8888E__GUID-61536869-2F4F-4B1C-9C19-C7796D2F4D13">SQL Type</p>
+                        <p>476,477</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9EA05081-1773-4290-8569-A94FB0C8888E__GUID-E180FB37-0208-4EF2-B854-E1686E691BB6">Range</p>
+                        <p>1≤ n≤255</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9EA05081-1773-4290-8569-A94FB0C8888E__GUID-8A0AC02C-BA32-4ABD-9DEA-75F6D373FEEC">Oracle Type</p>
+                        <p><code class="codeph">CHAR</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS374"></a><a id="DRDAS375"></a><a id="DRDAS376"></a><a id="DRDAS373"></a><div class="props_rev_3"><a id="GUID-4B400ED2-CB4C-409C-81C7-8981B63BEE1F" name="GUID-4B400ED2-CB4C-409C-81C7-8981B63BEE1F"></a><h4 id="DRDAS-GUID-4B400ED2-CB4C-409C-81C7-8981B63BEE1F" class="sect4">char(n) for Bit Data (Pascal L String)</h4>
+                  <div>
+                     <div class="section">
+                        <p>byte</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4B400ED2-CB4C-409C-81C7-8981B63BEE1F__GUID-1BFB437A-6DE8-4086-8ED3-39D83FFA0185">SQL Type</p>
+                        <p>476,477</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4B400ED2-CB4C-409C-81C7-8981B63BEE1F__GUID-2EF2D8A8-4DB4-4E4D-930D-921E5A1EEA45">Range</p>
+                        <p>1≤ n≤255</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4B400ED2-CB4C-409C-81C7-8981B63BEE1F__GUID-0AD51D5F-9F8D-42A5-B478-9DA265FE6F3B">Oracle Type</p>
+                        <p><code class="codeph">RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS378"></a><a id="DRDAS379"></a><a id="DRDAS377"></a><div class="props_rev_3"><a id="GUID-8E89E896-7CA6-447C-849B-51AC136C5351" name="GUID-8E89E896-7CA6-447C-849B-51AC136C5351"></a><h4 id="DRDAS-GUID-8E89E896-7CA6-447C-849B-51AC136C5351" class="sect4">DATE</h4>
+                  <div>
+                     <div class="section">
+                        <p>Date with zero time component</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8E89E896-7CA6-447C-849B-51AC136C5351__GUID-F33050A2-4CFD-45FB-B9F9-0B6429F771BC">SQL Type</p>
+                        <p>384, 385</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8E89E896-7CA6-447C-849B-51AC136C5351__GUID-5E4C4C23-5FFB-41DC-A2E2-5C829EAF454F">Oracle Type</p>
+                        <p><code class="codeph">DATE</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS381"></a><a id="DRDAS382"></a><a id="DRDAS380"></a><div class="props_rev_3"><a id="GUID-8F487D9E-2E0B-4BB9-B960-49D387666A44" name="GUID-8F487D9E-2E0B-4BB9-B960-49D387666A44"></a><h4 id="DRDAS-GUID-8F487D9E-2E0B-4BB9-B960-49D387666A44" class="sect4">TIME</h4>
+                  <div>
+                     <div class="section">
+                        <p>Uses time component of date only, or is formatted as textual time representation</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8F487D9E-2E0B-4BB9-B960-49D387666A44__GUID-8DD0135B-4FAF-473E-9906-70D72CE3A91B">SQL Type</p>
+                        <p>388, 389</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8F487D9E-2E0B-4BB9-B960-49D387666A44__GUID-80A44DF7-7A3D-4C14-9AD9-B1D8C49361C4">Oracle Type</p>
+                        <p><code class="codeph">DATE</code> or <code class="codeph">CHAR(8)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS384"></a><a id="DRDAS385"></a><a id="DRDAS383"></a><div class="props_rev_3"><a id="GUID-78BE34B9-138C-4230-99F6-930E4AA6C77C" name="GUID-78BE34B9-138C-4230-99F6-930E4AA6C77C"></a><h4 id="DRDAS-GUID-78BE34B9-138C-4230-99F6-930E4AA6C77C" class="sect4">TIMESTAMP</h4>
+                  <div>
+                     <div class="section">
+                        <p>Timestamp</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-78BE34B9-138C-4230-99F6-930E4AA6C77C__GUID-EACD5507-7E29-4D0F-91F8-8C90CF94968E">SQL Type</p>
+                        <p>392, 393</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-78BE34B9-138C-4230-99F6-930E4AA6C77C__GUID-6977A070-A43E-4AC4-8FC9-AE9C797791FF">Oracle Type</p>
+                        <p><code class="codeph">TIMESTAMP(6)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS387"></a><a id="DRDAS388"></a><a id="DRDAS386"></a><div class="props_rev_3"><a id="GUID-EC0FF02C-6E87-4542-86F5-842D93E6B57B" name="GUID-EC0FF02C-6E87-4542-86F5-842D93E6B57B"></a><h4 id="DRDAS-GUID-EC0FF02C-6E87-4542-86F5-842D93E6B57B" class="sect4">(datalink)</h4>
+                  <div>
+                     <div class="section">
+                        <p>no equivalent representation</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-EC0FF02C-6E87-4542-86F5-842D93E6B57B__GUID-CB300FFF-899E-483F-B057-07801AB85166">SQL Type</p>
+                        <p>396, 397</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-EC0FF02C-6E87-4542-86F5-842D93E6B57B__GUID-729B7667-1CDE-40B6-B724-1BFDD896B45E">Oracle Type</p>
+                        <p><code class="codeph">VARCHAR2</code> for sbcs, or <code class="codeph">NVARCHAR2</code> for dbcs
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS390"></a><a id="DRDAS391"></a><a id="DRDAS389"></a><div class="props_rev_3"><a id="GUID-D08B80D4-09C6-470D-A859-654E75889D0D" name="GUID-D08B80D4-09C6-470D-A859-654E75889D0D"></a><h4 id="DRDAS-GUID-D08B80D4-09C6-470D-A859-654E75889D0D" class="sect4">BLOB</h4>
+                  <div>
+                     <div class="section">
+                        <p>Binary Long OBject</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D08B80D4-09C6-470D-A859-654E75889D0D__GUID-9D35F10A-D70D-4213-A396-A18AB66DCDC8">SQL Type</p>
+                        <p>404, 405</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D08B80D4-09C6-470D-A859-654E75889D0D__GUID-6A3D17A1-9B92-4BB4-A112-B44B6895E16F">Oracle Type</p>
+                        <p><code class="codeph">BLOB</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS393"></a><a id="DRDAS394"></a><a id="DRDAS392"></a><div class="props_rev_3"><a id="GUID-E7DC7553-A7B4-4B17-B1D5-494DD91FB42F" name="GUID-E7DC7553-A7B4-4B17-B1D5-494DD91FB42F"></a><h4 id="DRDAS-GUID-E7DC7553-A7B4-4B17-B1D5-494DD91FB42F" class="sect4">CLOB</h4>
+                  <div>
+                     <div class="section">
+                        <p>Character Long OBject (LOB) for sbcs or mixed representation</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E7DC7553-A7B4-4B17-B1D5-494DD91FB42F__GUID-36456C43-2F39-43FD-9128-07908CF7B05E">SQL Type</p>
+                        <p>408, 409</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E7DC7553-A7B4-4B17-B1D5-494DD91FB42F__GUID-E5DE141E-DB0B-4FED-B769-CFED3FBD43DD">Oracle Type</p>
+                        <p><code class="codeph">CLOB</code> for sbcs, and <code class="codeph">CLOB</code> for mixed representation
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS396"></a><a id="DRDAS397"></a><a id="DRDAS395"></a><div class="props_rev_3"><a id="GUID-2D5CCE01-AFEE-4993-AEA9-E60342F75612" name="GUID-2D5CCE01-AFEE-4993-AEA9-E60342F75612"></a><h4 id="DRDAS-GUID-2D5CCE01-AFEE-4993-AEA9-E60342F75612" class="sect4">DBCLOB</h4>
+                  <div>
+                     <div class="section">
+                        <p>For dbcs</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2D5CCE01-AFEE-4993-AEA9-E60342F75612__GUID-2069910B-7510-418C-A5AA-D1DA5AE63E95">SQL Type</p>
+                        <p>412, 413</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-2D5CCE01-AFEE-4993-AEA9-E60342F75612__GUID-046C59AF-96F3-4A1D-89FD-8B8222A4603F">Oracle Type</p>
+                        <p><code class="codeph">NCLOB</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS399"></a><a id="DRDAS400"></a><a id="DRDAS398"></a><div class="props_rev_3"><a id="GUID-6CA38F34-2700-4CBF-963B-F46D91E03170" name="GUID-6CA38F34-2700-4CBF-963B-F46D91E03170"></a><h4 id="DRDAS-GUID-6CA38F34-2700-4CBF-963B-F46D91E03170" class="sect4">BLOB LOCATOR</h4>
+                  <div>
+                     <div class="section">
+                        <p>Binary Long OBject (LOB)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6CA38F34-2700-4CBF-963B-F46D91E03170__GUID-45B28A73-8CBD-409B-ACAA-43B6EB514CB6">SQL Type</p>
+                        <p>960, 961</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6CA38F34-2700-4CBF-963B-F46D91E03170__GUID-DCF09015-74EB-4842-84ED-98DBCB15B9D0">Oracle Type</p>
+                        <p><code class="codeph">BLOB</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS402"></a><a id="DRDAS403"></a><a id="DRDAS401"></a><div class="props_rev_3"><a id="GUID-E444616F-8BFA-4A9B-AC1F-281AFD53CCB8" name="GUID-E444616F-8BFA-4A9B-AC1F-281AFD53CCB8"></a><h4 id="DRDAS-GUID-E444616F-8BFA-4A9B-AC1F-281AFD53CCB8" class="sect4">CLOB LOCATOR</h4>
+                  <div>
+                     <div class="section">
+                        <p>For sbcs or mixed representation</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E444616F-8BFA-4A9B-AC1F-281AFD53CCB8__GUID-2C35787A-3602-452A-8C6E-0FE562B1AFCB">SQL Type</p>
+                        <p>964, 965</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-E444616F-8BFA-4A9B-AC1F-281AFD53CCB8__GUID-07681778-B6E1-462E-985C-35CCD6B8E1DF">Oracle Type</p>
+                        <p><code class="codeph">CLOB</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS405"></a><a id="DRDAS406"></a><a id="DRDAS404"></a><div class="props_rev_3"><a id="GUID-0A016A2B-EC65-41A5-B92A-9E70B85E4FA0" name="GUID-0A016A2B-EC65-41A5-B92A-9E70B85E4FA0"></a><h4 id="DRDAS-GUID-0A016A2B-EC65-41A5-B92A-9E70B85E4FA0" class="sect4">DBCLOB LOCATOR</h4>
+                  <div>
+                     <div class="section">
+                        <p>For dbcs representation</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-0A016A2B-EC65-41A5-B92A-9E70B85E4FA0__GUID-92A85C41-D32A-4964-B6A5-0ED714CF8830">SQL Type</p>
+                        <p>968, 969</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-0A016A2B-EC65-41A5-B92A-9E70B85E4FA0__GUID-8223FF05-7F58-4752-A56B-CA20309B4216">Oracle Type</p>
+                        <p><code class="codeph">NCLOB</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS408"></a><a id="DRDAS409"></a><a id="DRDAS407"></a><div class="props_rev_3"><a id="GUID-410CE163-F53D-4724-8BF2-9939B4A8D390" name="GUID-410CE163-F53D-4724-8BF2-9939B4A8D390"></a><h4 id="DRDAS-GUID-410CE163-F53D-4724-8BF2-9939B4A8D390" class="sect4">boolean</h4>
+                  <div>
+                     <div class="section">
+                        <p>No equivalent representation</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-410CE163-F53D-4724-8BF2-9939B4A8D390__GUID-78E52200-922B-4912-A18C-8376494BE139">SQL Type</p>
+                        <p>2436, 2437</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-410CE163-F53D-4724-8BF2-9939B4A8D390__GUID-993A2515-58FE-48D3-9C22-84C7342418AA">Oracle Type</p>
+                        <p><code class="codeph">NUMBER(5)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS411"></a><a id="DRDAS412"></a><a id="DRDAS413"></a><a id="DRDAS410"></a><div class="props_rev_3"><a id="GUID-BE10BE1E-2F9A-476C-B05A-C0111FCD59E1" name="GUID-BE10BE1E-2F9A-476C-B05A-C0111FCD59E1"></a><h4 id="DRDAS-GUID-BE10BE1E-2F9A-476C-B05A-C0111FCD59E1" class="sect4">BINARY(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>Fixed-length binary string</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BE10BE1E-2F9A-476C-B05A-C0111FCD59E1__GUID-E41E4A48-10C2-4E8D-86F9-01EF3DF2689C">SQL Type</p>
+                        <p>912, 913</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BE10BE1E-2F9A-476C-B05A-C0111FCD59E1__GUID-7DAD43CC-38F0-49D4-9E4E-32D5FE5F899D">Range</p>
+                        <p>1 ≤ n ≤ 255</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BE10BE1E-2F9A-476C-B05A-C0111FCD59E1__GUID-4F857D32-E6C0-498D-8634-8F2297230F0B">Oracle Type</p>
+                        <p><code class="codeph">RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS415"></a><a id="DRDAS416"></a><a id="DRDAS417"></a><a id="DRDAS414"></a><div class="props_rev_3"><a id="GUID-9E2A410E-F6BC-4A9C-96D5-07E76719E867" name="GUID-9E2A410E-F6BC-4A9C-96D5-07E76719E867"></a><h4 id="DRDAS-GUID-9E2A410E-F6BC-4A9C-96D5-07E76719E867" class="sect4">VARBINARY(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>Variable-length binary string</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9E2A410E-F6BC-4A9C-96D5-07E76719E867__GUID-9BF59AB9-A30A-4D1B-8F46-F05046D68811">SQL Type</p>
+                        <p>908, 909</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9E2A410E-F6BC-4A9C-96D5-07E76719E867__GUID-DDD9D32D-4D9B-4899-B3CA-83ACF3FCEA96">Range</p>
+                        <p>1 ≤ n ≤ 32767</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9E2A410E-F6BC-4A9C-96D5-07E76719E867__GUID-0074FEAC-172E-41BF-8788-9CFD6EC2BC1C">Oracle Type</p>
+                        <p><code class="codeph">LONG RAW</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS419"></a><a id="DRDAS420"></a><a id="DRDAS418"></a><div class="props_rev_3"><a id="GUID-351FE2B6-128B-4498-9252-3735D7A4895D" name="GUID-351FE2B6-128B-4498-9252-3735D7A4895D"></a><h4 id="DRDAS-GUID-351FE2B6-128B-4498-9252-3735D7A4895D" class="sect4">XML</h4>
+                  <div>
+                     <div class="section">
+                        <p>External form</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-351FE2B6-128B-4498-9252-3735D7A4895D__GUID-251AFD17-0B68-4A33-A084-E389BA794031">SQL Type</p>
+                        <p>988, 989</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-351FE2B6-128B-4498-9252-3735D7A4895D__GUID-31ABBECB-946E-4A4B-A5BF-50CC4F86CCFB">Oracle Type</p>
+                        <p><code class="codeph">SYS.XMLType</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="DRDAS421"></a><div class="props_rev_3"><a id="GUID-D4FA2095-27FC-4A95-8C7C-89CB20E7B7E5" name="GUID-D4FA2095-27FC-4A95-8C7C-89CB20E7B7E5"></a><h3 id="DRDAS-GUID-D4FA2095-27FC-4A95-8C7C-89CB20E7B7E5" class="sect3">Conversion of Oracle Datatype to DRDA</h3>
+               <div>
+                  <div class="section">
+                     <p>Tables and procedures use Oracle datatypes. When describing objects, or returning data from a table or procedure, Oracle maps Oracle datatypes onto equivalent DRDA datatypes.</p>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="DRDAS424"></a><a id="DRDAS425"></a><a id="DRDAS423"></a><div class="props_rev_3"><a id="GUID-9AA5E878-FD15-4E12-A65F-09D739016E12" name="GUID-9AA5E878-FD15-4E12-A65F-09D739016E12"></a><h4 id="DRDAS-GUID-9AA5E878-FD15-4E12-A65F-09D739016E12" class="sect4">BINARY_FLOAT</h4>
+                  <div>
+                     <div class="section">
+                        <p>8 bytes</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9AA5E878-FD15-4E12-A65F-09D739016E12__GUID-92C307C3-83CE-4109-B743-3D2DEC5357A1">SQL Type</p>
+                        <p>480, 481</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9AA5E878-FD15-4E12-A65F-09D739016E12__GUID-70AEFA86-BD09-4600-B033-8FDBEF4850B7">SQL Type Name</p>
+                        <p><code class="codeph">DOUBLE</code> (8 byte floating point)
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS427"></a><a id="DRDAS428"></a><a id="DRDAS426"></a><div class="props_rev_3"><a id="GUID-82D63415-F2E1-4F52-9794-04BBED5BDBB2" name="GUID-82D63415-F2E1-4F52-9794-04BBED5BDBB2"></a><h4 id="DRDAS-GUID-82D63415-F2E1-4F52-9794-04BBED5BDBB2" class="sect4">BINARY_DOUBLE</h4>
+                  <div>
+                     <div class="section">
+                        <p>8 bytes</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-82D63415-F2E1-4F52-9794-04BBED5BDBB2__GUID-7F13957D-2812-455D-922C-22AA4E28D474">SQL Type</p>
+                        <p>480, 481</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-82D63415-F2E1-4F52-9794-04BBED5BDBB2__GUID-84DD4212-299D-4BBA-812B-90A6BB412842">SQL Type Name</p>
+                        <p><code class="codeph">DOUBLE</code> (8 byte floating point)
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS430"></a><a id="DRDAS431"></a><a id="DRDAS432"></a><a id="DRDAS429"></a><div class="props_rev_3"><a id="GUID-30BBB9BE-C656-4D16-9F12-8A048CA376BE" name="GUID-30BBB9BE-C656-4D16-9F12-8A048CA376BE"></a><h4 id="DRDAS-GUID-30BBB9BE-C656-4D16-9F12-8A048CA376BE" class="sect4">VARCHAR2(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>mixed variable length character string</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-30BBB9BE-C656-4D16-9F12-8A048CA376BE__GUID-2DBB6D3A-4483-4B51-AD90-8CC02E16C9AE">SQL Type</p>
+                        <p>448, 449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-30BBB9BE-C656-4D16-9F12-8A048CA376BE__GUID-F29217A6-417A-4971-BDFE-79C68F708CD9">Range</p>
+                        <p>1 ≤ n ≤ 32,767</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-30BBB9BE-C656-4D16-9F12-8A048CA376BE__GUID-1964A24B-FB49-4900-A132-604A5E97D48C">SQL Type Name</p>
+                        <p><code class="codeph">VARCHAR(n) FOR MIXED DATA</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS434"></a><a id="DRDAS435"></a><a id="DRDAS433"></a><div class="props_rev_3"><a id="GUID-BA6A5B24-07DC-4592-8B22-C76CE01C9F6B" name="GUID-BA6A5B24-07DC-4592-8B22-C76CE01C9F6B"></a><h4 id="DRDAS-GUID-BA6A5B24-07DC-4592-8B22-C76CE01C9F6B" class="sect4">LONG</h4>
+                  <div>
+                     <div class="section">
+                        <p>Mixed long variable-length character string; Oracle <code class="codeph">LONG</code> supports up to 2^31-1 bytes, but only the first <code class="codeph">32,767</code> bytes are currently returned.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BA6A5B24-07DC-4592-8B22-C76CE01C9F6B__GUID-6550EAF8-801F-4653-8B1D-17126741C219">SQL Type</p>
+                        <p>448, 449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-BA6A5B24-07DC-4592-8B22-C76CE01C9F6B__GUID-F032CD5C-103C-4FBA-96AB-14E99AD65A1C">SQL Type Name</p>
+                        <p><code class="codeph">VARCHAR(32767) FOR MIXED DATA</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS437"></a><a id="DRDAS438"></a><a id="DRDAS436"></a><div class="props_rev_3"><a id="GUID-374EE173-FCCE-4354-900B-DAB602822CA9" name="GUID-374EE173-FCCE-4354-900B-DAB602822CA9"></a><h4 id="DRDAS-GUID-374EE173-FCCE-4354-900B-DAB602822CA9" class="sect4">LONG RAW</h4>
+                  <div>
+                     <div class="section">
+                        <p>Binary long variable length character string; Oracle <code class="codeph">LONG RAW</code> supports up to 2^31-1 bytes, but only the first <code class="codeph">32,767</code> bytes are currently returned.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-374EE173-FCCE-4354-900B-DAB602822CA9__GUID-1C5C2322-A3D3-4BD1-BF40-A9555CC1A246">SQL Type</p>
+                        <p>448, 449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-374EE173-FCCE-4354-900B-DAB602822CA9__GUID-C510EC96-4D08-459E-871F-75D4E6251A89">SQL Type Name</p>
+                        <p><code class="codeph">VARCHAR(32767) FOR BIT DATA</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS440"></a><a id="DRDAS441"></a><a id="DRDAS442"></a><a id="DRDAS439"></a><div class="props_rev_3"><a id="GUID-157FCD93-ACA8-439B-BB9D-C4C5C19F2192" name="GUID-157FCD93-ACA8-439B-BB9D-C4C5C19F2192"></a><h4 id="DRDAS-GUID-157FCD93-ACA8-439B-BB9D-C4C5C19F2192" class="sect4">NVARCHAR2(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>National variable length character string</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-157FCD93-ACA8-439B-BB9D-C4C5C19F2192__GUID-FBD9D13E-38EB-42FF-9D4D-D761507AFBE3">SQL Type</p>
+                        <p>464, 465</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-157FCD93-ACA8-439B-BB9D-C4C5C19F2192__GUID-BB50E4C8-EAE7-46AC-AA87-55CEB4C3FB7D">Range</p>
+                        <p>1 ≤ n ≤ 32,767</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-157FCD93-ACA8-439B-BB9D-C4C5C19F2192__GUID-7BC85E17-AA67-4D92-91C7-3C4817A7C603">SQL Type Name</p>
+                        <p><code class="codeph">VARGRAPHIC(n)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS443"></a><div class="props_rev_3"><a id="GUID-18FAA3AE-7626-49F5-8382-EE568E8449EE" name="GUID-18FAA3AE-7626-49F5-8382-EE568E8449EE"></a><h4 id="DRDAS-GUID-18FAA3AE-7626-49F5-8382-EE568E8449EE" class="sect4">CHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>Mixed fixed length character string; there are two possibilities, determined by the range necessary for the datatype: converts to <code class="codeph">CHAR(n)</code> for n under <code class="codeph">256</code>, and to <code class="codeph">VARCHAR(n)</code> for longer character strings.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="DRDAS445"></a><a id="DRDAS446"></a><a id="DRDAS447"></a><a id="DRDAS444"></a><div class="props_rev_3"><a id="GUID-339FBFF5-5103-4F1D-B64A-D86367995B2F" name="GUID-339FBFF5-5103-4F1D-B64A-D86367995B2F"></a><h5 id="DRDAS-GUID-339FBFF5-5103-4F1D-B64A-D86367995B2F" class="sect5">Shorter version</h5>
+                     <div>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-339FBFF5-5103-4F1D-B64A-D86367995B2F__GUID-47075388-1088-459E-988C-E1AD94B93BA4">SQL Type</p>
+                           <p>452, 453</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-339FBFF5-5103-4F1D-B64A-D86367995B2F__GUID-11E16EA2-B0E3-4A25-A58F-9D5345078832">Range</p>
+                           <p><code class="codeph">1 ≤ n ≤ 255</code></p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-339FBFF5-5103-4F1D-B64A-D86367995B2F__GUID-7ED07402-C72F-44AE-8360-98BC7536AAD9">SQL Type Name</p>
+                           <p><code class="codeph">CHAR(n) FOR MIXED DATA</code></p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="DRDAS449"></a><a id="DRDAS450"></a><a id="DRDAS451"></a><a id="DRDAS448"></a><div class="props_rev_3"><a id="GUID-5789FFAF-AB98-4509-A7B5-74EC1D6645D6" name="GUID-5789FFAF-AB98-4509-A7B5-74EC1D6645D6"></a><h5 id="DRDAS-GUID-5789FFAF-AB98-4509-A7B5-74EC1D6645D6" class="sect5">Longer Version</h5>
+                     <div>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-5789FFAF-AB98-4509-A7B5-74EC1D6645D6__GUID-E32B80D2-ACD8-4A5F-8945-06A172C6C5EF">SQL Type</p>
+                           <p>448, 449</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-5789FFAF-AB98-4509-A7B5-74EC1D6645D6__GUID-435A44EA-241A-4200-A506-736939C77DCA">Range</p>
+                           <p><code class="codeph">256 ≤ n ≤ 32,767</code></p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-5789FFAF-AB98-4509-A7B5-74EC1D6645D6__GUID-F791B4B4-CFF4-4B18-8000-AB6EA90BB24B">SQL Type Name</p>
+                           <p><code class="codeph">VARCHAR(n) FOR MIXED DATA</code></p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div><a id="DRDAS452"></a><div class="props_rev_3"><a id="GUID-70CAA6AC-F5E0-4852-B52E-72814B5E0C68" name="GUID-70CAA6AC-F5E0-4852-B52E-72814B5E0C68"></a><h4 id="DRDAS-GUID-70CAA6AC-F5E0-4852-B52E-72814B5E0C68" class="sect4">NCHAR(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>National fixed length character string; there are two possibilities, determined by the range necessary for the datatype: converts to <code class="codeph">CHAR(n)</code> for n under <code class="codeph">256</code>, and to <code class="codeph">VARCHAR(n)</code> for longer character strings.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="DRDAS454"></a><a id="DRDAS455"></a><a id="DRDAS456"></a><a id="DRDAS453"></a><div class="props_rev_3"><a id="GUID-7EC9D711-CA8B-42AE-8539-860044414AEB" name="GUID-7EC9D711-CA8B-42AE-8539-860044414AEB"></a><h5 id="DRDAS-GUID-7EC9D711-CA8B-42AE-8539-860044414AEB" class="sect5">Shorter version</h5>
+                     <div>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-7EC9D711-CA8B-42AE-8539-860044414AEB__GUID-35183132-E227-499A-8D2C-5CFBA6C38AA4">SQL Type</p>
+                           <p>468, 469</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-7EC9D711-CA8B-42AE-8539-860044414AEB__GUID-2E01A07C-3099-4F79-9DDD-0E068364AD2A">Range</p>
+                           <p><code class="codeph">1 ≤ n ≤ 255</code></p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-7EC9D711-CA8B-42AE-8539-860044414AEB__GUID-CC67A692-793F-4BBB-99FB-CAF0E599A774">SQL Type Name</p>
+                           <p><code class="codeph">GRAPHIC(n)</code></p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="DRDAS458"></a><a id="DRDAS459"></a><a id="DRDAS460"></a><a id="DRDAS457"></a><div class="props_rev_3"><a id="GUID-50BC3176-BE8E-4319-9780-C95FD915F7AE" name="GUID-50BC3176-BE8E-4319-9780-C95FD915F7AE"></a><h5 id="DRDAS-GUID-50BC3176-BE8E-4319-9780-C95FD915F7AE" class="sect5">Longer Version</h5>
+                     <div>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-50BC3176-BE8E-4319-9780-C95FD915F7AE__GUID-6C410FE2-964A-4D54-82F7-3875B6A80802">SQL Type</p>
+                           <p>464, 465</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-50BC3176-BE8E-4319-9780-C95FD915F7AE__GUID-2BE9393B-7FE7-484B-AE33-1572B8ECC9D3">Range</p>
+                           <p><code class="codeph">256 ≤ n ≤ 32,767</code></p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-50BC3176-BE8E-4319-9780-C95FD915F7AE__GUID-0784C480-C4A6-41A7-9B32-4879E3275226">SQL Type Name</p>
+                           <p><code class="codeph">VARGRAPHIC(n)</code></p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div><a id="DRDAS462"></a><a id="DRDAS463"></a><a id="DRDAS461"></a><div class="props_rev_3"><a id="GUID-A5764D29-755E-4A56-8C6F-ABAEB5B568E2" name="GUID-A5764D29-755E-4A56-8C6F-ABAEB5B568E2"></a><h4 id="DRDAS-GUID-A5764D29-755E-4A56-8C6F-ABAEB5B568E2" class="sect4">UROWID</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle universal <code class="codeph">ROWID</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A5764D29-755E-4A56-8C6F-ABAEB5B568E2__GUID-43B48C2E-E98C-4A13-B4A0-A932750878D3">SQL Type</p>
+                        <p>908, 909</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-A5764D29-755E-4A56-8C6F-ABAEB5B568E2__GUID-7AD75460-2145-456A-A0DF-526DCAC19830">SQL Type Name</p>
+                        <p><code class="codeph">VARBINARY(4000)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS465"></a><a id="DRDAS466"></a><a id="DRDAS464"></a><div class="props_rev_3"><a id="GUID-6BF4C73E-B2FB-44FF-A411-2F1434563003" name="GUID-6BF4C73E-B2FB-44FF-A411-2F1434563003"></a><h4 id="DRDAS-GUID-6BF4C73E-B2FB-44FF-A411-2F1434563003" class="sect4">DATE</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle <code class="codeph">DATE</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6BF4C73E-B2FB-44FF-A411-2F1434563003__GUID-9CDB3105-D7C8-42EF-AC12-8F204CB8F212">SQL Type</p>
+                        <p>384, 385</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6BF4C73E-B2FB-44FF-A411-2F1434563003__GUID-6BB5F1A1-88CF-4E61-BDF1-92969F46201E">SQL Type Name</p>
+                        <p><code class="codeph">DATE</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS468"></a><a id="DRDAS469"></a><a id="DRDAS467"></a><div class="props_rev_3"><a id="GUID-162718FC-6B5A-4CDA-BA50-AE7CD68F15EA" name="GUID-162718FC-6B5A-4CDA-BA50-AE7CD68F15EA"></a><h4 id="DRDAS-GUID-162718FC-6B5A-4CDA-BA50-AE7CD68F15EA" class="sect4">TIMESTAMP</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle <code class="codeph">TIMESTAMP</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-162718FC-6B5A-4CDA-BA50-AE7CD68F15EA__GUID-B13FE33A-8EF6-435B-820D-3A0E6C4DA819">SQL Type</p>
+                        <p>392, 393</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-162718FC-6B5A-4CDA-BA50-AE7CD68F15EA__GUID-B2800A1B-86C1-48E1-9192-429241ED5C96">SQL Type Name</p>
+                        <p><code class="codeph">TIMESTAMP</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS471"></a><a id="DRDAS472"></a><a id="DRDAS470"></a><div class="props_rev_3"><a id="GUID-4A84CEBC-1E49-42D2-A0DD-B321D54B5F26" name="GUID-4A84CEBC-1E49-42D2-A0DD-B321D54B5F26"></a><h4 id="DRDAS-GUID-4A84CEBC-1E49-42D2-A0DD-B321D54B5F26" class="sect4">TIMESTAMP WITH LOCAL TIME ZONE</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle <code class="codeph">TIMESTAMP WITH LOCAL TIME ZONE</code> 
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4A84CEBC-1E49-42D2-A0DD-B321D54B5F26__GUID-C24E6C58-CC63-4684-BDE3-54ADFC8D3138">SQL Type</p>
+                        <p>392, 393</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-4A84CEBC-1E49-42D2-A0DD-B321D54B5F26__GUID-226D6025-2F52-49BD-9EDA-EB915BD4B3B9">SQL Type Name</p>
+                        <p><code class="codeph">TIMESTAMP</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS474"></a><a id="DRDAS475"></a><a id="DRDAS476"></a><a id="DRDAS473"></a><div class="props_rev_3"><a id="GUID-6F5AD914-1819-4B35-B1C6-2BF889BB8077" name="GUID-6F5AD914-1819-4B35-B1C6-2BF889BB8077"></a><h4 id="DRDAS-GUID-6F5AD914-1819-4B35-B1C6-2BF889BB8077" class="sect4">TIMESTAMP(p) WITH TIME ZONE</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle <code class="codeph">TIMESTAMP WITH LOCAL TIME ZONE</code> 
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6F5AD914-1819-4B35-B1C6-2BF889BB8077__GUID-38664BA1-9E55-4A08-86ED-7782AEC649A1">SQL Type</p>
+                        <p>448, 449</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6F5AD914-1819-4B35-B1C6-2BF889BB8077__GUID-F70623DD-21DB-4892-BDB3-DC03AD0264A2">Range</p>
+                        <p><code class="codeph">0 ≤ p ≤ 9</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6F5AD914-1819-4B35-B1C6-2BF889BB8077__GUID-7127E306-2177-4825-8A80-9F6BA5CBF539">SQL Type Name</p>
+                        <p><code class="codeph">VARCHAR(n) FOR MIXED DATA</code></p>
+                        <p><code class="codeph">n=148</code> for <code class="codeph">TIMESTAMP(0) WITH TIME ZONE</code>; otherwise, <code class="codeph">149+p</code> for <code class="codeph">TIMESTAMP(p)</code> <code class="codeph">WITH TIME ZONE</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS478"></a><a id="DRDAS479"></a><a id="DRDAS480"></a><a id="DRDAS477"></a><div class="props_rev_3"><a id="GUID-9B79C1A2-324E-4C5C-B8C4-0C12724FB903" name="GUID-9B79C1A2-324E-4C5C-B8C4-0C12724FB903"></a><h4 id="DRDAS-GUID-9B79C1A2-324E-4C5C-B8C4-0C12724FB903" class="sect4">RAW(n)</h4>
+                  <div>
+                     <div class="section">
+                        <p>Binary variable length string</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9B79C1A2-324E-4C5C-B8C4-0C12724FB903__GUID-7FC94E6D-0FEA-49F0-BF14-A701EE82B92D">SQL Type</p>
+                        <p>908, 909</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9B79C1A2-324E-4C5C-B8C4-0C12724FB903__GUID-F2DCC2A2-976D-4AD0-A813-FDBCD4765F70">Range</p>
+                        <p><code class="codeph">1 ≤ n ≤ 2000</code></p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-9B79C1A2-324E-4C5C-B8C4-0C12724FB903__GUID-F79A510B-8F22-4174-A2FE-10909F6460B1">SQL Type Name</p>
+                        <p><code class="codeph">VARBINARY(n)</code></p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DRDAS482"></a><a id="DRDAS483"></a><a id="DRDAS481"></a><div class="props_rev_3"><a id="GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1" name="GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1"></a><h4 id="DRDAS-GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1" class="sect4">NUMBER and FLOAT</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle <code class="codeph">NUMBER</code> and <code class="codeph">FLOAT</code> may be used to represent several numeric types:
+                        </p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>simple integer types with only a decimal precision</p>
+                           </li>
+                           <li>
+                              <p>fixed-point decimal types with a specific precision and scale</p>
+                           </li>
+                           <li>
+                              <p>floating point types with up to <code class="codeph">38</code> decimal digits of precision and an exponent
+                              </p>
+                           </li>
+                        </ul>
+                        <p>Additionally, <code class="codeph">NUMBER</code> may be defined with a scale that is greater than precision, with negative scale, and as a <code class="codeph">FLOAT</code> with binary precision. See <a href="datatype-support-and-conversion.html#GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1__CDECFBGG" title="Converting Oracle NUMBER to DRDA datatype. The first column lists the Oracle datatype variant, the second column lists the corresponding DRDA datatype, and the third column is for notes on compatibility">Table 7-1</a> and <a href="datatype-support-and-conversion.html#GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1__CDEHEGDF" title="Converting Oracle FLOAT to DRDA datatype. The first column lists the Oracle datatype variant, the second column lists the corresponding DRDA datatype, and the third colum is for notes on compatibility">Table 7-2</a> for details.
+                        </p>
+                        <p>Note that the general form of this datatype is <code class="codeph">NUMBER(</code><span class="italic"><code class="codeph">p</code></span><code class="codeph">,</code><span class="italic"><code class="codeph">s</code></span><code class="codeph">)</code>, where <span class="italic"><code class="codeph">p</code></span> is the variable for precision and <span class="italic"><code class="codeph">s</code></span> is the variable for scale.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="tblformal" id="GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1__CDECFBGG">
+                        <p class="titleintable">Table 7-1 Converting Oracle NUMBER Variants to DRDA Datatypes</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="Converting Oracle NUMBER Variants to DRDA Datatypes" summary="Converting Oracle NUMBER to DRDA datatype. The first column lists the Oracle datatype variant, the second column lists the corresponding DRDA datatype, and the third column is for notes on compatibility" width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="27%" id="d7698e4112">Oracle Variant of NUMBER(p,s)</th>
+                                 <th align="left" valign="bottom" width="19%" id="d7698e4115">DRDA Datatype</th>
+                                 <th align="left" valign="bottom" width="54%" id="d7698e4118">Notes</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4123" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(1)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4123 d7698e4115 ">
+                                    <p><code class="codeph">DECIMAL(1)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4123 d7698e4118 ">
+                                    <p></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4134" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(2-4)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4134 d7698e4115 ">
+                                    <p><code class="codeph">SMALLINT</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4134 d7698e4118 ">
+                                    <p></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4145" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(5-9</code>)
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4145 d7698e4115 ">
+                                    <p><code class="codeph">INTEGER</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4145 d7698e4118 ">
+                                    <p></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4157" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(10-18)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4157 d7698e4115 ">
+                                    <p><code class="codeph">BIGINT</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4157 d7698e4118 ">
+                                    <p>Whenever the client does not support <code class="codeph">BIGINT</code>, the mapping is made to <code class="codeph">DECIMAL(n)</code></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4174" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(19-31)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4174 d7698e4115 ">
+                                    <p><code class="codeph">DECIMAL(</code><span class="italic"><code class="codeph">p</code></span><code class="codeph">)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4174 d7698e4118 ">
+                                    <p></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4190" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(1-31, 1-31)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4190 d7698e4115 ">
+                                    <p><code class="codeph">DECIMAL(p,s)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4190 d7698e4118 ">
+                                    <p>For both datatypes, <code class="codeph">scale &lt;= precision</code></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4204" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(32-38)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4204 d7698e4115 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4204 d7698e4118 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE.</code></p>
+                                    <p>Oracle <code class="codeph">NUMBER(35-38)</code> is rounded to <code class="codeph">34</code> digits during conversion.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4229" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(1-38, -s)</code></p>
+                                    <p>where scale is negative</p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4229 d7698e4115 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4229 d7698e4118 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code>.
+                                    </p>
+                                    <p>Oracle <code class="codeph">NUMBER(35-38)</code> is rounded to <code class="codeph">34</code> digits during conversion.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4257" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(1-38, s)</code></p>
+                                    <p>where scale &gt; precision</p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4257 d7698e4115 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4257 d7698e4118 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code>.
+                                    </p>
+                                    <p>Oracle <code class="codeph">NUMBER(35-38)</code> is rounded to <code class="codeph">34</code> digits during conversion.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4285" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER(32-38, s)</code></p>
+                                    <p>with any scale</p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4285 d7698e4115 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4285 d7698e4118 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code>.
+                                    </p>
+                                    <p>Oracle <code class="codeph">NUMBER(35-38)</code> is rounded to <code class="codeph">34</code> digits during conversion.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4313" headers="d7698e4112 ">
+                                    <p><code class="codeph">NUMBER</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4313 d7698e4115 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4313 d7698e4118 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code></p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                     <div class="tblformal" id="GUID-DF4DAA57-81EF-4246-83AE-7B7BB0B9FCE1__CDEHEGDF">
+                        <p class="titleintable">Table 7-2 Converting Oracle FLOAT Variants to DRDA Datatypes</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="Converting Oracle FLOAT Variants to DRDA Datatypes" summary="Converting Oracle FLOAT to DRDA datatype. The first column lists the Oracle datatype variant, the second column lists the corresponding DRDA datatype, and the third colum is for notes on compatibility" width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="27%" id="d7698e4340">Oracle Variant of FLOAT(n)</th>
+                                 <th align="left" valign="bottom" width="19%" id="d7698e4343">DRDA Datatype</th>
+                                 <th align="left" valign="bottom" width="54%" id="d7698e4346">Notes</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4351" headers="d7698e4340 ">
+                                    <p><code class="codeph">FLOAT(1-53)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4351 d7698e4343 ">
+                                    <p><code class="codeph">DECFLOAT16</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4351 d7698e4346 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4368" headers="d7698e4340 ">
+                                    <p><code class="codeph">FLOAT(n)</code></p>
+                                    <p>where <code class="codeph">n &gt; 53</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4368 d7698e4343 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4368 d7698e4346 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code></p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="27%" id="d7698e4389" headers="d7698e4340 ">
+                                    <p><code class="codeph">FLOAT</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d7698e4389 d7698e4343 ">
+                                    <p><code class="codeph">DECFLOAT34</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="54%" headers="d7698e4389 d7698e4346 ">
+                                    <p>Whenever the client does not support <code class="codeph">DECFLOAT</code>, the mapping is made to <code class="codeph">DOUBLE</code></p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                  </div>
+               </div>
+            </div><a id="DRDAS484"></a><div class="props_rev_3"><a id="GUID-34EE673C-D932-45E9-B876-0EC6B9F8ECE1" name="GUID-34EE673C-D932-45E9-B876-0EC6B9F8ECE1"></a><h3 id="DRDAS-GUID-34EE673C-D932-45E9-B876-0EC6B9F8ECE1" class="sect3">Datatype Equivalence and Remapping</h3>
+               <div>
+                  <p>Oracle does not provide discrete database datatypes such as <code class="codeph">SMALLINT</code>, <code class="codeph">INTEGER</code> or <code class="codeph">BIGINT</code> DRDA datatypes. In some cases, often to limit the column's range of values, it may become necessary to define a numeric column with specific precision or scale. Oracle therefore supplies a more flexible numeric database datatype, Oracle <code class="codeph">NUMBER</code>, which may be defined by specified precision and scale. Oracle <code class="codeph">NUMBER</code> may contain both integral and fractional values in the same column, if no specific range limitations have been defined for the column.
+                  </p>
+                  <p>Consideration, therefore, must be made for appropriate database datatypes when migrating data from a non-Oracle database. This is particularly important when migrating applications that expect to handle data of a limited range or form. </p>
+                  <p>For example, if the application accepts a data range specific to <code class="codeph">NUMBER(5)</code>, but the column is defined by datatype <code class="codeph">NUMBER</code>, it is likely that an inappropriate or invalid values may be inserted into the column and causing data issues when using or retrieving that value. 
+                  </p>
+                  <p>If the table definition is mapped to a close approximation of the original non-Oracle data, there should be no datatype compatibility issues. However, in cases where data that was not modeled accurately must be accessed, or if a query uses an expression that yields a non-range limited datatype, it may become necessary to apply an alternate datatype that is more compatible.</p>
+                  <p>Consider that the <code class="codeph">COUNT(*)</code> expression results in a non-range limited Oracle <code class="codeph">NUMBER</code> datatype. If the application expects the result of the query that uses <code class="codeph">COUNT</code> to be represented as a DRDA <code class="codeph">INTEGER</code> datatype, it becomes necessary perform one of the following steps to avoid a type mis-match:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>change the application to use the Oracle <code class="codeph">NUMBER</code></p>
+                     </li>
+                     <li>
+                        <p>change the query expression to <code class="codeph">CAST</code> the result to the appropriate form
+                        </p>
+                     </li>
+                     <li>
+                        <p>remap the resulting datatype form</p>
+                     </li>
+                  </ul>
+                  <p>Often, it is neither practical nor feasible to modify the application, and remapping the datatype is the only workable solution.</p>
+                  <p>The Application Server has a limited facility to convert Oracle <code class="codeph">NUMBER</code> datatype results to more discrete equivalent DRDA datatypes, on a per table or per column basis. This mechanism may also be used when the client AR is unable to properly convert the default mappings of Oracle <code class="codeph">NUMBER</code> to DRDA datatype. See “Conversion of Oracle Datatype to DRDA” for all supported conversions.
+                  </p>
+               </div>
+               <div>
+                  <div class="relinfo">
+                     <p><strong>Related Topics</strong></p>
+                     <ul>
+                        <li><a href="datatype-support-and-conversion.html#GUID-D4FA2095-27FC-4A95-8C7C-89CB20E7B7E5">Conversion of Oracle Datatype to DRDA</a></li>
+                     </ul>
+                  </div>
+               </div>
+               
+               <div class="props_rev_3"><a id="GUID-587B314F-8E63-498D-AB9E-94A460928666" name="GUID-587B314F-8E63-498D-AB9E-94A460928666"></a><h4 id="DRDAS-GUID-587B314F-8E63-498D-AB9E-94A460928666" class="sect4">Applying Datatype Mapping</h4>
+                  <div>
+                     <div class="section">
+                        <p>To apply datatype mappings, you must invoke the PL/SQL function. Refer the section on “<code class="codeph">SET_TYPEMAP</code>.” The procedure <code class="codeph">SET_TYPEMAP</code> implements a specified type conversion map for a specified table and column expression. The syntax for the type map object name is <span class="italic"><code class="codeph">table_name</code></span><code class="codeph">:</code><span class="italic"><code class="codeph">column_expression</code></span>. The wildcard character, <code class="codeph">*</code>, may be used in place of table name to include all tables with the specified column expression. It may also be used to indicate that all column expressions for a specified table that evaluate to an Oracle <code class="codeph">NUMBER</code> be type mapped. 
+                        </p>
+                        <p>The syntax for converting from Oracle <code class="codeph">NUMBER</code> to another datatype is <code class="codeph">NUMBER=</code><span class="italic"><code class="codeph">datatype</code></span>. See Oracle <code class="codeph">NUMBER TYPEMAP</code> Datatype Names for available datatype names.
+                        </p>
+                        <p>The default mapping of Oracle <code class="codeph">NUMBER</code> is to DRDA <code class="codeph">DECFLOAT(34)</code>. “Using <code class="codeph">TYPEMAP</code> in Queries that Use the Column Directly” shows that queries that use a column directly may use re-mapping on the retrieved column as a DRDA type <code class="codeph">INTEGER</code>. When using a column in a function it may be necessary to apply a <code class="codeph">typemap</code> for the expression, as described in “Using <code class="codeph">TYPEMAP</code> in a function”.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="relinfo">
+                        <p><strong>Related Topics</strong></p>
+                        <ul>
+                           <li><a href="datatype-support-and-conversion.html#GUID-F5B39B2B-D4D1-4028-8055-C91BEFC2F30F">Using TYPEMAP in Queries</a></li>
+                        </ul>
+                     </div>
+                  </div>
+                  
+               </div><a id="DRDAS485"></a><div class="sect3"><a id="GUID-F5B39B2B-D4D1-4028-8055-C91BEFC2F30F" name="GUID-F5B39B2B-D4D1-4028-8055-C91BEFC2F30F"></a><h4 id="DRDAS-GUID-F5B39B2B-D4D1-4028-8055-C91BEFC2F30F" class="sect4">Using TYPEMAP in Queries</h4>
+                  <div>
+                     <p>Assume that an application expects an <code class="codeph">EMPLOYEE_ID</code> value to be in a format of DRDA type <code class="codeph">INTEGER</code>. 
+                     </p>
+                     <div class="example" id="GUID-F5B39B2B-D4D1-4028-8055-C91BEFC2F30F__CDEFEBBH">
+                        <p class="titleinexample">Example 7-2 Using TYPEMAP in Queries that Use the Column Directly</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE employees(employee_id NUMBER(6), first_name VARCHAR2(20), ...);
+</pre><p>This mapping enforces range limitations. To facilitate this mapping, apply the following <code class="codeph">typemap</code> entry for the applications package <code class="codeph">ORACLE.MYPACKAGE</code>:
+                        </p><pre class="oac_no_warn" dir="ltr">begin
+&nbsp;&nbsp;&nbsp;dbms_drdaas.set_typemap (
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ORACLE', 'MYPACKAGE', 'EMPLOYEES:EMPLOYEE_ID',
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'NUMBER=INTEGER');
+end;</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="DRDAS486"></a><div class="props_rev_3"><a id="GUID-940C9555-A31B-43C8-8F26-EDD9A0AC3E6B" name="GUID-940C9555-A31B-43C8-8F26-EDD9A0AC3E6B"></a><h4 id="DRDAS-GUID-940C9555-A31B-43C8-8F26-EDD9A0AC3E6B" class="sect4">Using TYPEMAP in Functions</h4>
+                  <div>
+                     <div class="section">
+                        <p>When using the <code class="codeph">COUNT</code> function against the column, as in
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-940C9555-A31B-43C8-8F26-EDD9A0AC3E6B__CDEGFFDB">
+                        <p class="titleinexample">Example 7-3 Using TYPEMAP in a Function</p><pre class="oac_no_warn" dir="ltr">SELECT COUNT(employee_id) FROM employees;
+</pre><p>apply the following <code class="codeph">typemap</code> expression:
+                        </p><pre class="oac_no_warn" dir="ltr">begin
+&nbsp;&nbsp;dbms_drdaas.set_typemap (
+&nbsp;&nbsp;&nbsp;&nbsp;'ORACLE', 'MYPACKAGE', 'EMPLOYEES:COUNT(EMPLOYEE_ID)', 
+&nbsp;&nbsp;&nbsp;&nbsp;'NUMBER=INTEGER' );
+end;</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="DRDAS487"></a><div class="props_rev_3"><a id="GUID-AA40B5B7-2BF8-4EE8-83A2-2DEB1A7A1F50" name="GUID-AA40B5B7-2BF8-4EE8-83A2-2DEB1A7A1F50"></a><h4 id="DRDAS-GUID-AA40B5B7-2BF8-4EE8-83A2-2DEB1A7A1F50" class="sect4">Oracle NUMBER TYPEMAP</h4>
+                  <div>
+                     <div class="section">
+                        <p><a href="datatype-support-and-conversion.html#GUID-AA40B5B7-2BF8-4EE8-83A2-2DEB1A7A1F50__CDEIHEJG" title="Oracle NUMBER for mapping to SQL Types, datatype,">Table 7-3</a> lists available <code class="codeph">typemap</code> names and their conversion to DRDA datatypes.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="tblformal" id="GUID-AA40B5B7-2BF8-4EE8-83A2-2DEB1A7A1F50__CDEIHEJG">
+                        <p class="titleintable">Table 7-3 Oracle NUMBER TYPEMAP Datatype Names</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="Oracle NUMBER TYPEMAP Datatype Names" summary="Oracle NUMBER for mapping to SQL Types, datatype," width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="23%" id="d7698e4765">Datatype Name</th>
+                                 <th align="left" valign="bottom" width="18%" id="d7698e4768">SQL Type</th>
+                                 <th align="left" valign="bottom" width="22%" id="d7698e4771">Datatype Size</th>
+                                 <th align="left" valign="bottom" width="36%" id="d7698e4774">Notes</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="23%" id="d7698e4779" headers="d7698e4765 ">
+                                    <p><code class="codeph">SMALLINT</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d7698e4779 d7698e4768 ">
+                                    <p>500, 501</p>
+                                 </td>
+                                 <td align="left" valign="top" width="22%" headers="d7698e4779 d7698e4771 ">
+                                    <p><code class="codeph">2</code> bytes
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="36%" headers="d7698e4779 d7698e4774 ">
+                                    <p>small integer</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="23%" id="d7698e4795" headers="d7698e4765 ">
+                                    <p><code class="codeph">INTEGER</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d7698e4795 d7698e4768 ">
+                                    <p>496, 497</p>
+                                 </td>
+                                 <td align="left" valign="top" width="22%" headers="d7698e4795 d7698e4771 ">
+                                    <p><code class="codeph">4</code> bytes
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="36%" headers="d7698e4795 d7698e4774 ">
+                                    <p>integer</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="23%" id="d7698e4811" headers="d7698e4765 ">
+                                    <p><code class="codeph">BIGINT</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d7698e4811 d7698e4768 ">
+                                    <p>492, 493</p>
+                                 </td>
+                                 <td align="left" valign="top" width="22%" headers="d7698e4811 d7698e4771 ">
+                                    <p><code class="codeph">8</code> bytes
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="36%" headers="d7698e4811 d7698e4774 ">
+                                    <p>large integer</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="23%" id="d7698e4827" headers="d7698e4765 ">
+                                    <p><code class="codeph">FLOAT</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d7698e4827 d7698e4768 ">
+                                    <p>480. 481</p>
+                                 </td>
+                                 <td align="left" valign="top" width="22%" headers="d7698e4827 d7698e4771 ">
+                                    <p><code class="codeph">4</code> bytes
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="36%" headers="d7698e4827 d7698e4774 ">
+                                    <p>single-precision floating point</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="23%" id="d7698e4843" headers="d7698e4765 ">
+                                    <p><code class="codeph">DOUBLE</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d7698e4843 d7698e4768 ">
+                                    <p>480, 481</p>
+                                 </td>
+                                 <td align="left" valign="top" width="22%" headers="d7698e4843 d7698e4771 ">
+                                    <p><code class="codeph">8</code> bytes
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="36%" headers="d7698e4843 d7698e4774 ">
+                                    <p>double-precision floating point</p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

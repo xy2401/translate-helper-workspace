@@ -1,0 +1,1329 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="The Rolling Upgrade Using Oracle Active Data Guard feature provides a streamlined method of performing rolling upgrades.">
+      <meta name="description" content="The Rolling Upgrade Using Oracle Active Data Guard feature provides a streamlined method of performing rolling upgrades.">
+      <title>Using DBMS_ROLLING to Perform a Rolling Upgrade</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Concepts and Administration ">
+      <meta property="og:description" content="The Rolling Upgrade Using Oracle Active Data Guard feature provides a streamlined method of performing rolling upgrades.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Concepts and Administration">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="data-guard-concepts-and-administration.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-02-12T10:50:21-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96244-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="using-sql-apply-to-perform-rolling-upgrade.html" title="Previous" type="text/html">
+      <link rel="next" href="examples-of-using-oracle-data-guard.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Data Guard Concepts and Administration">
+    <meta name="dcterms.isVersionOf" content="SBYDB">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="using-sql-apply-to-perform-rolling-upgrade.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="examples-of-using-oracle-data-guard.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Concepts and Administration </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="oracle-data-guard-concepts.html" property="item" typeof="WebPage"><span property="name">  Concepts and Administration </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Using DBMS_ROLLING to Perform a Rolling Upgrade </li>
+            </ol>
+            <a id="GUID-70C09F5B-90BE-4C8C-96A5-45A52E05D380" name="GUID-70C09F5B-90BE-4C8C-96A5-45A52E05D380"></a><a id="SBYDB5214"></a>
+            
+            <h2 id="SBYDB-GUID-70C09F5B-90BE-4C8C-96A5-45A52E05D380" class="sect2"><span class="enumeration_chapter">14 </span>Using DBMS_ROLLING to Perform a Rolling Upgrade 
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>The Rolling Upgrade Using Oracle Active Data Guard feature provides a streamlined method of performing rolling upgrades.</p>
+               <p>It is implemented using the <code class="codeph">DBMS_ROLLING</code> PL/SQL package, which enables you to upgrade the database software in an Oracle Data Guard configuration in a rolling fashion. The Rolling Upgrade Using Oracle Active Data Guard feature requires a license for the Oracle Active Data Guard option.
+               </p>
+               <p>You can use this feature to perform database version upgrades starting with the first patchset of Oracle Database 12<span class="italic">c</span>. You cannot use it to upgrade from any version earlier than the first Oracle Database 12<span class="italic">c</span> patchset. This means that the manual Transient Logical Standby upgrade procedure must still be used when upgrading from Oracle Database 11<span class="italic">g</span> to Oracle Database12<span class="italic">c,</span> or when upgrading from the initial Oracle Database 12<span class="italic">c</span> release to the first patchset of Oracle Database 12<span class="italic">c</span>.
+               </p>
+               <p>The <code class="codeph">DBMS_ROLLING</code> package performs Oracle Data Guard switchovers to minimize downtime of the primary database service. Prior to using <code class="codeph">DBMS_ROLLING</code>, the Oracle Data Guard environment must be properly configured to accommodate switchovers. The setup requirements differ depending on whether Oracle Data Guard broker is active during execution of <code class="codeph">DBMS_ROLLING</code>:
+               </p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p> If the broker is going to be active during <code class="codeph">DBMS_ROLLING</code>, then see <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=DGBKR-GUID-AC6A6D2B-1112-422B-8A41-02FAC40E2078" target="_blank"><span><cite>Oracle Data Guard Broker</cite></span></a> for information about setting up the broker for a switchover.
+                     </p>
+                  </li>
+                  <li>
+                     <p>If the broker is not going to be active during <code class="codeph">DBMS_ROLLING</code>, then see <a href="managing-oracle-data-guard-role-transitions.html#GUID-CE785178-FD22-4A81-9248-DF5ED8E91635" title="Role transition steps differ depending on whether you are performing a switchover or a failover.">Role Transitions Involving Logical Standby Databases</a>. The absence of Oracle Data Guard broker means that <code class="codeph">LOG_ARCHIVE_DEST_</code><span class="variable" translate="no">n</span> parameters must be properly configured on the target primary database so that redo shipping resumes after the switchover.
+                     </p>
+                  </li>
+               </ul>
+               <p>Additionally, you can use this feature immediately for other database maintenance tasks beginning with Oracle Database 12<span class="italic">c</span> Release 1 (12.1). The database where maintenance is performed must be operating at a minimum of Oracle 12.1. Such maintenance tasks include:
+               </p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p>Adding partitioning to non-partitioned tables</p>
+                  </li>
+                  <li>
+                     <p>Changing BasicFiles LOBs to SecureFiles LOBs</p>
+                  </li>
+                  <li>
+                     <p>Changing <code class="codeph">XMLType</code> stored as <code class="codeph">CLOB</code> to <code class="codeph">XMLtype</code> stored as binary XML
+                     </p>
+                  </li>
+                  <li>
+                     <p>Altering tables to be OLTP-compressed</p>
+                  </li>
+               </ul>
+               <p>See the following topics:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7" title="To upgrade the database software in an Oracle Data Guard configuration in a rolling fashion, you first designate a physical standby as the future primary database.">Concepts New to Rolling Upgrades</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-BC4E1CA8-4431-4FC0-8437-106C934E88EA" title="The steps to performing a rolling upgrade using DBMS_ROLLING on a multitenant container database (CDB) are no different from non-CDB environments, but there are additional requirements and considerations.">DBMS_ROLLING Upgrades and CDBs</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-D42FC23B-C6F4-44D1-A46A-202AB845BB80" title="There are three stages to the rolling upgrade process using the DBMS_ROLLING PL/SQL Package: specification, compilation, and execution.">Overview of Using DBMS_ROLLING</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE" title="Planning your rolling upgrade is essential to a successful upgrade experience. In the planning phase you specify various upgrade parameters and build an upgrade plan.">Planning a Rolling Upgrade</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6" title="Follow these steps to perform a rolling upgrade using the DBMS_ROLLING PL/SQL package.">Performing a Rolling Upgrade</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-A1348F5A-AFBC-4090-822F-23DF87CE7D3C" title="There are several views you can query for information about the databases involved in a rolling upgrade.">Monitoring a Rolling Upgrade</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5B34621B-FABE-4C50-A2C0-ED249844934D" title="To roll back a rolling upgrade procedure, you can call the DBMS_ROLLING.ROLLBACK_PLAN procedure.">Rolling Back a Rolling Upgrade</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-1019E58C-1370-48A6-BC67-FA42074C0351" title="If a situation arises in which a rolling upgrade is underway and you need to perform a failover in your Oracle Data Guard configuration before the rollover completes, you can do so only in these circumstances.">Handling Role Changes That Occur During a Rolling Upgrade</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9" title="These examples show a variety of rolling upgrade scenarios.">Examples of Rolling Upgrades</a></p>
+                  </li>
+               </ul>
+            </div><a id="SBYDB5406"></a><a id="SBYDB5431"></a><div class="props_rev_3"><a id="GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7" name="GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7"></a><h3 id="SBYDB-GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7" class="sect3"><span class="enumeration_section">14.1 </span>Concepts New to Rolling Upgrades
+               </h3>
+               <div>
+                  <p>To upgrade the database software in an Oracle Data Guard configuration in a rolling fashion, you first designate a physical standby as the future primary database.</p>
+                  <p>Conceptually, the rolling upgrade process splits the Oracle Data Guard configuration into two groups: the leading group (LG) and the trailing group (TG).</p>
+                  <p>Databases in the leading group are upgraded first; hence the name leading group. The leading group contains the designated future primary database, and the physical standbys that you can configure to protect the designated future primary. The future primary is first converted into a logical standby database and then the new database software is installed on it and the upgrade process is run. Other standby databases in the leading group also must have their software upgraded at this point.</p>
+                  <p>The trailing group contains the original primary database and standby databases that protect the original primary during the rolling upgrade process. While the databases in the leading group are going through the upgrade process, user applications can still be connected to the original primary and making changes. The trailing group databases continue running the old database software until all the databases in the leading group are upgraded and the future primary has caught up with the original primary by applying the changes that were generated at the original primary database during the upgrade window. At this point a switchover is done to transfer the primary role to the designated future primary database, and the user applications are switched over to the new primary database. New software is then installed on the databases that are part of the trailing group, and they are reinstated into the configuration as standbys to the new primary database.</p>
+                  <p>The standbys in the respective groups are called the Leading Group Standbys (LGS) and Trailing Group Standbys (TGS). Other than the designated future primary, all other standbys in the leading group can only be physical standbys. The trailing group can contain both physical and logical standbys; they are called Trailing Group Physical (TGP) and Trailing Group Logical (TGL) in cases where it is necessary to make a distinction between the standby types. The designated future primary is also called the Leading Group Master (LGM) and the original primary database is called the Trailing Group Master (TGM).</p>
+                  <p>The <code class="codeph">DBMS_ROLLING</code> package increases the robustness of the rolling upgrade process as follows:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>It can handle failures during the rolling upgrade process. The original primary or the TGM database can fail. You can initiate a regular failover operation to any other physical standby in the trailing group, and then designate the new primary database as the TGM.</p>
+                     </li>
+                     <li>
+                        <p>It allows data protection of the LGM (the designated future primary) during the rolling upgrade process. You can set up physical standbys for the LGM database, and thus protect it during the upgrade process and also achieve Zero Data Loss after the upgrade. After the LGM has been successfully upgraded, a failure in the LGM can be accommodated by failing over to any of its physical standby databases. You can then designate the failover target database to take over the role of the LGM.</p>
+                     </li>
+                  </ul>
+                  <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7__CJAFAAHA" title="This table describes the difference between Trailing Group Physical standbys and Leading Group Physical standbys. There are 4 columns and two rows, excluding the header row.">Table 14-1</a> compares the characteristics of TGP standbys versus LGP standbys before and after a switchover operation.
+                  </p>
+                  <div class="tblformalwide" id="GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7__CJAFAAHA">
+                     <p class="titleintable">Table 14-1 Trailing Group Physicals (TGP) Versus Leading Group Physicals (LGP)</p>
+                     <table cellpadding="4" cellspacing="0" class="FormalWide" title="Trailing Group Physicals (TGP) Versus Leading Group Physicals (LGP)" summary="This table describes the difference between Trailing Group Physical standbys and Leading Group Physical standbys. There are 4 columns and two rows, excluding the header row." width="100%" frame="hsides" border="1" rules="rows">
+                        <thead>
+                           <tr align="left" valign="top">
+                              <th align="left" valign="bottom" width="25%" id="d36675e367">Standby Type</th>
+                              <th align="left" valign="bottom" width="23%" id="d36675e370">Before Switchover</th>
+                              <th align="left" valign="bottom" width="23%" id="d36675e373">After Switchover</th>
+                              <th align="left" valign="bottom" width="29%" id="d36675e376">Notes</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="25%" id="d36675e381" headers="d36675e367 ">
+                                 <p>Trailing Group Physical (TGP)</p>
+                              </td>
+                              <td align="left" valign="top" width="23%" headers="d36675e381 d36675e370 ">
+                                 <p>Low apply lag</p>
+                                 <p>Lower data loss risk</p>
+                              </td>
+                              <td align="left" valign="top" width="23%" headers="d36675e381 d36675e373 ">
+                                 <p>High apply lag</p>
+                                 <p>Higher data loss risk</p>
+                              </td>
+                              <td align="left" valign="top" width="29%" headers="d36675e381 d36675e376 ">
+                                 <p>Can fail over to the primary role</p>
+                                 <p>Must flash back like the original primary</p>
+                              </td>
+                           </tr>
+                           <tr align="left" valign="top">
+                              <td align="left" valign="top" width="25%" id="d36675e400" headers="d36675e367 ">
+                                 <p>Leading Group Physical (LGP)</p>
+                              </td>
+                              <td align="left" valign="top" width="23%" headers="d36675e400 d36675e370 ">
+                                 <p>High apply lag</p>
+                                 <p>Higher data loss risk</p>
+                              </td>
+                              <td align="left" valign="top" width="23%" headers="d36675e400 d36675e373 ">
+                                 <p>Low apply lag</p>
+                                 <p>Lower data loss risk</p>
+                              </td>
+                              <td align="left" valign="top" width="29%" headers="d36675e400 d36675e376 ">
+                                 <p>Can fail over to the transient logical standby role</p>
+                                 <p>Does not have to flash back like the original primary</p>
+                              </td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+                  <!-- class="inftblhruleinformal" -->
+                  <div class="infoboxnotealso" id="GUID-647FF758-5B53-44AE-BB80-B6FA506F09C7__GUID-83F26596-3D2D-4304-93D7-2F74735BCBEF">
+                     <p class="notep1">See Also:</p>
+                     <p></p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=ARPLS73534" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a> for a description of the <code class="codeph">DBMS_ROLLING</code> PL/SQL package
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="data-type-ddl-support-on-logical-standby-databases.html#GUID-13DDE926-B175-488D-9037-F707A4D2256D" title="Before you perform a rolling upgrade, determine whether any of the tables involved contain data types that are unsupported on logical standby databases.">Unsupported Tables During Rolling Upgrades</a> for information about how to determine whether any of the tables involved in the upgrade contain data types that are unsupported when performing an upgrade using the <code class="codeph">DBMS_ROLLING</code> PL/SQL package
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="data-type-ddl-support-on-logical-standby-databases.html#GUID-F54904C7-F666-4CC3-B1CB-493525476D2F" title="Replication of certain packages is available only in the context of rolling upgrades performed using the DBMS_ROLLING package.">Additional PL/SQL Package Support Available Only in the Context of DBMS_ROLLING Upgrades</a> for information about PL/SQL packages that are supported only in the context of a <code class="codeph">DBMS_ROLLING</code> upgrade
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+               <div class="sect3"><a id="GUID-5DDF9197-33A4-4279-8058-46B3B8C0FAE4" name="GUID-5DDF9197-33A4-4279-8058-46B3B8C0FAE4"></a><h4 id="SBYDB-GUID-5DDF9197-33A4-4279-8058-46B3B8C0FAE4" class="sect4"><span class="enumeration_section">14.1.1 </span>Data Guard Broker Support for DBMS_ROLLING Upgrades
+                  </h4>
+                  <div>
+                     <p>As of Oracle Database 12<span class="italic">c</span> Release 2 (12.2.0.1), Data Guard broker can remain on during a <code class="codeph">DBMS_ROLLING</code> rolling upgrade; there is no longer any need to disable it.
+                     </p>
+                     <p>Keep the following in mind regarding Data Guard broker support for <code class="codeph">DBMS_ROLLING</code> upgrades:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Broker support is enabled by default during execution of the <code class="codeph">DBMS_ROLLING.BUILD_PLAN</code> procedure if the broker is enabled at the time of the call. When broker support is enabled, the broker sets up the redo transport destinations as necessary from the original primary database as well as from the rolling upgrade target.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The fast-start failover feature must be disabled before starting a <code class="codeph">DBMS_ROLLING</code> upgrade. 
+                           </p>
+                        </li>
+                        <li>
+                           <p>Any attempt to enable fast-start failover while a rolling upgrade is in progress is rejected.</p>
+                        </li>
+                        <li>
+                           <p>While a rolling upgrade is in progress, role changes are permissible only to the standby databases that are protecting the current primary database. The broker reports the role of the rolling upgrade target as <code class="codeph">Transient Logical Standby</code> during a <code class="codeph">SHOW CONFIGURATION</code> command as well as reporting the configuration status as<code class="codeph"> ROLLING DATABASE MAINTENANCE IS IN PROGRESS</code>. If there are standby databases protecting both the original primary and the upgrade target, then this topology is reflected when the <code class="codeph">SHOW CONFIGURATION</code> command is issued from the current primary as well as from the upgrade target (before it has taken over as the primary database).
+                           </p>
+                        </li>
+                        <li>
+                           <p> The broker prevents a role change to a standby that is not protecting the current primary.  This ensures that before the switchover phase, role changes to the Trailing Group Standby are allowed, and after the switchover phase, role changes are only allowed to the Leading Group Standbys.</p>
+                        </li>
+                        <li>
+                           <p>During the start of the upgrade process, if the upgrade target is an Oracle RAC database, then the broker automatically reduces the target standby to one instance and allows the upgrade to proceed.  Without the broker, the start of the upgrade is rejected if it is found that the target has multiple instances running.</p>
+                        </li>
+                        <li>
+                           <p>The broker notifies Oracle Clusterware and Global Data Services as appropriate during the course of the rolling upgrade.</p>
+                        </li>
+                        <li>
+                           <p>Although role transitions are typically performed using the broker, the switchover step in a rolling upgrade should continue to be performed using the <code class="codeph">DBMS_ROLLING.SWITCHOVER</code> procedure.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Information about the status of a rolling upgrade being done using the PL/SQL package <code class="codeph">DBMS_ROLLING</code>, is displayed in the output of the broker commands <code class="codeph">SHOW CONFIGURATION</code> and <code class="codeph">SHOW DATABASE</code>.
+                           </p>
+                           <p>The <code class="codeph">SHOW CONFIGURATION</code> command shows Transient logical standby database as the role of the upgrade target, and <code class="codeph">ROLLING DATABASE MAINTENANCE IN PROGRESS</code> as the configuration status. An example of this output is as follows:
+                           </p><pre class="pre codeblock"><code>Configuration - DRSolution
+
+  Protection Mode: MaxPerformance
+  Members:
+  North_Sales - Primary database
+    South_Sales - Transient logical standby database
+
+Fast-Start Failover: DISABLED
+
+Configuration Status:
+   ROLLING DATABASE MAINTENANCE IN PROGRESS</code></pre><p>The <code class="codeph">SHOW DATABASE</code> command shows a <code class="codeph">WARNING</code> with an appropriate <code class="codeph">ORA</code> error for the upgrade target and the trailing or leading standbys, depending on the current rolling upgrade progress. An example of this output is as follows:
+                           </p><pre class="pre codeblock"><code>Database - South_Sales
+
+  Role: Physical standby database
+  Intended State: APPLY-ON
+  Transport Lag: ***
+  Apply Lag: ***
+  Average Apply Rate: ***
+  Real Time Query: OFF
+  Instance(s):
+    South
+  Database Warning(s):
+    ORA-16866: database converted to transient logical standby database for rolling
+    database maintenance
+Database Status:
+WARNING</code></pre></li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-5DDF9197-33A4-4279-8058-46B3B8C0FAE4__GUID-F6B759E1-5CC1-4C99-847C-4A47F6539563">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../arpls/DBMS_ROLLING.html#ARPLS-GUID-097F1B39-E623-43B5-BA30-DF377BFE05CF" target="_blank">DBMS_ROLLING</a></p>
+                           </li>
+                           <li>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=DGBKR-GUID-1A5D2697-D931-4A48-B54C-CAE223B37733" target="_blank">SHOW CONFIGURATION</a></p>
+                           </li>
+                           <li>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=DGBKR-GUID-9293F2C8-A7D2-442E-B147-A05A54DDE20E" target="_blank">SHOW DATABASE</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="sect2"><a id="GUID-BC4E1CA8-4431-4FC0-8437-106C934E88EA" name="GUID-BC4E1CA8-4431-4FC0-8437-106C934E88EA"></a><h3 id="SBYDB-GUID-BC4E1CA8-4431-4FC0-8437-106C934E88EA" class="sect3"><span class="enumeration_section">14.2 </span>DBMS_ROLLING Upgrades and CDBs
+               </h3>
+               <div>
+                  <p>The steps to performing a rolling upgrade using <code class="codeph">DBMS_ROLLING</code> on a multitenant container database (CDB) are no different from non-CDB environments, but there are additional requirements and considerations.
+                  </p>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-BC4E1CA8-4431-4FC0-8437-106C934E88EA__GUID-D7110B13-4AD6-4485-8C57-8A10D1DEAB59">Requirements Specific to DBMS_ROLLING Upgrades on a CDB</p>
+                     <p>The additional requirements when you use <code class="codeph">DBMS_ROLLING</code> to perform a rolling upgrade on a CDB are as follows.
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The TNS services referenced in the <code class="codeph">LOG_ARCHIVE_DEST_n</code> parameters must be services that resolve to the root container of the destination database. The process assisting <code class="codeph">DBMS_ROLLING</code> performs numerous operations which can only execute from the root container.
+                           </p>
+                        </li>
+                        <li>
+                           <p>All container databases on the transient logical standby must be plugged in and opened prior to calling <code class="codeph">DBMS_ROLLING.SWITCHOVER</code>. This eliminates the possibility that the logical standby apply engine will halt because it cannot apply to a given PDB.
+                           </p>
+                        </li>
+                     </ul>
+                     <p>See <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">Example 14-5</a> for an example rolling upgrade using <code class="codeph">DBMS_ROLLING</code>.
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-BC4E1CA8-4431-4FC0-8437-106C934E88EA__GUID-681E40B4-CFCD-4BF1-A716-41EDD73E71E4">Additional Considerations for DBMS_ROLLING Upgrades on a CDB</p>
+                     <p>Installing, upgrading, or patching of applications installed in application containers is not supported while a<code class="codeph"> DBMS_ROLLING</code> upgrade is in progress.
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>If DDL is executed to start the install, upgrade, or patching of an application container while a <code class="codeph">DBMS_ROLLING</code> upgrade is in progress, then an error is returned. (The <code class="codeph">DBMS_ROLLING</code> upgrade continues.)
+                           </p>
+                        </li>
+                        <li>
+                           <p>If an upgrade to an application container is in progress, then an attempt to start a <code class="codeph">DBMS_ROLLING</code> upgrade results in an error. (The application container upgrade continues.)
+                           </p>
+                        </li>
+                        <li>
+                           <p>If a <code class="codeph">DBMS_ROLLING</code> upgrade is performed and database compatibility is set to 12.2 or higher, then replication of application containers is supported. Except for <code class="codeph">DBMS_ROLLING</code> upgrades, logical standby does not offer any support for application containers; such containers are skipped and a message is written to the alert log indicating that application containers are being skipped.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The CDB that you are upgrading using <code class="codeph">DBMS_ROLLING</code> can contain pluggable databases (PDBs) with different character sets.
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="SBYDB5432"></a><div class="props_rev_3"><a id="GUID-D42FC23B-C6F4-44D1-A46A-202AB845BB80" name="GUID-D42FC23B-C6F4-44D1-A46A-202AB845BB80"></a><h3 id="SBYDB-GUID-D42FC23B-C6F4-44D1-A46A-202AB845BB80" class="sect3"><span class="enumeration_section">14.3 </span>Overview of Using DBMS_ROLLING
+               </h3>
+               <div>
+                  <p>There are three stages to the rolling upgrade process using the <code class="codeph">DBMS_ROLLING</code> PL/SQL Package: specification, compilation, and execution.
+                  </p>
+                  <p></p>
+                  <ol>
+                     <li>
+                        <p><span class="bold">Specification</span>: You first specify how you want to implement the rolling upgrade process. It is mandatory that you designate a future primary database. This act conceptually creates the leading and the trailing groups. At this point, the leading group only contains the LGM. You can optionally specify other standbys to protect the LGM. 
+                        </p>
+                        <p>You use the following procedures during the specification phase:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><code class="codeph">DBMS_ROLLING.INIT_PLAN</code></p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">DBMS_ROLLING.SET_PARAMETER</code></p>
+                           </li>
+                        </ul>
+                     </li>
+                     <li>
+                        <p><span class="bold">Compilation</span>: This is initiated by calling the <code class="codeph">DBMS_ROLLING.BUILD_PLAN</code> procedure. The <code class="codeph">BUILD_PLAN</code> procedure communicates with all databases participating in the rolling upgrade and assembles a rolling upgrade plan. The <code class="codeph">BUILD_PLAN</code> procedure is also called to alter an existing rolling upgrade plan. Alterations are necessary after changes to <code class="codeph">DBMS_ROLLING</code> parameters and after changes to the topology as a result of failover. All participating databases must be reachable during execution of the <code class="codeph">BUILD_PLAN</code> procedure because numerous validations are required to ensure a successful rolling upgrade.
+                        </p>
+                     </li>
+                     <li>
+                        <p><span class="bold">Execution</span>: Execution of the rolling upgrade has five stages.
+                        </p>
+                        <p><span class="bold">Stage 1:</span> The <code class="codeph">DBMS_ROLLING.START_PLAN</code> procedure starts the execution of the rolling upgrade. This converts the LGM database to a logical standby and starts the SQL Apply process at the LGM.
+                        </p>
+                        <p><span class="bold">Stage 2:</span> You upgrade the database software at the databases that are part of the leading group. You also run the upgrade scripts at the LGM. After this is done, you must restart SQL Apply processes at the LGM database. (See <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=UPGRD-GUID-99E10023-B2E5-4B35-BD01-E21D5B912D50" target="_blank"><span class="italic">Oracle Database Upgrade Guide</span></a> for information about upgrade scripts.) Leading group physical standbys are also addressed during this stage by re-mounting them using the higher version binaries. These databases are upgraded via recovery of the redo from the LGM.
+                        </p>
+                        <p><span class="bold">Stage 3: </span>After the apply lag reaches a given threshold (set to 10 minutes by default, but can be configured during the specification stage), the <code class="codeph">DBMS_ROLLING.SWITCHOVER</code> procedure proceeds with the switchover operation. When the switchover is complete, the LGM becomes the primary database.
+                        </p>
+                        <p><span class="bold">Stage 4:</span> The LGM is now the primary database running the new database software and the databases in the leading group are protecting it. The TGM is mounted and the databases in the trailing group are still running the older version of the database software. You must prepare the TGM and TGS databases for upgrade by upgrading the database software and re-mounting the databases on the higher version binaries. (See <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=UPGRD-GUID-99E10023-B2E5-4B35-BD01-E21D5B912D50" target="_blank"><span class="italic">Oracle Database Upgrade Guide</span></a> for information about upgrade scripts.)
+                        </p>
+                        <p><span class="bold">Stage 5:</span> Execute the <code class="codeph">DBMS_ROLLING.FINISH_PLAN </code>procedure at the current primary database (originally the LGM). It reinstates all the databases in the trailing group to become the standbys of the current primary database, and restarts the apply processes. The <code class="codeph">FINISH_PLAN</code> procedure waits for all databases in the trailing group to be upgraded to the new release (although the database software for the trailing group databases was changed in Stage 4, the data dictionary of the trailing group databases, except for any logical standbys in the trailing group, are updated based on media recovery of the redo generated during the upgrade at the LGM database).
+                        </p>
+                     </li>
+                  </ol>
+                  <p>After the rolling upgrade has been successfully executed, you can remove your rolling upgrade specification by calling the <code class="codeph">DBMS_ROLLING.DESTROY_PLAN</code> procedure.
+                  </p>
+               </div>
+            </div><a id="SBYDB5222"></a><a id="SBYDB5223"></a><a id="SBYDB5224"></a><a id="SBYDB5225"></a><a id="SBYDB5216"></a><div class="props_rev_3"><a id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE" name="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE"></a><h3 id="SBYDB-GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE" class="sect3"><span class="enumeration_section">14.4 </span>Planning a Rolling Upgrade
+               </h3>
+               <div>
+                  <p>Planning your rolling upgrade is essential to a successful upgrade experience. In the planning phase you specify various upgrade parameters and build an upgrade plan.</p>
+                  <div class="section">
+                     <p>The parameters and upgrade plan forecast all the operational details unique to your environment. The upgrade plan performs site-specific validations to alert you to configuration and resource problems which could potentially disrupt the rolling upgrade.</p>
+                     <p>The tasks necessary to define upgrade parameters and build an upgrade plan are as follows:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Initialize the upgrade parameters</p>
+                        </li>
+                        <li>
+                           <p>View the current upgrade parameter values</p>
+                        </li>
+                        <li>
+                           <p>Modify the upgrade parameter values, as necessary</p>
+                        </li>
+                        <li>
+                           <p>Build the upgrade plan</p>
+                        </li>
+                        <li>
+                           <p>View the current upgrade plan</p>
+                        </li>
+                        <li>
+                           <p>Revise the upgrade plan, as necessary</p>
+                        </li>
+                     </ul>
+                     <p>The rest of this section describes each of these steps in detail. They must be performed in the order presented.</p>
+                  </div>
+                  <!-- class="section" -->
+                  <ol>
+                     <li class="stepexpand"><span>Plan parameters must be initialized to system-generated default values before they can be customized. To initialize plan parameters, call the <code class="codeph">DBMS_ROLLING.INIT_PLAN</code> procedure. This procedure identifies the <code class="codeph">DB_UNIQUE_NAME</code> of the future primary database (the leading group master or LGM). The LGM is converted into a logical standby database as part of the <code class="codeph">START_PLAN</code> procedure call. The following is a sample call to the <code class="codeph">INIT_PLAN</code> procedure in which <code class="codeph">boston</code> is identified as the future primary database:</span><div><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.INIT_PLAN(future_primary=&gt;'boston');
+</pre><p>The <code class="codeph">INIT_PLAN</code> procedure returns an initial set of system-generated plan parameters. It adds each physical and logical standby database specified in the <code class="codeph">DG_CONFIG</code> init.ora parameter as a participant in the rolling upgrade. Other databases (such as downstream databases serving GoldenGate downstream deployment or snapshot standbys) are excluded automatically.
+                           </p>
+                           <p>By default, standby databases other than the future primary are configured to protect the primary database, and are configured as mandatory participants in the rolling upgrade. </p>
+                           <p>Once the database-related parameters have been defined, the <code class="codeph">INIT_PLAN</code> procedure defines operational parameters with system-supplied defaults. In most cases, the plan parameters are ready for plan validation, but to ensure they meet your needs, be sure to review each parameter. 
+                           </p>
+                           <p>Plan parameters are persisted in the database until you call the <code class="codeph">DESTROY_PLAN</code> procedure to remove all states related to the rolling upgrade.
+                           </p>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>After the <code class="codeph">INIT_PLAN</code> procedure has completed, you can query the <code class="codeph">DBA_ROLLING_PARAMETERS</code> view to see the plan parameters and their current values. Plan parameters are either global or local in scope. Global parameters are attributes of the rolling upgrade as a whole and are independent of the database participants. Global parameters have a <code class="codeph">NULL</code> value in the <code class="codeph">SCOPE</code> column. Local parameters have a specific database name in the <code class="codeph">SCOPE</code> column, with which they are associated. The following is a sample query:</span><div><pre class="pre codeblock"><code>SQL&gt; select scope, name, curval from dba_rolling_parameters order by scope, name;
+
+SCOPE          NAME                        CURVAL
+-------------- ------------------------    ------------------------------
+seattle        INVOLVEMENT                 FULL
+seattle        MEMBER                      NONE
+boston         INVOLVEMENT                 FULL
+boston         MEMBER                      TRAILING
+oakland        INVOLVEMENT                 FULL
+oakland        MEMBER                      TRAILING
+atlanta        INVOLVEMENT                 FULL
+atlanta        MEMBER                      LEADING
+               ACTIVE_SESSIONS_TIMEOUT     3600
+               ACTIVE_SESSIONS_WAIT        0
+               BACKUP_CONTROLFILE          rolling_change_backup.f
+               DGBROKER                    0
+               DICTIONARY_LOAD_TIMEOUT     3600
+               DICTIONARY_LOAD_WAIT        0
+               DICTIONARY_PLS_WAIT_INIT    300
+               DICTIONARY_PLS_WAIT_TIMEOUT 3600
+               EVENT_RECORDS               10000
+               FAILOVER                    0
+               GRP_PREFIX                  DBMSRU_
+               IGNORE_BUILD_WARNINGS       0
+               IGNORE_LAST_ERROR           0
+               LAD_ENABLED_TIMEOUT         600
+               LOG_LEVEL                   INFO
+               READY_LGM_LAG_TIME          600
+               READY_LGM_LAG_TIMEOUT       60
+               READY_LGM_LAG_WAIT          0
+               SWITCH_LGM_LAG_TIME         600
+               SWITCH_LGM_LAG_TIMEOUT      60
+               SWITCH_LGM_LAG_WAIT         1
+               SWITCH_LGS_LAG_TIME         60
+               SWITCH_LGS_LAG_TIMEOUT      60
+               SWITCH_LGS_LAG_WAIT         0
+               UPDATED_LGS_TIMEOUT         10800
+               UPDATED_LGS_WAIT            1
+               UPDATED_TGS_TIMEOUT         10800
+               UPDATED_TGS_WAIT            1
+35 rows selected.</code></pre><p>In the sample output, the databases <code class="codeph">atlanta</code>, <code class="codeph">boston</code>, <code class="codeph">oakland</code>, and <code class="codeph">seattle</code> were all discovered through the <code class="codeph">DG_CONFIG</code>, and assigned parameters in the current plan.
+                           </p>
+                           <div class="infoboxnotealso" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-02D62122-F280-46AC-B0EF-1462BC58B288">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=REFRN23889" target="_blank"><span class="italic">Oracle Database Reference</span></a> for more information about the <code class="codeph">DBA_ROLLING_PARAMETERS</code> view
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>To modify any existing rolling upgrade parameter, use the <code class="codeph">DBMS_ROLLING.SET_PARAMETER</code> PL/SQL procedure. The following is an example of using the <code class="codeph">SET_PARAMETER</code> procedure:</span><div><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.SET_PARAMETER(
+  scope IN VARCHAR2,
+  name IN VARCHAR2,
+  value IN VARCHAR2);
+</pre><p>The scope identifies either a <code class="codeph">DB_UNIQUE_NAME</code> value for local parameters or <code class="codeph">NULL</code> for global parameters. It is not necessary to provide a scope of <code class="codeph">NULL</code> for parameters that are not specific to a database.
+                           </p>
+                           <p>The name is the name of the parameter to modify.</p>
+                           <p>The value identifies the value for the specified parameter. A value of NULL reverts the parameter back to its system-supplied default if one exists.</p>
+                           <div class="infoboxnotealso" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-F4EF7787-5C33-4E59-9750-17609C87C212">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/sbydb&amp;id=ARPLS74605" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a> for a complete list of all available rolling upgrade parameters
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                           <p>The following examples illustrate sample usage of some rolling upgrade parameters.</p>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>After all the necessary parameters are specified, you build an upgrade plan. An upgrade plan is a custom generated set of instructions which guides your Oracle Data Guard configuration through a rolling upgrade. (The plan that is generated differs based on whether or not the configuration is managed by Data Guard broker.)</span><div>
+                           <p>To build an upgrade plan, use the <code class="codeph">DBA_ROLLING.BUILD_PLAN</code> PL/SQL procedure. This procedure requires the configuration to be exactly as described by the plan parameters with all of the instances started and reachable through the network.
+                           </p>
+                           <p>The procedure is called as follows:</p><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.BUILD_PLAN;
+</pre><p>There are no arguments to specify because the procedure gets all its input from the <code class="codeph">DBA_ROLLING_PARAMETERS</code> view. The procedure validates plan parameters and performs site-specific validations of resources such as log transport and flash recovery area settings. In general, configuration settings that do not meet the criteria of best-practice values are treated as warnings and recorded in the <code class="codeph">DBA_ROLLING_EVENTS</code> view. By default, the <code class="codeph">IGNORE_BUILD_WARNINGS</code> parameter is set to <code class="codeph">1</code>, meaning warnings do not prevent an upgrade plan from reaching a usable state. You can set this parameter to <code class="codeph">0</code> for stricter rule enforcement when plans are built. 
+                           </p>
+                           <div class="infoboxnote" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-010705B4-E3C8-4152-92ED-0EB9395C15C1">
+                              <p class="notep1">Note:</p>
+                              <p>The validations performed during plan generation are specific to rolling upgrades. They are not a substitute for the recommended practice of running the Pre-Upgrade Information Tool to evaluate upgrade readiness.</p>
+                           </div>
+                           <p>After generating the plan, move on to the following steps to view it, diagnose any problems with it, and revise it if necessary. </p>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>After the <code class="codeph">BUILD_PLAN</code> procedure successfully returns, the complete upgrade plan is viewable in the <code class="codeph">DBA_ROLLING_PLAN</code> view. Each record in the view identifies a specific instruction that is scheduled for execution.</span><div>
+                           <p>The following output is an example of how a rolling upgrade plan would appear:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; SELECT instid, target, phase, description FROM DBA_ROLLING_PLAN;
+
+INSTID TARGET       PHASE   DESCRIPTION
+------ ------------ ------- -----------------------------------------------------
+     1 seattle      START   Verify database is a primary
+     2 seattle      START   Verify MAXIMUM PROTECTION is disabled
+     3 boston       START   Verify database is a physical standby
+     4 boston       START   Verify physical standby is mounted
+     5 oakland      START   Verify database is a physical standby
+     6 oakland      START   Verify physical standby is mounted
+     7 atlanta      START   Verify database is a physical standby
+     8 atlanta      START   Verify physical standby is mounted
+     9 seattle      START   Verify server parameter file exists and is modifiable
+    10 boston       START   Verify server parameter file exists and is modifiable
+    11 oakland      START   Verify server parameter file exists and is modifiable
+    12 atlanta      START   Verify server parameter file exists and is modifiable
+    13 seattle      START   Verify Data Guard Broker configuration is disabled
+    14 boston       START   Verify Data Guard Broker configuration is disabled
+    15 oakland      START   Verify Data Guard Broker configuration is disabled
+    16 atlanta      START   Verify Data Guard Broker configuration is disabled
+    17 seattle      START   Verify flashback database is enabled
+    18 seattle      START   Verify available flashback restore points
+    19 boston       START   Verify flashback database is enabled
+    20 boston       START   Verify available flashback restore points
+    21 oakland      START   Verify flashback database is enabled
+    22 oakland      START   Verify available flashback restore points
+    23 atlanta      START   Verify flashback database is enabled
+    24 atlanta      START   Verify available flashback restore points
+    25 boston       START   Scan LADs for presence of atlanta destination
+    26 boston       START   Test if atlanta is reachable using configured TNS service
+    27 boston       START   Stop media recovery
+    28 oakland      START   Stop media recovery
+    29 atlanta      START   Stop media recovery
+    30 boston       START   Drop guaranteed restore point DBMSRU_INITIAL
+    31 boston       START   Create guaranteed restore point DBMSRU_INITIAL
+    32 oakland      START   Drop guaranteed restore point DBMSRU_INITIAL
+    33 oakland      START   Create guaranteed restore point DBMSRU_INITIAL
+    34 atlanta      START   Drop guaranteed restore point DBMSRU_INITIAL
+    35 atlanta      START   Create guaranteed restore point DBMSRU_INITIAL
+    36 seattle      START   Drop guaranteed restore point DBMSRU_INITIAL
+    37 seattle      START   Create guaranteed restore point DBMSRU_INITIAL
+
+INSTID TARGET       PHASE   DESCRIPTION
+------ ------------ ------- ----------------------------------------------------------
+    38 boston       START   Start media recovery
+    39 boston       START   Verify media recovery is running
+    40 oakland      START   Start media recovery
+    41 oakland      START   Verify media recovery is running
+    42 atlanta      START   Start media recovery
+    43 atlanta      START   Verify media recovery is running
+    44 seattle      START   Verify user_dump_dest has been specified
+    45 seattle      START   Backup control file to rolling_change_backup.f
+    46 boston       START   Verify user_dump_dest has been specified
+    47 boston       START   Backup control file to rolling_change_backup.f
+    48 oakland      START   Verify user_dump_dest has been specified
+    49 oakland      START   Backup control file to rolling_change_backup.f
+    50 atlanta      START   Verify user_dump_dest has been specified
+    51 atlanta      START   Backup control file to rolling_change_backup.f
+    52 seattle      START   Get current redo branch of the primary database
+    53 boston       START   Wait until recovery is active on the primary's redo branch
+    54 boston       START   Stop media recovery
+    55 seattle      START   Execute dbms_logstdby.build
+    56 boston       START   Convert into a transient logical standby
+    57 boston       START   Open database
+    58 boston       START   Configure logical standby parameters
+    59 boston       START   Start logical standby apply
+    60 boston       START   Get redo branch of transient logical standby
+    61 boston       START   Get reset scn of transient logical redo branch
+    62 atlanta      START   Stop media recovery
+    63 atlanta      START   Flashback database
+    64 seattle      START   Disable log file archival to atlanta
+    65 boston       START   Enable log file archival to atlanta
+    66 boston       START   Wait for log archive destination to atlanta to reach a valid state
+    67 atlanta      START   Wait until transient logical redo branch has been registered
+    68 atlanta      START   Start media recovery
+    69 atlanta      START   Wait until v$dataguard_stats has been initialized
+    70 atlanta      START   Wait until recovery has started on the transient redo branch
+    71 seattle      START   Log pre-switchover instructions to events table
+    72 boston       START   Record start of user upgrade of boston
+    73 boston       SWITCH  Verify database is in OPENRW mode
+    74 boston       SWITCH  Record completion of user upgrade of boston
+
+INSTID TARGET       PHASE   DESCRIPTION
+------ ------------ ------- ---------------------------------------------------------
+    75 boston       SWITCH  Scan LADs for presence of seattle destination
+    76 boston       SWITCH  Scan LADs for presence of oakland destination
+    77 boston       SWITCH  Scan LADs for presence of atlanta destination
+    78 boston       SWITCH  Test if seattle is reachable using configured TNS service
+    79 boston       SWITCH  Test if oakland is reachable using configured TNS service
+    80 boston       SWITCH  Test if atlanta is reachable using configured TNS service
+    81 seattle      SWITCH  Enable log file archival to boston
+    82 boston       SWITCH  Enable log file archival to atlanta
+    83 boston       SWITCH  Start logical standby apply
+    84 atlanta      SWITCH  Start media recovery
+    85 atlanta      SWITCH  Wait until upgrade redo has been fully recovered
+    86 boston       SWITCH  Wait until apply lag has fallen below 600 seconds
+    87 seattle      SWITCH  Log post-switchover instructions to events table
+    88 seattle      SWITCH  Switch database to a logical standby
+    89 boston       SWITCH  Wait until end-of-redo has been applied
+    90 oakland      SWITCH  Wait until end-of-redo has been applied
+    91 seattle      SWITCH  Disable log file archival to oakland
+    92 boston       SWITCH  Switch database to a primary
+    93 oakland      SWITCH  Stop media recovery
+    94 seattle      SWITCH  Synchronize plan with new primary
+    95 seattle      FINISH  Verify only a single instance is active
+    96 seattle      FINISH  Verify database is mounted
+    97 seattle      FINISH  Flashback database
+    98 seattle      FINISH  Convert into a physical standby
+    99 oakland      FINISH  Verify database is mounted
+   100 oakland      FINISH  Flashback database
+   101 boston       FINISH  Verify database is open
+   102 boston       FINISH  Save the DBID of the new primary
+   103 boston       FINISH  Save the logminer session start scn
+   104 seattle      FINISH  Wait until transient logical redo branch has been registered
+   105 oakland      FINISH  Wait until transient logical redo branch has been registered
+   106 seattle      FINISH  Start media recovery
+   107 oakland      FINISH  Start media recovery
+   108 seattle      FINISH  Wait until apply/recovery has started on the transient branch
+   109 oakland      FINISH  Wait until apply/recovery has started on the transient branch
+   110 seattle      FINISH  Wait until upgrade redo has been fully recovered
+
+INSTID TARGET       PHASE   DESCRIPTION
+------ ------------ ------- ------------------------------------------------
+   111 oakland      FINISH  Wait until upgrade redo has been fully recovered
+   112 seattle      FINISH  Drop guaranteed restore point DBMSRU_INITIAL
+   113 boston       FINISH  Drop guaranteed restore point DBMSRU_INITIAL
+   114 oakland      FINISH  Drop guaranteed restore point DBMSRU_INITIAL
+   115 atlanta      FINISH  Drop guaranteed restore point DBMSRU_INITIAL
+
+115 rows selected.
+
+SQL&gt; 
+</pre><p>The columns in this view display the following information:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">INSTID</code> - The Instruction ID, which is the order in which the instruction is to be performed. Instructions are typically performed in groups.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">PHASE</code> - Every instruction in the upgrade plan is associated with a particular phase. A phase is a logical grouping of instructions which is performed by a procedure in the <code class="codeph">DBMS_ROLLING</code> PL/SQL package. When a <code class="codeph">DBMS_ROLLING</code> procedure is invoked, all of the associated instructions in the upgrade plan for that phase are executed. Possible phases are as follows:
+                                 </p>
+                                 <ul style="list-style-type: disc;">
+                                    <li>
+                                       <p><code class="codeph">START</code>: Consists of activities related to setup such as taking restore points, instantiation of the transient logical standby database, and configuration of LGS databases. Activities in this phase are initiated when you call the <code class="codeph">DBMS_ROLLING.START_PLAN</code> procedure. See Step 1 in <span class="q">"<a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6" title="Follow these steps to perform a rolling upgrade using the DBMS_ROLLING PL/SQL package.">Performing a Rolling Upgrade</a>"</span>.
+                                       </p>
+                                    </li>
+                                    <li>
+                                       <p><code class="codeph">SWITCH</code>: Consists of activities related to the switchover of the transient logical standby into the new primary database. Activities in this phase are initiated when you call the <code class="codeph">DBMS_ROLLING.SWITCHOVER</code> procedure. See Step 3 in<span class="q">"<a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6" title="Follow these steps to perform a rolling upgrade using the DBMS_ROLLING PL/SQL package.">Performing a Rolling Upgrade</a>"</span></p>
+                                    </li>
+                                    <li>
+                                       <p><code class="codeph">FINISH</code>: Consists of activities related to configuring standby databases for recovery of the upgrade redo. Activities in this phase are initiated when you call the <code class="codeph">DBMS_ROLLING.FINISH_PLAN</code> procedure. See Step 5 in <span class="q">"<a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6" title="Follow these steps to perform a rolling upgrade using the DBMS_ROLLING PL/SQL package.">Performing a Rolling Upgrade</a>"</span>.
+                                       </p>
+                                    </li>
+                                 </ul>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">EXEC_STATUS</code> - The overall status of the instruction.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">PROGRESS</code> - The progress of an instruction's execution. A value of <code class="codeph">REQUESTING</code> indicates an instruction is being transmitted to a target database for execution. A value of <code class="codeph">EXECUTING</code> indicates the instruction is actively being executed. A value of <code class="codeph">REPLYING</code> indicates completion information is being returned.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">DESCRIPTION</code> - The specific operation that is scheduled to be performed.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">TARGET</code> - The site at which a given instruction is to be performed.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">EXEC_INFO</code> - Additional contextual information related to the instruction.
+                                 </p>
+                              </li>
+                           </ul>
+                           <div class="infoboxnotealso" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-E78DC6AB-57E7-4525-8F7A-DCA6991A14E0">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="../refrn/DBA_ROLLING_PLAN.html#REFRN23890" target="_blank"><span class="italic">Oracle Database Reference</span></a> for more information about the <code class="codeph">DBA_ROLLING_PLAN</code> view
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>Upgrade plans need to be revised after any change to the rolling upgrade or database configuration. A configuration change could include any of the following:</span><div>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>	init.ora parameter file changes at any of the databases participating in the rolling upgrade</p>
+                              </li>
+                              <li>
+                                 <p>	database role changes as a result of failover events</p>
+                              </li>
+                              <li>
+                                 <p>	rolling upgrade parameter changes</p>
+                              </li>
+                           </ul>
+                           <p>To revise an active upgrade plan, call the <code class="codeph">BUILD_PLAN</code> procedure again. In some cases, the <code class="codeph">BUILD_PLAN</code> procedure may raise an error if a given change cannot be accepted. For example, setting the <code class="codeph">ACTIVE_SESSIONS_WAIT</code> parameter has no effect if the switchover has already occurred. 
+                           </p>
+                           <p>It is recommended that you call the <code class="codeph">BUILD_PLAN</code> procedure to process a group of parameter changes rather than processing parameters individually.
+                           </p>
+                        </div>
+                     </li>
+                  </ol>
+                  <div class="example" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-EB36DF19-3847-4FB0-B963-49ADCCBF73BC">
+                     <p class="titleinexample">Example 14-1 Setting Switchover to Enforce Apply Lag Requirements</p>
+                     <p>The following example demonstrates how to configure the plan to wait for the apply lag to fall below 60 seconds before switching over to the future primary:</p><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.SET_PARAMETER('SWITCH_LGM_LAG_WAIT', '1');
+DBMS_ROLLING.SET_PARAMETER('SWITCH_LGM_LAG_TIME', '60');</pre></div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-1A958C1B-1109-4A3C-8E52-E5B891761274">
+                     <p class="titleinexample">Example 14-2 Resetting Logging Back to Its Default Value</p>
+                     <p>The following example demonstrates resetting the <code class="codeph">LOG_LEVEL</code> global parameter back to its default value.
+                     </p><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.SET_PARAMETER (
+  name=&gt;'LOG_LEVEL', 
+  value=&gt;NULL);</pre></div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-65A16C53-05A8-4B54-B177-56AB5DB90545">
+                     <p class="titleinexample">Example 14-3 Designating a Database as an Optional Participant</p>
+                     <p>The following example demonstrates setting the <code class="codeph">INVOLVEMENT</code> local parameter of database <code class="codeph">atlanta</code> to indicate that errors encountered on the database should not impede the overall rolling upgrade.
+                     </p><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.SET_PARAMETER (
+  scope=&gt;'atlanta', 
+  name=&gt;'involvement', 
+  value=&gt;'optional');</pre></div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE__GUID-B3C2737F-A5E2-4B78-9CDA-C7FF7D401FF6">
+                     <p class="titleinexample">Example 14-4 Setting a Database to Protect the Transient Logical Standby</p>
+                     <p>The following example demonstrates setting the <code class="codeph">MEMBER</code> local parameter of database <code class="codeph">atlanta</code> to indicate it should protect the transient logical standby database during the rolling upgrade.
+                     </p><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.SET_PARAMETER (
+  scope=&gt;'atlanta', 
+  name=&gt;'member', 
+  value=&gt;'leading');
+</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="SBYDB5231"></a><a id="SBYDB5230"></a><div class="props_rev_3"><a id="GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6" name="GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6"></a><h3 id="SBYDB-GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6" class="sect3"><span class="enumeration_section">14.5 </span>Performing a Rolling Upgrade
+               </h3>
+               <div>
+                  <p>Follow these steps to perform a rolling upgrade using the <code class="codeph">DBMS_ROLLING</code> PL/SQL package. 
+                  </p>
+                  <div class="section">
+                     <p><a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6__CJAJCACI" title="This 3 column table lists the steps to perform rolling upgrade. Column 1 is the step number. Column 2 is a step description. Column 3 is the phase.">Table 14-2</a> provides a summary of the steps. These steps assume that you have first successfully built an upgrade plan as described in <span class="q">"<a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-CD45406F-0A0F-4C9E-95FF-42C908BE62BE" title="Planning your rolling upgrade is essential to a successful upgrade experience. In the planning phase you specify various upgrade parameters and build an upgrade plan.">Planning a Rolling Upgrade</a>"</span>.
+                     </p>
+                     <div class="tblformal" id="GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6__CJAJCACI">
+                        <p class="titleintable">Table 14-2 Steps to Perform Rolling Upgrade Using DBMS_ROLLING</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="Steps to Perform Rolling Upgrade Using DBMS_ROLLING" summary="This 3 column table lists the steps to perform rolling upgrade. Column 1 is the step number. Column 2 is a step description. Column 3 is the phase. " width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="9%" id="d36675e1532">Step</th>
+                                 <th align="left" valign="bottom" width="72%" id="d36675e1535">Description</th>
+                                 <th align="left" valign="bottom" width="19%" id="d36675e1538">PHASE</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="9%" id="d36675e1543" headers="d36675e1532 ">
+                                    <p>Step 1</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d36675e1543 d36675e1535 ">
+                                    <p>Call the <code class="codeph">DBMS_ROLLING.START_PLAN</code> procedure to configure the future primary and physical standbys designated to protect the future primary.
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d36675e1543 d36675e1538 ">
+                                    <p>START</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="9%" id="d36675e1556" headers="d36675e1532 ">
+                                    <p>Step 2</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d36675e1556 d36675e1535 ">
+                                    <p>Manually upgrade the Oracle Database software at the future primary database and standbys that protect it.</p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d36675e1556 d36675e1538 ">
+                                    <p>SWITCH PENDING</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="9%" id="d36675e1566" headers="d36675e1532 ">
+                                    <p>Step 3</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d36675e1566 d36675e1535 ">
+                                    <p>Call the <code class="codeph">DBMS_ROLLING.SWITCHOVER</code> procedure to switch roles between the current and future primary database.
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d36675e1566 d36675e1538 ">
+                                    <p>SWITCH</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="9%" id="d36675e1579" headers="d36675e1532 ">
+                                    <p>Step 4</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d36675e1579 d36675e1535 ">
+                                    <p>Manually restart the former primary and remaining standby databases on the higher version of Oracle Database.</p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d36675e1579 d36675e1538 ">
+                                    <p>FINISH PENDING</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="9%" id="d36675e1589" headers="d36675e1532 ">
+                                    <p>Step 5</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d36675e1589 d36675e1535 ">
+                                    <p>Call the <code class="codeph">DBMS_ROLLING.FINISH_PLAN</code> procedure to convert the former primary to a physical standby, and to configure the remaining standby databases for recovery of the upgrade redo.
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="19%" headers="d36675e1589 d36675e1538 ">
+                                    <p>FINISH</p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                     <p>Activities that take place during each step belong to a specific phase of the rolling upgrade as shown in the PHASE column of <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-5652ED69-A95F-454A-9208-E2483B9A9BA6__CJAJCACI" title="This 3 column table lists the steps to perform rolling upgrade. Column 1 is the step number. Column 2 is a step description. Column 3 is the phase.">Table 14-2</a>. A rolling upgrade operation is at a single phase at any given time. The current phase of a rolling upgrade is reported in the <code class="codeph">PHASE</code> column of the <code class="codeph">DBA_ROLLING_STATUS</code> view. 
+                     </p>
+                     <p>The rest of this section describes each of the upgrade steps in detail.</p>
+                     <ol>
+                        <li>
+                           <p>Call the <code class="codeph">DBMS_ROLLING.START_PLAN</code> procedure to configure the future primary and physical standbys designated to protect the future primary.
+                           </p>
+                           <p>The <code class="codeph">DBMS_ROLLING.START_PLAN</code> procedure is the formal start of the rolling upgrade. The goal of the <code class="codeph">START_PLAN</code> procedure is to configure the transient logical standby database and any physical standby databases that have been designated to protect it. When invoked, the <code class="codeph">START_PLAN</code> procedure executes all instructions in the upgrade plan with a <code class="codeph">PHASE</code> value of <code class="codeph">START_PLAN</code>. The types of instructions that are performed include:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Backing up the control file for each database to a trace file</p>
+                              </li>
+                              <li>
+                                 <p>Creating flashback database guaranteed restore points</p>
+                              </li>
+                              <li>
+                                 <p>Building a LogMiner dictionary at the primary database</p>
+                              </li>
+                              <li>
+                                 <p>Recovering the designated physical standby into a transient logical standby database</p>
+                              </li>
+                              <li>
+                                 <p>Loading the LogMiner dictionary into the logical standby database</p>
+                              </li>
+                              <li>
+                                 <p>Configuring LGS databases with the transient logical standby database</p>
+                              </li>
+                           </ul>
+                           <p>Call the <code class="codeph">START_PLAN</code> procedure as follows (no arguments are required):
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.START_PLAN;
+</pre></li>
+                        <li>
+                           <p>Manually upgrade the Oracle Database software at the future primary database and standbys that protect it.</p>
+                           <p>After the <code class="codeph">START_PLAN</code> procedure has completed, you must manually upgrade the Oracle Database software at the future primary database and standbys which protect the future primary database. This involves the following steps:
+                           </p>
+                           <ol type="a">
+                              <li>
+                                 <p>Upgrade the Oracle Database software of the transient logical (LGM) and leading group standbys (LGS).</p>
+                              </li>
+                              <li>
+                                 <p>Start media recovery on the LGS databases.</p>
+                              </li>
+                              <li>
+                                 <p>Upgrade the transient logical standby database either manually or using the Database Upgrade Assistant (DBUA).</p>
+                              </li>
+                              <li>
+                                 <p>Re-open the transient logical standby in read/write mode.</p>
+                              </li>
+                           </ol>
+                           <p>The transient logical standby and LGS databases are a functional group. The LGS databases must be restarted on the higher version actively running media recovery before the transient logical standby is upgraded. If the LGS databases are not configured first, then the upgrade of the transient logical is not protected. At the conclusion of this step, the upgrade of the transient logical is complete, and media recovery is running on all LGS databases. </p>
+                           <p>It is recommended that you wait until all LGS databases have been fully upgraded before performing the switchover. An LGS database is fully upgraded when its associated record in the <code class="codeph">DBA_ROLLING_DATABASES</code> view reports a value of <code class="codeph">YES</code> in the <code class="codeph">UPDATED</code> column.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Call the <code class="codeph">DBMS_ROLLING.SWITCHOVER</code> procedure to switch roles between the current and future primary database.
+                           </p>
+                           <p>The <code class="codeph">SWITCHOVER</code> procedure switches roles between the current and future primary databases. The procedure times the switchover to occur when apply lag is minimal which minimizes outage time of the primary service. The <code class="codeph">SWITCHOVER</code> procedure executes all instructions in the upgrade plan with a <code class="codeph">PHASE</code> value of <code class="codeph">SWITCHOVER</code>. The types of instructions that are performed can include:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Waiting for the apply lag at the Leading Group Master (LGM), which is currently the transient logical standby, to fall below a threshold value</p>
+                              </li>
+                              <li>
+                                 <p>Waiting for the apply lag at LGS databases to fall below a threshold value</p>
+                              </li>
+                              <li>
+                                 <p>Switching the primary to the logical standby role</p>
+                              </li>
+                              <li>
+                                 <p>Switching the Leading Group Master (LGM), which is currently a logical standby, to the primary role</p>
+                              </li>
+                              <li>
+                                 <p>Enabling log archive destinations at the Leading Group Master (LGM) after it has become the new primary</p>
+                              </li>
+                           </ul>
+                           <p>Call the <code class="codeph">SWITCHOVER</code> procedure as follows (no arguments are required):
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SWITCHOVER;
+</pre><p>If a switchover error occurs after the switchover of the primary to the standby role but before the transient logical could be successfully converted into the primary role, then continue to execute the <code class="codeph">SWITCHOVER</code> procedure at the former primary site until successful completion.
+                           </p>
+                        </li>
+                        <li>
+                           <p>At this point, you must manually restart and mount the former primary and remaining standby databases on the higher version of Oracle Database. Mounting the standby databases is especially important because the <code class="codeph">DBMS_ROLLING</code> package needs to communicate with the standby database to continue the rolling upgrade.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The overall goal of the <code class="codeph">FINISH_PLAN</code> procedure is to configure the former primary and TGP standbys as physical standbys which recover through the upgrade redo. When invoked, the <code class="codeph">FINISH_PLAN</code> procedure executes all instructions in the upgrade plan with a <code class="codeph">PHASE</code> value of <code class="codeph">FINISH</code>. The types of instructions that are performed include:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Flashback of the former primary and TGP standbys</p>
+                              </li>
+                              <li>
+                                 <p>Conversion of the former primary into a physical standby</p>
+                              </li>
+                              <li>
+                                 <p>Startup of media recovery on the new redo branch</p>
+                              </li>
+                           </ul>
+                           <p>Call the <code class="codeph">FINISH_PLAN</code> procedure as follows (no arguments are required):
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.FINISH_PLAN;</pre></li>
+                     </ol>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="SBYDB5237"></a><div class="props_rev_3"><a id="GUID-A1348F5A-AFBC-4090-822F-23DF87CE7D3C" name="GUID-A1348F5A-AFBC-4090-822F-23DF87CE7D3C"></a><h3 id="SBYDB-GUID-A1348F5A-AFBC-4090-822F-23DF87CE7D3C" class="sect3"><span class="enumeration_section">14.6 </span>Monitoring a Rolling Upgrade
+               </h3>
+               <div>
+                  <p>There are several views you can query for information about the databases involved in a rolling upgrade.</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><code class="codeph">DBA_ROLLING_STATUS</code></p>
+                        <p>Provides information about the overall status of the upgrade.</p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">DBA_ROLLING_DATABASES</code></p>
+                        <p>Provides information about the role, protection, and recovery state of each database involved in the rolling upgrade.</p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">DBA_ROLLING_STATISTICS</code></p>
+                        <p>Provides statistics such as start and finish times, how long services were offline, and so on.</p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-A1348F5A-AFBC-4090-822F-23DF87CE7D3C__GUID-408EC045-7E42-4C98-A440-84EE640E038F">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="../refrn/about-static-data-dictionary-views.html#REFRN002" target="_blank"><span class="italic">Oracle Database Reference</span></a> for descriptions of these views
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div><a id="SBYDB5238"></a><div class="props_rev_3"><a id="GUID-5B34621B-FABE-4C50-A2C0-ED249844934D" name="GUID-5B34621B-FABE-4C50-A2C0-ED249844934D"></a><h3 id="SBYDB-GUID-5B34621B-FABE-4C50-A2C0-ED249844934D" class="sect3"><span class="enumeration_section">14.7 </span>Rolling Back a Rolling Upgrade
+               </h3>
+               <div>
+                  <p>To roll back a rolling upgrade procedure, you can call the <code class="codeph">DBMS_ROLLING.ROLLBACK_PLAN</code> procedure.
+                  </p>
+                  <div class="section">
+                     <p>The procedure is called as follows:</p><pre class="oac_no_warn" dir="ltr">DBMS_ROLLING.ROLLBACK_PLAN;
+</pre><p>The <code class="codeph">ROLLBACK_PLAN</code> procedure has the following requirements:
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The <code class="codeph">ROLLBACK_PLAN</code> procedure can only be called if the <code class="codeph">DBMS_ROLLING.SWITCHOVER</code> procedure has not been previously called.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Before you can use the <code class="codeph">ROLLBACK_PLAN</code> procedure you must set the transient logical standby database back to a mounted state because a flashback database is imminent.
+                           </p>
+                        </li>
+                        <li>
+                           <p>If the Oracle Database software was already upgraded, then you must restart the resultant physical standbys on the older version, and start media recovery.</p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="SBYDB5239"></a><div class="props_rev_3"><a id="GUID-1019E58C-1370-48A6-BC67-FA42074C0351" name="GUID-1019E58C-1370-48A6-BC67-FA42074C0351"></a><h3 id="SBYDB-GUID-1019E58C-1370-48A6-BC67-FA42074C0351" class="sect3"><span class="enumeration_section">14.8 </span>Handling Role Changes That Occur During a Rolling Upgrade
+               </h3>
+               <div>
+                  <p>If a situation arises in which a rolling upgrade is underway and you need to perform a failover in your Oracle Data Guard configuration before the rollover completes, you can do so only in these circumstances.</p>
+                  <p></p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>The failover was not performed while a <code class="codeph">DBMS_ROLLING</code> procedure was in progress.
+                        </p>
+                     </li>
+                     <li>
+                        <p>The failover was between a primary database and a physical standby database, and was a no-data-loss failover.</p>
+                     </li>
+                     <li>
+                        <p>The failover was between a transient logical standby database and a physical standby of the transient logical standby database.</p>
+                     </li>
+                  </ul>
+                  <p>A role change is a significant event that inevitably invalidates instructions in the upgrade plan, which was tailored for a different configuration. To resume the rolling upgrade, a new plan must be created. You must set the <code class="codeph">FAILOVER</code> parameter to indicate that the configuration has changed. This parameter is detected on the next invocation of the <code class="codeph">BUILD_PLAN</code> procedure, and the existing plan is amended accordingly.
+                  </p>
+                  <p>After the revised plan is built, you can resume the rolling upgrade.</p>
+               </div>
+            </div><a id="SBYDB5241"></a><a id="SBYDB5242"></a><a id="SBYDB5243"></a><a id="SBYDB5244"></a><a id="SBYDB5245"></a><a id="SBYDB5246"></a><a id="SBYDB5248"></a><a id="SBYDB5249"></a><a id="SBYDB5240"></a><div class="props_rev_3"><a id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9" name="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9"></a><h3 id="SBYDB-GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9" class="sect3"><span class="enumeration_section">14.9 </span>Examples of Rolling Upgrades
+               </h3>
+               <div>
+                  <p>These examples show a variety of rolling upgrade scenarios.</p>
+                  <p>At some point in all of the scenarios, the same basic rolling upgrade steps are used. These steps are shown in <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">Example 14-5</a>. The rest of the examples refer back to this example where appropriate rather than reiterating the same steps.
+                  </p>
+                  <p>Some of the examples in this section instruct you to resume the rolling upgrade, which means that you should continue where you left off. Resuming a rolling upgrade involves identifying the current phase of the rolling upgrade and reperforming either the PL/SQL procedure associated with the phase or the activities relevant to the phase. The current phase of the rolling upgrade is shown in the <code class="codeph">PHASE</code> column of the <code class="codeph">DBA_ROLLING_STATUS</code> view. 
+                  </p>
+                  <div class="infoboxnote" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__GUID-F3429155-7A78-4212-AE2D-2A53FDF36403">
+                     <p class="notep1">Note:</p>
+                     <p>The scenarios provided in this section are only meant to be hypothetical examples. You can use the Rolling Upgrade Using Oracle Active Data Guard feature to perform database upgrades beginning with the first Oracle Database 12<span class="italic">c</span> patchset.
+                     </p>
+                  </div>
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">
+                     <p class="titleinexample">Example 14-5 Basic Rolling Upgrade Steps</p>
+                     <ol>
+                        <li>
+                           <p>Start the rolling upgrade:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.START_PLAN;
+</pre></li>
+                        <li>
+                           <p>Upgrade the transient logical standby and its protecting standbys.</p>
+                           <ol type="a">
+                              <li>
+                                 <p>Mount LGP standbys using the higher Oracle Database software version.</p>
+                              </li>
+                              <li>
+                                 <p>Start media recovery on Leading Group Physicals (LGP).</p>
+                              </li>
+                              <li>
+                                 <p>Open the Leading Group Master (LGM), which is the transient logical standby, in upgrade mode using the higher Oracle Database software version.</p>
+                              </li>
+                              <li>
+                                 <p>Upgrade the Leading Group Master (LGM), which is the transient logical standby, either manually or using the Database Upgrade Assistant (DBUA).</p>
+                              </li>
+                              <li>
+                                 <p>Restart the Leading Group Master (LGM), which is the transient logical standby, in read/write mode.</p>
+                              </li>
+                           </ol>
+                        </li>
+                        <li>
+                           <p>Switchover to the Leading Group Master (LGM):</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SWITCHOVER;
+</pre></li>
+                        <li>
+                           <p>Restart the databases in the trailing group. This includes the original primary database and all its protecting standbys in the trailing group (TGP).</p>
+                           <ol type="a">
+                              <li>
+                                 <p>Mount the former primary using the higher Oracle Database version.</p>
+                              </li>
+                              <li>
+                                 <p>Mount the physical standbys of the former primary using the higher Oracle Database version.</p>
+                              </li>
+                           </ol>
+                        </li>
+                        <li>
+                           <p>Finish the rolling upgrade:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.FINISH_PLAN;</pre></li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAEIFEB">
+                     <p class="titleinexample">Example 14-6 Rolling Upgrade Between Two Databases</p>
+                     <p>The following example demonstrates a rolling upgrade on a two-site configuration consisting of a primary database and a physical standby database. In this example, <code class="codeph">seattle</code> is the current primary and <code class="codeph">boston</code> is the future primary. The <code class="codeph">seattle</code> database is automatically chosen as the Trailing Group Master (TGM) and participates in the operation. By default, there is nothing that needs to be set for <code class="codeph">seattle</code>.
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Initialize the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.INIT_PLAN(future_primary=&gt;'boston');
+</pre></li>
+                        <li>
+                           <p>Build the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Perform the rolling upgrade as described in <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">Example 14-5</a>.
+                           </p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJADBHHG">
+                     <p class="titleinexample">Example 14-7 Rolling Upgrade Between Three Databases</p>
+                     <p>The following example demonstrates a rolling upgrade on a three-site configuration consisting of a primary databases and two physical standby databases. In this example, <code class="codeph">seattle</code> is the primary, <code class="codeph">boston</code> is the future primary, and <code class="codeph">oakland</code> is a physical standby of <code class="codeph">seattle</code>.
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Initialize the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.INIT_PLAN (future_primary =&gt; 'boston');
+</pre></li>
+                        <li>
+                           <p>Build the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Perform the rolling upgrade as described in <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">Example 14-5</a>.
+                           </p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJABJIEI">
+                     <p class="titleinexample">Example 14-8 Rolling Upgrade Between Four Databases</p>
+                     <p>The following example demonstrates a rolling upgrade on a four-site configuration consisting of a primary database and three physical standby databases. In this example, <code class="codeph">seattle</code> is the primary database, <code class="codeph">boston</code> is the future primary, <code class="codeph">oakland</code> is a physical standby of <code class="codeph">seattle</code>, and <code class="codeph">atlanta</code> is a physical standby of <code class="codeph">boston</code>.
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Initialize the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.INIT_PLAN (future_primary =&gt; 'boston');
+</pre></li>
+                        <li>
+                           <p>Configure <code class="codeph">atlanta</code> as a standby in the leading group:
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(scope=&gt;'atlanta',name=&gt;'member',
+ value=&gt;'leading');
+</pre></li>
+                        <li>
+                           <p>Build the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Perform the rolling upgrade as described in <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">Example 14-5</a>.
+                           </p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAJFJDE">
+                     <p class="titleinexample">Example 14-9 Rolling Upgrade on a Reader Farm</p>
+                     <p>The following example demonstrates a rolling upgrade on a reader farm configuration consisting of one primary database and nine physical standby databases. In this example, eight physical standby databases are split into two groups of four in order for physical standbys to be available as Oracle Active Data Guard standbys before and after the switchover. In this example, <code class="codeph">seattle</code> is the primary, <code class="codeph">boston</code> is the future primary, databases <code class="codeph">rf[a-d]</code> are physical standbys of <code class="codeph">seattle</code>, and databases <code class="codeph">rf[e-h]</code> are physical standbys of <code class="codeph">boston</code>. The rolling upgrade is configured so that the switchover to the new primary waits until the apply lag among the reader farm group of the future primary database is less than 60 seconds.
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Initialize the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.INIT_PLAN ( future_primary =&gt; 'boston');
+</pre></li>
+                        <li>
+                           <p>Configure the reader farm group to protect the future primary:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(scope=&gt;'rfe',name=&gt;'member',
+value=&gt;'leading');
+</pre><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(scope=&gt;'rff',name=&gt;'member',
+value=&gt;'leading');
+</pre><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(scope=&gt;'rfg',name=&gt;'member',
+value=&gt;'leading');
+</pre><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(scope=&gt;'rfh',name=&gt;'member',
+value=&gt;'leading');
+</pre></li>
+                        <li>
+                           <p>Set a maximum permitted apply lag of 60 seconds on the future primary's reader farm:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(name=&gt;'SWITCH_LGS_LAG_WAIT',
+ value=&gt;'1');
+</pre></li>
+                        <li>
+                           <p>Build the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Perform the rolling upgrade as described in <a href="using-DBMS_ROLLING-to-perform-rolling-upgrade.html#GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAFHDDH">Example 14-5</a>.
+                           </p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAHAJDD">
+                     <p class="titleinexample">Example 14-10 Rolling Upgrade for Application Testing</p>
+                     <p>The following example demonstrates using rolling upgrade on a four-site configuration to configure a transient logical standby and a physical of the transient logical standby in order to validate an application on the higher version database. The primary database is <code class="codeph">seattle</code>, <code class="codeph">boston</code> is the future primary, <code class="codeph">oakland</code> is a physical standby of <code class="codeph">seattle</code>, and <code class="codeph">atlanta</code> is physical standby of <code class="codeph">boston</code>. So in this example, <code class="codeph">seattle</code> and <code class="codeph">oakland</code> make up the trailing group, and <code class="codeph">boston</code> and <code class="codeph">atlanta</code> make up the leading group. At the end of testing, <code class="codeph">boston</code> and <code class="codeph">atlanta</code> are restored back to their original physical standby roles in order to resume protection of <code class="codeph">seattle</code>.
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Initialize the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.INIT_PLAN (future_primary =&gt; 'boston');
+</pre></li>
+                        <li>
+                           <p>Configure <code class="codeph">atlanta</code> to protect the future primary:
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(scope=&gt;'atlanta',name=&gt;'member',
+ value=&gt;'leading');
+</pre></li>
+                        <li>
+                           <p>Build the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Start the rolling upgrade:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.START_PLAN;
+</pre></li>
+                        <li>
+                           <p>Upgrade <code class="codeph">boston</code> and <code class="codeph">atlanta</code>:
+                           </p>
+                           <ol type="a">
+                              <li>
+                                 <p>Mount <code class="codeph">atlanta</code> using the higher database version.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Start media recovery on <code class="codeph">atlanta</code>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Open <code class="codeph">boston</code> in upgrade mode using the higher database version.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Upgrade database <code class="codeph">boston</code> either manually or using the Database Upgrade Assistant (DBUA).
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Restart <code class="codeph">boston</code> in read/write mode.
+                                 </p>
+                              </li>
+                           </ol>
+                        </li>
+                        <li>
+                           <p>Test the application, as necessary.</p>
+                        </li>
+                        <li>
+                           <p>Rollback the configuration:</p>
+                           <ol type="a">
+                              <li>
+                                 <p>Restart <code class="codeph">boston</code> in mounted mode
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Roll back the upgrade:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.ROLLBACK_PLAN;
+</pre></li>
+                           </ol>
+                        </li>
+                        <li>
+                           <p>Start media recovery on <code class="codeph">boston</code> and <code class="codeph">atlanta</code> using the older database version:
+                           </p>
+                           <ol type="a">
+                              <li>
+                                 <p>Mount <code class="codeph">boston</code> and <code class="codeph">atlanta</code> using the lower database version.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Start media recovery on <code class="codeph">boston</code> and <code class="codeph">atlanta</code>.
+                                 </p>
+                              </li>
+                           </ol>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAEDBEF">
+                     <p class="titleinexample">Example 14-11 Resuming a Rolling Upgrade After a Failover to a New Primary</p>
+                     <p>The following example demonstrates a no-data-loss failover of a physical standby to the primary role followed by the reconfiguration of the rolling upgrade plan on a three-site configuration. In this example, <code class="codeph">seattle</code> is the primary, <code class="codeph">boston</code> is the future primary, and <code class="codeph">oakland</code> is a physical standby of <code class="codeph">seattle</code>. Database <code class="codeph">oakland</code> is failed over to become the new primary. (The Trailing Group is (<code class="codeph">seattle</code>, <code class="codeph">oakland</code>) and the Leading Group is <code class="codeph">boston</code>.)
+                     </p>
+                     <p></p>
+                     <ol>
+                        <li>
+                           <p>Recover remaining redo on <code class="codeph">oakland</code>, and fail over to the new primary role:
+                           </p><pre class="pre codeblock"><code>SQL&gt; ALTER DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL;
+SQL&gt; ALTER DATABASE RECOVER MANAGED STANDBY FINISH;
+SQL&gt; ALTER DATABASE FAILOVER TO OAKLAND;
+SQL&gt; ALTER DATABASE OPEN;</code></pre></li>
+                        <li>
+                           <p>Configure log archive destinations on <code class="codeph">oakland</code>, as necessary:
+                           </p><pre class="pre codeblock"><code>SQL&gt; ALTER SYSTEM SET LOG_ARCHIVE_DEST_2='service="boston" reopen=5
+  2  LGWR ASYNC NET_TIMEOUT=180 valid_for=(ONLINE_LOGFILE, PRIMARY_ROLE)
+  3  DB_UNIQUE_NAME="oakland"';</code></pre><pre class="pre codeblock"><code>
+SQL&gt; ALTER SYSTEM ARCHIVE LOG CURRENT;</code></pre></li>
+                        <li>
+                           <p>Set a parameter to indicate that a failover took place:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(name=&gt;'failover', value=&gt;'1');
+</pre></li>
+                        <li>
+                           <p>Revise the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Resume the rolling upgrade.</p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-3D3BDB04-0981-4E3A-88FD-B1C0B9BDD0E9__CJAHBCBH">
+                     <p class="titleinexample">Example 14-12 Resuming a Rolling Upgrade After a Failover to a New Transient Logical</p>
+                     <p>The following example demonstrates a failover of a physical standby to the transient logical role, followed by the reconfiguration of the rolling upgrade plan on a five-site configuration. In this example, <code class="codeph">seattle</code> is the primary, <code class="codeph">boston</code> is the future primary, <code class="codeph">oakland</code> is a physical standby of <code class="codeph">seattle</code>, and <code class="codeph">atlanta</code> and <code class="codeph">miami</code> are physical standbys of <code class="codeph">boston</code>. Database <code class="codeph">atlanta</code> is failed over to become the new transient logical standby.
+                     </p>
+                     <ol>
+                        <li>
+                           <p>Recover remaining redo on <code class="codeph">atlanta</code> and failover to the new transient logical role:
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; ALTER DATABASE RECOVER MANAGED STANDBY FINISH;
+
+SQL&gt; ALTER DATABASE ACTIVATE STANDBY DATABASE;
+
+SQL&gt; ALTER DATABASE OPEN;
+</pre></li>
+                        <li>
+                           <p>Configure log archive destinations on <code class="codeph">atlanta</code>, as necessary:
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; alter system set log_archive_dest_2='service="seattle" reopen=5
+  2  LGWR ASYNC NET_TIMEOUT=180 valid_for=(ONLINE_LOGFILE, PRIMARY_ROLE)
+  3  DB_UNIQUE_NAME="atlanta"';
+
+SQL&gt; alter system set log_archive_dest_3='service="oakland" reopen=5
+  2  LGWR ASYNC NET_TIMEOUT=180 valid_for=(ONLINE_LOGFILE, PRIMARY_ROLE)
+  3  DB_UNIQUE_NAME="atlanta"';
+
+SQL&gt; alter system set log_archive_dest_4='service="miami" reopen=5
+  2  LGWR ASYNC NET_TIMEOUT=180 valid_for=(ONLINE_LOGFILE, ALL_ROLES)
+  3  DB_UNIQUE_NAME="atlanta"';
+</pre></li>
+                        <li>
+                           <p>Specify <code class="codeph">atlanta</code> as the new transient logical standby database:
+                           </p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.SET_PARAMETER(name=&gt;'failover', value=&gt;'1');
+</pre></li>
+                        <li>
+                           <p>Revise the upgrade plan:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; EXECUTE DBMS_ROLLING.BUILD_PLAN;
+</pre></li>
+                        <li>
+                           <p>Resume the rolling upgrade.</p>
+                        </li>
+                     </ol>
+                  </div>
+                  <!-- class="example" -->
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

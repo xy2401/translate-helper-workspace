@@ -1,0 +1,96 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content>
+      <meta name="description" content>
+      <title>About Optimizing Real-World Performance with Static Connection Pools</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Universal Connection Pool Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Universal Connection Pool Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="universal-connection-pool-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-02-13T06:57:38-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96473-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="controlling-pool-size.html" title="Previous" type="text/html">
+      <link rel="next" href="stale-ucp-connections.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Universal Connection Pool Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JJUCP">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="controlling-pool-size.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="stale-ucp-connections.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Universal Connection Pool Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="optimizing-ucp-behavior.html" property="item" typeof="WebPage"><span property="name">Optimizing Universal Connection Pool Behavior</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">About Optimizing Real-World Performance with Static Connection Pools</li>
+            </ol>
+            <a id="GUID-BC09F045-5D80-4AF5-93F5-FEF0531E0E1D" name="GUID-BC09F045-5D80-4AF5-93F5-FEF0531E0E1D"></a>
+            
+            <h2 id="JJUCP-GUID-BC09F045-5D80-4AF5-93F5-FEF0531E0E1D" class="sect2"><span class="enumeration_section">4.3 </span>About Optimizing Real-World Performance with Static Connection Pools
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p></p>
+               <div class="section">
+                  <p class="subhead1" id="GUID-BC09F045-5D80-4AF5-93F5-FEF0531E0E1D__GUID-E1B5B4D8-1692-4751-AD8A-3B3EB01D29EA"></p>
+                  <p>Most on-line transaction processing (OLTP) performance problems that the Real-World Performance group investigates relate to the connection strategy used by the application. For this reason, designing a sound connection strategy is crucial for system performance, especially in enterprise environments that must scale to meet increasing demand.</p>
+                  <p>Most applications use a dynamic pool of connections to the database, configured with a minimum number of connections to keep open on the database and a maximum number of connections that can be made to the database. When an application needs a connection to the database, then it requests one from the pool. If there are no connections available, then the application creates a new connection, if it has not reached the maximum number of connections already. If a connection has not been used for a specified duration of time, then the application closes the connection, if there are more than the minimum number of connections available.</p>
+                  <p>This configuration conserves system resources by only maintaining the number of connections actively needed by the application. In the real world, this configuration enables connection storms and database system CPU oversubscription, quickly destabilizing a system. A connection storm can occur when there are lots of activities on the application server requiring database connections. If there are not enough connections to the database to serve all of the requests, then the application server opens new connections. Creating a new connection to the database is a resource intensive activity, and when lots of connections are made in a short period of time, it can overwhelm the CPU resources on the database system.</p>
+                  <p>So, for creating a static connection pool, the number of connections to the database system must be based on the CPU cores available on the system. Oracle recommends 1-10 connections per CPU core. The ideal number varies depending on the application and the system hardware. However, the value is somewhere within that range. the Real-World Performance group recommends creating a static pool of connections to the database by setting the minimum and maximum number of connections to the same value. This prevents connection storms by keeping the number of database connections constant to a predefined value.</p>
+                  <p>For example, if a database server has 2 CPUs, 12 cores per CPU, and 2 threads per CPU, then there are 24 cores available and the number of connections to the database should be between 12 and 120. The number of threads is not taken into consideration as only the CPU cores are able to retire instructions. This number is cumulative for all applications connecting to the system and for all databases, if there is more than one database on the system. If there are two application servers, then the maximum number of connections (for example, 120 in this case) should be divided between them. If there are two databases running on the system, then the maximum number of connections that is, 120 connections needs to be divided between them.</p>
+                  <div class="infoboxnotealso" id="GUID-BC09F045-5D80-4AF5-93F5-FEF0531E0E1D__GUID-36C7CD5D-66D5-40D0-9774-CDFF57AE223B">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.youtube.com/watch?v=Oo-tBpVewP4" target="_blank">https://www.youtube.com/watch?v=Oo-tBpVewP4</a></p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.youtube.com/watch?v=XzN8Rp6glEo" target="_blank">https://www.youtube.com/watch?v=XzN8Rp6glEo</a></p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+               <!-- class="section" -->
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

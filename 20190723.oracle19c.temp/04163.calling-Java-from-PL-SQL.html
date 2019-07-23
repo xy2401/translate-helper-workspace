@@ -1,0 +1,131 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Calling Java from PL/SQL</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Java Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Java Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="java-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T00:55:24-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96468-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="calling-Java-from-SQL-DML.html" title="Previous" type="text/html">
+      <link rel="next" href="calling-PL-SQL-from-Java.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Java Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JJDEV">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="calling-Java-from-SQL-DML.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="calling-PL-SQL-from-Java.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Java Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="calling-stored-procedures.html" property="item" typeof="WebPage"><span property="name"> Calling Stored Procedures </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Calling Java from PL/SQL</li>
+            </ol>
+            <a id="GUID-499ABE6B-4391-43C8-A527-74A6C7B0A0FF" name="GUID-499ABE6B-4391-43C8-A527-74A6C7B0A0FF"></a><a id="JJDEV13291"></a>
+            
+            <h2 id="JJDEV-GUID-499ABE6B-4391-43C8-A527-74A6C7B0A0FF" class="sect2"><span class="enumeration_section">8.4 </span>Calling Java from PL/SQL
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div class="section">
+                  <p>You can call Java stored procedures from any PL/SQL block, subprogram, or package. For example, assume that the executable for the following Java class is stored in Oracle Database:</p><pre class="oac_no_warn" dir="ltr">import java.sql.*;
+import oracle.jdbc.*;
+
+public class Adjuster
+{
+  public static void raiseSalary (int empNo, float percent) throws SQLException
+  {
+    Connection conn = DriverManager.getConnection("jdbc:default:connection:");
+    String sql = "UPDATE employees SET salary = salary * ? WHERE employee_id = ?";
+    try
+    {
+      PreparedStatement pstmt = conn.prepareStatement(sql);
+      pstmt.setFloat(1, (1 + percent / 100));
+      pstmt.setInt(2, empNo);
+      pstmt.executeUpdate();
+      pstmt.close();
+    }
+    catch (SQLException e)
+    {
+      System.err.println(e.getMessage());
+    }
+  }
+}
+</pre><p>The <code class="codeph">Adjuster</code> class has one method, which raises the salary of an employee by a given percentage. Because <code class="codeph">raiseSalary()</code> is a <code class="codeph">void</code> method, you must publish it as a procedure, as follows:
+                  </p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE PROCEDURE raise_salary (empno NUMBER, pct NUMBER)
+AS LANGUAGE JAVA
+NAME 'Adjuster.raiseSalary(int, float)';
+</pre><p>In the following example, you call the <code class="codeph">raise_salary</code> procedure from an anonymous PL/SQL block:
+                  </p><pre class="oac_no_warn" dir="ltr">DECLARE
+emp_id NUMBER;
+percent NUMBER;
+BEGIN
+-- get values for emp_id and percent
+raise_salary(emp_id, percent);
+...
+END;
+</pre><p>In the following example, you call the <code class="codeph">row_count</code> function, which defined in <a href="writing-top-level-call-specifications.html#GUID-84D498DC-E586-47F8-8667-3B63180F13AF__BABIBHCI">Example 7-3</a>, from a standalone PL/SQL stored procedure:
+                  </p><pre class="oac_no_warn" dir="ltr">CREATE PROCEDURE calc_bonus (emp_id NUMBER, bonus OUT NUMBER) AS
+emp_count NUMBER;
+...
+BEGIN
+emp_count := row_count('employees');
+...
+END;
+</pre><p>In the following example, you call the <code class="codeph">raise_sal</code> method of the <code class="codeph">Employee</code> object type, which is defined in <span class="q">"<a href="writing-object-type-call-specifications.html#GUID-3D25C5B9-61C1-419E-AF6B-934505301115__BABDJIHE">Implementing Object Type Methods</a>"</span>, from an anonymous PL/SQL block:
+                  </p><pre class="oac_no_warn" dir="ltr">DECLARE
+emp_id NUMBER(4);
+v emp_type;
+BEGIN
+-- assign a value to emp_id
+SELECT VALUE(e) INTO v FROM emps e WHERE empno = emp_id;
+v.raise_sal(500);
+UPDATE emps e SET e = v WHERE empno = emp_id;
+...
+END;
+</pre></div>
+               <!-- class="section" -->
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

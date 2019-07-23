@@ -1,0 +1,2026 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Developing Applications with Oracle XA</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Database Development Guide">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Database Development Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="database-development-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-31T23:23:15-08:00">
+      <meta name="dcterms.title" content="Database Development Guide">
+      <meta name="dcterms.dateCopyrighted" content="1996, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96334-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="external-procedures.html" title="Previous" type="text/html">
+      <link rel="next" href="publish-subscribe-model.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="ADFNS">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="external-procedures.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="publish-subscribe-model.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Database Development Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="advanced-part.html" property="item" typeof="WebPage"><span property="name">Advanced Topics for Application Developers</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Developing Applications with Oracle XA</li>
+            </ol>
+            <a id="GUID-1DAB062F-F796-4424-9FFD-9756688AC5B7" name="GUID-1DAB062F-F796-4424-9FFD-9756688AC5B7"></a><a id="ADFNS1097"></a><a id="ADFNS017"></a>
+            
+            <h2 id="ADFNS-GUID-1DAB062F-F796-4424-9FFD-9756688AC5B7" class="sect2"><span class="enumeration_chapter">22 </span>Developing Applications with Oracle XA
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div class="infoboxnote" id="GUID-1DAB062F-F796-4424-9FFD-9756688AC5B7__GUID-87C74900-502C-40FF-9457-99D2AC698B40">
+                  <p class="notep1">Note:</p>
+                  <p>Avoid using XA if possible, for these reasons:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>XA can degrade performance.</p>
+                     </li>
+                     <li>
+                        <p>XA can cause in-doubt transactions.</p>
+                     </li>
+                     <li>
+                        <p>XA might be unable to take advantage of Oracle Database 12<span class="italic">c</span> Release 1 (12.1.0.1) features that enhance the ability of applications to continue after recoverable outages.
+                        </p>
+                     </li>
+                  </ul>
+                  <p>It might be possible to avoid using XA even when that seems avoidable (for example, if Oracle and non-Oracle resources must be used in the same transaction).</p>
+               </div>
+               <p>This chapter explains how to use the Oracle XA library. Typically, you use this library in applications that work with transaction monitors. The XA features are most useful in applications in which transactions interact with multiple databases.</p>
+               <div class="section">
+                  <p class="subhead1" id="GUID-1DAB062F-F796-4424-9FFD-9756688AC5B7__GUID-055B150E-7A14-4327-9D3D-2A72B6DE9C17">Topics:</p>
+               </div>
+               <!-- class="section" -->
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="xa.html#GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C">X/Open Distributed Transaction Processing (DTP)</a></p>
+                  </li>
+                  <li>
+                     <p><a href="xa.html#GUID-9A7404AC-CE6F-4F41-B8C6-CA2936A78609">Oracle XA Library Subprograms</a></p>
+                  </li>
+                  <li>
+                     <p><a href="xa.html#GUID-22284B0A-C63F-471A-96ED-AEA195068944">Developing and Installing XA Applications</a></p>
+                  </li>
+                  <li>
+                     <p><a href="xa.html#GUID-194B0A1B-1A10-47B5-B898-5CDECD7FFA9B">Troubleshooting XA Applications</a></p>
+                  </li>
+                  <li>
+                     <p><a href="xa.html#GUID-D1F82CDD-DDDA-4895-B18B-C9F7D44AAEBB">Oracle XA Issues and Restrictions</a></p>
+                  </li>
+               </ul>
+               <div class="infoboxnotealso" id="GUID-1DAB062F-F796-4424-9FFD-9756688AC5B7__GUID-4BF8CF25-B27D-4EAD-8C8E-D09C4CAC0A78">
+                  <p class="notep1">See Also:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><span class="italic">Distributed TP: The XA Specification</span>, for an overview of XA, including basic architecture<span class="italic">.</span> Access at <a href="https://www2.opengroup.org/ogsys/jsp/publications/PublicationDetails.jsp?publicationid=11144" target="_blank"><code class="codeph">https://www2.opengroup.org/ogsys/jsp/publications/PublicationDetails.jsp?publicationid=11144</code></a>.
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=LNOCI350" target="_blank"><span class="italic">Oracle Call Interface Programmer's Guide</span></a> for background and reference information about the Oracle XA library
+                        </p>
+                     </li>
+                     <li>
+                        <p>The Oracle Database platform-specific documentation for information about library linking filenames</p>
+                     </li>
+                     <li>
+                        <p>README for changes, bugs, and restrictions in the Oracle XA library for your platform</p>
+                     </li>
+                  </ul>
+               </div>
+            </div><a id="ADFNS760"></a><a id="ADFNS1098"></a><a id="ADFNS1501"></a><div class="props_rev_3"><a id="GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C" name="GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C"></a><h3 id="ADFNS-GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C" class="sect3">X/Open Distributed Transaction Processing (DTP)</h3>
+               <div>
+                  <p>The X/Open Distributed Transaction Processing (DTP) architecture defines a standard architecture or interface that enables multiple application programs (APs) to share resources provided by multiple, and possibly different, resource managers (RMs). It coordinates the work between APs and RMs into global transactions.</p>
+                  <p>The Oracle XA library conforms to the X/Open software architecture's XA interface specification. The Oracle XA library is an external interface that enables a client-side transaction manager (TM) that is not an Oracle client-side TM to coordinate global transactions, thereby allowing inclusion of database RMs that are not Oracle Database RMs in distributed transactions. For example, a client application can manage an Oracle Database transaction and a transaction in an NTFS file system as a single, global transaction.</p>
+                  <p><a href="xa.html#GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C__BGBJEHGJ">Figure 22-1</a> illustrates a possible X/Open DTP model.
+                  </p>
+                  <div class="figure" id="GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C__BGBJEHGJ">
+                     <p class="titleinfigure">Figure 22-1 Possible DTP Model</p><img src="img/adfns079.gif" width="400" alt="Description of Figure 22-1 follows" title="Description of Figure 22-1 follows" longdesc="img_text/adfns079.html"><br><a href="img_text/adfns079.html">Description of "Figure 22-1 Possible DTP Model"</a></div>
+                  <!-- class="figure" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-19B8285C-F8CA-4857-89E3-477C6BD1483C__GUID-7C56C978-7923-4A1E-9FCB-1692AA110A2C">Topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E">DTP Terminology</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-2CF88A6E-A75B-4CE0-891D-0E6AE7D31FA1">Required Public Information</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="ADFNS762"></a><a id="ADFNS763"></a><a id="ADFNS764"></a><a id="ADFNS765"></a><a id="ADFNS766"></a><a id="ADFNS767"></a><a id="ADFNS768"></a><a id="ADFNS769"></a><a id="ADFNS770"></a><a id="ADFNS771"></a><a id="ADFNS761"></a><div class="props_rev_3"><a id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E" name="GUID-CA0BA438-300D-4978-AE75-52D293D3552E"></a><h4 id="ADFNS-GUID-CA0BA438-300D-4978-AE75-52D293D3552E" class="sect4">DTP Terminology</h4>
+                  <div>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABDCAIG">Resource Manager (RM)</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABFFCHB">Distributed Transaction</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABHEGBF">Branch</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABIACJA">Transaction Manager (TM)</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABDBFFB">Transaction Processing Monitor (TPM)</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABBBCHD">Two-Phase Commit Protocol</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABCBIAH">Application Program (AP)</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABFDADA">TX Interface</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABBDDFC">Tight and Loose Coupling</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABGHHEG">Dynamic and Static Registration</a></p>
+                        </li>
+                     </ul>
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABDCAIG">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-F0D59031-48A6-4599-99C3-3B800502573C">Resource Manager (RM)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>A resource manager controls a shared, recoverable resource that can be returned to a consistent state after a failure. Examples are relational databases, transactional queues, and transactional file systems. Oracle Database is an RM and uses its online redo log and undo segments to return to a consistent state after a failure.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABFFCHB">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-0CA959CF-5C8A-44B0-BDA6-AC1D8FDB3AF6">Distributed Transaction</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>A distributed transaction, also called a <strong class="term">global transaction</strong>, is a client transaction that involves updates to multiple distributed resources and requires "all-or-none" semantics across distributed RMs.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABHEGBF">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-808BE7EC-91B6-4C9E-8F60-4636A309C62F">Branch</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>A branch is a unit of work contained within one RM. Multiple branches comprise a global transaction. For Oracle Database, each branch maps to a local transaction inside the database server.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABIACJA">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-7137E6FF-E308-497A-9251-0DA1D3E9C2C8">Transaction Manager (TM)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>A transaction manager provides an API for specifying the boundaries of the transaction and manages commit and recovery. The TM implements a two-phase commit engine to provide "all-or-none" semantics across distributed RMs. </p>
+                        <p>An <strong class="term">external TM</strong> is a middle-tier component that resides outside Oracle Database. Normally, the database is its own internal TM. Using a standards-based TM enables Oracle Database to cooperate with other heterogeneous RMs in a single transaction.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABDBFFB">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-12171B7B-DDF7-4002-9F42-C0A6A65FC4F2">Transaction Processing Monitor (TPM)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>A TM is usually provided by a transaction processing monitor (TPM), such as:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Oracle Tuxedo</p>
+                           </li>
+                           <li>
+                              <p>IBM Transarc Encina</p>
+                           </li>
+                           <li>
+                              <p>IBM CICS</p>
+                           </li>
+                        </ul>
+                        <p>A TPM coordinates the flow of transaction requests between the client processes that issue requests and the back-end servers that process them. Basically, a TPM coordinates transactions that require the services of several different types of back-end processes, such as application servers and RMs distributed over a network.</p>
+                        <p>The TPM synchronizes any commits or rollbacks required to complete a distributed transaction. The TM portion of the TPM is responsible for controlling when distributed commits and rollbacks take place. Thus, if a distributed application program takes advantage of a TPM, then the TM portion of the TPM is responsible for controlling the two-phase commit protocol. The RMs enable the TMs to perform this task.</p>
+                        <p>Because the TM controls distributed commits or rollbacks, it must communicate directly with Oracle Database (or any other RM) through the XA interface. It uses Oracle XA library subprograms, which are described in <span class="q">"<a href="xa.html#GUID-9C1460F8-43B4-470B-A624-07889E522340">Oracle XA Library Subprograms</a>"</span>, to tell Oracle Database how to process the transaction, based on its knowledge of all RMs in the transaction.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABBBCHD">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-11969F91-28A8-4D39-BC05-60DB34C658E0">Two-Phase Commit Protocol</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>The Oracle XA library interface follows the two-phase commit protocol. The sequence of events is as follows:</p>
+                        <ol>
+                           <li>
+                              <p>In the prepare phase, the TM asks each RM to guarantee that it can commit any part of the transaction. If this is possible, then the RM records its prepared state and replies affirmatively to the TM. If it is not possible, then the RM might roll back any work, reply negatively to the TM, and forget about the transaction. The protocol allows the application, or any RM, to roll back the transaction unilaterally until the prepare phase completes. </p>
+                           </li>
+                           <li>
+                              <p>In phase two, the TM records the commit decision and issues a commit or rollback to all RMs participating in the transaction. TM can issue a commit for an RM only if all RMs have replied affirmatively to phase one.</p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABCBIAH">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-2D142483-7C2F-459D-AA08-245875528D82">Application Program (AP)</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>An application program defines transaction boundaries and specifies actions that constitute a transaction. For example, an AP can be a precompiler or Oracle Call Interface (OCI) program. The AP operates on the RM resource through its native interface, for example, SQL. </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABFDADA">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-1D409ADA-6013-4F0F-A191-A474890F92C8">TX Interface</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>An application program starts and completes all transaction control operations through the TM through an interface called <strong class="term">TX</strong>. The AP does not directly use the XA interface. APs are not aware of branches that fork in the middle-tier: application threads do not explicitly join, leave, suspend, and resume branch work, instead the TM portion of the transaction processing monitor manages the branches of a global transaction for APs. Ultimately, APs call the TM to commit all-or-none.
+                        </p>
+                        <div class="infoboxnote" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-293402A0-94B2-4B5C-804F-5460BFA68609">
+                           <p class="notep1">Note:</p>
+                           <p>The naming conventions for the TX interface and associated subprograms are vendor-specific. For example, the <code class="codeph">tx_open</code> call might be referred to as <code class="codeph">tp_open</code> on your system. In some cases, the calls might be implicit, for example, at the entry to a transactional RPC. See the documentation supplied with the transaction processing monitor for details.
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABBDDFC">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-74CB271D-C466-4928-9137-4C94D60A9823">Tight and Loose Coupling</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>Application threads are <span class="bold">tightly coupled</span> if the RM considers them as a single entity for all isolation semantic purposes. Tightly coupled branches must see changes in each other. Furthermore, an external client must either see all changes of a tightly coupled set or none of the changes. If application threads are not tightly coupled, then they are <span class="bold">loosely coupled</span>.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__BABGHHEG">
+                        <p class="subhead3" id="GUID-CA0BA438-300D-4978-AE75-52D293D3552E__GUID-E572F404-6B66-4496-B3B9-77EC82AF2C1E">Dynamic and Static Registration</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>Oracle Database supports both dynamic and static registration. In <span class="bold">dynamic registration</span>, the RM runs an application callback before starting any work. In <span class="bold">static registration</span>, you must call <code class="codeph">xa_start</code> for each RM before starting any work, even if some RMs are not involved.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS773"></a><a id="ADFNS772"></a><div class="props_rev_3"><a id="GUID-2CF88A6E-A75B-4CE0-891D-0E6AE7D31FA1" name="GUID-2CF88A6E-A75B-4CE0-891D-0E6AE7D31FA1"></a><h4 id="ADFNS-GUID-2CF88A6E-A75B-4CE0-891D-0E6AE7D31FA1" class="sect4">Required Public Information</h4>
+                  <div>
+                     <p>As a resource manager, Oracle Database must publish the information described in <a href="xa.html#GUID-2CF88A6E-A75B-4CE0-891D-0E6AE7D31FA1__BGBFABGJ" title="This table summarizes the required XA features published by Oracle Database.">Table 22-1</a>.
+                     </p>
+                     <div class="tblformal" id="GUID-2CF88A6E-A75B-4CE0-891D-0E6AE7D31FA1__BGBFABGJ">
+                        <p class="titleintable">Table 22-1 Required XA Features Published by Oracle Database</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="Required XA Features Published by Oracle Database" summary="This table summarizes the required XA features published by Oracle Database." width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="28%" id="d132228e765">XA Feature</th>
+                                 <th align="left" valign="bottom" width="72%" id="d132228e768">Oracle Database Details</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="28%" id="d132228e773" headers="d132228e765 ">
+                                    <p><code class="codeph">xa_switch_t</code> structures
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d132228e773 d132228e768 ">
+                                    <p>The Oracle Database <code class="codeph">xa_switch_t</code> structure name is <code class="codeph">xaosw</code> for static registration and <code class="codeph">xaoswd</code> for dynamic registration. These structures contain entry points and other information for the resource manager.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="28%" id="d132228e791" headers="d132228e765 ">
+                                    <p><code class="codeph">xa_switch_t</code> resource manager
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d132228e791 d132228e768 ">
+                                    <p>The Oracle Database resource manager name within the <code class="codeph">xa_switch_t</code> structure is <code class="codeph">Oracle_XA</code>.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="28%" id="d132228e806" headers="d132228e765 ">
+                                    <p>Close string</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d132228e806 d132228e768 ">
+                                    <p>The close string used by <code class="codeph">xa_close</code> is ignored and can be null.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="28%" id="d132228e816" headers="d132228e765 ">
+                                    <p>Open string</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d132228e816 d132228e768 ">
+                                    <p>For the description of the format of the open string that <code class="codeph">xa_open</code> uses, see <a href="xa.html#GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96">Defining the xa_open String</a>.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="28%" id="d132228e830" headers="d132228e765 ">
+                                    <p>Libraries</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d132228e830 d132228e768 ">
+                                    <p>Libraries needed to link applications using Oracle XA have platform-specific names. The procedure is similar to linking an ordinary precompiler or OCI program except that you might have to link any TPM-specific libraries.</p>
+                                    <p>If you are not using Precompilers (such as Pro*C/C++, Pro*COBOL, and others), then link with <code class="codeph">$ORACLE_HOME/rdbms/lib/xaonsl.o</code> or <code class="codeph">$ORACLE_HOME/rdbms/lib32/xaonsl.o</code> (for 32 bit application on 64 bit platforms).
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="28%" id="d132228e845" headers="d132228e765 ">
+                                    <p>Requirements</p>
+                                 </td>
+                                 <td align="left" valign="top" width="72%" headers="d132228e845 d132228e768 ">
+                                    <p>None. The functionality to support XA is part of both Standard Edition and Enterprise Edition.</p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                  </div>
+               </div>
+            </div><a id="ADFNS1099"></a><a id="ADFNS1502"></a><div class="props_rev_3"><a id="GUID-9A7404AC-CE6F-4F41-B8C6-CA2936A78609" name="GUID-9A7404AC-CE6F-4F41-B8C6-CA2936A78609"></a><h3 id="ADFNS-GUID-9A7404AC-CE6F-4F41-B8C6-CA2936A78609" class="sect3">Oracle XA Library Subprograms</h3>
+               <div>
+                  <p>The Oracle XA library subprograms enable a TM to tell Oracle Database how to process transactions. Generally, the TM must open the resource by using <code class="codeph">xa_open</code>. Typically, the opening of the resource results from the AP call to <code class="codeph">tx_open</code>. Some TMs might call <code class="codeph">xa_open</code> implicitly when the application begins. 
+                  </p>
+                  <p>Similarly, there is a close (using <code class="codeph">xa_close</code>) that occurs when the application is finished with the resource. The close might occur when the AP calls <code class="codeph">tx_close</code> or when the application terminates.
+                  </p>
+                  <p>The TM instructs the RMs to perform several other tasks, which include:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Starting a transaction and associating it with an ID</p>
+                     </li>
+                     <li>
+                        <p>Rolling back a transaction</p>
+                     </li>
+                     <li>
+                        <p>Preparing and committing a transaction</p>
+                     </li>
+                  </ul>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-9A7404AC-CE6F-4F41-B8C6-CA2936A78609__GUID-7C1AF3C7-1DD7-4F98-A4EB-49A2BF1F290B">Topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-9C1460F8-43B4-470B-A624-07889E522340">Oracle XA Library Subprograms</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-00C2A1DD-B351-4377-A13B-0E67D0E21B51">Oracle XA Interface Extensions</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="ADFNS775"></a><a id="ADFNS774"></a><div class="props_rev_3"><a id="GUID-9C1460F8-43B4-470B-A624-07889E522340" name="GUID-9C1460F8-43B4-470B-A624-07889E522340"></a><h4 id="ADFNS-GUID-9C1460F8-43B4-470B-A624-07889E522340" class="sect4">Oracle XA Library Subprograms</h4>
+                  <div>
+                     <p>XA Library subprograms are described in <a href="xa.html#GUID-9C1460F8-43B4-470B-A624-07889E522340__g1017655" title="This table summarizes the XA library subroutines.">Table 22-2</a>.
+                     </p>
+                     <div class="tblformal" id="GUID-9C1460F8-43B4-470B-A624-07889E522340__g1017655">
+                        <p class="titleintable">Table 22-2  XA Library Subprograms</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title=" XA Library Subprograms" summary="This table summarizes the XA library subroutines." width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="20%" id="d132228e1116">XA Subprogram</th>
+                                 <th align="left" valign="bottom" width="80%" id="d132228e1119">Description</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1124" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_open</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1124 d132228e1119 ">
+                                    <p>Connects to the RM.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1132" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_close</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1132 d132228e1119 ">
+                                    <p>Disconnects from the RM.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1140" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_start</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1140 d132228e1119 ">
+                                    <p>Starts a transaction and associates it with the given transaction ID (XID), or associates the process with an existing transaction.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1148" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_end</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1148 d132228e1119 ">
+                                    <p>Disassociates the process from the given XID.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1156" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_rollback</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1156 d132228e1119 ">
+                                    <p>Rolls back the transaction associated with the given XID.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1164" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_prepare</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1164 d132228e1119 ">
+                                    <p>Prepares the transaction associated with the given XID. This is the first phase of the two-phase commit protocol.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1172" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_commit</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1172 d132228e1119 ">
+                                    <p>Commits the transaction associated with the given XID. This is the second phase of the two-phase commit protocol.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1180" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_recover</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1180 d132228e1119 ">
+                                    <p>Retrieves a list of prepared, heuristically committed, or heuristically rolled back transactions.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d132228e1188" headers="d132228e1116 ">
+                                    <p><code class="codeph">xa_forget</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="80%" headers="d132228e1188 d132228e1119 ">
+                                    <p>Forgets the heuristically completed transaction associated with the given XID.</p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                     <p>In general, the AP need not worry about the subprograms in <a href="xa.html#GUID-9C1460F8-43B4-470B-A624-07889E522340__g1017655" title="This table summarizes the XA library subroutines.">Table 22-2</a> except to understand the role played by the <code class="codeph">xa_open</code> string.
+                     </p>
+                  </div>
+               </div><a id="ADFNS777"></a><a id="ADFNS776"></a><div class="props_rev_3"><a id="GUID-00C2A1DD-B351-4377-A13B-0E67D0E21B51" name="GUID-00C2A1DD-B351-4377-A13B-0E67D0E21B51"></a><h4 id="ADFNS-GUID-00C2A1DD-B351-4377-A13B-0E67D0E21B51" class="sect4">Oracle XA Interface Extensions</h4>
+                  <div>
+                     <p>Oracle Database's XA interface includes some additional functions, which are described in <a href="xa.html#GUID-00C2A1DD-B351-4377-A13B-0E67D0E21B51__BGBEDJAG" title="This table summarizes additional functions in the XA interface for Oracle Database.">Table 22-3</a>.
+                     </p>
+                     <div class="tblformalwide" id="GUID-00C2A1DD-B351-4377-A13B-0E67D0E21B51__BGBEDJAG">
+                        <p class="titleintable">Table 22-3 Oracle XA Interface Extensions</p>
+                        <table cellpadding="4" cellspacing="0" class="FormalWide" title="Oracle XA Interface Extensions" summary="This table summarizes additional functions in the XA interface for Oracle Database." width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="49%" id="d132228e1318">Function</th>
+                                 <th align="left" valign="bottom" width="51%" id="d132228e1321">Description</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="49%" id="d132228e1326" headers="d132228e1318 ">
+                                    <p><code class="codeph">OCISvcCtx *xaoSvcCtx(text *dbname)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="51%" headers="d132228e1326 d132228e1321 ">
+                                    <p>Returns the OCI service handle for a given XA connection. The <code class="codeph">dbname</code> parameter must be the same as the <code class="codeph">DB</code> parameter passed in the <code class="codeph">xa_open</code> string. OCI applications can use this routing instead of the <code class="codeph">sqlld2</code> calls to obtain the connection handle. Hence, OCI applications need not link with the <code class="codeph">sqllib</code> library. The service handle can be converted to the Version 7 OCI logon data area (LDA) by using <code class="codeph">OCISvcCtxToLda</code> [Version 8 OCI]. Client applications must remember to convert the Version 7 LDA to a service handle by using <code class="codeph">OCILdaToSvcCtx</code> after completing the OCI calls.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="49%" id="d132228e1356" headers="d132228e1318 ">
+                                    <p><code class="codeph">OCIEnv *xaoEnv(text *dbname)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="51%" headers="d132228e1356 d132228e1321 ">
+                                    <p>Returns the OCI environment handle for a given XA connection. The <code class="codeph">dbname</code> parameter must be the same as the <code class="codeph">DB</code> parameter passed in the <code class="codeph">xa_open</code> string.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="49%" id="d132228e1373" headers="d132228e1318 ">
+                                    <p><code class="codeph">int xaosterr(OCISvcCtx *SvcCtx,sb4 error)</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="51%" headers="d132228e1373 d132228e1321 ">
+                                    <p>Converts an Oracle Database error code to an XA error code (applicable only to dynamic registration). The first parameter is the service handle used to run the work in the database. The second parameter is the error code that was returned from Oracle Database. Use this function to determine if the error returned from an OCI statement was caused because the <code class="codeph">xa_start</code> failed. The function returns XA_OK if the error was not generated by the XA module or a valid XA error if the error was generated by the XA module.
+                                    </p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                  </div>
+               </div>
+            </div><a id="ADFNS1503"></a><div class="props_rev_3"><a id="GUID-22284B0A-C63F-471A-96ED-AEA195068944" name="GUID-22284B0A-C63F-471A-96ED-AEA195068944"></a><h3 id="ADFNS-GUID-22284B0A-C63F-471A-96ED-AEA195068944" class="sect3">Developing and Installing XA Applications</h3>
+               <div>
+                  <div class="section">
+                     <p>This section explains how to develop and install Oracle XA applications:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-91007BAE-9DD3-4993-8220-C3EC8391376B">DBA or System Administrator Responsibilities</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-FE99AEDA-C4B1-40F9-A3BB-4484F9532753">Application Developer Responsibilities</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96">Defining the xa_open String</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-22284B0A-C63F-471A-96ED-AEA195068944">Developing and Installing XA Applications</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-731EEEF6-C3CB-460C-85DE-25F5EF88FD2C">Managing Transaction Control with Oracle XA</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE">Migrating Precompiler or OCI Applications to TPM Applications</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-1769DFE4-A670-471F-81D2-514398386A41">Managing Oracle XA Library Thread Safety</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6">Using the DBMS_XA Package</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="ADFNS778"></a><div class="props_rev_3"><a id="GUID-91007BAE-9DD3-4993-8220-C3EC8391376B" name="GUID-91007BAE-9DD3-4993-8220-C3EC8391376B"></a><h4 id="ADFNS-GUID-91007BAE-9DD3-4993-8220-C3EC8391376B" class="sect4">DBA or System Administrator Responsibilities</h4>
+                  <div>
+                     <div class="section">
+                        <p>The responsibilities of the DBA or system administrator are:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <ol>
+                        <li class="stepexpand"><span>Define the open string, with help from the application developer.</span></li>
+                        <li class="stepexpand"><span>Ensure that the static data dictionary view <code class="codeph">DBA_PENDING_TRANSACTIONS</code> exists and grant the <code class="codeph">READ</code> or <code class="codeph">SELECT</code> privilege to the view for all Oracle users specified in the <code class="codeph">xa_open</code> string.</span><div>
+                              <p>Grant <code class="codeph">FORCE</code> <code class="codeph">TRANSACTION</code> privilege to the Oracle user who might commit or roll back pending (in-doubt) transactions that he or she created, using the command <code class="codeph">COMMIT</code> <code class="codeph">FORCE</code> <span class="italic"><code class="codeph">local_tran_id</code></span> or <code class="codeph">ROLLBACK</code> <code class="codeph">FORCE</code> <span class="italic"><code class="codeph">local_tran_id</code></span>.
+                              </p>
+                              <p>Grant <code class="codeph">FORCE</code> <code class="codeph">ANY</code> <code class="codeph">TRANSACTION</code> privilege to the Oracle user who might commit or roll back XA transactions created by other users. For example, if user A might commit or roll back a transaction that was created by user B, user A must have <code class="codeph">FORCE</code> <code class="codeph">ANY</code> <code class="codeph">TRANSACTION</code> privilege.
+                              </p>
+                              <p>In Oracle Database version 7 client applications, all Oracle Database accounts used by Oracle XA library must have the <code class="codeph">SELECT</code> privilege on the dynamic performance view <code class="codeph">V$XATRANS$</code>. This view must have been created during the XA library installation. If necessary, you can manually create the view by running the SQL script <code class="codeph">xaview</code>.<code class="codeph">sql</code> as Oracle Database user <code class="codeph">SYS</code>.
+                              </p>
+                           </div>
+                        </li>
+                        <li class="stepexpand"><span>Using the open string information, install the RM into the TPM configuration. Follow the TPM vendor instructions. </span><div>
+                              <p>The DBA or system administrator must be aware that a TPM system starts the process that connects to Oracle Database. See your TPM documentation to determine what environment exists for the process and what user ID it must have. Ensure that correct values are set for <code class="codeph">$ORACLE_HOME</code> and <code class="codeph">$ORACLE_SID</code> in this environment.
+                              </p>
+                           </div>
+                        </li>
+                        <li class="stepexpand"><span>Grant the user ID write permission to the directory in which the system is to write the XA trace file.</span><div></div>
+                        </li>
+                        <li class="stepexpand"><span>Start the relevant database instances to bring Oracle XA applications on-line. Perform this task before starting any TPM servers.</span></li>
+                     </ol>
+                     <div class="section">
+                        <div class="infoboxnotealso" id="GUID-91007BAE-9DD3-4993-8220-C3EC8391376B__NOTE-1231-CB04EA89">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="xa.html#GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96">Defining the xa_open String</a> for information about how to define open string, and specify an Oracle System Identifier (SID) or a trace directory that is different from the defaults
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Your Oracle Database platform-specific documentation for the location of the <code class="codeph">catxpend</code>.<code class="codeph">sql</code> script
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS779"></a><div class="props_rev_3"><a id="GUID-FE99AEDA-C4B1-40F9-A3BB-4484F9532753" name="GUID-FE99AEDA-C4B1-40F9-A3BB-4484F9532753"></a><h4 id="ADFNS-GUID-FE99AEDA-C4B1-40F9-A3BB-4484F9532753" class="sect4">Application Developer Responsibilities</h4>
+                  <div>
+                     <div class="section">
+                        <p>The responsibilities of the application developer are:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <ol>
+                        <li class="stepexpand"><span>Define the open string with help from the DBA or system administrator, as explained in <a href="xa.html#GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96">Defining the xa_open String</a>..</span></li>
+                        <li class="stepexpand"><span>Develop the applications. </span><div>
+                              <p>Observe special restrictions on transaction-oriented SQL statements for precompilers.</p>
+                              <div class="infoboxnotealso" id="GUID-FE99AEDA-C4B1-40F9-A3BB-4484F9532753__GUID-AB0A5F35-9E3B-4959-990B-959E0C3B13FE">
+                                 <p class="notep1">See Also:</p>
+                                 <p><a href="xa.html#GUID-22284B0A-C63F-471A-96ED-AEA195068944">Developing and Installing XA Applications</a></p>
+                              </div>
+                           </div>
+                        </li>
+                        <li class="stepexpand"><span>Link the application according to TPM vendor instructions.</span></li>
+                     </ol>
+                  </div>
+               </div><a id="ADFNS1100"></a><a id="ADFNS780"></a><div class="props_rev_3"><a id="GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96" name="GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96"></a><h4 id="ADFNS-GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96" class="sect4">Defining the xa_open String</h4>
+                  <div>
+                     <div class="section">
+                        <p>The open string is used by the transaction monitor to open the database. The maximum number of characters in an open string is 256. </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-33E70E78-7ACD-4B6F-84C2-AC567C6EDE96__GUID-C967996D-E739-49A0-A6B6-FBEC760D51B8">Topics:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="xa.html#GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B">Syntax of the xa_open String</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-C6CEF296-5873-4F8B-80AE-F647B9367054">Required Fields for the xa_open String</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2">Optional Fields for the xa_open String</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="ADFNS782"></a><a id="ADFNS781"></a><div class="props_rev_3"><a id="GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B" name="GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B"></a><h5 id="ADFNS-GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B" class="sect5">Syntax of the xa_open String</h5>
+                     <div>
+                        <div class="section">
+                           <p>You can define an open string with the syntax shown in <a href="xa.html#GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B__BGBJCIHB">Example 22-1</a>.
+                           </p>
+                           <p>These strings shows sample parameter settings:</p><pre class="oac_no_warn" dir="ltr">ORACLE_XA+DB=MANAGERS+SqlNet=SID1+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/xalog
+ORACLE_XA+DB=PAYROLL+SqlNet=SID2+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/xalog
+ORACLE_XA+SqlNet=SID3+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/xalog
+</pre><p>These topics describe valid parameters for the <span class="italic"><code class="codeph">required_fields</code></span><span class="italic"> </span>and <span class="italic"><code class="codeph">optional_fields</code></span> placeholders:
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="xa.html#GUID-C6CEF296-5873-4F8B-80AE-F647B9367054">Required Fields for the xa_open String</a></p>
+                              </li>
+                              <li>
+                                 <p><a href="xa.html#GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2">Optional Fields for the xa_open String</a></p>
+                              </li>
+                           </ul>
+                           <div class="infoboxnote" id="GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B__GUID-482A066D-E03F-4A9C-BCD4-0F8F59C18348">
+                              <p class="notep1">Note:</p>
+                              <p></p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p>You can enter the required fields and optional fields in any order when constructing the open string.</p>
+                                 </li>
+                                 <li>
+                                    <p>All field names are case insensitive. Whether their values are case-sensitive depends on the platform.</p>
+                                 </li>
+                                 <li>
+                                    <p>There is no way to use the plus character (<code class="codeph">+</code>) as part of the actual information string.
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B__BGBJCIHB">
+                           <p class="titleinexample">Example 22-1 xa_open String</p><pre class="oac_no_warn" dir="ltr">ORACLE_XA{+<span class="italic"><code class="codeph">required_fields</code></span>...} [+<span class="italic"><code class="codeph">optional_fields</code></span><span class="italic">..</span>.]
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="ADFNS784"></a><a id="ADFNS783"></a><div class="props_rev_3"><a id="GUID-C6CEF296-5873-4F8B-80AE-F647B9367054" name="GUID-C6CEF296-5873-4F8B-80AE-F647B9367054"></a><h5 id="ADFNS-GUID-C6CEF296-5873-4F8B-80AE-F647B9367054" class="sect5">Required Fields for the xa_open String</h5>
+                     <div>
+                        <p>The <span class="italic"><code class="codeph">required_fields</code></span> placeholder in <a href="xa.html#GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B__BGBJCIHB">Example 22-1</a> refers to any of the name-value pairs described in <a href="xa.html#GUID-C6CEF296-5873-4F8B-80AE-F647B9367054__BGBDIACH" title="This table summarizes the required fields of the xa_open string.">Table 22-4</a>.
+                        </p>
+                        <div class="tblformal" id="GUID-C6CEF296-5873-4F8B-80AE-F647B9367054__BGBDIACH">
+                           <p class="titleintable">Table 22-4 Required Fields of xa_open string</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="Required Fields of xa_open string" summary="This table summarizes the required fields of the xa_open string." width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="36%" id="d132228e2287">Syntax Element</th>
+                                    <th align="left" valign="bottom" width="64%" id="d132228e2290">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="36%" id="d132228e2295" headers="d132228e2287 ">
+                                       <p><code class="codeph">Acc=P//</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="64%" headers="d132228e2295 d132228e2290 ">
+                                       <p>Specifies that no explicit user or password information is provided and that the operating system authentication form is used.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="36%" id="d132228e2303" headers="d132228e2287 ">
+                                       <p><code class="codeph">Acc=P/</code><span class="italic"><code class="codeph">user</code></span><code class="codeph">/</code><span class="italic"><code class="codeph">password</code></span> 
+                                       </p>
+                                    </td>
+                                    <td align="left" valign="top" width="64%" headers="d132228e2303 d132228e2290 ">
+                                       <p>Specifies the user name and password for a valid Oracle Database account. As described in <a href="xa.html#GUID-91007BAE-9DD3-4993-8220-C3EC8391376B">DBA or System Administrator Responsibilities</a>, ensure that HR has the <code class="codeph">READ</code> or <code class="codeph">SELECT</code> privilege on the <code class="codeph">DBA_PENDING_TRANSACTIONS</code> table.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="36%" id="d132228e2333" headers="d132228e2287 ">
+                                       <p><code class="codeph">SesTm=</code><span class="italic"><code class="codeph">session_time_limit</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="64%" headers="d132228e2333 d132228e2290 ">
+                                       <p>Specifies the maximum number of seconds allowed in a transaction between one service and the next, or between a service and the commit or rollback of the transaction, before the system terminates the transaction. For example, <code class="codeph">SesTM=15</code> indicates that the session idle time limit is 15 seconds.
+                                       </p>
+                                       <p>For example, if the TPM uses remote subprogram calls between the client and the servers, then <code class="codeph">SesTM</code> applies to the time between the completion of one RPC and the initiation of the next RPC, or the <code class="codeph">tx_commit</code>, or the <code class="codeph">tx_rollback</code>.
+                                       </p>
+                                       <p>The value of <code class="codeph">0</code> indicates no limit. Entering a value of <code class="codeph">0</code> is strongly discouraged. It might tie up resources for a long time if something goes wrong. Also, if a child process has <code class="codeph">SesTM=0</code>, then the <code class="codeph">SesTM</code> setting is not effective after the parent process is terminated.
+                                       </p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <div class="infoboxnotealso" id="GUID-C6CEF296-5873-4F8B-80AE-F647B9367054__NOTE-123-CB061EE4">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ADMIN11046" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for more information about administrator authentication
+                           </p>
+                        </div>
+                     </div>
+                  </div><a id="ADFNS786"></a><a id="ADFNS785"></a><div class="props_rev_3"><a id="GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2" name="GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2"></a><h5 id="ADFNS-GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2" class="sect5">Optional Fields for the xa_open String</h5>
+                     <div>
+                        <p>The <span class="italic"><code class="codeph">optional_fields</code></span> placeholder in <a href="xa.html#GUID-A4EF3AB0-8800-45B8-9A71-07986BE3697B__BGBJCIHB">Example 22-1</a> refers to any of the name-value pairs described in <a href="xa.html#GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2__BGBFICJB" title="This table summarizes the optional fields of the xa_open string.">Table 22-5</a>.
+                        </p>
+                        <div class="tblformal" id="GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2__BGBFICJB">
+                           <p class="titleintable">Table 22-5 Optional Fields in the xa_open String</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="Optional Fields in the xa_open String" summary="This table summarizes the optional fields of the xa_open string." width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="31%" id="d132228e2498">Syntax Element</th>
+                                    <th align="left" valign="bottom" width="69%" id="d132228e2501">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2506" headers="d132228e2498 ">
+                                       <p><code class="codeph">NoLocal= true | false</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2506 d132228e2501 ">
+                                       <p>Specifies whether local transactions are allowed. The default value is <code class="codeph">false</code>. If the application must disallow local transactions, then set the value to <code class="codeph">true</code>.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2520" headers="d132228e2498 ">
+                                       <p><code class="codeph">DB=</code><span class="italic"><code class="codeph">db_name</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2520 d132228e2501 ">
+                                       <p>Specifies the name used by Oracle Database precompilers to identify the database. For example, <code class="codeph">DB=payroll</code> specifies that the database name is <code class="codeph">payroll</code> and that the application server program uses that name in <code class="codeph">AT</code> clauses.
+                                       </p>
+                                       <p>Application programs that use only the default database for the Oracle Database precompiler (that is, they do not use the <code class="codeph">AT</code> clause in their SQL statements) must omit the <code class="codeph">DB=</code><span class="italic"><code class="codeph">db_name</code></span> clause in the open string. Applications that use explicitly named databases must indicate that database name in their <code class="codeph">DB=</code><span class="italic"><code class="codeph">db_name</code></span> field. Oracle Database Version 7 OCI programs must call the <code class="codeph">sqlld2</code> function to obtain the correct context for logon data area (<code class="codeph">Lda_Def</code>), which is the equivalent of an OCI service context. Version 8 and higher OCI programs must call the <code class="codeph">xaoSvcCtx</code> function to get the <code class="codeph">OCISvcCtx</code> service context.
+                                       </p>
+                                       <p>The <span class="italic"><code class="codeph">db_name</code></span> is not the SID and is not used to locate the database to be opened. Rather, it correlates the database opened by this open string with the name used in the application program to run SQL statements. The SID is set from either the environment variable <code class="codeph">ORACLE_SID</code> of the TPM application server or the SID given in the Oracle Net clause in the open string. The Oracle Net clause is described later in this section.Some TPM vendors provide a way to name a group of servers that use the same open string. You might find it convenient to choose the same name both for that purpose and for db_name. 
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2579" headers="d132228e2498 ">
+                                       <p><code class="codeph">LogDir=</code><span class="italic"><code class="codeph">log_dir</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2579 d132228e2501 ">
+                                       <p>Specifies the path name on the local system where the Oracle XA library error and tracing information is to be logged. The default is <code class="codeph">$ORACLE_HOME/rdbms/log </code>if <code class="codeph">ORACLE_HOME</code> is set; otherwise, it specifies the current directory. For example, <code class="codeph">LogDir=/xa_trace</code> indicates that the logging information is located under the <code class="codeph">/xa_trace</code> directory. Ensure that the directory exists and the application server can write to it. 
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2602" headers="d132228e2498 ">
+                                       <p><code class="codeph">Objects= true</code> | <code class="codeph">false</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2602 d132228e2501 ">
+                                       <p>Specifies whether the application is initialized in object mode. The default value is false. If the application must use certain API calls that require object mode, such as <code class="codeph">OCIRawAssignBytes</code>, then set the value to <code class="codeph">true</code>.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2619" headers="d132228e2498 ">
+                                       <p><code class="codeph">MaxCur=</code><span class="italic"><code class="codeph">maximum_#_of_open_cursors</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2619 d132228e2501 ">
+                                       <p>Specifies the number of cursors to be allocated when the database is opened. It serves the same purpose as the precompiler option <code class="codeph">maxopencursors</code>. For example, <code class="codeph">MaxCur=5</code> indicates that the precompiler tries to keep five open cursors cached. This parameter overrides the precompiler option <code class="codeph">maxopencursors</code> that you might have specified in your source code or at compile time.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2639" headers="d132228e2498 ">
+                                       <p><code class="codeph">SqlNet=</code><span class="italic"><code class="codeph">db_link</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2639 d132228e2501 ">
+                                       <p>Specifies the Oracle Net database link to use to log on to the system. This string must be an entry in <code class="codeph">tnsnames.ora</code>. For example, the string <code class="codeph">SqlNet=inst1_disp</code> might connect to a shared server at instance 1 if so defined in <code class="codeph">tnsnames.ora</code>.
+                                       </p>
+                                       <p>You can use the <code class="codeph">SqlNet</code> parameter to specify the <code class="codeph">ORACLE_SID</code> in cases where you cannot control the server environment variable. You must also use it when the server must access multiple Oracle Database instances. To use the Oracle Net string without actually accessing a remote database, use the Pipe driver. For example, specify <code class="codeph">SqlNet=localsid1</code>, where <code class="codeph">localsid1</code> is an alias defined in the <code class="codeph">tnsnames.ora</code> file.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2676" headers="d132228e2498 ">
+                                       <p><code class="codeph">Loose_Coupling=true | false</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2676 d132228e2501 ">
+                                       <p>Specifies whether locks are shared. Oracle Database transaction branches within the same global transaction can be coupled tightly or loosely. If branches are loosely coupled, then they do not share locks. Set the value to <code class="codeph">true</code> for loosely coupled branches. If branches are tightly coupled, then they share locks. Set the value to <code class="codeph">false</code> for tightly coupled branches. The default value is <code class="codeph">false</code>.
+                                       </p>
+                                       <p><span class="bold">Note:</span> When running Oracle RAC, if transaction branches land on different Oracle RAC instances, then they are loosely coupled even if <code class="codeph">Loose_Coupling=false</code>.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2700" headers="d132228e2498 ">
+                                       <p><code class="codeph">SesWt=</code><span class="italic"><code class="codeph">session_wait_limit</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2700 d132228e2501 ">
+                                       <p>Specifies the number of seconds Oracle Database waits for a transaction branch that is being used by another session before <code class="codeph">XA_RETRY</code> is returned. The default value is 60 seconds.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2714" headers="d132228e2498 ">
+                                       <p><code class="codeph">Threads=true</code> | <code class="codeph">false</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2714 d132228e2501 ">
+                                       <p>Specifies whether the application is multithreaded. The default value is <code class="codeph">false</code>. If the application is multithreaded, then the setting is <code class="codeph">true</code>.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e2731" headers="d132228e2498 ">
+                                       <p><code class="codeph">FAN=true</code> | <code class="codeph">false</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e2731 d132228e2501 ">
+                                       <p>Specifies whether the application will use Fast Application Notification (FAN). The default value is <code class="codeph">false</code>. If the application will use FAN, then the setting is <code class="codeph">true</code>. 
+                                       </p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <div class="infoboxnotealso" id="GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2__NOTE-123-CB056A25">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ADMIN13178" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for information about FAN
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+               </div><a id="ADFNS787"></a><div class="props_rev_3"><a id="GUID-F59B1580-2DAF-44DA-9B19-F4AA10DF9937" name="GUID-F59B1580-2DAF-44DA-9B19-F4AA10DF9937"></a><h4 id="ADFNS-GUID-F59B1580-2DAF-44DA-9B19-F4AA10DF9937" class="sect4">Using Oracle XA with Precompilers</h4>
+                  <div>
+                     <div class="section">
+                        <p>When used in an Oracle XA application, cursors are valid only for the duration of the transaction. Explicit cursors must be opened after the transaction begins, and closed before the commit or rollback. </p>
+                        <p>You have these options when interfacing with precompilers:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="xa.html#GUID-EEFA138F-9B25-4085-B141-FF5E959A2B87">Using Precompilers with the Default Database</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB">Using Precompilers with a Named Database</a></p>
+                           </li>
+                        </ul>
+                        <p>The examples in this topic use the precompiler Pro*C/C++.</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="ADFNS788"></a><div class="props_rev_3"><a id="GUID-EEFA138F-9B25-4085-B141-FF5E959A2B87" name="GUID-EEFA138F-9B25-4085-B141-FF5E959A2B87"></a><h5 id="ADFNS-GUID-EEFA138F-9B25-4085-B141-FF5E959A2B87" class="sect5">Using Precompilers with the Default Database</h5>
+                     <div>
+                        <div class="section">
+                           <p>To interface to a precompiler with the default database, ensure that the <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span> field used in the open string is not present. The absence of this field indicates the default connection. Only one default connection is allowed for each process.
+                           </p>
+                           <p>This is an example of an open string identifying a default Pro*C/C++ connection:</p><pre class="oac_no_warn" dir="ltr">ORACLE_XA+SqlNet=maildb+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/logs
+</pre><p>The <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span> is absent, indicating an empty database ID string.
+                           </p>
+                           <p>The syntax of a SQL statement is:</p><pre class="oac_no_warn" dir="ltr">EXEC SQL UPDATE Emp_tab SET Sal = Sal*1.5;</pre></div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="ADFNS790"></a><a id="ADFNS789"></a><div class="props_rev_3"><a id="GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB" name="GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB"></a><h5 id="ADFNS-GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB" class="sect5">Using Precompilers with a Named Database</h5>
+                     <div>
+                        <div class="section">
+                           <p>To interface to a precompiler with a named database, include the <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span> field in the open string. Any database you refer to must reference the same <span class="italic"><code class="codeph">db_name</code></span> you specified in the corresponding open string.
+                           </p>
+                           <p>An application might include the default database and one or more named databases. For example, suppose you want to update an employee's salary in one database, his department number (<code class="codeph">DEPTNO</code>) in another, and his manager in a third database. Configure the open strings in the transaction manager as shown in <a href="xa.html#GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB__BGBIEBII">Example 22-2</a>.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB__BGBIEBII">
+                           <p class="titleinexample">Example 22-2 Sample Open String Configuration</p><pre class="oac_no_warn" dir="ltr">ORACLE_XA+DB=MANAGERS+SqlNet=SID1+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/xalog
+ORACLE_XA+DB=PAYROLL+SqlNet=SID2+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/xalog
+ORACLE_XA+SqlNet=SID3+ACC=P/<span class="italic">username</span>/<span class="italic">password</span>
+  +SesTM=10+LogDir=/usr/local/xalog
+</pre><p>There is no <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span> field in the last open string in <a href="xa.html#GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB__BGBIEBII">Example 22-2</a>.
+                           </p>
+                           <p>In the application server program, enter declarations such as:</p><pre class="oac_no_warn" dir="ltr">EXEC SQL DECLARE PAYROLL DATABASE;
+EXEC SQL DECLARE MANAGERS DATABASE;
+</pre><p>Again, the default connection (corresponding to the third open string that does not contain the <code class="codeph">DB</code> field) needs no declaration.
+                           </p>
+                           <p>When doing the update, enter statements similar to these:</p><pre class="oac_no_warn" dir="ltr">EXEC SQL AT PAYROLL UPDATE Emp_Tab SET Sal=4500 WHERE Empno=7788;
+EXEC SQL AT MANAGERS UPDATE Emp_Tab SET Mgr=7566 WHERE Empno=7788;
+EXEC SQL UPDATE Emp_Tab SET Deptno=30 WHERE Empno=7788;
+</pre><p>There is no <code class="codeph">AT</code> clause in the last statement because it is referring to the default database.
+                           </p>
+                           <p>In Oracle Database precompilers release 1.5.3 or later, you can use a character host variable in the <code class="codeph">AT</code> clause, as this example shows:
+                           </p><pre class="oac_no_warn" dir="ltr">EXEC SQL BEGIN DECLARE SECTION;
+  DB_NAME1 CHARACTER(10);
+  DB_NAME2 CHARACTER(10);
+EXEC SQL END DECLARE SECTION;
+    ...
+SET DB_NAME1 = 'PAYROLL'
+SET DB_NAME2 = 'MANAGERS'
+    ...
+EXEC SQL AT :DB_NAME1 UPDATE...
+EXEC SQL AT :DB_NAME2 UPDATE...</pre><div class="infoboxnote" id="GUID-FB945892-26E9-4AF4-B0DB-7ED5A66CAAFB__GUID-7765C40A-DEF7-4957-A632-10F9CE39F8BB">
+                              <p class="notep1">Caution:</p>
+                              <p>Do not have XA applications create connections other than those created through <code class="codeph">xa_open</code>. Work performed on non-XA connections is outside the global transaction and must be committed separately.
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+               </div><a id="ADFNS791"></a><div class="props_rev_3"><a id="GUID-085722D0-7EFA-40D8-88F0-9C06D19A26CB" name="GUID-085722D0-7EFA-40D8-88F0-9C06D19A26CB"></a><h4 id="ADFNS-GUID-085722D0-7EFA-40D8-88F0-9C06D19A26CB" class="sect4">Using Oracle XA with OCI</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle Call Interface applications that use the Oracle XA library must not call <code class="codeph">OCISessionBegin</code> to log on to the resource manager. Rather, the logon must be done through the TPM. The applications can run the function <code class="codeph">xaoSvcCtx</code> to obtain the service context structure when they must access the resource manager.
+                        </p>
+                        <p>In applications that must pass the environment handle to OCI functions, you can also call <code class="codeph">xaoEnv</code> to find that handle.
+                        </p>
+                        <p>Because an application server can have multiple concurrent open Oracle Database resource managers, it must call the function <code class="codeph">xaoSvcCtx</code> with the correct arguments to obtain the correct service context.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-085722D0-7EFA-40D8-88F0-9C06D19A26CB__GUID-B04D1CD9-1351-4C0A-A385-2543C4D7F7A5">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=LNOCI-GUID-27645179-6957-4004-8BB8-38775266B038" target="_blank"><span><cite>Oracle Call Interface Programmer's Guide</cite></span></a></p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS793"></a><a id="ADFNS792"></a><div class="props_rev_3"><a id="GUID-731EEEF6-C3CB-460C-85DE-25F5EF88FD2C" name="GUID-731EEEF6-C3CB-460C-85DE-25F5EF88FD2C"></a><h4 id="ADFNS-GUID-731EEEF6-C3CB-460C-85DE-25F5EF88FD2C" class="sect4">Managing Transaction Control with Oracle XA</h4>
+                  <div>
+                     <div class="section">
+                        <p>When you use the XA library, transactions are not controlled by the SQL statements that commit or roll back transactions. Rather, they are controlled by an API accepted by the TM that starts and stops transactions. You call the API that is provided by the transaction manager, including the TX interface listed in <a href="xa.html#GUID-731EEEF6-C3CB-460C-85DE-25F5EF88FD2C__g1017842" title="This table summarizes the TX interface functions.">Table 22-6</a>, but not the XA Library Subprograms listed in <a href="xa.html#GUID-9C1460F8-43B4-470B-A624-07889E522340__g1017655" title="This table summarizes the XA library subroutines.">Table 22-2</a>.
+                        </p>
+                        <p>The TMs typically control the transactions through the XA interface. This interface includes the functions described in <a href="xa.html#GUID-9C1460F8-43B4-470B-A624-07889E522340__g1017655" title="This table summarizes the XA library subroutines.">Table 22-2</a>.
+                        </p>
+                        <div class="tblformal" id="GUID-731EEEF6-C3CB-460C-85DE-25F5EF88FD2C__g1017842">
+                           <p class="titleintable">Table 22-6  TX Interface Functions</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title=" TX Interface Functions" summary="This table summarizes the TX interface functions." width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="31%" id="d132228e3444">TX Function</th>
+                                    <th align="left" valign="bottom" width="69%" id="d132228e3447">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e3452" headers="d132228e3444 ">
+                                       <p><code class="codeph">tx_open</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e3452 d132228e3447 ">
+                                       <p>Logs into the resource manager(s)</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e3460" headers="d132228e3444 ">
+                                       <p><code class="codeph">tx_close</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e3460 d132228e3447 ">
+                                       <p>Logs out of the resource manager(s)</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e3468" headers="d132228e3444 ">
+                                       <p><code class="codeph">tx_begin</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e3468 d132228e3447 ">
+                                       <p>Starts a transaction</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e3476" headers="d132228e3444 ">
+                                       <p><code class="codeph">tx_commit</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e3476 d132228e3447 ">
+                                       <p>Commits a transaction</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="31%" id="d132228e3484" headers="d132228e3444 ">
+                                       <p><code class="codeph">tx_rollback</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="69%" headers="d132228e3484 d132228e3447 ">
+                                       <p>Rolls back the transaction</p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <p>Most TPM applications use a client/server architecture in which an application client requests services and an application server provides them. The examples shown in <span class="q">"<a href="xa.html#GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A">Examples of Precompiler Applications</a>"</span> use such a client/server model. A service is a logical unit of work that, for Oracle Database as the resource manager, comprises a set of SQL statements that perform a related unit of work.
+                        </p>
+                        <p>For example, when a service named "credit" receives an account number and the amount to be credited, it runs SQL statements to update information in certain tables in the database. Also, a service might request other services. For example, a "transfer fund" service might request services from a "credit" and "debit" service. </p>
+                        <p>Typically, application clients request services from the application servers to perform tasks within a transaction. For some TPM systems, however, the application client itself can offer its own local services. As shown in <span class="q">"<a href="xa.html#GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A">Examples of Precompiler Applications</a>"</span>, you can encode transaction control statements within either the client or the server.
+                        </p>
+                        <p>To have multiple processes participating in the same transaction, the TPM provides a communication API that enables transaction information to flow between the participating processes. Examples of communications APIs include RPC, pseudo-RPC functions, and send/receive functions.</p>
+                        <p>Because the leading vendors support different communication functions, these examples use the communication pseudo-function <code class="codeph">tpm_service</code> to generalize the communications API. 
+                        </p>
+                        <p>X/Open includes several alternative methods for providing communication functions in their preliminary specification. At least one of these alternatives is supported by each of the leading TPM vendors.</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS795"></a><a id="ADFNS796"></a><a id="ADFNS794"></a><div class="props_rev_3"><a id="GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A" name="GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A"></a><h4 id="ADFNS-GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A" class="sect4">Examples of Precompiler Applications</h4>
+                  <div>
+                     <p>These examples illustrate precompiler applications. Assume that the application server has logged onto the RMs system, in a TPM-specific manner. <a href="xa.html#GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A__BGBDDBJJ">Example 22-3</a> shows a transaction started by an application server.
+                     </p>
+                     <div class="example" id="GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A__BGBDDBJJ">
+                        <p class="titleinexample">Example 22-3 Transaction Started by an Application Server</p><pre class="oac_no_warn" dir="ltr">/***** Client: *****/
+tpm_service("ServiceName");            <span class="italic">  /*Request Service*/</span>
+
+/***** Server: *****/
+ServiceName()
+{
+  &lt;get service specific data&gt;
+  tx_begin();                             <span class="italic">/* Begin transaction boundary */</span>
+  EXEC SQL UPDATE ...;
+
+  /* This application server temporarily becomes */
+  /* a client and requests another service. */
+
+  tpm_service("AnotherService");
+  tx_commit();                            <span class="italic"> /* Commit the transaction */</span>
+  &lt;return service status back to the client&gt;
+}
+</pre><p><a href="xa.html#GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A__BGBGFADB">Example 22-4</a> shows a transaction started by an application client.
+                        </p>
+                     </div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-629D4D9D-1B0D-4582-9FC7-9AE011CDA07A__BGBGFADB">
+                        <p class="titleinexample">Example 22-4 Transaction Started by an Application Client</p><pre class="oac_no_warn" dir="ltr">/***** Client: *****/
+tx_begin();                           <span class="italic"> /* Begin transaction boundary */</span>
+tpm_service("Service1");
+tpm_service("Service2");
+tx_commit();                           /* Commit the transaction */
+
+/***** Server: *****/
+Service1()
+{
+  &lt;get service specific data&gt;
+  EXEC SQL UPDATE ...;
+  &lt;return service status back to the client&gt;
+}
+Service2()
+{
+  &lt;get service specific data&gt;
+  EXEC SQL UPDATE ...;
+  ...
+  &lt;return service status back to client&gt;
+}</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="ADFNS798"></a><a id="ADFNS797"></a><div class="props_rev_3"><a id="GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE" name="GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE"></a><h4 id="ADFNS-GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE" class="sect4">Migrating Precompiler or OCI Applications to TPM Applications</h4>
+                  <div>
+                     <div class="section">
+                        <p>To migrate existing precompiler or OCI applications to a TPM application that uses the Oracle XA library, you must:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <ol>
+                        <li class="stepexpand"><span>Reorganize the application into a framework of "services" so that application clients request services from application servers. Some TPMs require the application to use the <code class="codeph">tx_open</code> and <code class="codeph">tx_close</code> functions, whereas other TPMs do the logon and logoff implicitly.</span><div>
+                              <p>If you do not specify the <code class="codeph">SqlNet</code> parameter in your open string, then the application uses the default Oracle Net driver. Thus, ensure that the application server is brought up with the <code class="codeph">ORACLE_HOME</code> and <code class="codeph">ORACLE_SID</code> environment variables properly defined. This is accomplished in a TPM-specific fashion. See your TPM vendor documentation for instructions on how to accomplish this.
+                              </p>
+                           </div>
+                        </li>
+                        <li class="stepexpand"><span>Ensure that the application replaces the regular connect and disconnect statements. For example, replace the connect statements <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">CONNECT</code> (for precompilers) or <code class="codeph">OCISessionBegin</code>, <code class="codeph">OCIServerAttach</code>, and <code class="codeph">OCIEnvCreate</code> (for OCI) with <code class="codeph">tx_open</code>. Replace the disconnect statements <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">COMMIT</code>/<code class="codeph">ROLLBACK</code> <code class="codeph">WORK RELEASE</code> (for precompilers) or <code class="codeph">OCISessionEnd</code>/<code class="codeph">OCIServerDetach</code> (for OCI) with <code class="codeph">tx_close</code>.</span></li>
+                        <li class="stepexpand"><span>Ensure that the application replaces the regular commit or rollback statements for any global transactions and begins the transaction explicitly. </span><div>
+                              <p>For example, replace the <code class="codeph">COMMIT</code>/<code class="codeph">ROLLBACK</code> statements <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">COMMIT</code>/<code class="codeph">ROLLBACK</code> <code class="codeph">WORK</code> (for precompilers), or <code class="codeph">OCITransCommit</code><code class="codeph">/</code><code class="codeph">OCITransRollback</code> (for OCI) with<code class="codeph"> tx_commit/tx_rollback</code> and start the transaction by calling <code class="codeph">tx_begin</code>.
+                              </p>
+                              <div class="infoboxnote" id="GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE__GUID-8097AC93-3568-406D-8070-F25AF61F8EC9">
+                                 <p class="notep1">Note:</p>
+                                 <p>The preceding is true only for global rather than local transactions. Commit or roll back local transactions with the Oracle API.</p>
+                              </div>
+                           </div>
+                        </li>
+                        <li class="stepexpand"><span>Ensure that the application resets the fetch state before ending a transaction. In general, use <code class="codeph">release_cursor=no</code>. Use <code class="codeph">release_cursor=yes</code> only when you are certain that a statement will run only once.</span></li>
+                     </ol>
+                     <div class="section">
+                        <p><a href="xa.html#GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE__g1017864" title="This table summarizes the TPM replacement commands.">Table 22-7</a> lists the TPM functions that replace regular Oracle Database statements when migrating precompiler or OCI applications to TPM applications.
+                        </p>
+                        <div class="tblformal" id="GUID-97D86BEB-B303-4CCE-9D7A-D65BB79F43DE__g1017864">
+                           <p class="titleintable">Table 22-7  TPM Replacement Statements</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title=" TPM Replacement Statements" summary="This table summarizes the TPM replacement commands." width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="44%" id="d132228e3883">Regular Oracle Database Statements</th>
+                                    <th align="left" valign="bottom" width="56%" id="d132228e3886">TPM Functions</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="44%" id="d132228e3891" headers="d132228e3883 ">
+                                       <p><code class="codeph">CONNECT</code><span class="italic"><code class="codeph">user</code></span>/<span class="italic"><code class="codeph">password</code></span></p>
+                                    </td>
+                                    <td align="left" valign="top" width="56%" headers="d132228e3891 d132228e3886 ">
+                                       <p><code class="codeph">tx_open</code> (possibly implicit)
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="44%" id="d132228e3908" headers="d132228e3883 ">
+                                       <p>implicit start of transaction</p>
+                                    </td>
+                                    <td align="left" valign="top" width="56%" headers="d132228e3908 d132228e3886 ">
+                                       <p><code class="codeph">tx_begin</code></p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="44%" id="d132228e3916" headers="d132228e3883 ">
+                                       <p><code class="codeph">SQL</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="56%" headers="d132228e3916 d132228e3886 ">
+                                       <p>Service that runs the SQL</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="44%" id="d132228e3924" headers="d132228e3883 ">
+                                       <p><code class="codeph">COMMIT</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="56%" headers="d132228e3924 d132228e3886 ">
+                                       <p><code class="codeph">tx_commit</code></p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="44%" id="d132228e3933" headers="d132228e3883 ">
+                                       <p><code class="codeph">ROLLBACK</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="56%" headers="d132228e3933 d132228e3886 ">
+                                       <p><code class="codeph">tx_rollback</code></p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="44%" id="d132228e3942" headers="d132228e3883 ">
+                                       <p>disconnect</p>
+                                    </td>
+                                    <td align="left" valign="top" width="56%" headers="d132228e3942 d132228e3886 ">
+                                       <p><code class="codeph">tx_close</code> (possibly implicit)
+                                       </p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS1106"></a><a id="ADFNS799"></a><div class="props_rev_3"><a id="GUID-1769DFE4-A670-471F-81D2-514398386A41" name="GUID-1769DFE4-A670-471F-81D2-514398386A41"></a><h4 id="ADFNS-GUID-1769DFE4-A670-471F-81D2-514398386A41" class="sect4">Managing Oracle XA Library Thread Safety</h4>
+                  <div>
+                     <div class="section">
+                        <p>If you use a transaction monitor that supports threads, then the Oracle XA library enables you to write applications that are thread-safe. Nevertheless, keep certain issues in mind.</p>
+                        <p>A <strong class="term">thread of control</strong> (or thread) refers to the set of connections to resource managers. In an nonthreaded system, each process is considered a thread of control because each process has its own set of connections to RMs and maintains its own independent resource manager table. In a threaded system, each thread has an autonomous set of connections to RMs and each thread maintains a <span class="italic">private</span> RM table. This private table must be allocated for each thread and deallocated when the thread terminates, even if the termination is abnormal. 
+                        </p>
+                        <div class="infoboxnote" id="GUID-1769DFE4-A670-471F-81D2-514398386A41__GUID-7D61DDF5-5E58-49C7-90BD-9C5432AD2D99">
+                           <p class="notep1">Note:</p>
+                           <p>In Oracle Database, each thread that accesses the database must have its own connection.</p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-1769DFE4-A670-471F-81D2-514398386A41__GUID-773EFAC2-B84F-447B-8514-ACBD22B95747">Topics:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="xa.html#GUID-45CBD96F-DE5E-4A2C-AEC4-5E1AA6E33D0A">Specifying Threading in the Open String</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-50E69541-0FA8-44F4-A8AB-2EE199533003">Restrictions on Threading in Oracle XA</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="ADFNS800"></a><div class="props_rev_3"><a id="GUID-45CBD96F-DE5E-4A2C-AEC4-5E1AA6E33D0A" name="GUID-45CBD96F-DE5E-4A2C-AEC4-5E1AA6E33D0A"></a><h5 id="ADFNS-GUID-45CBD96F-DE5E-4A2C-AEC4-5E1AA6E33D0A" class="sect5">Specifying Threading in the Open String</h5>
+                     <div>
+                        <div class="section">
+                           <p>The <code class="codeph">xa_open</code> string provides the clause <code class="codeph">Threads=</code>. You must specify this clause as <code class="codeph">true</code> to enable the use of threads by the TM. The default is <code class="codeph">false</code>. In most cases, the TM creates the threads; the application does not know when a thread is created. Therefore, it is advisable to allocate a service context on the stack within each service that is written for a TM application. Before doing any Oracle Database-related calls in that service, you must call the <code class="codeph">xaoSvcCtx</code> function to retrieve the initialized OCI service context. You can then use this context for OCI calls within the service.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="ADFNS801"></a><div class="props_rev_3"><a id="GUID-50E69541-0FA8-44F4-A8AB-2EE199533003" name="GUID-50E69541-0FA8-44F4-A8AB-2EE199533003"></a><h5 id="ADFNS-GUID-50E69541-0FA8-44F4-A8AB-2EE199533003" class="sect5">Restrictions on Threading in Oracle XA</h5>
+                     <div>
+                        <p>These restrictions apply when using threads:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Any Pro* or OCI code that runs as part of the application server process on the transaction monitor cannot be threaded unless the transaction monitor is explicitly told when each application thread is started. This is typically accomplished by using a special C compiler provided by the TM vendor.</p>
+                           </li>
+                           <li>
+                              <p>The Pro* statements <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">ALLOCATE</code> and <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">USE</code> are not supported. Therefore, when threading is enabled, you cannot use embedded SQL statements across non-XA connections.
+                              </p>
+                           </li>
+                           <li>
+                              <p>If one thread in a process connects to Oracle Database through XA, then all other threads in the process that connect to Oracle Database must also connect through XA. You cannot connect through <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">CONNECT</code> in one thread and through <code class="codeph">xa_open</code> in another thread.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="ADFNS802"></a><a id="ADFNS0171"></a><div class="props_rev_3"><a id="GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6" name="GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6"></a><h4 id="ADFNS-GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6" class="sect4">Using the DBMS_XA Package</h4>
+                  <div>
+                     <div class="section">
+                        <p>PL/SQL applications can use the Oracle XA library with the <code class="codeph">DBMS_XA</code> package.
+                        </p>
+                        <p>In <a href="xa.html#GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6__BABJDBFH">Example 22-5</a>, one PL/SQL session starts a transaction but does not commit it, a second session resumes the transaction, and a third session commits the transaction. All three sessions are connected to the <code class="codeph">HR</code> schema.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6__BABJDBFH">
+                        <p class="titleinexample">Example 22-5 Using the DBMS_XA Package</p><pre class="oac_no_warn" dir="ltr"><span class="bold">REM Session 1 starts a transaction and does some work.</span>
+DECLARE
+  rc  PLS_INTEGER;
+  oer PLS_INTEGER;
+  xae EXCEPTION;
+BEGIN
+  rc  := <span class="bold">DBMS_XA.XA_START(DBMS_XA_XID(123), DBMS_XA.TMNOFLAGS</span>);
+
+  IF rc!=<span class="bold">DBMS_XA.XA_OK</span> THEN
+    oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+    DBMS_OUTPUT.PUT_LINE('ORA-' || oer || ' occurred, XA_START failed');
+    RAISE xae;
+  ELSE DBMS_OUTPUT.PUT_LINE('XA_START(new xid=123)     OK');
+  END IF;
+
+  UPDATE employees SET salary=salary*1.1 WHERE employee_id = 100;
+  rc  := <span class="bold">DBMS_XA.XA_END(DBMS_XA_XID(123), DBMS_XA.TMSUSPEND)</span>;
+
+  IF rc!=<span class="bold">DBMS_XA.XA_OK</span> THEN
+    oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+    DBMS_OUTPUT.PUT_LINE('ORA-' || oer || ' occurred, XA_END failed');
+    RAISE xae;
+  ELSE DBMS_OUTPUT.PUT_LINE('XA_END(suspend xid=123)   OK');
+  END IF;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE
+       ('XA error('||rc||') occurred, rolling back the transaction ...');
+      rc := <span class="bold">DBMS_XA.XA_END(DBMS_XA_XID(123), DBMS_XA.TMSUCCESS)</span>;
+      rc := <span class="bold">DBMS_XA.XA_ROLLBACK(DBMS_XA_XID(123))</span>;
+
+      IF rc != <span class="bold">DBMS_XA.XA_OK</span> THEN
+        oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+        DBMS_OUTPUT.PUT_LINE('XA-'||rc||', ORA-' || oer ||
+         ' XA_ROLLBACK does not return XA_OK');
+        raise_application_error(-20001, 'ORA-'||oer||
+         ' error in rolling back a failed transaction');
+      END IF;
+
+      raise_application_error(-20002, 'ORA-'||oer||
+       ' error in transaction processing, transaction rolled back');
+END;
+/
+SHOW ERRORS
+<span class="bold">DISCONNECT</span>
+
+<span class="bold">REM Session 2 resumes the transaction and does some work.</span>
+DECLARE
+  rc  PLS_INTEGER;
+  oer PLS_INTEGER;
+  s   NUMBER;
+  xae EXCEPTION;
+BEGIN
+  rc  := <span class="bold">DBMS_XA.XA_START(DBMS_XA_XID(123), DBMS_XA.TMRESUME)</span>;
+
+  IF rc!=<span class="bold">DBMS_XA.XA_OK</span> THEN
+    oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+    DBMS_OUTPUT.PUT_LINE('ORA-' || oer || ' occurred, xa_start failed');
+    RAISE xae;
+  ELSE DBMS_OUTPUT.PUT_LINE('XA_START(resume xid=123)  OK');
+  END IF;
+
+  SELECT salary INTO s FROM employees WHERE employee_id = 100;
+  DBMS_OUTPUT.PUT_LINE('employee_id = 100, salary = ' || s);
+  rc  := <span class="bold">DBMS_XA.XA_END(DBMS_XA_XID(123), DBMS_XA.TMSUCCESS)</span>;
+
+  IF rc!=<span class="bold">DBMS_XA.XA_OK</span> THEN
+    oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+    DBMS_OUTPUT.PUT_LINE('ORA-' || oer || ' occurred, XA_END failed');
+    RAISE xae;
+  ELSE DBMS_OUTPUT.PUT_LINE('XA_END(detach xid=123)    OK');
+  END IF;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE
+       ('XA error('||rc||') occurred, rolling back the transaction ...');
+      rc := <span class="bold">DBMS_XA.XA_END(DBMS_XA_XID(123), DBMS_XA.TMSUCCESS)</span>;
+      rc := <span class="bold">DBMS_XA.XA_ROLLBACK(DBMS_XA_XID(123))</span>;
+
+      IF rc != <span class="bold">DBMS_XA.XA_OK</span> THEN
+        oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+        DBMS_OUTPUT.PUT_LINE('XA-'||rc||', ORA-' || oer ||
+         ' XA_ROLLBACK does not return XA_OK');
+        raise_application_error(-20001, 'ORA-'||oer||
+         ' error in rolling back a failed transaction');
+      END IF;
+
+      raise_application_error(-20002, 'ORA-'||oer||
+       ' error in transaction processing, transaction rolled back');
+END;
+/
+SHOW ERRORS
+<span class="bold">DISCONNECT</span>
+
+<span class="bold">REM Session 3 commits the transaction.</span>
+DECLARE
+  rc  PLS_INTEGER;
+  oer PLS_INTEGER;
+  xae EXCEPTION;
+BEGIN
+  rc  := <span class="bold">DBMS_XA.XA_COMMIT(DBMS_XA_XID(123), TRUE)</span>;
+
+  IF rc!=<span class="bold">DBMS_XA.XA_OK</span> THEN
+    oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+    DBMS_OUTPUT.PUT_LINE('ORA-' || oer || ' occurred, XA_COMMIT failed');
+    RAISE xae;
+  ELSE DBMS_OUTPUT.PUT_LINE('XA_COMMIT(commit xid=123)  OK');
+  END IF;
+
+  EXCEPTION
+    WHEN xae THEN
+      DBMS_OUTPUT.PUT_LINE
+       ('XA error('||rc||') occurred, rolling back the transaction ...');
+      rc := <span class="bold">DBMS_XA.XA_ROLLBACK(DBMS_XA_XID(123))</span>;
+
+      IF rc != <span class="bold">DBMS_XA.XA_OK</span> THEN
+        oer := <span class="bold">DBMS_XA.XA_GETLASTOER()</span>;
+        DBMS_OUTPUT.PUT_LINE('XA-'||rc||', ORA-' || oer ||
+         ' XA_ROLLBACK does not return XA_OK');
+        raise_application_error(-20001, 'ORA-'||oer||
+         ' error in rolling back a failed transaction');
+      END IF;
+
+      raise_application_error(-20002, 'ORA-'||oer||
+       ' error in transaction processing, transaction rolled back');
+END;
+/
+SHOW ERRORS
+<span class="bold">DISCONNECT</span>
+<span class="bold">QUIT</span></pre></div>
+                     <!-- class="example" -->
+                     <div class="section">
+                        <div class="infoboxnotealso" id="GUID-27CD17CC-91C7-4C4D-B341-132AB8E167A6__NOTE-1331-CB06F080">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=ARPLS209" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a> for more information about <code class="codeph">DBMS_XA</code> package
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="ADFNS1107"></a><a id="ADFNS1504"></a><div class="props_rev_3"><a id="GUID-194B0A1B-1A10-47B5-B898-5CDECD7FFA9B" name="GUID-194B0A1B-1A10-47B5-B898-5CDECD7FFA9B"></a><h3 id="ADFNS-GUID-194B0A1B-1A10-47B5-B898-5CDECD7FFA9B" class="sect3">Troubleshooting XA Applications</h3>
+               <div>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-194B0A1B-1A10-47B5-B898-5CDECD7FFA9B__GUID-D4113682-7688-43B8-8F8F-B1576E5FDA06">Topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65">Accessing Oracle XA Trace Files</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-06BB7A40-971F-43A5-AF4F-581A6A1F95F9">Managing In-Doubt or Pending Oracle XA Transactions</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-8EFEBEF3-5827-4EF9-AFEA-355BB3994DDA">Using SYS Account Tables to Monitor Oracle XA Transactions</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="ADFNS804"></a><a id="ADFNS1108"></a><a id="ADFNS803"></a><div class="props_rev_3"><a id="GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65" name="GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65"></a><h4 id="ADFNS-GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65" class="sect4">Accessing Oracle XA Trace Files</h4>
+                  <div>
+                     <div class="section">
+                        <p>The Oracle XA library logs any error and tracing information to its trace file. This information is useful in supplementing the XA error codes. For example, it can indicate whether an <code class="codeph">xa_open</code> failure is caused by an incorrect open string, failure to find the Oracle Database instance, or a logon authorization failure.
+                        </p>
+                        <p>The name of the trace file is <code class="codeph">xa_</code><span class="italic"><code class="codeph">db_namedate</code></span>.<code class="codeph">trc</code>, where <span class="italic"><code class="codeph">db_name</code></span> is the database name specified in the open string field <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span>, and <span class="italic"><code class="codeph">date</code></span> is the date when the information is logged to the trace file. If you do not specify <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span> in the open string, then it automatically defaults to <code class="codeph">NULL</code>.
+                        </p>
+                        <p>For example, <code class="codeph">xa_NULL06022005</code>.<code class="codeph">trc</code> indicates a trace file that was created on June 2, 2005. Its <code class="codeph">DB</code> field was not specified in the open string when the resource manager was opened. The filename <code class="codeph">xa_Finance12152004</code>.<code class="codeph">trc</code> indicates a trace file was created on December 15, 2004. Its <code class="codeph">DB</code> field was specified as "Finance" in the open string when the resource manager was opened.
+                        </p>
+                        <div class="infoboxnote" id="GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65__GUID-1605428A-F122-46BA-BE72-7D9706A92CFA">
+                           <p class="notep1">Note:</p>
+                           <p>Multiple Oracle XA library resource managers with the same <code class="codeph">DB</code> field and <code class="codeph">LogDir</code> field in their open strings log all trace information that occurs on the same day to the same trace file.
+                           </p>
+                        </div>
+                        <p>Suppose that a trace file contains these contents:</p><pre class="oac_no_warn" dir="ltr">1032.12345.2:  ORA-01017:  invalid username/password;  logon denied
+1032.12345.2:  xaolgn:  XAER_INVAL;  logon denied
+</pre><p><a href="xa.html#GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65__BGBHBCIJ" title="This table describes sample trace file contents.">Table 22-8</a> explains the meaning of each element.
+                        </p>
+                        <div class="tblformal" id="GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65__BGBHBCIJ">
+                           <p class="titleintable">Table 22-8 Sample Trace File Contents</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="Sample Trace File Contents" summary="This table describes sample trace file contents." width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="24%" id="d132228e4868">String</th>
+                                    <th align="left" valign="bottom" width="76%" id="d132228e4871">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="24%" id="d132228e4876" headers="d132228e4868 ">
+                                       <p><code class="codeph">1032</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="76%" headers="d132228e4876 d132228e4871 ">
+                                       <p>The time when the information is logged.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="24%" id="d132228e4884" headers="d132228e4868 ">
+                                       <p><code class="codeph">12345</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="76%" headers="d132228e4884 d132228e4871 ">
+                                       <p>The process ID (PID).</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="24%" id="d132228e4892" headers="d132228e4868 ">
+                                       <p><code class="codeph">2</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="76%" headers="d132228e4892 d132228e4871 ">
+                                       <p>Resource manager ID</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="24%" id="d132228e4900" headers="d132228e4868 ">
+                                       <p><code class="codeph">xaolgn</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="76%" headers="d132228e4900 d132228e4871 ">
+                                       <p>Name of module</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="24%" id="d132228e4908" headers="d132228e4868 ">
+                                       <p><code class="codeph">XAER_INVAL</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="76%" headers="d132228e4908 d132228e4871 ">
+                                       <p>Error returned as specified in the XA standard</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="24%" id="d132228e4916" headers="d132228e4868 ">
+                                       <p>ORA-01017</p>
+                                    </td>
+                                    <td align="left" valign="top" width="76%" headers="d132228e4916 d132228e4871 ">
+                                       <p>Oracle Database information that was returned</p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-02FDAD5D-7C03-430A-93F1-5C0B93194F65__GUID-0830BF45-8EB7-4609-BEB3-906491602BFE">Topics:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="xa.html#GUID-1C816BFB-9B5D-490A-BD40-8560E4743847">xa_open String DbgFl</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-8271A46E-A8F5-4E73-A2DF-DB7DA03315B6">Trace File Locations</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="ADFNS805"></a><div class="props_rev_3"><a id="GUID-1C816BFB-9B5D-490A-BD40-8560E4743847" name="GUID-1C816BFB-9B5D-490A-BD40-8560E4743847"></a><h5 id="ADFNS-GUID-1C816BFB-9B5D-490A-BD40-8560E4743847" class="sect5">xa_open String DbgFl</h5>
+                     <div>
+                        <p>Normally, the XA trace file is opened only if an error is detected. The <code class="codeph">xa_open</code> string <code class="codeph">DbgFl</code> provides a tracing facility to record additional detail about the XA library. By default, its value is zero. You can set it to any combination of these values:
+                        </p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><code class="codeph">0x1</code>, which enables you to trace the entry and exit to each subprogram in the XA interface. This value can be useful in seeing exactly which XA calls the TP Monitor is making and which transaction identifier it is generating.
+                              </p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">0x2</code>, which enables you to trace the entry to and exit from other nonpublic XA library programs. This is generally useful only to Oracle Database developers.
+                              </p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">0x4</code>, which enables you to trace various other "interesting" calls made by the XA library, such as specific calls to the OCI. This is generally useful only to Oracle Database developers.
+                              </p>
+                           </li>
+                        </ul>
+                        <div class="infoboxnote" id="GUID-1C816BFB-9B5D-490A-BD40-8560E4743847__GUID-8A242A59-58B2-46A2-8711-8CF340A272DF">
+                           <p class="notep1">Note:</p>
+                           <p>The flags are independent bits of an <code class="codeph">ub4</code>, so to obtain printout from two or more flags, you must set a combined value of the flags.
+                           </p>
+                        </div>
+                     </div>
+                  </div><a id="ADFNS806"></a><div class="props_rev_3"><a id="GUID-8271A46E-A8F5-4E73-A2DF-DB7DA03315B6" name="GUID-8271A46E-A8F5-4E73-A2DF-DB7DA03315B6"></a><h5 id="ADFNS-GUID-8271A46E-A8F5-4E73-A2DF-DB7DA03315B6" class="sect5">Trace File Locations</h5>
+                     <div>
+                        <div class="section">
+                           <p>The XA application determines a location for the trace file according to this algorithm:</p>
+                           <ol>
+                              <li>
+                                 <p>The <code class="codeph">LogDir</code> directory specified in the open string.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>If you do not specify <code class="codeph">LogDir</code> in the open string, then the Oracle XA application attempts to create the trace file in this directory (if the Oracle home is accessible):
+                                 </p>
+                                 <ul style="list-style-type: disc;">
+                                    <li>
+                                       <p><code class="codeph">%ORACLE_HOME%\rdbms\trace</code> on Windows
+                                       </p>
+                                    </li>
+                                    <li>
+                                       <p><code class="codeph">$ORACLE_HOME/rdbms/log</code> on Linux and UNIX 
+                                       </p>
+                                    </li>
+                                 </ul>
+                              </li>
+                              <li>
+                                 <p>If the Oracle XA application cannot determine where the Oracle home is located, then the application creates the trace file in the current working directory. </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div><a id="ADFNS807"></a><div class="props_rev_3"><a id="GUID-06BB7A40-971F-43A5-AF4F-581A6A1F95F9" name="GUID-06BB7A40-971F-43A5-AF4F-581A6A1F95F9"></a><h4 id="ADFNS-GUID-06BB7A40-971F-43A5-AF4F-581A6A1F95F9" class="sect4">Managing In-Doubt or Pending Oracle XA Transactions</h4>
+                  <div>
+                     <div class="section">
+                        <p>In-doubt or pending transactions are transactions that were prepared but not committed to the database. In general, the TM provided by the TPM system resolves any failure and recovery of in-doubt or pending transactions. The DBA might have to override an in-doubt transaction if these situations occur:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>It is locking data that is required by other transactions.</p>
+                           </li>
+                           <li>
+                              <p>It is not resolved in a reasonable amount of time.</p>
+                           </li>
+                        </ul>
+                        <p>See the TPM documentation for more information about overriding in-doubt transactions in such circumstances and about how to decide whether to commit or roll back the in-doubt transaction.</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS808"></a><div class="props_rev_3"><a id="GUID-8EFEBEF3-5827-4EF9-AFEA-355BB3994DDA" name="GUID-8EFEBEF3-5827-4EF9-AFEA-355BB3994DDA"></a><h4 id="ADFNS-GUID-8EFEBEF3-5827-4EF9-AFEA-355BB3994DDA" class="sect4">Using SYS Account Tables to Monitor Oracle XA Transactions</h4>
+                  <div>
+                     <div class="section">
+                        <p>These views under the Oracle Database <code class="codeph">SYS</code> account contain transactions generated by regular Oracle Database applications and Oracle XA applications:
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><code class="codeph">DBA_PENDING_TRANSACTIONS</code></p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">V$GLOBAL_TRANSACTION</code></p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">DBA_2PC_PENDING</code></p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">DBA_2PC_NEIGHBORS</code></p>
+                           </li>
+                        </ul>
+                        <p>For transactions generated by Oracle XA applications, this column information applies specifically to the <code class="codeph">DBA_2PC_NEIGHBORS</code> table:
+                        </p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>The <code class="codeph">DBID</code> column is always <code class="codeph">xa_orcl</code></p>
+                           </li>
+                           <li>
+                              <p>The <code class="codeph">DBUSER_OWNER</code> column is always <span class="italic"><code class="codeph">db_name</code></span><code class="codeph">xa</code>.<code class="codeph">oracle</code>.<code class="codeph">com</code></p>
+                           </li>
+                        </ul>
+                        <p>Remember that the <span class="italic">db_name</span> is always specified as <code class="codeph">DB</code>=<span class="italic"><code class="codeph">db_name</code></span> in the open string. If you do not specify this field in the open string, then the value of this column is <code class="codeph">NULLxa</code>.<code class="codeph">oracle</code>.<code class="codeph">com</code> for transactions generated by Oracle XA applications.
+                        </p>
+                        <p>For example, this SQL statement provide more information about in-doubt transactions generated by Oracle XA applications:</p><pre class="oac_no_warn" dir="ltr">SELECT * 
+FROM DBA_2PC_PENDING p, DBA_2PC_NEIGHBORS n
+WHERE p.LOCAL_TRAN_ID = n.LOCAL_TRAN_ID
+AND n.DBID = 'xa_orcl';
+</pre><p>Alternatively, if you know the format <code class="codeph">ID</code> used by the transaction processing monitor, then you can use <code class="codeph">DBA_PENDING_TRANSACTIONS</code> or <code class="codeph">V$GLOBAL_TRANSACTION</code>. Whereas <code class="codeph">DBA_PENDING_TRANSACTIONS</code> gives a list of prepared transactions, <code class="codeph">V$GLOBAL_TRANSACTION</code> provides a list of all active global transactions.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="ADFNS1109"></a><a id="ADFNS1505"></a><div class="props_rev_3"><a id="GUID-D1F82CDD-DDDA-4895-B18B-C9F7D44AAEBB" name="GUID-D1F82CDD-DDDA-4895-B18B-C9F7D44AAEBB"></a><h3 id="ADFNS-GUID-D1F82CDD-DDDA-4895-B18B-C9F7D44AAEBB" class="sect3">Oracle XA Issues and Restrictions</h3>
+               <div>
+                  <div class="section">
+                     <p class="subhead2" id="GUID-D1F82CDD-DDDA-4895-B18B-C9F7D44AAEBB__GUID-D4EBF802-279C-4F90-A475-AFEFF73346DE">Topics:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-C4F27C42-C388-4604-8986-7917930F7EF8">Using Database Links in Oracle XA Applications</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-66124F06-FC05-4513-A76A-F00D725440E4">Managing Transaction Branches in Oracle XA Applications</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-086B00D2-116E-4862-B8D0-AADF90CC9E8F">Using Oracle XA with Oracle Real Application Clusters (Oracle RAC)</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-F6CB7EA2-BC01-47D6-BCF6-BD3D329B42EA">SQL-Based Oracle XA Restrictions</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-6166F2B9-4ADA-417E-A8B2-6FF22C3D72E8">Miscellaneous Restrictions</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="ADFNS809"></a><div class="props_rev_3"><a id="GUID-C4F27C42-C388-4604-8986-7917930F7EF8" name="GUID-C4F27C42-C388-4604-8986-7917930F7EF8"></a><h4 id="ADFNS-GUID-C4F27C42-C388-4604-8986-7917930F7EF8" class="sect4">Using Database Links in Oracle XA Applications</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle XA applications can access other Oracle Database instances through database links with these restrictions:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>They must use the shared server configuration. </p>
+                              <p>The transaction processing monitors (TPMs) use shared servers to open the connection to an Oracle Database A. Then the operating system network connection required for the database link is opened by the dispatcher instead of a dedicated server process. This allows different services or threads to operate on the transaction.</p>
+                              <p>If this restriction is not satisfied, then when you use database links within an XA transaction, it creates an operating system network connection between the dedicated server process and the other Oracle Database B. Because this network connection cannot be moved from one dedicated server process to another, you cannot detach from this dedicated server process of database A. Then when you access the database B through a database link, you receive an ORA-24777 error.</p>
+                           </li>
+                           <li>
+                              <p>The other database being accessed must be another Oracle Database.</p>
+                           </li>
+                        </ul>
+                        <p>If these restrictions are satisfied, Oracle Database allows such links and propagates the transaction protocol (prepare, rollback, and commit) to the other Oracle Database instances.</p>
+                        <p>If using the shared server configuration is not possible, then access the remote database through the Pro*C/C++ application by using <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">AT</code> syntax.
+                        </p>
+                        <p>The <code class="codeph">init.ora</code> parameter <code class="codeph">OPEN_LINKS_PER_INSTANCE</code> specifies the number of open database link connections that can be migrated. These <code class="codeph">dblink</code> connections are used by XA transactions so that the connections are cached after a transaction is committed. Another transaction can use the database link connection if the user who created the connection also created the transaction. This parameter is different from the <code class="codeph">init</code>.<code class="codeph">ora</code> parameter <code class="codeph">OPEN_LINKS</code>, which specifies the maximum number of concurrent open connections (including database links) to remote databases in one session. The <code class="codeph">OPEN_LINKS</code> parameter does not apply to XA applications.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS811"></a><a id="ADFNS810"></a><div class="props_rev_3"><a id="GUID-66124F06-FC05-4513-A76A-F00D725440E4" name="GUID-66124F06-FC05-4513-A76A-F00D725440E4"></a><h4 id="ADFNS-GUID-66124F06-FC05-4513-A76A-F00D725440E4" class="sect4">Managing Transaction Branches in Oracle XA Applications</h4>
+                  <div>
+                     <div class="section">
+                        <p>Oracle Database transaction branches within the same global transaction can be coupled tightly or loosely. If the transaction branches are <strong class="term">tightly coupled</strong>, then they share locks. Consequently, pre-<code class="codeph">COMMIT</code> updates in one transaction branch are visible in other branches that belong to the same global transaction. In loosely coupled transaction branches, the branches do not share locks and do not see updates in other branches. 
+                        </p>
+                        <p>In a tightly coupled branch, Oracle Database obtains the DX lock before running any statement. Because the system does not obtain a lock before running the statement, loosely coupled transaction branches result in greater concurrency. The disadvantage is that all transaction branches must go through the two phases of commit, that is, the system cannot use XA one-phase optimization.</p>
+                        <p><a href="xa.html#GUID-66124F06-FC05-4513-A76A-F00D725440E4__g1017904" title="This table compares tightly and loosely coupled transaction branches.">Table 22-9</a> summarizes the trade-offs between tightly coupled branches and loosely coupled branches.
+                        </p>
+                        <div class="tblformal" id="GUID-66124F06-FC05-4513-A76A-F00D725440E4__g1017904">
+                           <p class="titleintable">Table 22-9  Tightly and Loosely Coupled Transaction Branches</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title=" Tightly and Loosely Coupled Transaction Branches" summary="This table compares tightly and loosely coupled transaction branches." width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="22%" id="d132228e5886">Attribute</th>
+                                    <th align="left" valign="bottom" width="39%" id="d132228e5889">Tightly Coupled Branches</th>
+                                    <th align="left" valign="bottom" width="39%" id="d132228e5892">Loosely Coupled Branches</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="22%" id="d132228e5897" headers="d132228e5886 ">
+                                       <p>Two Phase Commit</p>
+                                    </td>
+                                    <td align="left" valign="top" width="39%" headers="d132228e5897 d132228e5889 ">
+                                       <p>Read-only optimization</p>
+                                       <p>[prepare for all branches, commit for last branch]</p>
+                                    </td>
+                                    <td align="left" valign="top" width="39%" headers="d132228e5897 d132228e5892 ">
+                                       <p>Two phases</p>
+                                       <p>[prepare and commit for all branches]</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="22%" id="d132228e5911" headers="d132228e5886 ">
+                                       <p>Serialization</p>
+                                    </td>
+                                    <td align="left" valign="top" width="39%" headers="d132228e5911 d132228e5889 ">
+                                       <p>Database call </p>
+                                    </td>
+                                    <td align="left" valign="top" width="39%" headers="d132228e5911 d132228e5892 ">
+                                       <p>None</p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="ADFNS1110"></a><a id="ADFNS812"></a><div class="props_rev_3"><a id="GUID-086B00D2-116E-4862-B8D0-AADF90CC9E8F" name="GUID-086B00D2-116E-4862-B8D0-AADF90CC9E8F"></a><h4 id="ADFNS-GUID-086B00D2-116E-4862-B8D0-AADF90CC9E8F" class="sect4">Using Oracle XA with Oracle Real Application Clusters (Oracle RAC)</h4>
+                  <div>
+                     <div class="section">
+                        <p>As of Oracle Database 11<span class="italic">g</span> Release 1 (11.1), an XA transaction can span Oracle RAC instances, allowing any application that uses XA to take full advantage of the Oracle RAC environment, enhancing the availability and scalability of the application.
+                        </p>
+                        <div class="infoboxnote" id="GUID-086B00D2-116E-4862-B8D0-AADF90CC9E8F__GUID-CD6B383F-D744-4058-A821-24E3E5D2090C">
+                           <p class="notep1">Note:</p>
+                           <p>External procedure callouts combined with distributed transactions is not supported.</p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-086B00D2-116E-4862-B8D0-AADF90CC9E8F__GUID-CD272BCA-7B39-4529-A67B-4D70B26C13AE">Topics:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="xa.html#GUID-B0A727E2-06BC-44E2-8359-EF1EFE060082">GLOBAL_TXN_PROCESSES Initialization Parameter</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96">Managing Transaction Branches on Oracle RAC</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-5D7075DF-3857-49DA-BE4A-835AEA2DE3BE">Managing Instance Recovery in Oracle RAC with DTP Services (10.2)</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-AFE8748A-61A2-44FB-8C8D-2A2EEAE91EA0">Global Uniqueness of XIDs in Oracle RAC</a></p>
+                           </li>
+                           <li>
+                              <p><a href="xa.html#GUID-1A97ED73-4C0E-42D2-AF06-8BB2CAF05977">Tight and Loose Coupling</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="ADFNS813"></a><div class="props_rev_3"><a id="GUID-B0A727E2-06BC-44E2-8359-EF1EFE060082" name="GUID-B0A727E2-06BC-44E2-8359-EF1EFE060082"></a><h5 id="ADFNS-GUID-B0A727E2-06BC-44E2-8359-EF1EFE060082" class="sect5">GLOBAL_TXN_PROCESSES Initialization Parameter</h5>
+                     <div>
+                        <p>The initialization parameter <code class="codeph">GLOBAL_TXN_PROCESSES</code> specifies the initial number of GTX<span class="italic">n</span> background processes for each Oracle RAC instance. Its default value is 1.
+                        </p>
+                        <p>Leave this parameter at its default value clusterwide if distributed transactions might span multiple Oracle RAC instances. This allows the units of work performed across these Oracle RAC instances to share resources and act as a single transaction (that is, the units of work are tightly coupled). It also allows 2PC requests to be sent to any node in the cluster.</p>
+                        <div class="infoboxnotealso" id="GUID-B0A727E2-06BC-44E2-8359-EF1EFE060082__GUID-89EEECAB-AF94-46DA-96AA-67A358E6BAE7">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=REFRN10291" target="_blank"><span class="italic">Oracle Database Reference</span></a> for more information about <code class="codeph">GLOBAL_TXN_PROCESSES</code></p>
+                        </div>
+                     </div>
+                  </div><a id="ADFNS815"></a><a id="ADFNS816"></a><a id="ADFNS814"></a><div class="props_rev_3"><a id="GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96" name="GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96"></a><h5 id="ADFNS-GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96" class="sect5">Managing Transaction Branches on Oracle RAC</h5>
+                     <div>
+                        <div class="section">
+                           <div class="infoboxnote" id="GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96__GUID-8559641B-484C-4D9A-B66E-29604A8BE7B1">
+                              <p class="notep1">Note:</p>
+                              <p>This topic applies if either of the following is true:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p>The initialization parameter <code class="codeph">GLOBAL_TXN_PROCESSES</code> is not at its default value in the initialization file of every Oracle RAC instance.
+                                    </p>
+                                 </li>
+                                 <li>
+                                    <p>The Oracle XA application resumes or joins previously detached branches of a transaction.</p>
+                                 </li>
+                              </ul>
+                           </div>
+                           <p>Oracle Database permits different instances to operate on different transaction branches in Oracle RAC. For example, Node 1 can operate on branch A while Node 2 operates on branch B. Before Oracle Database 11<span class="italic">g</span> Release 1 (11.1), if transaction branches were on different instances, then they were loosely coupled and did not share locks. In this case, Oracle Database treated different units of work in different application threads as separate entities that did not share resources.
+                           </p>
+                           <p>A different case is when multiple instances operate on a single transaction branch. For example, assume that a single transaction lands on Node 1 and Node 2 as follows:</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96__GUID-3F97576D-7DEA-49E2-B342-E43EE1920D04">Node 1</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ol>
+                              <li>
+                                 <p><code class="codeph">xa_start</code></p>
+                              </li>
+                              <li>
+                                 <p>SQL operations</p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">xa_end</code> (SUSPEND)
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96__GUID-BC744918-1A0D-41FC-B30A-BA673CFDFB5D">Node 2</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ol>
+                              <li>
+                                 <p><code class="codeph">xa_start</code> (RESUME)
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">xa_prepare</code></p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">xa_commit</code></p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">xa_end</code></p>
+                              </li>
+                           </ol>
+                           <p>In the immediately preceding sequence, Oracle Database returns an error because Node 2 must not resume a branch that is physically located on a different node (Node 1).</p>
+                           <p>Before Oracle Database 11<span class="italic">g</span> Release 1 (11.1), the way to achieve tight coupling in Oracle RAC was to use <strong class="term">Distributed Transaction Processing (DTP) services</strong>, that is, services whose cardinality (one) ensured that all tightly-coupled branches landed on the same instance—regardless of whether load balancing was enabled. Middle-tier components addressed Oracle Database through a common logical database service name that mapped to a single Oracle RAC instance at any point in time. An intermediate name resolver for the database service hid the physical characteristics of the database instance. DTP services enabled all participants of a tightly-coupled global transaction to create branches on one instance.
+                           </p>
+                           <p>As of Oracle Database 11<span class="italic">g</span> Release 1 (11.1), the DTP service is no longer required to support XA transactions with tightly coupled branches. By default, tightly coupled branches that land on different Oracle RAC instances remain tightly coupled; that is, they share locks and resources across Oracle RAC instances.
+                           </p>
+                           <p>For example, when you use a DTP service, this sequence of actions occurs on the same instance:</p>
+                        </div>
+                        <!-- class="section" -->
+                        <ol>
+                           <li><span><code class="codeph">xa_start</code></span></li>
+                           <li><span>SQL operations</span></li>
+                           <li><span><code class="codeph">xa_end</code> (SUSPEND)</span></li>
+                           <li><span><code class="codeph">xa_start</code> (RESUME)</span></li>
+                           <li><span>SQL operations</span></li>
+                           <li><span><code class="codeph">xa_prepare</code></span></li>
+                           <li><span><code class="codeph">xa_commit</code> or <code class="codeph">xa_rollback</code></span></li>
+                        </ol>
+                        <div class="section">
+                           <p>Moreover, multiple tightly-coupled branches land on the same instance if each addresses the Oracle RM with the same DTP service.</p>
+                           <p>To leverage all instances in the cluster, create multiple DTP services, with one or more on each node that hosts distributed transactions. All branches of a global distributed transaction exist on the same instance. Thus, you can leverage all instances and nodes of an Oracle RAC cluster to balance the load of many distributed XA transactions, thereby maximizing application throughput.</p>
+                           <div class="infoboxnotealso" id="GUID-E8D197D4-E2CE-43C7-AF61-047EABB71F96__GUID-0FF94259-A3D9-459E-90D1-FFE7E92EB3BB">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=RACAD967" target="_blank"><span class="italic">Oracle Real Application Clusters Administration and Deployment Guide</span></a> to learn how to manage distributed transactions in a Real Application Clusters configuration
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="ADFNS817"></a><div class="props_rev_3"><a id="GUID-5D7075DF-3857-49DA-BE4A-835AEA2DE3BE" name="GUID-5D7075DF-3857-49DA-BE4A-835AEA2DE3BE"></a><h5 id="ADFNS-GUID-5D7075DF-3857-49DA-BE4A-835AEA2DE3BE" class="sect5">Managing Instance Recovery in Oracle RAC with DTP Services (10.2)</h5>
+                     <div>
+                        <div class="section">
+                           <p>Before Oracle Database 10<span class="italic">g</span> Release 2 (10.2), TM was responsible for detecting failure and triggering failover and failback in Oracle RAC. To ensure that information about in-doubt transactions was propagated to <code class="codeph">DBA_2PC_PENDING</code>, TM had to call <code class="codeph">xa_recover</code> before resolving the in-doubt transactions. If an instance failed, then the XA client library could not fail over to another instance until it had run the<code class="codeph">SYS.DBMS_XA.DIST_TXN_SYNC</code> procedure to ensure that the undo segments of the failed instance were recovered. As of Oracle Database 10<span class="italic">g</span> Release 2 (10.2), there is no such requirement to call <code class="codeph">xa_recover</code> in cases where the TM has enough information about in-flight transactions.
+                           </p>
+                           <div class="infoboxnote" id="GUID-5D7075DF-3857-49DA-BE4A-835AEA2DE3BE__GUID-C9C6B44C-38B6-49D2-BC2F-70D2F7C590E4">
+                              <p class="notep1">Note:</p>
+                              <p>As of Oracle Database 9<span class="italic">g</span> Release 2 (9.2), <code class="codeph">xa_recover</code> is required to wait for distributed data manipulation language (DML) statements to complete on remote sites.
+                              </p>
+                           </div>
+                           <p>Using DTP services in Oracle RAC has these benefits:</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Automates instance failure detection.</p>
+                              </li>
+                              <li>
+                                 <p>Automates instance failover and failback. When an instance fails, the DTP service hosted on this instance fails over to another instance. The failover forces clients to reconnect; nevertheless, the logical names for the service remain the same. Failover is automatic and does not require an administrator intervention. The administrator can induce failback by a service relocate statement, but all failback-related recovery is automatically handled within the database server.</p>
+                              </li>
+                              <li>
+                                 <p>Enables Oracle Database rather than the client to drive instance recovery. The database does not require middle-tier TM involvement to determine the state of transactions prepared by other instances.</p>
+                              </li>
+                           </ul>
+                           <div class="infoboxnotealso" id="GUID-5D7075DF-3857-49DA-BE4A-835AEA2DE3BE__GUID-4290CF4E-FE6B-4E9F-B116-D104C6D2901C">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=RACAD063" target="_blank"><span class="italic">Oracle Real Application Clusters Administration and Deployment Guide</span></a> to learn how to manage instance recovery
+                                    </p>
+                                 </li>
+                                 <li>
+                                    <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=RACAD7147" target="_blank"><span class="italic">Oracle Real Application Clusters Administration and Deployment Guide</span></a> for information about services and distributed transaction processing in Oracle RAC
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="ADFNS818"></a><div class="props_rev_3"><a id="GUID-AFE8748A-61A2-44FB-8C8D-2A2EEAE91EA0" name="GUID-AFE8748A-61A2-44FB-8C8D-2A2EEAE91EA0"></a><h5 id="ADFNS-GUID-AFE8748A-61A2-44FB-8C8D-2A2EEAE91EA0" class="sect5">Global Uniqueness of XIDs in Oracle RAC</h5>
+                     <div>
+                        <p>Before Oracle Database 11<span class="italic">g</span> Release 1 (11.1), Oracle RAC database cannot determine whether a given XID is unique for XA transactions throughout the cluster.
+                        </p>
+                        <p>For example, suppose that there is an XID <code class="codeph">Fmt(</code><span class="italic"><code class="codeph">x</code></span><code class="codeph">)</code>.<code class="codeph">Tx(1)</code>.<code class="codeph">Br(1)</code> on Oracle RAC instance 1 and another XID <code class="codeph">Fmt(</code><span class="italic"><code class="codeph">x</code></span><code class="codeph">)</code>.<code class="codeph">Tx(1)</code>.<code class="codeph">Br(1)</code> on Oracle RAC instance 2. Each of these can start a branch and run SQL even though the XID is not unique across Oracle RAC instances.
+                        </p>
+                        <p>As of Oracle Database 11<span class="italic">g</span> Release 1 (11.1), Oracle RAC database detects the duplicate XIDs across Oracle RAC instances and prevents a branch with a duplicate XID from starting.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-AFE8748A-61A2-44FB-8C8D-2A2EEAE91EA0__GUID-3C896BA5-FD5D-44AD-9447-1CFBA51FEB39">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=RACAD7147" target="_blank"><span class="italic">Oracle Real Application Clusters Administration and Deployment Guide</span></a> for information about services and distributed transaction processing in Oracle RAC
+                           </p>
+                        </div>
+                     </div>
+                  </div><a id="ADFNS819"></a><div class="props_rev_3"><a id="GUID-1A97ED73-4C0E-42D2-AF06-8BB2CAF05977" name="GUID-1A97ED73-4C0E-42D2-AF06-8BB2CAF05977"></a><h5 id="ADFNS-GUID-1A97ED73-4C0E-42D2-AF06-8BB2CAF05977" class="sect5">Tight and Loose Coupling</h5>
+                     <div>
+                        <p>Oracle Database transaction branches within the same global transaction can be coupled either tightly or loosely. Ordinarily, coupling type is determined by the value of the <code class="codeph">Loose_Coupling</code> field of the <code class="codeph">xa_open</code> string (see <a href="xa.html#GUID-F2867F04-EE6C-4AB7-83FE-7E77F6EFACD2__BGBFICJB" title="This table summarizes the optional fields of the xa_open string.">Table 22-5</a>). However, if transaction branches land on different Oracle RAC instances when running Oracle RAC, they are loosely coupled even if <code class="codeph">Loose_Coupling=false</code>.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-1A97ED73-4C0E-42D2-AF06-8BB2CAF05977__GUID-E558C90A-0D15-409B-B102-F2B5C6227DB6">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/adfns&amp;id=RACAD7147" target="_blank"><span class="italic">Oracle Real Application Clusters Administration and Deployment Guide</span></a> for information about services and distributed transaction processing in Oracle RAC
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><a href="xa.html#GUID-66124F06-FC05-4513-A76A-F00D725440E4">Managing Transaction Branches in Oracle XA Applications</a></p>
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                  </div>
+               </div><a id="ADFNS820"></a><div class="props_rev_3"><a id="GUID-F6CB7EA2-BC01-47D6-BCF6-BD3D329B42EA" name="GUID-F6CB7EA2-BC01-47D6-BCF6-BD3D329B42EA"></a><h4 id="ADFNS-GUID-F6CB7EA2-BC01-47D6-BCF6-BD3D329B42EA" class="sect4">SQL-Based Oracle XA Restrictions</h4>
+                  <div>
+                     <p>This section describes restrictions concerning these SQL operations:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="xa.html#GUID-73F77CBF-D4AA-4E05-9493-4A07FB774751">Rollbacks and Commits</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-C83AE4C3-0FD5-49FC-B3F5-AC0F5BAD6463">DDL Statements</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-5E6A9F11-244B-4A26-8781-0C654AC9E448">Session State</a></p>
+                        </li>
+                        <li>
+                           <p><a href="xa.html#GUID-407EDF18-A106-4E62-B795-2C5A8552C824">EXEC SQL</a></p>
+                        </li>
+                     </ul>
+                  </div><a id="ADFNS821"></a><div class="props_rev_3"><a id="GUID-73F77CBF-D4AA-4E05-9493-4A07FB774751" name="GUID-73F77CBF-D4AA-4E05-9493-4A07FB774751"></a><h5 id="ADFNS-GUID-73F77CBF-D4AA-4E05-9493-4A07FB774751" class="sect5">Rollbacks and Commits</h5>
+                     <div>
+                        <p>Because the transaction manager is responsible for coordinating and monitoring the progress of the global transaction, the application must not contain any Oracle Database-specific statement that independently rolls back or commits a global transaction. However, you can use rollbacks and commits in a local transaction.</p>
+                        <p>Do not use <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">ROLLBACK</code> <code class="codeph">WORK</code> for precompiler applications when you are in the middle of a global transaction. Similarly, an OCI application must not run <code class="codeph">OCITransRollback</code>, or the Version 7 equivalent <code class="codeph">orol</code>. You can roll back a global transaction by calling <code class="codeph">tx_rollback</code>.
+                        </p>
+                        <p>Similarly, a precompiler application must not have the <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">COMMIT</code> <code class="codeph">WORK</code> statement in the middle of a global transaction. An OCI application must not run <code class="codeph">OCITransCommit</code> or the Version 7 equivalent <code class="codeph">ocom</code>. For example, use <code class="codeph">tx_commit</code> or <code class="codeph">tx_rollback</code> to end a global transaction.
+                        </p>
+                     </div>
+                  </div><a id="ADFNS822"></a><div class="props_rev_3"><a id="GUID-C83AE4C3-0FD5-49FC-B3F5-AC0F5BAD6463" name="GUID-C83AE4C3-0FD5-49FC-B3F5-AC0F5BAD6463"></a><h5 id="ADFNS-GUID-C83AE4C3-0FD5-49FC-B3F5-AC0F5BAD6463" class="sect5">DDL Statements</h5>
+                     <div>
+                        <p>Because a data definition language (DDL) statement, such as <code class="codeph">CREATE</code> <code class="codeph">TABLE</code>, implies an implicit commit, the Oracle XA application cannot run any DDL statements.
+                        </p>
+                     </div>
+                  </div><a id="ADFNS823"></a><div class="props_rev_3"><a id="GUID-5E6A9F11-244B-4A26-8781-0C654AC9E448" name="GUID-5E6A9F11-244B-4A26-8781-0C654AC9E448"></a><h5 id="ADFNS-GUID-5E6A9F11-244B-4A26-8781-0C654AC9E448" class="sect5">Session State</h5>
+                     <div>
+                        <p>Oracle Database does not guarantee that session state is valid between TPM services. For example, if a TPM service updates a session variable (such as a global package variable), then another TPM service that runs as part of the same global transaction might not see the change. Use savepoints only within a TPM service. The application must not refer to a savepoint that was created in another TPM service. Similarly, an application must not attempt to fetch from a cursor that was executed in another TPM service.</p>
+                     </div>
+                  </div><a id="ADFNS824"></a><div class="props_rev_3"><a id="GUID-407EDF18-A106-4E62-B795-2C5A8552C824" name="GUID-407EDF18-A106-4E62-B795-2C5A8552C824"></a><h5 id="ADFNS-GUID-407EDF18-A106-4E62-B795-2C5A8552C824" class="sect5">EXEC SQL</h5>
+                     <div>
+                        <p>Do not use the <code class="codeph">EXEC</code> <code class="codeph">SQL</code> statement to connect or disconnect. That is, do not use <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">CONNECT</code>, <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">COMMIT</code> <code class="codeph">WORK</code> <code class="codeph">RELEASE</code> or <code class="codeph">EXEC</code> <code class="codeph">SQL</code> <code class="codeph">ROLLBACK</code> <code class="codeph">WORK</code> <code class="codeph">RELEASE</code>.
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="ADFNS825"></a><div class="props_rev_3"><a id="GUID-6166F2B9-4ADA-417E-A8B2-6FF22C3D72E8" name="GUID-6166F2B9-4ADA-417E-A8B2-6FF22C3D72E8"></a><h4 id="ADFNS-GUID-6166F2B9-4ADA-417E-A8B2-6FF22C3D72E8" class="sect4">Miscellaneous Restrictions</h4>
+                  <div>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>You cannot use both Oracle XA and a gateway in the same session.</p>
+                        </li>
+                        <li>
+                           <p>Oracle Database does not support association migration (a means whereby a transaction manager might resume a suspended branch association in another branch).</p>
+                        </li>
+                        <li>
+                           <p>The optional XA feature asynchronous XA calls is not supported.</p>
+                        </li>
+                        <li>
+                           <p>Set the <code class="codeph">TRANSACTIONS</code> initialization parameter to the expected number of concurrent global transactions. The initialization parameter <code class="codeph">OPEN_LINKS_PER_INSTANCE</code> specifies the number of open database link connections that can be migrated. These database link connections are used by XA transactions so that the connections are cached after a transaction is committed.
+                           </p>
+                           <div class="infoboxnotealso" id="GUID-6166F2B9-4ADA-417E-A8B2-6FF22C3D72E8__GUID-7A537654-45E3-40A0-9389-29ABDE8E182A">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="xa.html#GUID-C4F27C42-C388-4604-8986-7917930F7EF8">Using Database Links in Oracle XA Applications</a></p>
+                           </div>
+                        </li>
+                        <li>
+                           <p>The maximum number of <code class="codeph">xa_open</code> calls for each thread is 32.
+                           </p>
+                        </li>
+                        <li>
+                           <p>When building an XA application based on TP-monitor, ensure that the TP-monitors libraries (that define the symbols <code class="codeph">ax_reg</code> and <code class="codeph">ax_unreg</code>) are placed in the link line before Oracle Database's client shared library. If your platform does not support shared libraries or if your linker is not sensitive to ordering of libraries in the link line, use Oracle Database's nonshared client library. These link restrictions are applicable only when using XA's dynamic registration (Oracle XA switch <code class="codeph">xaoswd</code>).
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

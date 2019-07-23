@@ -1,0 +1,493 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">
+      <meta name="description" content="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">
+      <title>Preprocessing a Database Workload</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Testing Guide ">
+      <meta property="og:description" content="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Testing Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="testing-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-07T01:43:11-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96279-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="capturing-a-database-workload.html" title="Previous" type="text/html">
+      <link rel="next" href="replaying-a-database-workload.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Testing Guide">
+    <meta name="dcterms.isVersionOf" content="RATUG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="capturing-a-database-workload.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="replaying-a-database-workload.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Testing Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="database-replay.html" property="item" typeof="WebPage"><span property="name"> Database Replay </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem"> Preprocessing a Database Workload </li>
+            </ol>
+            <a id="GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" name="GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A"></a><a id="RATUG128"></a>
+            
+            <h2 id="RATUG-GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" class="sect2"><span class="enumeration_chapter">11 </span> Preprocessing a Database Workload 
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div><span>After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.</span> Preprocessing a captured workload creates all necessary metadata for replaying the workload. This must be done once for every captured workload before they can be replayed. After the captured workload is preprocessed, it can be replayed repeatedly on a replay system.
+               </div>
+               <p>To preprocess a captured workload, you will first need to move all captured data files from the directory where they are stored on the capture system to a directory on the instance where the preprocessing will be performed. Preprocessing is resource intensive and should be performed on a system that is:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p>Separate from the production system</p>
+                  </li>
+                  <li>
+                     <p>Running the same version of Oracle Database as the replay system</p>
+                  </li>
+               </ul>
+               <p>For Oracle Real Application Clusters (Oracle RAC), select one database instance of the replay system for the preprocessing. This instance must have access to the captured data files that require preprocessing, which can be stored on a local or shared file system. If the capture directory path on the capture system resolves to separate physical directories in each instance, you will need to merge them into a single capture directory where the preprocessing will be performed. All directories must have the same directory tree and all files contained in each of these directories must be moved into a directory that has the same relative path to the capture directory.</p>
+               <p>Typically, you will preprocess the captured workload on the replay system. If you plan to preprocess the captured workload on a system that is separate from the replay system, you will also need to move all preprocessed data files from the directory where they are stored on the preprocessing system to a directory on the replay system after preprocessing is complete.</p>
+               <p>This chapter contains the following sections:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="preprocessing-a-database-workload.html#GUID-07329403-B681-4278-81F3-B72803E83B44" title="Several tasks are involved in preparing a single workload.">Preparing a Single Database Workload Using Enterprise Manager</a></p>
+                  </li>
+                  <li>
+                     <p><a href="preprocessing-a-database-workload.html#GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733" title="This section describes how to preprocess a captured workload using the DBMS_WORKLOAD_REPLAY package.">Preprocessing a Database Workload Using APIs</a></p>
+                  </li>
+               </ul>
+            </div><a id="RATUG4125"></a><div class="props_rev_3"><a id="GUID-07329403-B681-4278-81F3-B72803E83B44" name="GUID-07329403-B681-4278-81F3-B72803E83B44"></a><h3 id="RATUG-GUID-07329403-B681-4278-81F3-B72803E83B44" class="sect3"><span class="enumeration_section">11.1 </span>Preparing a Single Database Workload Using Enterprise Manager
+               </h3>
+               <div>
+                  <div><span>Several tasks are involved in preparing a single workload.</span> For example:
+                  </div>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Creating a database replay task</p>
+                     </li>
+                     <li>
+                        <p>Creating a replay from a replay task</p>
+                     </li>
+                     <li>
+                        <p>Preparing the test database</p>
+                     </li>
+                     <li>
+                        <p>Preprocessing the workload and deploying the replay clients</p>
+                     </li>
+                  </ul>
+                  <p>Before you can preprocess a captured workload, you must first capture the workload on the production system, as described in <a href="capturing-a-database-workload.html#GUID-E774C161-98C0-43EF-8B78-DD74E2A2A219" title="This chapter describes how to capture a database workload on the production system.">Capturing a Database Workload</a>.
+                  </p>
+                  <div class="infoboxnote" id="GUID-07329403-B681-4278-81F3-B72803E83B44__GUID-347FD684-E641-45F0-B595-861083C0DB66">
+                     <p class="notep1">Note:</p>
+                     <p>Preparing the test database is only required if you have not done so already. </p>
+                  </div>
+                  <p>The following sections provide procedures for these tasks. </p>
+               </div><a id="RATUG4126"></a><div class="props_rev_3"><a id="GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0" name="GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0"></a><h4 id="RATUG-GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0" class="sect4"><span class="enumeration_section">11.1.1 </span>Creating a Database Replay Task
+                  </h4>
+                  <div>
+                     <p>Before creating a database replay task, make sure that the capture that you want to replay has some captured user calls.</p>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0__GUID-0F222299-945D-4DC3-8A8E-D9367111C09C">To create a database replay task:</p>
+                        <ol>
+                           <li>
+                              <p>From the Database Replay page, click the <span class="bold">Replay Tasks</span> tab, then click <span class="bold">Create</span> in the toolbar.
+                              </p>
+                              <p>The Create Task page appears.</p>
+                              <div class="figure" id="GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0__GUID-F9845F86-3BFC-4AB0-93F5-FBB82114DD0C"><img src="img/dbr_replay_create_task.gif" width="510" alt="Description of dbr_replay_create_task.gif follows" title="Description of dbr_replay_create_task.gif follows" longdesc="img_text/dbr_replay_create_task.html"><br><a href="img_text/dbr_replay_create_task.html">Description of the illustration dbr_replay_create_task.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Provide a <span class="bold">Name</span> for the task, select a capture to be replayed, then click <span class="bold">Submit</span>. For consolidated replays, select two or more captures.
+                              </p>
+                              <p>The Database Replay page reappears, and displays your newly created replay task in the table under the Replay Task tab.</p>
+                              <div class="figure" id="GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0__GUID-168F78C7-2225-4F36-8FA3-B1B52FC3A604"><img src="img/dbr_replay_create_tsk_comp.gif" width="507" alt="Description of dbr_replay_create_tsk_comp.gif follows" title="Description of dbr_replay_create_tsk_comp.gif follows" longdesc="img_text/dbr_replay_create_tsk_comp.html"><br><a href="img_text/dbr_replay_create_tsk_comp.html">Description of the illustration dbr_replay_create_tsk_comp.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="RATUG4127"></a><div class="props_rev_3"><a id="GUID-74C95D47-4822-4513-83C9-6244365BCBFB" name="GUID-74C95D47-4822-4513-83C9-6244365BCBFB"></a><h4 id="RATUG-GUID-74C95D47-4822-4513-83C9-6244365BCBFB" class="sect4"><span class="enumeration_section">11.1.2 </span>Creating a Replay from a Replay Task
+                  </h4>
+                  <div>
+                     <p>This topic describes how to create a replay from a replay task.</p>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-74C95D47-4822-4513-83C9-6244365BCBFB__GUID-2297A2FD-4D37-47CC-8CF8-76B5BC132284">To create the replay:</p>
+                        <ol>
+                           <li>
+                              <p>From the Database Replay page, click the <span class="bold">Replay Tasks</span> tab.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Click the link for the desired replay task in the table.</p>
+                              <p>The Replay Task page for the capture appears.</p>
+                              <div class="figure" id="GUID-74C95D47-4822-4513-83C9-6244365BCBFB__GUID-9FB0DE6A-75DC-4B2F-9E65-36E47C7A036E"><img src="img/dbr_replay_create_replay.gif" width="507" alt="Description of dbr_replay_create_replay.gif follows" title="Description of dbr_replay_create_replay.gif follows" longdesc="img_text/dbr_replay_create_replay.html"><br><a href="img_text/dbr_replay_create_replay.html">Description of the illustration dbr_replay_create_replay.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Click <span class="bold">Create</span> in the Replays section.
+                              </p>
+                              <p>The Create Replay pop-up appears.</p>
+                           </li>
+                           <li>
+                              <p>Provide a required Name and optional description, then click the <span class="bold">Target Database</span> icon.
+                              </p>
+                              <p>The Search and Select: Targets pop-up appears.</p>
+                           </li>
+                           <li>
+                              <p>Choose the desired database, then click <span class="bold">Select</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Click <span class="bold">OK</span> in the Create Replay pop-up.
+                              </p>
+                              <p>The Database Replay page for your replay appears, which includes a Task List with links to perform the needed tasks. </p>
+                              <div class="figure" id="GUID-74C95D47-4822-4513-83C9-6244365BCBFB__GUID-8C4F93EC-05F8-4431-8CA6-EA8AA8868898"><img src="img/dbr_replay_create_rep_nm.gif" width="467" alt="Description of dbr_replay_create_rep_nm.gif follows" title="Description of dbr_replay_create_rep_nm.gif follows" longdesc="img_text/dbr_replay_create_rep_nm.html"><br><a href="img_text/dbr_replay_create_rep_nm.html">Description of the illustration dbr_replay_create_rep_nm.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>You can now proceed to the first task in the Task List, described in the next section.</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="RATUG4128"></a><div class="props_rev_3"><a id="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C" name="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C"></a><h4 id="RATUG-GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C" class="sect4"><span class="enumeration_section">11.1.3 </span>Preparing the Test Database
+                  </h4>
+                  <div>
+                     <div><span>This topic describes the tasks involved in preparing the test database.</span> For example:
+                     </div>
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Setting up the test database</p>
+                           </li>
+                           <li>
+                              <p>Isolating the test database</p>
+                           </li>
+                        </ul>
+                        <div class="infoboxnote" id="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C__GUID-48D44941-EDEC-49E8-8313-32609AE7E5ED">
+                           <p class="notep1">Note:</p>
+                           <p>These tasks are optional. If you have already set up your test database, skip to <span class="q">"<a href="preprocessing-a-database-workload.html#GUID-6C328D8F-9451-4733-AB51-595BE096DAC9" title="The final preparation for the replay involves preprocessing the workload and deploying the replay clients.">Preprocessing the Workload and Deploying the Replay Clients</a>"</span>.
+                           </p>
+                        </div>
+                        <p>The following procedures explain how to perform each of these tasks, which you can do in any order.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C__GUID-5D5DCC74-3FFE-49F1-88E5-BF7B21425384">To set up the test database:</p>
+                        <ol>
+                           <li>
+                              <p>From the Replay page for your particular replay, click the link for the <span class="bold">Set Up Test Database</span> task.
+                              </p>
+                              <p>The Set Up Test Database page appears.</p>
+                              <div class="figure" id="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C__GUID-96EEECAC-BEDF-478F-9A19-9BF0695BB912"><img src="img/dbr_process_setup_db.gif" width="507" alt="Description of dbr_process_setup_db.gif follows" title="Description of dbr_process_setup_db.gif follows" longdesc="img_text/dbr_process_setup_db.html"><br><a href="img_text/dbr_process_setup_db.html">Description of the illustration dbr_process_setup_db.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Choose whether you want to upgrade the database or not, and indicate whether this is a cluster database.</p>
+                           </li>
+                           <li>
+                              <p>Click the <span class="bold">Go to Task</span> icon for the Clone Existing Database Software sub-task, or click <span class="bold">Enable All Tasks</span> if you want to create the test database first.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Follow the instructions provided in the online help for the wizards. </p>
+                              <p>When the tasks are complete, a checkmark appears in the Status column for each task. </p>
+                           </li>
+                           <li>
+                              <p>Click <span class="bold">OK</span> to return to the Database Replay page.
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C__GUID-093EB955-3E3F-429E-AF29-7BA24770CD38">To isolate the test database:</p>
+                        <ol>
+                           <li>
+                              <p>From the Replay page for your particular replay, click the link for the <span class="bold">Isolate Test Database</span> task.
+                              </p>
+                              <p>A page appears explaining that references to external systems can cause problems during the replay.</p>
+                              <div class="figure" id="GUID-FC7140B3-38EB-45EE-A3F1-BAA42FB5F07C__GUID-26C6F64F-F258-49DB-992D-421F40BAD17A"><img src="img/dbr_process_isolate_db.gif" width="507" alt="Description of dbr_process_isolate_db.gif follows" title="Description of dbr_process_isolate_db.gif follows" longdesc="img_text/dbr_process_isolate_db.html"><br><a href="img_text/dbr_process_isolate_db.html">Description of the illustration dbr_process_isolate_db.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Use the links provided to verify potential references to external systems, modify those that are invalid, then click <span class="bold">OK</span>.
+                              </p>
+                              <p>The Replay Summary page reappears.</p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="RATUG4129"></a><div class="props_rev_3"><a id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9" name="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9"></a><h4 id="RATUG-GUID-6C328D8F-9451-4733-AB51-595BE096DAC9" class="sect4"><span class="enumeration_section">11.1.4 </span>Preprocessing the Workload and Deploying the Replay Clients
+                  </h4>
+                  <div>
+                     <div><span>The final preparation for the replay involves preprocessing the workload and deploying the replay clients.</span> For example:
+                     </div>
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Preprocessing the workload</p>
+                              <p>You need to preprocess each captured workload once for each version of the database against which the workload will be replayed. After you preprocess the workload once, you can use it for any subsequent replay tasks and replays without needing to preprocess again, as long as the test database is the same version as the database where the workload was preprocessed.For instance, for a replay task that contains two replays named "MyReplay1" and "MyReplay2," after you have preprocessed "MyReplay1", you can just directly reuse the directory object to replay "MyReplay2."</p>
+                              <p>The Workload Analyzer report is available after preprocessing.</p>
+                           </li>
+                           <li>
+                              <p>Deploying the replay clients</p>
+                              <p>You do not need to deploy the replay clients to other replay client hosts if these hosts can access the Oracle home of the test database you specified in the Database Target Name field.</p>
+                           </li>
+                        </ul>
+                        <p>The following procedures explain how to accomplish each of these tasks.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-4EDB2D43-6A02-480A-A708-0F425FCC48C1">To preprocess the workload:</p>
+                        <ol>
+                           <li>
+                              <p>From the Replay page for your particular replay, click the link for the <span class="bold">Preprocess Workload</span> task.
+                              </p>
+                              <p>The Preprocess Captured Workload: Locate Workload page appears.</p>
+                              <div class="figure" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-532CD03E-2A17-4A29-899E-DAC637C5D4A9"><img src="img/dbr_process_locate_wkload.gif" width="507" alt="Description of dbr_process_locate_wkload.gif follows" title="Description of dbr_process_locate_wkload.gif follows" longdesc="img_text/dbr_process_locate_wkload.html"><br><a href="img_text/dbr_process_locate_wkload.html">Description of the illustration dbr_process_locate_wkload.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Select the desired workload location option, then click <span class="bold">Next</span>.
+                              </p>
+                              <div class="infoboxnote" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-322D920B-1979-4A36-8300-D4453364E8E8">
+                                 <p class="notep1">Note:</p>
+                                 <p>You initially need to select the copy option.</p>
+                              </div>
+                              <p>The Preprocess Captured Workload: Copy Workload page appears.</p>
+                              <div class="figure" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-23A17205-E78F-409A-878C-AA5FCD21D74D"><img src="img/dbr_process_copy_wkld.gif" width="452" alt="Description of dbr_process_copy_wkld.gif follows" title="Description of dbr_process_copy_wkld.gif follows" longdesc="img_text/dbr_process_copy_wkld.html"><br><a href="img_text/dbr_process_copy_wkld.html">Description of the illustration dbr_process_copy_wkld.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Provide the required credentials and the new location to which the workloads will be copied and preprocessed, then click <span class="bold">Next</span>.
+                              </p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p>For a consolidated replay, there are multiple source workloads, so multiple source credentials might be needed for the current location of the workload directory. For more information on consolidated replays, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-BBC96414-F08A-4D57-BA72-B28C1BBEE9F2" title="This section describes how to use Consolidated Database Replay with Enterprise Manager.">Using Consolidated Database Replay with Enterprise Manager</a>."</span></p>
+                                 </li>
+                              </ul>
+                              <p>The system responds by displaying a progress bar graph during processing, then displays the Preprocess Captured Workload: Select Directory page after the copy operation concludes.</p>
+                              <div class="figure" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-CF95B271-005B-4FA3-9632-8EBB8FCC176F"><img src="img/dbr_process_select_dir.gif" width="421" alt="Description of dbr_process_select_dir.gif follows" title="Description of dbr_process_select_dir.gif follows" longdesc="img_text/dbr_process_select_dir.html"><br><a href="img_text/dbr_process_select_dir.html">Description of the illustration dbr_process_select_dir.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Specify the Directory Object, or create a new Directory Object that points to the location that contains the workload. If you chose to copy from the workload location to a new location in the previous step, make sure that the directory object points to the exact location you specified in the New Location of the Workload Directory section.</p>
+                              <p>The system responds by displaying a Capture Summary. You can now expand the Capture Details section to see the workload profile and workload filters. The Capture Summary does not appear for consolidated replays.</p>
+                              <p>Click <span class="bold">Next</span> to display the Preprocess Captured Workload: Schedule page.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Provide input to schedule the preprocess job:</p>
+                              <ol type="a">
+                                 <li>
+                                    <p>Provide your own required job name or accept the system-supplied name. The job system automatically names the job in uppercase.</p>
+                                 </li>
+                                 <li>
+                                    <p>Indicate whether you want the job to run as soon as you submit it, or whether you want it to run at a later time. </p>
+                                 </li>
+                                 <li>
+                                    <p>Provide the host credentials, which are used to run the preprocess job in the operating system.</p>
+                                 </li>
+                              </ol>
+                              <p>Click <span class="bold">Next</span> to display the Preprocess Captured Workload: Review page.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Check to make sure that the settings are what you intend, then click <span class="bold">Submit</span>.
+                              </p>
+                              <p>The Database Replay page appears, and assuming that there were no errors in your input, a confirmation message at the top of the page states "Job JOBNAME to prepare the workload has been created successfully."</p>
+                           </li>
+                           <li>
+                              <p>Click the <span class="italic">JOBNAME</span> link to check the status of the job. The job must succeed before you can proceed to the Replay Workload task.
+                              </p>
+                              <div class="infoboxnote" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-C62BAF76-50E5-4C81-8DDA-4F3B6F1B945B">
+                                 <p class="notep1">Note:</p>
+                                 <p>A message may appear in the Task List stating that you need to install an additional PL/SQL package in the test database to generate a compare period report after the trial. Click <span class="bold">Install PL/SQL Package</span> to resolve this issue before proceeding to the Replay Workload task.
+                                 </p>
+                              </div>
+                              <div class="infobox-tip" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-D351A9BB-E160-46EA-9237-68614D0B55A6">
+                                 <p class="notep1">Tip:</p>
+                                 <p>After preprocessing a captured workload, you can replay it on the test system, as described in <a href="replaying-a-database-workload.html#GUID-1F638D8F-7168-492D-BAD6-39F4F36EAD9B" title="After a captured workload is preprocessed, it can be replayed repeatedly on a replay system that is running the same version of Oracle Database.">Replaying a Database Workload</a>.
+                                 </p>
+                              </div>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-19C2C9C4-C362-4F5A-8917-79022119BF70">To deploy the replay clients:</p>
+                        <ol>
+                           <li>
+                              <p>From the Replay page for your particular replay, click the link for the <span class="bold">Deploy Replay Clients</span> task.
+                              </p>
+                              <p>The Deploy Replay Clients page appears.</p>
+                              <div class="figure" id="GUID-6C328D8F-9451-4733-AB51-595BE096DAC9__GUID-916F81D0-5308-4854-A484-37E27551D57B"><img src="img/dbr_process_deploy_clients.gif" width="507" alt="Description of dbr_process_deploy_clients.gif follows" title="Description of dbr_process_deploy_clients.gif follows" longdesc="img_text/dbr_process_deploy_clients.html"><br><a href="img_text/dbr_process_deploy_clients.html">Description of the illustration dbr_process_deploy_clients.gif</a></div>
+                              <!-- class="figure" -->
+                           </li>
+                           <li>
+                              <p>Accept the default values defined for the associated workload capture, or override these values, then click <span class="bold">Continue</span>.
+                              </p>
+                              <p>The Provision Oracle Database Client wizard appears.</p>
+                           </li>
+                           <li>
+                              <p>Follow the instructions provided in the online help for each step of the wizard.</p>
+                              <p>After you click Submit in the Review step to run the deployment procedure according to the schedule you have set, the Replay Summary page reappears.</p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="RATUG130"></a><div class="props_rev_3"><a id="GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733" name="GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733"></a><h3 id="RATUG-GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733" class="sect3"><span class="enumeration_section">11.2 </span>Preprocessing a Database Workload Using APIs
+               </h3>
+               <div>
+                  <div><span>This section describes how to preprocess a captured workload using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> You can also use Oracle Enterprise Manager to preprocess a captured workload, as described in <span class="q">"<a href="preprocessing-a-database-workload.html#GUID-07329403-B681-4278-81F3-B72803E83B44" title="Several tasks are involved in preparing a single workload.">Preparing a Single Database Workload Using Enterprise Manager</a>"</span>.
+                  </div>
+                  <div class="p">Before you can preprocess a captured workload, you must first capture the workload on the production system, as described in <a href="capturing-a-database-workload.html#GUID-E774C161-98C0-43EF-8B78-DD74E2A2A219" title="This chapter describes how to capture a database workload on the production system.">Capturing a Database Workload</a>.
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733__GUID-98915FB4-3289-47FC-B388-5FE5AF69DBF6">To preprocess a captured workload:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Use the <a id="d21653e975" class="indexterm-anchor"></a><code class="codeph">PROCESS_CAPTURE</code> procedure:
+                           </p><pre class="oac_no_warn" dir="ltr">BEGIN
+  DBMS_WORKLOAD_REPLAY.PROCESS_CAPTURE (capture_dir =&gt; 'dec06',
+                             plsql_mode =&gt; 'extended');
+END;
+/
+</pre><p>In this example, the captured workload stored in the <code class="codeph">dec06</code> directory will be preprocessed.
+                           </p>
+                           <p>The <code class="codeph">PROCESS_CAPTURE</code> procedure in this example uses the <code class="codeph">capture_dir</code> required parameter, which specifies the directory that contains the captured workload to be preprocessed.
+                           </p>
+                           <p>The optional <code class="codeph">plsql_mode</code> parameter specifies the processing mode for PL/SQL.
+                           </p>
+                           <p>These two values can be set for the <code class="codeph">plsql_mode</code> parameter:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">top_level</code>: Metadata is generated for top-level PL/SQL calls only; this will be the only option for replay. This is the default value.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">extended</code>: Metadata is generated for both top-level PL/SQL calls and the SQL called from PL/SQL. A new directory <code class="codeph">ppe_X.X.X.X</code> (where X's represent the current Oracle version) is created under the capture root directory. Capture must have been done with this same value for the <code class="codeph">plsql_mode</code> parameter. Replay can use either <code class="codeph">'TOP_LEVEL'</code> or <code class="codeph">'EXTENDED'</code>.
+                                 </p>
+                                 <p>The <code class="codeph">extended</code> value can be set only for workloads that were captured with the <code class="codeph">plsql_mode</code> parameter set to <code class="codeph">extended</code>. If <code class="codeph">extended</code> is specified, but the capture was not executed in <code class="codeph">extended</code> mode, then you will receive an error message.
+                                 </p>
+                              </li>
+                           </ul>
+                        </li>
+                     </ul>
+                     <div class="infoboxnote" id="GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733__GUID-E8A7A3D2-7ACB-4FF7-B01A-797232787197">
+                        <p class="notep1">Note:</p>
+                        <p>To run <code class="codeph">PROCESS_CAPTURE</code> on an encrypted workload capture, you need to set the password using the identifier <code class="codeph">oracle.rat.database_replay.encryption</code> (case-sensitive). The password is stored in a software keystore. You can find whether a workload capture is encrypted or not from <code class="codeph">DBA_WORKLOAD_CAPTURES</code> view.
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <div class="infobox-tip" id="GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733__GUID-BC9521DF-F9F1-431D-95ED-CE0EC8F74C1D">
+                        <p class="notep1">Tip:</p>
+                        <p>After preprocessing a captured workload, you can replay it on the test system, as described in <a href="replaying-a-database-workload.html#GUID-1F638D8F-7168-492D-BAD6-39F4F36EAD9B" title="After a captured workload is preprocessed, it can be replayed repeatedly on a replay system that is running the same version of Oracle Database.">Replaying a Database Workload</a>.
+                        </p>
+                     </div>
+                     <div class="infoboxnotealso" id="GUID-4FC4A529-D603-48A1-BA0E-12E8BB130733__GUID-AD6CFAF0-F790-4C6A-A8A1-E4ED2075EB78">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="capturing-a-database-workload.html#GUID-C85885FA-715D-48AB-80F1-9C546988E667" title="This section describes how to start a workload capture.">Starting a Workload Capture</a> for information about the <code class="codeph">plsql_mode</code> parameter for the <code class="codeph">START_CAPTURE</code> procedure for the <code class="codeph">DBMS_WORKLOAD_CAPTURE</code> package
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS-GUID-5DA9F293-880A-47C0-9AD4-981A891526E2" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for additional information about the <code class="codeph">DBMS_WORKLOAD_REPLAY.PROCESS_CAPTURE</code> procedure
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="RATUG319"></a><div class="props_rev_3"><a id="GUID-D47738A7-4BBA-48A4-9BBB-BD104580CEB7" name="GUID-D47738A7-4BBA-48A4-9BBB-BD104580CEB7"></a><h4 id="RATUG-GUID-D47738A7-4BBA-48A4-9BBB-BD104580CEB7" class="sect4"><span class="enumeration_section">11.2.1 </span>Running the Workload Analyzer Command-Line Interface
+                  </h4>
+                  <div>
+                     <div><span>The Workload Analyzer is a Java program that analyzes a workload capture directory and identifies parts of a captured workload that may not replay accurately due to insufficient data, errors that occurred during workload capture, or usage features that are not supported by Database Replay.</span> The results of the workload analysis are saved to an HTML report named <code class="codeph">wcr_cap_analysis.html</code> located in the capture directory that is being analyzed. If an error can be prevented, the workload analysis report displays available preventive actions that can be implemented before replay. If an error cannot be corrected, the workload analysis report provides a description of the error so it can be accounted for during replay. Running Workload Analyzer is the default option and is strongly recommended.
+                     </div>
+                     <div class="section">
+                        <div class="infoboxnote" id="GUID-D47738A7-4BBA-48A4-9BBB-BD104580CEB7__GUID-0F063CDA-9FF7-431B-8E07-691E848FB36F">
+                           <p class="notep1">Note:</p>
+                           <p>If you are preprocessing a workload capture using Oracle Enterprise Manager, then you do not need to run Workload Analyzer in the command-line interface. Oracle Enterprise Manager enables you to run Workload Analyzer as part of the workload preprocessing.</p>
+                        </div>
+                        <p>Workload Analyzer is composed of two JAR files, <code class="codeph">dbranalyzer.jar</code> and <code class="codeph">dbrparser.jar</code>, located in the <code class="codeph">$ORACLE_HOME/rdbms/jlib/</code> directory of a system running Oracle Database Enterprise Edition Release 11.2.0.2 or higher. Workload Analyzer requires Java 1.5 or higher and the <code class="codeph">ojdbc6.jar</code> file located in the <code class="codeph">$ORACLE_HOME/jdbc/lib/</code> directory.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D47738A7-4BBA-48A4-9BBB-BD104580CEB7__GUID-2B86AF8A-4AAF-4CA9-9C5F-95D4FD578CD6">To run Workload Analyzer:</p>
+                        <ol>
+                           <li>
+                              <p>In the command-line interface, run the following <code class="codeph">java</code> command on a single line:
+                              </p><pre class="oac_no_warn" dir="ltr">java -classpath
+$ORACLE_HOME/jdbc/lib/ojdbc6.jar:$ORACLE_HOME/rdbms/jlib/dbrparser.jar:
+$ORACLE_HOME/rdbms/jlib/dbranalyzer.jar:
+oracle.dbreplay.workload.checker.CaptureChecker
+&lt;<span class="italic">capture_directory</span>&gt; &lt;<span class="italic">connection_string</span>&gt;
+</pre><p>For the <code class="codeph">capture_directory</code> parameter, input the operating system path of the capture directory. This directory should also contain the exported AWR data for the workload capture. For the <code class="codeph">connection_string</code> parameter, input the connection string of an Oracle database that is release 11.1 or higher.
+                              </p>
+                              <p>An example of this command may be:</p><pre class="oac_no_warn" dir="ltr">java -classpath
+$ORACLE_HOME/jdbc/lib/ojdbc6.jar:$ORACLE_HOME/rdbms/jlib/dbrparser.jar:
+$ORACLE_HOME/rdbms/jlib/dbranalyzer.jar:
+oracle.dbreplay.workload.checker.CaptureChecker /scratch/capture
+jdbc:oracle:thin:@myhost.mycompany.com:1521:orcl
+</pre></li>
+                           <li>
+                              <p>When prompted, input the username and password of a database user with <code class="codeph">EXECUTE</code> privileges for the <code class="codeph">DBMS_WORKLOAD_CAPTURE</code> package and the <code class="codeph">SELECT_CATALOG</code> role on the target database.
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

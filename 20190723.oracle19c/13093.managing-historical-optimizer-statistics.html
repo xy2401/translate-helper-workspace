@@ -1,0 +1,666 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="This chapter how to retain, report on, and restore non-current statistics.">
+      <meta name="description" content="This chapter how to retain, report on, and restore non-current statistics.">
+      <title>Managing Historical Optimizer Statistics</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="SQL Tuning Guide">
+      <meta property="og:description" content="This chapter how to retain, report on, and restore non-current statistics.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="SQL Tuning Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="sql-tuning-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-31T14:57:08-08:00">
+      <meta name="dcterms.title" content="SQL Tuning Guide">
+      <meta name="dcterms.dateCopyrighted" content="2013, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96095-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="controlling-the-use-of-optimizer-statistics.html" title="Previous" type="text/html">
+      <link rel="next" href="transporting-optimizer-statistics.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="TGSQL">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="controlling-the-use-of-optimizer-statistics.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="transporting-optimizer-statistics.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">SQL Tuning Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="optimizer-statistics.html" property="item" typeof="WebPage"><span property="name">Optimizer Statistics</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Managing Historical Optimizer Statistics</li>
+            </ol>
+            <a id="GUID-F1399D77-7E2E-434F-A67C-6ADB4C648D95" name="GUID-F1399D77-7E2E-434F-A67C-6ADB4C648D95"></a><a id="TGSQL449"></a>
+            
+            <h2 id="TGSQL-GUID-F1399D77-7E2E-434F-A67C-6ADB4C648D95" class="sect2"><span class="enumeration_chapter">16 </span>Managing Historical Optimizer Statistics
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>This chapter how to retain, report on, and restore non-current statistics.</p>
+               <p>This chapter contains the following topics:</p>
+            </div>
+            <div>
+               <ul class="ullinks">
+                  <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461">Restoring Optimizer Statistics</a><br>You can use <code class="codeph">DBMS_STATS</code> to restore old versions of statistics that are stored in the data dictionary.
+                  </li>
+                  <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456">Managing Optimizer Statistics Retention</a><br>By default, the database retains optimizer statistics for 31 days, after which time the statistics are scheduled for purging.
+                  </li>
+                  <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-48022C00-9B87-4470-BC23-AECFCDA0E434">Reporting on Past Statistics Gathering Operations</a><br>You can use <code class="codeph">DBMS_STATS</code> functions to report on a specific statistics gathering operation or on operations that occurred during a specified time. 
+                  </li>
+               </ul>
+               <div class="familylinks">
+                  <div class="parentlink">
+                     <p><strong>Parent topic:</strong> <a href="optimizer-statistics.html#GUID-0A2F3D52-A135-43E1-9CAB-55BFE068A297" title="The accuracy of an execution plan depends on the quality of the optimizer statistics.">Optimizer Statistics</a></p>
+                  </div>
+               </div>
+            </div>
+            <a id="TGSQL502"></a><div class="props_rev_3"><a id="GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461" name="GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461"></a><h3 id="TGSQL-GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461" class="sect3"><span class="enumeration_section">16.1 </span>Restoring Optimizer Statistics
+               </h3>
+               <div>
+                  <p>You can use <code class="codeph">DBMS_STATS</code> to restore old versions of statistics that are stored in the data dictionary.
+                  </p>
+                  <p>This topic contains the following topics:</p>
+               </div>
+               <div>
+                  <ul class="ullinks">
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-20CDFDE1-96AA-4F70-9C12-70912E62EDBA">About Restore Operations for Optimizer Statistics</a><br>Whenever statistics in the data dictionary are modified, the database automatically saves old versions of statistics. If newly collected statistics lead to suboptimal execution plans, then you may want to revert to the previous statistics. 
+                     </li>
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-77E3F1DF-919C-45EE-B515-1E7C6D3382D7">Guidelines for Restoring Optimizer Statistics</a><br>Restoring statistics is similar to importing and exporting statistics.
+                     </li>
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-61DB66DE-7967-4453-9898-FC903A704B5D">Restrictions for Restoring Optimizer Statistics</a><br>When restoring previous versions of statistics, various limitations apply.
+                     </li>
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52">Restoring Optimizer Statistics Using DBMS_STATS</a><br>You can restore statistics using the <code class="codeph">DBMS_STATS.RESTORE_*_STATS</code> procedures.
+                     </li>
+                  </ul>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-F1399D77-7E2E-434F-A67C-6ADB4C648D95" title="This chapter how to retain, report on, and restore non-current statistics.">Managing Historical Optimizer Statistics</a></p>
+                     </div>
+                  </div>
+               </div>
+               <a id="TGSQL503"></a><div class="props_rev_3"><a id="GUID-20CDFDE1-96AA-4F70-9C12-70912E62EDBA" name="GUID-20CDFDE1-96AA-4F70-9C12-70912E62EDBA"></a><h4 id="TGSQL-GUID-20CDFDE1-96AA-4F70-9C12-70912E62EDBA" class="sect4"><span class="enumeration_section">16.1.1 </span>About Restore Operations for Optimizer Statistics
+                  </h4>
+                  <div>
+                     <p>Whenever statistics in the data dictionary are modified, the database automatically saves old versions of statistics. If newly collected statistics lead to suboptimal execution plans, then you may want to revert to the previous statistics. </p>
+                     <p>Restoring optimizer statistics can aid in troubleshooting suboptimal plans. The following graphic illustrates a timeline for restoring statistics. In the graphic, statistics collection occurs on August 10 and August 20. On August 24, the DBA determines that the current statistics may be causing the optimizer to generate suboptimal plans. On August 25, the administrator restores the statistics collected on August 10.</p>
+                     <div class="figure" id="GUID-20CDFDE1-96AA-4F70-9C12-70912E62EDBA__CHDEHCDA">
+                        <p class="titleinfigure">Figure 16-1 Restoring Optimizer Statistics</p><img src="img/tgsql_vm_020.png" alt="Description of Figure 16-1 follows" title="Description of Figure 16-1 follows" longdesc="img_text/tgsql_vm_020.html"><br><a href="img_text/tgsql_vm_020.html">Description of "Figure 16-1 Restoring Optimizer Statistics"</a></div>
+                     <!-- class="figure" -->
+                  </div>
+                  <div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461" title="You can use DBMS_STATS to restore old versions of statistics that are stored in the data dictionary.">Restoring Optimizer Statistics</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div><a id="TGSQL504"></a><div class="props_rev_3"><a id="GUID-77E3F1DF-919C-45EE-B515-1E7C6D3382D7" name="GUID-77E3F1DF-919C-45EE-B515-1E7C6D3382D7"></a><h4 id="TGSQL-GUID-77E3F1DF-919C-45EE-B515-1E7C6D3382D7" class="sect4"><span class="enumeration_section">16.1.2 </span>Guidelines for Restoring Optimizer Statistics
+                  </h4>
+                  <div>
+                     <p>Restoring statistics is similar to importing and exporting statistics.</p>
+                     <div class="section">
+                        <p>In general, restore statistics instead of exporting them in the following situations:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>You want to recover older versions of the statistics. For example, you want to restore the optimizer behavior to an earlier date.</p>
+                           </li>
+                           <li>
+                              <p>You want the database to manage the retention and purging of statistics histories. </p>
+                           </li>
+                        </ul>
+                        <p>Export statistics rather than restoring them in the following situations:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>You want to experiment with multiple sets of statistics and change the values back and forth.</p>
+                           </li>
+                           <li>
+                              <p>You want to move the statistics from one database to another database. For example, moving statistics from a production system to a test system.</p>
+                           </li>
+                           <li>
+                              <p>You want to preserve a known set of statistics for a longer period than the desired retention date for restoring statistics.</p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-77E3F1DF-919C-45EE-B515-1E7C6D3382D7__GUID-FC7D7F55-EFC3-4D62-A87A-36EE36F9757E">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../arpls/DBMS_STATS.html#ARPLS68491" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for an overview of the procedures for restoring and importing statistics
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461" title="You can use DBMS_STATS to restore old versions of statistics that are stored in the data dictionary.">Restoring Optimizer Statistics</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div><a id="TGSQL505"></a><div class="props_rev_3"><a id="GUID-61DB66DE-7967-4453-9898-FC903A704B5D" name="GUID-61DB66DE-7967-4453-9898-FC903A704B5D"></a><h4 id="TGSQL-GUID-61DB66DE-7967-4453-9898-FC903A704B5D" class="sect4"><span class="enumeration_section">16.1.3 </span>Restrictions for Restoring Optimizer Statistics
+                  </h4>
+                  <div>
+                     <p>When restoring previous versions of statistics, various limitations apply.</p>
+                     <div class="section">
+                        <p>Limitations include the following:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><code class="codeph">DBMS_STATS.RESTORE_*_STATS</code> procedures cannot restore user-defined statistics.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Old versions of statistics are not stored when the <code class="codeph">ANALYZE</code> command has been used for collecting statistics.
+                              </p>
+                           </li>
+                           <li>
+                              <p>When you drop a table, workload information used by the auto-histogram gathering feature and saved statistics history used by the <code class="codeph">RESTORE_*_STATS</code> procedures is lost. Without this data, these features do not function properly. To remove all rows from a table, and to restore these statistics with <code class="codeph">DBMS_STATS</code>, use <code class="codeph">TRUNCATE</code> instead of dropping and re-creating the same table.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461" title="You can use DBMS_STATS to restore old versions of statistics that are stored in the data dictionary.">Restoring Optimizer Statistics</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div><a id="TGSQL507"></a><a id="TGSQL508"></a><a id="TGSQL506"></a><div class="props_rev_3"><a id="GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52" name="GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52"></a><h4 id="TGSQL-GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52" class="sect4"><span class="enumeration_section">16.1.4 </span>Restoring Optimizer Statistics Using DBMS_STATS
+                  </h4>
+                  <div>
+                     <p>You can restore statistics using the <code class="codeph">DBMS_STATS.RESTORE_*_STATS</code> procedures.
+                     </p>
+                     <div class="section">
+                        <p>The procedures listed in the following table accept a timestamp as an argument and restore statistics as of the specified time (<code class="codeph">as_of_timestamp</code>).
+                        </p>
+                        <div class="tblformal" id="GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52__CHDIHEAE">
+                           <p class="titleintable">Table 16-1 DBMS_STATS Restore Procedures</p>
+                           <table cellpadding="4" cellspacing="0" class="Formal" title="DBMS_STATS Restore Procedures" summary="DBMS_STATS restore procedures" width="100%" frame="hsides" border="1" rules="rows">
+                              <thead>
+                                 <tr align="left" valign="top">
+                                    <th align="left" valign="bottom" width="43%" id="d88724e868">Procedure</th>
+                                    <th align="left" valign="bottom" width="57%" id="d88724e871">Description</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="43%" id="d88724e876" headers="d88724e868 ">
+                                       <p><code class="codeph">RESTORE_DICTIONARY_STATS</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="57%" headers="d88724e876 d88724e871 ">
+                                       <p>Restores statistics of all dictionary tables (tables of <code class="codeph">SYS</code>, <code class="codeph">SYSTEM</code>, and <code class="codeph">RDBMS</code> component schemas) as of a specified timestamp.
+                                       </p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="43%" id="d88724e893" headers="d88724e868 ">
+                                       <p><code class="codeph">RESTORE_FIXED_OBJECTS_STATS</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="57%" headers="d88724e893 d88724e871 ">
+                                       <p>Restores statistics of all fixed tables as of a specified timestamp.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="43%" id="d88724e901" headers="d88724e868 ">
+                                       <p><code class="codeph">RESTORE_SCHEMA_STATS</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="57%" headers="d88724e901 d88724e871 ">
+                                       <p>Restores statistics of all tables of a schema as of a specified timestamp.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="43%" id="d88724e909" headers="d88724e868 ">
+                                       <p><code class="codeph">RESTORE_SYSTEM_STATS</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="57%" headers="d88724e909 d88724e871 ">
+                                       <p>Restores system statistics as of a specified timestamp.</p>
+                                    </td>
+                                 </tr>
+                                 <tr align="left" valign="top">
+                                    <td align="left" valign="top" width="43%" id="d88724e917" headers="d88724e868 ">
+                                       <p><code class="codeph">RESTORE_TABLE_STATS</code></p>
+                                    </td>
+                                    <td align="left" valign="top" width="57%" headers="d88724e917 d88724e871 ">
+                                       <p>Restores statistics of a table as of a specified timestamp. The procedure also restores statistics of associated indexes and columns. If the table statistics were locked at the specified timestamp, then the procedure locks the statistics.</p>
+                                    </td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <!-- class="inftblhruleinformal" -->
+                        <p>Dictionary views display the time of statistics modifications. You can use the following views to determine the time stamp to be use for the restore operation:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>The <code class="codeph">DBA_OPTSTAT_OPERATIONS</code> view contain history of statistics operations performed at schema and database level using <code class="codeph">DBMS_STATS</code>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>The <code class="codeph">DBA_TAB_STATS_HISTORY</code> views contains a history of table statistics modifications.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52__GUID-4F915400-6680-4E65-8F11-E97577523ED2">Assumptions</p>
+                        <p>This tutorial assumes the following:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>After the most recent statistics collection for the <code class="codeph">oe.orders</code> table, the optimizer began choosing suboptimal plans for queries of this table.
+                              </p>
+                           </li>
+                           <li>
+                              <p>You want to restore the statistics from before the most recent statistics collection to see if the plans improve.</p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52__GUID-F22197D2-8B3D-4F43-BC7E-27C0E53AE126">To restore optimizer statistics:</p>
+                        <ol>
+                           <li>
+                              <p>Start SQL*Plus and connect to the database with administrator privileges.</p>
+                           </li>
+                           <li>
+                              <p>Query the statistics history for <code class="codeph">oe.orders</code>.
+                              </p>
+                              <p>For example, run the following query:</p><pre class="pre codeblock"><code>COL TABLE_NAME FORMAT a10
+SELECT TABLE_NAME,
+       TO_CHAR(STATS_UPDATE_TIME,'YYYY-MM-DD:HH24:MI:SS') AS STATS_MOD_TIME
+FROM   DBA_TAB_STATS_HISTORY 
+WHERE  TABLE_NAME='ORDERS'
+AND    OWNER='OE'
+ORDER BY STATS_UPDATE_TIME DESC;
+</code></pre><p>Sample output is as follows:</p><pre class="pre codeblock"><code>TABLE_NAME STATS_MOD_TIME
+---------- -------------------
+ORDERS     2012-08-20:11:36:38
+ORDERS     2012-08-10:11:06:20
+</code></pre></li>
+                           <li>
+                              <p>Restore the optimizer statistics to the previous modification time.</p>
+                              <p>For example, restore the <code class="codeph">oe.orders</code> table statistics to August 10, 2012:
+                              </p><pre class="pre codeblock"><code>BEGIN
+  DBMS_STATS.RESTORE_TABLE_STATS( 'OE','ORDERS', 
+               TO_TIMESTAMP('2012-08-10:11:06:20','YYYY-MM-DD:HH24:MI:SS') );
+END;
+/
+</code></pre><p>You can specify any date between 8/10 and 8/20 because <code class="codeph">DBMS_STATS</code> restores statistics as of the specified time. 
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-8AAE84DA-487B-41AB-92A5-F41215DDAF52__GUID-2A1CFADE-0412-4887-AC18-16AC0D0AEE56">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../arpls/DBMS_STATS.html#ARPLS-GUID-DAF4653C-2C8F-462E-9509-6BA3E6AE768F" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn more about the <code class="codeph">DBMS_STATS.RESTORE_TABLE_STATS</code> procedure
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-D3050CB5-C0FA-4BD7-B7FF-88566437D461" title="You can use DBMS_STATS to restore old versions of statistics that are stored in the data dictionary.">Restoring Optimizer Statistics</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+            </div><a id="TGSQL494"></a><div class="props_rev_3"><a id="GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456" name="GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456"></a><h3 id="TGSQL-GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456" class="sect3"><span class="enumeration_section">16.2 </span>Managing Optimizer Statistics Retention
+               </h3>
+               <div>
+                  <p>By default, the database retains optimizer statistics for 31 days, after which time the statistics are scheduled for purging.</p>
+                  <p>You can use the <code class="codeph">DBMS_STATS</code> package to determine the retention period, change the period, and manually purge old statistics.
+                  </p>
+                  <p>This section contains the following topics:</p>
+               </div>
+               <div>
+                  <ul class="ullinks">
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-D5C8B818-5D69-4F18-B504-A96433310C48">Obtaining Optimizer Statistics History</a><br>You can use <code class="codeph">DBMS_STATS</code> procedures to obtain historical information for optimizer statistics. 
+                     </li>
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1">Changing the Optimizer Statistics Retention Period</a><br>You can configure the retention period using the <code class="codeph">DBMS_STATS.ALTER_STATS_HISTORY_RETENTION</code> procedure. The default is 31 days.
+                     </li>
+                     <li class="ulchildlink"><a href="managing-historical-optimizer-statistics.html#GUID-46AC849E-6C18-494B-9E5E-E6F87879610A">Purging Optimizer Statistics</a><br>Automatic purging is enabled when the <code class="codeph">STATISTICS_LEVEL</code> initialization parameter is set to <code class="codeph">TYPICAL</code> or <code class="codeph">ALL</code>. 
+                     </li>
+                  </ul>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-F1399D77-7E2E-434F-A67C-6ADB4C648D95" title="This chapter how to retain, report on, and restore non-current statistics.">Managing Historical Optimizer Statistics</a></p>
+                     </div>
+                  </div>
+               </div>
+               <a id="TGSQL495"></a><div class="props_rev_3"><a id="GUID-D5C8B818-5D69-4F18-B504-A96433310C48" name="GUID-D5C8B818-5D69-4F18-B504-A96433310C48"></a><h4 id="TGSQL-GUID-D5C8B818-5D69-4F18-B504-A96433310C48" class="sect4"><span class="enumeration_section">16.2.1 </span>Obtaining Optimizer Statistics History
+                  </h4>
+                  <div>
+                     <p>You can use <code class="codeph">DBMS_STATS</code> procedures to obtain historical information for optimizer statistics. 
+                     </p>
+                     <div class="section">
+                        <p>Historical information is useful when you want to determine how long the database retains optimizer statistics, and how far back these statistics can be restored. You can use the following procedure to obtain information about the optimizer statistics history:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><code class="codeph">GET_STATS_HISTORY_RETENTION</code></p>
+                              <p>This function can retrieve the current statistics history retention value.</p>
+                           </li>
+                           <li>
+                              <p><code class="codeph">GET_STATS_HISTORY_AVAILABILITY</code></p>
+                              <p>This function retrieves the oldest time stamp when statistics history is available. Users cannot restore statistics to a time stamp older than the oldest time stamp.</p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-D5C8B818-5D69-4F18-B504-A96433310C48__GUID-4D41C4D1-3F33-4C1E-81BF-802BFB535058">To obtain optimizer statistics history information:</p>
+                        <ol>
+                           <li>
+                              <p>Start SQL*Plus and connect to the database with the necessary privileges.</p>
+                           </li>
+                           <li>
+                              <p>Execute the following PL/SQL program:</p><pre class="pre codeblock"><code>DECLARE
+  v_stats_retn  NUMBER;
+  v_stats_date  DATE;
+BEGIN
+  v_stats_retn := DBMS_STATS.GET_STATS_HISTORY_RETENTION;
+  DBMS_OUTPUT.PUT_LINE('The retention setting is ' || v_stats_retn || '.');
+  v_stats_date := DBMS_STATS.GET_STATS_HISTORY_AVAILABILITY;
+  DBMS_OUTPUT.PUT_LINE('Earliest restore date is ' || v_stats_date || '.');
+END;
+/</code></pre></li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-D5C8B818-5D69-4F18-B504-A96433310C48__GUID-2D3DE7F4-4C36-431C-B160-25D853DEE617">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../arpls/DBMS_STATS.html#ARPLS-GUID-03065EEA-54F1-4B69-9D3E-EB9EEAD27103" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn about the <code class="codeph">DBMS_STATS.GET_STATS_HISTORY_RETENTION</code> procedure
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456" title="By default, the database retains optimizer statistics for 31 days, after which time the statistics are scheduled for purging.">Managing Optimizer Statistics Retention</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div><a id="TGSQL497"></a><a id="TGSQL498"></a><a id="TGSQL496"></a><div class="props_rev_3"><a id="GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1" name="GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1"></a><h4 id="TGSQL-GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1" class="sect4"><span class="enumeration_section">16.2.2 </span>Changing the Optimizer Statistics Retention Period
+                  </h4>
+                  <div>
+                     <p>You can configure the retention period using the <code class="codeph">DBMS_STATS.ALTER_STATS_HISTORY_RETENTION</code> procedure. The default is 31 days.
+                     </p>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1__GUID-2FFE7A12-FC57-4135-AC4B-AEC25D1B7730">Prerequisites</p>
+                        <p>To run this procedure, you must have either the <code class="codeph">SYSDBA</code> privilege, or both the <code class="codeph">ANALYZE ANY DICTIONARY</code> and <code class="codeph">ANALYZE ANY</code> system privileges.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1__GUID-0E64C517-E1D8-49DC-BC47-90BF908D51F8">Assumptions</p>
+                        <p>This tutorial assumes the following:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>The current retention period for optimizer statistics is 31 days.</p>
+                           </li>
+                           <li>
+                              <p>You run queries annually as part of an annual report. To keep the statistics history for more than 365 days so that you have access to last year's plan (in case a suboptimal plan occurs now), you set the retention period to 366 days.</p>
+                           </li>
+                           <li>
+                              <p>You want to create a PL/SQL procedure <code class="codeph">set_opt_stats_retention</code> that you can use to change the optimizer statistics retention period.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1__GUID-05084790-34EB-4D74-A8EF-DBAC62CBDDF9">To change the optimizer statistics retention period:</p>
+                        <ol>
+                           <li>
+                              <p>Start SQL*Plus and connect to the database with the necessary privileges.</p>
+                           </li>
+                           <li>
+                              <p>Create a procedure that changes the retention period.</p>
+                              <p>For example, create the following procedure:</p><pre class="pre codeblock"><code>CREATE OR REPLACE PROCEDURE set_opt_stats_retention
+  ( p_stats_retn   IN NUMBER )
+IS
+  v_stats_retn NUMBER;
+BEGIN
+  v_stats_retn := DBMS_STATS.GET_STATS_HISTORY_RETENTION;
+  DBMS_OUTPUT.PUT_LINE('Old retention setting is ' ||v_stats_retn|| '.');
+  DBMS_STATS.ALTER_STATS_HISTORY_RETENTION(p_stats_retn);
+  v_stats_retn := DBMS_STATS.GET_STATS_HISTORY_RETENTION;
+  DBMS_OUTPUT.PUT_LINE('New retention setting is ' ||v_stats_retn|| '.');
+END;
+/
+</code></pre></li>
+                           <li>
+                              <p>Change the retention period to 366 days.</p>
+                              <p>For example, execute the procedure that you created in the previous step (sample output included):</p><pre class="pre codeblock"><code>SQL&gt; EXECUTE set_opt_stats_retention(366)
+
+The old retention setting is 31.
+The new retention setting is 366.
+ 
+PL/SQL procedure successfully completed.</code></pre></li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-7522E2BD-1FCF-4FD0-B62F-CFB7858D53C1__GUID-5DD8309E-3CDB-4814-A6D1-15D36745E37D">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../arpls/DBMS_STATS.html#ARPLS-GUID-A04AE1C0-5DE1-4AFC-91F8-D35D41DF98A2" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn about the <code class="codeph">DBMS_STATS.ALTER_STATS_HISTORY_RETENTION</code> procedure
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456" title="By default, the database retains optimizer statistics for 31 days, after which time the statistics are scheduled for purging.">Managing Optimizer Statistics Retention</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div><a id="TGSQL500"></a><a id="TGSQL501"></a><a id="TGSQL499"></a><div class="props_rev_3"><a id="GUID-46AC849E-6C18-494B-9E5E-E6F87879610A" name="GUID-46AC849E-6C18-494B-9E5E-E6F87879610A"></a><h4 id="TGSQL-GUID-46AC849E-6C18-494B-9E5E-E6F87879610A" class="sect4"><span class="enumeration_section">16.2.3 </span>Purging Optimizer Statistics
+                  </h4>
+                  <div>
+                     <p>Automatic purging is enabled when the <code class="codeph">STATISTICS_LEVEL</code> initialization parameter is set to <code class="codeph">TYPICAL</code> or <code class="codeph">ALL</code>. 
+                     </p>
+                     <div class="section">
+                        <p>The database purges all history older than the older of (current time - the <code class="codeph">ALTER_STATS_HISTORY_RETENTION</code> setting) and (time of the most recent statistics gathering - 1).
+                        </p>
+                        <p>You can purge old statistics manually using the <code class="codeph">PURGE_STATS</code> procedure. If you do not specify an argument, then this procedure uses the automatic purging policy. If you specify the <code class="codeph">before_timestamp</code> parameter, then the database purges statistics saved before the specified timestamp.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-46AC849E-6C18-494B-9E5E-E6F87879610A__GUID-E2E7C86E-595A-470A-83DA-44FF93F22545">Prerequisites</p>
+                        <p>To run this procedure, you must have either the <code class="codeph">SYSDBA</code> privilege, or both the <code class="codeph">ANALYZE ANY DICTIONARY</code> and <code class="codeph">ANALYZE ANY</code> system privileges.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-46AC849E-6C18-494B-9E5E-E6F87879610A__GUID-4C9EF089-EE96-447C-83A7-9DF349CBA74C">Assumptions</p>
+                        <p>This tutorial assumes that you want to purge statistics more than one week old.</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-46AC849E-6C18-494B-9E5E-E6F87879610A__GUID-E7438FA3-5994-42FF-A3B5-5BA5D6F0D3B0">To purge optimizer statistics:</p>
+                        <ol>
+                           <li>
+                              <p>In SQL*Plus, log in to the database with the necessary privileges.</p>
+                           </li>
+                           <li>
+                              <p>Execute the <code class="codeph">DBMS_STATS.PURGE_STATS</code> procedure.
+                              </p>
+                              <p>For example, execute the procedure as follows:</p><pre class="pre codeblock"><code>EXEC DBMS_STATS.PURGE_STATS( SYSDATE-7 );</code></pre></li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+                  <div>
+                     <div class="infoboxnotealso" id="GUID-46AC849E-6C18-494B-9E5E-E6F87879610A__GUID-DE884555-0FA1-40B5-B5EB-B0DE635F9A2B">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../arpls/DBMS_STATS.html#ARPLS-GUID-8E6413D5-F827-4F57-9FAD-7EC56362A98C" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn about the <code class="codeph">DBMS_STATS.PURGE_STATS</code> procedure
+                        </p>
+                     </div>
+                     <div class="familylinks">
+                        <div class="parentlink">
+                           <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-DEEE6740-F601-4B77-B4D3-AF03F5883456" title="By default, the database retains optimizer statistics for 31 days, after which time the statistics are scheduled for purging.">Managing Optimizer Statistics Retention</a></p>
+                        </div>
+                     </div>
+                  </div>
+                  
+               </div>
+            </div><a id="TGSQL94642"></a><a id="TGSQL94643"></a><a id="TGSQL94641"></a><div class="props_rev_3"><a id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434" name="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434"></a><h3 id="TGSQL-GUID-48022C00-9B87-4470-BC23-AECFCDA0E434" class="sect3"><span class="enumeration_section">16.3 </span>Reporting on Past Statistics Gathering Operations
+               </h3>
+               <div>
+                  <p>You can use <code class="codeph">DBMS_STATS</code> functions to report on a specific statistics gathering operation or on operations that occurred during a specified time. 
+                  </p>
+                  <div class="section">
+                     <p><a href="managing-historical-optimizer-statistics.html#GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__CHDCDHHH" title="DBMS_STATS restore procedures">Table 16-2</a> lists the functions.
+                     </p>
+                     <div class="tblformal" id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__CHDCDHHH">
+                        <p class="titleintable">Table 16-2 DBMS_STATS Reporting Functions</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="DBMS_STATS Reporting Functions" summary="DBMS_STATS restore procedures" width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="44%" id="d88724e1857">Function</th>
+                                 <th align="left" valign="bottom" width="56%" id="d88724e1860">Description</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="44%" id="d88724e1865" headers="d88724e1857 ">
+                                    <p><code class="codeph">REPORT_STATS_OPERATIONS</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="56%" headers="d88724e1865 d88724e1860 ">
+                                    <p>Generates a report of all statistics operations that occurred between two points in time. You can narrow the scope of the report to include only automatic statistics gathering runs. You can also provide a set of pluggable database (PDB) IDs so that the database reports only statistics operations from the specified PDBs.</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="44%" id="d88724e1873" headers="d88724e1857 ">
+                                    <p><code class="codeph">REPORT_SINGLE_STATS_OPERATION</code></p>
+                                 </td>
+                                 <td align="left" valign="top" width="56%" headers="d88724e1873 d88724e1860 ">
+                                    <p>Generates a report of the specified operation. Optionally, you can specify a particular PDB ID in a container database (CDB).</p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__GUID-24B87E94-4A9E-4975-95D1-D20313042962">Assumptions</p>
+                     <p>This tutorial assumes that you want to generate HTML reports of the following:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>All statistics gathering operations within the last day</p>
+                        </li>
+                        <li>
+                           <p>The most recent statistics gathering operation</p>
+                        </li>
+                     </ul>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__GUID-4D7A6B73-61FD-4B04-A0EB-B30104FD230A">To report on all operations in the past day:</p>
+                     <ol>
+                        <li>
+                           <p>Start SQL*Plus and connect to the database with administrator privileges.</p>
+                        </li>
+                        <li>
+                           <p>Run the <code class="codeph">DBMS_STATS.REPORT_STATS_OPERATIONS</code> function.
+                           </p>
+                           <p>For example, run the following commands:</p><pre class="pre codeblock"><code>SET LINES 200 PAGES 0
+SET LONG 100000
+COLUMN REPORT FORMAT A200
+
+VARIABLE my_report CLOB;
+BEGIN
+  :my_report := DBMS_STATS.REPORT_STATS_OPERATIONS (
+     since        =&gt; SYSDATE-1
+,    until        =&gt; SYSDATE 
+,    detail_level =&gt; 'TYPICAL' 
+,    format       =&gt; 'HTML'      
+);
+END;
+/
+</code></pre><p>The following graphic shows a sample report:</p>
+                           <div class="figure" id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__GUID-4F82753E-3A6E-44D7-9049-188A3962B5B1"><img src="img/reporting_past_ops.gif" alt="Description of reporting_past_ops.gif follows" title="Description of reporting_past_ops.gif follows" longdesc="img_text/reporting_past_ops.html"><br><a href="img_text/reporting_past_ops.html">Description of the illustration reporting_past_ops.gif</a></div>
+                           <!-- class="figure" -->
+                        </li>
+                        <li>
+                           <p>Run the <code class="codeph">DBMS_STATS.REPORT_SINGLE_STATS_OPERATION</code> function for an individual operation.
+                           </p>
+                           <p>For example, run the following program to generate a report of operation <code class="codeph">848</code>:
+                           </p><pre class="pre codeblock"><code>BEGIN
+  :my_report :=DBMS_STATS.REPORT_SINGLE_STATS_OPERATION (
+     OPID    =&gt; 848
+,    FORMAT  =&gt; 'HTML'
+);
+END;
+</code></pre></li>
+                     </ol>
+                     <p>The following graphic shows a sample report:</p>
+                     <div class="figure" id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__GUID-5C83050B-40D3-4983-9FAC-4D93ED74F9FE"><img src="img/reporting_past_op.gif" alt="Description of reporting_past_op.gif follows" title="Description of reporting_past_op.gif follows" longdesc="img_text/reporting_past_op.html"><br><a href="img_text/reporting_past_op.html">Description of the illustration reporting_past_op.gif</a></div>
+                     <!-- class="figure" -->
+                  </div>
+                  <!-- class="section" -->
+               </div>
+               <div>
+                  <div class="infoboxnotealso" id="GUID-48022C00-9B87-4470-BC23-AECFCDA0E434__GUID-3E9019C0-F1D8-491F-AC68-27175F68FDC7">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><span class="q">"<a href="options-for-optimizer-statistics-gathering.html#GUID-7D050AB3-B3E6-4318-B9AC-B0D751131CD3" title="The Manage Optimizer Statistics page in Cloud Control is a GUI that enables you to manage optimizer statistics.">Graphical Interface for Optimizer Statistics Management</a>"</span> to learn about the Cloud Control GUI for statistics management
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../arpls/DBMS_STATS.html#ARPLS059" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> to learn more about <code class="codeph">DBMS_STATS</code> 
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="managing-historical-optimizer-statistics.html#GUID-F1399D77-7E2E-434F-A67C-6ADB4C648D95" title="This chapter how to retain, report on, and restore non-current statistics.">Managing Historical Optimizer Statistics</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

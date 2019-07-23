@@ -1,0 +1,235 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Use this technique to upgrade CDB$ROOT, PDB$SEED, and all PDBS in the CDB in one upgrade operation.">
+      <meta name="description" content="Use this technique to upgrade CDB$ROOT, PDB$SEED, and all PDBS in the CDB in one upgrade operation.">
+      <title>Upgrading Multitenant Container Databases In Parallel</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Upgrading PDBs in Parallel on the Same System">
+      <meta property="og:description" content="Use this technique to upgrade CDB$ROOT, PDB$SEED, and all PDBS in the CDB in one upgrade operation.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Upgrading PDBs in Parallel on the Same System">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="upgrading-pdbs-parallel-same-system.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-08T17:28:27-08:00">
+      <meta name="dcterms.title" content="Upgrading PDBs in Parallel on the Same System">
+      <meta name="dcterms.dateCopyrighted" content="2018, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="F10902-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="about-upgrading-pluggable-databases-in-parallel.html" title="Previous" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="SPUMS">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="about-upgrading-pluggable-databases-in-parallel.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="#" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Upgrading PDBs in Parallel on the Same System</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="upgrading-multitenant-architecture-in-parallel.html" property="item" typeof="WebPage"><span property="name">Upgrading Multitenant Architecture In Parallel</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Upgrading Multitenant Container Databases In Parallel</li>
+            </ol>
+            <a id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875" name="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875"></a>
+            
+            <h2 id="SPUMS-GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875" class="sect2">Upgrading Multitenant Container Databases In Parallel</h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Use this technique to upgrade CDB$ROOT, PDB$SEED, and all PDBS in the CDB in one upgrade operation.</p>
+               <div class="section">Oracle recommends that you use this approach if you can schedule downtime, because it provides a direct procedure for upgrades and simplicity of maintenance. Using this procedure upgrades in parallel all the PDBs in the multitenant architecture container database, depending on your server’s available processors (CPUs). </div>
+               <!-- class="section" -->
+               <div class="p">
+                  <div class="infoboxnote" id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875__GUID-B9E56452-D917-4494-9CEA-1776AB539636">
+                     <p class="notep1">Note:</p>
+                     <p>When you upgrade the entire container using the In Parallel upgrade method, all the PDBs must be down. Perform the upgrade in a scheduled upgrade window so that you can bring all the PDBs down. </p>
+                  </div>
+                  <div class="infoboxnote" id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875__GUID-7E298C0B-771D-4F81-BFB5-1659CC483F66">
+                     <p class="notep1">Caution:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Always create a backup of existing databases before starting any configuration change.</p>
+                        </li>
+                        <li>
+                           <p>You cannot downgrade a database after you have set the compatible initialization parameter.</p>
+                        </li>
+                        <li>
+                           <p>Oracle strongly recommends that you upgrade your source and target databases to the most recent bundle patch or patch set update (BP or PSU) before starting an upgrade, and to the most recent release update before starting a downgrade. </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+               <!-- class="section" -->
+               <ol>
+                  <li class="stepexpand"><span>Ensure that you have a proper backup strategy in place.</span></li>
+                  <li class="stepexpand"><span>Open all PDBs. </span><div>
+                        <p>For example:</p><pre class="pre codeblock"><code>SQL&gt; alter pluggable database all open;
+</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Run the Pre-Upgrade Information Tool (<code class="codeph">preupgrade.jar</code>), using the following syntax:</span><div><code class="codeph">/java -jar <span class="variable" translate="no">$New_release_Oracle_home</span>/rdbms/admin/preupgrade.jar [TERMINAL|FILE|DIR outputdir] [TEXT|XML] [-c <span class="variable" translate="no">InclusionListOfPDBs</span>] [-C <span class="variable" translate="no">ExclusionListOfPDBs</span>]</code><p>Use space-delimitation for lists. On Linux and UNIX, define the list by placing the list inside single quotes:<code class="codeph"> '</code>. On Windows systems, define the list by placing the list inside double quotes<code class="codeph"> "</code>.
+                        </p>
+                     </div>
+                     <div>For example, run the following command to run the Pre-Upgrade Information tool on PDBs PDB1 through PDB25, where you have set up an environment variable <code class="codeph">$ORACLE_HOME_12.2</code> for your Oracle Database Oracle home in<code class="codeph"> /u01/app/ oracle/product/12.2.0/dbhome_1/</code>, and you have set up an environment variable <code class="codeph">$ORACLE_HOME_19.1</code> for your new Oracle Database Oracle home in <code>/u01/app/oracle/product/19.1.0/dbhome_1/</code>:
+                        <p>Linux and UNIX:</p><pre class="pre codeblock"><code>java -jar $ORACLE_HOME_19.1/rdbms/admin/preupgrade.jar \
+-c 'pdb1 pdb2 pdb3 pdb4 pdb5 pdb6 pdb7 pdb8 pdb9 pdb10 pdb11 pdb12 pdb13\
+pdb14 pdb15 pdb16 pdb17 pdb18 pdb19 pdb20 pdb21 pdb22 pdb23 pdb24 pdb25'</code></pre><p>Windows:</p><pre class="pre codeblock"><code>java -jar %ORACLE_HOME_19.1%/rdbms/admin/preupgrade.jar \
+-c "pdb1 pdb2 pdb3 pdb4 pdb5 pdb6 pdb7 pdb8 pdb9 pdb10 pdb11 pdb12 pdb13\
+pdb14 pdb15 pdb16 pdb17 pdb18 pdb19 pdb20 pdb21 pdb22 pdb23 pdb24 pdb25"</code></pre></div>
+                     <div>
+                        <div class="infoboxnote" id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875__GUID-3CDD4AE3-9DFE-438B-82B3-2C4700E40E3D">
+                           <p class="notep1">Note:</p>
+                           <p>You must use Java 1.5 or later to run the Pre-Upgrade Information tool. By default, the Java releases in Oracle Database releases that you can upgrade directly support the tool.</p>
+                        </div>
+                     </div>
+                  </li>
+                  <li class="stepexpand"><span>Review any generated fixup scripts and log files.</span><div>
+                        <p>By default, if ORACLE_BASE is defined, then the fixup files are placed in one of the following paths:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Linux and UNIX:</p>
+                              <p><code>$ORACLE_BASE/cfgtoollogs/<span class="variable" translate="no">db_unique_name</span>/preupgrade</code></p>
+                           </li>
+                           <li>
+                              <p>Windows</p>
+                              <p><code>%ORACLE_BASE%\cfgtoollogs\<span class="variable" translate="no">db_unique_name</span>\preupgrade</code></p>
+                           </li>
+                        </ul>
+                        <p>If ORACLE_BASE is not defined, then fixup files are placed in one of the following paths:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Linux and UNIX:</p>
+                              <p><code class="codeph">$ORACLE_HOME/cfgtoollogs/<span class="variable" translate="no">db_unique_name</span>/preupgrade</code></p>
+                           </li>
+                           <li>
+                              <p>Windows:</p>
+                              <p><code class="codeph">%ORACLE_HOME\cfgtoollogs\<span class="variable" translate="no">db_unique_name</span>\preupgrade</code></p>
+                           </li>
+                        </ul>
+                        <p>On multitenant architecture Oracle Databases, the Pre-Upgrade Information Tool also creates a consolidated <code>preupgrade_fixups.sql</code> script. You can run the consolidated fixup script by using <code>catcon.pl</code>. The consolidated fixup script runs on every container that was open at the time that you ran the <code>preupgrade.jar</code> command. 
+                        </p>
+                     </div>
+                  </li>
+                  <li class="stepexpand"><span>Run the <code class="codeph">preupgrade_fixups</code> script, or individual PDB scripts. The <code class="codeph">preupgrade_fixups</code> SQL scripts resolve some of the issues reported by the <code class="codeph">preupgrade</code> script.</span><div>
+                        <p>On multitenant environment Oracle Database deployments, you can run <code class="codeph">preupgrade_fixups<span class="variable" translate="no">pdb-name</span>.sql</code> scripts on the source database, where <code class="codeph"><span class="variable" translate="no">pdb-name</span></code> is the PDB name. If you generate fixup scripts for PDBs, then the PDB name is added to the fixup filename.
+                        </p>
+                        <p>In addition to the individual PDB fixup scripts, you can use <code>catcon.pl</code> to run the consolidated <code>preupgrade_fixups.sql</code> script. The consolidated script runs on every container that was open at the time that you ran <code>preupgrade.jar</code>.
+                        </p>
+                        <div class="infoboxnote" id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875__GUID-DAAD9892-D13C-4947-B51E-3E0655691C12">
+                           <p class="notep1">Note:</p>
+                           <p>Because $ is a reserved symbol on operating systems, the fixup script for PDB$SEED is <code>preupgrade_fixups_pdb_seed.sql</code>.
+                           </p>
+                        </div>
+                     </div>
+                     <div>
+                        <p>Complete any other preupgrade tasks that the Pre-Upgrade Information Tool identifies. </p>
+                     </div>
+                  </li>
+                  <li class="stepexpand"><span>(Conditional) for Oracle RAC databases, set the cluster database initialization parameter to false: </span><div>
+                        <p>For example; </p><pre class="pre codeblock"><code>ALTER SYSTEM SET cluster_database=FALSE SCOPE=spfile;</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Shut down the database in the old Oracle home. </span><div>
+                        <p>For example, where <code class="codeph"><span class="variable" translate="no">db_unique_name</span></code> is your database name: 
+                        </p><code class="codeph">$ srvctl stop database -d <span class="variable" translate="no">db_unique_name</span></code></div>
+                  </li>
+                  <li class="stepexpand"><span>Copy the <code class="codeph">PFILE</code> or <code class="codeph">SPFILE</code> from the old Oracle home to the new Oracle home</span></li>
+                  <li class="stepexpand"><span>Connect with SQL*Plus:</span><div><pre class="pre codeblock"><code>sqlplus / as sysdba</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Bring the CDB$ROOT instance into upgrade mode:</span><div><pre class="pre codeblock"><code>STARTUP UPGRADE</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Bring all PDBs into upgrade mode:</span><div><pre class="pre codeblock"><code>ALTER PLUGGABLE DATABASE ALL OPEN UPGRADE;</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Check the status of PDBs to confirm that they are ready to upgrade:</span><div><pre class="pre codeblock"><code>SHOW PDBS</code></pre></div>
+                     <div>For all PDBs, ensure that the status is set to MIGRATE. </div>
+                  </li>
+                  <li class="stepexpand"><span>Exit from SQL*Plus, and change directory to the new Oracle home <code>$ORACLE_HOME/rdbms/admin</code>:</span><div><pre class="pre codeblock"><code>SQL&gt; EXIT
+$ ORACLE_HOME/bin </code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Start the upgrade using the Parallel Upgrade Utility (<code class="codeph">catctl.pl</code>, using the shell command <code class="codeph">dbupgrade</code>), where <code class="codeph">-d</code> specifies the location of the directory:</span><div><pre class="pre codeblock"><code>dbupgrade -d $ORACLE_HOME/rdbms/admin</code></pre></div>
+                     <div>
+                        <p>If you do not specify any parameters, then the Parallel Upgrade Utility runs the upgrade in parallel on the number of PDBs equivalent to the number of CPUs divided by 2. On a server with 64 CPUs, 64 divided by 2 equals 32 PDBs upgraded in parallel, carried out with two SQL processors for each PDB. CDB$ROOT remains in NORMAL mode for the duration of the upgrade.</p>
+                     </div>
+                  </li>
+                  <li class="stepexpand"><span>Confirm that the upgrade was successful by reviewing the <code class="codeph">upg_summary.log</code> If necessary, review other logs. </span></li>
+                  <li class="stepexpand"><span>Open all PDBs, so that you can recompile the databases:</span><div><pre class="pre codeblock"><code>ALTER PLUGGABLE DATABASE ALL OPEN;</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Exit from SQL*Plus, and change directory to the new Oracle home path <code>$ORACLE_HOME/rdbms/admin</code>:</span><div><pre class="pre codeblock"><code>SQL&gt; EXIT
+cd $ORACLE_HOME/rdbms/admin</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Run the <code class="codeph">catcon.pl</code> script and the <code class="codeph">postupgrade_fixups.sql</code> script that is supplied with the new release Oracle Database.</span><div>
+                        <p>The following example shows the command strings for running <code>catcon.pl</code>, using the <code class="codeph">-n</code> parameter to specify one parallel processor for each PDB, using the <code class="codeph">-d</code> parameter to specify the path where the preupgrade script that you want to run is located, using the <code class="codeph">-l</code> parameter to specify the location where you want the scripts to place log files, and using the <code class="codeph">-b</code> flag to specify the log file prefixes for the <code class="codeph">postupgrade_fixups.sql</code> script:
+                        </p><pre class="pre codeblock"><code>$ORACLE_HOME/perl/bin/perl $ORACLE_HOME/rdbms/admin/catcon.pl -n 1 -d \
+$ORACLE_HOME/cfgtoollogs/cdbupgr/preupgrade -l /home/oracle/upgrdDBA -b \
+postupgrade_fixups postupgrade_fixups.sql</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Run <code>postupgrade_fixups.sql</code>.</span><div>
+                        <p>Non- CDB:</p><pre class="pre codeblock"><code>SQL&gt; @rdbms/admin/postupgrade_fixups.sql</code></pre><p>CDB:</p><pre class="pre codeblock"><code>$ORACLE_HOME/perl/bin/perl catcon.pl -n 1 -e -b postupgradefixups -d '''.''' postupgradefixups.sql</code></pre></div>
+                  </li>
+                  <li class="stepexpand"><span>Run <code>utlusts.sql</code> to verify that there are no upgrade issues. </span><div>
+                        <p>Non-CDB:</p><pre class="pre codeblock"><code>SQL&gt; @rdbms/admin/utlusts.sql
+</code></pre><p>CDB:</p><pre class="pre codeblock"><code>$ORACLE_HOME/perl/bin/perl catcon.pl -n 1 -e -b utlu122s -d '''.''' utlusts.sql</code></pre></div>
+                     <div>
+                        <p>When you use <code>catcon.pl</code> to run <code>utlusts.sql</code>, the log file <code class="codeph">utlu122s0.log</code> is generated. The log file provides the upgrade results. You can also review the upgrade report, <code class="codeph">upg_summary.log</code>.
+                        </p>
+                        <p>To see information about the state of the database, run <code>utlusts.sql</code> as many times as you want, at any time after the upgrade is completed. If the <code>utlusts.sql</code> script returns errors, or shows components that do not have the status <code class="codeph">VALID</code>, or if the version listed for the component is not the most recent release, then perform troubleshooting. 
+                        </p>
+                     </div>
+                  </li>
+                  <li class="stepexpand"><span>(Conditional) For Oracle RAC environments only, enter the following commands to set the initialization parameter value for <span class="parmname" translate="no">CLUSTER_DATABASE</span> to <code class="codeph">TRUE</code>, and to start the Oracle RAC database, where <code class="codeph"><span class="variable" translate="no">dbname</span></code> is the name of the Oracle RAC database:</span><div><pre class="pre codeblock"><code>ALTER SYSTEM SET CLUSTER_DATABASE=TRUE SCOPE=SPFILE;
+srvctl start database -db <span class="variable" translate="no">db_unique_name</span></code></pre></div>
+                     <div>
+                        <p>Your database is now upgraded.</p>
+                        <div class="infoboxnote" id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875__GUID-ACC577D0-471E-4AF2-8EBC-B6FAD500DAF1">
+                           <p class="notep1">Caution:</p>
+                           <p>If you retain the old Oracle software, then never start the upgraded database with the old software. Only start Oracle Database using the start command in the new Oracle Database home. </p>
+                           <p>Before you remove the old Oracle environment, relocate any data files in that environment to the new Oracle Database environment. </p>
+                        </div>
+                        <div class="infoboxnotealso" id="GUID-5C043DD3-309A-4C8A-B500-1CAFC2CAB875__GUID-4FD7BF4A-F3A5-4914-9645-22387E206000">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="../admin/managing-data-files-and-temp-files.html#ADMIN012" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> for information about relocating data files
+                           </p>
+                        </div>
+                     </div>
+                  </li>
+               </ol>
+            </div>
+            <div>
+               <div class="familylinks">
+                  <div class="parentlink">
+                     <p><strong>Parent topic:</strong> <a href="upgrading-multitenant-architecture-in-parallel.html#GUID-4CA89342-971B-447C-A643-9638DE4EB121" title="Use this technique to upgrade multitenant architecture Oracle Database releases (Oracle Database 12c Release 1 (12.1.0.1) and later by upgrading container databases (CDBs), and then upgrading multiple pluggable databases (PDBs) in parallel.">Upgrading Multitenant Architecture In Parallel</a></p>
+                  </div>
+               </div>
+            </div>
+            
+         </div>
+      </article>
+   </body>
+</html>

@@ -1,0 +1,1518 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Database Replay enables you to capture a workload on the production system and replay it on a test system. This can be very useful when evaluating or adopting new database technologies because these changes can be tested on a test system without affecting the production system.">
+      <meta name="description" content="Database Replay enables you to capture a workload on the production system and replay it on a test system. This can be very useful when evaluating or adopting new database technologies because these changes can be tested on a test system without affecting the production system.">
+      <title>Using Consolidated Database Replay</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Testing Guide ">
+      <meta property="og:description" content="Database Replay enables you to capture a workload on the production system and replay it on a test system. This can be very useful when evaluating or adopting new database technologies because these changes can be tested on a test system without affecting the production system.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Testing Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="testing-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-07T01:43:11-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96279-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="using-workload-intelligence.html" title="Previous" type="text/html">
+      <link rel="next" href="using-workload-scale-up.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Testing Guide">
+    <meta name="dcterms.isVersionOf" content="RATUG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="using-workload-intelligence.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="using-workload-scale-up.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Testing Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="database-replay.html" property="item" typeof="WebPage"><span property="name"> Database Replay </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Using Consolidated Database Replay </li>
+            </ol>
+            <a id="GUID-62AAF505-1DD4-414A-9F1D-4386B59B7138" name="GUID-62AAF505-1DD4-414A-9F1D-4386B59B7138"></a><a id="RATUG4080"></a>
+            
+            <h2 id="RATUG-GUID-62AAF505-1DD4-414A-9F1D-4386B59B7138" class="sect2"><span class="enumeration_chapter">15 </span>Using Consolidated Database Replay 
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div><span>Database Replay enables you to capture a workload on the production system and replay it on a test system. This can be very useful when evaluating or adopting new database technologies because these changes can be tested on a test system without affecting the production system.</span> However, if the new system being tested offers significantly better performance than the existing system, then Database Replay may not accurately predict how much additional workload can be handled by the new system.
+               </div>
+               <p>For example, if you are consolidating multiple production systems into a single Oracle Exadata Machine, replaying a workload captured from one of the existing systems on Oracle Exadata Machine may result in much lower resource usage (such as host CPU and I/O) during replay because the new system is much more powerful. In this case, it is more useful to assess how the new system will handle the combined workloads from all existing systems, rather than that of a single workload from one system.</p>
+               <p><a id="d31544e81" class="indexterm-anchor"></a>Consolidated Database Replay enables you to consolidate multiple workloads captured from one or multiple systems and replay them concurrently on a single test system. In this example, using Consolidated Database Replay will help you to assess how the database consolidation will affect the production system and if a single Oracle Exadata Machine can handle the combined workloads from the consolidated databases.
+               </p>
+               <p>This chapter describes how to use Consolidated Database Replay and contains the following sections:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="using-consolidated-database-replay.html#GUID-CA75813D-10DB-4635-B127-6747CEC0C6D8" title="Consolidated Database Replay enables you to replay multiple workloads captured from one or multiple systems concurrently.">Use Cases for Consolidated Database Replay</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-consolidated-database-replay.html#GUID-ED30A383-7236-44C7-9DD0-A9FC4F75F686" title="This section describes the steps involved when using Consolidated Workload Replay.">Steps for Using Consolidated Database Replay</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-consolidated-database-replay.html#GUID-BBC96414-F08A-4D57-BA72-B28C1BBEE9F2" title="This section describes how to use Consolidated Database Replay with Enterprise Manager.">Using Consolidated Database Replay with Enterprise Manager</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-consolidated-database-replay.html#GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5" title="This section describes how to create and replay consolidated workloads using the DBMS_WORKLOAD_REPLAY package.">Using Consolidated Database Replay with APIs</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-consolidated-database-replay.html#GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8" title="In a query-only database replay, only the read-only queries of a workload capture are replayed. In other words, in a query-only replay, only SELECT statements are sent to the server at replay time. No DML statements are executed during a query-only replay, and the replay does not make any changes to user schemas or data.">About Query-Only Database Replay</a></p>
+                  </li>
+                  <li>
+                     <p><a href="using-consolidated-database-replay.html#GUID-29988B63-F974-46EF-9AAD-3D04AF774337" title="This section assumes a scenario where workloads from three separate production systems running different versions of Oracle Database on various operating systems are being consolidated.">Example: Replaying a Consolidated Workload with APIs</a></p>
+                  </li>
+               </ul>
+            </div><a id="RATUG4082"></a><div class="props_rev_3"><a id="GUID-CA75813D-10DB-4635-B127-6747CEC0C6D8" name="GUID-CA75813D-10DB-4635-B127-6747CEC0C6D8"></a><h3 id="RATUG-GUID-CA75813D-10DB-4635-B127-6747CEC0C6D8" class="sect3"><span class="enumeration_section">15.1 </span>Use Cases for Consolidated Database Replay
+               </h3>
+               <div>
+                  <div><span>Consolidated Database Replay enables you to replay multiple workloads captured from one or multiple systems concurrently.</span> During the replay, every workload capture that is consolidated will start to replay when the consolidated replay begins.
+                  </div>
+                  <p>Some typical use cases for Consolidated Database Replay include:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-42958859-005D-4B93-9DD3-79807968EA9E" title="One use for Consolidated Database Replay is to assess if the system can handle the combined workload from a database consolidation.">Database Consolidation Using Pluggable Databases</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-A2836514-C2B9-4170-B76F-DA8E4B298C2B" title="Another use for Consolidated Database Replay is for stress testing or capacity planning.">Stress Testing</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-0A835930-BD73-4C32-AC02-35D2E21AF725" title="A third use for Consolidated Database Replay is for scale-up testing.">Scale-Up Testing</a></p>
+                     </li>
+                  </ul>
+                  <p>Each of these use cases can be performed using the procedures described in this chapter. In addition, you can employ various workload scale-up techniques when using Consolidated Database Replay, as described in <a href="using-workload-scale-up.html#GUID-6EE876DA-F6E0-435A-8728-CFDA1AFD1FF0" title="This chapter describes using various workload scale-up techniques with Consolidated Database Replay.">Using Workload Scale-Up</a>.
+                  </p>
+               </div><a id="RATUG4199"></a><div class="props_rev_3"><a id="GUID-42958859-005D-4B93-9DD3-79807968EA9E" name="GUID-42958859-005D-4B93-9DD3-79807968EA9E"></a><h4 id="RATUG-GUID-42958859-005D-4B93-9DD3-79807968EA9E" class="sect4"><span class="enumeration_section">15.1.1 </span>Database Consolidation Using Pluggable Databases
+                  </h4>
+                  <div>
+                     <p>One use for Consolidated Database Replay is to assess if the system can handle the combined workload from a database consolidation.</p>
+                     <p>For example, assume that you want to consolidate the databases for the CRM, ERP, and SCM applications by migrating them to pluggable databases (PDBs). You can use Consolidated Database Replay to combine the captured workloads from the three applications and replay them concurrently on PDBs.</p>
+                     <div class="infoboxnotealso" id="GUID-42958859-005D-4B93-9DD3-79807968EA9E__GUID-3EE5DD0E-B6F9-4E27-BEE9-D37D734EB6B2">
+                        <p class="notep1">See Also:</p>
+                        <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-29988B63-F974-46EF-9AAD-3D04AF774337" title="This section assumes a scenario where workloads from three separate production systems running different versions of Oracle Database on various operating systems are being consolidated.">Example: Replaying a Consolidated Workload with APIs</a>"</span> for an example of this use case
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="RATUG4200"></a><div class="props_rev_3"><a id="GUID-A2836514-C2B9-4170-B76F-DA8E4B298C2B" name="GUID-A2836514-C2B9-4170-B76F-DA8E4B298C2B"></a><h4 id="RATUG-GUID-A2836514-C2B9-4170-B76F-DA8E4B298C2B" class="sect4"><span class="enumeration_section">15.1.2 </span>Stress Testing
+                  </h4>
+                  <div>
+                     <p>Another use for Consolidated Database Replay is for stress testing or capacity planning.</p>
+                     <p>For example, assume that you are expecting the workload for the Sales application to double during the holiday season. You can use Consolidated Database Replay to test the added stress on the system by doubling the workload and replaying the combined workload.</p>
+                     <div class="infoboxnotealso" id="GUID-A2836514-C2B9-4170-B76F-DA8E4B298C2B__GUID-721FA44F-2680-47A0-ACEF-9EC7267391C2">
+                        <p class="notep1">See Also:</p>
+                        <p><span class="q">"<a href="using-workload-scale-up.html#GUID-A8D66BDD-5B60-4A0D-81E8-FF88D9F68A49" title="This section describes how to use time shifting with Consolidated Database Replay, and assumes a scenario where you want to use time shifting to align the peaks of workloads captured from three applications and replay them simultaneously.">Using Time Shifting</a>"</span> for an example of this use case
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="RATUG4201"></a><div class="props_rev_3"><a id="GUID-0A835930-BD73-4C32-AC02-35D2E21AF725" name="GUID-0A835930-BD73-4C32-AC02-35D2E21AF725"></a><h4 id="RATUG-GUID-0A835930-BD73-4C32-AC02-35D2E21AF725" class="sect4"><span class="enumeration_section">15.1.3 </span>Scale-Up Testing
+                  </h4>
+                  <div>
+                     <p>A third use for Consolidated Database Replay is for scale-up testing.</p>
+                     <p>For example, assume that you want to test if your system can handle captured workloads from the Financials application and the Orders application concurrently. You can use Consolidated Database Replay to test the effects of the scaled-up workload on your system by combining the workloads and replaying them simultaneously.</p>
+                     <div class="infoboxnotealso" id="GUID-0A835930-BD73-4C32-AC02-35D2E21AF725__GUID-2AABD94E-E630-4F44-BBD1-A817F1CD367F">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><span class="q">"<a href="using-workload-scale-up.html#GUID-8564F1A9-E002-45DB-B049-6AABB3A88B82" title="This section describes how to use schema remapping with Consolidated Database Replay, and assumes a scenario where you want to use schema remapping to identify possible host bottlenecks when deploying multiple instances of an application.">Using Schema Remapping</a>"</span></p>
+                           </li>
+                           <li>
+                              <p><span class="q">"<a href="using-workload-scale-up.html#GUID-756772FF-1F7E-4EB5-AFB5-152CB3DF6704" title="This section describes how to use workload folding with Consolidated Database Replay, and assumes a scenario where you want to use workload folding to triple a captured workload. The scenario demonstrates how to use workload folding for scale-up testing.">Using Workload Folding</a>"</span></p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="RATUG4081"></a><div class="props_rev_3"><a id="GUID-ED30A383-7236-44C7-9DD0-A9FC4F75F686" name="GUID-ED30A383-7236-44C7-9DD0-A9FC4F75F686"></a><h3 id="RATUG-GUID-ED30A383-7236-44C7-9DD0-A9FC4F75F686" class="sect3"><span class="enumeration_section">15.2 </span>Steps for Using Consolidated Database Replay
+               </h3>
+               <div>
+                  <div><span>This section describes the steps involved when using Consolidated Workload Replay.</span> It contains the following topics:
+                  </div>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-29DEF1D4-AA77-4BF5-938E-52EFC666D47C" title="Consolidated Database Replay does not require any special steps for capturing database workloads.">Capturing Database Workloads for Consolidated Database Replay</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667" title="Setting up the test system for Consolidated Database Replay is similar to setting up a test system for Database Replay.">Setting Up the Test System for Consolidated Database Replay</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-E8EB57F8-8977-47FA-8FD4-B2C528CE7FE4" title="Preprocessing a database workload for Consolidated Database Replay is similar to preprocessing a database workload for Database Replay.">Preprocessing Database Workloads for Consolidated Database Replay</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-BFC7713A-5BEB-4A2E-9B0F-9F43A983BC6C" title="Replaying consolidated workloads using Consolidated Database Replay is quite different from replaying a single database workload using Database Replay.">Replaying Database Workloads for Consolidated Database Replay</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954" title="Reporting and analysis for Consolidated Database Replay is performed using the replay compare period report. See "" for more information.">Reporting and Analysis for Consolidated Database Replay</a></p>
+                     </li>
+                  </ul>
+               </div><a id="RATUG4086"></a><div class="props_rev_3"><a id="GUID-29DEF1D4-AA77-4BF5-938E-52EFC666D47C" name="GUID-29DEF1D4-AA77-4BF5-938E-52EFC666D47C"></a><h4 id="RATUG-GUID-29DEF1D4-AA77-4BF5-938E-52EFC666D47C" class="sect4"><span class="enumeration_section">15.2.1 </span>Capturing Database Workloads for Consolidated Database Replay
+                  </h4>
+                  <div>
+                     <div><span>Consolidated Database Replay does not require any special steps for capturing database workloads.</span> The steps for capturing database workloads are exactly the same as for capturing a single workload for Database Replay, as described in <a href="capturing-a-database-workload.html#GUID-E774C161-98C0-43EF-8B78-DD74E2A2A219" title="This chapter describes how to capture a database workload on the production system.">Capturing a Database Workload</a>.
+                     </div>
+                     <p>This section contains the following topics for workload captures that are specific to Consolidated Database Replay:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-180A4527-003B-4441-8FE7-524A2206FB54" title="Consolidated Database Replay supports multiple workloads captured from one or multiple systems running Oracle Database 9i Release 2 (release 9.2.0.8.0) or higher on one or multiple operating systems.">Supported Types of Workload Captures</a></p>
+                        </li>
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-C4DC0795-74B2-456D-AA0A-B4F7F45C81F8" title="Consolidated Database Replay enables you to transform existing workload captures into new, smaller pieces of capture subsets.">Capture Subsets</a></p>
+                        </li>
+                     </ul>
+                  </div><a id="RATUG4087"></a><div class="props_rev_3"><a id="GUID-180A4527-003B-4441-8FE7-524A2206FB54" name="GUID-180A4527-003B-4441-8FE7-524A2206FB54"></a><h5 id="RATUG-GUID-180A4527-003B-4441-8FE7-524A2206FB54" class="sect5"><span class="enumeration_section">15.2.1.1 </span>Supported Types of Workload Captures
+                     </h5>
+                     <div>
+                        <div><span>Consolidated Database Replay supports multiple workloads captured from one or multiple systems running Oracle Database 9<span class="italic">i</span> Release 2 (release 9.2.0.8.0) or higher on one or multiple operating systems.</span> For example, you can use workloads captured from one system running Oracle Database 9<span class="italic">i</span> Release 2 (release 9.2.0.8.0) on HP-UX and another system running Oracle Database 10<span class="italic">g</span> Release 2 (release 10.2.0.4.0) on AIX.
+                        </div>
+                        <div class="infoboxnote" id="GUID-180A4527-003B-4441-8FE7-524A2206FB54__GUID-3D39C9AB-52AD-4AF2-B52C-4A5131DB8D62">
+                           <p class="notep1">Note:</p>
+                           <p>Consolidated Database Replay is only available on Oracle Database 11<span class="italic">g</span> Release 2 (release 11.2.0.2.0) and higher.
+                           </p>
+                        </div>
+                     </div>
+                  </div><a id="RATUG4088"></a><div class="props_rev_3"><a id="GUID-C4DC0795-74B2-456D-AA0A-B4F7F45C81F8" name="GUID-C4DC0795-74B2-456D-AA0A-B4F7F45C81F8"></a><h5 id="RATUG-GUID-C4DC0795-74B2-456D-AA0A-B4F7F45C81F8" class="sect5"><span class="enumeration_section">15.2.1.2 </span>Capture Subsets
+                     </h5>
+                     <div>
+                        <div><span>Consolidated Database Replay enables you to transform existing workload captures into new, smaller pieces of capture subsets.</span> You can then generate new workload captures from the capture subsets that can be used in different use cases, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CA75813D-10DB-4635-B127-6747CEC0C6D8" title="Consolidated Database Replay enables you to replay multiple workloads captured from one or multiple systems concurrently.">Use Cases for Consolidated Database Replay</a>"</span>.
+                        </div>
+                        <p>A <span class="bold">capture subset</span> is a piece of a workload capture that is defined from an existing workload capture by applying a time range. The time range is specified as an offset from the start of the workload capture. All user workloads captured within the specified time range are included in the defined capture subset.
+                        </p>
+                        <p>For example, assume that a workload was captured from 2 a.m. to 8 p.m. and the peak workload is identified to be from 10 a.m. to 4 p.m. You can define a capture subset to represent the peak workload by applying a time range that starts at 8 hours after the start of the workload (or 10 a.m.) and ends at 14 hours after the start of the workload (or 4 p.m.).</p>
+                        <p>However, if a capture subset only contains recorded user workloads that satisfy the specified time range, user logins that occurred before the specified time range are not recorded. If these user logins are required for replay, then the capture subset may not be replayable. For example, if a user session starts at 9:30 a.m. and ends at 10:30 a.m. and the specified time range for the capture subset is 10:00 a.m. to 4:00 p.m., the replay may fail if the user login at 9:30 a.m. is not included in the workload. Similarly, the specified time range may also include incomplete user calls that are only partially recorded if a user sessions starts at 3:30 p.m. but does not complete until 4:30 p.m.</p>
+                        <p>Consolidated Database Replay addresses this problem by including only incomplete user calls caused by the start time of the specified time range. To avoid including the same incomplete user calls twice if the workload capture is folded, incomplete user calls caused by the end time are <span class="italic">not</span> included by default. Therefore, a capture subset is essentially the minimal number of recorded user calls during a specified time range that are required for proper replay, including the necessary user logins, alter session statements, and incomplete user calls caused by the start time.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-C4DC0795-74B2-456D-AA0A-B4F7F45C81F8__GUID-43ACD249-5A94-411D-B55B-5FC6EA5BAB9A">
+                           <p class="notep1">See Also:</p>
+                           <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC" title="This section describes how to generate capture subsets from existing workload captures using the DBMS_WORKLOAD_REPLAY package.">Generating Capture Subsets Using APIs</a>"</span></p>
+                        </div>
+                     </div>
+                  </div>
+               </div><a id="RATUG4091"></a><a id="RATUG4090"></a><div class="props_rev_3"><a id="GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667" name="GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667"></a><h4 id="RATUG-GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667" class="sect4"><span class="enumeration_section">15.2.2 </span>Setting Up the Test System for Consolidated Database Replay
+                  </h4>
+                  <div>
+                     <div><span>Setting up the test system for Consolidated Database Replay is similar to setting up a test system for Database Replay.</span> However, there are some additional considerations when setting up a replay database for Consolidated Database Replay. See <span class="q">"<a href="replaying-a-database-workload.html#GUID-EA0C0608-0B0C-4D2B-B6A4-2B8FFC548F8F" title="Proper preparation of the replay system and planning of the workload replay ensures that the replay will be accurate.">Steps for Replaying a Database Workload</a>"</span> for more information about setting up a test system for Database Replay.
+                     </div>
+                     <p>To minimize divergence during the replay, the test system should contain the same application data and the state of the application data should be logically equivalent to that of the capture system at the start time of each workload capture. However, because a consolidated capture may contain multiple workload captures from different production systems, the test system needs to be set up for all the captures. In this case, it is recommended that the multitenant architecture be used to consolidate multiple databases, so that each database will have equivalent data to its capture system at the capture start time.</p>
+                     <p>For Consolidated Database Replay, all participating workload captures must be placed under a new capture directory on the test system. You can copy all the workload captures into the new <a id="d31544e1083" class="indexterm-anchor"></a>capture directory, or create symbolic links pointing to the original workload captures. Before consolidating the workload captures, ensure that the new capture directory has enough disk space to store all participating captures.
+                     </p>
+                     <p><a href="using-consolidated-database-replay.html#GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667__CHDEFCDA">Figure 15-1</a> illustrates how to set up the test system and new capture directory to consolidate three workload captures.
+                     </p>
+                     <div class="figure" id="GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667__CHDEFCDA">
+                        <p class="titleinfigure">Figure 15-1 Setting Up the Test System for Consolidated Database Replay</p><img src="img/ratug004.png" width="279" alt="Description of Figure 15-1 follows" title="Description of Figure 15-1 follows" longdesc="img_text/ratug004.html"><br><a href="img_text/ratug004.html">Description of "Figure 15-1 Setting Up the Test System for Consolidated Database Replay"</a></div>
+                     <!-- class="figure" -->
+                     <div class="infoboxnotealso" id="GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667__GUID-C9AEA61F-FC73-49D6-9614-D130925F9A09">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA" title="This section describes how to set the consolidated replay directory on the test system using the DBMS_WORKLOAD_REPLAY package.">Setting the Consolidated Replay Directory Using APIs</a>"</span></p>
+                           </li>
+                           <li>
+                              <p><a href="../multi/introduction-to-the-multitenant-architecture.html#CNCPT89234" target="_blank"><span><cite>Oracle Database Concepts</cite></span></a> for information about the multitenant architecture
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="RATUG4089"></a><div class="props_rev_3"><a id="GUID-E8EB57F8-8977-47FA-8FD4-B2C528CE7FE4" name="GUID-E8EB57F8-8977-47FA-8FD4-B2C528CE7FE4"></a><h4 id="RATUG-GUID-E8EB57F8-8977-47FA-8FD4-B2C528CE7FE4" class="sect4"><span class="enumeration_section">15.2.3 </span>Preprocessing Database Workloads for Consolidated Database Replay
+                  </h4>
+                  <div>
+                     <div><span>Preprocessing a database workload for Consolidated Database Replay is similar to preprocessing a database workload for Database Replay.</span> See <span class="q">"<a href="preprocessing-a-database-workload.html#GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" title="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">Preprocessing a Database Workload</a>"</span> for information about preprocessing a database workload for Database Replay.
+                     </div>
+                     <p>For Consolidated Database Replay, preprocess each captured workload into its own directory. Do not combine different workload captures into one directory for preprocessing. Preprocessing of captured workloads must be performed using a database running the same version of Oracle Database as that of the test system where the workloads will be replayed.</p>
+                  </div>
+               </div><a id="RATUG4092"></a><div class="props_rev_3"><a id="GUID-BFC7713A-5BEB-4A2E-9B0F-9F43A983BC6C" name="GUID-BFC7713A-5BEB-4A2E-9B0F-9F43A983BC6C"></a><h4 id="RATUG-GUID-BFC7713A-5BEB-4A2E-9B0F-9F43A983BC6C" class="sect4"><span class="enumeration_section">15.2.4 </span>Replaying Database Workloads for Consolidated Database Replay
+                  </h4>
+                  <div>
+                     <p>Replaying consolidated workloads using Consolidated Database Replay is quite different from replaying a single database workload using Database Replay.</p>
+                     <p>This section contains the following topics for replaying workloads that are specific to Consolidated Database Replay:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A" title="A replay schedule adds one or multiple workload captures to a consolidated replay and specifies the order in which the captures will start during replay.">Defining Replay Schedules</a></p>
+                        </li>
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-A2D6CDAF-A91D-4DA4-ADCE-038595E851A9" title="As in the case with replaying a single database workload using Database Replay, captured connection strings used to connect to the production system need to be remapped to the replay system.">Remapping Connections for Consolidated Database Replay</a></p>
+                        </li>
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-48411BB5-E585-4783-B016-72DCD97074CE" title="As in the case with replaying a single database workload using Database Replay, usernames of database users and schemas used to connect to the production system can be remapped during replay. See "" for more information.">Remapping Users for Consolidated Database Replay</a></p>
+                        </li>
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-C2F6DA54-9C2C-40CE-B357-F58126C0E2EE" title="As is the case with replaying a single database workload using Database Replay, replay options are defined during preparation of a replay.">Preparing for Consolidated Database Replay</a></p>
+                        </li>
+                        <li>
+                           <p><a href="using-consolidated-database-replay.html#GUID-C0629657-BFE2-48AB-8BF6-E1EBBCEB79EE" title="It is recommended that each of the participating workloads be replayed individually before replaying the consolidated workload.">Replaying Individual Workloads</a></p>
+                        </li>
+                     </ul>
+                  </div><a id="RATUG4093"></a><div class="props_rev_3"><a id="GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A" name="GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A"></a><h5 id="RATUG-GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A" class="sect5"><span class="enumeration_section">15.2.4.1 </span>Defining Replay Schedules
+                     </h5>
+                     <div>
+                        <div><span>A <span class="bold">replay schedule</span> adds one or multiple workload captures to a consolidated replay and specifies the order in which the captures will start during replay.</span> A replay schedule must be created before a consolidated replay can be initialized. Multiple replay schedules can be defined for a consolidated replay. During replay initialization, you can select from any of the existing replay schedules.
+                        </div>
+                        <p>Replay schedules perform two types of operation:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="using-consolidated-database-replay.html#GUID-816A1006-2A04-4C6C-B046-8C0F26FB7C70" title="The first type of operation performed by a replay schedule is to add the participating workload captures to a replay.">Adding Workload Captures</a></p>
+                           </li>
+                           <li>
+                              <p><a href="using-consolidated-database-replay.html#GUID-03A418A1-2FB3-43FE-AC82-C9703C3224EA" title="The second type of operation performed by a replay schedule is to add schedule orders that specify the order in which the participating workload captures will start during replay.">Adding Schedule Orders</a></p>
+                           </li>
+                        </ul>
+                        <div class="infoboxnotealso" id="GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A__GUID-E9D32462-7C44-427F-87D6-1157183438F2">
+                           <p class="notep1">See Also:</p>
+                           <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-0C2C161B-76C7-4D14-87A1-2364EF731ECD" title="This section describes how to define replay schedules using the DBMS_WORKLOAD_REPLAY package.">Defining Replay Schedules Using APIs</a>"</span></p>
+                        </div>
+                     </div><a id="RATUG4094"></a><div class="props_rev_3"><a id="GUID-816A1006-2A04-4C6C-B046-8C0F26FB7C70" name="GUID-816A1006-2A04-4C6C-B046-8C0F26FB7C70"></a><h6 id="RATUG-GUID-816A1006-2A04-4C6C-B046-8C0F26FB7C70" class="sect6"><span class="enumeration_section">15.2.4.1.1 </span>Adding Workload Captures
+                        </h6>
+                        <div>
+                           <p>The first type of operation performed by a replay schedule is to add the participating workload captures to a replay.</p>
+                           <p>When a workload capture is added to a replay schedule, a unique number is returned to identify the workload capture. A workload capture can be added to a replay schedule more than once, as it will be assigned a different capture number each time it is added. The replay schedule will point to the same capture directory each time to avoid a waste of disk space by copying the capture each time it is added.</p>
+                           <div class="infoboxnotealso" id="GUID-816A1006-2A04-4C6C-B046-8C0F26FB7C70__GUID-C33A7BE0-BE78-4C77-BEBC-EB5A511FFA0C">
+                              <p class="notep1">See Also:</p>
+                              <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span></p>
+                           </div>
+                        </div>
+                     </div><a id="RATUG4095"></a><div class="props_rev_3"><a id="GUID-03A418A1-2FB3-43FE-AC82-C9703C3224EA" name="GUID-03A418A1-2FB3-43FE-AC82-C9703C3224EA"></a><h6 id="RATUG-GUID-03A418A1-2FB3-43FE-AC82-C9703C3224EA" class="sect6"><span class="enumeration_section">15.2.4.1.2 </span>Adding Schedule Orders
+                        </h6>
+                        <div>
+                           <p>The second type of operation performed by a replay schedule is to add schedule orders that specify the order in which the participating workload captures will start during replay.</p>
+                           <p>A <a id="d31544e1621" class="indexterm-anchor"></a><span class="bold">schedule order</span> defines an order between the start of two workload captures that have been added to the replay schedule. Multiple schedule orders can be added to a replay schedule. For example, assume that a replay schedule has three workload captures added. One schedule order can be added to specify that Capture 2 must wait for Capture 1 to complete before starting. Another schedule order can be added to specify that Capture 3 must wait for Capture 1 to complete before starting. In this case, both Capture 2 and Capture 3 must wait for Capture 1 to complete before starting.
+                           </p>
+                           <p>It is possible for a replay schedule to not contain any schedule orders. In this case, all participating workload captures in the replay schedule will start to replay simultaneously when the consolidated replay begins.</p>
+                           <div class="infoboxnotealso" id="GUID-03A418A1-2FB3-43FE-AC82-C9703C3224EA__GUID-1379BFFF-3832-4AEF-A41E-DAC7254ECDA5">
+                              <p class="notep1">See Also:</p>
+                              <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73" title="This section describes how to add schedule orders to and remove schedule orders from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Schedule Orders to Replay Schedules Using APIs</a>"</span></p>
+                           </div>
+                        </div>
+                     </div>
+                  </div><a id="RATUG4096"></a><div class="props_rev_3"><a id="GUID-A2D6CDAF-A91D-4DA4-ADCE-038595E851A9" name="GUID-A2D6CDAF-A91D-4DA4-ADCE-038595E851A9"></a><h5 id="RATUG-GUID-A2D6CDAF-A91D-4DA4-ADCE-038595E851A9" class="sect5"><span class="enumeration_section">15.2.4.2 </span>Remapping Connections for Consolidated Database Replay
+                     </h5>
+                     <div>
+                        <div><span>As in the case with replaying a single database workload using Database Replay, captured connection strings used to connect to the production system need to be remapped to the replay system.</span> See <span class="q">"<a href="replaying-a-database-workload.html#GUID-823FEDBB-B93B-47DF-AE72-FBD3832DFD9B" title="During workload capture, connection strings used to connect to the production system are captured. In order for the replay to succeed, you need to remap these connection strings to the replay system. The replay clients can then connect to the replay system using the remapped connections.">Connection Remapping</a>"</span> for more information.
+                        </div>
+                        <p>For <a id="d31544e1731" class="indexterm-anchor"></a>Consolidated Database Replay, you need to remap captured connection strings from multiple workload captures to different connection strings during replay.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-A2D6CDAF-A91D-4DA4-ADCE-038595E851A9__GUID-8E052D59-1915-4BA9-B3EA-CD59DC22C6AE">
+                           <p class="notep1">See Also:</p>
+                           <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-284D7908-40EE-4570-AE78-E75AAA294327" title="This section describes how to remap connection strings for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Remapping Connection Using APIs</a>"</span></p>
+                        </div>
+                     </div>
+                  </div><a id="RATUG4097"></a><div class="props_rev_3"><a id="GUID-48411BB5-E585-4783-B016-72DCD97074CE" name="GUID-48411BB5-E585-4783-B016-72DCD97074CE"></a><h5 id="RATUG-GUID-48411BB5-E585-4783-B016-72DCD97074CE" class="sect5"><span class="enumeration_section">15.2.4.3 </span>Remapping Users for Consolidated Database Replay
+                     </h5>
+                     <div>
+                        <div><span>As in the case with replaying a single database workload using Database Replay, usernames of database users and schemas used to connect to the production system can be remapped during replay. See <span class="q">"<a href="replaying-a-database-workload.html#GUID-A00C24B9-28C9-46E4-839F-A0ABDA6C4C24" title="During workload capture, the username of the database user or schema used to connect to the production system is captured. You can choose to remap the captured username to that of a new user or schema.">User Remapping</a>"</span> for more information.</span></div>
+                        <p>For <a id="d31544e1835" class="indexterm-anchor"></a>Consolidated Database Replay, you can choose to remap the captured users from multiple workload captures to different users or schemas during replay.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-48411BB5-E585-4783-B016-72DCD97074CE__GUID-18CC0161-29E8-42BB-AC28-D211140E85C5">
+                           <p class="notep1">See Also:</p>
+                           <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915" title="This section describes how to remap users for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Remapping Users Using APIs</a>"</span></p>
+                        </div>
+                     </div>
+                  </div><a id="RATUG4098"></a><div class="props_rev_3"><a id="GUID-C2F6DA54-9C2C-40CE-B357-F58126C0E2EE" name="GUID-C2F6DA54-9C2C-40CE-B357-F58126C0E2EE"></a><h5 id="RATUG-GUID-C2F6DA54-9C2C-40CE-B357-F58126C0E2EE" class="sect5"><span class="enumeration_section">15.2.4.4 </span>Preparing for Consolidated Database Replay
+                     </h5>
+                     <div>
+                        <div><span>As is the case with replaying a single database workload using Database Replay, replay options are defined during preparation of a replay.</span> See <span class="q">"<a href="replaying-a-database-workload.html#GUID-289F573A-9C83-4A29-A1D4-323705E8293D" title="After the database is restored, and connections and users are remapped, you can set the appropriate replay options.">Specifying Replay Options</a>"</span> for more information.
+                        </div>
+                        <p>For <a id="d31544e1940" class="indexterm-anchor"></a>Consolidated Database Replay, all participating workload captures in a consolidated replay use the same replay options during replay that are defined during replay preparation.
+                        </p>
+                        <div class="infoboxnotealso" id="GUID-C2F6DA54-9C2C-40CE-B357-F58126C0E2EE__GUID-3C4FAAE0-B74D-44BA-B8EF-C951BC4E3869">
+                           <p class="notep1">See Also:</p>
+                           <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68" title="This section describes how to prepare a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Preparing for Consolidated Database Replay Using APIs</a>"</span></p>
+                        </div>
+                     </div>
+                  </div><a id="RATUG4099"></a><div class="props_rev_3"><a id="GUID-C0629657-BFE2-48AB-8BF6-E1EBBCEB79EE" name="GUID-C0629657-BFE2-48AB-8BF6-E1EBBCEB79EE"></a><h5 id="RATUG-GUID-C0629657-BFE2-48AB-8BF6-E1EBBCEB79EE" class="sect5"><span class="enumeration_section">15.2.4.5 </span>Replaying Individual Workloads
+                     </h5>
+                     <div>
+                        <div><span>It is recommended that each of the participating workloads be replayed individually before replaying the consolidated workload.</span> See <span class="q">"<a href="replaying-a-database-workload.html#GUID-1F638D8F-7168-492D-BAD6-39F4F36EAD9B" title="After a captured workload is preprocessed, it can be replayed repeatedly on a replay system that is running the same version of Oracle Database.">Replaying a Database Workload</a>"</span> for more information.
+                        </div>
+                        <p>The individual replays can establish a baseline performance for each workload capture and be used to analyze the performance of the consolidated replay.</p>
+                     </div>
+                  </div>
+               </div><a id="RATUG4202"></a><a id="RATUG4100"></a><div class="props_rev_3"><a id="GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954" name="GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954"></a><h4 id="RATUG-GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954" class="sect4"><span class="enumeration_section">15.2.5 </span>Reporting and Analysis for Consolidated Database Replay
+                  </h4>
+                  <div>
+                     <div><span>Reporting and analysis for Consolidated Database Replay is performed using the replay compare period report. See <span class="q">"<a href="analyzing-captured-and-replayed-workloads.html#GUID-A4EEC94D-ACA1-4B1C-937E-51BBA20CF91D" title="Replay compare period reports can be used for several purposes.">Using Replay Compare Period Reports</a>"</span> for more information.</span></div>
+                     <p>The replay compare period report for Consolidated Database Replay identifies the Active Session History (ASH) data for each individual workload capture and compares the ASH data from the workload capture to the filtered ASH data from the consolidated replay. Use this report to compare replays of the same consolidated workload capture.</p>
+                     <p>The replay compare period report for Consolidated Database Replay treats the consolidated replay as multiple Capture vs. Replay comparisons. The summary section of the report contains a table that summarizes all individual Capture vs. Replay comparisons. Review the information in this section to gain a general understanding of how the consolidated replay ran.</p>
+                     <p><a href="using-consolidated-database-replay.html#GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954__CHDCBGFE">Figure 15-2</a> shows the summary section of a sample replay compare period report for Consolidated Database Replay.
+                     </p>
+                     <div class="figure" id="GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954__CHDCBGFE">
+                        <p class="titleinfigure">Figure 15-2 Compare Period Report: Consolidated Replay</p><img src="img/dbr_rep_cons_replay.gif" width="505" alt="Description of Figure 15-2 follows" title="Description of Figure 15-2 follows" longdesc="img_text/dbr_rep_cons_replay.html"><br><a href="img_text/dbr_rep_cons_replay.html">Description of "Figure 15-2 Compare Period Report: Consolidated Replay"</a></div>
+                     <!-- class="figure" -->
+                     <p>The rest of the sections in the report resemble the ASH Data Comparison section of the replay compare period report and are formed by joining all Capture vs. Replay reports in the consolidated replay. For a description of this section, see <span class="q">"<a href="analyzing-captured-and-replayed-workloads.html#GUID-1741E117-65B1-4DEE-8E3E-314BD09AA4C8" title="This section compares the ASH data across the two runs.">ASH Data Comparison</a>"</span>.
+                     </p>
+                  </div>
+               </div>
+            </div><a id="RATUG4137"></a><div class="props_rev_3"><a id="GUID-BBC96414-F08A-4D57-BA72-B28C1BBEE9F2" name="GUID-BBC96414-F08A-4D57-BA72-B28C1BBEE9F2"></a><h3 id="RATUG-GUID-BBC96414-F08A-4D57-BA72-B28C1BBEE9F2" class="sect3"><span class="enumeration_section">15.3 </span>Using Consolidated Database Replay with Enterprise Manager
+               </h3>
+               <div>
+                  <p>This section describes how to use Consolidated Database Replay with Enterprise Manager.</p>
+                  <p>The primary tool for replaying consolidated database workloads is Oracle Enterprise Manager. If Oracle Enterprise Manager is unavailable, you can also replay consolidated database workloads using APIs, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5" title="This section describes how to create and replay consolidated workloads using the DBMS_WORKLOAD_REPLAY package.">Using Consolidated Database Replay with APIs</a>"</span>.
+                  </p>
+                  <p>The process for replaying a consolidated database workload is nearly identical to that of replaying a single database workload. The differences are documented in the procedures for single replays in the following sections:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><span class="q">"<a href="preprocessing-a-database-workload.html#GUID-8012B6B9-4571-4802-9B87-CC44B3E51DF0" title="Before creating a database replay task, make sure that the capture that you want to replay has some captured user calls.">Creating a Database Replay Task</a>"</span> in <a href="preprocessing-a-database-workload.html#GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" title="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">Preprocessing a Database Workload</a></p>
+                     </li>
+                     <li>
+                        <p><span class="q">"<a href="preprocessing-a-database-workload.html#GUID-6C328D8F-9451-4733-AB51-595BE096DAC9" title="The final preparation for the replay involves preprocessing the workload and deploying the replay clients.">Preprocessing the Workload and Deploying the Replay Clients</a>"</span> in <a href="preprocessing-a-database-workload.html#GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" title="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">Preprocessing a Database Workload</a></p>
+                     </li>
+                     <li>
+                        <p><span class="q">"<a href="replaying-a-database-workload.html#GUID-B97B7550-A947-45D0-A31B-636A6427DD86" title="This section describes how to replay a database workload using Enterprise Manager.">Replaying a Database Workload Using Enterprise Manager</a>"</span> in <a href="replaying-a-database-workload.html#GUID-1F638D8F-7168-492D-BAD6-39F4F36EAD9B" title="After a captured workload is preprocessed, it can be replayed repeatedly on a replay system that is running the same version of Oracle Database.">Replaying a Database Workload</a></p>
+                     </li>
+                  </ul>
+                  <p>The following list provides a summary of the differences between replaying a consolidated database workload versus replaying a single database workload:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>When creating a replay task, you need to select two or more captured workloads from the Select Captures table in the Create Task page.</p>
+                     </li>
+                     <li>
+                        <p>The Preprocess Captured Workload: Copy Workload step of the wizard has more than one choice for the Capture Name drop-down, so you may need to enter multiple credentials for the current location of the workload directory.</p>
+                     </li>
+                     <li>
+                        <p>The Preprocess Captured Workload: Select Directory step of the wizard does not display a Capture Summary as it does for single replays.</p>
+                     </li>
+                     <li>
+                        <p>The Replay Workload: Copy Workload step of the wizard has more than one choice for the Capture Name drop-down, so you may need to enter multiple credentials for the current location of the workload directory.</p>
+                     </li>
+                     <li>
+                        <p>The Replay Workload: Select Directory step of the wizard does not display a Capture Summary as it does for single replays.</p>
+                     </li>
+                     <li>
+                        <p>The Replay Workload: Initialize Options step of the wizard does not display the Identify Source section.</p>
+                     </li>
+                     <li>
+                        <p>The Replay Workload: Customize Options step of the wizard has more than one choice for the Capture Name drop-down in the Connection Mappings tab, so you can remap connections for each captured workload. The option to use a single connect descriptor or net service name is not available.</p>
+                     </li>
+                  </ul>
+               </div>
+            </div><a id="RATUG4102"></a><div class="props_rev_3"><a id="GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5" name="GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5"></a><h3 id="RATUG-GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5" class="sect3"><span class="enumeration_section">15.4 </span>Using Consolidated Database Replay with APIs
+               </h3>
+               <div>
+                  <div><span>This section describes how to create and replay consolidated workloads using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> You can also create and replay consolidated workloads using Oracle Enterprise Manager, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-BBC96414-F08A-4D57-BA72-B28C1BBEE9F2" title="This section describes how to use Consolidated Database Replay with Enterprise Manager.">Using Consolidated Database Replay with Enterprise Manager</a>"</span>.
+                  </div>
+                  <p>Creating and replay a consolidated workload using APIs is a multi-step process that involves:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC" title="This section describes how to generate capture subsets from existing workload captures using the DBMS_WORKLOAD_REPLAY package.">Generating Capture Subsets Using APIs</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA" title="This section describes how to set the consolidated replay directory on the test system using the DBMS_WORKLOAD_REPLAY package.">Setting the Consolidated Replay Directory Using APIs</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-0C2C161B-76C7-4D14-87A1-2364EF731ECD" title="This section describes how to define replay schedules using the DBMS_WORKLOAD_REPLAY package.">Defining Replay Schedules Using APIs</a></p>
+                     </li>
+                     <li>
+                        <p><a href="using-consolidated-database-replay.html#GUID-10610AAB-EB5C-441C-A1E3-64DEDEC6B45F" title="This section describes how to run Consolidated Database Replay using the DBMS_WORKLOAD_REPLAY package.">Running Consolidated Database Replay Using APIs</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5__GUID-582B0AC9-B098-4AB4-9317-D73A941DD678">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS208" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package
+                     </p>
+                  </div>
+               </div><a id="RATUG4104"></a><a id="RATUG4103"></a><div class="props_rev_3"><a id="GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC" name="GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC"></a><h4 id="RATUG-GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC" class="sect4"><span class="enumeration_section">15.4.1 </span>Generating Capture Subsets Using APIs
+                  </h4>
+                  <div>
+                     <div><span>This section describes how to generate capture subsets from existing workload captures using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about capture subsets, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-C4DC0795-74B2-456D-AA0A-B4F7F45C81F8" title="Consolidated Database Replay enables you to transform existing workload captures into new, smaller pieces of capture subsets.">Capture Subsets</a>"</span>.
+                     </div>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC__GUID-A33C5A55-01CF-4624-BEDB-A4161822E486">To generate a capture subset from existing workload captures:</p>
+                        <ol>
+                           <li>
+                              <p>Use the <a id="d31544e2574" class="indexterm-anchor"></a><code class="codeph">GENERATE_CAPTURE_SUBSET</code> procedure:
+                              </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.GENERATE_CAPTURE_SUBSET (
+   input_capture_dir        IN VARCHAR2,
+   output_capture_dir       IN VARCHAR2,
+   new_capture_name         IN VARCHAR2,
+   begin_time               IN NUMBER,
+   begin_include_incomplete IN BOOLEAN   DEFAULT TRUE,
+   end_time                 IN NUMBER,
+   end_include_incomplete   IN BOOLEAN   DEFAULT FALSE,
+   parallel_level           IN NUMBER    DEFAULT NULL);
+</pre></li>
+                           <li>
+                              <p>Set the <code class="codeph">input_capture_dir</code> parameter to the name of the directory object that points to an existing workload capture.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Set the <code class="codeph">output_capture_dir</code> parameter to the name of the directory object that points to an empty directory where the new workload capture will be stored.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Set the <code class="codeph">new_capture_name</code> parameter to the name of the new workload capture that is to be generated.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Set the other parameters, which are optional, as appropriate.</p>
+                              <p>For information about these parameters, see <a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73989" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a>.
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p>This example shows how to create a capture subset named <code class="codeph">peak_wkld</code> at directory object <code class="codeph">peak_capdir</code> from an existing workload capture at directory object <code class="codeph">rec_dir</code>. The capture subset includes workload from 2 hours after the start of the workload capture (or 7,200 seconds) to 3 hours after the start of the workload capture (or 10,800 seconds).
+                        </p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.GENERATE_CAPTURE_SUBSET ('rec_dir', 'peak_capdir',
+     'peak_wkld', 7200, TRUE, 10800, FALSE, 1);</pre><div class="infoboxnotealso" id="GUID-936472E4-89E9-4FBA-8474-1E3831BFB3CC__GUID-92C841A0-762E-470B-A2FD-4244B1C407CF">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73988" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">GENERATE_CAPTURE_SUBSET</code> procedure
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="RATUG4106"></a><a id="RATUG4105"></a><div class="props_rev_3"><a id="GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA" name="GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA"></a><h4 id="RATUG-GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA" class="sect4"><span class="enumeration_section">15.4.2 </span>Setting the Consolidated Replay Directory Using APIs
+                  </h4>
+                  <div>
+                     <div><span>This section describes how to set the consolidated replay directory on the test system using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> Set the consolidated replay directory to a directory on the test system that contains the workload captures to be consolidated and replayed. For information about setting up the test system, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-D4B92163-DB56-403B-81B2-B3E91D3EA667" title="Setting up the test system for Consolidated Database Replay is similar to setting up a test system for Database Replay.">Setting Up the Test System for Consolidated Database Replay</a>"</span>.
+                     </div>
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA__GUID-08AA053F-1F61-4480-91C6-54DC27CD74D5">To set the replay directory:</p>
+                        <ol>
+                           <li>
+                              <p>Use the <a id="d31544e2744" class="indexterm-anchor"></a><code class="codeph">SET_CONSOLIDATED_DIRECTORY</code> procedure:
+                              </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.SET_CONSOLIDATED_DIRECTORY (
+   replay_dir IN VARCHAR2);
+</pre></li>
+                           <li>
+                              <p>Set the <code class="codeph">replay_dir</code> parameter to the name of the directory object that points to the operating system directory containing the workload captures to be used for workload consolidation.
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <div class="infobox-tip" id="GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA__GUID-115AB160-02CF-4480-867C-003560AADEFF">
+                           <p class="notep1">Tip:</p>
+                           <p>The <code class="codeph">SET_REPLAY_DIRECTORY</code> procedure is deprecated and replaced by the <code class="codeph">SET_CONSOLIDATED_DIRECTORY</code> procedure.
+                           </p>
+                        </div>
+                        <p>This example shows how to set the replay directory to a directory object named <code class="codeph">rep_dir</code>.
+                        </p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.SET_CONSOLIDATED_DIRECTORY ('rep_dir');
+</pre><p>You can also use the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package to view the current consolidated replay directory that has been set by the <code class="codeph">SET_CONSOLIDATED_DIRECTORY</code> procedure.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA__GUID-555DD23B-9C2A-4F48-8F75-02E46F4BAC1D">To view the current consolidated replay directory that has been set:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>Use the <a id="d31544e2792" class="indexterm-anchor"></a><code class="codeph">GET_REPLAY_DIRECTORY</code> function:
+                              </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.GET_REPLAY_DIRECTORY RETURN VARCHAR2;
+</pre><p>If no consolidated replay directory has been set, then the function returns <code class="codeph">NULL</code>.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <div class="infoboxnotealso" id="GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA__GUID-D44D28BA-6804-4D88-A07D-A40A8FDB3CA8">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73107" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">SET_REPLAY_DIRECTORY</code> procedure
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73993" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">GET_REPLAY_DIRECTORY</code> function
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="RATUG4107"></a><div class="props_rev_3"><a id="GUID-0C2C161B-76C7-4D14-87A1-2364EF731ECD" name="GUID-0C2C161B-76C7-4D14-87A1-2364EF731ECD"></a><h4 id="RATUG-GUID-0C2C161B-76C7-4D14-87A1-2364EF731ECD" class="sect4"><span class="enumeration_section">15.4.3 </span>Defining Replay Schedules Using APIs
+                  </h4>
+                  <div>
+                     <div><span>This section describes how to define replay schedules using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about replay schedules, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A" title="A replay schedule adds one or multiple workload captures to a consolidated replay and specifies the order in which the captures will start during replay.">Defining Replay Schedules</a>"</span>.
+                     </div>
+                     <div class="p">
+                        <p>Before defining replay schedules, ensure that the following prerequisites are met:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>All workload captures are preprocessed using the <code class="codeph">PROCESS_CAPTURE</code> procedure on a system running the same database version as the replay system, as described in <a href="preprocessing-a-database-workload.html#GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" title="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">Preprocessing a Database Workload</a>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>All capture directories are copied to the replay directory on the replay system</p>
+                           </li>
+                           <li>
+                              <p>Replay directory is set using the <code class="codeph">SET_REPLAY_DIRECTORY</code> procedure, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA" title="This section describes how to set the consolidated replay directory on the test system using the DBMS_WORKLOAD_REPLAY package.">Setting the Consolidated Replay Directory Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Database state is not in replay mode</p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-0C2C161B-76C7-4D14-87A1-2364EF731ECD__GUID-A9FEED3A-A934-4E0A-BDCF-1A66BA473135">To define replay schedules:</p>
+                        <ol>
+                           <li>
+                              <p>Create a new replay schedule, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" title="This section describes how to create replay schedules using the DBMS_WORKLOAD_REPLAY package.">Creating Replay Schedules Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Add workload captures to the replay schedule, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Add schedule orders to the replay schedule, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73" title="This section describes how to add schedule orders to and remove schedule orders from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Schedule Orders to Replay Schedules Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Save the replay schedule, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6" title="This section describes how to save replay schedules that been defined using the DBMS_WORKLOAD_REPLAY package.">Saving Replay Schedules Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="RATUG4109"></a><a id="RATUG4108"></a><div class="props_rev_3"><a id="GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" name="GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB"></a><h5 id="RATUG-GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" class="sect5"><span class="enumeration_section">15.4.3.1 </span>Creating Replay Schedules Using APIs
+                     </h5>
+                     <div>
+                        <div><span>This section describes how to create replay schedules using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about replay schedules, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-B1AEA82F-60E5-43CE-BB12-C6D72232886A" title="A replay schedule adds one or multiple workload captures to a consolidated replay and specifies the order in which the captures will start during replay.">Defining Replay Schedules</a>"</span>.
+                        </div>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB__GUID-A5058A68-E1F9-407F-A94D-09ADD270A720">To create a replay schedule:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e3132" class="indexterm-anchor"></a><code class="codeph">BEGIN_REPLAY_SCHEDULE</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.BEGIN_REPLAY_SCHEDULE (
+   schedule_name  IN VARCHAR2);
+</pre></li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_name</code> parameter to the name of this replay schedule.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnote" id="GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB__GUID-05D8F5D8-67E1-4BBC-A2E2-59797D522AE0">
+                              <p class="notep1">Note:</p>
+                              <p>The <code class="codeph">BEGIN_REPLAY_SCHEDULE</code> procedure initiates the creation of a reusable replay schedule. Only one replay schedule can be defined at a time. Calling this procedure again while a replay schedule is being defined will result in an error.
+                              </p>
+                           </div>
+                           <p>This example shows how to create a replay schedule named <code class="codeph">peak_schedule</code>.
+                           </p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.BEGIN_REPLAY_SCHEDULE ('peak_schedule');
+</pre><div class="infoboxnotealso" id="GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB__GUID-47E10147-6E85-4499-A23C-A83CAAB4188D">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73985" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">BEGIN_REPLAY_SCHEDULE</code> procedure
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4111"></a><a id="RATUG4110"></a><div class="props_rev_3"><a id="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" name="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE"></a><h5 id="RATUG-GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" class="sect5"><span class="enumeration_section">15.4.3.2 </span>Adding Workload Captures to Replay Schedules Using APIs
+                     </h5>
+                     <div>
+                        <div><span>This section describes how to add workload captures to and remove workload captures from replay schedules using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about adding workload captures to replay schedules, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-816A1006-2A04-4C6C-B046-8C0F26FB7C70" title="The first type of operation performed by a replay schedule is to add the participating workload captures to a replay.">Adding Workload Captures</a>"</span>.
+                        </div>
+                        <div class="p">
+                           <p>Before adding workload captures to a replay schedule, ensure that the following prerequisite is met:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>A replay schedule to which the workload captures are to be added is created.</p>
+                                 <p>For information about creating a replay schedule, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" title="This section describes how to create replay schedules using the DBMS_WORKLOAD_REPLAY package.">Creating Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p></p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section"></div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE__GUID-5C6BF56D-BFF5-427F-A82F-7B4CC3A917D2">To add workload captures to a replay schedule:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e3301" class="indexterm-anchor"></a><code class="codeph">ADD_CAPTURE</code> function:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.ADD_CAPTURE (
+   capture_dir_name    IN VARCHAR2,
+   start_delay_seconds IN NUMBER  DEFAULT 0,
+   stop_replay         IN BOOLEAN DEFAULT FALSE,
+   take_begin_snapshot IN BOOLEAN DEFAULT FALSE,
+   take_end_snapshot   IN BOOLEAN DEFAULT FALSE,
+   query_only          IN BOOLEAN DEFAULT FALSE)
+RETURN NUMBER;
+</pre><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.ADD_CAPTURE (
+   capture_dir_name    IN VARCHAR2,
+   start_delay_seconds IN NUMBER,
+   stop_replay         IN VARCHAR2,
+   take_begin_snapshot IN VARCHAR2 DEFAULT 'N',
+   take_end_snapshot   IN VARCHAR2 DEFAULT 'N',
+   query_only          IN VARCHAR2 DEFAULT 'N')
+RETURN NUMBER;
+</pre><p>This function returns an unique identifier that identifies the workload capture in this replay schedule.</p>
+                                 <div class="infoboxnote" id="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE__GUID-53354CB5-FBFD-442D-8276-6BB72D1D1A53">
+                                    <p class="notep1">See:</p>
+                                    <p><span class="q">"<a href="using-consolidated-database-replay.html#GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8" title="In a query-only database replay, only the read-only queries of a workload capture are replayed. In other words, in a query-only replay, only SELECT statements are sent to the server at replay time. No DML statements are executed during a query-only replay, and the replay does not make any changes to user schemas or data.">About Query-Only Database Replay</a>"</span> for information about query-only database replays.
+                                    </p>
+                                 </div>
+                                 <div class="infoboxnote" id="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE__GUID-B085FB32-1640-415E-9700-AC8703E5BD8E">
+                                    <p class="notep1">Note:</p>
+                                    <p>Query-only database replays are meant to be used and executed in test environments only.</p>
+                                    <ul style="list-style-type: disc;">
+                                       <li>
+                                          <p>Do not use query-only database replays on production systems.</p>
+                                       </li>
+                                       <li>
+                                          <p>Divergence is expected during query-only database replays.</p>
+                                       </li>
+                                    </ul>
+                                 </div>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">capture_dir_name</code> parameter to the name of the directory object that points to the workload capture under the top-level replay directory.
+                                 </p>
+                                 <p>The directory must contain a valid workload capture that is preprocessed on a system running the same database version as the replay system.</p>
+                              </li>
+                              <li>
+                                 <p>Set the other parameters, which are optional, as appropriate.</p>
+                                 <p>For information about these parameters, see <a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73982" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a>.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p>The following example shows how to add a workload capture named <code class="codeph">peak_wkld</code> to a replay schedule by using the <code class="codeph">ADD_CAPTURE</code> function in a <code class="codeph">SELECT</code> statement.
+                           </p><pre class="oac_no_warn" dir="ltr">SELECT DBMS_WORKLOAD_REPLAY.ADD_CAPTURE ('peak_wkld')
+  FROM dual;
+</pre><p>You can also use the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package to remove <a id="d31544e3374" class="indexterm-anchor"></a>workload captures from a replay schedule.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE__GUID-E63D6BCD-D837-4F8C-8061-58BDD6D5D0C9">To remove workload captures from a replay schedule:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e3388" class="indexterm-anchor"></a><code class="codeph">REMOVE_CAPTURE</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.REMOVE_CAPTURE (
+   schedule_capture_number IN NUMBER);
+</pre></li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_capture_number</code> parameter to the unique identifier that identifies the workload capture in this replay schedule.
+                                 </p>
+                                 <p>The unique identifier is the same identifier that was returned by the <code class="codeph">ADD_CAPTURE</code> function when the workload capture was added to the replay schedule.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnotealso" id="GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE__GUID-EEA18DF4-962E-4C25-A7DF-AA804E9CC66E">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73981" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a> for information about the <code class="codeph">ADD_CAPTURE</code> function
+                                    </p>
+                                 </li>
+                                 <li>
+                                    <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73998" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a> for information about the <code class="codeph">REMOVE_CAPTURE</code> procedure
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4112"></a><div class="props_rev_3"><a id="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73" name="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73"></a><h5 id="RATUG-GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73" class="sect5"><span class="enumeration_section">15.4.3.3 </span>Adding Schedule Orders to Replay Schedules Using APIs
+                     </h5>
+                     <div>
+                        <div><span>This section describes how to add schedule orders to and remove schedule orders from replay schedules using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about adding schedule orders to replay schedules, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-03A418A1-2FB3-43FE-AC82-C9703C3224EA" title="The second type of operation performed by a replay schedule is to add schedule orders that specify the order in which the participating workload captures will start during replay.">Adding Schedule Orders</a>"</span>.
+                        </div>
+                        <div class="p">
+                           <p>Before adding schedule orders to a replay schedule, ensure that the following prerequisites are met:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>A replay schedule to which the schedule orders are to be added is created.</p>
+                                 <p>For information about creating a replay schedule, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" title="This section describes how to create replay schedules using the DBMS_WORKLOAD_REPLAY package.">Creating Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>All workload captures participating in the schedule order are added to the replay schedule.</p>
+                                 <p>For information about adding workload captures to a replay schedule, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnote" id="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73__GUID-04FD230E-1B5F-4195-B515-83108436357A">
+                              <p class="notep1">Note:</p>
+                              <p>Adding schedule orders to a replay schedule is optional. If you do not add a schedule order to a replay schedule, then all workload captures added to the replay schedule will start to replay simultaneously when the consolidated replay begins.</p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73__GUID-EE69F9DB-1E1E-46A1-A8A0-86DD81D758D7">To add schedule orders to a replay schedule:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e3579" class="indexterm-anchor"></a><code class="codeph">ADD_SCHEDULE_ORDERING</code> function:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.ADD_SCHEDULE_ORDERING (
+   schedule_capture_id IN NUMBER,
+   waitfor_capture_id IN NUMBER)
+RETURN NUMBER;
+</pre><p>This function adds a schedule order between two workload captures that have been added to the replay schedule. If a schedule order cannot be added, it returns a nonzero error code.</p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_capture_id</code> parameter to the workload capture that you want to wait in this schedule order.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">wait_for_capture_id</code> parameter to the workload capture that you want to be completed before the other workload capture can start in this schedule order.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p>You can also use the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package to remove <a id="d31544e3609" class="indexterm-anchor"></a>schedule orders from a replay schedule.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73__GUID-7143E517-B55F-4E4D-A566-EB7871324702">To remove schedule orders from a replay schedule:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <code class="codeph">REMOVE_SCHEDULE_ORDERING</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.REMOVE_SCHEDULE ORDERING (
+   schedule_capture_id IN VARCHAR2,
+   wait_for_capture_id IN VARCHAR2);
+</pre></li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_capture_id</code> parameter to the workload capture waiting in this schedule order.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">wait_for_capture_id</code> parameter to the workload capture that needs to be completed before the other workload capture can start in this schedule order.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73__GUID-0E63F9CC-EAE1-4A45-8145-EA6777342EA5">To view schedule orders:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Use the <code class="codeph">DBA_WORKLOAD_SCHEDULE_ORDERING</code> view.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnotealso" id="GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73__GUID-01E4C99D-5167-4500-AA93-CCB305191218">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS72130" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">ADD_SCHEDULE_ORDERING</code> function
+                                    </p>
+                                 </li>
+                                 <li>
+                                    <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS74000" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">REMOVE_SCHEDULE_ORDERING</code> procedure
+                                    </p>
+                                 </li>
+                                 <li>
+                                    <p><a href="../refrn/DBA_WORKLOAD_SCHEDULE_ORDERING.html#REFRN23844" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> for information about the <code class="codeph">DBA_WORKLOAD_SCHEDULE_ORDERING</code> view
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4113"></a><div class="props_rev_3"><a id="GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6" name="GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6"></a><h5 id="RATUG-GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6" class="sect5"><span class="enumeration_section">15.4.3.4 </span>Saving Replay Schedules Using APIs
+                     </h5>
+                     <div>
+                        <p>This section describes how to save replay schedules that been defined using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.
+                        </p>
+                        <div class="p">
+                           <p>Before saving a replay schedule, ensure that the following prerequisites are met:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>A replay schedule that will be saved is created.</p>
+                                 <p>For information about creating a replay schedule, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" title="This section describes how to create replay schedules using the DBMS_WORKLOAD_REPLAY package.">Creating Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>All workload captures participating in the schedule order are added to the replay schedule.</p>
+                                 <p>For information about adding workload captures to a replay schedule, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Any schedule orders that you want to use are added to the replay schedule (this step is optional).</p>
+                                 <p>For information about adding schedule orders to a replay schedule, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CB0EBAEF-AE24-4EFA-A3F1-27C2479B3A73" title="This section describes how to add schedule orders to and remove schedule orders from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Schedule Orders to Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section"></div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6__GUID-84F8B405-BB69-40CE-B1F1-191D17A36854">To save a replay schedule:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Use the <a id="d31544e3830" class="indexterm-anchor"></a><code class="codeph">END_REPLAY_SCHEDULE</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.END_REPLAY_SCHEDULE;
+</pre><p>This procedure completes the creation of a replay schedule. The replay schedule is saved and associated with the replay directory. Once a replay schedule is saved, you can use it for a consolidated replay.</p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6__GUID-DF78CE64-0AF7-4F9E-A53B-D71022E5D08B">To view replay schedules:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Use the <code class="codeph">DBA_WORKLOAD_REPLAY_SCHEDULES</code> view.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnotealso" id="GUID-40B753EE-A8E0-4C58-AF63-70B23FBF73A6__GUID-8895EC74-CFA2-4AB2-9051-90C081E635B6">
+                              <p class="notep1">See Also:</p>
+                              <ul style="list-style-type: disc;">
+                                 <li>
+                                    <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73987" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">END_REPLAY_SCHEDULE</code> procedure
+                                    </p>
+                                 </li>
+                                 <li>
+                                    <p><a href="../refrn/DBA_WORKLOAD_REPLAY_SCHEDULES.html#REFRN-GUID-5C3B2723-B9F9-491A-9226-171B8DAD6553" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> for information about the <code class="codeph">DBA_WORKLOAD_REPLAY_SCHEDULES</code> view
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div><a id="RATUG4114"></a><div class="props_rev_3"><a id="GUID-10610AAB-EB5C-441C-A1E3-64DEDEC6B45F" name="GUID-10610AAB-EB5C-441C-A1E3-64DEDEC6B45F"></a><h4 id="RATUG-GUID-10610AAB-EB5C-441C-A1E3-64DEDEC6B45F" class="sect4"><span class="enumeration_section">15.4.4 </span>Running Consolidated Database Replay Using APIs
+                  </h4>
+                  <div>
+                     <div><span>This section describes how to run Consolidated Database Replay using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about consolidated replay, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-BFC7713A-5BEB-4A2E-9B0F-9F43A983BC6C" title="Replaying consolidated workloads using Consolidated Database Replay is quite different from replaying a single database workload using Database Replay.">Replaying Database Workloads for Consolidated Database Replay</a>"</span>.
+                     </div>
+                     <div class="p">
+                        <p>Before running Consolidated Database Replay, ensure that the following prerequisites are met:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>All workload captures are preprocessed using the <code class="codeph">PROCESS_CAPTURE</code> procedure on a system running the same database version as the replay system, as described in <a href="preprocessing-a-database-workload.html#GUID-4CEE2F79-F5A7-4EBA-9018-0CB99AB51C0A" title="After a workload is captured and setup of the test system is complete, the captured data must be preprocessed.">Preprocessing a Database Workload</a>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>All capture directories are copied to the replay directory on the replay system</p>
+                           </li>
+                           <li>
+                              <p>Replay directory is set using the <code class="codeph">SET_REPLAY_DIRECTORY</code> procedure, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-3A5F701E-6200-45C4-BDFD-D5A4740875DA" title="This section describes how to set the consolidated replay directory on the test system using the DBMS_WORKLOAD_REPLAY package.">Setting the Consolidated Replay Directory Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Database is logically restored to the same application state as that of all the capture systems at the start time of all workload captures.</p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <p class="subhead3" id="GUID-10610AAB-EB5C-441C-A1E3-64DEDEC6B45F__GUID-28E06ED6-C11C-4310-BCD4-F08CA40D7C1D">To run Consolidated Database Replay:</p>
+                        <ol>
+                           <li>
+                              <p>Initialize the replay data, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65" title="This section describes how to initialize the replay data for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Initializing Consolidated Database Replay Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Remap connections strings, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-284D7908-40EE-4570-AE78-E75AAA294327" title="This section describes how to remap connection strings for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Remapping Connection Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Remap users, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915" title="This section describes how to remap users for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Remapping Users Using APIs</a>"</span>.
+                              </p>
+                              <p>Remapping users is optional.</p>
+                           </li>
+                           <li>
+                              <p>Prepare the consolidated replay, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68" title="This section describes how to prepare a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Preparing for Consolidated Database Replay Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Set up and start the replay clients, as described in <span class="q">"<a href="replaying-a-database-workload.html#GUID-80A5AAE5-53E8-4775-AE5F-B43ADDB6E07F" title="At this point, you need to set up and start the replay clients, which will connect to the replay system and send requests based on what has been captured in the workload.">Setting Up Replay Clients</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Start the consolidated replay, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-62E2EA2B-D34C-47A0-BDA3-83E446DCC3D1" title="This section describes how to start a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Starting Consolidated Database Replay Using APIs</a>"</span>.
+                              </p>
+                           </li>
+                           <li>
+                              <p>Generate reports and perform analysis, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-D7C55F09-D604-4AD6-8B4A-C8C93D954954" title="Reporting and analysis for Consolidated Database Replay is performed using the replay compare period report. See "" for more information.">Reporting and Analysis for Consolidated Database Replay</a>"</span>.
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="RATUG4116"></a><a id="RATUG4115"></a><div class="props_rev_3"><a id="GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65" name="GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65"></a><h5 id="RATUG-GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65" class="sect5"><span class="enumeration_section">15.4.4.1 </span>Initializing Consolidated Database Replay Using APIs
+                     </h5>
+                     <div>
+                        <p>This section describes how to initialize the replay data for a consolidated replay using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.
+                        </p>
+                        <div class="section">
+                           <p>Initializing the replay data performs the following operations:</p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Puts the database state in initialized mode for the replay of a consolidated workload.</p>
+                              </li>
+                              <li>
+                                 <p>Points to the replay directory that contains all workload captures participating in the replay schedule.</p>
+                              </li>
+                              <li>
+                                 <p>Loads the necessary metadata into tables required for replay.</p>
+                                 <p>For example, captured connection strings are loaded into a table where they can be remapped for replay.</p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65__GUID-D8874968-8015-448B-A276-AC0CF4922D8F">To initialize Consolidated Database Replay:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e4217" class="indexterm-anchor"></a><code class="codeph">INITIALIZE_CONSOLIDATED_REPLAY</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.INITIALIZE_CONSOLIDATED_REPLAY (
+   replay_name    IN VARCHAR2,
+   schedule_name  IN VARCHAR2,
+   plsql_mode     IN VARCHAR2 DEFAULT 'TOP_LEVEL');
+</pre></li>
+                              <li>
+                                 <p>Set the <code class="codeph">replay_name</code> parameter to the name of the consolidated replay.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_name</code> parameter to the name of the replay schedule to use.
+                                 </p>
+                                 <p>The <code class="codeph">schedule_name</code> parameter is the name of the replay schedule used during its creation, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-CC592BD9-1FBE-46BA-88DD-ABB191C93EAB" title="This section describes how to create replay schedules using the DBMS_WORKLOAD_REPLAY package.">Creating Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                           </ol>
+                           <p>The optional <code class="codeph">plsql_mode</code> parameter specifies the PL/SQL replay mode.
+                           </p>
+                           <p>These two values can be set for the <code class="codeph">plsql_mode</code> parameter:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">top_level</code>: Only top-level PL/SQL calls. This is the default value.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">extended</code>: SQL executed inside PL/SQL or top-level PL/SQL if there is no SQL recorded inside. All captures must have been done in the <code class="codeph">‘extended’</code> PL/SQL mode. Non-PL/SQL calls will be replayed in the usual manner.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p>The following example shows how to initialize a consolidated replay named <code class="codeph">peak_replay</code> using the replay schedule named <code class="codeph">peak_schedule</code>.
+                           </p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.INITIALIZE_CONSOLIDATED_REPLAY ('peak_replay',
+     'peak_schedule');
+</pre><div class="infoboxnotealso" id="GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65__GUID-F69A8ED8-D38D-4C88-A697-667085ABC2F2">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73994" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">INITIALIZE_CONSOLIDATED_REPLAY</code> procedure
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4117"></a><div class="props_rev_3"><a id="GUID-284D7908-40EE-4570-AE78-E75AAA294327" name="GUID-284D7908-40EE-4570-AE78-E75AAA294327"></a><h5 id="RATUG-GUID-284D7908-40EE-4570-AE78-E75AAA294327" class="sect5"><span class="enumeration_section">15.4.4.2 </span>Remapping Connection Using APIs
+                     </h5>
+                     <div>
+                        <div><span>This section describes how to remap connection strings for a consolidated replay using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about connection remapping, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-A2D6CDAF-A91D-4DA4-ADCE-038595E851A9" title="As in the case with replaying a single database workload using Database Replay, captured connection strings used to connect to the production system need to be remapped to the replay system.">Remapping Connections for Consolidated Database Replay</a>"</span>.
+                        </div>
+                        <div class="section">
+                           <p class="subhead3" id="GUID-284D7908-40EE-4570-AE78-E75AAA294327__GUID-CC13AAA9-08DC-448B-9818-C83536C25724">To remap connection strings:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e4404" class="indexterm-anchor"></a><code class="codeph">REMAP_CONNECTION</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.REMAP_CONNECTION (
+   schedule_cap_id   IN NUMBER,
+   connection_id     IN NUMBER,
+   replay_connection IN VARCHAR2);
+</pre><p>This procedure remaps the captured connection to a new connection string for all participating workload captures in the replay schedule.</p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_capture_id</code> parameter to a participating workload capture in the current replay schedule.
+                                 </p>
+                                 <p>The <code class="codeph">schedule_capture_id</code> parameter is the unique identifier returned when adding the workload capture to the replay schedule, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">connection_id</code> parameter to the connection to be remapped.
+                                 </p>
+                                 <p>The <code class="codeph">connection_id</code> parameter is generated when replay data is initialized and corresponds to a connection from the workload capture.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">replay_connection</code> parameter to the new connection string that will be used during replay.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnotealso" id="GUID-284D7908-40EE-4570-AE78-E75AAA294327__GUID-01C606DC-D44E-4016-B215-C5F1146A4FB6">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS69093" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">REMAP_CONNECTION</code> procedure
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4119"></a><a id="RATUG4118"></a><div class="props_rev_3"><a id="GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915" name="GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915"></a><h5 id="RATUG-GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915" class="sect5"><span class="enumeration_section">15.4.4.3 </span>Remapping Users Using APIs
+                     </h5>
+                     <div>
+                        <div><span>This section describes how to remap users for a consolidated replay using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about remapping users, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-48411BB5-E585-4783-B016-72DCD97074CE" title="As in the case with replaying a single database workload using Database Replay, usernames of database users and schemas used to connect to the production system can be remapped during replay. See "" for more information.">Remapping Users for Consolidated Database Replay</a>"</span>.
+                        </div>
+                        <div class="p">
+                           <p>Before remapping users, ensure that the following prerequisites are met:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Replay data is initialized, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65" title="This section describes how to initialize the replay data for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Initializing Consolidated Database Replay Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>The database state is not in replay mode.</p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915__GUID-68972639-9541-46C0-8C4F-FFC32411E689">To remap users:</p>
+                           <ol>
+                              <li>
+                                 <p>Use the <a id="d31544e4594" class="indexterm-anchor"></a><code class="codeph">SET_USER_MAPPING</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.SET_USER_MAPPING (
+   schedule_cap_id IN NUMBER,
+   capture_user    IN VARCHAR2,
+   replay_user     IN VARCHAR2);
+</pre></li>
+                              <li>
+                                 <p>Set the <code class="codeph">schedule_capture_id</code> parameter to a participating workload capture in the current replay schedule.
+                                 </p>
+                                 <p>The <code class="codeph">schedule_capture_id</code> parameter is the unique identifier returned when adding the workload capture to the replay schedule, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">capture_user</code> parameter to the username of the user or schema captured during the time of the workload capture.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Set the <code class="codeph">replay_user</code> parameter to the username of a new user or schema to which the captured user is remapped during replay.
+                                 </p>
+                                 <p>If this parameter is set to <code class="codeph">NULL</code>, then the mapping is disabled.
+                                 </p>
+                              </li>
+                           </ol>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p>This example shows how to remap the <code class="codeph">PROD</code> user used during capture to the <code class="codeph">TEST</code> user during replay for the workload capture identified as <code class="codeph">1001</code>.
+                           </p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.SET_USER_MAPPING (1001, 'PROD', 'TEST');
+</pre><div class="infoboxnotealso" id="GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915__GUID-5B470F97-CDFE-4350-8E8D-D6D5457D2505">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS74963" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">SET_USER_MAPPING</code> procedure
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4120"></a><div class="props_rev_3"><a id="GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68" name="GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68"></a><h5 id="RATUG-GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68" class="sect5"><span class="enumeration_section">15.4.4.4 </span>Preparing for Consolidated Database Replay Using APIs
+                     </h5>
+                     <div>
+                        <div><span>This section describes how to prepare a consolidated replay using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.</span> For information about preparing consolidated replays, see <span class="q">"<a href="using-consolidated-database-replay.html#GUID-C2F6DA54-9C2C-40CE-B357-F58126C0E2EE" title="As is the case with replaying a single database workload using Database Replay, replay options are defined during preparation of a replay.">Preparing for Consolidated Database Replay</a>"</span>.
+                        </div>
+                        <div class="p">
+                           <p>Before preparing a consolidated replay, ensure that the following prerequisites are met:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Replay data is initialized, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-7FA57ECB-BFF9-4595-AB3E-DDED8BEE3E65" title="This section describes how to initialize the replay data for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Initializing Consolidated Database Replay Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Captured connections are remapped, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-284D7908-40EE-4570-AE78-E75AAA294327" title="This section describes how to remap connection strings for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Remapping Connection Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Users are mapped, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-12BFB1A9-B0C6-4AE9-9E1B-F7237FAED915" title="This section describes how to remap users for a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Remapping Users Using APIs</a>"</span>.
+                                 </p>
+                                 <p>Remapping users is optional. However, if you are planning to remap users during replay, then it must be completed before preparing the consolidated replay.</p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section"></div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p>Preparing a consolidated replay performs the following operations:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Specifies the replay options, such as synchronization mode, session connection rate, and session request rate.</p>
+                              </li>
+                              <li>
+                                 <p>Puts the database state in replay mode.</p>
+                              </li>
+                              <li>
+                                 <p>Enables the start of replay clients.</p>
+                              </li>
+                           </ul>
+                           <div class="infoboxnote" id="GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68__GUID-FE5EE87C-72B4-41DA-A7E8-61E2562C8C0F">
+                              <p class="notep1">Note:</p>
+                              <p>Consolidated Database Replay only supports time based or <code class="codeph">OBJECT_ID</code>-based synchronization (<code class="codeph">synchronization</code>=<code class="codeph">TIME</code> or <code class="codeph">OBJECT_ID</code>). SCN-based synchronization is currently not supported.
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68__GUID-25F965C4-613B-4246-BD1E-5A3F05B1EF8E">To prepare a consolidated replay:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Use the <a id="d31544e4843" class="indexterm-anchor"></a><code class="codeph">PREPARE_CONSOLIDATED_REPLAY</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.PREPARE_CONSOLIDATED_REPLAY (
+   synchronization         IN VARCHAR2 DEFAULT 'OBJECT_ID',
+   connect_time_scale      IN NUMBER   DEFAULT 100,
+   think_time_scale        IN NUMBER   DEFAULT 100,
+   think_time_auto_correct IN BOOLEAN  DEFAULT TRUE,
+   capture_sts             IN BOOLEAN  DEFAULT FALSE,
+   sts_cap_interval        IN NUMBER   DEFAULT 300);
+</pre><p>For information about these parameters and how to set them, see <span class="q">"<a href="replaying-a-database-workload.html#GUID-289F573A-9C83-4A29-A1D4-323705E8293D" title="After the database is restored, and connections and users are remapped, you can set the appropriate replay options.">Specifying Replay Options</a>"</span>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnote" id="GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68__GUID-3AB11FC9-F51A-4526-87F2-6289B811322E">
+                              <p class="notep1">Note:</p>
+                              <p>Be sure to set <code class="codeph">synchronization</code> to <code class="codeph">false</code> when you use the <code class="codeph">PREPARE_CONSOLIDATED_REPLAY</code> procedure.
+                              </p>
+                           </div>
+                           <div class="infoboxnotealso" id="GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68__GUID-2C656CF4-9A96-4455-B835-17A3513F4450">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS73996" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">PREPARE_CONSOLIDATED_REPLAY</code> procedure
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="RATUG4121"></a><div class="props_rev_3"><a id="GUID-62E2EA2B-D34C-47A0-BDA3-83E446DCC3D1" name="GUID-62E2EA2B-D34C-47A0-BDA3-83E446DCC3D1"></a><h5 id="RATUG-GUID-62E2EA2B-D34C-47A0-BDA3-83E446DCC3D1" class="sect5"><span class="enumeration_section">15.4.4.5 </span>Starting Consolidated Database Replay Using APIs
+                     </h5>
+                     <div>
+                        <p>This section describes how to start a consolidated replay using the <code class="codeph">DBMS_WORKLOAD_REPLAY</code> package.
+                        </p>
+                        <div class="p">
+                           <p>Before starting a consolidated replay, ensure that the following prerequisites are met:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>The consolidated replay is prepared, as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-84EE2D27-04A8-4C78-8C08-4A5FF4472B68" title="This section describes how to prepare a consolidated replay using the DBMS_WORKLOAD_REPLAY package.">Preparing for Consolidated Database Replay Using APIs</a>"</span>.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>An adequate number of replay clients are started.</p>
+                                 <p>For information about setting up and starting replay clients, see <span class="q">"<a href="replaying-a-database-workload.html#GUID-80A5AAE5-53E8-4775-AE5F-B43ADDB6E07F" title="At this point, you need to set up and start the replay clients, which will connect to the replay system and send requests based on what has been captured in the workload.">Setting Up Replay Clients</a>"</span>.
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <p class="subhead3" id="GUID-62E2EA2B-D34C-47A0-BDA3-83E446DCC3D1__GUID-DF65BFF4-F297-41C5-BE1C-13C04DF55E98">To start a consolidated replay:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>Use the <a id="d31544e5009" class="indexterm-anchor"></a><code class="codeph">START_CONSOLIDATED_REPLAY</code> procedure:
+                                 </p><pre class="oac_no_warn" dir="ltr">DBMS_WORKLOAD_REPLAY.START_CONSOLIDATED_REPLAY;</pre></li>
+                           </ul>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="section">
+                           <div class="infoboxnotealso" id="GUID-62E2EA2B-D34C-47A0-BDA3-83E446DCC3D1__GUID-9B347C48-85D3-40C4-B94D-82D904A642CD">
+                              <p class="notep1">See Also:</p>
+                              <p><a href="../arpls/DBMS_WORKLOAD_REPLAY.html#ARPLS74454" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for information about the <code class="codeph">START_CONSOLIDATED_REPLAY</code> procedure
+                              </p>
+                           </div>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div>
+               </div>
+            </div><a id="RATUG4265"></a><div class="props_rev_3"><a id="GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8" name="GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8"></a><h3 id="RATUG-GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8" class="sect3"><span class="enumeration_section">15.5 </span>About Query-Only Database Replay
+               </h3>
+               <div>
+                  <p>In a query-only database replay, only the read-only queries of a workload capture are replayed. In other words, in a query-only replay, only <code class="codeph">SELECT</code> statements are sent to the server at replay time. No DML statements are executed during a query-only replay, and the replay does not make any changes to user schemas or data.
+                  </p>
+                  <div class="infoboxnote" id="GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8__GUID-9E11040B-0E83-4E6B-B2D4-6E228FF9ACE8">
+                     <p class="notep1">Note:</p>
+                     <p>A query-only database replay can be performed with Consolidated Database Replay only.</p>
+                  </div>
+                  <div class="infoboxnote" id="GUID-14A9F425-0888-4CA8-90C4-9E7B476852B8__GUID-E04313E2-44BA-49E6-B069-B1E39B523120">
+                     <p class="notep1">Note:</p>
+                     <p>Query-only database replays are meant to be used and executed in test environments only.</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Do not use query-only database replays on production systems.</p>
+                        </li>
+                        <li>
+                           <p>Divergence is expected during query-only database replays.</p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="RATUG4266"></a><div class="props_rev_3"><a id="GUID-5BF0AEE7-A64C-4523-ACDE-7043AE0AAEFE" name="GUID-5BF0AEE7-A64C-4523-ACDE-7043AE0AAEFE"></a><h4 id="RATUG-GUID-5BF0AEE7-A64C-4523-ACDE-7043AE0AAEFE" class="sect4"><span class="enumeration_section">15.5.1 </span>Use Cases for Query-Only Database Replay
+                  </h4>
+                  <div>
+                     <div><span>You can use query-only database replay to warm up the database buffer cache and to find regressions.</span> For example:
+                     </div>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>To warm up the database buffer cache</p>
+                           <p>In some cases, a workload is captured when the database buffer cache is warm (data blocks are already in the buffer cache). However, when you replay that workload on the test system, the buffer cache will not be warm, and the data blocks will need to be loaded from disk initially. This may make the replay duration longer than the capture duration, and increase the database time.</p>
+                           <p>To avoid having to warm up the buffer cache, you can perform a query-only replay and then perform the read/write replay without restarting the database and without flushing the buffer cache. Note that you do not have to restart the database after a query-only replay because a query-only replay is read-only.</p>
+                        </li>
+                        <li>
+                           <p>To find regressions</p>
+                           <p>A query-only replay is a good and easy way to find regressions from the read-only part of the workload with concurrency. The read-only part includes <code class="codeph">SELECT</code> (not <code class="codeph">SELECT...FOR UPDATE</code>) statements, PL/SQL without DMLs and DDLs, LOB reads, and so on. It is typically the main part of the workload capture.
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="RATUG4267"></a><div class="props_rev_3"><a id="GUID-81A86A84-E915-4A40-A9C1-B3BA4C5410E1" name="GUID-81A86A84-E915-4A40-A9C1-B3BA4C5410E1"></a><h4 id="RATUG-GUID-81A86A84-E915-4A40-A9C1-B3BA4C5410E1" class="sect4"><span class="enumeration_section">15.5.2 </span>Performing a Query-Only Database Replay
+                  </h4>
+                  <div>
+                     <p>You can perform a query-only database replay.</p>
+                     <p>To perform a query-only database replay, follow the instructions in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-F3F44EF1-5E8E-4758-BB59-602E7E07CAE5" title="This section describes how to create and replay consolidated workloads using the DBMS_WORKLOAD_REPLAY package.">Using Consolidated Database Replay with APIs</a>"</span>. When you use the <code class="codeph">ADD_CAPTURE</code> function to add workload captures to the replay schedule as described in <span class="q">"<a href="using-consolidated-database-replay.html#GUID-5D8972FE-DCB0-4CE4-A930-28E211387ECE" title="This section describes how to add workload captures to and remove workload captures from replay schedules using the DBMS_WORKLOAD_REPLAY package.">Adding Workload Captures to Replay Schedules Using APIs</a>"</span>, set the <code class="codeph">query_only</code> parameter to <code class="codeph">Y</code>.
+                     </p>
+                  </div>
+               </div>
+            </div><a id="RATUG4130"></a><a id="RATUG4122"></a><div class="props_rev_3"><a id="GUID-29988B63-F974-46EF-9AAD-3D04AF774337" name="GUID-29988B63-F974-46EF-9AAD-3D04AF774337"></a><h3 id="RATUG-GUID-29988B63-F974-46EF-9AAD-3D04AF774337" class="sect3"><span class="enumeration_section">15.6 </span>Example: Replaying a Consolidated Workload with APIs
+               </h3>
+               <div>
+                  <p>This section assumes a scenario where workloads from three separate production systems running different versions of Oracle Database on various operating systems are being consolidated.</p>
+                  <div class="section">
+                     <p>This scenario uses the following assumptions:</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>The first workload to be consolidated is captured from the CRM system, which is running Oracle Database 10g Release 2 (release 10.2.0.4) on a Solaris server.</p>
+                        </li>
+                        <li>
+                           <p>The second workload to be consolidated is captured from the ERP system, which is running Oracle Database 10g Release 2 (release 10.2.0.5) on a Linux server.</p>
+                        </li>
+                        <li>
+                           <p>The third workload to be consolidated is captured from the SCM system, which is running Oracle Database 11<span class="italic">g</span> Release 2 (release 11.2.0.2) on a Solaris server.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The test system is set up as a multitenant container database (CDB) running Oracle Database 12<span class="italic">c</span> Release 1 (release 12.1.0.1).
+                           </p>
+                        </li>
+                        <li>
+                           <p>The CDB contains three PDBs created from the CRM, ERP, and SCM systems.</p>
+                        </li>
+                        <li>
+                           <p>Each PDB contained within the CDB is restored to the same application data state as the CRM, ERP, and SCM systems at the capture start time.</p>
+                        </li>
+                     </ul>
+                     <p><a href="using-consolidated-database-replay.html#GUID-29988B63-F974-46EF-9AAD-3D04AF774337__CHDJGAIH">Figure 15-3</a> illustrates this scenario.
+                     </p>
+                     <div class="figure" id="GUID-29988B63-F974-46EF-9AAD-3D04AF774337__CHDJGAIH">
+                        <p class="titleinfigure">Figure 15-3 Scenario for Consolidating Three Workloads</p><img src="img/ratug005.png" width="298" alt="Description of Figure 15-3 follows" title="Description of Figure 15-3 follows" longdesc="img_text/ratug005.html"><br><a href="img_text/ratug005.html">Description of "Figure 15-3 Scenario for Consolidating Three Workloads"</a></div>
+                     <!-- class="figure" -->
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <p class="subhead2" id="GUID-29988B63-F974-46EF-9AAD-3D04AF774337__GUID-52916F2F-D49E-4071-ADD0-BBEA157DD284">To consolidate the workloads and replay the consolidated workload in this scenario:</p>
+                     <ol>
+                        <li>
+                           <p>On the test system, preprocess the individual workload captures into separate directories:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p>For the CRM workload:</p>
+                                 <ol type="a">
+                                    <li>
+                                       <p>Create a directory object:</p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE DIRECTORY crm AS '/u01/test/cap_crm';
+</pre></li>
+                                    <li>
+                                       <p>Ensure that the captured workload from the CRM system is stored in this directory.</p>
+                                    </li>
+                                    <li>
+                                       <p>Preprocess the workload:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.PROCESS_CAPTURE ('CRM');
+</pre></li>
+                                 </ol>
+                              </li>
+                              <li>
+                                 <p>For the ERP workload:</p>
+                                 <ol type="a">
+                                    <li>
+                                       <p>Create a directory object:</p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE DIRECTORY erp AS '/u01/test/cap_erp';
+</pre></li>
+                                    <li>
+                                       <p>Ensure that the captured workload from the ERP system is stored in this directory.</p>
+                                    </li>
+                                    <li>
+                                       <p>Preprocess the workload:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.PROCESS_CAPTURE ('ERP');
+</pre></li>
+                                 </ol>
+                              </li>
+                              <li>
+                                 <p>For the SCM workload:</p>
+                                 <ol type="a">
+                                    <li>
+                                       <p>Create a directory object:</p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE DIRECTORY scm AS '/u01/test/cap_scm';
+</pre></li>
+                                    <li>
+                                       <p>Ensure that the captured workload from the SCM system is stored in this directory.</p>
+                                    </li>
+                                    <li>
+                                       <p>Preprocess the workload:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.PROCESS_CAPTURE ('SCM');
+</pre></li>
+                                 </ol>
+                              </li>
+                           </ul>
+                        </li>
+                        <li id="GUID-29988B63-F974-46EF-9AAD-3D04AF774337__CHDCFBIC">
+                           <p>Create a root directory to store the preprocessed workloads:</p><pre class="oac_no_warn" dir="ltr">mkdir '/u01/test/cons_dir';
+CREATE OR REPLACE DIRECTORY cons_workload AS '/u01/test/cons_dir';
+</pre></li>
+                        <li>
+                           <p>Copy each preprocessed workload directory into the root directory:</p><pre class="oac_no_warn" dir="ltr">cp -r /u01/test/cap_crm /u01/test/cons_dir
+cp -r /u01/test/cap_erp /u01/test/cons_dir
+cp -r /u01/test/cap_scm /u01/test/cons_dir
+</pre></li>
+                        <li>
+                           <p>For each workload, create a directory object using the new operating system directory path:</p><pre class="oac_no_warn" dir="ltr">CREATE OR REPLACE DIRECTORY crm AS '/u01/test/cons_dir/cap_crm';
+CREATE OR REPLACE DIRECTORY erp AS '/u01/test/cons_dir/cap_erp';
+CREATE OR REPLACE DIRECTORY scm AS '/u01/test/cons_dir/cap_scm';
+</pre></li>
+                        <li>
+                           <p>Set the replay directory to the root directory previously created in Step <a href="using-consolidated-database-replay.html#GUID-29988B63-F974-46EF-9AAD-3D04AF774337__CHDCFBIC">2</a>:
+                           </p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.SET_REPLAY_DIRECTORY ('CONS_WORKLOAD');
+</pre></li>
+                        <li>
+                           <p>Create a replay schedule and add the workload captures:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.BEGIN_REPLAY_SCHEDULE ('CONS_SCHEDULE');
+SELECT DBMS_WORKLOAD_REPLAY.ADD_CAPTURE ('CRM') FROM dual;
+SELECT DBMS_WORKLOAD_REPLAY.ADD_CAPTURE ('ERP') FROM dual;
+SELECT DBMS_WORKLOAD_REPLAY.ADD_CAPTURE ('SCM') FROM dual;
+EXEC DBMS_WORKLOAD_REPLAY.END_REPLAY_SCHEDULE;
+</pre></li>
+                        <li>
+                           <p>Initialize the consolidated replay:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.INITIALIZE_CONSOLIDATED_REPLAY ('CONS_REPLAY',
+     'CONS_SCHEDULE');
+</pre></li>
+                        <li>
+                           <p>Remap connections:</p>
+                           <ol type="a">
+                              <li>
+                                 <p>Query the <code class="codeph">DBA_WORKLOAD_CONNECTION_MAP</code> view for the connection mapping information:
+                                 </p><pre class="oac_no_warn" dir="ltr">SELECT schedule_cap_id, conn_id, capture_conn, replay_conn
+  FROM dba_workload_connection_map;
+</pre></li>
+                              <li>
+                                 <p>Remap the connections:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.REMAP_CONNECTION (schedule_cap_id =&gt; 1,
+     conn_id =&gt; 1, replay_connection =&gt; 'CRM');
+EXEC DBMS_WORKLOAD_REPLAY.REMAP_CONNECTION (schedule_cap_id =&gt; 2,
+     conn_id =&gt; 1, replay_connection =&gt; 'ERP');
+EXEC DBMS_WORKLOAD_REPLAY.REMAP_CONNECTION (schedule_cap_id =&gt; 3,
+     conn_id =&gt; 1, replay_connection =&gt; 'SCM');
+</pre><p>The <code class="codeph">replay_connection</code> parameter represents the services that are defined on the test system.
+                                 </p>
+                              </li>
+                              <li>
+                                 <p>Verify the connection remappings:</p><pre class="oac_no_warn" dir="ltr">SELECT schedule_cap_id, conn_id, capture_conn, replay_conn
+  FROM dba_workload_connection_map;
+</pre></li>
+                           </ol>
+                        </li>
+                        <li>
+                           <p>Prepare the consolidated replay:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.PREPARE_CONSOLIDATED_REPLAY (
+     synchronization =&gt; 'OBJECT_ID');
+</pre></li>
+                        <li>
+                           <p>Start replay clients:</p>
+                           <ol type="a">
+                              <li>
+                                 <p>Estimate the number of replay clients that are required:</p><pre class="oac_no_warn" dir="ltr">wrc mode=calibrate replaydir=/u01/test/cons_dir/cap_crm
+wrc mode=calibrate replaydir=/u01/test/cons_dir/cap_erp
+wrc mode=calibrate replaydir=/u01/test/cons_dir/cap_scm
+</pre></li>
+                              <li>
+                                 <p>Add the output to determine the number of replay clients required.</p>
+                                 <p>You will need to start at least one replay client per workload capture contained in the consolidated workload.</p>
+                              </li>
+                              <li>
+                                 <p>Start the required number of replay clients by repeating this command:</p><pre class="oac_no_warn" dir="ltr">wrc <span class="italic">username</span>/<span class="italic">password</span> mode=replay replaydir=/u01/test/cons_dir
+</pre><p>The <code class="codeph">replaydir</code> parameter is set to the root directory in which the workload captures are stored.
+                                 </p>
+                              </li>
+                           </ol>
+                        </li>
+                        <li>
+                           <p>Start the consolidated replay:</p><pre class="oac_no_warn" dir="ltr">EXEC DBMS_WORKLOAD_REPLAY.START_CONSOLIDATED_REPLAY;
+</pre></li>
+                     </ol>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <div class="infoboxnotealso" id="GUID-29988B63-F974-46EF-9AAD-3D04AF774337__GUID-F9378433-DF10-42F0-A2EB-3F062B2776EE">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../multi/creating-and-configuring-a-cdb.html#ADMIN13514" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> for information about configuring a CDB
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../admin/index.html" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> for information about creating PDBs
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="The following example explains the usage of the middle-tier routing API of UCP.">
+      <meta name="description" content="The following example explains the usage of the middle-tier routing API of UCP.">
+      <title>Middle-Tier Routing with UCP Example</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Universal Connection Pool Developer's Guide ">
+      <meta property="og:description" content="The following example explains the usage of the middle-tier routing API of UCP.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Universal Connection Pool Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="universal-connection-pool-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-02-13T06:57:38-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96473-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="ucp-sharding-example.html" title="Previous" type="text/html">
+      <link rel="next" href="diagnosing-ucp.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Universal Connection Pool Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JJUCP">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="ucp-sharding-example.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="diagnosing-ucp.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Universal Connection Pool Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="ucp-database-sharding-support.html" property="item" typeof="WebPage"><span property="name">Shared Pool for Sharded Databases</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Middle-Tier Routing with UCP Example</li>
+            </ol>
+            <a id="GUID-CF5A2C43-7BCD-4977-AA6F-089708CEE75D" name="GUID-CF5A2C43-7BCD-4977-AA6F-089708CEE75D"></a>
+            
+            <h2 id="JJUCP-GUID-CF5A2C43-7BCD-4977-AA6F-089708CEE75D" class="sect2"><span class="enumeration_section">11.7 </span>Middle-Tier Routing with UCP Example
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>The following example explains the usage of the middle-tier routing API of UCP.</p>
+               <div class="example" id="GUID-CF5A2C43-7BCD-4977-AA6F-089708CEE75D__GUID-8B93F746-EAC0-4E43-B8E5-13DD5F658CFE">
+                  <p class="titleinexample">Example 11-4 Example of Middle-Tier Routing Using UCP</p><pre class="pre codeblock"><code>import java.sql.SQLException;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+
+import oracle.jdbc.OracleShardingKey;
+import oracle.jdbc.OracleType;
+import oracle.ucp.UniversalConnectionPoolException;
+import oracle.ucp.routing.ShardInfo;
+import oracle.ucp.routing.oracle.OracleShardRoutingCache;
+
+/**
+ * The code example illustrates the usage of the middle-tier routing feature of UCP.  
+ * The API accepts sharding key as input and returns the set of ShardInfo 
+ * instances mapped to the sharding key. The ShardInfo instance encapsulates 
+ * unique shard name and priority. The unique shard name then can be mapped 
+ * to a middle-tier server that connects to a specific shard.
+ *
+ */
+public class MidtierShardingExample {
+
+  private static String user = "testuser1";
+  private static String password = "testuser1";
+
+  // catalog DB URL
+  private static String url = "jdbc:oracle:thin:@//hostName:1521/catalogServiceName";
+  private static String region = "regionName";
+
+  public static void main(String args[]) throws Exception {
+    testMidTierRouting();
+  }
+
+  static void testMidTierRouting() throws UniversalConnectionPoolException,
+      SQLException {
+
+    Properties dbConnectProperties = new Properties();
+    dbConnectProperties.setProperty(OracleShardRoutingCache.USER, user);
+    dbConnectProperties.setProperty(OracleShardRoutingCache.PASSWORD, password);
+    // Mid-tier routing API accepts catalog DB URL
+    dbConnectProperties.setProperty(OracleShardRoutingCache.URL, url);
+
+    // Region name is required to get the ONS config string
+    dbConnectProperties.setProperty(OracleShardRoutingCache.REGION, region);
+
+    OracleShardRoutingCache routingCache = new OracleShardRoutingCache(
+        dbConnectProperties);
+
+    final int COUNT = 10;
+    Random random = new Random();
+
+    for (int i = 0; i &lt; COUNT; i++) {
+      int key = random.nextInt();
+      OracleShardingKey shardKey = routingCache.getShardingKeyBuilder()
+          .subkey(key, OracleType.NUMBER).build();
+      OracleShardingKey superShardKey = null;
+
+      Set&lt;ShardInfo&gt; shardInfoSet = routingCache.getShardInfoForKey(shardKey,
+          superShardKey);
+
+      for (ShardInfo shardInfo : shardInfoSet) {
+        System.out.println("Sharding Key=" + key + " Shard Name="
+            + shardInfo.getName() + " Priority=" + shardInfo.getPriority());
+      }
+    }
+
+  }
+}</code></pre></div>
+               <!-- class="example" -->
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

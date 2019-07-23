@@ -1,0 +1,422 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.">
+      <meta name="description" content="This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.">
+      <title>Creating and Registering a Custom Spatial Data Provider</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Map Visualization Developer's Guide ">
+      <meta property="og:description" content="This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Map Visualization Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="spatial-and-graph-map-visualization-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-10T11:37:22-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2001, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E94797-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="xml-formats-map-visualizer.html" title="Previous" type="text/html">
+      <link rel="next" href="ogc-wms-support-map-visualzation-component.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Spatial and Graph Map Visualization Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JIMPV">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="xml-formats-map-visualizer.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="ogc-wms-support-map-visualzation-component.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Map Visualization Developer's Guide </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem"> Creating and Registering a Custom Spatial Data Provider</li>
+            </ol>
+            <a id="GUID-EEDC5892-3E42-477E-BCC8-140873665EC4" name="GUID-EEDC5892-3E42-477E-BCC8-140873665EC4"></a><a id="JIMPV9250"></a>
+            
+            <h2 id="JIMPV-GUID-EEDC5892-3E42-477E-BCC8-140873665EC4" class="sect2"><span class="enumeration_chapter">B </span> Creating and Registering a Custom Spatial Data Provider
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.</p>
+               <p>The complete implementation can be found under the map visualization component <code class="codeph">web/demo/spatialprovider </code>directory. The implementation uses then following files:
+               </p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><code class="codeph">us_bigcities.xml</code>: sample XML file that the provider parses
+                     </p>
+                  </li>
+                  <li>
+                     <p><code class="codeph">customSpatialProviderSample.java</code>: Java implementation of the spatial data provider
+                     </p>
+                  </li>
+                  <li>
+                     <p><code class="codeph">spatialprovider.jar</code>: jar file with the compiled version of the customSpatialProviderSample.java source file
+                     </p>
+                  </li>
+               </ul>
+               <p>The <code class="codeph">us_bigcities.xml</code> file has sections to define the data attributes, the data extents, and the feature information, including the geometry (in GML format) and the attribute values. This file includes the following:
+               </p><pre class="oac_no_warn" dir="ltr">&lt;?xml version="1.0" standalone="yes"?&gt;
+&lt;spatial_data&gt;
+ 
+&lt;data_attributes&gt;
+  &lt;attribute name="city" type="string" /&gt;
+  &lt;attribute name="state_abrv" type="string" /&gt;
+  &lt;attribute name="pop90" type="double" /&gt;
+&lt;/data_attributes&gt;
+ 
+&lt;data_extents&gt;
+   &lt;xmin&gt; -122.49586 &lt;/xmin&gt;
+   &lt;ymin&gt; 29.45765 &lt;/ymin&gt;
+   &lt;xmax&gt; -73.943849 &lt;/xmax&gt;
+   &lt;ymax&gt; 42.3831 &lt;/ymax&gt;
+&lt;/data_extents&gt;
+ 
+&lt;geoFeature&gt;
+  &lt;attributes&gt; New York,NY,7322564 &lt;/attributes&gt;
+  &lt;geometricProperty&gt;
+    &lt;Point&gt;
+      &lt;coordinates&gt;-73.943849, 40.6698&lt;/coordinates&gt;
+    &lt;/Point&gt;
+   &lt;/geometricProperty&gt;
+ &lt;/geoFeature&gt;
+ 
+. . .
+&lt;/spatial_data&gt;
+</pre></div>
+            <div>
+               <ul class="ullinks">
+                  <li class="ulchildlink"><a href="creating-registering-custom-spatial-data-provider.html#GUID-8A0AC852-B281-42C1-9BB8-94BF25A79453">Implementing the Spatial Provider Class</a><br>The spatial provider class interface must be implemented.
+                  </li>
+                  <li class="ulchildlink"><a href="creating-registering-custom-spatial-data-provider.html#GUID-D858FC6A-7590-4F7E-B73C-B134DDA9853C">Registering the Spatial Provider with the Map Visualization Component</a><br>To register the spatial provider with the map visualization component, add the following in the spatial provider section of the map visualization component configuration file, and then restart the map visualization component.
+                  </li>
+                  <li class="ulchildlink"><a href="creating-registering-custom-spatial-data-provider.html#GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A">Rendering the External Spatial Data</a><br>To enable you to render the sample external spatial data that comes with the map visualization component kit, create a data source pointing to this data.
+                  </li>
+               </ul>
+            </div>
+            <a id="JIMPV9867"></a><a id="JIMPV9866"></a><div class="props_rev_3"><a id="GUID-8A0AC852-B281-42C1-9BB8-94BF25A79453" name="GUID-8A0AC852-B281-42C1-9BB8-94BF25A79453"></a><h3 id="JIMPV-GUID-8A0AC852-B281-42C1-9BB8-94BF25A79453" class="sect3"><span class="enumeration_section">B.1 </span>Implementing the Spatial Provider Class
+               </h3>
+               <div>
+                  <p>The spatial provider class interface must be implemented.</p>
+                  <p>The provider must implement the class interface shown in <a href="map-visualization-concepts.html#GUID-583B47AE-76C2-4E23-9202-2055D7C3AE42">Custom Geometry Themes</a>. <a href="creating-registering-custom-spatial-data-provider.html#GUID-8A0AC852-B281-42C1-9BB8-94BF25A79453__CHDHDCJI">Example B-1</a> contains the partial code for the spatial provider in the supplied demo. Note that this sample code is deliberately simplified; it is not optimized, and the provider does not create any spatial indexing mechanism.
+                  </p>
+                  <p>After you have implemented the provider code, compile it and generate a jar file with this compiled class. The file <code class="codeph">spatialprovider.jar</code> in the demo directory contains the compiled version of this sample code, and you can use it directly. Copy this jar file to a directory that is part of the map visualization component's CLASSPATH definition, such as the <code class="codeph">web/WB-INF/lib</code> directory.
+                  </p>
+                  <div class="example" id="GUID-8A0AC852-B281-42C1-9BB8-94BF25A79453__CHDHDCJI">
+                     <p class="titleinexample">Example B-1 Implementing the Spatial Provider Class</p><pre class="oac_no_warn" dir="ltr">package spatialprovider.samples;
+ 
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import oracle.mapviewer.share.Field;
+import oracle.mapviewer.share.ext.SDataProvider;
+import oracle.mapviewer.share.ext.SDataSet;
+import oracle.mapviewer.share.ext.SObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import oracle.spatial.geometry.JGeometry;
+import oracle.spatial.util.GML;
+ 
+public class CustomSpatialProviderSample implements SDataProvider
+{
+ ...
+ 
+ /**
+  * Constructor.
+  */
+ public CustomSpatialProviderSample()
+ {
+   ...
+ }
+ 
+ /**
+  * Returns the initialization parameters for the provider.
+  * The "datadir" parameter should be registered in the map visualization component
+  * configuration file and can be used to access the data.
+  * @return
+  */
+ public String[] getInitParameterNames()
+ {
+   return new String[]{ "datadir" };
+ }
+ 
+ /**
+  * Returns runtime parameter names. Runtime parameters are additional parameters
+  * that the provider may use when retrieving the data objects.
+  * @return
+  */
+ public String[] getRuntimeParameterNames()
+ {
+   return new String[]{ "filename" };
+ }
+ 
+ /**
+  * Initializes the provider
+  * @param params  init properties
+  * @return
+  */
+ public boolean init(Properties params)
+ {
+   dataDirectory = null;
+     if(params == null)
+     return true;
+     dataDirectory = params.getProperty("datadir");
+   if(dataDirectory == null || dataDirectory.trim().length() == 0)
+   {
+     // try upper case
+     dataDirectory = params.getProperty("DATADIR");
+     if(dataDirectory == null || dataDirectory.trim().length() == 0)
+       System.out.println("FINE: Init properties does not define \"datadir\" parameter.");
+   }
+       return true;
+ }
+ 
+ /**
+  * Returns the data set (geometries plus attributes) that intersects the
+  * query window. In this sample the data is parsed just once and
+  * there is no spatial index for searching. The search is sequential.
+  * @param queryWin  search area
+  * @param nonSpatialColumns   attribute columns
+  * @param params      runtime properties
+  * @return
+  */
+ public SDataSet buildDataSet(Rectangle2D queryWin,
+                              String []nonSpatialColumns,
+                              Properties params)
+ {
+   if(!dataParsed)
+   {
+     dataParsed = parseData(params);
+     if(!dataParsed)
+       return null;
+   }
+     if(geometries.size() == 0)
+     return null;
+ 
+   SDataSet dataset = new SDataSet();
+     boolean fullExtent = isFullExtent(queryWin);
+     if(fullExtent)
+   {
+     for(int i=0;i&lt;geometries.size();i++)
+     {
+       JGeometry geom = (JGeometry)geometries.get(i);
+       SObject obj = new SObject(geom,getGeometryAttributes(nonSpatialColumns,i));
+       dataset.addObject(obj);      }
+   }
+   else
+   {
+     for(int i=0;i&lt;geometries.size();i++)
+     {
+       JGeometry geom = (JGeometry)geometries.get(i);
+       double []mbr = geom.getMBR();
+       if(mbr == null)
+         continue;
+       Rectangle2D.Double rect = new Rectangle2D.Double(mbr[0],mbr[1],
+                                   mbr[2]-mbr[0],
+                                   mbr[3]-mbr[1]);
+             if(rect.getWidth() == 0. &amp;&amp; rect.getHeight() == 0.)
+       {
+         Point2D.Double pt = new Point2D.Double(mbr[0],mbr[1]);
+         if(queryWin.contains(pt))
+         {
+           SObject obj = new SObject(geom,getGeometryAttributes(nonSpatialColumns,i));
+           dataset.addObject(obj);                    }
+       }
+       else if(queryWin.contains(rect) || queryWin.intersects(rect))
+       {
+         SObject obj = new SObject(geom,getGeometryAttributes(nonSpatialColumns,i));
+         dataset.addObject(obj);
+       }
+     }        }
+     if(dataset.getSize() == 0)
+     return null;
+       return dataset;
+ }
+ 
+ /**
+  * Returns the data provider attribute list.
+  * @return
+  */
+ public Field[] getAttributeList(Properties params)
+ {
+   if(!dataParsed)
+   {
+     dataParsed = parseData(params);
+     if(!dataParsed)
+       return null;
+   }
+     if(attributes.size() == 0)
+     return null;
+ 
+   return (Field[])attributes.toArray(new Field[attributes.size()]);
+ }
+ 
+ /**
+  * Returns the data extents.
+  * @return
+  */
+ public Rectangle2D getDataExtents(Properties params)
+ {
+   if(!dataParsed)
+   {
+     dataParsed = parseData(params);
+     if(!dataParsed)
+       return null;
+   }
+     if(extents == null || extents.length &lt; 4)
+     return null;
+   else
+     return new Rectangle2D.Double(extents[0],extents[1],
+                                   extents[2]-extents[0],
+                                   extents[3]-extents[1]);
+ }
+ 
+ /**
+  * Builds a spatial index for the data. In this sample there is no
+  * spatial index. The data is loaded into memory when data is parsed.
+  * @return
+  */
+ public boolean buildSpatialIndex(Properties params)
+ {
+   return true;
+ }
+ 
+}
+</pre></div>
+                  <!-- class="example" -->
+               </div>
+               <div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="creating-registering-custom-spatial-data-provider.html#GUID-EEDC5892-3E42-477E-BCC8-140873665EC4" title="This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.">Creating and Registering a Custom Spatial Data Provider</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div><a id="JIMPV9868"></a><div class="props_rev_3"><a id="GUID-D858FC6A-7590-4F7E-B73C-B134DDA9853C" name="GUID-D858FC6A-7590-4F7E-B73C-B134DDA9853C"></a><h3 id="JIMPV-GUID-D858FC6A-7590-4F7E-B73C-B134DDA9853C" class="sect3"><span class="enumeration_section">B.2 </span>Registering the Spatial Provider with the Map Visualization Component
+               </h3>
+               <div>
+                  <p>To register the spatial provider with the map visualization component, add the following in the spatial provider section of the map visualization component configuration file, and then restart the map visualization component.</p><pre class="oac_no_warn" dir="ltr">&lt;s_data_provider
+  id="xmlProvider"
+  class="spatialprovider.samples.CustomSpatialProviderSample"
+  &gt;
+  &lt;parameters&gt;
+    &lt;parameter name="datadir" value="/temp/data" /&gt;
+  &lt;/parameters&gt;
+&lt;/s_data_provider&gt;
+</pre><p>When you restart the map visualization component, you should see a console message that the spatial provider has been registered. For example:</p><pre class="oac_no_warn" dir="ltr">2007-10-01 14:30:31.109 NOTIFICATION Spatial Provider xmlProvider has been registered.</pre></div>
+               <div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="creating-registering-custom-spatial-data-provider.html#GUID-EEDC5892-3E42-477E-BCC8-140873665EC4" title="This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.">Creating and Registering a Custom Spatial Data Provider</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div><a id="JIMPV9871"></a><a id="JIMPV9870"></a><a id="JIMPV9869"></a><div class="props_rev_3"><a id="GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A" name="GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A"></a><h3 id="JIMPV-GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A" class="sect3"><span class="enumeration_section">B.3 </span>Rendering the External Spatial Data
+               </h3>
+               <div>
+                  <p>To enable you to render the sample external spatial data that comes with the map visualization component kit, create a data source pointing to this data.</p>
+                  <p><a href="creating-registering-custom-spatial-data-provider.html#GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A__CHDJGGDB">Example B-2</a> is an XML request that contains a dynamic custom geometry theme.
+                  </p>
+                  <div class="example" id="GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A__CHDJGGDB">
+                     <p class="titleinexample">Example B-2 Map Request to Render External Spatial Data</p><pre class="oac_no_warn" dir="ltr">&lt;?xml version="1.0" standalone="yes"?&gt;
+&lt;map_request
+ title="Custom Geometry Theme"
+ datasource="mvdemo"
+ width="500"
+ height="400"
+ bgcolor="#a6caf0"
+ antialiase="true"
+ format="PNG_STREAM"
+&gt;
+ &lt;center size="40"&gt;
+   &lt;geoFeature&gt;
+     &lt;geometricProperty typeName="center"&gt;
+       &lt;Point&gt;
+         &lt;coordinates&gt;-90,32&lt;/coordinates&gt;
+       &lt;/Point&gt;
+     &lt;/geometricProperty&gt;
+   &lt;/geoFeature&gt;
+ &lt;/center&gt;
+ 
+ &lt;themes&gt;
+   &lt;theme name="custom_theme" &gt;
+      &lt;custom_geom_theme
+        provider_id="xmlProvider"
+        srid="8307"
+        render_style="M.CIRCLE"
+        label_column="city"
+        label_style="T.CITY NAME"
+        datasource="mvdemo"&gt;
+      &lt;parameters&gt;
+       &lt;parameter name="filename" value="/lbs/demo/spatialprovider/us_bigcities.xml"/&gt;
+      &lt;/parameters&gt;
+     &lt;/custom_geom_theme&gt;
+   &lt;/theme&gt;
+ &lt;/themes&gt;
+&lt;/map_request&gt;
+</pre><p>In <a href="creating-registering-custom-spatial-data-provider.html#GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A__CHDJGGDB">Example B-2</a>, the file name in the <code class="codeph">&lt;parameter&gt;</code> element points to <code class="codeph">/lbs/demo/spatialprovider/us_bigcities.xml</code>. If the file path is not accessible to the map visualization component, the map request may generate error messages in the log file, such as the following:
+                     </p><pre class="oac_no_warn" dir="ltr">07/09/28 10:26:47 ParseData: Can not access file: /lbs/demo/spatialprovider/us_bigcities.xml
+07/09/28 10:26:47 ParseData: File to be parsed: /temp/data\us_bigcities.xml
+07/09/28 10:26:47 ParseData: File can not be accessed on provider data directory. Copy files there.
+</pre><p>When the map visualization component searches for the file, it first tries to access the file using the original theme definition parameter; and if that fails, it tries the data directory defined in the map visualization component configuration file (<code class="codeph">/temp/data</code> in the preceding example error messages). Therefore, if the original theme definition data path is not accessible to the map visualization component, copy the data files to the directory defined in the configuration file before you issue the map request.
+                     </p>
+                     <p>If the map visualization component can find the data file, the map request in<a href="creating-registering-custom-spatial-data-provider.html#GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A__CHDJGGDB">Example B-2</a> should generate an image like the one in <a href="creating-registering-custom-spatial-data-provider.html#GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A__CHDCAGGC">Figure B-1</a>.
+                     </p>
+                     <div class="figure" id="GUID-5BA7E90F-FD89-4D84-9BBA-9C47D7DE212A__CHDCAGGC">
+                        <p class="titleinfigure">Figure B-1 Map Image Using Custom Geometry Theme and External Spatial Data</p><img src="img/custom_theme.gif" alt="Description of Figure B-1 follows" title="Description of Figure B-1 follows" longdesc="img_text/custom_theme.html"><br><a href="img_text/custom_theme.html">Description of "Figure B-1 Map Image Using Custom Geometry Theme and External Spatial Data"</a></div>
+                     <!-- class="figure" -->
+                  </div>
+                  <!-- class="example" -->
+               </div>
+               <div>
+                  <div class="familylinks">
+                     <div class="parentlink">
+                        <p><strong>Parent topic:</strong> <a href="creating-registering-custom-spatial-data-provider.html#GUID-EEDC5892-3E42-477E-BCC8-140873665EC4" title="This appendix shows a sample implementation of a spatial data provider, and explains how to register this provider to be used with the map visualization component.">Creating and Registering a Custom Spatial Data Provider</a></p>
+                     </div>
+                  </div>
+               </div>
+               
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

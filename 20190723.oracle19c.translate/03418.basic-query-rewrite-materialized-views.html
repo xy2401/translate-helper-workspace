@@ -1,0 +1,397 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Basic Query Rewrite for Materialized Views</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Data Warehousing Guide">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Data Warehousing Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="database-data-warehousing-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-09T00:20:13-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2001, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96243-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="dimensions.html" title="Previous" type="text/html">
+      <link rel="next" href="advanced-query-rewrite-materialized-views.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Database Data Warehousing Guide">
+    <meta name="dcterms.isVersionOf" content="DWHSG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="dimensions.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="advanced-query-rewrite-materialized-views.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Data Warehousing Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="part-optimizing-dw.html" property="item" typeof="WebPage"><span property="name">Optimizing Data Warehouses</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Basic Query Rewrite for Materialized Views</li>
+            </ol>
+            <a id="GUID-DB76286B-8557-446B-A6CC-BC987C378076" name="GUID-DB76286B-8557-446B-A6CC-BC987C378076"></a>
+            
+            <h2 id="DWHSG-GUID-DB76286B-8557-446B-A6CC-BC987C378076" class="sect2"><span class="enumeration_chapter">11 </span>Basic Query Rewrite for Materialized Views
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>This chapter discusses query rewrite in Oracle, and contains:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="basic-query-rewrite-materialized-views.html#GUID-BA8C963B-21C7-465D-8C94-CFE65F8B7513" title="A query undergoes several checks to determine whether it is a candidate for query rewrite. If the query fails any check, then the query is applied to the detail tables rather than the materialized view. The inability to rewrite can be costly in terms of response time and processing power.">Overview of Query Rewrite</a></p>
+                  </li>
+                  <li>
+                     <p><a href="basic-query-rewrite-materialized-views.html#GUID-D9D4DE1E-FB32-42A6-8EC2-C2EADEDACA97" title="Query rewrite behavior is controlled by certain database initialization parameters.Query rewrite offers three levels of rewrite integrity that are controlled by the initialization parameter QUERY_REWRITE_INTEGRITY.">Ensuring that Query Rewrite Takes Effect</a></p>
+                  </li>
+                  <li>
+                     <p><a href="basic-query-rewrite-materialized-views.html#GUID-19F8E323-0EE4-45AE-A88D-D29E76420206" title="This example illustrates the power of query rewrite with materialized views.">Example of Query Rewrite</a></p>
+                  </li>
+               </ul>
+            </div><a id="DWHSG0181"></a><div class="props_rev_3"><a id="GUID-BA8C963B-21C7-465D-8C94-CFE65F8B7513" name="GUID-BA8C963B-21C7-465D-8C94-CFE65F8B7513"></a><h3 id="DWHSG-GUID-BA8C963B-21C7-465D-8C94-CFE65F8B7513" class="sect3"><span class="enumeration_section">11.1 </span>Overview of Query Rewrite
+               </h3>
+               <div>
+                  <p>When base tables contain large amount of data, it is expensive and time-consuming to compute the required aggregates or to compute joins between these tables. In such cases, queries can take minutes or even hours. Because materialized views contain already precomputed aggregates and joins, Oracle Database employs an extremely powerful process called query rewrite to quickly answer the query using materialized views.</p>
+                  <p>One of the major benefits of creating and maintaining materialized views is the ability to take advantage of query rewrite, which transforms a SQL statement expressed in terms of tables or views into a statement accessing one or more materialized views that are defined on the detail tables. The transformation is transparent to the end user or application, requiring no intervention and no reference to the materialized view in the SQL statement. Because query rewrite is transparent, materialized views can be added or dropped just like indexes without invalidating the SQL in the application code. <span class="q">"<a href="basic-query-rewrite-materialized-views.html#GUID-63B491A0-A479-4711-A5B0-40365904115F">When Does Oracle Rewrite a Query?</a>"</span> describes the conditions that must be met for a query to be rewritten.
+                  </p>
+               </div>
+               <div class="props_rev_3"><a id="GUID-D43AE3AB-0778-49EA-9C8D-983F0910FE05" name="GUID-D43AE3AB-0778-49EA-9C8D-983F0910FE05"></a><h4 id="DWHSG-GUID-D43AE3AB-0778-49EA-9C8D-983F0910FE05" class="sect4"><span class="enumeration_section">11.1.1 </span>About Query Rewrite and the Optimizer
+                  </h4>
+                  <div>
+                     <p>A query undergoes several checks to determine whether it is a candidate for query rewrite. If the query fails any check, then the query is applied to the detail tables rather than the materialized view. The inability to rewrite can be costly in terms of response time and processing power.</p>
+                     <p>The optimizer uses two different methods to determine when to rewrite a query in terms of a materialized view. The first method matches the SQL text of the query to the SQL text of the materialized view definition. If the first method fails, then the optimizer uses the more general method in which it compares joins, selections, data columns, grouping columns, and aggregate functions between the query and materialized views.</p>
+                     <p>Query rewrite operates on queries and subqueries in the following types of SQL statements:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><code class="codeph">SELECT</code></p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">CREATE TABLE … AS SELECT</code> 
+                           </p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">INSERT INTO … SELECT</code> 
+                           </p>
+                        </li>
+                     </ul>
+                     <p>It also operates on subqueries in the set operators <code class="codeph">UNION</code>, <code class="codeph">UNION ALL</code> , <code class="codeph">INTERSECT</code>, and <code class="codeph">MINUS</code>, and subqueries in DML statements such as <code class="codeph">INSERT</code>, <code class="codeph">DELETE</code>, and <code class="codeph">UPDATE</code>.
+                     </p>
+                     <p>Dimensions, constraints, and rewrite integrity levels affect whether a query is rewritten to use materialized views. Additionally, query rewrite can be enabled or disabled by <code class="codeph">REWRITE</code> and <code class="codeph">NOREWRITE</code> hints and the <code class="codeph">QUERY_REWRITE_ENABLED</code> session parameter.
+                     </p>
+                     <p>The <code class="codeph">DBMS_MVIEW.EXPLAIN_REWRITE</code> procedure advises whether query rewrite is possible on a query and, if so, which materialized views are used. It also explains why a query cannot be rewritten.
+                     </p>
+                  </div>
+               </div><a id="DWHSG8494"></a><div class="props_rev_3"><a id="GUID-63B491A0-A479-4711-A5B0-40365904115F" name="GUID-63B491A0-A479-4711-A5B0-40365904115F"></a><h4 id="DWHSG-GUID-63B491A0-A479-4711-A5B0-40365904115F" class="sect4"><span class="enumeration_section">11.1.2 </span>When Does Oracle Rewrite a Query?
+                  </h4>
+                  <div>
+                     <p><a id="d43490e183" class="indexterm-anchor"></a>A query is rewritten only when a certain number of conditions are met:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Query rewrite must be enabled for the session.</p>
+                        </li>
+                        <li>
+                           <p>A materialized view must be enabled for query rewrite.</p>
+                        </li>
+                        <li>
+                           <p>The rewrite integrity level should allow the use of the materialized view. For example, if a materialized view is not fresh and query rewrite integrity is set to <code class="codeph">ENFORCED</code>, then the materialized view is not used.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Either all or part of the results requested by the query must be obtainable from the precomputed result stored in the materialized view or views.</p>
+                        </li>
+                     </ul>
+                     <p>To test these conditions, the optimizer may depend on some of the data relationships declared by the user using constraints and dimensions, among others, hierarchies, referential integrity, and uniqueness of key data, and so on.</p>
+                  </div>
+               </div>
+            </div><a id="DWHSG0182"></a><div class="props_rev_3"><a id="GUID-D9D4DE1E-FB32-42A6-8EC2-C2EADEDACA97" name="GUID-D9D4DE1E-FB32-42A6-8EC2-C2EADEDACA97"></a><h3 id="DWHSG-GUID-D9D4DE1E-FB32-42A6-8EC2-C2EADEDACA97" class="sect3"><span class="enumeration_section">11.2 </span>Ensuring that Query Rewrite Takes Effect
+               </h3>
+               <div>
+                  <div class="section">
+                     <p><a id="d43490e228" class="indexterm-anchor"></a>You must follow several conditions to enable query rewrite:
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+                  <ol>
+                     <li class="stepexpand"><span>Individual materialized views must have the <code class="codeph">ENABLE</code> <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code> clause.</span><div>
+                           <p>If this step is not completed, as described in <a href="basic-query-rewrite-materialized-views.html#GUID-D4CD7FA7-7E59-4114-A8A7-941FD7F1C07E">Enabling Query Rewrite for Materialized Views</a>, then a materialized view is never eligible for query rewrite.
+                           </p>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>The session parameter <code class="codeph">QUERY_REWRITE_ENABLED</code> must be set to <code class="codeph">TRUE</code> (the default) or <code class="codeph">FORCE</code>.</span><div>
+                           <p>See <a href="basic-query-rewrite-materialized-views.html#GUID-51E02736-2656-4F44-8392-98980067A97F" title="Query rewrite behavior is controlled by certain database initialization parameters.">Initialization Parameters for Query Rewrite</a>.
+                           </p>
+                        </div>
+                     </li>
+                     <li class="stepexpand"><span>Cost-based optimization must be used by setting the initialization parameter <code class="codeph">OPTIMIZER_MODE</code> to <code class="codeph">ALL_ROWS</code>, <code class="codeph">FIRST_ROWS</code>, or <code class="codeph">FIRST_ROWS_</code><span class="italic"><code class="codeph">n</code></span>.</span><div>
+                           <p>See <a href="basic-query-rewrite-materialized-views.html#GUID-51E02736-2656-4F44-8392-98980067A97F" title="Query rewrite behavior is controlled by certain database initialization parameters.">Initialization Parameters for Query Rewrite</a>.
+                           </p>
+                        </div>
+                     </li>
+                  </ol>
+                  <div class="section">
+                     <p>You can use the <code class="codeph">DBMS_ADVISOR.TUNE_MVIEW</code> procedure to optimize a <code class="codeph">CREATE</code> <code class="codeph">MATERIALIZED</code> <code class="codeph">VIEW</code> statement to enable general <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code>.
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+               <div class="props_rev_3"><a id="GUID-D4CD7FA7-7E59-4114-A8A7-941FD7F1C07E" name="GUID-D4CD7FA7-7E59-4114-A8A7-941FD7F1C07E"></a><h4 id="DWHSG-GUID-D4CD7FA7-7E59-4114-A8A7-941FD7F1C07E" class="sect4"><span class="enumeration_section">11.2.1 </span>Enabling Query Rewrite for Materialized Views
+                  </h4>
+                  <div>
+                     <div class="section">
+                        <p>You can specify <code class="codeph">ENABLE</code> <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code> either with the <code class="codeph">ALTER</code> <code class="codeph">MATERIALIZED</code> <code class="codeph">VIEW</code> statement or when the materialized view is created, as illustrated in the following:
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE MATERIALIZED VIEW join_sales_time_product_mv
+ENABLE QUERY REWRITE AS
+SELECT p.prod_id, p.prod_name, t.time_id, t.week_ending_day,
+       s.channel_id, s.promo_id, s.cust_id, s.amount_sold
+FROM   sales s, products p, times t
+WHERE  s.time_id=t.time_id  AND s.prod_id = p.prod_id;
+</pre><p><a id="d43490e369" class="indexterm-anchor"></a><a id="d43490e373" class="indexterm-anchor"></a><a id="d43490e379" class="indexterm-anchor"></a><a id="d43490e385" class="indexterm-anchor"></a><a id="d43490e389" class="indexterm-anchor"></a><a id="d43490e391" class="indexterm-anchor"></a><a id="d43490e395" class="indexterm-anchor"></a><a id="d43490e399" class="indexterm-anchor"></a><a id="d43490e401" class="indexterm-anchor"></a><a id="d43490e403" class="indexterm-anchor"></a><a id="d43490e407" class="indexterm-anchor"></a><a id="d43490e414" class="indexterm-anchor"></a><a id="d43490e420" class="indexterm-anchor"></a>The <code class="codeph">NOREWRITE</code> hint disables query rewrite in a SQL statement, overriding the <code class="codeph">QUERY_REWRITE_ENABLED</code> parameter, and the <code class="codeph">REWRITE</code> hint (when used with <code class="codeph">mv_name</code>) restricts the eligible materialized views to those named in the hint.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DWHSG01821"></a><div class="props_rev_3"><a id="GUID-51E02736-2656-4F44-8392-98980067A97F" name="GUID-51E02736-2656-4F44-8392-98980067A97F"></a><h4 id="DWHSG-GUID-51E02736-2656-4F44-8392-98980067A97F" class="sect4"><span class="enumeration_section">11.2.2 </span>About Initialization Parameters for Query Rewrite
+                  </h4>
+                  <div>
+                     <p>Query rewrite behavior is controlled by certain database initialization parameters.</p>
+                     <div class="tblformal" id="GUID-51E02736-2656-4F44-8392-98980067A97F__GUID-A20BF7CE-ECB9-4FA6-9237-34D926C834C3">
+                        <p class="titleintable">Table 11-1 Initialization Parameters that Control Query Rewrite Behavior</p>
+                        <table cellpadding="4" cellspacing="0" class="Formal" title="Initialization Parameters that Control Query Rewrite Behavior" summary="This table describes the initialization parameters that control query rewrite behavior." frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="20%" id="d43490e488">Initialization Parameter Name</th>
+                                 <th align="left" valign="bottom" width="20%" id="d43490e490">Initialization Parameter Value</th>
+                                 <th align="left" valign="bottom" width="20%" id="d43490e492">Behavior of Query Rewrite</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d43490e496" headers="d43490e488 "><code class="codeph">OPTIMIZER_MODE</code></td>
+                                 <td align="left" valign="top" width="20%" headers="d43490e496 d43490e490 "><code class="codeph">ALL_ROWS</code> (default), <code class="codeph">FIRST_ROWS</code>, or <code class="codeph">FIRST_ROWS_</code><span class="italic"><code class="codeph">n</code></span></td>
+                                 <td align="left" valign="top" width="20%" headers="d43490e496 d43490e492 ">
+                                    <p>With <code class="codeph">OPTIMIZER_MODE</code> set to <code class="codeph">FIRST_ROWS</code>, the optimizer uses a mix of costs and heuristics to find a best plan for fast delivery of the first few rows. When set to <code class="codeph">FIRST_ROWS_</code><span class="italic"><code class="codeph">n</code></span>, the optimizer uses a cost-based approach and optimizes with a goal of best response time to return the first <span class="italic"><code class="codeph">n</code></span> rows (where n = 1, 10, 100, 1000).
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d43490e531" headers="d43490e488 "><code class="codeph">QUERY_REWRITE_ENABLED</code></td>
+                                 <td align="left" valign="top" width="20%" headers="d43490e531 d43490e490 "><code class="codeph">TRUE</code> (default), <code class="codeph">FALSE</code>, or <code class="codeph">FORCE</code></td>
+                                 <td align="left" valign="top" width="20%" headers="d43490e531 d43490e492 ">
+                                    <p>This option enables the query rewrite feature of the optimizer, enabling the optimizer to utilize materialized views to enhance performance. If set to <code class="codeph">FALSE</code>, this option disables the query rewrite feature of the optimizer and directs the optimizer not to rewrite queries using materialized views even when the estimated query cost of the unrewritten query is lower.
+                                    </p>
+                                    <p>If set to <code class="codeph">FORCE</code>, this option enables the query rewrite feature of the optimizer and directs the optimizer to rewrite queries using materialized views even when the estimated query cost of the unrewritten query is lower.
+                                    </p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="20%" id="d43490e555" headers="d43490e488 "><code class="codeph">QUERY_REWRITE_INTEGRITY</code></td>
+                                 <td align="left" valign="top" width="20%" headers="d43490e555 d43490e490 "><code class="codeph">STALE_TOLERATED</code>, <code class="codeph">TRUSTED</code>, or <code class="codeph">ENFORCED</code> (the default)
+                                 </td>
+                                 <td align="left" valign="top" width="20%" headers="d43490e555 d43490e492 ">
+                                    <p>This parameter is optional. However, if it is set, the value must be one of these specified in the Initialization Parameter Value column.</p>
+                                    <p>By default, the integrity level is set to <code class="codeph">ENFORCED</code>. In this mode, all constraints must be validated. Therefore, if you use <code class="codeph">ENABLE NOVALIDATE RELY</code> , certain types of query rewrite might not work. To enable query rewrite in this environment (where constraints have not been validated), you should set the integrity level to a lower level of granularity such as <code class="codeph">TRUSTED</code> or <code class="codeph">STALE_TOLERATED</code>.
+                                    </p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                  </div>
+                  <div>
+                     <div class="relinfo">
+                        <p><strong>Related Topics</strong></p>
+                        <ul>
+                           <li><a href="basic-query-rewrite-materialized-views.html#GUID-34CBC168-E1C8-4983-B271-0AB0B639CE7D" title="Query rewrite offers three levels of rewrite integrity that are controlled by the initialization parameter QUERY_REWRITE_INTEGRITY.">About the Accuracy of Query Rewrite</a></li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="DWHSG8495"></a><div class="props_rev_3"><a id="GUID-34C03C5C-B45C-4FEA-9146-32C91540E185" name="GUID-34C03C5C-B45C-4FEA-9146-32C91540E185"></a><h4 id="DWHSG-GUID-34C03C5C-B45C-4FEA-9146-32C91540E185" class="sect4"><span class="enumeration_section">11.2.3 </span>Controlling Query Rewrite
+                  </h4>
+                  <div>
+                     <div class="section">
+                        <p><a id="d43490e619" class="indexterm-anchor"></a>A materialized view is only eligible for query rewrite if the <code class="codeph">ENABLE</code> <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code> clause has been specified, either initially when the materialized view was first created or subsequently with an <code class="codeph">ALTER</code> <code class="codeph">MATERIALIZED</code> <code class="codeph">VIEW</code> statement.
+                        </p>
+                        <p>You can set the session parameters described previously for all sessions using the <code class="codeph">ALTER</code> <code class="codeph">SYSTEM</code> <code class="codeph">SET</code> statement or in the initialization file. For a given user's session, <code class="codeph">ALTER</code> <code class="codeph">SESSION</code> can be used to disable or enable query rewrite for that session only. An example is the following:
+                        </p><pre class="oac_no_warn" dir="ltr">ALTER SESSION SET QUERY_REWRITE_ENABLED = TRUE;
+</pre><p>You can set the level of query rewrite for a session, thus allowing different users to work at different integrity levels. The possible statements are:</p><pre class="oac_no_warn" dir="ltr">ALTER SESSION SET QUERY_REWRITE_INTEGRITY = STALE_TOLERATED;
+ALTER SESSION SET QUERY_REWRITE_INTEGRITY = TRUSTED;
+ALTER SESSION SET QUERY_REWRITE_INTEGRITY = ENFORCED;</pre></div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="DWHSG8496"></a><div class="props_rev_3"><a id="GUID-34CBC168-E1C8-4983-B271-0AB0B639CE7D" name="GUID-34CBC168-E1C8-4983-B271-0AB0B639CE7D"></a><h4 id="DWHSG-GUID-34CBC168-E1C8-4983-B271-0AB0B639CE7D" class="sect4"><span class="enumeration_section">11.2.4 </span>About the Accuracy of Query Rewrite
+                  </h4>
+                  <div>
+                     <p>Query rewrite offers three levels of rewrite integrity that are controlled by the initialization parameter <code class="codeph">QUERY_REWRITE_INTEGRITY</code>.
+                     </p>
+                     <p>The values that you can set for the <code class="codeph">QUERY_REWRITE_INTEGRITY</code> parameter are as follows:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><code class="codeph">ENFORCED</code></p>
+                           <p>This is the default mode. The optimizer only uses fresh data from the materialized views and only use those relationships that are based on <code class="codeph">ENABLED VALIDATED</code> primary, unique, or foreign key constraints.
+                           </p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">TRUSTED</code></p>
+                           <p>In <code class="codeph">TRUSTED</code> mode, the optimizer trusts that the relationships declared in dimensions and <code class="codeph">RELY</code> constraints are correct. In this mode, the optimizer also uses prebuilt materialized views or materialized views based on views, and it uses relationships that are not enforced as well as those that are enforced. It also trusts declared but not <code class="codeph">ENABLED VALIDATED</code> primary or unique key constraints and data relationships specified using dimensions. This mode offers greater query rewrite capabilities but also creates the risk of incorrect results if any of the trusted relationships you have declared are incorrect.
+                           </p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">STALE_TOLERATED</code></p>
+                           <p>In <code class="codeph">STALE_TOLERATED</code> mode, the optimizer uses materialized views that are valid but contain stale data as well as those that contain fresh data. This mode offers the maximum rewrite capability but creates the risk of generating inaccurate results.
+                           </p>
+                        </li>
+                     </ul>
+                     <p>If rewrite integrity is set to the safest level, <code class="codeph">ENFORCED</code>, the optimizer uses only enforced primary key constraints and referential integrity constraints to ensure that the results of the query are the same as the results when accessing the detail tables directly.
+                     </p>
+                     <p>If the rewrite integrity is set to levels other than <code class="codeph">ENFORCED</code>, there are several situations where the output with rewrite can be different from that without it:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>A materialized view can be out of synchronization with the master copy of the data. This generally happens because the materialized view refresh procedure is pending following bulk load or DML operations to one or more detail tables of a materialized view. At some data warehouse sites, this situation is desirable because it is not uncommon for some materialized views to be refreshed at certain time intervals.</p>
+                        </li>
+                        <li>
+                           <p>The relationships implied by the dimension objects are invalid. For example, values at a certain level in a hierarchy do not roll up to exactly one parent value. </p>
+                        </li>
+                        <li>
+                           <p>The values stored in a prebuilt materialized view table might be incorrect.</p>
+                        </li>
+                        <li>
+                           <p>A wrong answer can occur because of bad data relationships defined by unenforced table or view constraints.</p>
+                        </li>
+                     </ul>
+                     <p>You can set <code class="codeph">QUERY_REWRITE_INTEGRITY</code> either in your initialization parameter file or using an <code class="codeph">ALTER SYSTEM</code> or <code class="codeph">ALTER SESSION</code> statement. 
+                     </p>
+                  </div>
+               </div><a id="DWHSG01813"></a><div class="props_rev_3"><a id="GUID-895DC368-39A3-4ADE-9031-DB6339A0FE7F" name="GUID-895DC368-39A3-4ADE-9031-DB6339A0FE7F"></a><h4 id="DWHSG-GUID-895DC368-39A3-4ADE-9031-DB6339A0FE7F" class="sect4"><span class="enumeration_section">11.2.5 </span>About Privileges for Enabling Query Rewrite
+                  </h4>
+                  <div>
+                     <p>Use of a materialized view is based not on privileges the user has on that materialized view, but on the privileges the user has on detail tables or views in the query.</p>
+                     <p><span class="italic"></span>The system privilege <code class="codeph">GRANT</code> <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code> lets you enable materialized views in your own schema for query rewrite only if all tables directly referenced by the materialized view are in that schema. The <code class="codeph">GRANT</code> <code class="codeph">GLOBAL</code> <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code> privilege enables you to enable materialized views for query rewrite even if the materialized view references objects in other schemas. Alternatively, you can use the <code class="codeph">QUERY</code> <code class="codeph">REWRITE</code> object privilege on tables and views outside your schema.
+                     </p>
+                     <p>The privileges for using materialized views for query rewrite are similar to those for definer's rights procedures.</p>
+                  </div>
+               </div><a id="DWHSG8497"></a><div class="props_rev_3"><a id="GUID-C99E8454-93E2-4F66-9AC6-D3290FA7F836" name="GUID-C99E8454-93E2-4F66-9AC6-D3290FA7F836"></a><h4 id="DWHSG-GUID-C99E8454-93E2-4F66-9AC6-D3290FA7F836" class="sect4"><span class="enumeration_section">11.2.6 </span>Sample Schema and Materialized Views
+                  </h4>
+                  <div>
+                     <p>The following sections use the <code class="codeph">sh</code> sample schema and a few materialized views to illustrate how the optimizer uses data relationships to rewrite queries.
+                     </p>
+                     <p>The query rewrite examples in this chapter mainly refer to the following materialized views. These materialized views do not necessarily represent the most efficient implementation for the <code class="codeph">sh</code> schema. Instead, they are a base for demonstrating rewrite capabilities. Further examples demonstrating specific functionality can be found throughout this chapter.
+                     </p>
+                     <p>The following materialized views contain joins and aggregates:</p><pre class="oac_no_warn" dir="ltr">CREATE MATERIALIZED VIEW sum_sales_pscat_week_mv
+ENABLE QUERY REWRITE AS
+SELECT p.prod_subcategory, t.week_ending_day,
+       SUM(s.amount_sold) AS sum_amount_sold
+FROM   sales s, products p, times t
+WHERE  s.time_id=t.time_id  AND s.prod_id=p.prod_id
+GROUP BY p.prod_subcategory, t.week_ending_day;
+
+CREATE MATERIALIZED VIEW sum_sales_prod_week_mv
+ENABLE QUERY REWRITE AS
+SELECT p.prod_id, t.week_ending_day, s.cust_id,
+       SUM(s.amount_sold) AS sum_amount_sold
+FROM   sales s, products p, times t
+WHERE  s.time_id=t.time_id AND s.prod_id=p.prod_id
+GROUP BY p.prod_id, t.week_ending_day, s.cust_id;
+
+CREATE MATERIALIZED VIEW sum_sales_pscat_month_city_mv
+ENABLE QUERY REWRITE AS
+SELECT p.prod_subcategory, t.calendar_month_desc, c.cust_city,
+       SUM(s.amount_sold) AS sum_amount_sold,
+       COUNT(s.amount_sold) AS count_amount_sold
+FROM   sales s, products p, times t, customers c
+WHERE  s.time_id=t.time_id AND s.prod_id=p.prod_id AND s.cust_id=c.cust_id 
+GROUP BY p.prod_subcategory, t.calendar_month_desc, c.cust_city;
+</pre><p>The following materialized views contain joins only:</p><pre class="oac_no_warn" dir="ltr">CREATE MATERIALIZED VIEW join_sales_time_product_mv
+ENABLE QUERY REWRITE AS
+SELECT p.prod_id, p.prod_name, t.time_id, t.week_ending_day,
+       s.channel_id, s.promo_id, s.cust_id, s.amount_sold
+FROM   sales s, products p, times t
+WHERE  s.time_id=t.time_id AND s.prod_id = p.prod_id;
+
+CREATE MATERIALIZED VIEW join_sales_time_product_oj_mv
+ENABLE QUERY REWRITE AS
+SELECT p.prod_id, p.prod_name, t.time_id, t.week_ending_day,
+       s.channel_id, s.promo_id, s.cust_id, s.amount_sold
+FROM   sales s, products p, times t
+WHERE  s.time_id=t.time_id AND s.prod_id=p.prod_id(+);
+</pre><p>Although it is not a strict requirement, it is highly recommended that you collect statistics on the materialized views so that the optimizer can determine whether to rewrite the queries. You can do this either on a per-object base or for all newly created objects without statistics. The following is an example of a per-object base, shown for <code class="codeph">join_sales_time_product_mv</code>:
+                     </p><pre class="oac_no_warn" dir="ltr">EXECUTE DBMS_STATS.GATHER_TABLE_STATS ( -
+   'SH','JOIN_SALES_TIME_PRODUCT_MV', estimate_percent   =&gt; 20, -
+    block_sample   =&gt; TRUE, cascade   =&gt; TRUE);
+</pre><p>The following illustrates a statistics collection for all newly created objects without statistics:</p><pre class="oac_no_warn" dir="ltr">EXECUTE DBMS_STATS.GATHER_SCHEMA_STATS ( 'SH', -
+   options            =&gt; 'GATHER EMPTY', -
+   estimate_percent   =&gt;  20, block_sample  =&gt;  TRUE, -
+   cascade            =&gt;  TRUE);</pre></div>
+               </div><a id="DWHSG8498"></a><div class="props_rev_3"><a id="GUID-B4CA1A8E-4E1A-46B9-8367-B7A12B2FA927" name="GUID-B4CA1A8E-4E1A-46B9-8367-B7A12B2FA927"></a><h4 id="DWHSG-GUID-B4CA1A8E-4E1A-46B9-8367-B7A12B2FA927" class="sect4"><span class="enumeration_section">11.2.7 </span>How to Verify if Query Rewrite Occurred
+                  </h4>
+                  <div>
+                     <div class="section">
+                        <p>Because query rewrite occurs transparently, special steps have to be taken to verify that a query has been rewritten. Of course, if the query runs faster, this should indicate that rewrite has occurred, but that is not proof. Therefore, to confirm that query rewrite does occur, use the <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> statement or the <code class="codeph">DBMS_MVIEW.EXPLAIN_REWRITE</code> procedure. See <span class="q">"<a href="advanced-query-rewrite-materialized-views.html#GUID-3AB77341-BDA9-4F84-9691-EB79E4C8B832">Verifying that Query Rewrite has Occurred</a>"</span> for further information.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="DWHSG0184"></a><div class="props_rev_3"><a id="GUID-19F8E323-0EE4-45AE-A88D-D29E76420206" name="GUID-19F8E323-0EE4-45AE-A88D-D29E76420206"></a><h3 id="DWHSG-GUID-19F8E323-0EE4-45AE-A88D-D29E76420206" class="sect3"><span class="enumeration_section">11.3 </span>Example of Query Rewrite
+               </h3>
+               <div>
+                  <p>This example illustrates the power of query rewrite with materialized views.</p>
+                  <div class="section">
+                     <p>Consider the following materialized view, <code class="codeph">cal_month_sales_mv</code>, which provides an aggregation of the dollar amount sold in every month:
+                     </p><pre class="pre codeblock"><code>CREATE MATERIALIZED VIEW cal_month_sales_mv
+ENABLE QUERY REWRITE AS
+SELECT t.calendar_month_desc, SUM(s.amount_sold) AS dollars
+FROM sales s, times t WHERE s.time_id = t.time_id
+GROUP BY t.calendar_month_desc;
+</code></pre><p>Let us assume that, in a typical month, the number of sales in the store is around one million. So this materialized aggregate view has the precomputed aggregates for the dollar amount sold for each month.</p>
+                     <p>Consider the following query, which asks for the sum of the amount sold at the store for each calendar month:</p><pre class="pre codeblock"><code>SELECT t.calendar_month_desc, SUM(s.amount_sold)
+FROM sales s, times t WHERE s.time_id = t.time_id
+GROUP BY t.calendar_month_desc;
+</code></pre><p>In the absence of the previous materialized view and query rewrite feature, Oracle Database must access the <code class="codeph">sales</code> table directly and compute the sum of the amount sold to return the results. This involves reading many million rows from the <code class="codeph">sales</code> table, which will invariably increase the query response time due to the disk access. The join in the query will also further slow down the query response as the join needs to be computed on many million rows.
+                     </p>
+                     <p>In the presence of the materialized view <code class="codeph">cal_month_sales_mv</code>, query rewrite will transparently rewrite the previous query into the following query:
+                     </p><pre class="pre codeblock"><code>SELECT calendar_month, dollars
+FROM cal_month_sales_mv;
+</code></pre><p>Because there are only a few dozen rows in the materialized view <code class="codeph">cal_month_sales_mv</code> and no joins, Oracle Database returns the results instantly. 
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

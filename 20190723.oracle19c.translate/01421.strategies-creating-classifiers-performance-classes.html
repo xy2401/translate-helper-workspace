@@ -1,0 +1,117 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Review the requirements for performance classes and workload classifiers.">
+      <meta name="description" content="Review the requirements for performance classes and workload classifiers.">
+      <title>Strategies for Creating Classifiers for Performance Classes</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="User’s Guide">
+      <meta property="og:description" content="Review the requirements for performance classes and workload classifiers.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="User’s Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="autonomous-health-framework-users-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-21T23:14:30-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2016, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96320-02">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="supported-configurations-qos-management.html" title="Previous" type="text/html">
+      <link rel="next" href="configuration-strategies-resource-management.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Autonomous Health Framework User’s Guide">
+    <meta name="dcterms.isVersionOf" content="ATNMS">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="supported-configurations-qos-management.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="configuration-strategies-resource-management.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">User’s Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="oracle-database-qos-management.html" property="item" typeof="WebPage"><span property="name">Monitoring and Managing Database Workload Performance</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="supported-workloads-and-strategies.html" property="item" typeof="WebPage"><span property="name">Supported Workloads and Strategies</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Strategies for Creating Classifiers for Performance Classes</li>
+            </ol>
+            <a id="GUID-C63F73B4-C1ED-4188-B654-2B22E10BEEFB" name="GUID-C63F73B4-C1ED-4188-B654-2B22E10BEEFB"></a><a id="APQOS344"></a>
+            
+            <h2 id="ATNMS-GUID-C63F73B4-C1ED-4188-B654-2B22E10BEEFB" class="sect2"><span class="enumeration_section">7.2 </span>Strategies for Creating Classifiers for Performance Classes
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Review the requirements for performance classes and workload classifiers.</p>
+               <p>Currently, the only workloads that Oracle Database QoS Management manages are OLTP database workloads. To manage the workload for a database, the incoming work requests must be assigned to a Performance Class. Workload is mapped to a Performance Class using classifiers. </p>
+               <p>In multi-tier environments, a request from a client is routed to different database sessions by the middle tier or through load balancing, making the tracking of a client across database sessions difficult. Classifiers use session attributes to identify work requests. The attributes used are service name, user name, module, action, and program.</p>
+               <p>Each classifier must specify one or more service names. If a classifier specifies multiple service names, then when matching the connection data to a Performance Class, the service names are evaluated using an <code class="codeph">OR</code> operation. If any one of the service names specified in the classifier matches the service name in the work request, then the comparison evaluates to <code class="codeph">TRUE</code>.
+               </p>
+               <p>To set the <code class="codeph">MODULE</code> and <code class="codeph">ACTION</code> attributes, use the <code class="codeph">OCIAttrSet()</code> call. Use the default namespace, <code class="codeph">USERENV</code>, for the application context.
+               </p>
+               <p>You can also optionally include the <strong class="term">UserName</strong> and <strong class="term">program name</strong> in the classifier. The user name is the name of the database user to which the session connects. The program attribute is the name of the client program used to log in to the server.
+               </p>
+               <p>If the classifier for a Performance Class specifies multiple attributes, then the session attributes are combined using an <code class="codeph">AND</code> operation. If all of the attribute values specified in the classifier match the session attribute values in the work request, then the comparison evaluates to <code class="codeph">TRUE</code>. If you have more than one classifier that uses similar attribute values, then place the classifier with the most fine-grained conditions first.
+               </p>
+               <p>For example, consider the following classifiers:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><code class="codeph">create_invoice_taxes_pc</code> that specifies the <code class="codeph">sales_cart</code> service, the <code class="codeph">ORDER</code> module, and the <code class="codeph">CALCULATE TAX</code> action
+                     </p>
+                  </li>
+                  <li>
+                     <p><code class="codeph">create_invoice_pc</code>, which specifies the <code class="codeph">sales_cart</code> service and the <code class="codeph">ORDER</code> module
+                     </p>
+                  </li>
+               </ul>
+               <p>The <code class="codeph">create_invoice_taxes_pc</code> classifier should be evaluated before the <code class="codeph">create_invoice_pc</code> classifier. If a work request uses the <code class="codeph">sales_cart</code> service, and is performing the <code class="codeph">CALCULATE TAX</code> action in the <code class="codeph">ORDER</code> module, then the work request is assigned to the <code class="codeph">create_invoice_taxes_pc</code>. If the work request does not have the matching values for all the attributes, then the work request is compared to the next classifier, for <code class="codeph">create_invoice_pc</code>. If you evaluate the <code class="codeph">create_invoice_pc</code> classifier first, then any work request that uses the <code class="codeph">sales_cart</code> service and the <code class="codeph">ORDER</code> module will be assigned to the <code class="codeph">create_invoice_pc</code> Performance Class, regardless of what action the work request performs.
+               </p>
+               <p>You can create up to 47 Performance Classes for a cluster. If you have more than 47 services for your cluster, then use more than one service name within classifiers. Once a match is found for a classifier, Oracle Database QoS Management assigns a tag to the matching work request. The tag is based on the classifier that evaluates to <code class="codeph">TRUE</code>.
+               </p>
+            </div>
+            <div>
+               <div class="relinfo">
+                  <p><strong>Related Topics</strong></p>
+                  <ul>
+                     <li><a href="overview-oracle-database-qos-management.html#GUID-9D59A65B-A912-4D46-8889-EBF9868309AA" title="A single application can support work requests of many types, with a range of performance characteristics.">Using Additional Filters for Classifying Work Requests</a></li>
+                     <li><a href="overview-oracle-database-qos-management.html#GUID-5E13E0A5-AD14-4FC9-953F-A9E75C5053D7" title="Classification occurs wherever new work enters the system.">Applying Classifiers to Work Requests</a></li>
+                     <li><a href="overview-oracle-database-qos-management.html#GUID-57E1B40A-CCB3-4969-AFBF-A7E01F6DE7BE" title="The classification of work requests applies a user-defined name tag that identifies the Performance Class to which the work request belongs.">Performance Class Tags</a></li>
+                  </ul>
+               </div>
+               <div class="familylinks">
+                  <div class="parentlink">
+                     <p><strong>Parent topic:</strong> <a href="supported-workloads-and-strategies.html#GUID-36349ABA-02F7-4AA4-BB4A-BA46B6278AF8" title="This chapter discusses the different ways that you can use Oracle Database Quality of Service Management (Oracle Database QoS Management) to manage the workload on your system and the best practices for configuring your system to effectively use Oracle Database QoS Management.">Supported Workloads and Strategies</a></p>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

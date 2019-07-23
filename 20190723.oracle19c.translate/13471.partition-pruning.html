@@ -1,0 +1,674 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Partition pruning is an essential performance feature for data warehouses.">
+      <meta name="description" content="Partition pruning is an essential performance feature for data warehouses.">
+      <title>Partition Pruning</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="VLDB and Partitioning Guide">
+      <meta property="og:description" content="Partition pruning is an essential performance feature for data warehouses.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="VLDB and Partitioning Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="vldb-and-partitioning-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-23T18:05:22-07:00">
+      <meta name="dcterms.title" content="VLDB and Partitioning Guide">
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96199-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="partition-availability.html" title="Previous" type="text/html">
+      <link rel="next" href="partition-wise-joins.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="VLDBG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="partition-availability.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="partition-wise-joins.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">VLDB and Partitioning Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="partition-availability.html" property="item" typeof="WebPage"><span property="name">Partitioning for Availability, Manageability, and Performance</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Partition Pruning</li>
+            </ol>
+            <a id="GUID-E677C85E-C5E3-4927-B3DF-684007A7B05D" name="GUID-E677C85E-C5E3-4927-B3DF-684007A7B05D"></a><a id="VLDBG00401"></a>
+            
+            <h2 id="VLDBG-GUID-E677C85E-C5E3-4927-B3DF-684007A7B05D" class="sect2">Partition Pruning</h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Partition pruning is an essential performance feature for data warehouses.</p>
+               <p>In partition pruning, the optimizer analyzes <code class="codeph">FROM</code> and <code class="codeph">WHERE</code> clauses in SQL statements to eliminate unneeded partitions when building the partition access list. This functionality enables Oracle Database to perform operations only on those partitions that are relevant to the SQL statement.
+               </p>
+               <p>The following topics are discussed:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-45D3CCAF-17BC-4E79-8B7F-E65C7F1866F3" title="Partition pruning dramatically reduces the amount of data retrieved from disk and shortens processing time, thus improving query performance and optimizing resource utilization.">Benefits of Partition Pruning</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-319F57EB-124A-4AFF-BBFC-B4EDA65212C4" title="Partition pruning can be performed on partitioning columns.">Information That Can Be Used for Partition Pruning</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-3F576B2F-FA87-472D-8B0F-27D88FD2B34F" title="Whether Oracle uses partition pruning is reflected in the execution plan of a statement, either in the plan table for the EXPLAIN PLAN statement or in the shared SQL area.">How to Identify Whether Partition Pruning Has Been Used</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-9BDD910C-CD99-4470-B269-59A8020C95E6" title="Oracle determines when to use static pruning primarily based on static predicates.">Static Partition Pruning</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-DF8D6743-8786-4D7A-ACDF-0091F8E2FE3B" title="Oracle dynamic partition pruning is introduced in this topic.">Dynamic Partition Pruning</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A" title="Partition pruning is enhanced to take advantage of zone maps for pruning of complete partitions. Providing enhanced pruning capabilities provides better performance with less resource consumption and shorter time-to-information.">Partition Pruning with Zone Maps</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-pruning.html#GUID-6C660105-8ECE-4426-A795-5884E84B0A48" title="Tips for partition pruning are introduced in this topic.">Partition Pruning Tips</a></p>
+                  </li>
+               </ul>
+            </div><a id="VLDBG14026"></a><div class="props_rev_3"><a id="GUID-45D3CCAF-17BC-4E79-8B7F-E65C7F1866F3" name="GUID-45D3CCAF-17BC-4E79-8B7F-E65C7F1866F3"></a><h3 id="VLDBG-GUID-45D3CCAF-17BC-4E79-8B7F-E65C7F1866F3" class="sect3">Benefits of Partition Pruning</h3>
+               <div>
+                  <p>Partition pruning dramatically reduces the amount of data retrieved from disk and shortens processing time, thus improving query performance and optimizing resource utilization.</p>
+                  <p>If you partition the index and table on different columns (with a global partitioned index), then partition pruning also eliminates index partitions even when the partitions of the underlying table cannot be eliminated.</p>
+                  <p>Depending upon the actual SQL statement, Oracle Database may use static or dynamic pruning. Static pruning occurs at compile-time, with the information about the partitions accessed beforehand. Dynamic pruning occurs at run-time, meaning that the exact partitions to be accessed by a statement are not known beforehand. A sample scenario for static pruning is a SQL statement containing a <code class="codeph">WHERE</code> condition with a constant literal on the partition key column. An example of dynamic pruning is the use of operators or functions in the <code class="codeph">WHERE</code> condition.
+                  </p>
+                  <p>Partition pruning affects the statistics of the objects where pruning occurs and also affects the execution plan of a statement.</p>
+               </div>
+            </div><a id="VLDBG14027"></a><a id="VLDBG1229"></a><div class="props_rev_3"><a id="GUID-319F57EB-124A-4AFF-BBFC-B4EDA65212C4" name="GUID-319F57EB-124A-4AFF-BBFC-B4EDA65212C4"></a><h3 id="VLDBG-GUID-319F57EB-124A-4AFF-BBFC-B4EDA65212C4" class="sect3">Information That Can Be Used for Partition Pruning</h3>
+               <div>
+                  <p>Partition pruning can be performed on partitioning columns.</p>
+                  <p>Oracle Database prunes partitions when you use range, <code class="codeph">LIKE</code>, equality, and <code class="codeph">IN</code>-list predicates on the range or list partitioning columns, and when you use equality and <code class="codeph">IN</code>-list predicates on the hash partitioning columns.
+                  </p>
+                  <p>On composite partitioned objects, Oracle Database can prune at both levels using the relevant predicates. For example, see the table <code class="codeph">sales_range_hash</code>, which is partitioned by range on the column <code class="codeph">s_saledate</code> and subpartitioned by hash on the column <code class="codeph">s_productid</code> in <a href="partition-pruning.html#GUID-319F57EB-124A-4AFF-BBFC-B4EDA65212C4__BABDIGFB">Example 3-1</a>.
+                  </p>
+                  <p>Oracle uses the predicate on the partitioning columns to perform partition pruning as follows:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>When using range partitioning, Oracle accesses only partitions <code class="codeph">sal99q2</code> and <code class="codeph">sal99q3</code>, representing the partitions for the third and fourth quarters of 1999.
+                        </p>
+                     </li>
+                     <li>
+                        <p>When using hash subpartitioning, Oracle accesses only the one subpartition in each partition that stores the rows with <code class="codeph">s_productid=1200</code>. The mapping between the subpartition and the predicate is calculated based on Oracle's internal hash distribution function.
+                        </p>
+                     </li>
+                  </ul>
+                  <p>A reference-partitioned table can take advantage of partition pruning through the join with the referenced table. Virtual column-based partitioned tables benefit from partition pruning for statements that use the virtual column-defining expression in the SQL statement.</p>
+                  <div class="example" id="GUID-319F57EB-124A-4AFF-BBFC-B4EDA65212C4__BABDIGFB">
+                     <p class="titleinexample">Example 3-1 Creating a table with partition pruning</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_range_hash(
+  s_productid  NUMBER,
+  s_saledate   DATE,
+  s_custid     NUMBER,
+  s_totalprice NUMBER)
+PARTITION BY RANGE (s_saledate)
+SUBPARTITION BY HASH (s_productid) SUBPARTITIONS 8
+ (PARTITION sal99q1 VALUES LESS THAN
+   (TO_DATE('01-APR-1999', 'DD-MON-YYYY')),
+  PARTITION sal99q2 VALUES LESS THAN
+   (TO_DATE('01-JUL-1999', 'DD-MON-YYYY')),
+  PARTITION sal99q3 VALUES LESS THAN
+   (TO_DATE('01-OCT-1999', 'DD-MON-YYYY')),
+  PARTITION sal99q4 VALUES LESS THAN
+   (TO_DATE('01-JAN-2000', 'DD-MON-YYYY')));
+
+SELECT * FROM sales_range_hash
+WHERE s_saledate BETWEEN (TO_DATE('01-JUL-1999', 'DD-MON-YYYY'))
+  AND (TO_DATE('01-OCT-1999', 'DD-MON-YYYY')) AND s_productid = 1200;
+</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="VLDBG1230"></a><div class="props_rev_3"><a id="GUID-3F576B2F-FA87-472D-8B0F-27D88FD2B34F" name="GUID-3F576B2F-FA87-472D-8B0F-27D88FD2B34F"></a><h3 id="VLDBG-GUID-3F576B2F-FA87-472D-8B0F-27D88FD2B34F" class="sect3">How to Identify Whether Partition Pruning Has Been Used</h3>
+               <div>
+                  <p>Whether Oracle uses partition pruning is reflected in the execution plan of a statement, either in the plan table for the <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> statement or in the shared SQL area.
+                  </p>
+                  <p>The partition pruning information is reflected in the plan columns <code class="codeph">PSTART</code> (<code class="codeph">PARTITION_START</code>) and <code class="codeph">PSTOP</code> (<code class="codeph">PARTITION_STOP</code>). For serial statements, the pruning information is also reflected in the <code class="codeph">OPERATION</code> and <code class="codeph">OPTIONS</code> columns.
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-3F576B2F-FA87-472D-8B0F-27D88FD2B34F__GUID-1C3973A9-790A-4FD4-9B59-11E76F660B3C">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="../tgsql/generating-and-displaying-execution-plans.html#TGSQL271" target="_blank"><span><cite>Oracle Database SQL Tuning Guide</cite></span></a> for more information about <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> and how to interpret it
+                     </p>
+                  </div>
+               </div>
+            </div><a id="VLDBG1231"></a><div class="props_rev_3"><a id="GUID-9BDD910C-CD99-4470-B269-59A8020C95E6" name="GUID-9BDD910C-CD99-4470-B269-59A8020C95E6"></a><h3 id="VLDBG-GUID-9BDD910C-CD99-4470-B269-59A8020C95E6" class="sect3">Static Partition Pruning</h3>
+               <div>
+                  <p>Oracle determines when to use static pruning primarily based on static predicates.</p>
+                  <p>For many cases, Oracle determines the partitions to be accessed at compile time. Static partition pruning occurs if you use static predicates, except for the following cases:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Partition pruning occurs using the result of a subquery.</p>
+                     </li>
+                     <li>
+                        <p>The optimizer rewrites the query with a star transformation and pruning occurs after the star transformation.</p>
+                     </li>
+                     <li>
+                        <p>The most efficient execution plan is a nested loop.</p>
+                     </li>
+                  </ul>
+                  <p>These three cases result in the use of dynamic pruning.</p>
+                  <p>If at parse time Oracle can identify which contiguous set of partitions is accessed, then the <code class="codeph">PSTART</code> and <code class="codeph">PSTOP</code> columns in the execution plan show the begin and the end values of the partitions being accessed. Any other cases of partition pruning, including dynamic pruning, show the KEY value in <code class="codeph">PSTART</code> and <code class="codeph">PSTOP</code>, optionally with an additional attribute.
+                  </p>
+                  <p>The following is an example:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; explain plan for select * from sales where time_id = to_date('01-jan-2001', 'dd-mon-yyyy');
+Explained.
+
+SQL&gt; select * from table(dbms_xplan.display);
+PLAN_TABLE_OUTPUT
+----------------------------------------------------------------------------------------------
+Plan hash value: 3971874201
+----------------------------------------------------------------------------------------------
+| Id | Operation              | Name  | Rows | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------
+|  0 | SELECT STATEMENT       |       | 673  | 19517 | 27      (8)| 00:00:01 |       |       |
+|  1 |  PARTITION RANGE SINGLE|       | 673  | 19517 | 27      (8)| 00:00:01 | 17    | 17    |
+|* 2 |   TABLE ACCESS FULL    | SALES | 673  | 19517 | 27      (8)| 00:00:01 | 17    | 17    |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+--------------------------------------------------- 
+   2 - filter("TIME_ID"=TO_DATE('2001-01-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss'))
+</pre><p>This plan shows that Oracle accesses partition number 17, as shown in the <code class="codeph">PSTART</code> and <code class="codeph">PSTOP</code> columns. The <code class="codeph">OPERATION</code> column shows <code class="codeph">PARTITION RANGE SINGLE</code>, indicating that only a single partition is being accessed. If <code class="codeph">OPERATION</code> shows <code class="codeph">PARTITION RANGE ALL</code>, then all partitions are being accessed and effectively no pruning takes place. <code class="codeph">PSTART</code> then shows the very first partition of the table and <code class="codeph">PSTOP</code> shows the very last partition.
+                  </p>
+                  <p>An execution plan with a full table scan on an interval-partitioned table shows 1 for <code class="codeph">PSTART</code>, and 1048575 for <code class="codeph">PSTOP</code>, regardless of how many interval partitions were created.
+                  </p>
+               </div>
+            </div><a id="VLDBG1232"></a><div class="props_rev_3"><a id="GUID-DF8D6743-8786-4D7A-ACDF-0091F8E2FE3B" name="GUID-DF8D6743-8786-4D7A-ACDF-0091F8E2FE3B"></a><h3 id="VLDBG-GUID-DF8D6743-8786-4D7A-ACDF-0091F8E2FE3B" class="sect3">Dynamic Partition Pruning</h3>
+               <div>
+                  <p>Oracle dynamic partition pruning is introduced in this topic.</p>
+                  <p>Dynamic pruning occurs if pruning is possible and static pruning is not possible. The following examples show multiple dynamic pruning cases:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-07025249-EA81-44E7-A1C2-F56386248FA0" title="Statements that use bind variables against partition columns result in dynamic pruning.">Dynamic Pruning with Bind Variables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-5B5893F9-4F64-46B1-B6CE-10BD1E7D6003" title="Statements that explicitly use subqueries against partition columns result in dynamic pruning.">Dynamic Pruning with Subqueries</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-273DE720-CEFF-43ED-8DB1-E0ADEB695433" title="Statements that get transformed by the database using the star transformation result in dynamic pruning.">Dynamic Pruning with Star Transformation</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-F57D9DC0-31D6-4A0F-A787-5A82723D88F5" title="Statements that are most efficiently executed using a nested loop join use dynamic pruning.">Dynamic Pruning with Nested Loop Joins</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1233"></a><div class="props_rev_3"><a id="GUID-07025249-EA81-44E7-A1C2-F56386248FA0" name="GUID-07025249-EA81-44E7-A1C2-F56386248FA0"></a><h4 id="VLDBG-GUID-07025249-EA81-44E7-A1C2-F56386248FA0" class="sect4">Dynamic Pruning with Bind Variables</h4>
+                  <div>
+                     <p>Statements that use bind variables against partition columns result in dynamic pruning.</p>
+                     <p>The following SQL statement is an example.</p><pre class="oac_no_warn" dir="ltr">SQL&gt; explain plan for select * from sales s where time_id in ( :a, :b, :c, :d);
+Explained.
+
+SQL&gt; select * from table(dbms_xplan.display);
+PLAN_TABLE_OUTPUT
+---------------------------------------------------------------------------------------------------
+Plan hash value: 513834092
+---------------------------------------------------------------------------------------------------
+| Id | Operation                         |    Name |Rows|Bytes|Cost (%CPU)|  Time  | Pstart| Pstop|
+---------------------------------------------------------------------------------------------------
+|  0 | SELECT STATEMENT                  |         |2517|72993|    292 (0)|00:00:04|       |      |
+|  1 |  INLIST ITERATOR                  |         |    |     |           |        |       |      |
+|  2 |   PARTITION RANGE ITERATOR        |         |2517|72993|    292 (0)|00:00:04|KEY(I) |KEY(I)|
+|  3 |    TABLE ACCESS BY LOCAL INDEX ROWID| SALES |2517|72993|    292 (0)|00:00:04|KEY(I) |KEY(I)|
+|  4 |     BITMAP CONVERSION TO ROWIDS   |         |    |     |           |        |       |      |
+|* 5 |      BITMAP INDEX SINGLE VALUE    |SALES_TIME_BIX| |   |           |        |KEY(I) |KEY(I)|
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+5 - access("TIME_ID"=:A OR "TIME_ID"=:B OR "TIME_ID"=:C OR "TIME_ID"=:D)
+</pre><p>For parallel execution plans, only the partition start and stop columns contain the partition pruning information; the operation column contains information for the parallel operation, as shown in the following example:</p><pre class="oac_no_warn" dir="ltr">SQL&gt; explain plan for select * from sales where time_id in (:a, :b, :c, :d);
+Explained.
+
+SQL&gt; select * from table(dbms_xplan.display);
+PLAN_TABLE_OUTPUT
+-------------------------------------------------------------------------------------------------
+Plan hash value: 4058105390
+-------------------------------------------------------------------------------------------------
+| Id| Operation          | Name  |Rows|Bytes|Cost(%CP|  Time  |Pstart| Pstop|  TQ |INOUT| PQ Dis|
+-------------------------------------------------------------------------------------------------
+|  0| SELECT STATEMENT   |       |2517|72993|  75(36)|00:00:01|      |      |     |     |       |
+|  1|  PX COORDINATOR    |       |    |     |        |        |      |      |     |     |       |
+|  2|  PX SEND QC(RANDOM)|:TQ10000|2517|72993| 75(36)|00:00:01|      |      |Q1,00| P-&gt;S|QC(RAND|
+|  3|   PX BLOCK ITERATOR|       |2517|72993|  75(36)|00:00:01|KEY(I)|KEY(I)|Q1,00| PCWC|       |
+|* 4|   TABLE ACCESS FULL| SALES |2517|72993|  75(36)|00:00:01|KEY(I)|KEY(I)|Q1,00| PCWP|       |
+-------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+--------------------------------------------------- 
+  4 - filter("TIME_ID"=:A OR "TIME_ID"=:B OR "TIME_ID"=:C OR "TIME_ID"=:D)
+</pre><div class="infoboxnotealso" id="GUID-07025249-EA81-44E7-A1C2-F56386248FA0__GUID-26E87695-8CBB-4444-9E37-B30BD6FD3DC1">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../tgsql/generating-and-displaying-execution-plans.html#TGSQL271" target="_blank"><span><cite>Oracle Database SQL Tuning Guide</cite></span></a> for more information about <code class="codeph">EXPLAIN PLAN</code> and how to interpret it
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1234"></a><div class="props_rev_3"><a id="GUID-5B5893F9-4F64-46B1-B6CE-10BD1E7D6003" name="GUID-5B5893F9-4F64-46B1-B6CE-10BD1E7D6003"></a><h4 id="VLDBG-GUID-5B5893F9-4F64-46B1-B6CE-10BD1E7D6003" class="sect4">Dynamic Pruning with Subqueries</h4>
+                  <div>
+                     <p>Statements that explicitly use subqueries against partition columns result in dynamic pruning.</p>
+                     <p>The following SQL statement is an example.</p><pre class="oac_no_warn" dir="ltr">SQL&gt; explain plan for select sum(amount_sold) from sales where time_id in
+     (select time_id from times where fiscal_year = 2000);
+Explained.
+
+SQL&gt; select * from table(dbms_xplan.display);
+PLAN_TABLE_OUTPUT
+PLAN_TABLE_OUTPUT
+----------------------------------------------------------------------------------------------------
+Plan hash value: 3827742054
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation                  | Name  | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT           |       |     1 |    25 |   523   (5)| 00:00:07 |       |       |
+|   1 |  SORT AGGREGATE            |       |     1 |    25 |            |          |       |       |
+|*  2 |   HASH JOIN                |       |   191K|  4676K|   523   (5)| 00:00:07 |       |       |
+|*  3 |    TABLE ACCESS FULL       | TIMES |   304 |  3648 |    18   (0)| 00:00:01 |       |       |
+|   4 |    PARTITION RANGE SUBQUERY|       |   918K|    11M|   498   (4)| 00:00:06 |KEY(SQ)|KEY(SQ)|
+|   5 |     TABLE ACCESS FULL      | SALES |   918K|    11M|   498   (4)| 00:00:06 |KEY(SQ)|KEY(SQ)|
+----------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("TIME_ID"="TIME_ID")
+   3 - filter("FISCAL_YEAR"=2000)
+</pre><div class="infoboxnotealso" id="GUID-5B5893F9-4F64-46B1-B6CE-10BD1E7D6003__GUID-9599263C-6B40-484A-9986-8ABC1CEC1116">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../tgsql/generating-and-displaying-execution-plans.html#TGSQL271" target="_blank"><span><cite>Oracle Database SQL Tuning Guide</cite></span></a> for more information about <code class="codeph">EXPLAIN PLAN</code> and how to interpret it
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1235"></a><div class="props_rev_3"><a id="GUID-273DE720-CEFF-43ED-8DB1-E0ADEB695433" name="GUID-273DE720-CEFF-43ED-8DB1-E0ADEB695433"></a><h4 id="VLDBG-GUID-273DE720-CEFF-43ED-8DB1-E0ADEB695433" class="sect4">Dynamic Pruning with Star Transformation</h4>
+                  <div>
+                     <p>Statements that get transformed by the database using the star transformation result in dynamic pruning.</p>
+                     <p>The following SQL statement is an example.</p><pre class="oac_no_warn" dir="ltr">SQL&gt; explain plan for select p.prod_name, t.time_id, sum(s.amount_sold)
+     from sales s, times t, products p
+     where s.time_id = t.time_id and s.prod_id = p.prod_id and t.fiscal_year = 2000
+     and t.fiscal_week_number = 3 and p.prod_category = 'Hardware'
+     group by t.time_id, p.prod_name;
+Explained.
+
+SQL&gt; select * from table(dbms_xplan.display);
+PLAN_TABLE_OUTPUT
+------------------------------------------------------------------------------------------------------
+Plan hash value: 4020965003
+
+------------------------------------------------------------------------------------------------------
+| Id  | Operation                             | Name                 | Rows  | Bytes | Pstart| Pstop |
+------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                      |                      |     1 |    79 |       |       |
+|   1 |  HASH GROUP BY                        |                      |     1 |    79 |       |       |
+|*  2 |   HASH JOIN                           |                      |     1 |    79 |       |       |
+|*  3 |    HASH JOIN                          |                      |     2 |    64 |       |       |
+|*  4 |     TABLE ACCESS FULL                 | TIMES                |     6 |    90 |       |       |
+|   5 |     PARTITION RANGE SUBQUERY          |                      |   587 |  9979 |KEY(SQ)|KEY(SQ)|
+|   6 |      TABLE ACCESS BY LOCAL INDEX ROWID| SALES                |   587 |  9979 |KEY(SQ)|KEY(SQ)|
+|   7 |       BITMAP CONVERSION TO ROWIDS     |                      |       |       |       |       |
+|   8 |        BITMAP AND                     |                      |       |       |       |       |
+|   9 |         BITMAP MERGE                  |                      |       |       |       |       |
+|  10 |          BITMAP KEY ITERATION         |                      |       |       |       |       |
+|  11 |           BUFFER SORT                 |                      |       |       |       |       |
+|* 12 |            TABLE ACCESS FULL          | TIMES                |     6 |    90 |       |       |
+|* 13 |           BITMAP INDEX RANGE SCAN     | SALES_TIME_BIX       |       |       |KEY(SQ)|KEY(SQ)|
+|  14 |         BITMAP MERGE                  |                      |       |       |       |       |
+|  15 |          BITMAP KEY ITERATION         |                      |       |       |       |       |
+|  16 |           BUFFER SORT                 |                      |       |       |       |       |
+|  17 |            TABLE ACCESS BY INDEX ROWID| PRODUCTS             |    14 |   658 |       |       |
+|* 18 |             INDEX RANGE SCAN          | PRODUCTS_PROD_CAT_IX |    14 |       |       |       |
+|* 19 |           BITMAP INDEX RANGE SCAN     | SALES_PROD_BIX       |       |       |KEY(SQ)|KEY(SQ)|
+|  20 |    TABLE ACCESS BY INDEX ROWID        | PRODUCTS             |    14 |   658 |       |       |
+|* 21 |     INDEX RANGE SCAN                  | PRODUCTS_PROD_CAT_IX |    14 |       |       |       |
+------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("S"."PROD_ID"="P"."PROD_ID")
+   3 - access("S"."TIME_ID"="T"."TIME_ID")
+   4 - filter("T"."FISCAL_WEEK_NUMBER"=3 AND "T"."FISCAL_YEAR"=2000)
+  12 - filter("T"."FISCAL_WEEK_NUMBER"=3 AND "T"."FISCAL_YEAR"=2000)
+  13 - access("S"."TIME_ID"="T"."TIME_ID")
+  18 - access("P"."PROD_CATEGORY"='Hardware')
+  19 - access("S"."PROD_ID"="P"."PROD_ID")
+  21 - access("P"."PROD_CATEGORY"='Hardware')
+
+Note
+-----
+   - star transformation used for this statement
+</pre><div class="infoboxnote" id="GUID-273DE720-CEFF-43ED-8DB1-E0ADEB695433__GUID-C81A4F68-0BE8-4FB6-B703-A828BCB8B617">
+                        <p class="notep1">Note:</p>
+                        <p>The <code class="codeph">Cost (%CPU)</code> and <code class="codeph">Time</code> columns were removed from the plan table output in this example.
+                        </p>
+                     </div>
+                     <div class="infoboxnotealso" id="GUID-273DE720-CEFF-43ED-8DB1-E0ADEB695433__GUID-9235D6CF-F5A2-4989-84AD-CEFD8C55BCDA">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../tgsql/generating-and-displaying-execution-plans.html#TGSQL271" target="_blank"><span><cite>Oracle Database SQL Tuning Guide</cite></span></a> for more information about <code class="codeph">EXPLAIN PLAN</code> and how to interpret it
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1236"></a><div class="props_rev_3"><a id="GUID-F57D9DC0-31D6-4A0F-A787-5A82723D88F5" name="GUID-F57D9DC0-31D6-4A0F-A787-5A82723D88F5"></a><h4 id="VLDBG-GUID-F57D9DC0-31D6-4A0F-A787-5A82723D88F5" class="sect4">Dynamic Pruning with Nested Loop Joins</h4>
+                  <div>
+                     <p>Statements that are most efficiently executed using a nested loop join use dynamic pruning.</p>
+                     <p>The following SQL statement is an example.</p><pre class="oac_no_warn" dir="ltr">SQL&gt; explain plan for select t.time_id, sum(s.amount_sold)
+     from sales s, times t
+     where s.time_id = t.time_id and t.fiscal_year = 2000 and t.fiscal_week_number = 3
+     group by t.time_id;
+Explained.
+
+SQL&gt; select * from table(dbms_xplan.display);
+PLAN_TABLE_OUTPUT
+----------------------------------------------------------------------------------------------------
+Plan hash value: 50737729
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation                  | Name  | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT           |       |     6 |   168 |   126   (4)| 00:00:02 |       |       |
+|   1 |  HASH GROUP BY             |       |     6 |   168 |   126   (4)| 00:00:02 |       |       |
+|   2 |   NESTED LOOPS             |       |  3683 |   100K|   125   (4)| 00:00:02 |       |       |
+|*  3 |    TABLE ACCESS FULL       | TIMES |     6 |    90 |    18   (0)| 00:00:01 |       |       |
+|   4 |    PARTITION RANGE ITERATOR|       |   629 |  8177 |    18   (6)| 00:00:01 |   KEY |   KEY |
+|*  5 |     TABLE ACCESS FULL      | SALES |   629 |  8177 |    18   (6)| 00:00:01 |   KEY |   KEY |
+----------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter("T"."FISCAL_WEEK_NUMBER"=3 AND "T"."FISCAL_YEAR"=2000)
+   5 - filter("S"."TIME_ID"="T"."TIME_ID")
+</pre><div class="infoboxnotealso" id="GUID-F57D9DC0-31D6-4A0F-A787-5A82723D88F5__GUID-307C37D6-1724-4D35-9266-B7CFF340D655">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../tgsql/generating-and-displaying-execution-plans.html#TGSQL271" target="_blank"><span><cite>Oracle Database SQL Tuning Guide</cite></span></a> for more information about <code class="codeph">EXPLAIN PLAN</code> and how to interpret it
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="VLDBG14224"></a><a id="VLDBG14225"></a><a id="VLDBG14101"></a><div class="props_rev_3"><a id="GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A" name="GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A"></a><h3 id="VLDBG-GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A" class="sect3">Partition Pruning with Zone Maps</h3>
+               <div>
+                  <p>Partition pruning is enhanced to take advantage of zone maps for pruning of complete partitions. Providing enhanced pruning capabilities provides better performance with less resource consumption and shorter time-to-information.</p>
+                  <p>A zone map is a independent access structure that can be built for a table. During table scans, zone maps enable you to prune disk blocks of a table and partitions of a partitioned table based on predicates on the table columns. Zone maps have no correlation to the partition key columns of a partitioned table, so statements on partitioned tables with zone maps can prune partitions based on non-partition key columns.</p>
+                  <div class="infoboxnotealso" id="GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A__GUID-A3F299E6-864B-4596-9592-9C09F3D54B92">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="../dwhsg/attribute-clustering.html#DWHSG-GUID-7B007A3C-53C2-4437-9E71-9ECECF8B4FAB" target="_blank"><span class="italic">Oracle Database Data Warehousing Guide</span></a> for information about zone maps and attribute clustering
+                     </p>
+                  </div>
+                  <p>Partition pruning with zone maps is especially effective when the zone map column values correlate with partition key column values. For example, the correlation can be between columns of the partitioned table itself, such as a shipping date that has a correlation to the partition key column order date in the same partitioned table, or within the join zone map columns and the partitioned table, such as a join zone map column month description from a dimension table times that correlates with the partition key column day of the partitioned table.</p>
+                  <p><a href="partition-pruning.html#GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A__BABHBCEG">Example 3-2</a> illustrates partition pruning with zone maps for correlated columns of a partitioned table. Column <code class="codeph">s_shipdate</code> in the partitioned table <code class="codeph">sales_range</code> correlates with the partition key column <code class="codeph">order_date</code> because orders are normally shipped within a couple of days after an order was received.
+                  </p>
+                  <p>Due to the correlation of <code class="codeph">s_shipdate</code> and the partition key column any selective predicate on this column has a high likelihood to enable partition pruning for the partitioned table <code class="codeph">sales_range</code>, without having the column as part of the partitioning key.
+                  </p>
+                  <p>The following <code class="codeph">SELECT</code> statement looks for all orders that were shipped in the first quarter of 1999:
+                  </p><pre class="oac_no_warn" dir="ltr">SELECT * FROM sales_range 
+      WHERE s_shipdate BETWEEN to_date('01/01/1999','dd/mm/yyyy') 
+      AND to_date('03/01/1999','mm/dd/yyyy');
+</pre><p>In the following execution plan for the previous <code class="codeph">SELECT</code> statement, zone maps are used for partition pruning and also to prune blocks from the partitions that have to be accessed.
+                  </p>
+                  <p>Partition pruning with zone maps is identified by having <code class="codeph">KEY(ZM)</code> in the <code class="codeph">PSTART</code> and <code class="codeph">PSTOP</code> columns of the execution plan. The block level pruning of all accessed partitions is identified by the filter predicate at table access time (<code class="codeph">id 2</code>).
+                  </p>
+                  <div class="example" id="GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A__BABHBCEG">
+                     <p class="titleinexample">Example 3-2 Partitioned table sales_range with attribute clustering and a zone map on a correlated column</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_range( 
+  s_productid      NUMBER,
+  s_saledate       DATE,
+  s_shipdate       DATE,
+  s_custid         NUMBER,
+  s_totalprice     NUMBER)
+CLUSTERING BY (s_shipdate)
+WITH MATERIALIZED ZONEMAP
+PARTITION BY RANGE (s_saledate)
+ (PARTITION sal99q1 VALUES LESS THAN
+   (TO_DATE('01-APR-1999', 'DD-MON-YYYY')),
+  PARTITION sal99q2 VALUES LESS THAN
+   (TO_DATE('01-JUL-1999', 'DD-MON-YYYY')),
+  PARTITION sal99q3 VALUES LESS THAN
+   (TO_DATE('01-OCT-1999', 'DD-MON-YYYY')),
+  PARTITION sal99q4 VALUES LESS THAN
+   (TO_DATE('01-JAN-2000', 'DD-MON-YYYY')));
+</pre></div>
+                  <!-- class="example" -->
+                  <div class="example" id="GUID-65DA5654-970B-4056-BFBF-C300C9A8AA2A__GUID-DE5F25E7-383A-4A46-B6D9-BEF785DBE0DA">
+                     <p class="titleinexample">Example 3-3 Execution plan for partition pruning with zone maps</p><pre class="oac_no_warn" dir="ltr">---------------------------------------------------------------------------------------------------------------
+| Id  | Operation                       | Name        | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+---------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                |             |       |       |     3 (100)|          |       |       |
+|   1 |  PARTITION RANGE ITERATOR       |             |    58 |  3306 |     3   (0)| 00:00:01 |KEY(ZM)|KEY(ZM)|
+|*  2 |   TABLE ACCESS FULL WITH ZONEMAP| SALES_RANGE |    58 |  3306 |     3   (0)| 00:00:01 |KEY(ZM)|KEY(ZM)|
+---------------------------------------------------------------------------------------------------------------</pre><pre class="oac_no_warn" dir="ltr">
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+2 - filter((SYS_ZMAP_FILTER('/* ZM_PRUNING */ SELECT "ZONE_ID$", CASE WHEN
+ BITAND(zm."ZONE_STATE$",1)=1 THEN 1 ELSE CASE WHEN (zm."MAX_1_S_SHIPDATE" &lt; :1 OR
+ zm."MIN_1_S_SHIPDATE" &gt; :2) THEN 3 ELSE 2 END END FROM "SH"."ZMAP$_SALES_RANGE" zm WHERE
+ zm."ZONE_LEVEL$"=0 ORDER BY zm."ZONE_ID$"',SYS_OP_ZONE_ID(ROWID),TO_DATE(' 1999-01-01 00:00:00',
+ 'syyyy-mm-dd hh24:mi:ss'),TO_DATE(' 1999-03-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))&lt;3 AND
+ "S_SHIPDATE"&gt;=TO_DATE(' 1999-01-01 00:00:00','syyyy-mm-dd hh24:mi:ss') AND "S_SHIPDATE"&lt;=TO_DATE('
+  1999-03-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')))
+</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="VLDBG1237"></a><div class="props_rev_3"><a id="GUID-6C660105-8ECE-4426-A795-5884E84B0A48" name="GUID-6C660105-8ECE-4426-A795-5884E84B0A48"></a><h3 id="VLDBG-GUID-6C660105-8ECE-4426-A795-5884E84B0A48" class="sect3">Partition Pruning Tips</h3>
+               <div>
+                  <p>Tips for partition pruning are introduced in this topic.</p>
+                  <p>When using partition pruning, you should consider the following:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053" title="To get the maximum performance benefit from partition pruning, you should avoid constructs that require the database to convert the data type you specify.">Data Type Conversions</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-C3CEB8F8-064E-45C5-97EE-E3BF1D00D517" title="Functions can limit the ability of the optimizer to perform pruning.">Function Calls</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-pruning.html#GUID-88E16CEE-3CB1-4AD6-82B3-62B86B899A01" title="Collection tables can limit the ability of the optimizer to perform pruning.">Collection Tables</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1238"></a><div class="props_rev_3"><a id="GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053" name="GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053"></a><h4 id="VLDBG-GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053" class="sect4">Data Type Conversions</h4>
+                  <div>
+                     <p>To get the maximum performance benefit from partition pruning, you should avoid constructs that require the database to convert the data type you specify.</p>
+                     <p>Data type conversions typically result in dynamic pruning when static pruning would have otherwise been possible. SQL statements that benefit from static pruning perform better than statements that benefit from dynamic pruning.</p>
+                     <p>A common case of data type conversions occurs when using the Oracle <code class="codeph">DATE</code> data type. An Oracle <code class="codeph">DATE</code> data type is not a character string but is only represented as such when querying the database; the format of the representation is defined by the NLS setting of the instance or the session. Consequently, the same reverse conversion has to happen when inserting data into a <code class="codeph">DATE</code> field or when specifying a predicate on such a field.
+                     </p>
+                     <p>A conversion can either happen implicitly or explicitly by specifying a <code class="codeph">TO_DATE</code> conversion. Only a properly applied <code class="codeph">TO_DATE</code> function guarantees that the database can uniquely determine the date value and using it potentially for static pruning, which is especially beneficial for single partition access.
+                     </p>
+                     <p>Consider the following example that runs against the <code class="codeph">sales</code> table. You would like to know the total revenue number for the year 2000. There are multiple ways you can retrieve the answer to the query, but not every method is equally efficient.
+                     </p><pre class="oac_no_warn" dir="ltr">explain plan for SELECT SUM(amount_sold) total_revenue
+FROM sales,
+WHERE time_id between '01-JAN-00' and '31-DEC-00';
+</pre><p>The plan should now be similar to the following:</p><pre class="oac_no_warn" dir="ltr">----------------------------------------------------------------------------------------------------
+| Id  | Operation                  | Name  | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT           |       |     1 |    13 |   525   (8)| 00:00:07 |       |       |
+|   1 |  SORT AGGREGATE            |       |     1 |    13 |            |          |       |       |
+|*  2 |   FILTER                   |       |       |       |            |          |       |       |
+|   3 |    PARTITION RANGE ITERATOR|       |   230K|  2932K|   525   (8)| 00:00:07 |   KEY |   KEY |
+|*  4 |     TABLE ACCESS FULL      | SALES |   230K|  2932K|   525   (8)| 00:00:07 |   KEY |   KEY |
+----------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter(TO_DATE('01-JAN-00')&lt;=TO_DATE('31-DEC-00'))
+   4 - filter("TIME_ID"&gt;='01-JAN-00' AND "TIME_ID"&lt;='31-DEC-00') 
+</pre><p>In this case, the keyword <code class="codeph">KEY</code> for both <code class="codeph">PSTART</code> and <code class="codeph">PSTOP</code> means that dynamic partition pruning occurs at run-time. Consider the following case.
+                     </p><pre class="oac_no_warn" dir="ltr">explain plan for select sum(amount_sold)
+from sales
+where time_id between '01-JAN-2000' and '31-DEC-2000' ;
+</pre><p>The execution plan now shows the following:</p><pre class="oac_no_warn" dir="ltr">----------------------------------------------------------------------------------------
+| Id  | Operation                 | Name  | Rows  | Bytes | Cost (%CPU)| Pstart| Pstop |
+----------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT          |       |     1 |    13 |   127   (4)|       |       |
+|   1 |  SORT AGGREGATE           |       |     1 |    13 |            |       |       |
+|   2 |   PARTITION RANGE ITERATOR|       |   230K|  2932K|   127   (4)|    13 |    16 |
+|*  3 |    TABLE ACCESS FULL      | SALES |   230K|  2932K|   127   (4)|    13 |    16 |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter("TIME_ID"&lt;=TO_DATE(' 2000-12-31 00:00:00', "syyyy-mm-dd hh24:mi:ss'))
+</pre><div class="infoboxnote" id="GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053__GUID-FB2F8EAD-76AB-486E-96B8-3BF0FFFE0A7F">
+                        <p class="notep1">Note:</p>
+                        <p>The <code class="codeph">Time</code> column was removed from the execution plan.
+                        </p>
+                     </div>
+                     <p>The execution plan shows static partition pruning. The query accesses a contiguous list of partitions 13 to 16. In this particular case, the way the date format was specified matches the NLS date format setting. Though this example shows the most efficient execution plan, you cannot rely on the NLS date format setting to define a certain format.</p><pre class="oac_no_warn" dir="ltr">alter session set nls_date_format='fmdd Month yyyy';
+
+explain plan for select sum(amount_sold)
+from sales
+where time_id between '01-JAN-2000' and '31-DEC-2000' ;
+</pre><p>The execution plan now shows the following:</p><pre class="oac_no_warn" dir="ltr">-----------------------------------------------------------------------------------------
+| Id  | Operation                  | Name  | Rows  | Bytes | Cost (%CPU)| Pstart| Pstop |
+-----------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT           |       |     1 |    13 |   525   (8)|       |       |
+|   1 |  SORT AGGREGATE            |       |     1 |    13 |            |       |       |
+|*  2 |   FILTER                   |       |       |       |            |       |       |
+|   3 |    PARTITION RANGE ITERATOR|       |   230K|  2932K|   525   (8)|   KEY |   KEY |
+|*  4 |     TABLE ACCESS FULL      | SALES |   230K|  2932K|   525   (8)|   KEY |   KEY |
+-----------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter(TO_DATE('01-JAN-2000')&lt;=TO_DATE('31-DEC-2000'))
+   4 - filter("TIME_ID"&gt;='01-JAN-2000' AND "TIME_ID"&lt;='31-DEC-2000')
+</pre><div class="infoboxnote" id="GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053__GUID-30F3D909-0B3C-4EC0-BD99-0CCB55DFB40C">
+                        <p class="notep1">Note:</p>
+                        <p>The <code class="codeph">Time</code> column was removed from the execution plan.
+                        </p>
+                     </div>
+                     <p>This plan, which uses dynamic pruning, again is less efficient than the static pruning execution plan. To guarantee a static partition pruning plan, you should explicitly convert data types to match the partition column data type. For example:</p><pre class="oac_no_warn" dir="ltr">explain plan for select sum(amount_sold)
+from sales
+where time_id between to_date('01-JAN-2000','dd-MON-yyyy')
+  and to_date('31-DEC-2000','dd-MON-yyyy') ;
+
+
+----------------------------------------------------------------------------------------
+| Id  | Operation                 | Name  | Rows  | Bytes | Cost (%CPU)| Pstart| Pstop |
+----------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT          |       |     1 |    13 |   127   (4)|       |       |
+|   1 |  SORT AGGREGATE           |       |     1 |    13 |            |       |       |
+|   2 |   PARTITION RANGE ITERATOR|       |   230K|  2932K|   127   (4)|    13 |    16 |
+|*  3 |    TABLE ACCESS FULL      | SALES |   230K|  2932K|   127   (4)|    13 |    16 |
+----------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter("TIME_ID"&lt;=TO_DATE(' 2000-12-31 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+</pre><div class="infoboxnote" id="GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053__GUID-9EB6FF49-D906-49F2-9FAC-07B8377D61BC">
+                        <p class="notep1">Note:</p>
+                        <p>The <code class="codeph">Time</code> column was removed from the execution plan.
+                        </p>
+                     </div>
+                     <div class="infoboxnotealso" id="GUID-B3D411C4-FC7B-4630-ACB0-E49BFA540053__GUID-E02543A1-66EF-46A1-A7CD-7281826AC601">
+                        <p class="notep1">See Also:</p>
+                        <p></p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../sqlrf/Data-Types.html#SQLRF00202" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for details about the <code class="codeph">DATE</code> data type
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../nlspg/setting-up-globalization-support-environment.html#NLSPG003" target="_blank"><span><cite>Oracle Database Globalization Support Guide</cite></span></a> for details about NLS settings and globalization issues
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1239"></a><div class="props_rev_3"><a id="GUID-C3CEB8F8-064E-45C5-97EE-E3BF1D00D517" name="GUID-C3CEB8F8-064E-45C5-97EE-E3BF1D00D517"></a><h4 id="VLDBG-GUID-C3CEB8F8-064E-45C5-97EE-E3BF1D00D517" class="sect4">Function Calls</h4>
+                  <div>
+                     <p>Functions can limit the ability of the optimizer to perform pruning.</p>
+                     <p>There are several cases when the optimizer cannot perform pruning. One common reasons is when an operator is used on top of a partitioning column. This could be an explicit operator (for example, a function) or even an implicit operator introduced by Oracle as part of the necessary data type conversion for executing the statement. For example, consider the following query:</p><pre class="oac_no_warn" dir="ltr">EXPLAIN PLAN FOR
+SELECT SUM(quantity_sold)
+FROM sales
+WHERE time_id = TO_TIMESTAMP('1-jan-2000', 'dd-mon-yyyy');
+</pre><p>Because <code class="codeph">time_id</code> is of type <code class="codeph">DATE</code> and Oracle must promote it to the <code class="codeph">TIMESTAMP</code> type to get the same data type, this predicate is internally rewritten as:
+                     </p><pre class="oac_no_warn" dir="ltr">TO_TIMESTAMP(time_id) = TO_TIMESTAMP('1-jan-2000', 'dd-mon-yyyy')
+</pre><p>The execution plan for this statement is as follows:</p><pre class="oac_no_warn" dir="ltr">--------------------------------------------------------------------------------------------
+|Id | Operation            | Name  | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+--------------------------------------------------------------------------------------------
+| 0 | SELECT STATEMENT     |       |     1 |    11 |     6  (17)| 00:00:01 |       |       |
+| 1 |  SORT AGGREGATE      |       |     1 |    11 |            |          |       |       |
+| 2 |   PARTITION RANGE ALL|       |    10 |   110 |     6  (17)| 00:00:01 |     1 |    16 |
+|*3 |    TABLE ACCESS FULL | SALES |    10 |   110 |     6  (17)| 00:00:01 |     1 |    16 |
+--------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+3 - filter(INTERNAL_FUNCTION("TIME_ID")=TO_TIMESTAMP('1-jan-2000',:B1))
+ 
+15 rows selected
+</pre><p>The <code class="codeph">SELECT</code> statement accesses all partitions even though pruning down to a single partition could have taken place. Consider the example to find the total sales revenue number for 2000. Another way to construct the query would be:
+                     </p><pre class="oac_no_warn" dir="ltr">EXPLAIN PLAN FOR
+SELECT SUM(amount_sold)
+FROM sales
+WHERE TO_CHAR(time_id,'yyyy') = '2000';
+</pre><p>This query applies a function call to the partition key column, which generally disables partition pruning. The execution plan shows a full table scan with no partition pruning:</p><pre class="oac_no_warn" dir="ltr">----------------------------------------------------------------------------------------------
+| Id  | Operation            | Name  | Rows  | Bytes | Cost (%CPU)| Time     | Pstart| Pstop |
+----------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |       |     1 |    13 |   527   (9)| 00:00:07 |       |       |
+|   1 |  SORT AGGREGATE      |       |     1 |    13 |            |          |       |       |
+|   2 |   PARTITION RANGE ALL|       |  9188 |   116K|   527   (9)| 00:00:07 |     1 |    28 |
+|*  3 |    TABLE ACCESS FULL | SALES |  9188 |   116K|   527   (9)| 00:00:07 |     1 |    28 |
+----------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter(TO_CHAR(INTERNAL_FUNCTION("TIME_ID"),'yyyy')='2000')
+</pre><p>Avoid using implicit or explicit functions on the partition columns. If your queries commonly use function calls, then consider using a virtual column and virtual column partitioning to benefit from partition pruning in these cases.</p>
+                  </div>
+               </div><a id="VLDBG1240"></a><div class="props_rev_3"><a id="GUID-88E16CEE-3CB1-4AD6-82B3-62B86B899A01" name="GUID-88E16CEE-3CB1-4AD6-82B3-62B86B899A01"></a><h4 id="VLDBG-GUID-88E16CEE-3CB1-4AD6-82B3-62B86B899A01" class="sect4">Collection Tables</h4>
+                  <div>
+                     <p>Collection tables can limit the ability of the optimizer to perform pruning.</p>
+                     <p>The following example illustrates what an <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> statement might look like when it contains Collection Tables, which, for the purposes of this discussion, are ordered collection tables or nested tables. A full table access is not performed because it is constrained to just the partition in question.
+                     </p><pre class="oac_no_warn" dir="ltr">EXPLAIN PLAN FOR
+SELECT p.ad_textdocs_ntab
+FROM print_media_part p;
+ 
+Explained.
+ 
+PLAN_TABLE_OUTPUT
+-----------------------------------------------------------------------
+Plan hash value: 2207588228
+ 
+-----------------------------------------------------------------------
+| Id  | Operation                  | Name             | Pstart| Pstop |
+-----------------------------------------------------------------------
+|   0 | SELECT STATEMENT           |                  |       |       |
+|   1 |  PARTITION REFERENCE SINGLE|                  |   KEY |   KEY |
+|   2 |   TABLE ACCESS FULL        | TEXTDOC_NT       |   KEY |   KEY |
+|   3 |  PARTITION RANGE ALL       |                  |     1 |     2 |
+|   4 |   TABLE ACCESS FULL        | PRINT_MEDIA_PART |     1 |     2 |
+-----------------------------------------------------------------------
+ 
+Note
+-----
+  - dynamic sampling used for this statement </pre><div class="infoboxnotealso" id="GUID-88E16CEE-3CB1-4AD6-82B3-62B86B899A01__GUID-18FE7D6A-6F8E-49DF-9FAA-BB4056D477A9">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="partition-create-tables-indexes.html#GUID-7F8EBE79-9FF2-4B2D-9764-C11263FA550F" title="Partitioning when using XMLType or object tables and columns follows the basic rules for partitioning.">Partitioning of Collections in XMLType and Objects</a> for an example of the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> statement on which the <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> is based
+                        </p>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

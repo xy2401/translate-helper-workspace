@@ -1,0 +1,393 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Implementing Data Cartridges in PL/SQL</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Data Cartridge Developer's Guide">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Data Cartridge Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="data-cartridge-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-10T07:34:53-08:00">
+      <meta name="dcterms.title" content="Data Cartridge Developer's Guide">
+      <meta name="dcterms.dateCopyrighted" content="1996, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96431-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="defining-object-types-for-data-cartridges.html" title="Previous" type="text/html">
+      <link rel="next" href="implementing-data-cartridges-in-C-CPP-and-java.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="ADDCI">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="defining-object-types-for-data-cartridges.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="implementing-data-cartridges-in-C-CPP-and-java.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Data Cartridge Developer's Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="building-data-cartridges.html" property="item" typeof="WebPage"><span property="name">Building Data Cartridges</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Implementing Data Cartridges in PL/SQL</li>
+            </ol>
+            <a id="GUID-BD3BCD88-0539-477E-AFA0-59656048D6F4" name="GUID-BD3BCD88-0539-477E-AFA0-59656048D6F4"></a><a id="ADDCI240"></a>
+            
+            <h2 id="ADDCI-GUID-BD3BCD88-0539-477E-AFA0-59656048D6F4" class="sect2"><span class="enumeration_chapter">4 </span>Implementing Data Cartridges in PL/SQL
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>You can use PL/SQL to implement data cartridge methods. Methods are procedures and functions that define the operations permitted on data defined using the data cartridge. </p>
+            </div><a id="ADDCI4306"></a><div class="props_rev_3"><a id="GUID-D1F8491B-68E1-4B5D-8599-961643537A70" name="GUID-D1F8491B-68E1-4B5D-8599-961643537A70"></a><h3 id="ADDCI-GUID-D1F8491B-68E1-4B5D-8599-961643537A70" class="sect3"><span class="enumeration_section">4.1 </span>Methods
+               </h3>
+               <div>
+                  <p><a id="d8416e107" class="indexterm-anchor"></a><a id="d8416e111" class="indexterm-anchor"></a>A <span class="bold">method</span> is procedure or function that is part of the object type definition, and that can operate on the attributes of the type. Such methods are also called <span class="bold">member methods</span>, and they take the keyword <code class="codeph">MEMBER</code> when you specify them as a component of the object type.
+                  </p>
+                  <p>Consider simple examples for implementing a method, invoking a method, and referencing an attribute in a method.</p>
+                  <div class="infoboxnotealso" id="GUID-D1F8491B-68E1-4B5D-8599-961643537A70__GUID-4788F56A-B5D4-478F-8C4A-6A13818AE8C2">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/addci&amp;id=CNCPT001" target="_blank"><span class="variable" translate="no">Oracle Database Concepts</span></a> for information about method specifications, names, and overloading
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/addci&amp;id=LNPLS001" target="_blank"><span class="variable" translate="no">Oracle Database PL/SQL Language Reference</span></a> for further explanation and examples
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="ADDCI4307"></a><div class="props_rev_3"><a id="GUID-0E328188-58BA-4C99-B2DB-E4D340190831" name="GUID-0E328188-58BA-4C99-B2DB-E4D340190831"></a><h4 id="ADDCI-GUID-0E328188-58BA-4C99-B2DB-E4D340190831" class="sect4"><span class="enumeration_section">4.1.1 </span>Implementing Methods
+                  </h4>
+                  <div>
+                     <p><a id="d8416e195" class="indexterm-anchor"></a><a id="d8416e199" class="indexterm-anchor"></a>To implement a method, create the PL/SQL code and specify it within a <code class="codeph">CREATE</code> <code class="codeph">TYPE</code> <code class="codeph">BODY</code> statement. If an object type has no methods, no <code class="codeph">CREATE</code> <code class="codeph">TYPE</code> <code class="codeph">BODY</code> statement for that object type is required.
+                     </p>
+                     <p><a href="implementing-data-cartridges-in-PL-SQL.html#GUID-AFB9A422-5714-4D6A-95FB-BFCA377D16C4__CIHCJCJB">Example 4-1</a>demonstrates the definition of an object type <code class="codeph">rational_type</code>.
+                     </p>
+                     <p>The definition in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-1D06437B-D5A4-48DD-A89D-914D3994CA23__CIHIFECI">Example 4-2</a> defines the function <code class="codeph">gcd</code>, which is used in the definition of the <code class="codeph">normalize</code> method in the <code class="codeph">CREATE</code> <code class="codeph">TYPE</code> <code class="codeph">BODY</code> statement.
+                     </p>
+                     <p>The statements in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-4BAC0CED-7F19-452F-9217-AC1A7364DE9A__CIHGAAHI">Example 4-3</a> implement the methods <code class="codeph">rat_to_real</code>, <code class="codeph">normalize</code>, and <code class="codeph">plus</code> for the object type <code class="codeph">rational_type</code>.
+                     </p>
+                  </div><a id="ADDCI4308"></a><div class="props_rev_3"><a id="GUID-AFB9A422-5714-4D6A-95FB-BFCA377D16C4" name="GUID-AFB9A422-5714-4D6A-95FB-BFCA377D16C4"></a><h5 id="ADDCI-GUID-AFB9A422-5714-4D6A-95FB-BFCA377D16C4" class="sect5"><span class="enumeration_section">4.1.1.1 </span>Defining an Object Type
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-AFB9A422-5714-4D6A-95FB-BFCA377D16C4__CIHCJCJB">
+                           <p class="titleinexample">Example 4-1 Defining an Object Type</p><pre class="oac_no_warn" dir="ltr">CREATE TYPE rational_type AS OBJECT
+( numerator INTEGER,
+  denominator INTEGER,
+  MAP MEMBER FUNCTION rat_to_real RETURN REAL,
+  MEMBER PROCEDURE normalize,
+  MEMBER FUNCTION plus (x rational_type)
+       RETURN rational_type);
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="ADDCI4309"></a><div class="props_rev_3"><a id="GUID-1D06437B-D5A4-48DD-A89D-914D3994CA23" name="GUID-1D06437B-D5A4-48DD-A89D-914D3994CA23"></a><h5 id="ADDCI-GUID-1D06437B-D5A4-48DD-A89D-914D3994CA23" class="sect5"><span class="enumeration_section">4.1.1.2 </span>Defining a “Greatest Common Divisor” Function
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-1D06437B-D5A4-48DD-A89D-914D3994CA23__CIHIFECI">
+                           <p class="titleinexample">Example 4-2 Defining a "Greatest Common Divisor" Function</p><pre class="oac_no_warn" dir="ltr">CREATE FUNCTION gcd (x INTEGER, y INTEGER) RETURN INTEGER AS
+-- Find greatest common divisor of x and y. For example, if
+-- (8,12) is input, the greatest common divisor is 4.
+-- This normalizes (simplifies) fractions.
+-- (You need not try to understand how this code works, unless
+--  you are a math wizard. It does.)
+--
+   ans INTEGER;
+BEGIN
+   IF (y &lt;= x) AND (x MOD y = 0) THEN
+      ans := y;
+   ELSIF x &lt; y THEN 
+      ans := gcd(y, x);  -- Recursive call
+   ELSE
+      ans := gcd(y, x MOD y);  -- Recursive call
+   END IF;
+   RETURN ans;
+END;
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="ADDCI4310"></a><div class="props_rev_3"><a id="GUID-4BAC0CED-7F19-452F-9217-AC1A7364DE9A" name="GUID-4BAC0CED-7F19-452F-9217-AC1A7364DE9A"></a><h5 id="ADDCI-GUID-4BAC0CED-7F19-452F-9217-AC1A7364DE9A" class="sect5"><span class="enumeration_section">4.1.1.3 </span>Implementing Methods for an Object Type
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-4BAC0CED-7F19-452F-9217-AC1A7364DE9A__CIHGAAHI">
+                           <p class="titleinexample">Example 4-3 Implementing Methods for an Object Type</p><pre class="oac_no_warn" dir="ltr">CREATE TYPE BODY rational_type
+( MAP MEMBER FUNCTION rat_to_real RETURN REAL IS
+   -- The rat-to-real function converts a rational number to 
+   -- a real number. For example, 6/8 = 0.75
+   BEGIN
+      RETURN numerator/denominator;
+   END;
+
+   -- The normalize procedure simplifies a fraction.
+   -- For example, 6/8 = 3/4
+   MEMBER PROCEDURE normalize IS
+      divisor INTEGER := gcd(numerator, denominator);
+   BEGIN
+      numerator := numerator/divisor;
+      denominator := denominator/divisor;
+   END;
+
+   -- The plus function adds a specified value to the
+   -- current value and returns a normalized result.
+   -- For example, 1/2 + 3/4 = 5/4
+   -- 
+   MEMBER FUNCTION plus(x rational_type)
+            RETURN rational_type IS
+            -- Return sum of SELF + x
+   BEGIN
+      r = rational_type(numerator*x.demonimator +
+             x.numerator*denominator,
+             denominator*x.denominator);
+                 -- Example adding 1/2 to 3/4:
+                 -- (3*2 + 1*4) / (4*2)
+      -- Now normalize (simplify). Here, 10/8 = 5/4
+      r.normalize;
+      RETURN r;
+   END;
+END;</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+               </div><a id="ADDCI4311"></a><div class="props_rev_3"><a id="GUID-AA518917-E9B5-4AA0-9B81-57D327DF01C0" name="GUID-AA518917-E9B5-4AA0-9B81-57D327DF01C0"></a><h4 id="ADDCI-GUID-AA518917-E9B5-4AA0-9B81-57D327DF01C0" class="sect4"><span class="enumeration_section">4.1.2 </span>Invoking Methods
+                  </h4>
+                  <div>
+                     <p><a id="d8416e492" class="indexterm-anchor"></a>To invoke a method, use the syntax in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-9701E811-AEFB-4554-AF06-329B748282E9__CIHJCGJG">Example 4-4</a>.
+                     </p>
+                     <p>In SQL statements only, you can use the syntax in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-C3C0BC64-48BA-4B7A-8C65-3BA460A8F873__CIHGFHGD">Example 4-5</a>.
+                     </p>
+                     <p><a href="implementing-data-cartridges-in-PL-SQL.html#GUID-D363C6F6-04EE-4093-A2C8-38563F3F3D38__CIHIBBHG">Example 4-6</a> shows how to invoke a method named <code class="codeph">get_emp_sal</code> in PL/SQL.
+                     </p>
+                     <p><a id="d8416e510" class="indexterm-anchor"></a>An alternative way to invoke a method is by using the <code class="codeph">SELF</code> built-in parameter. Because the implicit first parameter of each method is the name of the object on whose behalf the method is invoked, <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-343D113C-F426-46BE-A81D-2830820CDEDE__CIHHAIGD">Example 4-7</a> performs the same action as the <code class="codeph">salary := employee.get_emp_sal();</code> line in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-D363C6F6-04EE-4093-A2C8-38563F3F3D38__CIHIBBHG">Example 4-6</a>.
+                     </p>
+                     <p>In <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-343D113C-F426-46BE-A81D-2830820CDEDE__CIHHAIGD">Example 4-7</a>, <code class="codeph">employee</code> is the name of the object on whose behalf the <code class="codeph">get_emp_sal()</code> method is invoked.
+                     </p>
+                  </div><a id="ADDCI4312"></a><div class="props_rev_3"><a id="GUID-9701E811-AEFB-4554-AF06-329B748282E9" name="GUID-9701E811-AEFB-4554-AF06-329B748282E9"></a><h5 id="ADDCI-GUID-9701E811-AEFB-4554-AF06-329B748282E9" class="sect5"><span class="enumeration_section">4.1.2.1 </span>General Syntax for Invoking Methods
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-9701E811-AEFB-4554-AF06-329B748282E9__CIHJCGJG">
+                           <p class="titleinexample">Example 4-4 Invoking Methods; General Syntax</p><pre class="oac_no_warn" dir="ltr"><span class="italic">object_name</span>.<span class="italic">method_name</span>(<span class="italic">[parameter_list]</span>)
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="ADDCI4313"></a><div class="props_rev_3"><a id="GUID-C3C0BC64-48BA-4B7A-8C65-3BA460A8F873" name="GUID-C3C0BC64-48BA-4B7A-8C65-3BA460A8F873"></a><h5 id="ADDCI-GUID-C3C0BC64-48BA-4B7A-8C65-3BA460A8F873" class="sect5"><span class="enumeration_section">4.1.2.2 </span>SQL Syntax for Invoking Methods
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-C3C0BC64-48BA-4B7A-8C65-3BA460A8F873__CIHGFHGD">
+                           <p class="titleinexample">Example 4-5 Invoking Methods; SQL Syntax</p><pre class="oac_no_warn" dir="ltr"><span class="italic">correlation_variable</span>.<span class="italic">method_name</span>(<span class="italic">[parameter_list]</span>)
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="ADDCI4314"></a><div class="props_rev_3"><a id="GUID-D363C6F6-04EE-4093-A2C8-38563F3F3D38" name="GUID-D363C6F6-04EE-4093-A2C8-38563F3F3D38"></a><h5 id="ADDCI-GUID-D363C6F6-04EE-4093-A2C8-38563F3F3D38" class="sect5"><span class="enumeration_section">4.1.2.3 </span>PL/SQL Syntax for Invoking Methods
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-D363C6F6-04EE-4093-A2C8-38563F3F3D38__CIHIBBHG">
+                           <p class="titleinexample">Example 4-6 Invoking Methods; PL/SQL Syntax</p><pre class="oac_no_warn" dir="ltr">DECLARE
+   employee employee_type;
+   salary number;
+   ...
+BEGIN
+   salary := employee.get_emp_sal();
+   ...
+END;
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="ADDCI4315"></a><div class="props_rev_3"><a id="GUID-343D113C-F426-46BE-A81D-2830820CDEDE" name="GUID-343D113C-F426-46BE-A81D-2830820CDEDE"></a><h5 id="ADDCI-GUID-343D113C-F426-46BE-A81D-2830820CDEDE" class="sect5"><span class="enumeration_section">4.1.2.4 </span>Using the SELF Build-In Parameter
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-343D113C-F426-46BE-A81D-2830820CDEDE__CIHHAIGD">
+                           <p class="titleinexample">Example 4-7 Using the SELF Build-In Parameter</p><pre class="oac_no_warn" dir="ltr">salary := get_emp_sal(SELF =&gt; employee);
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+               </div><a id="ADDCI4316"></a><div class="props_rev_3"><a id="GUID-A88380BD-B8A4-46DA-8EAD-DFA0CC6A6632" name="GUID-A88380BD-B8A4-46DA-8EAD-DFA0CC6A6632"></a><h4 id="ADDCI-GUID-A88380BD-B8A4-46DA-8EAD-DFA0CC6A6632" class="sect4"><span class="enumeration_section">4.1.3 </span>Referencing Attributes in a Method
+                  </h4>
+                  <div>
+                     <p><a id="d8416e837" class="indexterm-anchor"></a><a id="d8416e839" class="indexterm-anchor"></a><a id="d8416e843" class="indexterm-anchor"></a>Because member methods can reference the attributes and member methods of the same object type without using a qualifier, a built-in reference, <code class="codeph">SELF</code>, always identifies the object on whose behalf the method is invoked.
+                     </p>
+                     <p>Consider <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-1372566E-3D72-4074-9D8B-C8BEDE4D8613__CIHBCEGG">Example 4-8</a>, where two statements set the value of variable <code class="codeph">var1</code> to <code class="codeph">42</code>.
+                     </p>
+                     <p>The statements <code class="codeph">var1 := 42</code> and <code class="codeph">SELF.var1 := 42</code> have the same effect. Because <code class="codeph">var1</code> is the name of an attribute of the object type <code class="codeph">a_type</code> and because <code class="codeph">set_var1</code> is a member method of this object type, no qualification is required to access <code class="codeph">var1</code> in the method code. However, for code readability and maintainability, you can use the keyword <code class="codeph">SELF</code> in this context to make the reference to <code class="codeph">var1</code> more clear.
+                     </p>
+                  </div><a id="ADDCI4317"></a><div class="props_rev_3"><a id="GUID-1372566E-3D72-4074-9D8B-C8BEDE4D8613" name="GUID-1372566E-3D72-4074-9D8B-C8BEDE4D8613"></a><h5 id="ADDCI-GUID-1372566E-3D72-4074-9D8B-C8BEDE4D8613" class="sect5"><span class="enumeration_section">4.1.3.1 </span>Setting Variable Values
+                     </h5>
+                     <div>
+                        <div class="example" id="GUID-1372566E-3D72-4074-9D8B-C8BEDE4D8613__CIHBCEGG">
+                           <p class="titleinexample">Example 4-8 Setting Variable Values</p><pre class="oac_no_warn" dir="ltr">CREATE TYPE a_type AS OBJECT (
+   var1 INTEGER,
+   MEMBER PROCEDURE set_var1);
+CREATE TYPE BODY a_type (
+   MEMBER PROCEDURE set_var1 IS
+   BEGIN
+      var1 := 42;
+      SELF.var1 := 42;
+   END set_var1;
+);
+</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+               </div>
+            </div><a id="ADDCI4326"></a><a id="ADDCI4325"></a><div class="props_rev_3"><a id="GUID-742CF208-6657-4A5C-BC3F-A225CB51BFC5" name="GUID-742CF208-6657-4A5C-BC3F-A225CB51BFC5"></a><h3 id="ADDCI-GUID-742CF208-6657-4A5C-BC3F-A225CB51BFC5" class="sect3"><span class="enumeration_section">4.2 </span>Debugging PL/SQL Code
+               </h3>
+               <div>
+                  <p>One of the simplest ways to debug PL/SQL code is to try each method, block, or statement interactively using SQL*Plus, and fix any problems before proceeding to the next statement. If you need more information on an error message, enter the statement <code class="codeph">SHOW</code> <code class="codeph">ERRORS</code>. Also. consider displaying statements for run-time debugging. You can debug stored procedures and packages using the <code class="codeph">DBMS_OUTPUT</code> package, by inserting <code class="codeph">PUT</code> and <code class="codeph">PUTLINE</code> statements into the code to output the values of variables and expressions to your terminal, as demonstrated in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-742CF208-6657-4A5C-BC3F-A225CB51BFC5__CIHEEDCB">Example 4-9</a>.
+                  </p>
+                  <p>A PL/SQL tracing tool provides more information about exception conditions in application code. You can use this tool to trace the execution of server-side PL/SQL statements. Object type methods cannot be traced directly, but you can trace any PL/SQL functions or procedures that a method calls. The tracing tool also provides information about exception conditions in the application code. The trace output is written to the Oracle server trace file. Note that only the database administrator has access to the file.</p>
+                  <div class="infoboxnotealso" id="GUID-742CF208-6657-4A5C-BC3F-A225CB51BFC5__GUID-032EF23B-C270-4A80-80BB-EFFFB106ACD1">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p> The <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/addci&amp;id=TGSQL791" target="_blank"><span class="italic">Oracle Database SQL Tuning Guide</span></a> describes the tracing tool
+                           </p>
+                        </li>
+                        <li>
+                           <p>The <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/addci&amp;id=ARPLS036" target="_blank"><span class="italic">Oracle Database PL/SQL Packages and Types Reference</span></a> and the <a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/addci&amp;id=LNPLS001" target="_blank"><span class="italic">Oracle Database PL/SQL Language Reference</span></a> describe the <code class="codeph">DBMS_OUTPUT</code> package
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="example" id="GUID-742CF208-6657-4A5C-BC3F-A225CB51BFC5__CIHEEDCB">
+                     <p class="titleinexample">Example 4-9 Outputing Variable Values to the Terminal, for Debugging</p><pre class="oac_no_warn" dir="ltr">Location in module: <span class="italic">location</span>
+Parameter name: <span class="italic">name</span>
+Parameter value: <span class="italic">value</span>
+</pre></div>
+                  <!-- class="example" -->
+               </div><a id="ADDCI4327"></a><div class="props_rev_3"><a id="GUID-57D9FCEB-091F-442F-9BE1-11C428CF5922" name="GUID-57D9FCEB-091F-442F-9BE1-11C428CF5922"></a><h4 id="ADDCI-GUID-57D9FCEB-091F-442F-9BE1-11C428CF5922" class="sect4"><span class="enumeration_section">4.2.1 </span>Notes for C and C++ Developers of Data Cartridges
+                  </h4>
+                  <div>
+                     <p>If you are a C or C++ programmer, several PL/SQL conventions and requirements may differ from your expectations.</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>= means equal (not assign).</p>
+                        </li>
+                        <li>
+                           <p>:= means assign (as in Algol).</p>
+                        </li>
+                        <li>
+                           <p><code class="codeph">VARRAYs</code> begin at index <code class="codeph">1</code> (not <code class="codeph">0</code>).
+                           </p>
+                        </li>
+                        <li>
+                           <p>Comments begin with two hyphens (--), not with <code class="codeph">//</code> or <code class="codeph">/*</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The <code class="codeph">IF</code> statement requires the <code class="codeph">THEN</code> keyword.
+                           </p>
+                        </li>
+                        <li>
+                           <p>The <code class="codeph">IF</code> statement must be concluded with the <code class="codeph">END</code> <code class="codeph">IF</code> keyword (which comes after the <code class="codeph">ELSE</code> clause, if there is one).
+                           </p>
+                        </li>
+                        <li>
+                           <p>There is no <code class="codeph">PRINTF</code> statement. The comparable feature is the <code class="codeph">DBMS_OUTPUT</code>.<code class="codeph">PUT_LINE</code> statement. In this statement, literal and variable text is separated using the double vertical bar, <code class="codeph">||</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>A function must have a return value, and a procedure cannot have a return value.</p>
+                        </li>
+                        <li>
+                           <p>If you call a function, it must be on the right side of an assignment operator.</p>
+                        </li>
+                        <li>
+                           <p>Many PL/SQL keywords cannot be used as variable names.</p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="ADDCI4328"></a><div class="props_rev_3"><a id="GUID-66FCC5B2-5886-46F8-83D2-EBC767702662" name="GUID-66FCC5B2-5886-46F8-83D2-EBC767702662"></a><h4 id="ADDCI-GUID-66FCC5B2-5886-46F8-83D2-EBC767702662" class="sect4"><span class="enumeration_section">4.2.2 </span>Common Potential Errors
+                  </h4>
+                  <div>
+                     <div class="section">
+                        <p>Several kinds of errors that may occur while creating a data cartridge.</p>
+                     </div>
+                     <!-- class="section" -->
+                  </div><a id="ADDCI4329"></a><div class="props_rev_3"><a id="GUID-31FB93C5-742F-4114-89BA-984C4BDF6E29" name="GUID-31FB93C5-742F-4114-89BA-984C4BDF6E29"></a><h5 id="ADDCI-GUID-31FB93C5-742F-4114-89BA-984C4BDF6E29" class="sect5"><span class="enumeration_section">4.2.2.1 </span>Signature Mismatches
+                     </h5>
+                     <div>
+                        <div class="section"><pre class="oac_no_warn" dir="ltr">13/19    PLS-00538: subprogram or cursor '&lt;name&gt;' is declared in an object
+         type specification and must be defined in the object type body
+15/19    PLS-00539: subprogram '&lt;name&gt;' is declared in an object type body
+         and must be defined in the object type specification
+</pre><p>If you see either or both of these messages, you have made an error with the signature for a procedure or function. In other words, you have a mismatch between the function or procedure prototype that you entered in the object specification, and the definition in the object body. </p>
+                           <p>Ensure that parameter orders, parameter spelling (including case), and function returns are identical. Use copy-and-paste to avoid errors in typing.</p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="ADDCI4330"></a><div class="props_rev_3"><a id="GUID-C9B4491D-DB7C-480B-BC6C-1C07F53764A4" name="GUID-C9B4491D-DB7C-480B-BC6C-1C07F53764A4"></a><h5 id="ADDCI-GUID-C9B4491D-DB7C-480B-BC6C-1C07F53764A4" class="sect5"><span class="enumeration_section">4.2.2.2 </span>RPC Time Out
+                     </h5>
+                     <div>
+                        <div class="section"><pre class="oac_no_warn" dir="ltr">ORA-28576: lost RPC connection to external procedure agent
+ORA-06512: at "&lt;name&gt;", line &lt;number&gt;
+ORA-06512: at "&lt;name&gt;", line &lt;number&gt;
+ORA-06512: at line 34
+</pre><p>This error might occur after you exit the debugger for the DLL. Restart the program outside the debugger.</p>
+                        </div>
+                        <!-- class="section" -->
+                     </div>
+                  </div><a id="ADDCI4332"></a><a id="ADDCI4333"></a><a id="ADDCI4331"></a><div class="props_rev_3"><a id="GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF" name="GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF"></a><h5 id="ADDCI-GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF" class="sect5"><span class="enumeration_section">4.2.2.3 </span>Package Corruption
+                     </h5>
+                     <div>
+                        <div class="section"><pre class="oac_no_warn" dir="ltr">ERROR at line 1:
+ORA-04068: existing state of packages has been discarded
+ORA-04063: package body "&lt;name&gt;" has errors
+ORA-06508: PL/SQL: could not find program unit being called
+ORA-06512: at "&lt;name&gt;", line &lt;number&gt;
+ORA-06512: at line &lt;number&gt;
+</pre><p>This error might occur if you are extending an existing data cartridge; it indicates that the package has been corrupted and must be recompiled.</p>
+                           <p>Before you can perform the recompilation, you must delete all tables and object types that depend upon the package that you are recompiling. To find the dependents on a Windows NT system, use the Oracle Administrator toolbar. Click the Schema button, log in as <code class="codeph">sys\&lt;password&gt;</code>, and find packages and tables that you created. Drop these packages and tables by entering SQL statements in the SQL*Plus interface, as shown in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF__CIHDJDJJ">Example 4-10</a>:
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF__CIHDJDJJ">
+                           <p class="titleinexample">Example 4-10 Dropping Packages and Tables</p><pre class="oac_no_warn" dir="ltr">Drop type <span class="italic">type_name</span>;
+Drop table <span class="italic">table_name</span> cascade constraints;
+</pre></div>
+                        <!-- class="example" -->
+                        <div class="section">
+                           <p>The recompilation can then be done using the SQL statements in <a href="implementing-data-cartridges-in-PL-SQL.html#GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF__CIHGGHIH">Example 4-11</a>:
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-62785AB6-6B27-42FD-B4CE-E7C6CDF42CCF__CIHGGHIH">
+                           <p class="titleinexample">Example 4-11 Recompiling Packages</p><pre class="oac_no_warn" dir="ltr">Alter type <span class="italic">type_name</span> compile body;
+Alter type t<span class="italic">ype_name</span> compile specification;</pre></div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

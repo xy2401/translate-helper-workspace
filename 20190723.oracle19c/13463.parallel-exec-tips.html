@@ -1,0 +1,584 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Various ideas for improving performance in a parallel execution environment are discussed under this section.">
+      <meta name="description" content="Various ideas for improving performance in a parallel execution environment are discussed under this section.">
+      <title>Tips for Tuning Parallel Execution</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="VLDB and Partitioning Guide">
+      <meta property="og:description" content="Various ideas for improving performance in a parallel execution environment are discussed under this section.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="VLDB and Partitioning Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="vldb-and-partitioning-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-23T18:05:22-07:00">
+      <meta name="dcterms.title" content="VLDB and Partitioning Guide">
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96199-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="monitor-parallel-performance.html" title="Previous" type="text/html">
+      <link rel="next" href="vldb-backup.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="VLDBG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="monitor-parallel-performance.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="vldb-backup.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">VLDB and Partitioning Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="using-parallel.html" property="item" typeof="WebPage"><span property="name">Using Parallel Execution</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Tips for Tuning Parallel Execution</li>
+            </ol>
+            <a id="GUID-4EE9408B-C03A-4842-9F24-C24EA2A3E704" name="GUID-4EE9408B-C03A-4842-9F24-C24EA2A3E704"></a><a id="VLDBG1525"></a>
+            
+            <h2 id="VLDBG-GUID-4EE9408B-C03A-4842-9F24-C24EA2A3E704" class="sect2">Tips for Tuning Parallel Execution</h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Various ideas for improving performance in a parallel execution environment are discussed under this section.</p>
+               <p>This section contains the following topics:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-FB1C39E9-CA3E-4AC6-9B01-4B3D99BDC79B" title="Implementing a good parallel execution strategy is important to ensure high performance.">Implementing a Parallel Execution Strategy</a></p>
+                  </li>
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-7A6185D1-AEF3-48C3-A704-8E3D7D3A4AFD" title="To optimize parallel execution performance for queries that retrieve large result sets, create and populate tables in parallel.">Optimizing Performance by Creating and Populating Tables in Parallel</a></p>
+                  </li>
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-F9F7C98A-9EA2-42D8-8AA5-46454C64E901" title="Use the EXPLAIN PLAN statement to see the execution plans for parallel queries.">Using EXPLAIN PLAN to Show Parallel Operations Plans</a></p>
+                  </li>
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-6181F1F5-CCD0-4F95-B831-1045C5F8EC2D" title="Additional considerations when using parallel DML operations are introduced in this topic.">Additional Considerations for Parallel DML</a></p>
+                  </li>
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-5A52793F-15AE-4C86-B8A4-4D7965575BB0" title="You can optimize performance by creating indexes in parallel.">Optimizing Performance by Creating Indexes in Parallel</a></p>
+                  </li>
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-08A08783-C243-4872-AFFA-56B603F1F0F5" title="The tips for parallel DML functionality are introduced in this topic.">Parallel DML Tips</a></p>
+                  </li>
+                  <li>
+                     <p><a href="parallel-exec-tips.html#GUID-35FF4DC9-F6FC-4634-832B-55ABBA531434" title="Parallel DML combined with the updatable join views facility provides an efficient solution for refreshing the tables of a data warehouse system.">Incremental Data Loading in Parallel</a></p>
+                  </li>
+               </ul>
+            </div>
+            <div class="sect2"><a id="GUID-FB1C39E9-CA3E-4AC6-9B01-4B3D99BDC79B" name="GUID-FB1C39E9-CA3E-4AC6-9B01-4B3D99BDC79B"></a><h3 id="VLDBG-GUID-FB1C39E9-CA3E-4AC6-9B01-4B3D99BDC79B" class="sect3">Implementing a Parallel Execution Strategy</h3>
+               <div>
+                  <p>Implementing a good parallel execution strategy is important to ensure high performance. </p>
+                  <p>Recommendations for a good strategy include:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Implement a simple setup to understand what is happening in your system.</p>
+                     </li>
+                     <li>
+                        <p>Use resource manager to specify the maximum degree of parallelism (DOP) for consumer groups so that each group is allotted a specific amount of processing resources without overwhelming the system. A resource management policy is needed when using parallel execution to keep the system under control, and to ensure SQL statements are able to execute in parallel.</p>
+                     </li>
+                     <li>
+                        <p>Base your strategy on the amount of system resources you want to make available for parallel execution. Adjust the values of the parameters <code class="codeph">PARALLEL_MAX_SERVERS</code> and <code class="codeph">PARALLEL_SERVERS_TARGET</code> to limit the number of parallel execution (PX) servers running in the system.
+                        </p>
+                     </li>
+                     <li>
+                        <p>Consider taking an ELT (Extract, Load, and Transform) strategy rather than an ETL (Extract, Transform, and Load) strategy.</p>
+                     </li>
+                     <li>
+                        <p>Use external tables with a parallel SQL statement, such as CTAS or IAS, for faster data loads</p>
+                     </li>
+                  </ul>
+               </div>
+            </div><a id="VLDBG1526"></a><div class="props_rev_3"><a id="GUID-7A6185D1-AEF3-48C3-A704-8E3D7D3A4AFD" name="GUID-7A6185D1-AEF3-48C3-A704-8E3D7D3A4AFD"></a><h3 id="VLDBG-GUID-7A6185D1-AEF3-48C3-A704-8E3D7D3A4AFD" class="sect3">Optimizing Performance by Creating and Populating Tables in Parallel</h3>
+               <div>
+                  <p> To optimize parallel execution performance for queries that retrieve large result sets, create and populate tables in parallel.</p>
+                  <p>Oracle Database cannot return results to a user process in parallel. If a query returns a large number of rows, execution of the query might indeed be faster. However, the user process can receive the rows only serially. To optimize parallel execution performance for queries that retrieve large result sets, use <code class="codeph">PARALLEL</code> <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> <code class="codeph">AS</code> <code class="codeph">SELECT</code> or direct-path <code class="codeph">INSERT</code> to store the result set in the database. At a later time, users can view the result set serially.
+                  </p>
+                  <p>Performing the <code class="codeph">SELECT</code> in parallel does not influence the <code class="codeph">CREATE</code> statement. If the <code class="codeph">CREATE</code> statement is executed in parallel, however, the optimizer tries to make the <code class="codeph">SELECT</code> run in parallel also.
+                  </p>
+                  <p>When combined with the <code class="codeph">NOLOGGING</code> option, the parallel version of <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> <code class="codeph">AS</code> <code class="codeph">SELECT</code> provides a very efficient intermediate table facility, for example:
+                  </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE summary PARALLEL NOLOGGING AS SELECT dim_1, dim_2 ..., 
+SUM (meas_1)
+FROM facts GROUP BY dim_1, dim_2;
+</pre><p>These tables can also be incrementally loaded with parallel <code class="codeph">INSERT</code>. You can take advantage of intermediate tables using the following techniques:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Common subqueries can be computed once and referenced many times. This can allow some queries against star schemas (in particular, queries without selective <code class="codeph">WHERE</code>-clause predicates) to be better parallelized. Star queries with selective <code class="codeph">WHERE</code>-clause predicates using the star-transformation technique can be effectively parallelized automatically without any modification to the SQL.
+                        </p>
+                     </li>
+                     <li>
+                        <p>Decompose complex queries into simpler steps to provide application-level checkpoint or restart. For example, a complex multitable join on a one terabyte database could run for dozens of hours. A failure during this query would mean starting over from the beginning. Using <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> <code class="codeph">AS</code> <code class="codeph">SELECT</code> or <code class="codeph">PARALLEL</code> <code class="codeph">INSERT</code> <code class="codeph">AS</code> <code class="codeph">SELECT</code>, you can rewrite the query as a sequence of simpler queries that run for a few hours each. If a system failure occurs, the query can be restarted from the last completed step.
+                        </p>
+                     </li>
+                     <li>
+                        <p>Implement manual parallel delete operations efficiently by creating a new table that omits the unwanted rows from the original table, and then dropping the original table. Alternatively, you can use the convenient parallel delete feature, which directly deletes rows from the original table.</p>
+                     </li>
+                     <li>
+                        <p>Create summary tables for efficient multidimensional drill-down analysis. For example, a summary table might store the sum of revenue grouped by month, brand, region, and salesman.</p>
+                     </li>
+                     <li>
+                        <p>Reorganize tables, eliminating chained rows, compressing free space, and so on, by copying the old table to a new table. This is much faster than export/import and easier than reloading.</p>
+                     </li>
+                  </ul>
+                  <p>Be sure to use the <code class="codeph">DBMS_STATS</code> package to gather optimizer statistics on newly created tables. To avoid I/O bottlenecks, specify a tablespace that is striped across at least as many physical disks as CPUs. To avoid fragmentation in allocating space, the number of files in a tablespace should be a multiple of the number of CPUs. 
+                  </p>
+                  <div class="infoboxnotealso" id="GUID-7A6185D1-AEF3-48C3-A704-8E3D7D3A4AFD__GUID-6EB35B78-5A56-484A-AA1E-69F743C4A8B6">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="../dwhsg/data-warehouse-optimizations-techniques.html#DWHSG9062" target="_blank"><span><cite>Oracle Database Data Warehousing Guide</cite></span></a> for information about parallel execution in data warehouses
+                     </p>
+                  </div>
+               </div>
+            </div><a id="VLDBG1527"></a><div class="props_rev_3"><a id="GUID-F9F7C98A-9EA2-42D8-8AA5-46454C64E901" name="GUID-F9F7C98A-9EA2-42D8-8AA5-46454C64E901"></a><h3 id="VLDBG-GUID-F9F7C98A-9EA2-42D8-8AA5-46454C64E901" class="sect3">Using EXPLAIN PLAN to Show Parallel Operations Plans</h3>
+               <div>
+                  <p>Use the <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> statement to see the execution plans for parallel queries. 
+                  </p>
+                  <p>The <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> output shows optimizer information in the <code class="codeph">COST</code>, <code class="codeph">BYTES</code>, and <code class="codeph">CARDINALITY</code> columns. You can also use the <code class="codeph">utlxplp.sql</code> script to present the <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> output with all relevant parallel information.
+                  </p>
+                  <p>There are several ways to optimize the parallel execution of join statements. You can alter system configuration, adjust parameters as discussed earlier in this chapter, or use hints, such as the <code class="codeph">DISTRIBUTION</code> hint.
+                  </p>
+                  <p>The key points when using <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> are to:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Verify optimizer selectivity estimates. If the optimizer thinks that only one row is produced from a query, it tends to favor using a nested loop. This could be an indication that the tables are not analyzed or that the optimizer has made an incorrect estimate about the correlation of multiple predicates on the same table. Extended statistics or a hint may be required to provide the optimizer with the correct selectivity or to force the optimizer to use another join method.</p>
+                     </li>
+                     <li>
+                        <p>Use hash join on low cardinality join keys. If a join key has few distinct values, then a hash join may not be optimal. If the number of distinct values is less than the degree of parallelism (DOP), then some parallel query servers may be unable to work on the particular query.</p>
+                     </li>
+                     <li>
+                        <p>Consider data skew. If a join key involves excessive data skew, a hash join may require some parallel query servers to work more than others. Consider using a hint to cause a <code class="codeph">BROADCAST</code> distribution method if the optimizer did not choose it. The optimizer considers the <code class="codeph">BROADCAST</code> distribution method only if the <code class="codeph">OPTIMIZER_FEATURES_ENABLE</code> is set to 9.0.2 or higher. See <a href="monitor-parallel-performance.html#GUID-81418734-F146-4477-8EC2-145F9A6CEA83" title="You can monitor parallel execution performance with the V$PQ_TQSTAT dynamic performance view.">V$PQ_TQSTAT</a> for more information.
+                        </p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1528"></a><div class="props_rev_3"><a id="GUID-3553836E-38CD-4D1C-B624-A310F5A269D7" name="GUID-3553836E-38CD-4D1C-B624-A310F5A269D7"></a><h4 id="VLDBG-GUID-3553836E-38CD-4D1C-B624-A310F5A269D7" class="sect4">Example: Using EXPLAIN PLAN to Show Parallel Operations</h4>
+                  <div>
+                     <p>You can use EXPLAIN PLAN to show parallel operations.</p>
+                     <div class="section">
+                        <p>The following example illustrates how the optimizer intends to execute a parallel query:</p><pre class="oac_no_warn" dir="ltr">explain plan for 
+  SELECT /*+ PARALLEL */ cust_first_name, cust_last_name 
+   FROM customers c, sales s WHERE c.cust_id = s.cust_id;
+
+----------------------------------------------------------
+| Id  | Operation                       |  Name          |
+----------------------------------------------------------
+|   0 | SELECT STATEMENT                |                |
+|   1 |  PX COORDINATOR                 |                |
+|   2 |   PX SEND QC (RANDOM)           | :TQ10000       |
+|   3 |    NESTED LOOPS                 |                |
+|   4 |     PX BLOCK ITERATOR           |                |
+|   5 |      TABLE ACCESS FULL          | CUSTOMERS      |
+|   6 |     PARTITION RANGE ALL         |                |
+|   7 |      BITMAP CONVERSION TO ROWIDS|                |
+|   8 |       BITMAP INDEX SINGLE VALUE | SALES_CUST_BIX |
+----------------------------------------------------------
+
+Note
+-----
+   - automatic DOP: Computed Degree of Parallelism is 2
+</pre></div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG1529"></a><div class="props_rev_3"><a id="GUID-6181F1F5-CCD0-4F95-B831-1045C5F8EC2D" name="GUID-6181F1F5-CCD0-4F95-B831-1045C5F8EC2D"></a><h3 id="VLDBG-GUID-6181F1F5-CCD0-4F95-B831-1045C5F8EC2D" class="sect3">Additional Considerations for Parallel DML</h3>
+               <div>
+                  <p>Additional considerations when using parallel DML operations are introduced in this topic.</p>
+                  <p>When you want to refresh your data warehouse database using parallel insert, update, or delete operations on a data warehouse, there are additional issues to consider when designing the physical database. These considerations do not affect parallel execution operations. These issues are:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-6035BB6E-D223-4087-AB01-6AA4003B7777" title="The restrictions for parallel DML and direct-path operations are identified in this topic.">Parallel DML and Direct-Path Restrictions</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-FEE610A3-F12C-47F6-9571-ADBB08096B06" title="There are certain limitations on the degree of parallelism based on the software level of Oracle Database in use.">Limitation on the Degree of Parallelism</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-1FE0C03C-C70A-4109-B574-51A8ADC7DE86" title="You should increase the value of INITRANS under certain situations.">When to Increase INITRANS</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-17D58575-D0F4-4031-AF07-F67B1769C336" title="There is a limitation on the available number of transaction free lists for segments in dictionary-managed tablespaces.">Limitation on Available Number of Transaction Free Lists for Segments</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-8628A98F-CA94-4D52-B3B8-DE3CF8AB2E91" title="Multiple archiver processes are needed for archiving large numbers of redo logs.">Multiple Archivers for Large Numbers of Redo Logs</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-E042C446-AFFF-4343-9F22-39081EAD0E34" title="There are situations when you should increase the number of database writer processes.">Database Writer Process (DBWn) Workload</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-05CE9FD6-3A3E-4441-B2D2-57040F7CA815" title="Understand the considerations when setting the [NO]LOGGING clause.">[NO]LOGGING Clause</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1530"></a><div class="props_rev_3"><a id="GUID-6035BB6E-D223-4087-AB01-6AA4003B7777" name="GUID-6035BB6E-D223-4087-AB01-6AA4003B7777"></a><h4 id="VLDBG-GUID-6035BB6E-D223-4087-AB01-6AA4003B7777" class="sect4">Parallel DML and Direct-Path Restrictions</h4>
+                  <div>
+                     <p>The restrictions for parallel DML and direct-path operations are identified in this topic.</p>
+                     <p>If a parallel restriction is violated, then the operation is simply performed serially. If a direct-path <code class="codeph">INSERT</code> restriction is violated, then the <code class="codeph">APPEND</code> hint is ignored and a conventional insert operation is performed. No error message is returned.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1531"></a><div class="props_rev_3"><a id="GUID-FEE610A3-F12C-47F6-9571-ADBB08096B06" name="GUID-FEE610A3-F12C-47F6-9571-ADBB08096B06"></a><h4 id="VLDBG-GUID-FEE610A3-F12C-47F6-9571-ADBB08096B06" class="sect4">Limitation on the Degree of Parallelism</h4>
+                  <div>
+                     <p>There are certain limitations on the degree of parallelism based on the software level of Oracle Database in use.</p>
+                     <p>For tables that do not have the parallel DML <code class="codeph">itl</code> invariant property (tables created before Oracle9<span class="italic">i</span> Release 2 (9.2) or tables that were created with the <code class="codeph">COMPATIBLE</code> initialization parameter set to less than <code class="codeph">9.2</code>), the degree of parallelism (DOP) equals the number of partitions or subpartitions. That means that, if the table is not partitioned, the query runs serially. To determine which tables do not have this property, issue the following statement:
+                     </p><pre class="oac_no_warn" dir="ltr">SELECT u.name, o.name FROM obj$ o, tab$ t, user$ u
+ WHERE o.obj# = t.obj# AND o.owner# = u.user#
+ AND bitand(t.property,536870912) != 536870912;
+</pre><div class="infoboxnotealso" id="GUID-FEE610A3-F12C-47F6-9571-ADBB08096B06__GUID-24D9B1D2-2859-4249-9877-C1793D8F8AD3">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../cncpt/data-concurrency-and-consistency.html#CNCPT88965" target="_blank"><span><cite>Oracle Database Concepts</cite></span></a> for information about the interested transaction list (ITL), also called the transaction table
+                        </p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG1532"></a><div class="props_rev_3"><a id="GUID-1FE0C03C-C70A-4109-B574-51A8ADC7DE86" name="GUID-1FE0C03C-C70A-4109-B574-51A8ADC7DE86"></a><h4 id="VLDBG-GUID-1FE0C03C-C70A-4109-B574-51A8ADC7DE86" class="sect4">When to Increase INITRANS</h4>
+                  <div>
+                     <p>You should increase the value of <code class="codeph">INITRANS</code> under certain situations.
+                     </p>
+                     <p>If you have global indexes, a global index segment and global index blocks are shared by server processes of the same parallel DML statement. Even if the operations are not performed against the same row, the server processes can share the same index blocks. Each server transaction needs one transaction entry in the index block header before it can make changes to a block. </p>
+                     <p>In this situation, when using the <code class="codeph">CREATE</code> <code class="codeph">INDEX</code> or <code class="codeph">ALTER</code> <code class="codeph">INDEX</code> statements, you should set <code class="codeph">INITRANS</code>, the initial number of transactions allocated within each data block, to a large value, such as the maximum DOP against this index.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1533"></a><div class="props_rev_3"><a id="GUID-17D58575-D0F4-4031-AF07-F67B1769C336" name="GUID-17D58575-D0F4-4031-AF07-F67B1769C336"></a><h4 id="VLDBG-GUID-17D58575-D0F4-4031-AF07-F67B1769C336" class="sect4">Limitation on Available Number of Transaction Free Lists for Segments</h4>
+                  <div>
+                     <p>There is a limitation on the available number of transaction free lists for segments in dictionary-managed tablespaces.</p>
+                     <p>After a segment has been created, the number of process and transaction free lists is fixed and cannot be altered. If you specify a large number of process free lists in the segment header, you might find that this limits the number of transaction free lists that are available. You can abate this limitation the next time you re-create the segment header by decreasing the number of process free lists; this leaves more room for transaction free lists in the segment header. </p>
+                     <p>For <code class="codeph">UPDATE</code> and <code class="codeph">DELETE</code> operations, each server process can require its own transaction free list. The parallel DML DOP is thus effectively limited by the smallest number of transaction free lists available on the table and on any of the global indexes the DML statement must maintain. For example, if the table has 25 transaction free lists and the table has two global indexes, one with 50 transaction free lists and one with 30 transaction free lists, the DOP is limited to 25. If the table had 40 transaction free lists, the DOP would have been limited to 30.
+                     </p>
+                     <p>The <code class="codeph">FREELISTS</code> parameter of the <code class="codeph">STORAGE</code> clause is used to set the number of process free lists. By default, no process free lists are created.
+                     </p>
+                     <p>The default number of transaction free lists depends on the block size. For example, if the number of process free lists is not set explicitly, a 4 KB block has about 80 transaction free lists by default. The minimum number of transaction free lists is 25. </p>
+                  </div>
+               </div><a id="VLDBG1534"></a><div class="props_rev_3"><a id="GUID-8628A98F-CA94-4D52-B3B8-DE3CF8AB2E91" name="GUID-8628A98F-CA94-4D52-B3B8-DE3CF8AB2E91"></a><h4 id="VLDBG-GUID-8628A98F-CA94-4D52-B3B8-DE3CF8AB2E91" class="sect4">Multiple Archivers for Large Numbers of Redo Logs</h4>
+                  <div>
+                     <p>Multiple archiver processes are needed for archiving large numbers of redo logs.</p>
+                     <p>Parallel DDL and parallel DML operations can generate a large number of redo logs. A single <code class="codeph">ARCH</code> process to archive these redo logs might not be able to keep up. To avoid this problem, you can spawn multiple archiver processes manually or by using a job queue.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1535"></a><div class="props_rev_3"><a id="GUID-E042C446-AFFF-4343-9F22-39081EAD0E34" name="GUID-E042C446-AFFF-4343-9F22-39081EAD0E34"></a><h4 id="VLDBG-GUID-E042C446-AFFF-4343-9F22-39081EAD0E34" class="sect4">Database Writer Process (DBWn) Workload</h4>
+                  <div>
+                     <p>There are situations when you should increase the number of database writer processes.</p>
+                     <p>Parallel DML operations use a large number of data, index, and undo blocks in the buffer cache during a short interval. For example, suppose you see a high number of <code class="codeph">free_buffer_waits</code> after querying the <code class="codeph">V$SYSTEM_EVENT</code> view, as in the following syntax: 
+                     </p><pre class="oac_no_warn" dir="ltr">SELECT TOTAL_WAITS FROM V$SYSTEM_EVENT WHERE EVENT = 'FREE BUFFER WAITS';
+</pre><p>In this case, you should consider increasing the DBW<span class="italic">n</span> processes. If there are no waits for free buffers, the query does not return any rows.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1536"></a><div class="props_rev_3"><a id="GUID-05CE9FD6-3A3E-4441-B2D2-57040F7CA815" name="GUID-05CE9FD6-3A3E-4441-B2D2-57040F7CA815"></a><h4 id="VLDBG-GUID-05CE9FD6-3A3E-4441-B2D2-57040F7CA815" class="sect4">[NO]LOGGING Clause</h4>
+                  <div>
+                     <p>Understand the considerations when setting the <code class="codeph">[NO]LOGGING</code> clause.
+                     </p>
+                     <div class="section">
+                        <p>The <code class="codeph">[NO]LOGGING</code> clause applies to tables, partitions, tablespaces, and indexes. Virtually no log is generated for certain operations (such as direct-path <code class="codeph">INSERT</code>) if the <code class="codeph">NOLOGGING</code> clause is used. The <code class="codeph">NOLOGGING</code> attribute is not specified at the <code class="codeph">INSERT</code> statement level but is instead specified when using the <code class="codeph">ALTER</code> or <code class="codeph">CREATE</code> statement for a table, partition, index, or tablespace.
+                        </p>
+                        <p>When a table or index has <code class="codeph">NOLOGGING</code> set, neither parallel nor serial direct-path <code class="codeph">INSERT</code> operations generate redo logs. Processes running with the <code class="codeph">NOLOGGING</code> option set run faster because no redo is generated. However, after a <code class="codeph">NOLOGGING</code> operation against a table, partition, or index, if a media failure occurs before a backup is performed, then all tables, partitions, and indexes that have been modified might be corrupted.
+                        </p>
+                        <p>Direct-path <code class="codeph">INSERT</code> operations (except for dictionary updates) never generate redo logs if the <code class="codeph">NOLOGGING</code> clause is used. The <code class="codeph">NOLOGGING</code> attribute does not affect undo, only redo. To be precise, <code class="codeph">NOLOGGING</code> allows the direct-path <code class="codeph">INSERT</code> operation to generate a negligible amount of redo (range-invalidation redo, as opposed to full image redo).
+                        </p>
+                        <p>For backward compatibility, <code class="codeph">[UN]RECOVERABLE</code> is still supported as an alternate keyword with the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> statement. This alternate keyword might not be supported, however, in future releases.
+                        </p>
+                        <p>At the tablespace level, the logging clause specifies the default logging attribute for all tables, indexes, and partitions created in the tablespace. When an existing tablespace logging attribute is changed by the <code class="codeph">ALTER</code> <code class="codeph">TABLESPACE</code> statement, then all tables, indexes, and partitions created after the <code class="codeph">ALTER</code> statement have the new logging attribute; existing ones do not change their logging attributes. The tablespace-level logging attribute can be overridden by the specifications at the table, index, or partition level.
+                        </p>
+                        <p>The default logging attribute is <code class="codeph">LOGGING</code>. However, if you have put the database in <code class="codeph">NOARCHIVELOG</code> mode, by issuing <code class="codeph">ALTER</code> <code class="codeph">DATABASE</code> <code class="codeph">NOARCHIVELOG</code>, then all operations that can be done without logging do not generate logs, regardless of the specified logging attribute.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG1537"></a><div class="props_rev_3"><a id="GUID-5A52793F-15AE-4C86-B8A4-4D7965575BB0" name="GUID-5A52793F-15AE-4C86-B8A4-4D7965575BB0"></a><h3 id="VLDBG-GUID-5A52793F-15AE-4C86-B8A4-4D7965575BB0" class="sect3">Optimizing Performance by Creating Indexes in Parallel</h3>
+               <div>
+                  <p>You can optimize performance by creating indexes in parallel.</p>
+                  <p>Multiple processes can work simultaneously to create an index. By dividing the work necessary to create an index among multiple server processes, Oracle Database can create the index more quickly than if a single server process created the index serially.</p>
+                  <p>Parallel index creation works in much the same way as a table scan with an <code class="codeph">ORDER</code> <code class="codeph">BY</code> clause. The table is randomly sampled and a set of index keys is found that equally divides the index into the same number of pieces as the DOP. A first set of query processes scans the table, extracts key-rowid pairs, and sends each pair to a process in a second set of query processes based on a key. Each process in the second set sorts the keys and builds an index in the usual fashion. After all index pieces are built, the parallel execution coordinator simply concatenates the pieces (which are ordered) to form the final index.
+                  </p>
+                  <p>Parallel local index creation uses a single server set. Each server process in the set is assigned a table partition to scan and for which to build an index partition. Because half as many server processes are used for a given DOP, parallel local index creation can be run with a higher DOP. However, the DOP is restricted to be less than or equal to the number of index partitions you want to create. To avoid this limitation, you can use the <code class="codeph">DBMS_PCLXUTIL</code> package.
+                  </p>
+                  <p>You can optionally specify that no redo and undo logging should occur during index creation. This can significantly improve performance but temporarily renders the index unrecoverable. Recoverability is restored after the new index is backed up. If your application can tolerate a window where recovery of the index requires it to be re-created, then you should consider using the <code class="codeph">NOLOGGING</code> clause.
+                  </p>
+                  <p>The <code class="codeph">PARALLEL</code> clause in the <code class="codeph">CREATE</code> <code class="codeph">INDEX</code> statement is the only way in which you can specify the DOP for creating the index. If the DOP is not specified in the parallel clause of the <code class="codeph">CREATE</code> <code class="codeph">INDEX</code> statement, then the number of CPUs is used as the DOP. If there is no <code class="codeph">PARALLEL</code> clause, index creation is done serially.
+                  </p>
+                  <p>When creating an index in parallel, the <code class="codeph">STORAGE</code> clause refers to the storage of each of the subindexes created by the query server processes. Therefore, an index created with an <code class="codeph">INITIAL</code> value of 5 MB and a DOP of 12 consumes at least 60 MB of storage during index creation because each process starts with an extent of 5 MB. When the query coordinator process combines the sorted subindexes, some extents might be trimmed, and the resulting index might be smaller than the requested 60 MB.
+                  </p>
+                  <p>When you add or enable a <code class="codeph">UNIQUE</code> or <code class="codeph">PRIMARY</code> <code class="codeph">KEY</code> constraint on a table, you cannot automatically create the required index in parallel. Instead, manually create an index on the desired columns, using the <code class="codeph">CREATE</code> <code class="codeph">INDEX</code> statement and an appropriate <code class="codeph">PARALLEL</code> clause, and then add or enable the constraint. Oracle Database then uses the existing index when enabling or adding the constraint.
+                  </p>
+                  <p>Multiple constraints on the same table can be enabled concurrently and in parallel if all the constraints are in the <code class="codeph">ENABLE</code> <code class="codeph">NOVALIDATE</code> state. In the following example, the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">ENABLE</code> <code class="codeph">CONSTRAINT</code> statement performs the table scan that checks the constraint in parallel:
+                  </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE a (a1 NUMBER CONSTRAINT ach CHECK (a1 &gt; 0) ENABLE NOVALIDATE)
+PARALLEL; 
+INSERT INTO a values (1);
+COMMIT;
+ALTER TABLE a ENABLE CONSTRAINT ach;</pre></div>
+            </div><a id="VLDBG1538"></a><div class="props_rev_3"><a id="GUID-08A08783-C243-4872-AFFA-56B603F1F0F5" name="GUID-08A08783-C243-4872-AFFA-56B603F1F0F5"></a><h3 id="VLDBG-GUID-08A08783-C243-4872-AFFA-56B603F1F0F5" class="sect3">Parallel DML Tips</h3>
+               <div>
+                  <p>The tips for parallel DML functionality are introduced in this topic.</p>
+                  <p>The topics covered include:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-2B327BD6-3191-493A-AE5B-EB08325A664C" title="Parallel DML when using the SQL INSERT statement is discussed in this topic.">Parallel DML Tip 1: INSERT</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-7E8095F3-9650-405C-B158-B5B4932093C5" title="Parallel DML when using Direct-Path INSERT operations is discussed in this topic.">Parallel DML Tip 2: Direct-Path INSERT</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-2627DC19-7EBE-4C45-A758-711BDB5E37EC" title="Parallel DML when using insert, merge, update, and delete operations is discussed in this topic.">Parallel DML Tip 3: Parallelizing INSERT, MERGE, UPDATE, and DELETE</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-08A08783-C243-4872-AFFA-56B603F1F0F5__GUID-8816EC5E-1A97-402F-93F4-0C11DB254A02">
+                     <p class="notep1">See Also:</p>
+                     <p></p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="../admin/managing-tables.html#ADMIN01509" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> for information about improving load performance with direct-path insert
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="https://www.oracle.com/pls/topic/lookup?ctx=en/database/oracle/oracle-database/19/vldbg&amp;id=SQLRF01604" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for information about the <code class="codeph">INSERT</code> statement
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="VLDBG1540"></a><a id="VLDBG1539"></a><div class="props_rev_3"><a id="GUID-2B327BD6-3191-493A-AE5B-EB08325A664C" name="GUID-2B327BD6-3191-493A-AE5B-EB08325A664C"></a><h4 id="VLDBG-GUID-2B327BD6-3191-493A-AE5B-EB08325A664C" class="sect4">Parallel DML Tip 1: INSERT</h4>
+                  <div>
+                     <p>Parallel DML when using the SQL <code class="codeph">INSERT</code> statement is discussed in this topic.
+                     </p>
+                     <p>The functionality available using an <code class="codeph">INSERT</code> statement can be summarized as shown in <a href="parallel-exec-tips.html#GUID-2B327BD6-3191-493A-AE5B-EB08325A664C__BEIIHGDC" title="Summary of INSERT Features">Table 8-5</a>:
+                     </p>
+                     <div class="tblformalwide" id="GUID-2B327BD6-3191-493A-AE5B-EB08325A664C__BEIIHGDC">
+                        <p class="titleintable">Table 8-5 Summary of INSERT Features</p>
+                        <table cellpadding="4" cellspacing="0" class="FormalWide" title="Summary of INSERT Features" summary="Summary of INSERT Features" width="100%" frame="hsides" border="1" rules="rows">
+                           <thead>
+                              <tr align="left" valign="top">
+                                 <th align="left" valign="bottom" width="16%" id="d63248e1938">Insert Type</th>
+                                 <th align="left" valign="bottom" width="43%" id="d63248e1941">Parallel</th>
+                                 <th align="left" valign="bottom" width="18%" id="d63248e1944">Serial</th>
+                                 <th align="left" valign="bottom" width="23%" id="d63248e1947">NOLOGGING</th>
+                              </tr>
+                           </thead>
+                           <tbody>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="16%" id="d63248e1952" headers="d63248e1938 ">
+                                    <p>Conventional</p>
+                                 </td>
+                                 <td align="left" valign="top" width="43%" headers="d63248e1952 d63248e1941 ">
+                                    <p>No</p>
+                                    <p>See text in this section for information about using the <code class="codeph">NOAPPEND</code> hint with parallel DML enabled to perform a parallel conventional insert.
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d63248e1952 d63248e1944 ">
+                                    <p>Yes</p>
+                                 </td>
+                                 <td align="left" valign="top" width="23%" headers="d63248e1952 d63248e1947 ">
+                                    <p>No</p>
+                                 </td>
+                              </tr>
+                              <tr align="left" valign="top">
+                                 <td align="left" valign="top" width="16%" id="d63248e1970" headers="d63248e1938 ">
+                                    <p>Direct-path</p>
+                                    <p><code class="codeph">INSERT</code></p>
+                                    <p>(<code class="codeph">APPEND</code>)
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="43%" headers="d63248e1970 d63248e1941 ">
+                                    <p>Yes, but requires </p>
+                                    <p><code class="codeph">ALTER</code> <code class="codeph">SESSION</code> <code class="codeph">ENABLE</code> <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> or the <code class="codeph">ENABLE_PARALLEL_DML</code> SQL hint to enable <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> mode
+                                    </p>
+                                    <p>and one of the following:</p>
+                                    <ul style="list-style-type: disc;">
+                                       <li>
+                                          <p>Table <code class="codeph">PARALLEL</code> attribute or <code class="codeph">PARALLEL</code> hint to explicitly set parallelism
+                                          </p>
+                                       </li>
+                                       <li>
+                                          <p><code class="codeph">APPEND</code> hint to explicitly set mode
+                                          </p>
+                                       </li>
+                                    </ul>
+                                    <p>Or the following</p>
+                                    <p><code class="codeph">ALTER</code> <code class="codeph">SESSION</code> <code class="codeph">FORCE</code> <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> to force <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> mode
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="18%" headers="d63248e1970 d63248e1944 ">
+                                    <p>Yes, but requires:</p>
+                                    <p><code class="codeph">APPEND</code> hint
+                                    </p>
+                                 </td>
+                                 <td align="left" valign="top" width="23%" headers="d63248e1970 d63248e1947 ">
+                                    <p>Yes, but requires:</p>
+                                    <p><code class="codeph">NOLOGGING</code> attribute set for partition or table
+                                    </p>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                     <!-- class="inftblhruleinformal" -->
+                     <p>If parallel DML is enabled and there is a <code class="codeph">PARALLEL</code> hint or <code class="codeph">PARALLEL</code> attribute set for the table in the data dictionary, then insert operations are parallel and appended, unless a restriction applies. If either the <code class="codeph">PARALLEL</code> hint or <code class="codeph">PARALLEL</code> attribute is missing, the insert operation is performed serially. Automatic DOP only parallelizes the DML part of a SQL statement if and only if parallel DML is enabled or forced.
+                     </p>
+                     <p>If parallel DML is enabled, then you can use the <code class="codeph">NOAPPEND</code> hint to perform a parallel conventional insert operation. For example, you can use <code class="codeph">/*+</code> <code class="codeph">noappend</code> <code class="codeph">parallel</code> <code class="codeph">*/</code> with the SQL <code class="codeph">INSERT</code> statement to perform a parallel conventional insert.
+                     </p><pre class="oac_no_warn" dir="ltr">SQL&gt; INSERT /*+ NOAPPEND PARALLEL */ INTO sales_hist SELECT * FROM sales;
+</pre><p>The advantage of the parallel conventional insert operation is the ability to perform online operations with none of the restrictions of direct-path <code class="codeph">INSERT</code>. The disadvantage of the parallel conventional insert operation is that this process may be slower than direct-path <code class="codeph">INSERT</code>.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1541"></a><div class="props_rev_3"><a id="GUID-7E8095F3-9650-405C-B158-B5B4932093C5" name="GUID-7E8095F3-9650-405C-B158-B5B4932093C5"></a><h4 id="VLDBG-GUID-7E8095F3-9650-405C-B158-B5B4932093C5" class="sect4">Parallel DML Tip 2: Direct-Path INSERT</h4>
+                  <div>
+                     <p>Parallel DML when using Direct-Path <code class="codeph">INSERT</code> operations is discussed in this topic.
+                     </p>
+                     <p>The append mode is the default during a parallel insert operation. Data is always inserted into a new block, which is allocated to the table. Using the <code class="codeph">APPEND</code> hint is optional. You should use append mode to increase the speed of <code class="codeph">INSERT</code> operations, but not when space utilization must be optimized. You can use <code class="codeph">NOAPPEND</code> to override append mode.
+                     </p>
+                     <p>The <code class="codeph">APPEND</code> hint applies to both serial and parallel insert operation. Serial insertions are also faster if you use this hint. The <code class="codeph">APPEND</code> hint, however, does require more space and locking overhead.
+                     </p>
+                     <p>You can use <code class="codeph">NOLOGGING</code> with <code class="codeph">APPEND</code> to make the process even faster. <code class="codeph">NOLOGGING</code> means that no redo log is generated for the operation. <code class="codeph">NOLOGGING</code> is never the default; use it when you want to optimize performance. It should not typically be used when recovery is needed for the table or partition. If recovery is needed, be sure to perform a backup immediately after the operation. Use the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">[NO]LOGGING</code> statement to set the appropriate value.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1542"></a><div class="props_rev_3"><a id="GUID-2627DC19-7EBE-4C45-A758-711BDB5E37EC" name="GUID-2627DC19-7EBE-4C45-A758-711BDB5E37EC"></a><h4 id="VLDBG-GUID-2627DC19-7EBE-4C45-A758-711BDB5E37EC" class="sect4">Parallel DML Tip 3: Parallelizing INSERT, MERGE, UPDATE, and DELETE</h4>
+                  <div>
+                     <p>Parallel DML when using insert, merge, update, and delete operations is discussed in this topic.</p>
+                     <p>When the table or partition has the <code class="codeph">PARALLEL</code> attribute in the data dictionary, that attribute setting is used to determine parallelism of <code class="codeph">INSERT</code>, <code class="codeph">UPDATE</code>, and <code class="codeph">DELETE</code> statements and queries. An explicit <code class="codeph">PARALLEL</code> hint for a table in a statement overrides the effect of the <code class="codeph">PARALLEL</code> attribute in the data dictionary.
+                     </p>
+                     <p>You can use the <code class="codeph">NO_PARALLEL</code> hint to override a <code class="codeph">PARALLEL</code> attribute for the table in the data dictionary. In general, hints take precedence over attributes.
+                     </p>
+                     <p>DML operations are considered for parallelization if the session has been enabled in the <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> mode with the <code class="codeph">ALTER</code> <code class="codeph">SESSION</code> <code class="codeph">ENABLE</code> <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> statement or a specific SQL statement has been enabled in the <code class="codeph">PARALLEL</code> <code class="codeph">DML</code> mode with the <code class="codeph">ENABLE_PARALLEL_DML</code> hint. The mode does not affect parallelization of queries or of the query portions of a DML statement.
+                     </p>
+                  </div><a id="VLDBG1544"></a><a id="VLDBG1543"></a><div class="props_rev_3"><a id="GUID-A4227A4C-209A-40B9-9A68-A57803E66C04" name="GUID-A4227A4C-209A-40B9-9A68-A57803E66C04"></a><h5 id="VLDBG-GUID-A4227A4C-209A-40B9-9A68-A57803E66C04" class="sect5">Parallelizing INSERT SELECT</h5>
+                     <div>
+                        <p>In the <code class="codeph">INSERT </code>... <code class="codeph">SELECT</code> statement, you can specify a <code class="codeph">PARALLEL</code> hint after the <code class="codeph">INSERT</code> keyword, in addition to the hint after the <code class="codeph">SELECT</code> keyword.
+                        </p>
+                        <div class="section">
+                           <p> The <code class="codeph">PARALLEL</code> hint after the <code class="codeph">INSERT</code> keyword applies to the <code class="codeph">INSERT</code> operation only, and the <code class="codeph">PARALLEL</code> hint after the <code class="codeph">SELECT</code> keyword applies to the <code class="codeph">SELECT</code> operation only. Thus, parallelism of the <code class="codeph">INSERT</code> and <code class="codeph">SELECT</code> operations are independent of each other. If one operation cannot be performed in parallel, it has no effect on whether the other operation can be performed in parallel.
+                           </p>
+                           <p>The ability to parallelize insert operations causes a change in existing behavior if the user has explicitly enabled the session for parallel DML and if the table in question has a <code class="codeph">PARALLEL</code> attribute set in the data dictionary entry. In that case, existing <code class="codeph">INSERT</code> <code class="codeph">SELECT</code> statements that have the select operation parallelized can also have their insert operation parallelized.
+                           </p>
+                           <p>If you query multiple tables, you can specify multiple <code class="codeph">SELECT</code> <code class="codeph">PARALLEL</code> hints and multiple <code class="codeph">PARALLEL</code> attributes. 
+                           </p>
+                           <p><a href="parallel-exec-tips.html#GUID-A4227A4C-209A-40B9-9A68-A57803E66C04__BEIIGDGI">Example 8-5</a> shows the addition of the new employees who were hired after the acquisition of <code class="codeph">ACME</code>.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-A4227A4C-209A-40B9-9A68-A57803E66C04__BEIIGDGI">
+                           <p class="titleinexample">Example 8-5 Parallelizing INSERT SELECT</p><pre class="oac_no_warn" dir="ltr">INSERT /*+ PARALLEL(employees) */ INTO employees
+SELECT /*+ PARALLEL(ACME_EMP) */ *  FROM ACME_EMP;
+</pre><p>The <code class="codeph">APPEND</code> keyword is not required in this example because it is implied by the <code class="codeph">PARALLEL</code> hint.
+                           </p>
+                        </div>
+                        <!-- class="example" -->
+                     </div>
+                  </div><a id="VLDBG1546"></a><a id="VLDBG1547"></a><a id="VLDBG1545"></a><div class="props_rev_3"><a id="GUID-49D5134E-7A04-4B87-A338-C4007D09D712" name="GUID-49D5134E-7A04-4B87-A338-C4007D09D712"></a><h5 id="VLDBG-GUID-49D5134E-7A04-4B87-A338-C4007D09D712" class="sect5">Parallelizing UPDATE and DELETE</h5>
+                     <div>
+                        <p>The <code class="codeph">PARALLEL</code> hint (placed immediately after the <code class="codeph">UPDATE</code> or <code class="codeph">DELETE</code> keyword) applies not only to the underlying scan operation, but also to the <code class="codeph">UPDATE</code> or <code class="codeph">DELETE</code> operation. 
+                        </p>
+                        <div class="section">
+                           <p>Alternatively, you can specify <code class="codeph">UPDATE</code> or <code class="codeph">DELETE</code> parallelism in the <code class="codeph">PARALLEL</code> clause specified in the definition of the table to be modified.
+                           </p>
+                           <p>If you have explicitly enabled parallel DML for the session or transaction, <code class="codeph">UPDATE</code> or <code class="codeph">DELETE</code> statements that have their query operation parallelized can also have their <code class="codeph">UPDATE</code> or <code class="codeph">DELETE</code> operation parallelized. Any subqueries or updatable views in the statement can have their own separate <code class="codeph">PARALLEL</code> hints or clauses, but these parallel directives do not affect the decision to parallelize the update or delete. If these operations cannot be performed in parallel, it has no effect on whether the <code class="codeph">UPDATE</code> or <code class="codeph">DELETE</code> portion can be performed in parallel.
+                           </p>
+                           <p><a href="parallel-exec-tips.html#GUID-49D5134E-7A04-4B87-A338-C4007D09D712__BEIGDEHC">Example 8-6</a> shows the update operation to give a 10 percent salary raise to all clerks in Dallas.
+                           </p>
+                        </div>
+                        <!-- class="section" -->
+                        <div class="example" id="GUID-49D5134E-7A04-4B87-A338-C4007D09D712__BEIGDEHC">
+                           <p class="titleinexample">Example 8-6 Parallelizing UPDATE and DELETE</p><pre class="oac_no_warn" dir="ltr">UPDATE /*+ PARALLEL(employees) */ employees
+ SET salary=salary * 1.1 WHERE job_id='CLERK' AND department_id IN
+  (SELECT department_id FROM DEPARTMENTS WHERE location_id = 'DALLAS');
+</pre><p>The <code class="codeph">PARALLEL</code> hint is applied to the <code class="codeph">UPDATE</code> operation and to the scan.
+                           </p>
+                           <p><a href="parallel-exec-tips.html#GUID-49D5134E-7A04-4B87-A338-C4007D09D712__BEIJIGHJ">Example 8-7</a> shows the removal of all products of category <code class="codeph">39</code> because that business line was recently spun off into a separate company.
+                           </p>
+                        </div>
+                        <!-- class="example" -->
+                        <div class="example" id="GUID-49D5134E-7A04-4B87-A338-C4007D09D712__BEIJIGHJ">
+                           <p class="titleinexample">Example 8-7 Parallelizing UPDATE and DELETE</p><pre class="oac_no_warn" dir="ltr">DELETE /*+ PARALLEL(PRODUCTS) */ FROM PRODUCTS 
+  WHERE category_id = 39;
+</pre><p>Again, the parallelism is applied to the scan and <code class="codeph">UPDATE</code> operations on the table <code class="codeph">employees</code>.
+                           </p>
+                        </div>
+                        <!-- class="example" -->
+                     </div>
+                  </div>
+               </div>
+            </div><a id="VLDBG1548"></a><div class="props_rev_3"><a id="GUID-35FF4DC9-F6FC-4634-832B-55ABBA531434" name="GUID-35FF4DC9-F6FC-4634-832B-55ABBA531434"></a><h3 id="VLDBG-GUID-35FF4DC9-F6FC-4634-832B-55ABBA531434" class="sect3">Incremental Data Loading in Parallel</h3>
+               <div>
+                  <p>Parallel DML combined with the updatable join views facility provides an efficient solution for refreshing the tables of a data warehouse system. </p>
+                  <p>To refresh tables is to update them with the differential data generated from the OLTP production system.</p>
+                  <p>In the following example, assume a refresh of a table named <code class="codeph">customers</code> that has columns <code class="codeph">c_key</code>, <code class="codeph">c_name</code>, and <code class="codeph">c_addr</code>. The differential data contains either new rows or rows that have been updated since the last refresh of the data warehouse. In this example, the updated data is shipped from the production system to the data warehouse system by means of ASCII files. These files must be loaded into a temporary table, named <code class="codeph">diff_customer</code>, before starting the refresh process. You can use SQL*Loader with both the parallel and direct options to efficiently perform this task. You can use the <code class="codeph">APPEND</code> hint when loading in parallel as well.
+                  </p>
+                  <p>After <code class="codeph">diff_customer</code> is loaded, the refresh process can be started. It can be performed in two phases or by merging in parallel, as demonstrated in the following:
+                  </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-E2B7261E-1DC4-4029-A018-B1B8C509FD84" title="How to optimize performance for updating a table in parallel is discussed in this topic.">Optimizing Performance for Updating the Table in Parallel</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-D1AFE9E1-D98C-4A5C-AE3E-75C9ADFE60D4" title="How to efficiently insert new rows into a table in parallel is discussed in this topic.">Efficiently Inserting the New Rows into the Table in Parallel</a></p>
+                     </li>
+                     <li>
+                        <p><a href="parallel-exec-tips.html#GUID-7F00E66F-A941-4299-8D61-36AE5D9CC846" title="How to optimize performance by merging in parallel is discussed in this topic.">Optimizing Performance by Merging in Parallel</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1549"></a><div class="props_rev_3"><a id="GUID-E2B7261E-1DC4-4029-A018-B1B8C509FD84" name="GUID-E2B7261E-1DC4-4029-A018-B1B8C509FD84"></a><h4 id="VLDBG-GUID-E2B7261E-1DC4-4029-A018-B1B8C509FD84" class="sect4">Optimizing Performance for Updating the Table in Parallel</h4>
+                  <div>
+                     <p>How to optimize performance for updating a table in parallel is discussed in this topic.</p>
+                     <p>The following statement is a straightforward SQL implementation of the update using subqueries:</p><pre class="oac_no_warn" dir="ltr">UPDATE customers SET(c_name, c_addr) = (SELECT c_name, c_addr
+  FROM diff_customer WHERE diff_customer.c_key = customer.c_key)
+  WHERE c_key IN(SELECT c_key FROM diff_customer);
+</pre><p>Unfortunately, the two subqueries in this statement affect performance.</p>
+                     <p>An alternative is to rewrite this query using updatable join views. To rewrite the query, you must first add a primary key constraint to the <code class="codeph">diff_customer</code> table to ensure that the modified columns map to a key-preserved table:
+                     </p><pre class="oac_no_warn" dir="ltr">CREATE UNIQUE INDEX diff_pkey_ind ON diff_customer(c_key) PARALLEL NOLOGGING;
+
+ALTER TABLE diff_customer ADD PRIMARY KEY (c_key);
+</pre><p>You can then update the <code class="codeph">customers</code> table with the following SQL statement:
+                     </p><pre class="oac_no_warn" dir="ltr">UPDATE /*+ PARALLEL(cust_joinview) */
+  (SELECT /*+ PARALLEL(customers) PARALLEL(diff_customer) */
+  CUSTOMER.c_name AS c_name CUSTOMER.c_addr AS c_addr,
+   diff_customer.c_name AS c_newname, diff_customer.c_addr AS c_newaddr
+   FROM diff_customer
+   WHERE customers.c_key = diff_customer.c_key) cust_joinview
+   SET c_name = c_newname, c_addr = c_newaddr;
+</pre><p>The underlying scans feeding the join view <code class="codeph">cust_joinview</code> are done in parallel. You can then parallelize the update to further improve performance, but only if the <code class="codeph">customers</code> table is partitioned.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1550"></a><div class="props_rev_3"><a id="GUID-D1AFE9E1-D98C-4A5C-AE3E-75C9ADFE60D4" name="GUID-D1AFE9E1-D98C-4A5C-AE3E-75C9ADFE60D4"></a><h4 id="VLDBG-GUID-D1AFE9E1-D98C-4A5C-AE3E-75C9ADFE60D4" class="sect4">Efficiently Inserting the New Rows into the Table in Parallel</h4>
+                  <div>
+                     <p>How to efficiently insert new rows into a table in parallel is discussed in this topic.</p>
+                     <p>The last phase of the refresh process consists of inserting the new rows from the <code class="codeph">diff_customer</code> temporary table to the <code class="codeph">customers</code> table. Unlike the update case, you cannot avoid having a subquery in the <code class="codeph">INSERT</code> statement:
+                     </p><pre class="oac_no_warn" dir="ltr">INSERT /*+PARALLEL(customers)*/ INTO customers SELECT * FROM diff_customer s);
+</pre><p>However, you can guarantee that the subquery is transformed into an anti-hash join by using the <code class="codeph">HASH_AJ</code> hint. Doing so enables you to use parallel <code class="codeph">INSERT</code> to execute the preceding statement efficiently. Parallel <code class="codeph">INSERT</code> is applicable even if the table is not partitioned.
+                     </p>
+                  </div>
+               </div><a id="VLDBG1551"></a><div class="props_rev_3"><a id="GUID-7F00E66F-A941-4299-8D61-36AE5D9CC846" name="GUID-7F00E66F-A941-4299-8D61-36AE5D9CC846"></a><h4 id="VLDBG-GUID-7F00E66F-A941-4299-8D61-36AE5D9CC846" class="sect4">Optimizing Performance by Merging in Parallel</h4>
+                  <div>
+                     <p>How to optimize performance by merging in parallel is discussed in this topic.</p>
+                     <p>You can combine update and insert operations into one statement, commonly known as a <span class="bold">merge</span>, as shown in the following example.
+                     </p><pre class="oac_no_warn" dir="ltr">MERGE INTO customers USING diff_customer
+ON (diff_customer.c_key = customer.c_key) WHEN MATCHED THEN
+  UPDATE SET (c_name, c_addr) = (SELECT c_name, c_addr 
+  FROM diff_customer WHERE diff_customer.c_key = customers.c_key) 
+WHEN NOT MATCHED THEN
+ INSERT VALUES (diff_customer.c_key,diff_customer.c_data);
+</pre><p>The SQL statement in the previous example achieves the same result as all of the statements in <a href="parallel-exec-tips.html#GUID-E2B7261E-1DC4-4029-A018-B1B8C509FD84" title="How to optimize performance for updating a table in parallel is discussed in this topic.">Optimizing Performance for Updating the Table in Parallel</a> and <a href="parallel-exec-tips.html#GUID-D1AFE9E1-D98C-4A5C-AE3E-75C9ADFE60D4" title="How to efficiently insert new rows into a table in parallel is discussed in this topic.">Efficiently Inserting the New Rows into the Table in Parallel</a>.
+                     </p>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

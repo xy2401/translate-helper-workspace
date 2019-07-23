@@ -1,0 +1,91 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Secure Use of Runtime.exec Functionality in Oracle Database</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Java Developer's Guide ">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Java Developer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="java-developers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-11T00:55:24-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1999, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96468-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="Oracle-JVM-authentication-mechanism.html" title="Previous" type="text/html">
+      <link rel="next" href="native-JNDI-support.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Java Developer's Guide">
+    <meta name="dcterms.isVersionOf" content="JJDEV">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="Oracle-JVM-authentication-mechanism.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="native-JNDI-support.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Java Developer's Guide </span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="database-Java-application-security.html" property="item" typeof="WebPage"><span property="name"> Security for Oracle Database Java Applications </span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Secure Use of Runtime.exec Functionality in Oracle Database</li>
+            </ol>
+            <a id="GUID-63109A8A-028C-4DFC-B24B-A2A6DB7FAE19" name="GUID-63109A8A-028C-4DFC-B24B-A2A6DB7FAE19"></a><a id="JJDEV13638"></a>
+            
+            <h2 id="JJDEV-GUID-63109A8A-028C-4DFC-B24B-A2A6DB7FAE19" class="sect2"><span class="enumeration_section">11.4 </span>Secure Use of Runtime.exec Functionality in Oracle Database
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <div class="section">
+                  <p>This section is intended for DBAs and security administrators, and provides guidelines for secure use of the Java SE functionality <code class="codeph">Runtime.exec</code> in Java applications running inside Oracle Database. The <code class="codeph">java.lang.Runtime.exec</code> methods, found in Java SE libraries and supported by Java Virtual Machine (Java VM) since release 9, span a new operating system (OS) process and execute the specified command and arguments in the new process. If a <code class="codeph">SecurityManager</code> is present, which is always the case for Java VM running in the database, then a security check for file execution permissions on relevant path names is performed before the new OS process starts. If you are a DBA or a security administrator, then you are responsible for granting the appropriate file read, write, and execute permissions selectively to the database users, who are authorized to run server-side OS commands. In addition, Oracle strongly recommends that the <code class="codeph">dbms_java.set_runtime_exec_credentials</code> procedure is used to control OS user identities of spawned commands as described in the following sections.
+                  </p>
+                  <p>By design, the <code class="codeph">Runtime.exec</code> and the related functionality of the <code class="codeph">java.lang.ProcessBuilder</code> and <code class="codeph">java.lang.Process</code> classes provide no control over the identity of the user associated with the newly created process. In most Java implementations, including the default behavior of Java VM, the forked process runs with the identity of the parent process, which is the Oracle OS user in Oracle Database. For security reasons, it is advisable to run the processes forked by the <code class="codeph">Runtime.exec</code> functionality with OS identity granted lesser rights. The <code class="codeph">dbms_java.set_runtime_exec_credentials</code> procedure provides a mechanism to bind a specified database user/schema to a specific OS account. If you are a DBA, then you should bind database users issuing <code class="codeph">Runtime.exec</code> calls to OS accounts with the least possible power. The following call associates database user/schema <code class="codeph">DBUSER</code> with an OS <code class="codeph">osuser</code> account:
+                  </p><pre class="oac_no_warn" dir="ltr">dbms_java.set_runtime_exec_credentials('DBUSER', 'osuser', 'ospass');
+</pre><p>As a result, the OS process spawned to run the <code class="codeph">Runtime.exec</code> commands issued by <code class="codeph">DBUSER</code> runs with the identity of <code class="codeph">osuser</code>. You must be the <code class="codeph">SYS</code> user to use <code class="codeph">set_runtime_exec_credentials</code> procedure.
+                  </p>
+               </div>
+               <!-- class="section" -->
+            </div>
+            <div>
+               <div class="relinfo">
+                  <p><strong>Related Topics</strong></p>
+                  <ul>
+                     <li><a href="DBMS-JAVA-package.html#GUID-7DB95C10-0386-4E88-991A-2496B325082F">set_runtime_exec_credentials</a></li>
+                  </ul>
+               </div>
+            </div>
+            
+         </div>
+      </article>
+   </body>
+</html>

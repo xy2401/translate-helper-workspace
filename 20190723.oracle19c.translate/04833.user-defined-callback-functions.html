@@ -1,0 +1,603 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Oracle Call Interface can execute user-specific code in addition to OCI calls.">
+      <meta name="description" content="Oracle Call Interface can execute user-specific code in addition to OCI calls.">
+      <title>User-Defined Callback Functions in OCI</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Programmer's Guide">
+      <meta property="og:description" content="Oracle Call Interface can execute user-specific code in addition to OCI calls.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Programmer's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="oracle-call-interface-programmers-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-14T08:46:00-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="1996, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96204-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="notification-streams-advanced-queuing.html" title="Previous" type="text/html">
+      <link rel="next" href="performance-topics.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Oracle Call Interface Programmer's Guide">
+    <meta name="dcterms.isVersionOf" content="LNOCI">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="notification-streams-advanced-queuing.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="performance-topics.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Programmer's Guide</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">User-Defined Callback Functions in OCI</li>
+            </ol>
+            <a id="GUID-215B52BB-6769-4A53-A2DC-EDB36AE031B7" name="GUID-215B52BB-6769-4A53-A2DC-EDB36AE031B7"></a>
+            
+            <h2 id="LNOCI-GUID-215B52BB-6769-4A53-A2DC-EDB36AE031B7" class="sect2"><span class="enumeration_chapter">14 </span>User-Defined Callback Functions in OCI
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Oracle Call Interface can execute user-specific code in addition to OCI calls. </p>
+               <p>You can use this functionality for:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p>Adding tracing and performance measurement code to enable users to tune their applications</p>
+                  </li>
+                  <li>
+                     <p>Performing preprocessing or postprocessing code for specific OCI calls </p>
+                  </li>
+                  <li>
+                     <p>Accessing other data sources with OCI by using the native OCI interface for Oracle Databases and directing the OCI calls to use user callbacks for non-Oracle data sources</p>
+                  </li>
+               </ul>
+               <p>The OCI callback feature provides support for calling user code before or after executing the OCI calls. It also allows the user-defined code to be executed instead of executing the OCI code. </p>
+               <p>The user callback code can be registered dynamically without modifying the source code of the application. The dynamic registration is implemented by loading up to five user-created dynamically linked libraries after the initialization of the environment handle during the <code class="codeph">OCIEnvCreate()</code> call. These user-created libraries (such as dynamic-link libraries (DLLs) on Windows, or shared libraries on Solaris, register the user callbacks for the selected OCI calls transparently to the application.
+               </p>
+               <div class="section">
+                  <p class="subhead1" id="GUID-215B52BB-6769-4A53-A2DC-EDB36AE031B7__GUID-44493DA1-4EFC-4A2D-9D53-E436791FB95B">Sample Application</p>
+               </div>
+               <!-- class="section" -->
+               <div class="section">
+                  <p>For a listing of the complete demonstration programs that illustrate the OCI user callback feature, see Appendix&nbsp;B.</p>
+               </div>
+               <!-- class="section" -->
+               <div class="section">
+                  <div class="p">This section includes the following topics:
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-37001800-DC08-4253-8958-4F51A734FCE0" title="An application can register user callback libraries with the OCIUserCallbackRegister() function.">About Registering User Callbacks in OCI</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-163FF0B1-BAA9-4300-BA7C-170AAF0960ED" title="Provides additional reference information about using OCI callbacks from external procedures.">OCI Callbacks from External Procedures</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="infoboxnotealso" id="GUID-215B52BB-6769-4A53-A2DC-EDB36AE031B7__GUID-E2BF4536-82DD-444A-8328-29435C560919">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="connect-authorize-and-initialize-functions.html#GUID-16BDA1F1-7DAF-41CA-9EE1-C9A4CB467244" title="Creates and initializes an environment handle for OCI functions to work under.">OCIEnvCreate()</a></p>
+                  </div>
+               </div>
+               <!-- class="section" -->
+            </div>
+            <div class="props_rev_3"><a id="GUID-37001800-DC08-4253-8958-4F51A734FCE0" name="GUID-37001800-DC08-4253-8958-4F51A734FCE0"></a><h3 id="LNOCI-GUID-37001800-DC08-4253-8958-4F51A734FCE0" class="sect3"><span class="enumeration_section">14.1 </span>About Registering User Callbacks in OCI
+               </h3>
+               <div>
+                  <p>An application can register user callback libraries with the <code class="codeph">OCIUserCallbackRegister()</code> function.
+                  </p>
+                  <p>Callbacks are registered in the context of the environment handle. An application can retrieve information about callbacks registered with a handle with the <code class="codeph">OCIUserCallbackGet()</code> function. 
+                  </p>
+                  <p>A user-defined callback is a subroutine that is registered against an OCI call and an environment handle. It can be specified to be either an entry callback, a replacement callback, or an exit callback. </p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>If it is an entry callback, it is called when the program enters the OCI function.</p>
+                     </li>
+                     <li>
+                        <p>Replacement callbacks are executed after entry callbacks. If the replacement callback returns a value of <code class="codeph">OCI_CONTINUE</code>, then a subsequent replacement callback or the normal OCI-specific code is executed. If a replacement callback returns anything other than <code class="codeph">OCI_CONTINUE</code>, then subsequent replacement callbacks and the OCI code do not execute.
+                        </p>
+                     </li>
+                     <li>
+                        <p>After a replacement callback returns something other than <code class="codeph">OCI_CONTINUE</code>, or an OCI function successfully executes, program control transfers to the exit callback (if one is registered).
+                        </p>
+                     </li>
+                  </ul>
+                  <p>If a replacement or exit callback returns anything other than <code class="codeph">OCI_CONTINUE</code>, then the return code from the callback is returned from the associated OCI call.
+                  </p>
+                  <p>A user callback can return <code class="codeph">OCI_INVALID_HANDLE</code> when either an invalid handle or an invalid context is passed to it.
+                  </p>
+                  <div class="infoboxnote" id="GUID-37001800-DC08-4253-8958-4F51A734FCE0__GUID-BE2072F7-E5DD-464D-98FF-B94366948A29">
+                     <p class="notep1">Note:</p>
+                     <p>If any callback returns anything other than <code class="codeph">OCI_CONTINUE</code>, then that return code is passed to the subsequent callbacks. If a replacement or exit callback returns a return code other than <code class="codeph">OCI_CONTINUE</code>, then the final (not <code class="codeph">OCI_CONTINUE</code>) return code is returned from the OCI call.
+                     </p>
+                  </div>
+                  <div class="p">This section includes the following topics:
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-7CC81F1D-0EB3-464A-B87F-CF4F18BCBA7C" title="A user callback is registered using the OCIUserCallbackRegister() call.">OCIUserCallbackRegister</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-7C13E29F-1300-47C4-96BE-142756FD6F61" title="Details about the user callback function.">User Callback Function</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-4815D8E1-B24F-4ADF-98D0-934CFC4192F8" title="Shows the control flow for a user callback.">User Callback Control Flow</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-151E2492-7F00-497F-B253-0F789E405BFB" title="If the callbacks are a total replacement of the OCI code, then they usually maintain their own error information in the call context and use that to return error information in bufp and errcodep parameters of the replacement callback of the OCIErrorGet() call.">User Callback for OCIErrorGet()</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-774331BE-507E-43B5-ABAC-F93A861C9F9C" title="If an entry callback wants to return an error to the caller of the OCI call, then it must register a replacement or exit callback.">Errors from Entry Callbacks</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-C1E8C023-F0D4-4C0A-8585-DA6CCA0DDF65" title="Because user callbacks are expected to be used for monitoring OCI behavior or to access other data sources, it is desirable that the registration of the callbacks be done transparently and nonintrusively.">Dynamic Callback Registrations</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-C58991CA-395F-4DCC-9795-D688931DFFB5" title="The ORA_OCI_UCBPKG variable can contain a semicolon-separated list of package names. The packages are loaded in the order they are specified in the list.">About Loading Multiple Packages</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-46F2412A-F84C-4C2A-983A-BF0AAA36647F" title="The package source must provide two functions.">Package Format</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-9E6DD6F6-FF2A-49B6-8832-3651A4C7502E" title="User callbacks can be registered statically in the application itself or dynamically at runtime in the DLLs.">User Callback Chaining</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-63F27A12-2778-43A0-918F-35F310E0EAA6" title="Because Oracle Database is the predominant database software accessed, applications can take advantage of the OCI interface to access non-Oracle data by using the user callbacks to access them.">About Accessing Other Data Sources Through OCI</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-1E75F3F2-673D-4D80-B9C3-89119D47CCB9" title="Details the restrictions on callback functions.">Restrictions on Callback Functions</a></p>
+                        </li>
+                        <li>
+                           <p><a href="user-defined-callback-functions.html#GUID-A817AC07-545A-4C3B-A155-027D1889CA38" title="Shows examples of using OCI callbacks.">Example of OCI Callbacks</a></p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="infoboxnotealso" id="GUID-37001800-DC08-4253-8958-4F51A734FCE0__GUID-9FBD9D48-595E-494F-A553-D13E3AC2B6F2">
+                     <p class="notep1">See Also:</p>
+                     <p><a href="miscellaneous-functions.html#GUID-2249B3FF-5E24-40AE-B310-EA63DBF37263" title="Determines the callback that is registered for a handle.">OCIUserCallbackGet()</a> and <a href="miscellaneous-functions.html#GUID-A11D635A-806B-445E-BDCF-F145E86232CF" title="Registers a user-created callback function.">OCIUserCallbackRegister()</a></p>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-7CC81F1D-0EB3-464A-B87F-CF4F18BCBA7C" name="GUID-7CC81F1D-0EB3-464A-B87F-CF4F18BCBA7C"></a><h4 id="LNOCI-GUID-7CC81F1D-0EB3-464A-B87F-CF4F18BCBA7C" class="sect4"><span class="enumeration_section">14.1.1 </span>OCIUserCallbackRegister
+                  </h4>
+                  <div>
+                     <p>A user callback is registered using the OCIUserCallbackRegister() call. </p>
+                     <p>Currently, <code class="codeph">OCIUserCallbackRegister()</code> is only registered on the environment handle. The user's callback function of typedef <code class="codeph">OCIUserCallback</code> is registered along with its context for the OCI call identified by the OCI function code, <span class="italic">fcode</span>. The type of the callback, whether entry, replacement, or exit, is specified by the <span class="italic">when</span> parameter.
+                     </p>
+                     <p>For example, the <code class="codeph">stmtprep_entry_dyncbk_fn</code> entry callback function and its context <code class="codeph">dynamic_context</code>, are registered against the environment handle <code class="codeph">hndlp</code> for the <code class="codeph">OCIStmtPrepare2()</code> call by calling the <code class="codeph">OCIUserCallbackRegister()</code> function with the following parameters.
+                     </p><pre class="oac_no_warn" dir="ltr">OCIUserCallbackRegister( hndlp, 
+                         OCI_HTYPE_ENV, 
+                         errh, 
+                         stmtprep_entry_dyncbk_fn, 
+                         dynamic_context, 
+                         OCI_FNCODE_STMTPREPARE,
+                         OCI_UCBTYPE_ENTRY
+                         (OCIUcb*) NULL);</pre><div class="infoboxnotealso" id="GUID-7CC81F1D-0EB3-464A-B87F-CF4F18BCBA7C__GUID-59A8DFDF-95BC-4149-B6A2-9651C72A08B2">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="miscellaneous-functions.html#GUID-A11D635A-806B-445E-BDCF-F145E86232CF" title="Registers a user-created callback function.">OCIUserCallbackRegister()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="statement-functions.html#GUID-E6C1DC67-D464-4D2A-9F19-737423D31779" title="Prepares a SQL or PL/SQL statement for execution.">OCIStmtPrepare2()</a></p>
+                           </li>
+                        </ul>
+                        <p></p>
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-7C13E29F-1300-47C4-96BE-142756FD6F61" name="GUID-7C13E29F-1300-47C4-96BE-142756FD6F61"></a><h4 id="LNOCI-GUID-7C13E29F-1300-47C4-96BE-142756FD6F61" class="sect4"><span class="enumeration_section">14.1.2 </span>User Callback Function
+                  </h4>
+                  <div>
+                     <p>Details about the user callback function.</p>
+                     <p>The user callback function must use the following syntax:</p><pre class="oac_no_warn" dir="ltr">typedef sword (*OCIUserCallback)
+     (void *ctxp,      /* context for the user callback*/
+      void *hndlp,     /* handle for the callback, env handle for now */
+      ub4 type,         /* type of handlp, OCI_HTYPE_ENV for this release */
+      ub4 fcode,        /* function code of the OCI call */
+      ub1 when,         /* type of the callback, entry or exit */
+      sword returnCode, /* OCI return code */
+      ub4 *errnop,      /* Oracle error number */
+      va_list arglist); /* parameters of the oci call */
+</pre><p>In addition to the parameters described in the <code class="codeph">OCIUserCallbackRegister()</code> call, the callback is called with the return code,<span class="italic"> errnop</span>, and all the parameters of the original OCI as declared by the prototype definition.
+                     </p>
+                     <p>The return code is always passed in as <code class="codeph">OCI_SUCCESS</code> and <code class="codeph">*errnop</code> is always passed in as 0 for the first entry callback. Note that <code class="codeph">*errnop</code> refers to the content of <code class="codeph">errnop</code> because <code class="codeph">errnop</code> is an IN/OUT parameter. 
+                     </p>
+                     <p>If the callback does not want to change the OCI return code, then it must return <code class="codeph">OCI_CONTINUE</code>, and the value returned in <code class="codeph">*errnop</code> is ignored. If, however, the callback returns any return code other than <code class="codeph">OCI_CONTINUE</code>, the last returned return code becomes the return code for the call. At this point, the value returned for <code class="codeph">*errnop</code> is set in the error handle, or in the environment handle if the error information is returned in the environment handle because of the absence of the error handle for certain OCI calls such as <code class="codeph">OCIHandleAlloc()</code>.
+                     </p>
+                     <p>For replacement callbacks, the <code class="codeph">returnCode</code> is the non-<code class="codeph">OCI_CONTINUE</code> return code from the previous callback or OCI call, and <code class="codeph">*errnop</code> is the value of the error number being returned in the error handle. This allows the subsequent callback to change the return code or error information if needed.
+                     </p>
+                     <p>The processing of replacement callbacks is different in that if it returns anything other than <code class="codeph">OCI_CONTINUE</code>, then subsequent replacement callbacks and OCI code are bypassed and processing jumps to the exit callbacks.
+                     </p>
+                     <p>Note that if the replacement callbacks return <code class="codeph">OCI_CONTINUE</code> to allow processing of OCI code, then the return code from entry callbacks is ignored.
+                     </p>
+                     <p>All the original parameters of the OCI call are passed to the callback as variable parameters, and the callback must retrieve them using the <span class="italic">va_arg</span> macros. The callback demonstration programs provide examples.
+                     </p>
+                     <p>A null value can be registered to deregister a callback. That is, if the value of the callback (<code class="codeph">OCIUserCallback()</code>) is <code class="codeph">NULL</code> in the <code class="codeph">OCIUserCallbackRegister()</code> call, then the user callback is deregistered. 
+                     </p>
+                     <p>When using the thread-safe mode, the OCI program acquires all mutexes before calling the user callbacks.</p>
+                     <div class="infoboxnotealso" id="GUID-7C13E29F-1300-47C4-96BE-142756FD6F61__GUID-C094DAA3-1F93-4BFA-A952-99B029BEFCA7">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="oci-demo-programs.html#GUID-75E18629-0C54-4495-A747-AFB346034F26" title="Lists example programs with sample code demonstrating the allocation and use of OCI handles.">OCI Demonstration Programs</a></p>
+                           </li>
+                           <li>
+                              <p><a href="miscellaneous-functions.html#GUID-A11D635A-806B-445E-BDCF-F145E86232CF" title="Registers a user-created callback function.">OCIUserCallbackRegister()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="handle-and-descriptor-functions.html#GUID-C5BF55F7-A110-4CB5-9663-5056590F12B5" title="Returns a pointer to an allocated and initialized handle.">OCIHandleAlloc()</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-4815D8E1-B24F-4ADF-98D0-934CFC4192F8" name="GUID-4815D8E1-B24F-4ADF-98D0-934CFC4192F8"></a><h4 id="LNOCI-GUID-4815D8E1-B24F-4ADF-98D0-934CFC4192F8" class="sect4"><span class="enumeration_section">14.1.3 </span>User Callback Control Flow
+                  </h4>
+                  <div>
+                     <p>Shows the control flow for a user callback.</p>
+                     <p><a href="user-defined-callback-functions.html#GUID-4815D8E1-B24F-4ADF-98D0-934CFC4192F8__CACJAFAG">Example 14-1</a> shows pseudocode that describes the overall processing of a typical OCI call.
+                     </p>
+                     <div class="example" id="GUID-4815D8E1-B24F-4ADF-98D0-934CFC4192F8__CACJAFAG">
+                        <p class="titleinexample">Example 14-1 Pseudocode That Describes the Overall Processing of a Typical OCI Call</p><pre class="oac_no_warn" dir="ltr">OCIXyzCall()
+{
+ Acquire mutexes on handles;
+ retCode = OCI_SUCCESS;
+ errno = 0;
+ for all ENTRY callbacks do
+  {
+     
+     EntryretCode = (*entryCallback)(..., retcode, &amp;errno, ...);
+     if (retCode != OCI_CONTINUE)
+      {
+         set errno in error handle or environment handle;
+         retCode = EntryretCode;
+       }
+   }
+  for all REPLACEMENT callbacks do
+  {
+   retCode = (*replacementCallback) (..., retcode, &amp;errno, ...);
+   if (retCode != OCI_CONTINUE)
+      {
+       set errno in error handle or environment handle
+       goto executeEXITCallback;
+       }
+   }
+
+   retCode = return code for XyzCall; /* normal processing of OCI call */
+
+   errno = error number from error handle or env handle;
+
+ executeExitCallback:
+   for all EXIT callbacks do
+   {
+       exitRetCode = (*exitCallback)(..., retCode, &amp;errno,...);
+       if (exitRetCode != OCI_CONTINUE)
+       {
+           set errno in error handle or environment handle;
+           retCode = exitRetCode;
+       }
+   }
+    release mutexes;
+    return retCode
+}
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-151E2492-7F00-497F-B253-0F789E405BFB" name="GUID-151E2492-7F00-497F-B253-0F789E405BFB"></a><h4 id="LNOCI-GUID-151E2492-7F00-497F-B253-0F789E405BFB" class="sect4"><span class="enumeration_section">14.1.4 </span>User Callback for OCIErrorGet()
+                  </h4>
+                  <div>
+                     <p>If the callbacks are a total replacement of the OCI code, then they usually maintain their own error information in the call context and use that to return error information in <code class="codeph">bufp</code> and <code class="codeph">errcodep</code> parameters of the replacement callback of the <code class="codeph">OCIErrorGet()</code> call.
+                     </p>
+                     <p></p>
+                     <p>If, however, the callbacks are either partially overriding OCI code, or just doing some other postprocessing, then they can use the exit callback to modify the error text and <code class="codeph">errcodep</code> parameters of the <code class="codeph">OCIErrorGet()</code> call by their own error message and error number. Note that the <code class="codeph">*errnop</code> passed into the exit callback is the error number in the error or the environment handle.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-151E2492-7F00-497F-B253-0F789E405BFB__GUID-01E109A7-B4FD-40E1-8E2A-26DCC2C9DF5C">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="miscellaneous-functions.html#GUID-4B99087C-74F6-498A-8310-D6645172390A" title="Returns an error message and an Oracle Database error code.">OCIErrorGet()</a></p>
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-774331BE-507E-43B5-ABAC-F93A861C9F9C" name="GUID-774331BE-507E-43B5-ABAC-F93A861C9F9C"></a><h4 id="LNOCI-GUID-774331BE-507E-43B5-ABAC-F93A861C9F9C" class="sect4"><span class="enumeration_section">14.1.5 </span>Errors from Entry Callbacks
+                  </h4>
+                  <div>
+                     <p>If an entry callback wants to return an error to the caller of the OCI call, then it must register a replacement or exit callback.</p>
+                     <p>This is because if the OCI code is executed, then the error code from the entry callback is ignored. Therefore, the entry callback must pass the error to the replacement or exit callback through its own context.</p>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-C1E8C023-F0D4-4C0A-8585-DA6CCA0DDF65" name="GUID-C1E8C023-F0D4-4C0A-8585-DA6CCA0DDF65"></a><h4 id="LNOCI-GUID-C1E8C023-F0D4-4C0A-8585-DA6CCA0DDF65" class="sect4"><span class="enumeration_section">14.1.6 </span>Dynamic Callback Registrations
+                  </h4>
+                  <div>
+                     <p>Because user callbacks are expected to be used for monitoring OCI behavior or to access other data sources, it is desirable that the registration of the callbacks be done transparently and nonintrusively. </p>
+                     <p>This is accomplished by loading user-created dynamically linked libraries at OCI initialization time. These dynamically linked libraries are called <span class="italic">packages</span>. The user-created packages register the user callbacks for the selected OCI calls. These callbacks can further register or deregister user callbacks as needed when receiving control at runtime.
+                     </p>
+                     <p>A makefile (<code class="codeph">ociucb.mk</code> on Solaris) is provided with the OCI demonstration programs to create the package. The exact naming and location of this package is operating system-dependent. The source code for the package must provide code for special callbacks that are called at OCI initialization and environment creation times. 
+                     </p>
+                     <p>Setting an operating system environment variable, <code class="codeph">ORA_OCI_UCBPKG</code>, controls the loading of the package. This variable names the packages in a generic way. The packages must be located in the <code class="codeph">$ORACLE_HOME/lib</code> directory.
+                     </p>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-C58991CA-395F-4DCC-9795-D688931DFFB5" name="GUID-C58991CA-395F-4DCC-9795-D688931DFFB5"></a><h4 id="LNOCI-GUID-C58991CA-395F-4DCC-9795-D688931DFFB5" class="sect4"><span class="enumeration_section">14.1.7 </span>About Loading Multiple Packages 
+                  </h4>
+                  <div>
+                     <p>The <code class="codeph">ORA_OCI_UCBPKG</code> variable can contain a semicolon-separated list of package names. The packages are loaded in the order they are specified in the list.
+                     </p>
+                     <p>For example, in the past the package was specified as:</p><pre class="oac_no_warn" dir="ltr">setenv ORA_OCI_UCBPKG mypkg
+</pre><p>Currently, you can still specify the package as before, but in addition multiple packages can be specified as:</p><pre class="oac_no_warn" dir="ltr">setenv ORA_OCI_UCBPKG "mypkg;yourpkg;oraclepkg;sunpkg;msoftpkg"
+</pre><p>All these packages are loaded in order. That is, <code class="codeph">mypkg</code> is loaded first and <code class="codeph">msoftpkg</code> is loaded last.
+                     </p>
+                     <p>A maximum of five packages can be specified. </p>
+                     <div class="infoboxnote" id="GUID-C58991CA-395F-4DCC-9795-D688931DFFB5__GUID-B774EC50-C033-4956-8EC3-93839484CF2B">
+                        <p class="notep1">Note:</p>
+                        <p>The sample makefile <code class="codeph">ociucb.mk</code> creates <code class="codeph">ociucb.so.1.0</code> on a Solaris or <code class="codeph">ociucb.dll</code> on a Windows system. To load the <code class="codeph">ociucb</code> package, the environmental variable <code class="codeph">ORA_OCI_UCBPKG</code> must be set to <code class="codeph">ociucb</code>. On Solaris, if the package name ends with <code class="codeph">.so</code>, OCIEnvCreate() or OCIEnvNlsCreate() fails. The package name must end with <code class="codeph">.so.1.0</code>.
+                        </p>
+                        <p>For further details about creating the dynamic-link libraries, read the Makefiles provided in the demo directory for your operating system. For further information about user-defined callbacks, see your operating system-specific documentation on compiling and linking applications.</p>
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-46F2412A-F84C-4C2A-983A-BF0AAA36647F" name="GUID-46F2412A-F84C-4C2A-983A-BF0AAA36647F"></a><h4 id="LNOCI-GUID-46F2412A-F84C-4C2A-983A-BF0AAA36647F" class="sect4"><span class="enumeration_section">14.1.8 </span>Package Format
+                  </h4>
+                  <div>
+                     <p>The package source must provide two functions. </p>
+                     <p>In the past, a package had to specify the source code for the <code class="codeph">OCIEnvCallback()</code> function. However, the <code class="codeph">OCIEnvCallback()</code> function is obsolete. Instead, the package source must provide two functions. The first function must be named as <span class="italic">packagename</span> suffixed with the word <span class="italic">Init</span>. For example, if the package is named <code class="codeph">foo</code>, then the source file (for example, but not necessarily, foo.c) must contain a <code class="codeph">fooInit()</code> function with a call to <code class="codeph">OCISharedLibInit()</code> function specified exactly as:
+                     </p><pre class="oac_no_warn" dir="ltr">sword fooInit(metaCtx, libCtx, argfmt, argc, argv)
+      void *     metaCtx;         /* The metacontext */
+      void *     libCtx;          /* The context for this package. */
+      ub4        argfmt;          /* package argument format */
+      sword      argc;            /* package arg count*/
+      void *     argv[];          /* package arguments */
+{
+  return  (OCISharedLibInit(metaCtx, libCtx, argfmt, argc, argv,
+                            fooEnvCallback));
+}
+</pre><p>The last parameter of the <code class="codeph">OCISharedLibInit()</code> function, <code class="codeph">fooEnvCallback()</code> in this case, is the name of the second function. It can be named anything, but by convention it is named <span class="italic">packagename</span> suffixed with the word <span class="italic">EnvCallback</span>.
+                     </p>
+                     <p>This function is a replacement for <code class="codeph">OCIEnvCallback()</code>. Currently, all the dynamic user callbacks must be registered in this function. The function must be of type <code class="codeph">OCIEnvCallbackType</code>, which is specified as:
+                     </p><pre class="oac_no_warn" dir="ltr">typedef sword (*OCIEnvCallbackType)(OCIEnv *env, ub4 mode,
+                                    size_t xtramem_sz, void *usrmemp,
+                                    OCIUcb *ucbDesc);
+</pre><p>When an environment handle is created, then this callback function is called at the very end. The <code class="codeph">env</code> parameter is the newly created environment handle.
+                     </p>
+                     <p>The <code class="codeph">mode</code>, <code class="codeph">xtramem_sz</code>, and <code class="codeph">usrmempp</code> are the parameters passed to the OCIEnvCreate() call. The last parameter, <code class="codeph">ucbDesc</code>, is a descriptor that is passed to the package. The package uses this descriptor to register the user callbacks as described later.
+                     </p>
+                     <p>A sample <code class="codeph">ociucb.c</code> file is provided in the <code class="codeph">demo</code> directory. The makefile <code class="codeph">ociucb.mk</code> is also provided (on Solaris) in the <code class="codeph">demo</code> directory to create the package. Please note that this may be different on other operating systems. The <code class="codeph">demo</code> directory also contains full user callback demo programs (<code class="codeph">cdemoucb.c, cdemoucbl.c</code>) illustrating this.
+                     </p>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-9E6DD6F6-FF2A-49B6-8832-3651A4C7502E" name="GUID-9E6DD6F6-FF2A-49B6-8832-3651A4C7502E"></a><h4 id="LNOCI-GUID-9E6DD6F6-FF2A-49B6-8832-3651A4C7502E" class="sect4"><span class="enumeration_section">14.1.9 </span>User Callback Chaining
+                  </h4>
+                  <div>
+                     <p>User callbacks can be registered statically in the application itself or dynamically at runtime in the DLLs.</p>
+                     <p>A mechanism is needed to allow the application to override a previously registered callback and then later invoke the overridden one in the newly registered callback to preserve the behavior intended by the dynamic registrations. This can result in chaining of user callbacks.</p>
+                     <p>The <code class="codeph">OCIUserCallbackGet()</code> function determines which function and context is registered for an OCI call. 
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-9E6DD6F6-FF2A-49B6-8832-3651A4C7502E__GUID-DEF2F5EB-F20C-46CF-8D33-A087EE508ACF">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="miscellaneous-functions.html#GUID-2249B3FF-5E24-40AE-B310-EA63DBF37263" title="Determines the callback that is registered for a handle.">OCIUserCallbackGet()</a></p>
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-63F27A12-2778-43A0-918F-35F310E0EAA6" name="GUID-63F27A12-2778-43A0-918F-35F310E0EAA6"></a><h4 id="LNOCI-GUID-63F27A12-2778-43A0-918F-35F310E0EAA6" class="sect4"><span class="enumeration_section">14.1.10 </span>About Accessing Other Data Sources Through OCI
+                  </h4>
+                  <div>
+                     <p>Because Oracle Database is the predominant database software accessed, applications can take advantage of the OCI interface to access non-Oracle data by using the user callbacks to access them.</p>
+                     <p>This allows an application written in OCI to access Oracle data without any performance penalty. Drivers can be written that access the non-Oracle data in user callbacks. Because OCI provides a very rich interface, there is usually a straightforward mapping of OCI calls to most data sources. This solution is better than writing applications for other middle layers such as ODBC that introduce performance penalties for all data sources. Using OCI does not incur any penalty to access Oracle data sources, and incurs the same penalty that ODBC does for non-Oracle data sources.</p>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-1E75F3F2-673D-4D80-B9C3-89119D47CCB9" name="GUID-1E75F3F2-673D-4D80-B9C3-89119D47CCB9"></a><h4 id="LNOCI-GUID-1E75F3F2-673D-4D80-B9C3-89119D47CCB9" class="sect4"><span class="enumeration_section">14.1.11 </span>Restrictions on Callback Functions
+                  </h4>
+                  <div>
+                     <p>Details the restrictions on callback functions.</p>
+                     <p>There are certain restrictions on the usage of callback functions, including <code class="codeph">OCIEnvCallback()</code>:
+                     </p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>A callback cannot call other OCI functions except <code class="codeph">OCIUserCallbackRegister()</code>, <code class="codeph">OCIUserCallbackGet()</code>, <code class="codeph">OCIHandleAlloc()</code>, and <code class="codeph">OCIHandleFree()</code>. Even for these functions, if they are called in a user callback, then callbacks on them are not called to avoid recursion. For example, if <code class="codeph">OCIHandleFree()</code> is called in the callback for <code class="codeph">OCILogoff()</code>, then the callback for <code class="codeph">OCIHandleFree()</code> is disabled during the execution of the callback for <code class="codeph">OCILogoff()</code>.
+                           </p>
+                        </li>
+                        <li>
+                           <p>A callback cannot modify OCI data structures such as the environment or error handles.</p>
+                        </li>
+                        <li>
+                           <p>A callback cannot be registered for the <code class="codeph">OCIUserCallbackRegister()</code> call itself, or for any of the following calls:
+                           </p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><code class="codeph">OCIUserCallbackGet()</code></p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">OCIEnvCreate()</code></p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">OCIInitialize()</code> (Deprecated)
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><code class="codeph">OCIEnvNlsCreate()</code></p>
+                              </li>
+                           </ul>
+                        </li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-1E75F3F2-673D-4D80-B9C3-89119D47CCB9__GUID-2DD7BBEA-6EFB-4406-852B-32A5D1B8A732">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="miscellaneous-functions.html#GUID-A11D635A-806B-445E-BDCF-F145E86232CF" title="Registers a user-created callback function.">OCIUserCallbackRegister()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="miscellaneous-functions.html#GUID-2249B3FF-5E24-40AE-B310-EA63DBF37263" title="Determines the callback that is registered for a handle.">OCIUserCallbackGet()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="handle-and-descriptor-functions.html#GUID-C5BF55F7-A110-4CB5-9663-5056590F12B5" title="Returns a pointer to an allocated and initialized handle.">OCIHandleAlloc()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="handle-and-descriptor-functions.html#GUID-E87E9F91-D3DC-4F35-BE7C-F1EFBFEEBA0A" title="Explicitly deallocates a handle">OCIHandleFree()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="connect-authorize-and-initialize-functions.html#GUID-567DA731-ABC9-4348-B29C-7B2C6C1D7C36" title="Releases a session that was retrieved using OCILogon2() or OCILogon().">OCILogoff()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="connect-authorize-and-initialize-functions.html#GUID-16BDA1F1-7DAF-41CA-9EE1-C9A4CB467244" title="Creates and initializes an environment handle for OCI functions to work under.">OCIEnvCreate()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="deprecated-oci-functions.html#GUID-F50356A8-450D-4A96-8AB5-5726502766B2" title="This function was deprecated in a release previous to Oracle Database 11g Release 2 (11.2).">OCIInitialize()</a></p>
+                           </li>
+                           <li>
+                              <p><a href="connect-authorize-and-initialize-functions.html#GUID-0B6911A9-4B46-476C-BC5E-B87581666CD9" title="Creates and initializes an environment handle for OCI functions to work under.">OCIEnvNlsCreate()</a></p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38" name="GUID-A817AC07-545A-4C3B-A155-027D1889CA38"></a><h4 id="LNOCI-GUID-A817AC07-545A-4C3B-A155-027D1889CA38" class="sect4"><span class="enumeration_section">14.1.12 </span>Example of OCI Callbacks
+                  </h4>
+                  <div>
+                     <p>Shows examples of using OCI callbacks.</p>
+                     <div class="section">
+                        <p>Suppose that there are five packages each registering entry, replacement, and exit callbacks for the <code class="codeph">OCIStmtPrepare2()</code> call. That is, the <code class="codeph">ORA_OCI_UCBPKG</code> variable is set as shown in <a href="user-defined-callback-functions.html#GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACBICBD">Example 14-2</a>. 
+                        </p>
+                        <p>In each package <code class="codeph">pkgN</code> (where N can be 1 through 5), the <code class="codeph">pkgNInit()</code> and <code class="codeph">PkgNEnvCallback()</code> functions are specified, as shown in <a href="user-defined-callback-functions.html#GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACJEBJF">Example 14-3</a>. 
+                        </p>
+                        <p><a href="user-defined-callback-functions.html#GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACDFCCC">Example 14-4</a> shows how the <code class="codeph">pkgNEnvCallback()</code> function registers the entry, replacement, and exit callbacks. 
+                        </p>
+                        <p>Finally, <a href="user-defined-callback-functions.html#GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACBJDFA">Example 14-5</a> shows how in the source code for the application, user callbacks can be registered with the <code class="codeph">NULL</code> <span class="italic">ucbDesc</span>. 
+                        </p>
+                        <p><a href="user-defined-callback-functions.html#GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACJHCID">Example 14-6</a> shows that when the <code class="codeph">OCIStmtPrepare2()</code> call is executed, the callbacks are called in the following order. 
+                        </p>
+                        <div class="infoboxnote" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__GUID-46C97747-CAC2-40EE-BA75-668C3483997F">
+                           <p class="notep1">Note:</p>
+                           <p>The exit callbacks are called in the reverse order of the entry and replacement callbacks.</p>
+                        </div>
+                        <p>The entry and exit callbacks can return any return code and the processing continues to the next callback. However, if the replacement callback returns anything other than <code class="codeph">OCI_CONTINUE</code>, then the next callback (or OCI code if it is the last replacement callback) in the chain is bypassed and processing jumps to the exit callback. For example, if <code class="codeph">pkg3_replace_callback_fn()</code> returned <code class="codeph">OCI_SUCCESS</code>, then <code class="codeph">pkg4_replace_callback_fn()</code>, <code class="codeph">pkg5_replace_callback_fn()</code>, and the OCI processing for the <code class="codeph">OCIStmtPrepare2()</code> call are bypassed. Instead, <code class="codeph">pkg5_exit_callback_fn()</code> is executed next. 
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACBICBD">
+                        <p class="titleinexample">Example 14-2 Environment Variable Setting for the ORA_OCI_UCBPKG Variable</p><pre class="oac_no_warn" dir="ltr">setenv ORA_OCI_UCBPKG "pkg1;pkg2;pkg3;pkg4;pkg5" 
+</pre></div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACJEBJF">
+                        <p class="titleinexample">Example 14-3 Specifying the pkgNInit() and PkgNEnvCallback() Functions</p><pre class="oac_no_warn" dir="ltr">pkgNInit(void *metaCtx, void *libCtx, ub4 argfmt, sword argc, void **argv)
+{
+  return OCISharedLibInit(metaCtx, libCtx, argfmt, argc, argv, pkgNEnvCallback);
+}
+</pre></div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACDFCCC">
+                        <p class="titleinexample">Example 14-4 Using pkgNEnvCallback() to Register Entry, Replacement, and Exit Callbacks</p><pre class="oac_no_warn" dir="ltr">pkgNEnvCallback(OCIEnv *env, ub4 mode, size_t xtramemsz,
+                                void *usrmemp, OCIUcb *ucbDesc)
+{
+  OCIHandleAlloc((void *)env, (void **)&amp;errh, OCI_HTYPE_ERROR, (size_t) 0,
+        (void **)NULL);
+
+  OCIUserCallbackRegister(env, OCI_HTYPE_ENV, errh, pkgN_entry_callback_fn,
+        pkgNctx, OCI_FNCODE_STMTPREPARE, OCI_UCBTYPE_ENTRY, ucbDesc);
+
+  OCIUserCallbackRegister(env, OCI_HTYPE_ENV, errh, pkgN_replace_callback_fn,
+        pkgNctx, OCI_FNCODE_STMTPREPARE, OCI_UCBTYPE_REPLACE, ucbDesc);
+
+  OCIUserCallbackRegister(env, OCI_HTYPE_ENV, errh, pkgN_exit_callback_fn,
+        pkgNctx, OCI_FNCODE_STMTPREPARE, OCI_UCBTYPE_EXIT, ucbDesc);
+
+  return OCI_CONTINUE;
+}
+ </pre></div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACBJDFA">
+                        <p class="titleinexample">Example 14-5 Registering User Callbacks with the NULL ucbDesc</p><pre class="oac_no_warn" dir="ltr">  OCIUserCallbackRegister(env, OCI_HTYPE_ENV, errh, static_entry_callback_fn,
+        pkgNctx, OCI_FNCODE_STMTPREPARE, OCI_UCBTYPE_ENTRY, (OCIUcb *)NULL);
+
+  OCIUserCallbackRegister(env, OCI_HTYPE_ENV, errh, static_replace_callback_fn,
+        pkgNctx, OCI_FNCODE_STMTPREPARE, OCI_UCBTYPE_REPLACE, (OCIUcb *)NULL);
+
+  OCIUserCallbackRegister(env, OCI_HTYPE_ENV, errh, static_exit_callback_fn,
+        pkgNctx, OCI_FNCODE_STMTPREPARE, OCI_UCBTYPE_EXIT, (OCIUcb *)NULL);
+ </pre></div>
+                     <!-- class="example" -->
+                     <div class="example" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__CACJHCID">
+                        <p class="titleinexample">Example 14-6 Using the OCIStmtPrepare() Call to Call the Callbacks in Order</p><pre class="oac_no_warn" dir="ltr">static_entry_callback_fn() 
+pkg1_entry_callback_fn() 
+pkg2_entry_callback_fn() 
+pkg3_entry_callback_fn() 
+pkg4_entry_callback_fn() 
+pkg5_entry_callback_fn() 
+ 
+static_replace_callback_fn() 
+ pkg1_replace_callback_fn() 
+  pkg2_replace_callback_fn() 
+   pkg3_replace_callback_fn() 
+    pkg4_replace_callback_fn() 
+     pkg5_replace_callback_fn() 
+ 
+      OCI code for OCIStmtPrepare call 
+ 
+pkg5_exit_callback_fn() 
+pkg4_exit_callback_fn() 
+pkg3_exit_callback_fn() 
+pkg2_exit_callback_fn() 
+pkg1_exit_callback_fn()
+
+static_exit_callback_fn()
+</pre></div>
+                     <!-- class="example" -->
+                     <div class="section">
+                        <div class="infoboxnotealso" id="GUID-A817AC07-545A-4C3B-A155-027D1889CA38__GUID-13D2CB18-469C-48D7-AC67-8CF186238E8C">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="statement-functions.html#GUID-E6C1DC67-D464-4D2A-9F19-737423D31779" title="Prepares a SQL or PL/SQL statement for execution.">OCIStmtPrepare2()</a></p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div>
+            <div class="props_rev_3"><a id="GUID-163FF0B1-BAA9-4300-BA7C-170AAF0960ED" name="GUID-163FF0B1-BAA9-4300-BA7C-170AAF0960ED"></a><h3 id="LNOCI-GUID-163FF0B1-BAA9-4300-BA7C-170AAF0960ED" class="sect3"><span class="enumeration_section">14.2 </span>OCI Callbacks from External Procedures
+               </h3>
+               <div>
+                  <p>Provides additional reference information about using OCI callbacks from external procedures.</p>
+                  <p>There are several OCI functions that you can use as callbacks from external procedures.</p>
+                  <div class="infoboxnotealso" id="GUID-163FF0B1-BAA9-4300-BA7C-170AAF0960ED__GUID-A436EA79-8BC2-4328-B1B6-0B073041DD71">
+                     <p class="notep1">See Also:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="oci-cartridge-functions.html#GUID-82822159-3CC2-47D6-BD6C-B75BB1B1BA49" title="This chapter presents the cartridge functions.">OCI Cartridge Functions</a> for a list of functions you can use as callbacks from external procedures
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../adfns/design_basics.html#ADFNS010" target="_blank"><span class="italic"> Oracle Database Development Guide</span></a> for information about writing C subroutines that can be called from PL/SQL code, including a list of which OCI calls you can use and some example code
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

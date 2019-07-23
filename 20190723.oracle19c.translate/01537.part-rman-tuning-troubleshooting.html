@@ -1,0 +1,81 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <title>Tuning and Troubleshooting</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="Backup and Recovery User's Guide">
+      <meta property="og:description" content>
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="Backup and Recovery User's Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="database-backup-and-recovery-users-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-01-09T05:20:45-08:00">
+      
+      <meta name="dcterms.dateCopyrighted" content="2003, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96241-01">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="rman-recovering-tables-partitions.html" title="Previous" type="text/html">
+      <link rel="next" href="tuning-rman-performance.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.title" content="Database Backup and Recovery User's Guide">
+    <meta name="dcterms.isVersionOf" content="BRADV">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="rman-recovering-tables-partitions.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="tuning-rman-performance.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">Backup and Recovery User's Guide</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem"> Tuning and Troubleshooting </li>
+            </ol>
+            <a id="GUID-94A203E0-5A7B-4C15-AB4D-7F86B26B890D" name="GUID-94A203E0-5A7B-4C15-AB4D-7F86B26B890D"></a><a id="BRADV392"></a>
+            
+            <h2 id="BRADV-GUID-94A203E0-5A7B-4C15-AB4D-7F86B26B890D" class="sect2"><span class="enumeration_part">Part VI </span> Tuning and Troubleshooting 
+            </h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>The following chapters describe how to tune and troubleshoot RMAN operations. This part of the book contains these chapters:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="tuning-rman-performance.html#GUID-33D81037-2310-4021-8039-1A2C579AAA5A" title="The purpose of RMAN tuning is to identify the bottlenecks for a given job and use RMAN commands, initialization parameters, or adjustments to physical media to improve performance.Multiple factors can affect the performance when an RMAN channel is reading data from disk.During a backup, an RMAN channel reads the blocks from the input files into I/O disk buffers. The database files on the disk subsystem can be managed by either Automatic Storage Management (ASM) or an alternative volume manager or file system. The considerations for backup tuning change depending on whether you manage database files with ASM.When a channel reads from or writes to disk, the I/O is either synchronous I/O or asynchronous I/O. On operating systems that do not support native asynchronous I/O, the database can simulate it with special I/O slave processes. These processes are dedicated to performing I/O on behalf of another process. You can use the RATE parameter to set an upper limit for bytes read so that RMAN does not consume excessive disk bandwidth and degrade online performance. Essentially, RATE serves as a backup throttle. In the copy phase, a channel copies blocks from the input buffers to the output buffers and performs additional processing.When backing up to SBT, RMAN gives the media management software a stream of bytes and associates a unique name with this stream. All details of how and where that stream is stored are handled entirely by the media manager. Thus, a backup to tape involves the interaction of both RMAN and the media manager.The RMAN-specific factors affecting the SBT write phase are analogous to the factors affecting disk reads. In both cases, the buffer allocation, slave processes, and synchronous or asynchronous I/O affect performance. Multiple factors affect the speed of the backup to tape.If the tape device is remote, then the media manager must transfer data over the network. The tape native transfer rate is the speed of writing to a tape without compression. This speed represents the upper limit of the backup rate. The level of tape compression is very important for backup performance. If the tape has good compression, then the sustained backup rate is faster. Tape streaming during write operations has a major effect on tape backup performance. The physical tape block size can affect backup performance. The principal factor affecting the write phase for disk is the buffer size. Typically, you begin the tuning process by using V$ views to determine where RMAN backup and restore operations are encountering problems.You can monitor the progress of backups and restore jobs by querying the view V$SESSION_LONGOPS. RMAN uses two types of rows in V$SESSION_LONGOPS: detail rows and aggregate rows.You can use the V$BACKUP_SYNC_IO and V$BACKUP_ASYNC_IO views to determine the source of backup or restore bottlenecks and to see detailed progress of backup jobs.Query the V$BACKUP_SYNC_IO view to identify bottlenecks with synchronoous I/O.Query the V$BACKUP_ASYNC_IO to identify bottlenecks with asynchronous I/O.Many factors can affect backup performance. Often, finding the solution to a slow backup is a process of trial and error. The RATE parameter on a channel is intended to reduce, rather than increase, backup throughput so that more disk bandwidth is available for other database operations. If the backup is not streaming to tape, then confirm that the RATE parameter is not set.Some operating systems support native asynchronous I/O. If and only if your disk does not support asynchronous I/O, then set DBWR_IO_SLAVES. Any nonzero value for DBWR_IO_SLAVES causes a fixed number of disk I/O slaves to be used for backup and restore, which simulates asynchronous I/O.Set the LARGE_POOL_SIZE initialization parameter if the database reports an error in the alert log stating that it does not have enough memory and that it cannot start I/O slaves.You can perform several tasks to identify and remedy bottlenecks that affect backup performance. One reliable way to determine whether the output device or input disk I/O is the bottleneck in a given backup job is to compare the time required to run backup tasks with the time required to run BACKUP VALIDATE of the same tasks. BACKUP VALIDATE of a backup performs the same disk reads as a real backup but performs no I/O to an output device.Tuning the read phase can help to improve RMAN performance.If the read phase is performing well, then the copy or write phases are probably the bottleneck. In particular, if RMAN is sending data blocks to the tape drive fast enough to support streaming, but the tape is not streaming, then the SBT write phase is the bottleneck."> Tuning RMAN Performance</a></p>
+                  </li>
+                  <li>
+                     <p><a href="troubleshooting-rman-operations.html#GUID-ABFD58BD-5D3B-4A6C-AA46-E085AE234D73" title="Recovery Manager provides detailed error messages that can aid in troubleshooting problems. Output that is useful for troubleshooting failed or unresponsive RMAN jobs is located in several different places.RMAN message output provides information about the progress of backup and recovery operations. Use this information to take any required actions to troubleshoot operations that are stuck or awaiting resources.RMAN reports errors as they occur. If an error is not retrievable, that is, if RMAN cannot perform failover to another channel to complete a particular job step, then RMAN also reports a summary of the errors after all job sets complete. This feature is known as deferred error reporting.You can use the error codes in RMAN message stacks to troubleshoot problems with RMAN commands.RMAN error messages are prefixed with RMAN-.If a media manager error occurs, ORA-19511 is signaled, and the media manager is expected to provide RMAN a descriptive error. RMAN displays the error passed back to it by the media manager. It is important to identify the relevant messages in the RMAN error stack.Errors prefixed by RMAN- indicate errors caused by RMAN commands.Errors from the server are prefixed with ORA-.This example shows how to interpret errors caused at the media manager level.This example shows the output of a backup job that has errors media management errors.One way to determine whether RMAN encountered an error is to examine its return code or exit status. The RMAN client returns 0 to the shell from which it was invoked if no errors occurred, and a nonzero error value otherwise. When LIST, REPORT, and SHOW do not provide all the information that you need for RMAN operations, some V$ views can provide useful details.You can use the event names in the dynamic performance event views to monitor RMAN calls to the media management API. The event names have one-to-one correspondence with SBT functions.To identify which server sessions correspond to which RMAN channels, you can query V$SESSION and V$PROCESS. When only one RMAN session is active, the easiest method for determining the server session ID for an RMAN channel is to query the target database.If multiple RMAN sessions are active, then the V$SESSION.CLIENT_INFO column can yield the same information for a channel in each session. You must first obtain the sid values from the RMAN output and then use these values in your SQL query.You specify a command ID string in the RMAN backup script. You can then query V$SESSION.CLIENT_INFO for this string.On some platforms, Oracle provides a diagnostic tool called sbttest. This utility performs a simple test of the media management software by acting as the Oracle database server and attempting to communicate with the media manager.The default location of the sbttest utility depends on the platform.Use the sbttest command, without arguments, to list the various arguments for this program.Use sbttest to perform a quick test of the media manager.There are several ways to terminate an RMAN command in the middle of execution.To terminate an RMAN session by using the ALTER SYSTEM statement, you need the Oracle session ID for the RMAN channel and the serial number. This information is contained in the RMAN log for messages.Finding and terminating the processes that are associated with the server sessions is operating system-specific. On some platforms, the server sessions are not associated with any processes at all. See your operating system-specific documentation for more information.You may sometimes need to terminate an RMAN job that is not responding in the media manager. The best way to terminate RMAN when the channel connections are not responding in the media manager is to terminate the session in the media manager. The nature of an RMAN session depends on the operating system.RMAN usually stops responding because a channel connection is waiting in the media manager code for a tape resource. The catalog connection and the default channel appear to suspend, because they are waiting for RMAN to tell them what to do. Polling connections seem to be in an infinite loop while polling the RPC under the control of the RMAN process.After the unresponsive channels in the media manager code are terminated, the RMAN process detects this termination and exits, removing all connections except target connections that are still operative in the media management layer.">Troubleshooting RMAN Operations</a></p>
+                  </li>
+               </ul>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>

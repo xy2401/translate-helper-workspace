@@ -1,0 +1,1515 @@
+<!DOCTYPE html
+  SYSTEM "about:legacy-compat">
+<html xml:lang="en-us" lang="en-us">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="abstract" content="Creating a partitioned table or index is very similar to creating a nonpartitioned table or index.">
+      <meta name="description" content="Creating a partitioned table or index is very similar to creating a nonpartitioned table or index.">
+      <title>Specifying Partitioning When Creating Tables and Indexes</title>
+      <meta property="og:site_name" content="Oracle Help Center">
+      <meta property="og:title" content="VLDB and Partitioning Guide">
+      <meta property="og:description" content="Creating a partitioned table or index is very similar to creating a nonpartitioned table or index.">
+      <link rel="stylesheet" href="/sp_common/book-template/ohc-book-template/css/book.css">
+      <link rel="shortcut icon" href="/sp_common/book-template/ohc-common/img/favicon.ico">
+      <meta name="application-name" content="VLDB and Partitioning Guide">
+      <meta name="generator" content="DITA Open Toolkit version 1.8.5 (Mode = doc)">
+      <meta name="plugin" content="SP_docbuilder HTML plugin release 18.2.2">
+      <link rel="alternate" href="vldb-and-partitioning-guide.pdf" title="PDF File" type="application/pdf">
+      <meta name="robots" content="all">
+      <link rel="schema.dcterms" href="http://purl.org/dc/terms/">
+      <meta name="dcterms.created" content="2019-04-23T18:05:22-07:00">
+      <meta name="dcterms.title" content="VLDB and Partitioning Guide">
+      <meta name="dcterms.dateCopyrighted" content="2008, 2019">
+      <meta name="dcterms.category" content="database">
+      <meta name="dcterms.identifier" content="E96199-03">
+      
+      <meta name="dcterms.product" content="en/database/oracle/oracle-database/19">
+      
+      <link rel="prev" href="partition-admin.html" title="Previous" type="text/html">
+      <link rel="next" href="create-composite-partition-table.html" title="Next" type="text/html">
+      <script>
+        document.write('<style type="text/css">');
+        document.write('body > .noscript, body > .noscript ~ * { visibility: hidden; }');
+        document.write('</style>');
+     </script>
+      <script data-main="/sp_common/book-template/ohc-book-template/js/book-config" src="/sp_common/book-template/requirejs/require.js"></script>
+      <script>
+            if (window.require === undefined) {
+                document.write('<script data-main="sp_common/book-template/ohc-book-template/js/book-config" src="sp_common/book-template/requirejs/require.js"><\/script>');
+                document.write('<link href="sp_common/book-template/ohc-book-template/css/book.css" rel="stylesheet"/>');
+            }
+        </script>
+      <script type="application/json" id="ssot-metadata">{"primary":{"category":{"short_name":"database","element_name":"Database","display_in_url":true},"suite":{"short_name":"oracle","element_name":"Oracle","display_in_url":true},"product_group":{"short_name":"not-applicable","element_name":"Not applicable","display_in_url":false},"product":{"short_name":"oracle-database","element_name":"Oracle Database","display_in_url":true},"release":{"short_name":"19","element_name":"Release 19","display_in_url":true}}}</script>
+      
+    <meta name="dcterms.isVersionOf" content="VLDBG">
+    <meta name="dcterms.release" content="Release 19">
+  </head>
+   <body>
+      <div class="noscript alert alert-danger text-center" role="alert">
+         <a href="partition-admin.html" class="pull-left"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous</a>
+         <a href="create-composite-partition-table.html" class="pull-right">Next<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></a>
+         <span class="fa fa-exclamation-triangle" aria-hidden="true"></span> JavaScript must be enabled to correctly display this content
+        
+      </div>
+      <article>
+         <header>
+            <ol class="breadcrumb" vocab="http://schema.org/" typeof="BreadcrumbList">
+               <li property="itemListElement" typeof="ListItem"><a href="index.html" property="item" typeof="WebPage"><span property="name">VLDB and Partitioning Guide</span></a></li>
+               <li property="itemListElement" typeof="ListItem"><a href="partition-admin.html" property="item" typeof="WebPage"><span property="name">Partition Administration</span></a></li>
+               <li class="active" property="itemListElement" typeof="ListItem">Specifying Partitioning When Creating Tables and Indexes</li>
+            </ol>
+            <a id="GUID-0CAB4231-E7DB-4245-9C43-C9CA352EC298" name="GUID-0CAB4231-E7DB-4245-9C43-C9CA352EC298"></a><a id="VLDBG1084"></a>
+            
+            <h2 id="VLDBG-GUID-0CAB4231-E7DB-4245-9C43-C9CA352EC298" class="sect2">Specifying Partitioning When Creating Tables and Indexes</h2>
+         </header>
+         <div class="ind">
+            <div>
+               <p>Creating a partitioned table or index is very similar to creating a nonpartitioned table or index.</p>
+               <p>When creating a partitioned table or index, you include a partitioning clause in the <code class="codeph">CREATE TABLE</code> statement. The partitioning clause, and subclauses, that you include depend upon the type of partitioning you want to achieve. 
+               </p>
+               <p>Partitioning is possible on both regular (heap organized) tables and index-organized tables, except for those containing <code class="codeph">LONG</code> or <code class="codeph">LONG RAW</code> columns. You can create nonpartitioned global indexes, range or hash partitioned global indexes, and local indexes on partitioned tables.
+               </p>
+               <p>When you create (or alter) a partitioned table, a row movement clause (either <code class="codeph">ENABLE ROW MOVEMENT</code> or <code class="codeph">DISABLE ROW MOVEMENT</code>) can be specified. This clause either enables or disables the migration of a row to a new partition if its key is updated. The default is <code class="codeph">DISABLE ROW MOVEMENT</code>.
+               </p>
+               <p>You can specify up to a total of 1024K-1 partitions for a single-level partitioned tables, or subpartitions for a composite partitioned table.</p>
+               <p>Creating automatic list composite partitioned tables and interval subpartitions can  save space because these methods only create subpartitions in the presence of data. Deferring subpartition segment creation when creating new partitions on demand ensures that a subpartition segment is only created when the first matching row is inserted.</p>
+               <p>The following topics present details and examples of creating partitions for the various types of partitioned tables and indexes:</p>
+               <ul style="list-style-type: disc;">
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-9FCAFF8C-0AA9-49F1-A7B8-7611C8AF56DD" title="The PARTITION BY RANGE clause of the CREATE TABLE statement specifies that the table or index is to be range-partitioned.">About Creating Range-Partitioned Tables and Global Indexes</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-F83CB777-F92C-43AB-A20D-EB2BCC82C32C" title="The INTERVAL clause of the CREATE TABLE statement establishes interval partitioning for the table.">Creating Range-Interval-Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-BF3F38E1-62BB-4EE3-86C1-A2EF8A258B1F" title="The PARTITION BY HASH clause of the CREATE TABLE statement identifies that the table is to be hash partitioned.">About Creating Hash Partitioned Tables and Global Indexes</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-17243D8E-03EA-44E7-AC0B-6525F14C784A" title="The semantics for creating list partitions are very similar to those for creating range partitions.">About Creating List-Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-00923EB3-05F6-41F7-8437-E42FC9BD9571" title="To create a reference-partitioned table, you specify a PARTITION BY REFERENCE clause in the CREATE TABLE statement.">Creating Reference-Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-52397EF9-EC3B-4E80-8211-77E683263530" title="You can use interval partitioned tables as parent tables for reference partitioning. Partitions in a reference-partitioned table corresponding to interval partitions in the parent table are created when inserting records into the reference partitioned table.">Creating Interval-Reference Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-01B3A14E-BC74-49D2-B719-B2D8B7692C97" title="You can create a partitioned table using the In-Memory Column Store with the INMEMORY clause.">Creating a Table Using In-Memory Column Store With Partitioning</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-9D7149B6-A2FF-47CA-8F00-47CBFD33F82B" title="You can set tables, partitions, and subpartitions to read-only status to protect data from unintentional DML operations by any user or trigger.">Creating a Table with Read-Only Partitions or Subpartitions</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1" title="You can create partitions for an external table.">Creating a Partitioned External Table</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-5C34BF3F-B728-47C7-B656-AE4FA9FFE2C3" title="For range-partitioned and hash partitioned tables, you can specify up to 16 partitioning key columns.">Specifying Partitioning on Key Columns</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-AF6D08D7-5E0F-4E08-B682-74CCCAEC64D1" title="With partitioning, a virtual column can be used as any regular column.">Using Virtual Column-Based Partitioning</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-7D211E4B-FFFD-4146-9010-20ED1232FF2C" title="For heap-organized partitioned tables, you can compress some or all partitions using table compression.">Using Table Compression with Partitioned Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-0C13E8A8-568B-4A60-8A46-F1120D193EFE" title="You can compress some or all partitions of a B-tree index using key compression.">Using Key Compression with Partitioned Indexes</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-548F1C63-0948-4B6E-95F9-6DCC7F5A9F95" title="Partitioning with segments is introduced in this topic.">Specifying Partitioning with Segments</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-46136CB9-ED71-4150-96F2-D50121F0BCF0" title="For index-organized tables, you can use the range, list, or hash partitioning method.">Specifying Partitioning When Creating Index-Organized Tables</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-24050391-B7C5-4AE2-86D4-B5438412C3F6" title="Use caution when creating partitioned objects in a database with tablespaces of different block sizes.">Partitioning Restrictions for Multiple Block Sizes</a></p>
+                  </li>
+                  <li>
+                     <p><a href="partition-create-tables-indexes.html#GUID-7F8EBE79-9FF2-4B2D-9764-C11263FA550F" title="Partitioning when using XMLType or object tables and columns follows the basic rules for partitioning.">Partitioning of Collections in XMLType and Objects</a></p>
+                  </li>
+               </ul>
+               <div class="infoboxnotealso" id="GUID-0CAB4231-E7DB-4245-9C43-C9CA352EC298__GUID-AD219F34-4542-416E-8CF7-02076E1EC690">
+                  <p class="notep1">See Also:</p>
+                  <p></p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="../admin/managing-tables.html#ADMIN015" target="_blank"><span class="italic">Oracle Database Administrator's Guide</span></a> for information about managing tables
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../sqlrf/CREATE-TABLE.html#SQLRF01402" target="_blank"><span class="italic">Oracle Database SQL Language Reference</span></a> for the exact syntax of the partitioning clauses for creating and altering partitioned tables and indexes, any restrictions on their use, and specific privileges required for creating and altering tables
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../adlob/LOB-storage-with-applications.html#ADLOB45309" target="_blank"><span class="italic">Oracle Database SecureFiles and Large Objects Developer's Guide </span></a>for information specific to creating partitioned tables containing columns with <code class="codeph">LOB</code>s or other objects stored as <code class="codeph">LOB</code>s 
+                        </p>
+                     </li>
+                     <li>
+                        <p><a href="../adobj/advanced-topics-for-oracle-objects.html#ADOBJ006" target="_blank"><span class="italic">Oracle Database Object-Relational Developer's Guide </span></a>for information specific to creating tables with object types, nested tables, or VARRAYs
+                        </p>
+                     </li>
+                  </ul>
+               </div>
+            </div><a id="VLDBG1085"></a><div class="props_rev_3"><a id="GUID-9FCAFF8C-0AA9-49F1-A7B8-7611C8AF56DD" name="GUID-9FCAFF8C-0AA9-49F1-A7B8-7611C8AF56DD"></a><h3 id="VLDBG-GUID-9FCAFF8C-0AA9-49F1-A7B8-7611C8AF56DD" class="sect3">About Creating Range-Partitioned Tables and Global Indexes</h3>
+               <div>
+                  <p>The <code class="codeph">PARTITION BY RANGE</code> clause of the <code class="codeph">CREATE TABLE</code> statement specifies that the table or index is to be range-partitioned.
+                  </p>
+                  <p> The <code class="codeph">PARTITION</code> clauses identify the individual partition ranges, and the optional subclauses of a <code class="codeph">PARTITION</code> clause can specify physical and other attributes specific to a partition segment. If not overridden at the partition level, partitions inherit the attributes of their underlying table.
+                  </p>
+                  <p>The following topics are discussed:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C" title="Use the PARTITION BY RANGE clause of the CREATE TABLE statement to create a range-partitioned table.">Creating a Range-Partitioned Table</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-66D19C36-C512-48DE-88B4-AFC6CCACDFEB" title="With attributes and storage parameters, more complexity can be added to the creation of a range-partitioned table.">Creating a Range-Partitioned Table With More Complexity</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15" title="The rules for creating range-partitioned global indexes are similar to those for creating range-partitioned tables.">Creating a Range-Partitioned Global Index</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG14039"></a><a id="VLDBG1086"></a><div class="props_rev_3"><a id="GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C" name="GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C"></a><h4 id="VLDBG-GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C" class="sect4">Creating a Range-Partitioned Table</h4>
+                  <div>
+                     <p>Use the <code class="codeph">PARTITION BY RANGE</code> clause of the <code class="codeph">CREATE TABLE</code> statement to create a range-partitioned table.
+                     </p>
+                     <div class="section">
+                        <p><a href="partition-create-tables-indexes.html#GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C__CHDJDFAF">Example 4-1</a> creates a table of four partitions, one for each quarter of sales. <code class="codeph">time_id</code> is the <span class="bold">partitioning column</span>, while its values constitute the <span class="bold">partitioning key</span> of a specific row. The <code class="codeph">VALUES LESS THAN</code> clause determines the <span class="bold">partition bound</span>: rows with partitioning key values that compare less than the ordered list of values specified by the clause are stored in the partition. Each partition is given a name (<code class="codeph">sales_q1_2006</code>, <code class="codeph">sales_q2_2006</code>, <code class="codeph">sales_q3_2006</code>, <code class="codeph">sales_q4_2006</code>), and each partition is contained in a separate tablespace (<code class="codeph">tsa</code>, <code class="codeph">tsb</code>, <code class="codeph">tsc</code>, <code class="codeph">tsd</code>). A row with <code class="codeph">time_id=17-MAR-2006</code> would be stored in partition <code class="codeph">sales_q1_2006</code>.
+                        </p>
+                        <div class="infoboxnote" id="GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C__GUID-B00F4F06-149E-42ED-B36D-AED85F2A3575">
+                           <p class="notep1">Live SQL:</p>
+                           <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/range-partitioning-example.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a Range Partitioned Table</span></a>.
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-F0BCECA4-A485-4DA2-863A-6DB7C064059C__CHDJDFAF">
+                        <p class="titleinexample">Example 4-1 Creating a range-partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6)
+  , cust_id       NUMBER
+  , time_id       DATE
+  , channel_id    CHAR(1)
+  , promo_id      NUMBER(6)
+  , quantity_sold NUMBER(3)
+  , amount_sold   NUMBER(10,2)
+  )
+ PARTITION BY RANGE (time_id)
+ ( PARTITION sales_q1_2006 VALUES LESS THAN (TO_DATE('01-APR-2006','dd-MON-yyyy'))
+    TABLESPACE tsa
+ , PARTITION sales_q2_2006 VALUES LESS THAN (TO_DATE('01-JUL-2006','dd-MON-yyyy'))
+    TABLESPACE tsb
+ , PARTITION sales_q3_2006 VALUES LESS THAN (TO_DATE('01-OCT-2006','dd-MON-yyyy'))
+    TABLESPACE tsc
+ , PARTITION sales_q4_2006 VALUES LESS THAN (TO_DATE('01-JAN-2007','dd-MON-yyyy'))
+    TABLESPACE tsd
+ );
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14040"></a><div class="props_rev_3"><a id="GUID-66D19C36-C512-48DE-88B4-AFC6CCACDFEB" name="GUID-66D19C36-C512-48DE-88B4-AFC6CCACDFEB"></a><h4 id="VLDBG-GUID-66D19C36-C512-48DE-88B4-AFC6CCACDFEB" class="sect4">Creating a Range-Partitioned Table With More Complexity</h4>
+                  <div>
+                     <p>With attributes and storage parameters, more complexity can be added to the creation of a range-partitioned table.</p>
+                     <div class="section">
+                        <p> In <a href="partition-create-tables-indexes.html#GUID-66D19C36-C512-48DE-88B4-AFC6CCACDFEB__CHDCEIJJ">Example 4-2</a>, storage parameters and a <code class="codeph">LOGGING</code> attribute are specified at the table level. These replace the corresponding defaults inherited from the tablespace level for the table itself, and are inherited by the range partitions. However, because there was little business in the first quarter, the storage attributes for partition <code class="codeph">sales_q1_2006</code> are made smaller. The <code class="codeph">ENABLE ROW MOVEMENT</code> clause is specified to allow the automatic migration of a row to a new partition if an update to a key value is made that would place the row in a different partition.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-66D19C36-C512-48DE-88B4-AFC6CCACDFEB__CHDCEIJJ">
+                        <p class="titleinexample">Example 4-2 Creating a range-partitioned table with LOGGING and ENABLE ROW MOVEMENT</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6)
+  , cust_id       NUMBER
+  , time_id       DATE
+  , channel_id    CHAR(1)
+  , promo_id      NUMBER(6)
+  , quantity_sold NUMBER(3)
+  , amount_sold   NUMBER(10,2)
+  )
+ STORAGE (INITIAL 100K NEXT 50K) LOGGING
+ PARTITION BY RANGE (time_id)
+ ( PARTITION sales_q1_2006 VALUES LESS THAN (TO_DATE('01-APR-2006','dd-MON-yyyy'))
+    TABLESPACE tsa STORAGE (INITIAL 20K NEXT 10K)
+ , PARTITION sales_q2_2006 VALUES LESS THAN (TO_DATE('01-JUL-2006','dd-MON-yyyy'))
+    TABLESPACE tsb
+ , PARTITION sales_q3_2006 VALUES LESS THAN (TO_DATE('01-OCT-2006','dd-MON-yyyy'))
+    TABLESPACE tsc
+ , PARTITION sales_q4_2006 VALUES LESS THAN (TO_DATE('01-JAN-2007','dd-MON-yyyy'))
+    TABLESPACE tsd
+ )
+ ENABLE ROW MOVEMENT;</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14041"></a><a id="VLDBG1087"></a><div class="props_rev_3"><a id="GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15" name="GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15"></a><h4 id="VLDBG-GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15" class="sect4">Creating a Range-Partitioned Global Index</h4>
+                  <div>
+                     <p>The rules for creating range-partitioned global indexes are similar to those for creating range-partitioned tables.</p>
+                     <div class="section">
+                        <p><a href="partition-create-tables-indexes.html#GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15__CHDHGFAG">Example 4-3</a> creates a range-partitioned global index on <code class="codeph">sale_month</code> for the tables created in the previous examples. Each index partition is named but is stored in the default tablespace for the index.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15__CHDHGFAG">
+                        <p class="titleinexample">Example 4-3 Creating a range-partitioned global index table</p><pre class="oac_no_warn" dir="ltr">CREATE INDEX amount_sold_ix ON sales(amount_sold)
+   GLOBAL PARTITION BY RANGE(sale_month)
+      ( PARTITION p_100 VALUES LESS THAN (100)
+      , PARTITION p_1000 VALUES LESS THAN (1000)
+      , PARTITION p_10000 VALUES LESS THAN (10000)
+      , PARTITION p_100000 VALUES LESS THAN (100000)
+      , PARTITION p_1000000 VALUES LESS THAN (1000000)
+      , PARTITION p_greater_than_1000000 VALUES LESS THAN (maxvalue)
+      );</pre><div class="infoboxnote" id="GUID-4EEB5C77-4D02-430D-9AC2-10D377A06A15__GUID-E6F43B9E-0D69-4CCF-913A-74A5C4F7067F">
+                           <p class="notep1">Note:</p>
+                           <p>If your enterprise has databases using different character sets, use caution when partitioning on character columns, because the sort sequence of characters is not identical in all character sets. For more information, refer to <a href="../nlspg/overview-of-globalization-support.html#NLSPG001" target="_blank"><span><cite>Oracle Database Globalization Support Guide</cite></span></a></p>
+                        </div>
+                     </div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG14042"></a><a id="VLDBG1088"></a><div class="props_rev_3"><a id="GUID-F83CB777-F92C-43AB-A20D-EB2BCC82C32C" name="GUID-F83CB777-F92C-43AB-A20D-EB2BCC82C32C"></a><h3 id="VLDBG-GUID-F83CB777-F92C-43AB-A20D-EB2BCC82C32C" class="sect3">Creating Range-Interval-Partitioned Tables</h3>
+               <div>
+                  <p>The <code class="codeph">INTERVAL</code> clause of the <code class="codeph">CREATE TABLE</code> statement establishes interval partitioning for the table.
+                  </p>
+                  <div class="section">
+                     <p>You must specify at least one range partition using the <code class="codeph">PARTITION</code> clause. The range partitioning key value determines the high value of the range partitions, which is called the transition point, and the database automatically creates interval partitions for data beyond that transition point. The lower boundary of every interval partition is the non-inclusive upper boundary of the previous range or interval partition.
+                     </p>
+                     <p>For example, if you create an interval partitioned table with monthly intervals and the transition point is at January 1, 2010, then the lower boundary for the January 2010 interval is January 1, 2010. The lower boundary for the July 2010 interval is July 1, 2010, regardless of whether the June 2010 partition was previously created. Note, however, that using a date where the high or low bound of the partition would be out of the range set for storage causes an error. For example, <code class="codeph">TO_DATE('9999-12-01', 'YYYY-MM-DD')</code> causes the high bound to be 10000-01-01, which would not be storable if 10000 is out of the legal range.
+                     </p>
+                     <p>The optional <code class="codeph">STORE IN</code> clause lets you specify one or more tablespaces into which the database stores interval partition data using a round-robin algorithm for subsequently created interval partitions.
+                     </p>
+                     <p>For interval partitioning, you can specify only one partitioning key column and the datatype is restricted.</p>
+                     <p>The following example specifies four partitions with varying interval widths. It also specifies that above the transition point of January 1, 2010, partitions are created with an interval width of one month. The high bound of partition <code class="codeph">p3</code> represents the transition point. <code class="codeph">p3</code> and all partitions below it (<code class="codeph">p0</code>, <code class="codeph">p1</code>, and <code class="codeph">p2</code> in this example) are in the range section while all partitions above it fall into the interval section.
+                     </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE interval_sales
+    ( prod_id        NUMBER(6)
+    , cust_id        NUMBER
+    , time_id        DATE
+    , channel_id     CHAR(1)
+    , promo_id       NUMBER(6)
+    , quantity_sold  NUMBER(3)
+    , amount_sold    NUMBER(10,2)
+    ) 
+  PARTITION BY RANGE (time_id) 
+  INTERVAL(NUMTOYMINTERVAL(1, 'MONTH'))
+    ( PARTITION p0 VALUES LESS THAN (TO_DATE('1-1-2008', 'DD-MM-YYYY')),
+      PARTITION p1 VALUES LESS THAN (TO_DATE('1-1-2009', 'DD-MM-YYYY')),
+      PARTITION p2 VALUES LESS THAN (TO_DATE('1-7-2009', 'DD-MM-YYYY')),
+      PARTITION p3 VALUES LESS THAN (TO_DATE('1-1-2010', 'DD-MM-YYYY')) );
+</pre></div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <div class="infoboxnotealso" id="GUID-F83CB777-F92C-43AB-A20D-EB2BCC82C32C__REFERTOORACLEDATABASESQLLANGUAGEREF-517317B9">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../sqlrf/CREATE-TABLE.html#SQLRF01402" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for restrictions on partitioning keys, the exact syntax of the partitioning clauses for creating and altering partitioned tables and indexes, any restrictions on their use, and specific privileges required for creating and altering tables.
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="VLDBG1089"></a><div class="props_rev_3"><a id="GUID-BF3F38E1-62BB-4EE3-86C1-A2EF8A258B1F" name="GUID-BF3F38E1-62BB-4EE3-86C1-A2EF8A258B1F"></a><h3 id="VLDBG-GUID-BF3F38E1-62BB-4EE3-86C1-A2EF8A258B1F" class="sect3">About Creating Hash Partitioned Tables and Global Indexes</h3>
+               <div>
+                  <p>The <code class="codeph">PARTITION BY HASH</code> clause of the <code class="codeph">CREATE TABLE</code> statement identifies that the table is to be hash partitioned.
+                  </p>
+                  <p>The <code class="codeph">PARTITIONS</code> clause can then be used to specify the number of partitions to create, and optionally, the tablespaces to store them in. Alternatively, you can use <code class="codeph">PARTITION</code> clauses to name the individual partitions and their tablespaces. 
+                  </p>
+                  <p>The only attribute you can specify for hash partitions is <code class="codeph">TABLESPACE</code>. All of the hash partitions of a table must share the same segment attributes (except <code class="codeph">TABLESPACE</code>), which are inherited from the table level.
+                  </p>
+                  <p>The following topics are discussed:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-04E6C6EF-CE27-4DE9-B5B1-D23010E4A356" title="The example in this topic shows how to create a hash partitioned table.">Creating a Hash Partitioned Table</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-A8991A7A-CEC0-4C6D-A886-17E0554BB3C6" title="Hash partitioned global indexes can improve the performance of indexes where a small number of leaf blocks in the index have high contention in multiuser OLTP environments.">Creating a Hash Partitioned Global Index</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG1090"></a><div class="props_rev_3"><a id="GUID-04E6C6EF-CE27-4DE9-B5B1-D23010E4A356" name="GUID-04E6C6EF-CE27-4DE9-B5B1-D23010E4A356"></a><h4 id="VLDBG-GUID-04E6C6EF-CE27-4DE9-B5B1-D23010E4A356" class="sect4">Creating a Hash Partitioned Table</h4>
+                  <div>
+                     <p>The example in this topic shows how to create a hash partitioned table. </p>
+                     <div class="section">
+                        <p>The partitioning column is <code class="codeph">id</code>, four partitions are created and assigned system generated names, and they are placed in four named tablespaces (<code class="codeph">gear1</code>, <code class="codeph">gear2</code>, <code class="codeph">gear3</code>, <code class="codeph">gear4</code>).
+                        </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE scubagear
+     (id NUMBER,
+      name VARCHAR2 (60))
+   PARTITION BY HASH (id)
+   PARTITIONS 4 
+   STORE IN (gear1, gear2, gear3, gear4);
+</pre><p>In the following example, the number of partitions is specified when creating a hash partitioned table, but system generated names are assigned to them and they are stored in the default tablespace of the table.</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE departments_hash (department_id NUMBER(4) NOT NULL, 
+             department_name VARCHAR2(30))
+     PARTITION BY HASH(department_id) PARTITIONS 16;
+</pre><p>In the following example, names of individual partitions, and tablespaces in which they are to reside, are specified. The initial extent size for each hash partition (segment) is also explicitly stated at the table level, and all partitions inherit this attribute.</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE departments_hash (department_id NUMBER(4) NOT NULL, 
+             department_name VARCHAR2(30))
+     STORAGE (INITIAL 10K)
+     PARTITION BY HASH(department_id)
+       (PARTITION p1 TABLESPACE ts1, PARTITION p2 TABLESPACE ts2,
+        PARTITION p3 TABLESPACE ts1, PARTITION p4 TABLESPACE ts3);
+</pre><p>If you create a local index for this table, the database constructs the index so that it is equipartitioned with the underlying table. The database also ensures that the index is maintained automatically when maintenance operations are performed on the underlying table. The following is an example of creating a local index on a table: </p><pre class="oac_no_warn" dir="ltr">CREATE INDEX loc_dept_ix ON departments_hash(department_id) LOCAL;
+</pre><p>You can optionally name the hash partitions and tablespaces into which the local index partitions are to be stored, but if you do not do so, then the database uses the name of the corresponding base partition as the index partition name, and stores the index partition in the same tablespace as the table partition.</p>
+                        <div class="infoboxnotealso" id="GUID-04E6C6EF-CE27-4DE9-B5B1-D23010E4A356__GUID-12B53A6F-B60C-4C28-9AD9-F155A747524E">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="partition-create-tables-indexes.html#GUID-5C34BF3F-B728-47C7-B656-AE4FA9FFE2C3" title="For range-partitioned and hash partitioned tables, you can specify up to 16 partitioning key columns.">Specifying Partitioning on Key Columns</a> for more information about partitioning on key columns
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div><a id="VLDBG14044"></a><a id="VLDBG1091"></a><div class="props_rev_3"><a id="GUID-A8991A7A-CEC0-4C6D-A886-17E0554BB3C6" name="GUID-A8991A7A-CEC0-4C6D-A886-17E0554BB3C6"></a><h4 id="VLDBG-GUID-A8991A7A-CEC0-4C6D-A886-17E0554BB3C6" class="sect4">Creating a Hash Partitioned Global Index</h4>
+                  <div>
+                     <p>Hash partitioned global indexes can improve the performance of indexes where a small number of leaf blocks in the index have high contention in multiuser OLTP environments.</p>
+                     <div class="section">
+                        <p>Hash partitioned global indexes can also limit the impact of index skew on monotonously increasing column values. Queries involving the equality and <code class="codeph">IN</code> predicates on the index partitioning key can efficiently use hash partitioned global indexes.
+                        </p>
+                        <p>The syntax for creating a hash partitioned global index is similar to that used for a hash partitioned table. For example, the statement in <a href="partition-create-tables-indexes.html#GUID-A8991A7A-CEC0-4C6D-A886-17E0554BB3C6__CHDBDJGC">Example 4-4</a> creates a hash partitioned global index:
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-A8991A7A-CEC0-4C6D-A886-17E0554BB3C6__CHDBDJGC">
+                        <p class="titleinexample">Example 4-4 Creating a hash partitioned global index</p><pre class="oac_no_warn" dir="ltr">CREATE INDEX hgidx ON tab (c1,c2,c3) GLOBAL
+     PARTITION BY HASH (c1,c2)
+     (PARTITION p1  TABLESPACE tbs_1,
+      PARTITION p2  TABLESPACE tbs_2,
+      PARTITION p3  TABLESPACE tbs_3,
+      PARTITION p4  TABLESPACE tbs_4);</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG1092"></a><div class="props_rev_3"><a id="GUID-17243D8E-03EA-44E7-AC0B-6525F14C784A" name="GUID-17243D8E-03EA-44E7-AC0B-6525F14C784A"></a><h3 id="VLDBG-GUID-17243D8E-03EA-44E7-AC0B-6525F14C784A" class="sect3">About Creating List-Partitioned Tables</h3>
+               <div>
+                  <p>The semantics for creating list partitions are very similar to those for creating range partitions.</p>
+                  <p>However, to create list partitions, you specify a <code class="codeph">PARTITION BY LIST</code> clause in the <code class="codeph">CREATE TABLE</code> statement, and the <code class="codeph">PARTITION</code> clauses specify lists of literal values, which are the discrete values of the partitioning columns that qualify rows to be included in the partition. For list partitioning, the partitioning key can be one or multiple column names from the table.
+                  </p>
+                  <p>Available only with list partitioning, you can use the keyword <code class="codeph">DEFAULT</code> to describe the value list for a partition. This identifies a partition that accommodates rows that do not map into any of the other partitions.
+                  </p>
+                  <p>As with range partitions, optional subclauses of a <code class="codeph">PARTITION</code> clause can specify physical and other attributes specific to a partition segment. If not overridden at the partition level, partitions inherit the attributes of their parent table. 
+                  </p>
+                  <p>The following topics are discussed:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429" title="The example in this topic show how to create a list-partitioned table.">Creating a List-Partitioned Table</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-8928C3B0-2F83-4213-B765-EFBBF0372F64" title="Unlike range partitioning, with list partitioning, there is no apparent sense of order between partitions.">Creating a List-Partitioned Table With a Default Partition</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A" title="The automatic list partitioning method enables list partition creation on demand.">Creating an Automatic List-Partitioned Table</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-6A4131B1-BBDF-4230-B88C-80BC91A0C861" title="Multi-column list partitioning enables you to partition a table based on list values of multiple columns.">Creating a Multi-column List-Partitioned Table</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG14045"></a><div class="props_rev_3"><a id="GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429" name="GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429"></a><h4 id="VLDBG-GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429" class="sect4">Creating a List-Partitioned Table</h4>
+                  <div>
+                     <p> The example in this topic show how to create a list-partitioned table.</p>
+                     <div class="section">
+                        <p><a href="partition-create-tables-indexes.html#GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429__CHDDEBEB">Example 4-5</a>creates table <code class="codeph">q1_sales_by_region</code> which is partitioned by regions consisting of groups of US states. A row is mapped to a partition by checking whether the value of the partitioning column for a row matches a value in the value list that describes the partition. For example, the following list describes how some sample rows are inserted into the table.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p>(10, 'accounting', 100, 'WA') maps to partition <code class="codeph">q1_northwest</code></p>
+                           </li>
+                           <li>
+                              <p>(20, 'R&amp;D', 150, 'OR') maps to partition <code class="codeph">q1_northwest</code></p>
+                           </li>
+                           <li>
+                              <p>(30, 'sales', 100, 'FL') maps to partition <code class="codeph">q1_southeast</code></p>
+                           </li>
+                           <li>
+                              <p>(40, 'HR', 10, 'TX') maps to partition <code class="codeph">q1_southwest</code></p>
+                           </li>
+                           <li>
+                              <p>(50, 'systems engineering', 10, 'CA') does not map to any partition in the table and raises an error</p>
+                           </li>
+                        </ul>
+                        <div class="infoboxnote" id="GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429__VIEWANDRUNARELATEDEXAMPLEONORACLELI-2CE1B406">
+                           <p class="notep1">Live SQL:</p>
+                           <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/list-partitioning-example.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a List Partitioned Table</span></a>.
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-D3E92FD8-5FE4-4CEA-9CB8-CC9277A74429__CHDDEBEB">
+                        <p class="titleinexample">Example 4-5 Creating a list-partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE q1_sales_by_region
+      (deptno number, 
+       deptname varchar2(20),
+       quarterly_sales number(10, 2),
+       state varchar2(2))
+   PARTITION BY LIST (state)
+      (PARTITION q1_northwest VALUES ('OR', 'WA'),
+       PARTITION q1_southwest VALUES ('AZ', 'UT', 'NM'),
+       PARTITION q1_northeast VALUES  ('NY', 'VM', 'NJ'),
+       PARTITION q1_southeast VALUES ('FL', 'GA'),
+       PARTITION q1_northcentral VALUES ('SD', 'WI'),
+       PARTITION q1_southcentral VALUES ('OK', 'TX'));
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14046"></a><div class="props_rev_3"><a id="GUID-8928C3B0-2F83-4213-B765-EFBBF0372F64" name="GUID-8928C3B0-2F83-4213-B765-EFBBF0372F64"></a><h4 id="VLDBG-GUID-8928C3B0-2F83-4213-B765-EFBBF0372F64" class="sect4">Creating a List-Partitioned Table With a Default Partition</h4>
+                  <div>
+                     <p>Unlike range partitioning, with list partitioning, there is no apparent sense of order between partitions.</p>
+                     <div class="section">
+                        <p>You can also specify a <span class="bold">default partition</span> into which rows that do not map to any other partition are mapped. If a default partition were specified in the preceding example, the state CA would map to that partition. 
+                        </p>
+                        <p><a href="partition-create-tables-indexes.html#GUID-8928C3B0-2F83-4213-B765-EFBBF0372F64__CHDDDCFI">Example 4-6</a> creates table <code class="codeph">sales_by_region</code> and partitions it using the list method. The first two <code class="codeph">PARTITION</code> clauses specify physical attributes, which override the table-level defaults. The remaining <code class="codeph">PARTITION</code> clauses do not specify attributes and those partitions inherit their physical attributes from table-level defaults. A default partition is also specified.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-8928C3B0-2F83-4213-B765-EFBBF0372F64__CHDDDCFI">
+                        <p class="titleinexample">Example 4-6 Creating a list-partitioned table with a default partition</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_by_region (item# INTEGER, qty INTEGER, 
+             store_name VARCHAR(30), state_code VARCHAR(2),
+             sale_date DATE)
+     STORAGE(INITIAL 10K NEXT 20K) TABLESPACE tbs5 
+     PARTITION BY LIST (state_code) 
+     (
+     PARTITION region_east
+        VALUES ('MA','NY','CT','NH','ME','MD','VA','PA','NJ')
+        STORAGE (INITIAL 8M) 
+        TABLESPACE tbs8,
+     PARTITION region_west
+        VALUES ('CA','AZ','NM','OR','WA','UT','NV','CO')
+        NOLOGGING,
+     PARTITION region_south
+        VALUES ('TX','KY','TN','LA','MS','AR','AL','GA'),
+     PARTITION region_central 
+        VALUES ('OH','ND','SD','MO','IL','MI','IA'),
+     PARTITION region_null
+        VALUES (NULL),
+     PARTITION region_unknown
+        VALUES (DEFAULT)
+     );</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+               <div class="sect3"><a id="GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A" name="GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A"></a><h4 id="VLDBG-GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A" class="sect4">Creating an Automatic List-Partitioned Table</h4>
+                  <div>
+                     <p>The automatic list partitioning method enables list partition creation on demand.</p>
+                     <p>An auto-list partitioned table is similar to a regular list partitioned table, except that this partitioned table is easier to manage. You can create an auto-list partitioned table using only the partitioning key values that are known. As data is loaded into the table, the database automatically creates a new partition if the loaded partitioning key value does not correspond to any of the existing partitions. Because partitions are automatically created on demand, the auto-list partitioning method is conceptually similar to the existing interval partitioning method.</p>
+                     <p>Automatic list partitioning on data types whose value changes very frequently are less suitable for this method unless you can adjust the data. For example, a <code class="codeph">SALES_DATE</code> field with a date value, when the format is not stripped, would increase every second. Each of the <code class="codeph">SALES_DATE</code> values, such as <code class="codeph">05-22-2016 08:00:00</code>, <code class="codeph">05-22-2016 08:00:01</code>, and so on, would generate its own partition. To avoid the creation of a very large number of partitions, you must be aware of the data that would be entered and adjust accordingly. As an example, you can truncate the <code class="codeph">SALES_DATE</code> date value to a day or some other time period, depending on the number of partitions required.
+                     </p>
+                     <p>The <code class="codeph">CREATE</code> and <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> SQL statements are updated with an additional clause to specify <code class="codeph">AUTOMATIC</code> or <code class="codeph">MANUAL</code> list partitioning. An automatic list-partitioned table must have at least one partition when created. Because new partitions are automatically created for new, and unknown, partition key values, an automatic list partition cannot have a <code class="codeph">DEFAULT</code> partition.
+                     </p>
+                     <p>You can check the <code class="codeph">AUTOLIST</code> column of the <code class="codeph">*_PART_TABLES</code> view to determine whether a table is automatic list-partitioned.
+                     </p>
+                     <div class="infoboxnote" id="GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A__GUID-B828C1EE-AE53-46B8-BDD4-408F90C7D893">
+                        <p class="notep1">Live SQL:</p>
+                        <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/create-auto-list-partition.html" target="_blank"><span class="italic">Oracle Live SQL: Creating an Automatic List-Partitioned Table</span></a>.
+                        </p>
+                     </div>
+                     <p><a href="partition-create-tables-indexes.html#GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A__GUID-E760B49A-61B0-4A02-8020-6A26B8540915">Example 4-7</a> is an example of the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> statement using the <code class="codeph">AUTOMATIC</code> keyword for auto-list partitioning on the <code class="codeph">sales_state</code> field. The CREATE TABLE SQL statement creates at least one partition as required. As additional rows are inserted, the number of partitions increases when a new <code class="codeph">sales_state</code> value is added.
+                     </p>
+                     <div class="example" id="GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A__GUID-E760B49A-61B0-4A02-8020-6A26B8540915">
+                        <p class="titleinexample">Example 4-7 Creating an automatic list partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_auto_list
+(
+   salesman_id   NUMBER(5)    NOT NULL,
+   salesman_name VARCHAR2(30),
+   sales_state   VARCHAR2(20) NOT NULL,
+   sales_amount  NUMBER(10),
+   sales_date    DATE         NOT NULL
+)
+  PARTITION BY LIST (sales_state) AUTOMATIC
+ (PARTITION P_CAL VALUES ('CALIFORNIA')
+);
+
+SELECT TABLE_NAME, PARTITIONING_TYPE, AUTOLIST, PARTITION_COUNT FROM USER_PART_TABLES WHERE TABLE_NAME ='SALES_AUTO_LIST';
+TABLE_NAME        PARTITIONING_TYPE  AUTOLIST  PARTITION_COUNT
+----------------  -----------------  --------  ---------------
+SALES_AUTO_LIST   LIST               YES                     1
+
+SELECT TABLE_NAME, PARTITION_NAME, HIGH_VALUE FROM USER_TAB_PARTITIONS WHERE TABLE_NAME ='SALES_AUTO_LIST';
+
+TABLE_NAME        PARTITION_NAME    HIGH_VALUE
+&#x2013;---------------  &#x2013;--------------   &#x2013;---------------
+SALES_AUTO_LIST     P_CAL           'CALIFORNIA'
+
+INSERT INTO SALES_AUTO_LIST VALUES(021, 'Mary Smith', 'FLORIDA', 41000, TO_DATE ('21-DEC-2018','DD-MON-YYYY'));
+1 row inserted.
+
+INSERT INTO SALES_AUTO_LIST VALUES(032, 'Luis Vargas', 'MICHIGAN', 42000, TO_DATE ('31-DEC-2018','DD-MON-YYYY'));
+1 row inserted.
+
+SELECT TABLE_NAME, PARTITIONING_TYPE, AUTOLIST, PARTITION_COUNT FROM USER_PART_TABLES WHERE TABLE_NAME ='SALES_AUTO_LIST';
+TABLE_NAME        PARTITIONING_TYPE  AUTOLIST  PARTITION_COUNT
+----------------  -----------------  --------  ---------------
+SALES_AUTO_LIST   LIST               YES                     3
+
+INSERT INTO SALES_AUTO_LIST VALUES(015, 'Simone Blair', 'CALIFORNIA', 45000, TO_DATE ('11-JAN-2019','DD-MON-YYYY'));
+1 row inserted.
+
+INSERT INTO SALES_AUTO_LIST VALUES(015, 'Simone Blair', 'OREGON', 38000, TO_DATE ('18-JAN-2019','DD-MON-YYYY'));
+1 row inserted.
+
+SELECT TABLE_NAME, PARTITIONING_TYPE, AUTOLIST,PARTITION_COUNT FROM USER_PART_TABLES WHERE TABLE_NAME ='SALES_AUTO_LIST';
+TABLE_NAME        PARTITIONING_TYPE  AUTOLIST  PARTITION_COUNT
+----------------  -----------------  --------  ---------------
+SALES_AUTO_LIST   LIST               YES                     4
+
+
+SELECT TABLE_NAME, PARTITION_NAME, HIGH_VALUE FROM USER_TAB_PARTITIONS WHERE TABLE_NAME ='SALES_AUTO_LIST';
+TABLE_NAME        PARTITION_NAME    HIGH_VALUE
+&#x2013;---------------  &#x2013;--------------   &#x2013;---------------
+SALES_AUTO_LIST     P_CAL           'CALIFORNIA'
+SALES_AUTO_LIST     SYS_P478        'FLORIDA'
+SALES_AUTO_LIST     SYS_P479        'MICHIGAN'
+SALES_AUTO_LIST     SYS_P480        'OREGON'</pre></div>
+                     <!-- class="example" -->
+                     <div class="section">
+                        <div class="infoboxnotealso" id="GUID-12150FFB-48E4-4169-9EBE-64974C1CEF2A__ORACLEDATABASEREFERENCEFORINFORMATI-F796E84D">
+                           <p class="notep1">See Also:</p>
+                           <p><a href="../refrn/static-data-dictionary-views-4.html#REFRN-GUID-2E7FFA31-6241-474E-BA88-5EB5B8F69245" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> for information about <code class="codeph">*_PART_TABLES</code> view
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+               <div class="sect3"><a id="GUID-6A4131B1-BBDF-4230-B88C-80BC91A0C861" name="GUID-6A4131B1-BBDF-4230-B88C-80BC91A0C861"></a><h4 id="VLDBG-GUID-6A4131B1-BBDF-4230-B88C-80BC91A0C861" class="sect4">Creating a Multi-column List-Partitioned Table</h4>
+                  <div>
+                     <p>Multi-column list partitioning enables you to partition a table based on list values of multiple columns.</p>
+                     <p>Similar to single-column list partitioning, individual partitions can contain sets containing lists of values. </p>
+                     <p>Multi-column list partitioning is supported on a table using the <code class="codeph">PARTITION</code> <code class="codeph">BY</code> <code class="codeph">LIST</code> clause on multiple columns of a table. For example: 
+                     </p><pre class="oac_no_warn" dir="ltr">PARTITION BY LIST (<span class="italic">column1</span>,<span class="italic">column2</span>)</pre><p>A multi-column list-partitioned table can only have one <code class="codeph">DEFAULT</code> partition.
+                     </p>
+                     <div class="infoboxnote" id="GUID-6A4131B1-BBDF-4230-B88C-80BC91A0C861__GUID-3CC99AFB-C31B-4245-877F-A0F18709C850">
+                        <p class="notep1">Live SQL:</p>
+                        <p>View and run a related example on Oracle Live SQL at <a href="https://livesql.oracle.com/apex/livesql/docs/vldbg/partitioning/create-multicolumn-list.html" target="_blank"><span class="italic">Oracle Live SQL: Creating a Multicolumn List-Partitioned Table</span></a>.
+                        </p>
+                     </div>
+                     <p>The following is an example of the <code class="codeph">CREATE TABLE</code> statement using multi-column partitioning on the <code class="codeph">state</code> and <code class="codeph">channel</code> columns.
+                     </p>
+                     <div class="example" id="GUID-6A4131B1-BBDF-4230-B88C-80BC91A0C861__GUID-60D85149-EBDE-46F5-B33F-FA65A59898C5">
+                        <p class="titleinexample">Example 4-8 Creating a multicolumn list-partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_by_region_and_channel
+ (dept_number      NUMBER NOT NULL, 
+  dept_name        VARCHAR2(20),
+  quarterly_sales  NUMBER(10,2),
+  state            VARCHAR2(2),
+  channel          VARCHAR2(1)
+ )
+ PARTITION BY LIST (state, channel)
+ (
+  PARTITION yearly_west_direct VALUES (('OR','D'),('UT','D'),('WA','D')),
+  PARTITION yearly_west_indirect VALUES (('OR','I'),('UT','I'),('WA','I')),
+  PARTITION yearly_south_direct VALUES (('AZ','D'),('TX','D'),('GA','D')),
+  PARTITION yearly_south_indirect VALUES (('AZ','I'),('TX','I'),('GA','I')),
+  PARTITION yearly_east_direct VALUES (('PA','D'), ('NC','D'), ('MA','D')),
+  PARTITION yearly_east_indirect VALUES (('PA','I'), ('NC','I'), ('MA','I')),
+  PARTITION yearly_north_direct VALUES (('MN','D'),('WI','D'),('MI','D')),
+  PARTITION yearly_north_indirect VALUES (('MN','I'),('WI','I'),('MI','I')),
+  PARTITION yearly_ny_direct VALUES ('NY','D'),
+  PARTITION yearly_ny_indirect VALUES ('NY','I'),
+  PARTITION yearly_ca_direct VALUES ('CA','D'),
+  PARTITION yearly_ca_indirect VALUES ('CA','I'),
+  PARTITION rest VALUES (DEFAULT)
+ );
+
+SELECT PARTITION_NAME, HIGH_VALUE FROM USER_TAB_PARTITIONS WHERE TABLE_NAME ='SALES_BY_REGION_AND_CHANNEL';
+PARTITION_NAME            HIGH_VALUE
+---------------------     -------------------------------------------
+REST                      DEFAULT
+YEARLY_CA_DIRECT          ( 'CA', 'D' )
+YEARLY_CA_INDIRECT        ( 'CA', 'I' )
+YEARLY_EAST_DIRECT        ( 'PA', 'D' ), ( 'NC', 'D' ), ( 'MA', 'D' )
+YEARLY_EAST_INDIRECT      ( 'PA', 'I' ), ( 'NC', 'I' ), ( 'MA', 'I' )
+YEARLY_NORTH_DIRECT       ( 'MN', 'D' ), ( 'WI', 'D' ), ( 'MI', 'D' )
+YEARLY_NORTH_INDIRECT     ( 'MN', 'I' ), ( 'WI', 'I' ), ( 'MI', 'I' )
+YEARLY_NY_DIRECT          ( 'NY', 'D' )
+YEARLY_NY_INDIRECT        ( 'NY', 'I' )
+YEARLY_SOUTH_DIRECT       ( 'AZ', 'D' ), ( 'TX', 'D' ), ( 'GA', 'D' )
+YEARLY_SOUTH_INDIRECT     ( 'AZ', 'I' ), ( 'TX', 'I' ), ( 'GA', 'I' )
+YEARLY_WEST_DIRECT        ( 'OR', 'D' ), ( 'UT', 'D' ), ( 'WA', 'D' )
+YEARLY_WEST_INDIRECT      ( 'OR', 'I' ), ( 'UT', 'I' ), ( 'WA', 'I' )
+13 rows selected.
+
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (005, 'AUTO DIRECT', 701000, 'OR', 'D' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (006, 'AUTO INDIRECT', 1201000, 'OR', 'I' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (005, 'AUTO DIRECT', 625000, 'WA', 'D' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (006, 'AUTO INDIRECT', 945000, 'WA', 'I' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (005, 'AUTO DIRECT', 595000, 'UT', 'D' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (006, 'AUTO INDIRECT', 825000, 'UT', 'I' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (003, 'AUTO DIRECT', 1950000, 'CA', 'D' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (004, 'AUTO INDIRECT', 5725000, 'CA', 'I' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (010, 'AUTO DIRECT', 925000, 'IL', 'D' );
+INSERT INTO SALES_BY_REGION_AND_CHANNEL VALUES (010, 'AUTO INDIRECT', 3250000, 'IL', 'I' );
+
+SELECT DEPT_NUMBER, DEPT_NAME, QUARTERLY_SALES, STATE, CHANNEL FROM SALES_BY_REGION_AND_CHANNEL PARTITION(yearly_west_direct);
+DEPT_NUMBER DEPT_NAME            QUARTERLY_SALES ST C
+----------- -------------------- --------------- -- -
+          5 AUTO DIRECT                   701000 OR D
+          5 AUTO DIRECT                   625000 WA D
+          5 AUTO DIRECT                   595000 UT D
+
+SELECT DEPT_NUMBER, DEPT_NAME, QUARTERLY_SALES, STATE, CHANNEL FROM SALES_BY_REGION_AND_CHANNEL PARTITION(yearly_west_indirect);
+DEPT_NUMBER DEPT_NAME            QUARTERLY_SALES ST C
+----------- -------------------- --------------- -- -
+          6 AUTO INDIRECT                1201000 OR I
+          6 AUTO INDIRECT                 945000 WA I
+          6 AUTO INDIRECT                 825000 UT I
+
+SELECT DEPT_NUMBER, DEPT_NAME, QUARTERLY_SALES, STATE, CHANNEL FROM SALES_BY_REGION_AND_CHANNEL PARTITION(yearly_ca_direct);
+DEPT_NUMBER DEPT_NAME            QUARTERLY_SALES ST C
+----------- -------------------- --------------- -- -
+          3 AUTO DIRECT                  1950000 CA D
+
+SELECT DEPT_NUMBER, DEPT_NAME, QUARTERLY_SALES, STATE, CHANNEL FROM SALES_BY_REGION_AND_CHANNEL PARTITION(yearly_ca_indirect);
+DEPT_NUMBER DEPT_NAME            QUARTERLY_SALES ST C
+----------- -------------------- --------------- -- -
+          4 AUTO INDIRECT                5725000 CA I
+
+SELECT DEPT_NUMBER, DEPT_NAME, QUARTERLY_SALES, STATE, CHANNEL FROM SALES_BY_REGION_AND_CHANNEL PARTITION(rest);
+DEPT_NUMBER DEPT_NAME            QUARTERLY_SALES ST C
+----------- -------------------- --------------- -- -
+         10 AUTO DIRECT                   925000 IL D
+         10 AUTO INDIRECT                3250000 IL I 
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG14047"></a><a id="VLDBG1093"></a><div class="props_rev_3"><a id="GUID-00923EB3-05F6-41F7-8437-E42FC9BD9571" name="GUID-00923EB3-05F6-41F7-8437-E42FC9BD9571"></a><h3 id="VLDBG-GUID-00923EB3-05F6-41F7-8437-E42FC9BD9571" class="sect3">Creating Reference-Partitioned Tables</h3>
+               <div>
+                  <p>To create a reference-partitioned table, you specify a <code class="codeph">PARTITION BY REFERENCE</code> clause in the <code class="codeph">CREATE TABLE</code> statement.
+                  </p>
+                  <div class="section">
+                     <p>The <code class="codeph">PARTITION BY REFERENCE</code> clause specifies the name of a referential constraint and this constraint becomes the partitioning referential constraint that is used as the basis for reference partitioning in the table. The referential constraint must be enabled and enforced.
+                     </p>
+                     <p>As with other partitioned tables, you can specify object-level default attributes, and you can optionally specify partition descriptors that override the object-level defaults on a per-partition basis.</p>
+                     <p><a href="partition-create-tables-indexes.html#GUID-00923EB3-05F6-41F7-8437-E42FC9BD9571__CHDHJCFD">Example 4-9</a> creates a parent table <code class="codeph">orders</code> which is range-partitioned on <code class="codeph">order_date</code>. The reference-partitioned child table <code class="codeph">order_items</code> is created with four partitions, <code class="codeph">Q1_2005</code>, <code class="codeph">Q2_2005</code>, <code class="codeph">Q3_2005</code>, and <code class="codeph">Q4_2005</code>, where each partition contains the <code class="codeph">order_items</code> rows corresponding to orders in the respective parent partition.
+                     </p>
+                     <p>If partition descriptors are provided, then the number of partitions described must exactly equal the number of partitions or subpartitions in the referenced table. If the parent table is a composite partitioned table, then the table has one partition for each subpartition of its parent; otherwise the table has one partition for each partition of its parent.</p>
+                     <p>Partition bounds cannot be specified for the partitions of a reference-partitioned table.</p>
+                     <p>The partitions of a reference-partitioned table can be named. If a partition is not explicitly named, then it inherits its name from the corresponding partition in the parent table, unless this inherited name conflicts with an existing explicit name. In this case, the partition has a system-generated name.</p>
+                     <p>Partitions of a reference-partitioned table collocate with the corresponding partition of the parent table, if no explicit tablespace is specified for the reference-partitioned table's partition.</p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="example" id="GUID-00923EB3-05F6-41F7-8437-E42FC9BD9571__CHDHJCFD">
+                     <p class="titleinexample">Example 4-9 Creating reference-partitioned tables</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE orders
+    ( order_id           NUMBER(12),
+      order_date         DATE,
+      order_mode         VARCHAR2(8),
+      customer_id        NUMBER(6),
+      order_status       NUMBER(2),
+      order_total        NUMBER(8,2),
+      sales_rep_id       NUMBER(6),
+      promotion_id       NUMBER(6),
+      CONSTRAINT orders_pk PRIMARY KEY(order_id)
+    )
+  PARTITION BY RANGE(order_date)
+    ( PARTITION Q1_2005 VALUES LESS THAN (TO_DATE('01-APR-2005','DD-MON-YYYY')),
+      PARTITION Q2_2005 VALUES LESS THAN (TO_DATE('01-JUL-2005','DD-MON-YYYY')),
+      PARTITION Q3_2005 VALUES LESS THAN (TO_DATE('01-OCT-2005','DD-MON-YYYY')),
+      PARTITION Q4_2005 VALUES LESS THAN (TO_DATE('01-JAN-2006','DD-MON-YYYY'))
+    );
+
+CREATE TABLE order_items
+    ( order_id           NUMBER(12) NOT NULL,
+      line_item_id       NUMBER(3)  NOT NULL,
+      product_id         NUMBER(6)  NOT NULL,
+      unit_price         NUMBER(8,2),
+      quantity           NUMBER(8),
+      CONSTRAINT order_items_fk
+      FOREIGN KEY(order_id) REFERENCES orders(order_id)
+    )
+    PARTITION BY REFERENCE(order_items_fk);
+</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="VLDBG14103"></a><div class="props_rev_3"><a id="GUID-52397EF9-EC3B-4E80-8211-77E683263530" name="GUID-52397EF9-EC3B-4E80-8211-77E683263530"></a><h3 id="VLDBG-GUID-52397EF9-EC3B-4E80-8211-77E683263530" class="sect3">Creating Interval-Reference Partitioned Tables</h3>
+               <div>
+                  <p>You can use interval partitioned tables as parent tables for reference partitioning. Partitions in a reference-partitioned table corresponding to interval partitions in the parent table are created when inserting records into the reference partitioned table.</p>
+                  <div class="section">
+                     <p>When creating an interval partition in a child table, the partition name is inherited from the associated parent table fragment. If the child table has a table-level default tablespace, then it is used as tablespace for the new interval partition; otherwise, the tablespace is inherited from the parent table fragment. </p>
+                     <p>The SQL <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">SET</code> <code class="codeph">INTERVAL</code> statement is not allowed for reference-partitioned tables, but can be run on tables that have reference-partitioned children. In particular, <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">SET</code> <code class="codeph">INTERVAL</code> removes the interval property from the targeted table and converts any interval-reference children to ordinary reference-partitioned tables. Also, the SQL <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">SET</code> <code class="codeph">STORE</code> <code class="codeph">IN</code> statement is not allowed for reference-partitioned tables, but can be run on tables that have reference-partitioned children. 
+                     </p>
+                     <p>Operations that transform interval partitions to conventional partitions in the parent table, such as <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">SPLIT</code> <code class="codeph">PARTITION</code> on an interval partition, construct the corresponding transformation in the child table, creating partitions in the child table as necessary.
+                     </p>
+                     <p>For example, the following SQL statements provides three interval partitions in the parent table and none in the child table:</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE par(pk INT CONSTRAINT par_pk PRIMARY KEY, i INT)
+ PARTITION BY RANGE(i) INTERVAL (10)
+ (PARTITION p1 VALUES LESS THAN (10));
+
+CREATE TABLE chi(fk INT NOT NULL, i INT,
+ CONSTRAINT chi_fk FOREIGN KEY(fk) REFERENCES par(pk))
+ PARTITION BY REFERENCE(chi_fk);
+
+INSERT INTO par VALUES(15, 15);
+INSERT INTO par VALUES(25, 25);
+INSERT INTO par VALUES(35, 35);
+</pre><p>You can display information about partitions with the <code class="codeph">USER_TAB_PARTITIONS</code> view:
+                     </p><pre class="oac_no_warn" dir="ltr">SELECT table_name, partition_position, high_value, interval
+   FROM USER_TAB_PARTITIONS WHERE table_name IN ('PAR', 'CHI')
+   ORDER BY 1, 2;
+
+TABLE_NAME       PARTITION_POSITION HIGH_VALUE INT
+---------------- ------------------ ---------- ---
+CHI                               1            NO
+PAR                               1         10 NO
+PAR                               2         20 YES
+PAR                               3         30 YES
+PAR                               4         40 YES
+</pre><p>If the interval partition is split in the parent table, then some interval partitions are converted to conventional partitions for all tables in the hierarchy, creating conventional partitions in the child table in the process. For example:</p><pre class="oac_no_warn" dir="ltr">ALTER TABLE par SPLIT PARTITION FOR (25) AT (25)
+   INTO (partition x, partition y);
+
+SELECT table_name, partition_position, high_value, interval
+   FROM USER_TAB_PARTITIONS WHERE table_name IN ('PAR', 'CHI')
+   ORDER BY 1, 2;
+
+TABLE_NAME       PARTITION_POSITION HIGH_VALUE INT
+---------------- ------------------ ---------- ---
+CHI                               1            NO
+CHI                               2            NO
+CHI                               3            NO
+CHI                               4            NO
+PAR                               1         10 NO
+PAR                               2         20 NO
+PAR                               3         25 NO
+PAR                               4         30 NO
+PAR                               5         40 YES
+</pre><p>Interval-reference functionality requires that the database compatibility level (Oracle Database <code class="codeph">COMPATIBLE</code> initialization parameter setting) be set to greater than or equal to <code class="codeph">12.0.0.0</code>. 
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="VLDBG14226"></a><div class="props_rev_3"><a id="GUID-01B3A14E-BC74-49D2-B719-B2D8B7692C97" name="GUID-01B3A14E-BC74-49D2-B719-B2D8B7692C97"></a><h3 id="VLDBG-GUID-01B3A14E-BC74-49D2-B719-B2D8B7692C97" class="sect3">Creating a Table Using In-Memory Column Store With Partitioning</h3>
+               <div>
+                  <p>You can create a partitioned table using the In-Memory Column Store with the <code class="codeph">INMEMORY</code> clause.
+                  </p>
+                  <div class="section">
+                     <p>The following example specifies that individual partitions are loaded into the In-Memory Column Store using the <code class="codeph">INMEMORY</code> clause with the partitioning clauses of the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> SQL statements.
+                     </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE list_customers 
+   ( customer_id             NUMBER(6)
+   , cust_first_name         VARCHAR2(20) 
+   , cust_last_name          VARCHAR2(20)
+   , cust_address            CUST_ADDRESS_TYP
+   , nls_territory           VARCHAR2(30)
+   , cust_email              VARCHAR2(40))
+   PARTITION BY LIST (nls_territory) (
+   PARTITION asia VALUES ('CHINA', 'THAILAND') 
+         INMEMORY MEMCOMPRESS FOR CAPACITY HIGH,
+   PARTITION europe VALUES ('GERMANY', 'ITALY', 'SWITZERLAND') 
+         INMEMORY MEMCOMPRESS FOR CAPACITY LOW,
+   PARTITION west VALUES ('AMERICA') 
+         INMEMORY MEMCOMPRESS FOR CAPACITY LOW,
+   PARTITION east VALUES ('INDIA') 
+         INMEMORY MEMCOMPRESS FOR CAPACITY HIGH,
+   PARTITION rest VALUES (DEFAULT);
+</pre><div class="infoboxnotealso" id="GUID-01B3A14E-BC74-49D2-B719-B2D8B7692C97__GUID-1EA9A1CE-138A-4737-B6B4-7EC1981FB8BF">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../inmem/intro-to-in-memory-column-store.html#INMEM-GUID-BFA53515-7643-41E5-A296-654AB4A9F9E7" target="_blank"><span><cite>Oracle Database In-Memory Guide</cite></span></a> for overview information about In-Memory Column Store
+                              </p>
+                           </li>
+                           <li><a href="../inmem/populating-objects-in-memory.html#INMEM-GUID-C5F856BF-70E3-41C6-A1BA-1E94D7D230B8" target="_blank"><span><cite>Oracle Database In-Memory Guide</cite></span></a> for information about enabling objects for population in the In-Memory Column Store and ADO support
+                           </li>
+                           <li>
+                              <p><a href="../sqlrf/CREATE-TABLE.html#SQLRF01402" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for information about SQL syntax related to In-Memory Column Store
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div>
+            <div class="sect2"><a id="GUID-9D7149B6-A2FF-47CA-8F00-47CBFD33F82B" name="GUID-9D7149B6-A2FF-47CA-8F00-47CBFD33F82B"></a><h3 id="VLDBG-GUID-9D7149B6-A2FF-47CA-8F00-47CBFD33F82B" class="sect3">Creating a Table with Read-Only Partitions or Subpartitions</h3>
+               <div>
+                  <p>You can set tables, partitions, and subpartitions to read-only status to protect data from unintentional DML operations by any user or trigger.</p>
+                  <p>Any attempt to update data in a partition or subpartition that is set to read only results in an error, while updating data in partitions or subpartitions that are set to read write succeeds.</p>
+                  <p>The <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> and <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> SQL statements provide a read-only clause for partitions and subpartitions. The values of the read-only clause can be <code class="codeph">READ</code> <code class="codeph">ONLY</code> or <code class="codeph">READ</code> <code class="codeph">WRITE</code>. <code class="codeph">READ</code> <code class="codeph">WRITE</code> is the default value. A higher level setting of the read-only clause is applied to partitions and subpartitions unless the read-only clause has been explicitly set for a partition or subpartition.
+                  </p>
+                  <p>The following is an example of a creating a composite range-list partitioned table with both read-only and read-write status. The <code class="codeph">orders_read_write_only</code> is explicitly specified as <code class="codeph">READ</code> <code class="codeph">WRITE</code>, so the default attribute of the table is read write. The default attribute of partition <code class="codeph">order_p1</code> is specified as read only, so the subpartitions <code class="codeph">ord_p1_northwest</code> and <code class="codeph">order_p1_southwest</code> inherit read only status from partition <code class="codeph">order_p1</code>. Subpartitions <code class="codeph">ord_p2_southwest</code> and <code class="codeph">order_p3_northwest</code> are explicitly specified as read only, overriding the default read write status.
+                  </p>
+                  <div class="example" id="GUID-9D7149B6-A2FF-47CA-8F00-47CBFD33F82B__GUID-E77AF727-D094-4A67-9AF6-73D2EB373E16">
+                     <p class="titleinexample">Example 4-10 Creating a table with read-only and read-write partitions</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE orders_read_write_only (
+   order_id NUMBER (12),
+   order_date DATE CONSTRAINT order_date_nn NOT NULL,
+   state VARCHAR2(2)
+   ) READ WRITE
+     PARTITION BY RANGE (order_date)
+     SUBPARTITION BY LIST (state)
+     ( PARTITION order_p1 VALUES LESS THAN (TO_DATE ('01-DEC-2015','DD-MON-YYYY')) READ ONLY
+     ( SUBPARTITION order_p1_northwest VALUES ('OR', 'WA'),
+       SUBPARTITION order_p1_southwest VALUES ('AZ', 'UT', 'NM')
+      ),
+     PARTITION order_p2 VALUES LESS THAN (TO_DATE ('01-MAR-2016','DD-MON-YYYY'))
+     ( SUBPARTITION order_p2_northwest VALUES ('OR', 'WA'),
+       SUBPARTITION order_p2_southwest VALUES ('AZ', 'UT', 'NM') READ ONLY
+      ),
+     PARTITION order_p3 VALUES LESS THAN (TO_DATE ('01-JUL-2016','DD-MON-YYYY'))
+     (
+     SUBPARTITION order_p3_northwest VALUES ('OR', 'WA') READ ONLY,
+     SUBPARTITION order_p3_southwest VALUES ('AZ', 'UT', 'NM')
+     )
+ );</pre></div>
+                  <!-- class="example" -->
+                  <div class="section">
+                     <p>You can check the read-only status with the <code class="codeph">DEF_READ_ONLY</code> column of the <code class="codeph">*_PART_TABLES</code> view, the <code class="codeph">READ_ONLY</code> column of the <code class="codeph">*_TAB_PARTITIONS</code> view, and the <code class="codeph">READ_ONLY</code> column of the <code class="codeph">*_TAB_SUBPARTITIONS</code> view. Note that only physical segments, partitions for single-level partitioning and subpartitions for composite partitioning, have a status. All other levels are logical and only have a default status.
+                     </p><pre class="oac_no_warn" dir="ltr">SQL&gt; SELECT PARTITION_NAME, READ_ONLY FROM USER_TAB_PARTITIONS WHERE TABLE_NAME ='ORDERS_READ_WRITE_ONLY';
+PARTITION_NAME                  READ
+------------------------------- ----
+ORDER_P1                        YES
+ORDER_P2                        NONE
+ORDER_P3                        NONE
+
+SQL&gt; SELECT PARTITION_NAME, SUBPARTITION_NAME, READ_ONLY FROM USER_TAB_SUBPARTITIONS WHERE TABLE_NAME ='ORDERS_READ_WRITE_ONLY';
+PARTITION_NAME                 SUBPARTITION_NAME             REA
+------------------------------ ----------------------------- ---
+ORDER_P1                       ORDER_P1_NORTHWEST            YES
+ORDER_P1                       ORDER_P1_SOUTHWEST            YES
+ORDER_P2                       ORDER_P2_NORTHWEST            NO
+ORDER_P2                       ORDER_P2_SOUTHWEST            YES
+ORDER_P3                       ORDER_P3_NORTHWEST            YES
+ORDER_P3                       ORDER_P3_SOUTHWEST            NO
+</pre><div class="infoboxnotealso" id="GUID-9D7149B6-A2FF-47CA-8F00-47CBFD33F82B__ORACLEDATABASEREFERENCEFORINFORMATI-F3FBC646">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../refrn/static-data-dictionary-views-5.html#REFRN-GUID-22FAAA6B-2181-47AE-8A10-6CF968B52CA4" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> for information about <code class="codeph">*_PART_TABLES</code>, <code class="codeph">*_TAB_PARTITIONS</code>, and <code class="codeph">*_TAB_SUBPARTITIONS</code> views
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div>
+            <div class="sect2"><a id="GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1" name="GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1"></a><h3 id="VLDBG-GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1" class="sect3">Creating a Partitioned External Table</h3>
+               <div>
+                  <p>You can create partitions for an external table.</p>
+                  <p>The organization external clause identifies the table as external table, followed by the specification and access parameters of the external table. While parameters, such as the default directory; can be overridden on a partition or subpartition level, the external table type and its access parameters are table-level attributes and applicable to all partitions or subpartitions.</p>
+                  <p>The table created in <a href="partition-create-tables-indexes.html#GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1__GUID-385BCC5F-77CA-4579-8C7C-0E964DB65AB6">Example 4-11</a> has three partitions for external data accessed from different locations. Partition <code class="codeph">p1</code> stores customer data for California, located in the default directory of the table. Partition <code class="codeph">p2</code> points to a file storing data for Washington. Partition <code class="codeph">p3</code> does not have a file descriptor and is empty.
+                  </p>
+                  <div class="example" id="GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1__GUID-385BCC5F-77CA-4579-8C7C-0E964DB65AB6">
+                     <p class="titleinexample">Example 4-11 Creating a Partitioned External Table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales (loc_id number, prod_id number, cust_id number, amount_sold number, quantity_sold number)
+ ORGANIZATION EXTERNAL
+ (TYPE oracle_loader
+  DEFAULT DIRECTORY load_d1
+  ACCESS PARAMETERS
+  ( RECORDS DELIMITED BY NEWLINE CHARACTERSET US7ASCII
+    NOBADFILE
+    LOGFILE log_dir:'sales.log'
+    FIELDS TERMINATED BY ","
+   )
+ )
+  REJECT LIMIT UNLIMITED
+ PARTITION BY RANGE (loc_id)
+ (PARTITION p1 VALUES LESS THAN (1000) LOCATION ('california.txt'),
+  PARTITION p2 VALUES LESS THAN (2000) DEFAULT DIRECTORY load_d2 LOCATION ('washington.txt'),
+  PARTITION p3 VALUES LESS THAN (3000))
+; </pre></div>
+                  <!-- class="example" -->
+                  <div class="section">
+                     <div class="infoboxnotealso" id="GUID-09CFA3CD-66B7-4CDF-A086-6958D113BDD1__ORACLEDATABASEADMINISTRATORSGUIDEFO-330DF498">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../admin/managing-tables.html#ADMIN-GUID-2A801016-0399-4925-AD1B-A02683E81B59" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> for information about partitioning external tables
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="VLDBG00301"></a><div class="props_rev_3"><a id="GUID-5C34BF3F-B728-47C7-B656-AE4FA9FFE2C3" name="GUID-5C34BF3F-B728-47C7-B656-AE4FA9FFE2C3"></a><h3 id="VLDBG-GUID-5C34BF3F-B728-47C7-B656-AE4FA9FFE2C3" class="sect3">Specifying Partitioning on Key Columns</h3>
+               <div>
+                  <p>For range-partitioned and hash partitioned tables, you can specify up to 16 partitioning key columns.</p>
+                  <p>Use multicolumn partitioning when the partitioning key is composed of several columns and subsequent columns define a higher granularity than the preceding ones. The most common scenario is a decomposed <code class="codeph">DATE</code> or <code class="codeph">TIMESTAMP</code> key, consisting of separated columns, for year, month, and day.
+                  </p>
+                  <p>In evaluating multicolumn partitioning keys, the database uses the second value only if the first value cannot uniquely identify a single target partition, and uses the third value only if the first and second do not determine the correct partition, and so forth. A value cannot determine the correct partition only when a partition bound exactly matches that value and the same bound is defined for the next partition. The <span class="italic">n</span><sup>th</sup> column is investigated only when all previous (n-1) values of the multicolumn key exactly match the (n-1) bounds of a partition. A second column, for example, is evaluated only if the first column exactly matches the partition boundary value. If all column values exactly match all of the bound values for a partition, then the database determines that the row does not fit in this partition and considers the next partition for a match. 
+                  </p>
+                  <p>For nondeterministic boundary definitions (successive partitions with identical values for at least one column), the partition boundary value becomes an inclusive value, representing a "less than or equal to" boundary. This is in contrast to deterministic boundaries, where the values are always regarded as "less than" boundaries.</p>
+                  <p>The following topics are discussed:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-814DE2FF-7147-42DE-9CAF-5E019BAB8C18" title="The example in this topic shows how to create a multicolumn range-partitioned table by date.">Creating a Multicolumn Range-Partitioned Table By Date</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-2E03ED66-312F-422A-9352-2128B34DEE8E" title="The example in this topic shows how to create a multicolumn range-partitioned table to enforce equal-sized partitions.">Creating a Multicolumn Range-Partitioned Table to Enforce Equal-Sized Partitions</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG14059"></a><div class="props_rev_3"><a id="GUID-814DE2FF-7147-42DE-9CAF-5E019BAB8C18" name="GUID-814DE2FF-7147-42DE-9CAF-5E019BAB8C18"></a><h4 id="VLDBG-GUID-814DE2FF-7147-42DE-9CAF-5E019BAB8C18" class="sect4">Creating a Multicolumn Range-Partitioned Table By Date</h4>
+                  <div>
+                     <p>The example in this topic shows how to create a multicolumn range-partitioned table by date.</p>
+                     <div class="section">
+                        <p><a href="partition-create-tables-indexes.html#GUID-814DE2FF-7147-42DE-9CAF-5E019BAB8C18__CHDEJJFJ">Example 4-12</a> illustrates the column evaluation for a multicolumn range-partitioned table, storing the actual <code class="codeph">DATE</code> information in three separate columns: <code class="codeph">year</code>, <code class="codeph">month</code>, and <code class="codeph">day</code>. The partitioning granularity is a calendar quarter. The partitioned table being evaluated is created as follows:
+                        </p>
+                        <p>The year value for 12-DEC-2000 satisfied the first partition, <code class="codeph">before2001</code>, so no further evaluation is needed:
+                        </p><pre class="oac_no_warn" dir="ltr">SELECT * FROM sales_demo PARTITION(before2001);
+
+      YEAR      MONTH        DAY AMOUNT_SOLD
+---------- ---------- ---------- -----------
+      2000         12         12        1000
+</pre><p>The information for 17-MAR-2001 is stored in partition <code class="codeph">q1_2001</code>. The first partitioning key column, <code class="codeph">year</code>, does not by itself determine the correct partition, so the second partitioning key column, <code class="codeph">month</code>, must be evaluated.
+                        </p><pre class="oac_no_warn" dir="ltr">SELECT * FROM sales_demo PARTITION(q1_2001);
+
+      YEAR      MONTH        DAY AMOUNT_SOLD
+---------- ---------- ---------- -----------
+      2001          3         17        2000
+</pre><p>Following the same determination rule as for the previous record, the second column, <code class="codeph">month</code>, determines partition <code class="codeph">q4_2001</code> as correct partition for 1-NOV-2001:
+                        </p><pre class="oac_no_warn" dir="ltr">SELECT * FROM sales_demo PARTITION(q4_2001);
+
+      YEAR      MONTH        DAY AMOUNT_SOLD
+---------- ---------- ---------- -----------
+      2001         11          1        5000
+</pre><p>The partition for 01-JAN-2002 is determined by evaluating only the <code class="codeph">year</code> column, which indicates the <code class="codeph">future</code> partition:
+                        </p><pre class="oac_no_warn" dir="ltr">SELECT * FROM sales_demo PARTITION(future);
+
+      YEAR      MONTH        DAY AMOUNT_SOLD
+---------- ---------- ---------- -----------
+      2002          1          1        4000
+</pre><p>If the database encounters <code class="codeph">MAXVALUE</code> in a partitioning key column, then all other values of subsequent columns become irrelevant. That is, a definition of partition <code class="codeph">future</code> in the preceding example, having a bound of (<code class="codeph">MAXVALUE</code>,0) is equivalent to a bound of (<code class="codeph">MAXVALUE</code>,100) or a bound of (<code class="codeph">MAXVALUE</code>,<code class="codeph">MAXVALUE</code>).
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-814DE2FF-7147-42DE-9CAF-5E019BAB8C18__CHDEJJFJ">
+                        <p class="titleinexample">Example 4-12 Creating a multicolumn range-partitioned table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales_demo (
+   year          NUMBER, 
+   month         NUMBER,
+   day           NUMBER,
+   amount_sold   NUMBER) 
+PARTITION BY RANGE (year,month) 
+  (PARTITION before2001 VALUES LESS THAN (2001,1),
+   PARTITION q1_2001    VALUES LESS THAN (2001,4),
+   PARTITION q2_2001    VALUES LESS THAN (2001,7),
+   PARTITION q3_2001    VALUES LESS THAN (2001,10),
+   PARTITION q4_2001    VALUES LESS THAN (2002,1),
+   PARTITION future     VALUES LESS THAN (MAXVALUE,0));
+
+REM  12-DEC-2000
+INSERT INTO sales_demo VALUES(2000,12,12, 1000);
+REM  17-MAR-2001
+INSERT INTO sales_demo VALUES(2001,3,17, 2000);
+REM  1-NOV-2001
+INSERT INTO sales_demo VALUES(2001,11,1, 5000);
+REM  1-JAN-2002
+INSERT INTO sales_demo VALUES(2002,1,1, 4000);
+</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+               <div class="props_rev_3"><a id="GUID-2E03ED66-312F-422A-9352-2128B34DEE8E" name="GUID-2E03ED66-312F-422A-9352-2128B34DEE8E"></a><h4 id="VLDBG-GUID-2E03ED66-312F-422A-9352-2128B34DEE8E" class="sect4">Creating a Multicolumn Range-Partitioned Table to Enforce Equal-Sized Partitions</h4>
+                  <div>
+                     <p>The example in this topic shows how to create a multicolumn range-partitioned table to enforce equal-sized partitions.</p>
+                     <div class="section">
+                        <p>The following example illustrates the use of a multicolumn partitioned approach for table <code class="codeph">supplier_parts</code>, storing the information about which suppliers deliver which parts. To distribute the data in equal-sized partitions, it is not sufficient to partition the table based on the <code class="codeph">supplier_id</code>, because some suppliers might provide hundreds of thousands of parts, while others provide only a few specialty parts. Instead, you partition the table on (<code class="codeph">supplier_id</code>, <code class="codeph">partnum</code>) to manually enforce equal-sized partitions.
+                        </p>
+                        <p>Every row with <code class="codeph">supplier_id</code> &lt; 10 is stored in partition <code class="codeph">p1</code>, regardless of the <code class="codeph">partnum</code> value. The column <code class="codeph">partnum</code> is evaluated only if <code class="codeph">supplier_id</code> =10, and the corresponding rows are inserted into partition <code class="codeph">p1</code>, <code class="codeph">p2</code>, or even into <code class="codeph">p3</code> when <code class="codeph">partnum</code> &gt;=200. To achieve equal-sized partitions for ranges of <code class="codeph">supplier_parts</code>, you could choose a composite range-hash partitioned table, range partitioned by <code class="codeph">supplier_id</code>, hash subpartitioned by <code class="codeph">partnum</code>.
+                        </p>
+                        <p>Defining the partition boundaries for multicolumn partitioned tables must obey some rules. For example, consider a table that is range partitioned on three columns <code class="codeph">a</code>, <code class="codeph">b</code>, and <code class="codeph">c</code>. The individual partitions have range values represented as follows:
+                        </p><pre class="oac_no_warn" dir="ltr">P0(a0, b0, c0)
+P1(a1, b1, c1)
+P2(a2, b2, c2)
+...
+Pn(an, bn, cn)
+</pre><p>The range values you provide for each partition must follow these rules:</p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section">
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><code class="codeph">a0</code> must be less than or equal to <code class="codeph">a1</code>, and <code class="codeph">a1</code> must be less than or equal to <code class="codeph">a2</code>, and so on.
+                              </p>
+                           </li>
+                           <li>
+                              <p>If <code class="codeph">a0</code>=<code class="codeph">a1</code>, then <code class="codeph">b0</code> must be less than or equal to <code class="codeph">b1</code>. If <code class="codeph">a0</code> &lt; <code class="codeph">a1</code>, then <code class="codeph">b0</code> and <code class="codeph">b1</code> can have any values. If <code class="codeph">a0</code>=<code class="codeph">a1</code> and <code class="codeph">b0</code>=<code class="codeph">b1</code>, then <code class="codeph">c0</code> must be less than or equal to <code class="codeph">c1</code>. If <code class="codeph">b0</code>&lt;<code class="codeph">b1</code>, then <code class="codeph">c0</code> and <code class="codeph">c1</code> can have any values, and so on.
+                              </p>
+                           </li>
+                           <li>
+                              <p>If <code class="codeph">a1</code>=<code class="codeph">a2</code>, then <code class="codeph">b1</code> must be less than or equal to <code class="codeph">b2</code>. If <code class="codeph">a1</code>&lt;<code class="codeph">a2</code>, then <code class="codeph">b1</code> and <code class="codeph">b2</code> can have any values. If <code class="codeph">a1</code>=<code class="codeph">a2</code> and <code class="codeph">b1</code>=<code class="codeph">b2</code>, then <code class="codeph">c1</code> must be less than or equal to <code class="codeph">c2</code>. If <code class="codeph">b1</code>&lt;<code class="codeph">b2</code>, then <code class="codeph">c1</code> and <code class="codeph">c2</code> can have any values, and so on.
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="section"><pre class="oac_no_warn" dir="ltr">CREATE TABLE supplier_parts (
+   supplier_id      NUMBER, 
+   partnum          NUMBER,
+   price            NUMBER)
+PARTITION BY RANGE (supplier_id, partnum)
+  (PARTITION p1 VALUES LESS THAN  (10,100),
+   PARTITION p2 VALUES LESS THAN (10,200),
+   PARTITION p3 VALUES LESS THAN (MAXVALUE,MAXVALUE));
+</pre><p>The following three records are inserted into the table:</p><pre class="oac_no_warn" dir="ltr">INSERT INTO supplier_parts VALUES (5,5, 1000);
+INSERT INTO supplier_parts VALUES (5,150, 1000);
+INSERT INTO supplier_parts VALUES (10,100, 1000);
+</pre><p>The first two records are inserted into partition <code class="codeph">p1</code>, uniquely identified by <code class="codeph">supplier_id</code>. However, the third record is inserted into partition <code class="codeph">p2</code>; it matches all range boundary values of partition <code class="codeph">p1</code> exactly and the database therefore considers the following partition for a match. The value of <code class="codeph">partnum</code> satisfies the criteria &lt; 200, so it is inserted into partition <code class="codeph">p2</code>.
+                        </p><pre class="oac_no_warn" dir="ltr">SELECT * FROM supplier_parts PARTITION (p1);
+
+SUPPLIER_ID    PARTNUM      PRICE
+----------- ---------- ----------
+          5          5       1000
+          5        150       1000
+
+SELECT * FROM supplier_parts PARTITION (p2);
+
+SUPPLIER_ID    PARTNUM      PRICE
+----------- ---------- ----------
+          10       100       1000
+</pre></div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG14060"></a><a id="VLDBG1109"></a><div class="props_rev_3"><a id="GUID-AF6D08D7-5E0F-4E08-B682-74CCCAEC64D1" name="GUID-AF6D08D7-5E0F-4E08-B682-74CCCAEC64D1"></a><h3 id="VLDBG-GUID-AF6D08D7-5E0F-4E08-B682-74CCCAEC64D1" class="sect3">Using Virtual Column-Based Partitioning</h3>
+               <div>
+                  <p>With partitioning, a virtual column can be used as any regular column.</p>
+                  <div class="section">
+                     <p>All partition methods are supported when using virtual columns, including interval partitioning and all different combinations of composite partitioning. A virtual column used as the partitioning column cannot use calls to a PL/SQL function.</p>
+                     <p>The following example shows the <code class="codeph">sales</code> table partitioned by range-range using a virtual column for the subpartitioning key. The virtual column calculates the total value of a sale by multiplying <code class="codeph">amount_sold</code> and <code class="codeph">quantity_sold</code>. As the example shows, row movement is also supported with virtual columns. If row movement is enabled, then a row migrates from one partition to another partition if the virtual column evaluates to a value that belongs to another partition.
+                     </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales
+  ( prod_id       NUMBER(6) NOT NULL
+  , cust_id       NUMBER NOT NULL
+  , time_id       DATE NOT NULL
+  , channel_id    CHAR(1) NOT NULL
+  , promo_id      NUMBER(6) NOT NULL
+  , quantity_sold NUMBER(3) NOT NULL
+  , amount_sold   NUMBER(10,2) NOT NULL
+  , total_amount AS (quantity_sold * amount_sold)
+  )
+ PARTITION BY RANGE (time_id) INTERVAL (NUMTOYMINTERVAL(1,'MONTH'))
+ SUBPARTITION BY RANGE(total_amount)
+ SUBPARTITION TEMPLATE
+   ( SUBPARTITION p_small VALUES LESS THAN (1000)
+   , SUBPARTITION p_medium VALUES LESS THAN (5000)
+   , SUBPARTITION p_large VALUES LESS THAN (10000)
+   , SUBPARTITION p_extreme VALUES LESS THAN (MAXVALUE)
+   )
+ (PARTITION sales_before_2007 VALUES LESS THAN
+        (TO_DATE('01-JAN-2007','dd-MON-yyyy'))
+)
+ENABLE ROW MOVEMENT
+PARALLEL NOLOGGING;
+</pre></div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <div class="infoboxnotealso" id="GUID-AF6D08D7-5E0F-4E08-B682-74CCCAEC64D1__GUID-8BC1241A-8B3A-45F6-B6BA-97369A497149">
+                        <p class="notep1">See Also:</p>
+                        <p><a href="../sqlrf/Pseudocolumns.html#SQLRF0025" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for the syntax on how to create a virtual column
+                        </p>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="VLDBG14061"></a><a id="VLDBG1110"></a><div class="props_rev_3"><a id="GUID-7D211E4B-FFFD-4146-9010-20ED1232FF2C" name="GUID-7D211E4B-FFFD-4146-9010-20ED1232FF2C"></a><h3 id="VLDBG-GUID-7D211E4B-FFFD-4146-9010-20ED1232FF2C" class="sect3">Using Table Compression with Partitioned Tables</h3>
+               <div>
+                  <p>For heap-organized partitioned tables, you can compress some or all partitions using table compression.</p>
+                  <div class="section">
+                     <p>The compression attribute can be declared for a tablespace, a table, or a partition of a table. Whenever the compress attribute is not specified, it is inherited like any other storage attribute.</p>
+                     <p><a href="partition-create-tables-indexes.html#GUID-7D211E4B-FFFD-4146-9010-20ED1232FF2C__CHDCCFGE">Example 4-13</a> creates a range-partitioned table with one compressed partition <code class="codeph">costs_old</code>. The compression attribute for the table and all other partitions is inherited from the tablespace level.
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+                  <div class="example" id="GUID-7D211E4B-FFFD-4146-9010-20ED1232FF2C__CHDCCFGE">
+                     <p class="titleinexample">Example 4-13 Creating a range-partitioned table with a compressed partition</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE costs_demo (
+   prod_id     NUMBER(6),    time_id     DATE, 
+   unit_cost   NUMBER(10,2), unit_price  NUMBER(10,2))
+PARTITION BY RANGE (time_id)
+   (PARTITION costs_old 
+       VALUES LESS THAN (TO_DATE('01-JAN-2003', 'DD-MON-YYYY')) COMPRESS,
+    PARTITION costs_q1_2003 
+       VALUES LESS THAN (TO_DATE('01-APR-2003', 'DD-MON-YYYY')),
+    PARTITION costs_q2_2003
+       VALUES LESS THAN (TO_DATE('01-JUN-2003', 'DD-MON-YYYY')),
+    PARTITION costs_recent VALUES LESS THAN (MAXVALUE));</pre></div>
+                  <!-- class="example" -->
+               </div>
+            </div><a id="VLDBG1111"></a><div class="props_rev_3"><a id="GUID-0C13E8A8-568B-4A60-8A46-F1120D193EFE" name="GUID-0C13E8A8-568B-4A60-8A46-F1120D193EFE"></a><h3 id="VLDBG-GUID-0C13E8A8-568B-4A60-8A46-F1120D193EFE" class="sect3">Using Key Compression with Partitioned Indexes</h3>
+               <div>
+                  <p>You can compress some or all partitions of a B-tree index using key compression.</p>
+                  <div class="section">
+                     <p>Key compression is applicable only to B-tree indexes. Bitmap indexes are stored in a compressed manner by default. An index using key compression eliminates repeated occurrences of key column prefix values, thus saving space and I/O.</p>
+                     <p>The following example creates a local partitioned index with all partitions except the most recent one compressed:</p><pre class="oac_no_warn" dir="ltr">CREATE INDEX i_cost1 ON costs_demo (prod_id) COMPRESS LOCAL
+   (PARTITION costs_old, PARTITION costs_q1_2003, 
+    PARTITION costs_q2_2003, PARTITION costs_recent NOCOMPRESS);
+</pre><p>You cannot specify <code class="codeph">COMPRESS</code> (or <code class="codeph">NOCOMPRESS</code>) explicitly for an index subpartition. All index subpartitions of a given partition inherit the key compression setting from the parent partition.
+                     </p>
+                     <p>To modify the key compression attribute for all subpartitions of a given partition, you must first issue an <code class="codeph">ALTER INDEX...MODIFY PARTITION</code> statement and then rebuild all subpartitions. The <code class="codeph">MODIFY PARTITION</code> clause marks all index subpartitions as <code class="codeph">UNUSABLE</code>.
+                     </p>
+                  </div>
+                  <!-- class="section" -->
+               </div>
+            </div><a id="VLDBG14062"></a><div class="props_rev_3"><a id="GUID-548F1C63-0948-4B6E-95F9-6DCC7F5A9F95" name="GUID-548F1C63-0948-4B6E-95F9-6DCC7F5A9F95"></a><h3 id="VLDBG-GUID-548F1C63-0948-4B6E-95F9-6DCC7F5A9F95" class="sect3">Specifying Partitioning with Segments</h3>
+               <div>
+                  <p>Partitioning with segments is introduced in this topic.</p>
+                  <p>These topics discuss the functionality when using partitioning with segments.</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-DF75897A-DF8D-4AF3-AECF-748D60A94949" title="You can defer the creation of segments when creating a partitioned table until the first row is inserted into a partition.">Deferred Segment Creation for Partitioning</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-4EBDF098-A3DB-44DF-8B0C-CE24246EBE64" title="You can drop empty segments in tables and table fragments with the DBMS_SPACE_ADMIN.DROP_EMPTY_SEGMENTS procedure.">Truncating Segments That Are Empty</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-FCAD2073-5AF3-42A6-8485-A5D4F9A814C3" title="You can use the MATERIALIZE_DEFERRED_SEGMENTS procedure in the DBMS_SPACE_ADMIN package to create segments for tables and dependent objects for tables with the deferred segment property.">Maintenance Procedures for Segment Creation on Demand</a></p>
+                     </li>
+                  </ul>
+               </div><a id="VLDBG14063"></a><div class="props_rev_3"><a id="GUID-DF75897A-DF8D-4AF3-AECF-748D60A94949" name="GUID-DF75897A-DF8D-4AF3-AECF-748D60A94949"></a><h4 id="VLDBG-GUID-DF75897A-DF8D-4AF3-AECF-748D60A94949" class="sect4">Deferred Segment Creation for Partitioning</h4>
+                  <div>
+                     <p>You can defer the creation of segments when creating a partitioned table until the first row is inserted into a partition.</p>
+                     <p>When the first row is inserted, segments are created for the base table partition, LOB columns, all global indexes, and local index partitions. Deferred segment creation can be controlled by the following:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>Setting the <code class="codeph">DEFERRED_SEGMENT_CREATION</code> initialization parameter to <code class="codeph">TRUE</code> or <code class="codeph">FALSE</code> in the initialization parameter file.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Setting the initialization parameter <code class="codeph">DEFERRED_SEGMENT_CREATION</code> to <code class="codeph">TRUE</code> or <code class="codeph">FALSE</code> with the <code class="codeph">ALTER</code> <code class="codeph">SESSION</code> or <code class="codeph">ALTER</code> <code class="codeph">SYSTEM</code> SQL statements.
+                           </p>
+                        </li>
+                        <li>
+                           <p>Specifying the keywords <code class="codeph">SEGMENT</code> <code class="codeph">CREATION</code> <code class="codeph">IMMEDIATE</code> or <code class="codeph">SEGMENT</code> <code class="codeph">CREATION</code> <code class="codeph">DEFERRED</code> with the partition clause when issuing the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> SQL statement.
+                           </p>
+                        </li>
+                     </ul>
+                     <p>You can force the creation of segments for an existing created partition with the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">MODIFY</code> <code class="codeph">PARTITION</code> <code class="codeph">ALLOCATE</code> <code class="codeph">EXTENT</code> SQL statement. This statement allocates one extent more than the initial number of extents specified during the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code>.
+                     </p>
+                     <p>Serializable transactions are not supported with deferred segment creation. Inserting data into an empty table with no segment created, or into a partition of an interval partitioned table that does not have a segment yet, can cause an error.</p>
+                     <div class="infoboxnotealso" id="GUID-DF75897A-DF8D-4AF3-AECF-748D60A94949__GUID-EC48DB23-C4C8-4DF5-878E-4B6305B3FF46">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../refrn/DEFERRED_SEGMENT_CREATION.html#REFRN10307" target="_blank"><span><cite>Oracle Database Reference</cite></span></a> for more information about the <code class="codeph">DEFERRED_SEGMENT_CREATION</code> initialization parameter
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../sqlrf/ALTER-SESSION.html#SQLRF00901" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for more information about the <code class="codeph">ALTER</code> <code class="codeph">SESSION</code> and <code class="codeph">ALTER</code> <code class="codeph">SYSTEM</code> SQL statements
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../sqlrf/CREATE-TABLE.html#SQLRF01402" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for more information about the keywords <code class="codeph">SEGMENT</code> <code class="codeph">CREATION</code> <code class="codeph">IMMEDIATE</code> and <code class="codeph">SEGMENT</code> <code class="codeph">CREATION</code> <code class="codeph">DEFERRED</code> of the <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> SQL statement
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="VLDBG14064"></a><div class="props_rev_3"><a id="GUID-4EBDF098-A3DB-44DF-8B0C-CE24246EBE64" name="GUID-4EBDF098-A3DB-44DF-8B0C-CE24246EBE64"></a><h4 id="VLDBG-GUID-4EBDF098-A3DB-44DF-8B0C-CE24246EBE64" class="sect4">Truncating Segments That Are Empty</h4>
+                  <div>
+                     <p>You can drop empty segments in tables and table fragments with the <code class="codeph">DBMS_SPACE_ADMIN.DROP_EMPTY_SEGMENTS</code> procedure.
+                     </p>
+                     <p>In addition, if a partition or subpartition has a segment, then the truncate feature drops the segment if the <code class="codeph">DROP</code> <code class="codeph">ALL</code> <code class="codeph">STORAGE</code> clause is specified with the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">TRUNCATE</code> <code class="codeph">PARTITION</code> SQL statement.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-4EBDF098-A3DB-44DF-8B0C-CE24246EBE64__GUID-CEE48B80-2BEE-4F30-9BA7-1C02CE8537B5">
+                        <p class="notep1">See Also:</p>
+                        <p></p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../arpls/DBMS_SPACE_ADMIN.html#ARPLS057" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for more information about the <code class="codeph">DBMS_SPACE_ADMIN</code> package
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../sqlrf/ALTER-TABLE.html#SQLRF01001" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for more information about the <code class="codeph">DROP</code> <code class="codeph">ALL</code> <code class="codeph">STORAGE</code> clause of <code class="codeph">ALTER</code> <code class="codeph">TABLE</code></p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div><a id="VLDBG14065"></a><div class="props_rev_3"><a id="GUID-FCAD2073-5AF3-42A6-8485-A5D4F9A814C3" name="GUID-FCAD2073-5AF3-42A6-8485-A5D4F9A814C3"></a><h4 id="VLDBG-GUID-FCAD2073-5AF3-42A6-8485-A5D4F9A814C3" class="sect4">Maintenance Procedures for Segment Creation on Demand</h4>
+                  <div>
+                     <p>You can use the <code class="codeph">MATERIALIZE_DEFERRED_SEGMENTS</code> procedure in the <code class="codeph">DBMS_SPACE_ADMIN</code> package to create segments for tables and dependent objects for tables with the deferred segment property.
+                     </p>
+                     <p>You can also force the creation of segments for an existing created table and table fragment with the <code class="codeph">DBMS_SPACE_ADMIN.MATERIALIZE_DEFERRED_SEGMENTS</code> procedure. The <code class="codeph">MATERIALIZE_DEFERRED_SEGMENTS</code> procedure differs from the <code class="codeph">ALTER</code> <code class="codeph">TABLE</code> <code class="codeph">MODIFY</code> <code class="codeph">PARTITION</code> <code class="codeph">ALLOCATE</code> <code class="codeph">EXTENT</code> SQL statement because it does not allocate one additional extent for the table or table fragment.
+                     </p>
+                     <div class="infoboxnotealso" id="GUID-FCAD2073-5AF3-42A6-8485-A5D4F9A814C3__GUID-1AF3F5F9-6484-4072-838E-75E08BCD7416">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../arpls/DBMS_SPACE_ADMIN.html#ARPLS057" target="_blank"><span><cite>Oracle Database PL/SQL Packages and Types Reference</cite></span></a> for more information about the <code class="codeph">DBMS_SPACE_ADMIN</code> package
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+            </div><a id="VLDBG1112"></a><div class="props_rev_3"><a id="GUID-46136CB9-ED71-4150-96F2-D50121F0BCF0" name="GUID-46136CB9-ED71-4150-96F2-D50121F0BCF0"></a><h3 id="VLDBG-GUID-46136CB9-ED71-4150-96F2-D50121F0BCF0" class="sect3">Specifying Partitioning When Creating Index-Organized Tables</h3>
+               <div>
+                  <p>For index-organized tables, you can use the range, list, or hash partitioning method.</p>
+                  <p>The semantics for creating partitioned index-organized tables are similar to that for regular tables with these differences:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>When you create the table, you specify the <code class="codeph">ORGANIZATION INDEX</code> clause, and <code class="codeph">INCLUDING</code> and <code class="codeph">OVERFLOW</code> clauses as necessary.
+                        </p>
+                     </li>
+                     <li>
+                        <p>The <code class="codeph">PARTITION</code> clause can have <code class="codeph">OVERFLOW</code> subclauses that allow you to specify attributes of the overflow segments at the partition level. 
+                        </p>
+                     </li>
+                  </ul>
+                  <p>Specifying an <code class="codeph">OVERFLOW</code> clause results in the overflow data segments themselves being equipartitioned with the primary key index segments. Thus, for partitioned index-organized tables with overflow, each partition has an index segment and an overflow data segment. 
+                  </p>
+                  <p>For index-organized tables, the set of partitioning columns must be a subset of the primary key columns. Because rows of an index-organized table are stored in the primary key index for the table, the partitioning criterion affects the availability. By choosing the partitioning key to be a subset of the primary key, an insert operation must only verify uniqueness of the primary key in a single partition, thereby maintaining partition independence. </p>
+                  <p>Support for secondary indexes on index-organized tables is similar to the support for regular tables. Because of the logical nature of the secondary indexes, global indexes on index-organized tables remain usable for certain operations where they would be marked <code class="codeph">UNUSABLE</code> for regular tables. 
+                  </p>
+                  <p>The following topics are discussed:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-A944913C-82F4-4A66-A208-E696C374AB1B" title="You can partition index-organized tables, and their secondary indexes, by the range method.">Creating Range-Partitioned Index-Organized Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3" title="Another option for partitioning index-organized tables is to use the hash method.">Creating Hash Partitioned Index-Organized Tables</a></p>
+                     </li>
+                     <li>
+                        <p><a href="partition-create-tables-indexes.html#GUID-77B812A7-6427-429A-8AA7-099EB631FBF8" title="The other option for partitioning index-organized tables is to use the list method.">Creating List-Partitioned Index-Organized Tables</a></p>
+                     </li>
+                  </ul>
+                  <div class="infoboxnotealso" id="GUID-46136CB9-ED71-4150-96F2-D50121F0BCF0__GUID-DEC0E597-32ED-4BDE-9ED4-61B9FFE41A8A">
+                     <p class="notep1">See Also:</p>
+                     <p></p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p><a href="maintenance-partition-tables-indexes.html#GUID-A226B597-BCF1-49E2-8284-739A99D3F9ED" title="There are various maintenance operations that can be performed on partitioned tables and indexes.">Maintenance Operations for Partitioned Tables and Indexes</a> for information about maintenance operations on index-organized tables
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../admin/managing-tables.html#ADMIN01506" target="_blank"><span><cite>Oracle Database Administrator’s Guide</cite></span></a> for more information about managing index-organized tables
+                           </p>
+                        </li>
+                        <li>
+                           <p><a href="../cncpt/indexes-and-index-organized-tables.html#CNCPT911" target="_blank"><span><cite>Oracle Database Concepts</cite></span></a> for more information about index-organized tables
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+               </div><a id="VLDBG14066"></a><a id="VLDBG1113"></a><div class="props_rev_3"><a id="GUID-A944913C-82F4-4A66-A208-E696C374AB1B" name="GUID-A944913C-82F4-4A66-A208-E696C374AB1B"></a><h4 id="VLDBG-GUID-A944913C-82F4-4A66-A208-E696C374AB1B" class="sect4">Creating Range-Partitioned Index-Organized Tables</h4>
+                  <div>
+                     <p>You can partition index-organized tables, and their secondary indexes, by the range method.</p>
+                     <div class="section">
+                        <p>In <a href="partition-create-tables-indexes.html#GUID-A944913C-82F4-4A66-A208-E696C374AB1B__CHDJCEAJ">Example 4-14</a>, a range-partitioned index-organized table <code class="codeph">sales</code> is created. The <code class="codeph">INCLUDING</code> clause specifies that all columns after <code class="codeph">week_no</code> are to be stored in an overflow segment. There is one overflow segment for each partition, all stored in the same tablespace (<code class="codeph">overflow_here</code>). Optionally, <code class="codeph">OVERFLOW TABLESPACE</code> could be specified at the individual partition level, in which case some or all of the overflow segments could have separate <code class="codeph">TABLESPACE</code> attributes.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-A944913C-82F4-4A66-A208-E696C374AB1B__CHDJCEAJ">
+                        <p class="titleinexample">Example 4-14 Creating a range-partitioned index-organized table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales(acct_no NUMBER(5), 
+                   acct_name CHAR(30), 
+                   amount_of_sale NUMBER(6), 
+                   week_no INTEGER,
+                   sale_details VARCHAR2(1000),
+             PRIMARY KEY (acct_no, acct_name, week_no)) 
+     ORGANIZATION INDEX 
+             INCLUDING week_no
+             OVERFLOW TABLESPACE overflow_here
+     PARTITION BY RANGE (week_no)
+            (PARTITION VALUES LESS THAN (5) 
+                   TABLESPACE ts1,
+             PARTITION VALUES LESS THAN (9) 
+                   TABLESPACE ts2 OVERFLOW TABLESPACE overflow_ts2,
+             ...
+             PARTITION VALUES LESS THAN (MAXVALUE) 
+                   TABLESPACE ts13);</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14067"></a><a id="VLDBG1114"></a><div class="props_rev_3"><a id="GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3" name="GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3"></a><h4 id="VLDBG-GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3" class="sect4">Creating Hash Partitioned Index-Organized Tables</h4>
+                  <div>
+                     <p>Another option for partitioning index-organized tables is to use the hash method.</p>
+                     <div class="section">
+                        <p>In <a href="partition-create-tables-indexes.html#GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3__CHDDCFHH">Example 4-15</a>, the <code class="codeph">sales</code> index-organized table is partitioned by the hash method.
+                        </p>
+                        <div class="infoboxnote" id="GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3__GUID-83DE597B-EA0A-4415-8F3D-DE32854629FF">
+                           <p class="notep1">Note:</p>
+                           <p>A well-designed hash function is intended to distribute rows in a well-balanced fashion among the partitions. Therefore, updating the primary key column(s) of a row is very likely to move that row to a different partition. Oracle recommends that you explicitly specify the <code class="codeph">ENABLE ROW MOVEMENT</code> clause when creating a hash partitioned index-organized table with a changeable partitioning key. The default is that <code class="codeph">ENABLE ROW MOVEMENT</code> is disabled.
+                           </p>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-ACA2C4B5-6C3D-4503-BFF1-927F89831CD3__CHDDCFHH">
+                        <p class="titleinexample">Example 4-15 Creating a hash partitioned index-organized table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales(acct_no NUMBER(5), 
+                   acct_name CHAR(30), 
+                   amount_of_sale NUMBER(6), 
+                   week_no INTEGER,
+                   sale_details VARCHAR2(1000),
+             PRIMARY KEY (acct_no, acct_name, week_no)) 
+     ORGANIZATION INDEX 
+             INCLUDING week_no
+     OVERFLOW
+          PARTITION BY HASH (week_no)
+             PARTITIONS 16
+             STORE IN (ts1, ts2, ts3, ts4)
+             OVERFLOW STORE IN (ts3, ts6, ts9);</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div><a id="VLDBG14068"></a><a id="VLDBG1115"></a><div class="props_rev_3"><a id="GUID-77B812A7-6427-429A-8AA7-099EB631FBF8" name="GUID-77B812A7-6427-429A-8AA7-099EB631FBF8"></a><h4 id="VLDBG-GUID-77B812A7-6427-429A-8AA7-099EB631FBF8" class="sect4">Creating List-Partitioned Index-Organized Tables</h4>
+                  <div>
+                     <p>The other option for partitioning index-organized tables is to use the list method.</p>
+                     <div class="section">
+                        <p>In <a href="partition-create-tables-indexes.html#GUID-77B812A7-6427-429A-8AA7-099EB631FBF8__CHDEAGIJ">Example 4-16</a>, the <code class="codeph">sales</code> index-organized table is partitioned by the list method.
+                        </p>
+                     </div>
+                     <!-- class="section" -->
+                     <div class="example" id="GUID-77B812A7-6427-429A-8AA7-099EB631FBF8__CHDEAGIJ">
+                        <p class="titleinexample">Example 4-16 Creating a list-partitioned index-organized table</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE sales(acct_no NUMBER(5), 
+                   acct_name CHAR(30), 
+                   amount_of_sale NUMBER(6), 
+                   week_no INTEGER,
+                   sale_details VARCHAR2(1000),
+             PRIMARY KEY (acct_no, acct_name, week_no)) 
+     ORGANIZATION INDEX 
+             INCLUDING week_no
+             OVERFLOW TABLESPACE ts1
+     PARTITION BY LIST (week_no)
+            (PARTITION VALUES (1, 2, 3, 4) 
+                   TABLESPACE ts2,
+             PARTITION VALUES (5, 6, 7, 8) 
+                   TABLESPACE ts3 OVERFLOW TABLESPACE ts4,
+             PARTITION VALUES (DEFAULT) 
+                   TABLESPACE ts5);</pre></div>
+                     <!-- class="example" -->
+                  </div>
+               </div>
+            </div><a id="VLDBG00306"></a><div class="props_rev_3"><a id="GUID-24050391-B7C5-4AE2-86D4-B5438412C3F6" name="GUID-24050391-B7C5-4AE2-86D4-B5438412C3F6"></a><h3 id="VLDBG-GUID-24050391-B7C5-4AE2-86D4-B5438412C3F6" class="sect3">Partitioning Restrictions for Multiple Block Sizes</h3>
+               <div>
+                  <p>Use caution when creating partitioned objects in a database with tablespaces of different block sizes.</p>
+                  <p>The storage of partitioned objects in such tablespaces is subject to some restrictions. Specifically, all partitions of the following entities must reside in tablespaces of the same block size:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>Conventional tables </p>
+                     </li>
+                     <li>
+                        <p>Indexes </p>
+                     </li>
+                     <li>
+                        <p>Primary key index segments of index-organized tables </p>
+                     </li>
+                     <li>
+                        <p>Overflow segments of index-organized tables </p>
+                     </li>
+                     <li>
+                        <p><code class="codeph">LOB</code> columns stored out of line
+                        </p>
+                     </li>
+                  </ul>
+                  <p>Therefore:</p>
+                  <ul style="list-style-type: disc;">
+                     <li>
+                        <p>For each conventional table, all partitions of that table must be stored in tablespaces with the same block size.</p>
+                     </li>
+                     <li>
+                        <p>For each index-organized table, all primary key index partitions must reside in tablespaces of the same block size, and all overflow partitions of that table must reside in tablespaces of the same block size. However, index partitions and overflow partitions can reside in tablespaces of different block size.</p>
+                     </li>
+                     <li>
+                        <p>For each index (global or local), each partition of that index must reside in tablespaces of the same block size. However, partitions of different indexes defined on the same object can reside in tablespaces of different block sizes.</p>
+                     </li>
+                     <li>
+                        <p>For each <code class="codeph">LOB</code> column, each partition of that column must be stored in tablespaces of equal block sizes. However, different <code class="codeph">LOB</code> columns can be stored in tablespaces of different block sizes.
+                        </p>
+                     </li>
+                  </ul>
+                  <p>When you create or alter a partitioned table or index, all tablespaces you <span class="italic">explicitly specify</span> for the partitions and subpartitions of each entity must be of the same block size. If you <span class="italic">do not explicitly specify</span> tablespace storage for an entity, then the tablespaces the database uses by default must be of the same block size. Therefore, you must be aware of the default tablespaces at each level of the partitioned object. 
+                  </p>
+               </div>
+            </div><a id="VLDBG14069"></a><a id="VLDBG1116"></a><div class="props_rev_3"><a id="GUID-7F8EBE79-9FF2-4B2D-9764-C11263FA550F" name="GUID-7F8EBE79-9FF2-4B2D-9764-C11263FA550F"></a><h3 id="VLDBG-GUID-7F8EBE79-9FF2-4B2D-9764-C11263FA550F" class="sect3">Partitioning of Collections in XMLType and Objects</h3>
+               <div>
+                  <p>Partitioning when using <code class="codeph">XMLType</code> or object tables and columns follows the basic rules for partitioning.
+                  </p>
+                  <div class="section">
+                     <p>For the purposes of this discussion, the term <span class="italic">Collection</span> <span class="italic">Tables</span> is used for the following two categories: (1) ordered collection tables inside <code class="codeph">XMLType</code> tables or columns, and (2) nested tables inside object tables or columns.
+                     </p>
+                     <p>When you partition Collection Tables, Oracle Database uses the partitioning scheme of the base table. Also, Collection Tables are automatically partitioned when the base table is partitioned. DML against a partitioned nested table behaves in a similar manner to that of a reference partitioned table. </p>
+                     <p></p>
+                     <p>Oracle Database provides a <code class="codeph">LOCAL</code> keyword to equipartition a Collection Table with a partitioned base table. This is the default behavior in this release. The default in earlier releases was not to equipartition the Collection Table with the partitioned base table. Now you must specify the <code class="codeph">GLOBAL</code> keyword to store an unpartitioned Collection Table with a partitioned base table.
+                     </p>
+                     <p>Out-of-line (OOL) table partitioning is supported. However, you cannot create two tables of the same XML schema that has out-of-line tables. This restriction means that exchange partitioning cannot be performed for schemas with OOL tables because it is not possible to have two tables of the same schema.</p>
+                     <p>The statement in the following example creates a nested table partition. </p><pre class="oac_no_warn" dir="ltr">CREATE TABLE print_media_part (
+   product_id NUMBER(6),
+   ad_id NUMBER(6),
+   ad_composite BLOB,
+   ad_sourcetext CLOB,
+   ad_finaltext CLOB,
+   ad_fltextn NCLOB,
+   ad_textdocs_ntab TEXTDOC_TAB,
+   ad_photo BLOB,
+   ad_graphic BFILE,
+   ad_header ADHEADER_TYP)
+NESTED TABLE ad_textdocs_ntab STORE AS textdoc_nt
+PARTITION BY RANGE (product_id)
+  (PARTITION p1 VALUES LESS THAN (100),
+   PARTITION p2 VALUES LESS THAN (200));
+</pre></div>
+                  <!-- class="section" -->
+                  <div class="section">
+                     <div class="infoboxnotealso" id="GUID-7F8EBE79-9FF2-4B2D-9764-C11263FA550F__GUID-1F17EF1E-E5CF-438E-A8AD-E448E0D42922">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="partition-create-tables-indexes.html#GUID-4FE08BA2-9EE6-4987-BC31-1381B77B47E8" title="Whether a partition contains Collection Tables or not does not significantly affect your ability to perform partition maintenance operations (PMOs).">Performing PMOs on Partitions that Contain Collection Tables</a> and <a href="partition-create-tables-indexes.html#GUID-66FDEA3D-8076-44D9-8FD2-B6CA7D79F9AA" title="For binary XML tables, XMLIndex is equipartitioned with the base table for range, hash, list, interval, and reference partitions.">Partitioning of XMLIndex for Binary XML Tables</a> for additional related examples
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="partition-pruning.html#GUID-88E16CEE-3CB1-4AD6-82B3-62B86B899A01" title="Collection tables can limit the ability of the optimizer to perform pruning.">Collection Tables</a> for an example of issuing a query against a partitioned nested table and using the <code class="codeph">EXPLAIN</code> <code class="codeph">PLAN</code> to improve performance
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="evolve-nopartition-table.html#GUID-6054142E-207A-4DF0-A62A-4C1A94DD36C4" title="You can change a nonpartitioned table into a partitioned table.">Changing a Nonpartitioned Table into a Partitioned Table</a> for information about using online redefinition to convert your existing nonpartitioned collection tables to partitioned tables
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="../sqlrf/CREATE-TABLE.html#SQLRF01402" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for details about <code class="codeph">CREATE</code> <code class="codeph">TABLE</code> syntax
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+                  <!-- class="section" -->
+               </div><a id="VLDBG1117"></a><div class="props_rev_3"><a id="GUID-4FE08BA2-9EE6-4987-BC31-1381B77B47E8" name="GUID-4FE08BA2-9EE6-4987-BC31-1381B77B47E8"></a><h4 id="VLDBG-GUID-4FE08BA2-9EE6-4987-BC31-1381B77B47E8" class="sect4">Performing PMOs on Partitions that Contain Collection Tables</h4>
+                  <div>
+                     <p>Whether a partition contains Collection Tables or not does not significantly affect your ability to perform partition maintenance operations (PMOs).</p>
+                     <p>Usually, maintenance operations on Collection Tables are carried out on the base table. The following example illustrates a typical <code class="codeph">ADD</code> <code class="codeph">PARTITION</code> operation based on the preceding nested table partition:
+                     </p><pre class="oac_no_warn" dir="ltr">ALTER TABLE print_media_part 
+   ADD PARTITION p4 VALUES LESS THAN (400)
+   LOB(ad_photo, ad_composite) STORE AS (TABLESPACE omf_ts1)
+   LOB(ad_sourcetext, ad_finaltext) STORE AS (TABLESPACE omf_ts1)
+   NESTED TABLE ad_textdocs_ntab STORE AS nt_p3;
+</pre><p>The storage table for nested table storage column <code class="codeph">ad_textdocs_ntab</code> is named <code class="codeph">nt_p3</code> and inherits all other attributes from the table-level defaults and then from the tablespace defaults.
+                     </p>
+                     <p>You must directly invoke the following partition maintenance operations on the storage table corresponding to the collection column:</p>
+                     <ul style="list-style-type: disc;">
+                        <li>
+                           <p>modify partition</p>
+                        </li>
+                        <li>
+                           <p>move partition</p>
+                        </li>
+                        <li>
+                           <p>rename partition</p>
+                        </li>
+                        <li>
+                           <p>modify the default attributes of a partition</p>
+                        </li>
+                     </ul>
+                     <div class="infoboxnotealso" id="GUID-4FE08BA2-9EE6-4987-BC31-1381B77B47E8__GUID-881AC37F-ED50-4CDF-A23C-2618A07B2BB2">
+                        <p class="notep1">See Also:</p>
+                        <ul style="list-style-type: disc;">
+                           <li>
+                              <p><a href="../sqlrf/ALTER-TABLE.html#SQLRF01001" target="_blank"><span><cite>Oracle Database SQL Language Reference</cite></span></a> for <code class="codeph">ADD</code> <code class="codeph">PARTITION</code> syntax 
+                              </p>
+                           </li>
+                           <li>
+                              <p><a href="maintenance-partition-can-be-performed.html#GUID-79391819-DCEF-46AC-977D-199BD2044DA2" title="There are various maintenance operations that can be performed on partitions, subpartitions, and index partitions.">Maintenance Operations Supported on Partitions</a> for a list of partition maintenance operations that can be performed on partitioned tables and composite partitioned tables
+                              </p>
+                           </li>
+                        </ul>
+                        <p></p>
+                     </div>
+                  </div>
+               </div><a id="VLDBG14104"></a><div class="props_rev_3"><a id="GUID-66FDEA3D-8076-44D9-8FD2-B6CA7D79F9AA" name="GUID-66FDEA3D-8076-44D9-8FD2-B6CA7D79F9AA"></a><h4 id="VLDBG-GUID-66FDEA3D-8076-44D9-8FD2-B6CA7D79F9AA" class="sect4">Partitioning of XMLIndex for Binary XML Tables</h4>
+                  <div>
+                     <p>For binary XML tables, XMLIndex is equipartitioned with the base table for range, hash, list, interval, and reference partitions.</p>
+                     <div class="section">
+                        <p>In the following example, an XMLIndex is created on a range-partitioned table.</p><pre class="oac_no_warn" dir="ltr">CREATE TABLE purchase_order 
+   (id NUMBER, doc XMLTYPE)
+    PARTITION BY RANGE (id)
+    (PARTITION p1 VALUES LESS THAN (10),
+     PARTITION p2 VALUES LESS THAN (MAXVALUE));
+ 
+CREATE INDEX purchase_order_idx ON purchase_order(doc) 
+       INDEXTYPE IS XDB.XMLINDEX LOCAL;
+</pre><div class="infoboxnotealso" id="GUID-66FDEA3D-8076-44D9-8FD2-B6CA7D79F9AA__GUID-2FE00C53-0CD4-4D2D-ADE5-1BA21334FC0D">
+                           <p class="notep1">See Also:</p>
+                           <ul style="list-style-type: disc;">
+                              <li>
+                                 <p><a href="../addci/introduction-to-data-cartridges.html#ADDCI110" target="_blank"><span><cite>Oracle Database Data Cartridge Developer's Guide</cite></span></a> for information about Oracle XML DB and partitioning of XMLIndex for binary XML tables
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><a href="../adxdb/indexes-for-XMLType-data.html#ADXDB0500" target="_blank"><span class="italic">Oracle XML DB Developer’s Guide</span></a> for information about XMLIndex
+                                 </p>
+                              </li>
+                              <li>
+                                 <p><a href="../adxdb/XML-Schema-and-query-object-relational-storage.html#ADXDB4630" target="_blank"><span class="italic">Oracle XML DB Developer’s Guide</span></a> for information about partitioning XMLType tables and columns
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                     <!-- class="section" -->
+                  </div>
+               </div>
+            </div>
+         </div>
+      </article>
+   </body>
+</html>
