@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>The RAP Client</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+</head>
+<body>
+
+  <h1>The RAP Client</h1>
+  <p>
+    The term "RAP client" is used to identify the software that displays the actual UI of a
+    RAP application, and communicates with the RAP server using the
+    <a href="http://wiki.eclipse.org/RAP/Protocol">RAP Protocol</a>.
+    The term does not include the environment an instance of
+    the client runs in (browser and/or OS), or the hardware ("device") itself.
+  </p>
+  <p>
+    The RAP project includes the default RAP client, written in JavaScript. It it will be referred
+    to simply as the "web client" from here on. The web client is downloaded  and started
+    automatically when the URL of a RAP application is entered into a browser.
+    Other client implementations are not part of the RAP project itself.
+  </p>
+  <h2>The Client Interface</h2>
+  <p>
+    Every client implementation is represented by a class implementing the
+    <em><a href="../reference/api/org/eclipse/rap/rwt/client/Client.html">Client</a></em>
+    interface, e.g. <em><a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html">WebClient</a></em>.
+    An instance of such a class can be obtained
+    from <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getClient--">RWT.getClient()</a></em>.
+    It represents the client instance connected to the current
+    RAP session. By using the <em>instanceof</em> operator, the instance can be used to
+    identify the client.
+  </p>
+<pre class="lang-java">
+if( RWT.getClient() instanceof WebClient ) {
+  ...
+}</pre>
+  <p>
+  The client <i><a href="../reference/api/org/eclipse/rap/rwt/client/Client.html">interface</a></i>
+  mainly specifies the <em><a href="../reference/api/org/eclipse/rap/rwt/client/Client.html#getService-java.lang.Class-">getService()</a></em>
+  method (described below),
+  while the client <i>class</i> may add some constants to be used in the
+  <a href = "application-configuration.html">application configuration</a>, for example to set a favicon
+  or enable HTML document scrolling.
+  </p>
+  <h2 id="service">Client Services</h2>
+  <p>
+    Client services are interfaces that can provide client-specific features.
+    The <em><a href="../reference/api/org/eclipse/rap/rwt/client/Client.html#getService-java.lang.Class-">getService()</a></em>
+    method of the client object can be used to obtain an implementation
+    of a given service, provided it is supported by the connected client. Whether or not
+    a service is supported depends on the RAP client implementation, but may also change
+    depending on the clients runtime environment (browser) and configuration.
+  </p>
+  <p>If a service is not supported, the method returns null. If this is a possibility given the
+    used service and targeted RAP client, a null check should be performed before using the service.
+    Currently, all services
+    of the <em><a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html">WebClient</a></em>
+    are supported at all times (i.e. on all browser).
+  </p><p>
+  Example usage of a service:
+  </p>
+<pre class="lang-java">
+BrowserNavigation navigation = RWT.getClient().getService( BrowserNavigation.class );
+if( navigation != null ) {
+  ...
+}</pre>
+  <h3>
+    Services of the Web Client
+  </h3>
+  <p>These services are all supported by the web client and can be found in the package
+  <em><a href="../reference/api/org/eclipse/rap/rwt/client/service/package-summary.html">org.eclipse.rap.rwt.client.service</a></em>.</p>
+  <ul>
+
+    <li id="info" style="margin-bottom:10px">
+      <b>ClientInfo</b>
+      <br/>
+      Provides the clients locale and timezone offset (in minutes). The locale may
+      be null if the client does not specify a locale. In contrast,
+       <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getLocale--">RWT.getLocale()</a></em>
+      will return the sessions locale which can also be changed programmatically and will never
+      be null.
+    </li>
+
+    <li style="margin-bottom:10px">
+      <b>BrowserNavigation</b>: See <a href="navigation.html#deeplinks">"Deep Links"</a>
+      and <a href="navigation.html#history">"Browser History"</a>
+    </li>
+
+    <li style="margin-bottom:10px">
+      <b>ExitConfirmation</b>: See <a href="navigation.html#exitconfirmation">"Exit Confirmation"</a>.
+    </li>
+
+    <li style="margin-bottom:10px">
+      <b>URLLauncher</b>: See <a href="navigation.html#launcher">"Open URLs in an external browser/application"</a>.
+    </li>
+
+    <li id="jsexec"  style="margin-bottom:10px">
+      <b>JavaScriptExecuter</b>
+      <br/>
+      Allows
+      <a href="../reference/api/org/eclipse/rap/rwt/client/service/JavaScriptExecutor.html#execute-java.lang.String-">executing arbitrary JavaScript code</a>
+      in the window the RAP client runs in.
+      This is usually not necessary, but may be useful to work around minor limitations in RAP or
+      implement very simple features.
+      <strong>NOTE:</strong>
+      This feature allows manipulating the HTML DOM or accessing internals of the web client.
+      It is strongly recommended to use the <a href="../reference/jsdoc/index.html">official
+      JavaScript API</a> only.
+    </li>
+
+    <li id="jsloader" style="margin-bottom:10px">
+      <b>ClientFileLoader</b>
+      <br/>
+      Can be used to load client-side
+      <a href="../reference/api/org/eclipse/rap/rwt/client/service/ClientFileLoader.html#requireJs-java.lang.String-"> JavaScript</a>
+      and <a href="../reference/api/org/eclipse/rap/rwt/client/service/ClientFileLoader.html#requireCss-java.lang.String-">CSS</a> files.
+      They will be added to the client documents "head" element.
+      The file may be provided by the RAP application itself
+      (by registering it as <a href="resources.html">static resource</a>), or (since RAP 2.2)
+      from any other URL that is reachable by the client.
+      When a file has been
+      loaded and executed by the connected client instance once, it will not do so again if
+      the method is called again with the same URL.
+      This service is especially useful for
+      <a href="custom-widget.html">custom widget</a> / custom component development.
+      <strong>NOTE:</strong>
+      The warnings from <em>JavaScriptExecuter</em> also apply for <em>ClientFileLoader</em>.
+      This service is a replacement of deprecated JavaScriptLoader.
+    </li>
+
+    <li id="uploader" style="margin-bottom:10px">
+      <b>ClientFileUploader</b>
+      <br/>
+      Can be used to <a href="../reference/api/org/eclipse/rap/rwt/client/service/ClientFileUploader.html#submit-java.lang.String-org.eclipse.rap.rwt.client.ClientFile:A-">upload files</a> from the client device to any given URL.
+      A client-side file is represented by the class <em><a href="../reference/api/org/eclipse/rap/rwt/client/ClientFile.html">ClientFile</a></em> which can be obtained
+      from a <em><a href="../reference/api/org/eclipse/swt/dnd/DropTargetEvent.html">Drop</a></em> event if <em><a href="../reference/api/org/eclipse/rap/rwt/dnd/ClientFileTransfer.html">ClientFileTransfer</a></em> is used. To receive the file
+      on the RAP server, use the <em><a href="http://wiki.eclipse.org/RAP/Incubator/File_Upload">FileUploadHandler</a></em> from the <a href="http://eclipse.org/rap/incubator/">RAP Incubator</a>.
+    </li>
+
+    <li id="params" style="margin-bottom:10px">
+      <b>StartupParameters</b>
+      <br/>
+      Can be used to <a href="../reference/api/org/eclipse/rap/rwt/client/service/StartupParameters.html#getParameter-java.lang.String-">access startup parameters</a> of an entry point.
+      In the default web client, these parameters can be passed as HTTP request parameters in the initial request.
+    </li>
+
+  </ul>
+
+  <h2 id="jsapi">JavaScript API</h2>
+
+  <p>
+    The web client provides a <a href="../reference/jsdoc/symbols/rap.html">JavaScript API</a>
+    that
+    <a href="../reference/jsdoc/symbols/rap.html#.getRemoteObject">mirrors</a>
+    the
+    <a href="../reference/api/org/eclipse/rap/rwt/remote/Connection.html#createRemoteObject-java.lang.String-">server side Remote API</a>
+     and allows
+     <a href="../reference/jsdoc/symbols/rap.html#.getObject">limited access</a>
+     to client widget instances. The purpose of this API is to
+     support <a href="custom-widget.html">custom widget development</a> and <a href="scripting.html#crosswidget">allow cross-widget scripting</a>.
+  </p>
+
+
+</body>
+</html>

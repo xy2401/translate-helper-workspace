@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - JUL Logging</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">JUL Logging</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Virtual-Machine-Analysis.html" title="Virtual Machine Analysis">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="XML-schema-extension.html" title="XML schema extension">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Virtual Machine Analysis</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">XML schema extension</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="JUL_Logging">JUL Logging</h1>
+		<p>Logging can be quite useful to debug a class, see its interactions with other components and understand the behavior of the system. TraceCompass uses JUL to log various events in the code, which can then be used to model and analyze the system's workflow. Here are some guidelines to use logging efficiently in Trace Compass. See the User Documentation for instructions on how to enable logging and obtain traces.</p>
+		<h3 id="Use_a_static_logger_for_each_class">Use a static logger for each class</h3>
+		<p>Each class should define and use their own static logger like this:</p>
+		<pre>   private static final Logger LOGGER = TraceCompassLog.getLogger(StateSystem.class);
+</pre>
+		<p>It is then easy to filter the components to log by their full class name. The 
+			<i>TraceCompassLog#getLogger</i> method is a wrapper for 
+			<i>java.util.logging.Logger#getLogger</i>, but the Trace Compass's logging initialization (overriding the default's ConsoleHandler and INFO level for the org.eclipse.tracecompass namespace when logging is not enabled) is done in the static initializer of this class. Using the wrapper method ensures that this code is called and the user will not see Console message all over the place.
+		</p>
+		<p>
+			<b>Note on abstract classes</b>: It is debatable whether to use a static logger with the abstract class name or a logger with the concrete class's name.
+		</p>
+		<p>In the former case, logging for this class uses the classes's own namespace, but it is impossible to discriminate logging statement by concrete classes unless the concrete class name is added as parameter to the statement (when necessary).</p>
+		<p>The latter case has the advantage that one can log only the concrete class and see all that goes on in the abstract class as well, but the concrete class may be in another namespace and will not benefit from the 
+			<i>TraceCompassLog</i> logging initialization and the user will see console logging happen.
+		</p>
+		<p>Both methods have their advantages and there is no clear good answer.</p>
+		<h3 id="Use_a_message_supplier">Use a message supplier</h3>
+		<p>A logging statement, to be meaningful, will usually log a string that contains data from the context and will thus do string concatenation. This has a non-negligible overhead. To avoid having to do the costly string concatenation when the statement is not logged, java provides method taking a 
+			<i>Supplier&lt;String&gt;</i> as argument and that method should be used for all logging statements
+		</p>
+		<pre>   LOGGER.info(() -&gt; "[Component:Action] param1=" + myParam1 + ", param2=" + myParam2);
+</pre>
+		<h3 id="Choose_the_appropriate_log_level">Choose the appropriate log level</h3>
+		<p>The available log levels for JUL are SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST. The default level when not specified is INFO.</p>
+		<ul>
+			<li>As a rule of thumb, enabling all INFO level statements should have a near zero impact on the execution, so log parameters that require some computations, or methods that are called very often should not be logged at INFO level.</li>
+			<li>CONFIG level should provide more detailed information than the INFO level, but still not impact the execution too much. It should be possible for a component to use up to CONFIG level statements and make meaningful analyses using the timestamps of the events.</li>
+			<li>FINE, FINER and FINEST are for statements that will not be used with the timestamps. Enabling them may have a visible effect on the performance of Trace Compass. They will typically be used with a purpose in mind, like debugging a component or getting data on caches for examples.</li>
+		</ul>
+		<h3 id="Log_message_format">Log message format</h3>
+		<p>JUL logging will produce trace data and unless one wants to visually parse a trace one event at a time, it will typically be used with an analysis to produce a result. To do so, the log messages should have a format that can then be associated with a trace type.</p>
+		<p>Third party plugins provide a custom trace parser and LTTng trace type for JUL statements that use the following format</p>
+		<pre>   [EventName:MayContainSemiColon] paramName1=paramValue1, paramName2=paramValue2
+</pre>
+		<h3 id="Logging_to_populate_Callstacks_and_Callgraph_analyses">Logging to populate Callstacks and Callgraph analyses</h3>
+		<p>In order to log data in a way that the call stack analysis has enough information to display, use the TraceCompassLogUtils#ScopeLog. It is an auto-closable logger that will log a try-with-resources block of code.</p>
+		<pre>       try (TraceCompassLogUtils.ScopeLog linksLogger = new TraceCompassLogUtils.ScopeLog(LOGGER, Level.CONFIG, "Perform Query")) { //$NON-NLS-1$
+          // Do something
+          new Object();
+      }
+</pre>
+		<p>The resulting trace will have the following fields</p>
+		<pre>      INFO: {"ts":12345,"ph":"B",tid:1,"name:Perform Query"}
+      INFO: {"ts":"12366,"ph":"E","tid":1}
+</pre>
+		<h3 id="Logging_to_track_Object_life_cycles">Logging to track Object life cycles</h3>
+		<p>In order to log data so that a lifecycle of a given object can be followed, use TraceCompassLogUtils#traceObjectCreation and TraceCompassLogUtils#traceObjectDestruction. The objects life cycles will be tracked and displayed.</p>
+		<h3 id="Logging_to_track_Asynchronous_operations">Logging to track Asynchronous operations</h3>
+		<p>In order to log data so that a lifecycle of a given object can be followed, use TraceCompassLogUtils#traceObjectCreation and TraceCompassLogUtils#traceAsyncStart/Nested/End. These create nestable sequences to follow.</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Virtual-Machine-Analysis.html" title="Virtual Machine Analysis">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="XML-schema-extension.html" title="XML schema extension">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Virtual Machine Analysis</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">XML schema extension</td>
+			</tr>
+		</table>
+	</body>
+</html>

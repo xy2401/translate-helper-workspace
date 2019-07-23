@@ -1,0 +1,622 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - View Tutorial</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">View Tutorial</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Implementing-a-New-Trace-Type.html" title="Implementing a New Trace Type">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Component-Interaction.html" title="Component Interaction">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Implementing a New Trace Type</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Component Interaction</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="View_Tutorial">View Tutorial</h1>
+		<p>This tutorial describes how to create a simple view using the TMF framework and the SWTChart library. SWTChart is a library based on SWT that can draw several types of charts including a line chart which we will use in this tutorial. We will create a view containing a line chart that displays time stamps on the X axis and the corresponding event values on the Y axis.</p>
+		<p>This tutorial will cover concepts like:</p>
+		<ul>
+			<li>Extending TmfView</li>
+			<li>Signal handling (@TmfSignalHandler)</li>
+			<li>Data requests (TmfEventRequest)</li>
+			<li>SWTChart integration</li>
+			<li>Use of the pin feature</li>
+		</ul>
+		<p>
+			<b>Note</b>: Trace Compass 0.1.0 provides base implementations for generating SWTChart viewers and views. For more details please refer to chapter 
+			<a href="#TMF_Built-in_Views_and_Viewers">TMF Built-in Views and Viewers</a>.
+		</p>
+		<h3 id="Prerequisites">Prerequisites</h3>
+		<p>The tutorial is based on Eclipse 4.4 (Eclipse Luna), Trace Compass 0.1.0 and SWTChart 0.7.0. If you are using TMF from the source repository, SWTChart is already included in the target definition file (see org.eclipse.tracecompass.target). You can also install it manually by using the Orbit update site. 
+			<a href="http://download.eclipse.org/tools/orbit/downloads/">http://download.eclipse.org/tools/orbit/downloads/</a>
+		</p>
+		<h3 id="Creating_an_Eclipse_UI_Plug-in">Creating an Eclipse UI Plug-in</h3>
+		<p>To create a new project with name org.eclipse.tracecompass.tmf.sample.ui select 
+			<b>File -&gt; New -&gt; Project -&gt; Plug-in Development -&gt; Plug-in Project</b>. 
+			<br/>
+
+			<img border="0" src="images/Screenshot-NewPlug-inProject1.png"/>
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/Screenshot-NewPlug-inProject2.png"/>
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/Screenshot-NewPlug-inProject3.png"/>
+			<br/>
+		</p>
+		<h3 id="Creating_a_View">Creating a View</h3>
+		<p>To open the plug-in manifest, double-click on the MANIFEST.MF file. 
+			<br/>
+
+			<img border="0" src="images/SelectManifest.png"/>
+			<br/>
+		</p>
+		<p>Change to the Dependencies tab and select 
+			<b>Add...</b> of the 
+			<i>Required Plug-ins</i> section. A new dialog box will open. Next find plug-in 
+			<i>org.eclipse.tracecompass.tmf.core</i> and press 
+			<b>OK</b>
+			<br/>
+			Following the same steps, add 
+			<i>org.eclipse.tracecompass.tmf.ui</i> and 
+			<i>org.swtchart</i>.
+			<br/>
+
+			<img border="0" src="images/AddDependencyTmfUi.png"/>
+			<br/>
+		</p>
+		<p>Change to the Extensions tab and select 
+			<b>Add...</b> of the 
+			<i>All Extension</i> section. A new dialog box will open. Find the view extension 
+			<i>org.eclipse.ui.views</i> and press 
+			<b>Finish</b>.
+			<br/>
+
+			<img border="0" src="images/AddViewExtension1.png"/>
+			<br/>
+		</p>
+		<p>To create a view, click the right mouse button. Then select 
+			<b>New -&gt; view</b>
+			<br/>
+
+			<img border="0" src="images/AddViewExtension2.png"/>
+			<br/>
+		</p>
+		<p>A new view entry has been created. Fill in the fields 
+			<i>id</i> and 
+			<i>name</i>. For 
+			<i>class</i> click on the 
+			<b>class hyperlink</b> and it will show the New Java Class dialog. Enter the name 
+			<i>SampleView</i>, change the superclass to 
+			<i>TmfView</i> and click Finish. This will create the source file and fill the 
+			<i>class</i> field in the process. We use TmfView as the superclass because it provides extra functionality like getting the active trace, pinning and it has support for signal handling between components.
+			<br/>
+
+			<img border="0" src="images/FillSampleViewExtension.png"/>
+			<br/>
+		</p>
+		<p>This will generate an empty class. Once the quick fixes are applied, the following code is obtained:</p>
+		<pre>
+package org.eclipse.tracecompass.tmf.sample.ui;
+
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.part.ViewPart;
+
+public class SampleView extends TmfView {
+
+    public SampleView(String viewName) {
+        super(viewName);
+        // TODO Auto-generated constructor stub
+    }
+
+    @Override
+    public void createPartControl(Composite parent) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setFocus() {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</pre>
+		<p>This creates an empty view, however the basic structure is now is place.</p>
+		<h3 id="Implementing_a_view">Implementing a view</h3>
+		<p>We will start by adding a empty chart then it will need to be populated with the trace data. Finally, we will make the chart more visually pleasing by adjusting the range and formating the time stamps.</p>
+		<h4 id="Adding_an_Empty_Chart">Adding an Empty Chart</h4>
+		<p>First, we can add an empty chart to the view and initialize some of its components.</p>
+		<pre>
+    private static final String SERIES_NAME = "Series";
+    private static final String Y_AXIS_TITLE = "Signal";
+    private static final String X_AXIS_TITLE = "Time";
+    private static final String FIELD = "value"; // The name of the field that we want to display on the Y axis
+    private static final String VIEW_ID = "org.eclipse.tracecompass.tmf.sample.ui.view";
+    private Chart chart;
+    private ITmfTrace currentTrace;
+
+    public SampleView() {
+        super(VIEW_ID);
+    }
+
+    @Override
+    public void createPartControl(Composite parent) {
+        chart = new Chart(parent, SWT.BORDER);
+        chart.getTitle().setVisible(false);
+        chart.getAxisSet().getXAxis(0).getTitle().setText(X_AXIS_TITLE);
+        chart.getAxisSet().getYAxis(0).getTitle().setText(Y_AXIS_TITLE);
+        chart.getSeriesSet().createSeries(SeriesType.LINE, SERIES_NAME);
+        chart.getLegend().setVisible(false);
+    }
+
+    @Override
+    public void setFocus() {
+        chart.setFocus();
+    }
+</pre>
+		<p>The view is prepared. Run the Example. To launch the an Eclipse Application select the 
+			<i>Overview</i> tab and click on 
+			<b>Launch an Eclipse Application</b>
+			<br/>
+
+			<img border="0" src="images/RunEclipseApplication.png"/>
+			<br/>
+		</p>
+		<p>A new Eclipse application window will show. In the new window go to 
+			<b>Windows -&gt; Show View -&gt; Other... -&gt; Other -&gt; Sample View</b>.
+			<br/>
+
+			<img border="0" src="images/ShowViewOther.png"/>
+			<br/>
+		</p>
+		<p>You should now see a view containing an empty chart
+			<br/>
+
+			<img border="0" src="images/EmptySampleView.png"/>
+			<br/>
+		</p>
+		<h4 id="Signal_Handling">Signal Handling</h4>
+		<p>We would like to populate the view when a trace is selected. To achieve this, we can use a signal hander which is specified with the 
+			<b>@TmfSignalHandler</b> annotation.
+		</p>
+		<pre>
+    @TmfSignalHandler
+    public void traceSelected(final TmfTraceSelectedSignal signal) {
+
+    }
+</pre>
+		<h4 id="Requesting_Data">Requesting Data</h4>
+		<p>Then we need to actually gather data from the trace. This is done asynchronously using a 
+			<i>TmfEventRequest</i>
+		</p>
+		<pre>
+    @TmfSignalHandler
+    public void traceSelected(final TmfTraceSelectedSignal signal) {
+        // Don't populate the view again if we're already showing this trace
+        if (currentTrace == signal.getTrace()) {
+            return;
+        }
+        currentTrace = signal.getTrace();
+
+        // Create the request to get data from the trace
+
+        TmfEventRequest req = new TmfEventRequest(TmfEvent.class,
+                TmfTimeRange.ETERNITY, 0, ITmfEventRequest.ALL_DATA,
+                ITmfEventRequest.ExecutionType.BACKGROUND) {
+
+            @Override
+            public void handleData(ITmfEvent data) {
+                // Called for each event
+                super.handleData(data);
+            }
+
+            @Override
+            public void handleSuccess() {
+                // Request successful, not more data available
+                super.handleSuccess();
+            }
+
+            @Override
+            public void handleFailure() {
+                // Request failed, not more data available
+                super.handleFailure();
+            }
+        };
+        ITmfTrace trace = signal.getTrace();
+        trace.sendRequest(req);
+    }
+</pre>
+		<h4 id="Transferring_Data_to_the_Chart">Transferring Data to the Chart</h4>
+		<p>The chart expects an array of doubles for both the X and Y axis values. To provide that, we can accumulate each event's time and value in their respective list then convert the list to arrays when all events are processed.</p>
+		<pre>
+        TmfEventRequest req = new TmfEventRequest(TmfEvent.class,
+                TmfTimeRange.ETERNITY, 0, ITmfEventRequest.ALL_DATA,
+                ITmfEventRequest.ExecutionType.BACKGROUND) {
+
+            ArrayList&lt;Double&gt; xValues = new ArrayList&lt;Double&gt;();
+            ArrayList&lt;Double&gt; yValues = new ArrayList&lt;Double&gt;();
+
+            @Override
+            public void handleData(ITmfEvent data) {
+                // Called for each event
+                super.handleData(data);
+                ITmfEventField field = data.getContent().getField(FIELD);
+                if (field != null) {
+                    yValues.add((Double) field.getValue());
+                    xValues.add((double) data.getTimestamp().getValue());
+                }
+            }
+
+            @Override
+            public void handleSuccess() {
+                // Request successful, not more data available
+                super.handleSuccess();
+
+                final double x[] = toArray(xValues);
+                final double y[] = toArray(yValues);
+
+                // This part needs to run on the UI thread since it updates the chart SWT control
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        chart.getSeriesSet().getSeries()[0].setXSeries(x);
+                        chart.getSeriesSet().getSeries()[0].setYSeries(y);
+
+                        chart.redraw();
+                    }
+
+                });
+            }
+
+            /**
+             * Convert List&lt;Double&gt; to double[]
+             */
+            private double[] toArray(List&lt;Double&gt; list) {
+                double[] d = new double[list.size()];
+                for (int i = 0; i &lt; list.size(); ++i) {
+                    d[i] = list.get(i);
+                }
+
+                return d;
+            }
+        };
+</pre>
+		<h4 id="Adjusting_the_Range">Adjusting the Range</h4>
+		<p>The chart now contains values but they might be out of range and not visible. We can adjust the range of each axis by computing the minimum and maximum values as we add events.</p>
+		<pre>
+
+            ArrayList&lt;Double&gt; xValues = new ArrayList&lt;Double&gt;();
+            ArrayList&lt;Double&gt; yValues = new ArrayList&lt;Double&gt;();
+            private double maxY = -Double.MAX_VALUE;
+            private double minY = Double.MAX_VALUE;
+            private double maxX = -Double.MAX_VALUE;
+            private double minX = Double.MAX_VALUE;
+
+            @Override
+            public void handleData(ITmfEvent data) {
+                super.handleData(data);
+                ITmfEventField field = data.getContent().getField(FIELD);
+                if (field != null) {
+                    Double yValue = (Double) field.getValue();
+                    minY = Math.min(minY, yValue);
+                    maxY = Math.max(maxY, yValue);
+                    yValues.add(yValue);
+
+                    double xValue = (double) data.getTimestamp().getValue();
+                    xValues.add(xValue);
+                    minX = Math.min(minX, xValue);
+                    maxX = Math.max(maxX, xValue);
+                }
+            }
+
+            @Override
+            public void handleSuccess() {
+                super.handleSuccess();
+                final double x[] = toArray(xValues);
+                final double y[] = toArray(yValues);
+
+                // This part needs to run on the UI thread since it updates the chart SWT control
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        chart.getSeriesSet().getSeries()[0].setXSeries(x);
+                        chart.getSeriesSet().getSeries()[0].setYSeries(y);
+
+                        // Set the new range
+                        if (!xValues.isEmpty() &amp;&amp; !yValues.isEmpty()) {
+                            chart.getAxisSet().getXAxis(0).setRange(new Range(0, x[x.length - 1]));
+                            chart.getAxisSet().getYAxis(0).setRange(new Range(minY, maxY));
+                        } else {
+                            chart.getAxisSet().getXAxis(0).setRange(new Range(0, 1));
+                            chart.getAxisSet().getYAxis(0).setRange(new Range(0, 1));
+                        }
+                        chart.getAxisSet().adjustRange();
+
+                        chart.redraw();
+                    }
+                });
+            }
+</pre>
+		<h4 id="Formatting_the_Time_Stamps">Formatting the Time Stamps</h4>
+		<p>To display the time stamps on the X axis nicely, we need to specify a format or else the time stamps will be displayed as 
+			<i>long</i>. We use TmfTimestampFormat to make it consistent with the other TMF views. We also need to handle the 
+			<b>TmfTimestampFormatUpdateSignal</b> to make sure that the time stamps update when the preferences change.
+		</p>
+		<pre>
+    @Override
+    public void createPartControl(Composite parent) {
+        ...
+
+        chart.getAxisSet().getXAxis(0).getTick().setFormat(new TmfChartTimeStampFormat());
+    }
+
+    public class TmfChartTimeStampFormat extends SimpleDateFormat {
+        private static final long serialVersionUID = 1L;
+        @Override
+        public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition fieldPosition) {
+            long time = date.getTime();
+            toAppendTo.append(TmfTimestampFormat.getDefaulTimeFormat().format(time));
+            return toAppendTo;
+        }
+    }
+
+    @TmfSignalHandler
+    public void timestampFormatUpdated(TmfTimestampFormatUpdateSignal signal) {
+        // Called when the time stamp preference is changed
+        chart.getAxisSet().getXAxis(0).getTick().setFormat(new TmfChartTimeStampFormat());
+        chart.redraw();
+    }
+</pre>
+		<p>We also need to populate the view when a trace is already selected and the view is opened. We can reuse the same code by having the view send the 
+			<b>TmfTraceSelectedSignal</b> to itself.
+		</p>
+		<pre>
+    @Override
+    public void createPartControl(Composite parent) {
+        ...
+
+        ITmfTrace trace = getActiveTrace();
+        if (trace != null) {
+            traceSelected(new TmfTraceSelectedSignal(this, trace));
+        }
+    }
+</pre>
+		<p>The view is now ready but we need a proper trace to test it. For this example, a trace was generated using LTTng-UST so that it would produce a sine function.
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/SampleView.png"/>
+			<br/>
+		</p>
+		<p>In summary, we have implemented a simple TMF view using the SWTChart library. We made use of signals and requests to populate the view at the appropriate time and we formated the time stamps nicely. We also made sure that the time stamp format is updated when the preferences change.</p>
+		<h4 id="Pin_feature">Pin feature</h4>
+		<p>The pin feature allows pinning a view to a specific trace. A pinned view will not synchronize on active trace changes. How the view implements the pinning and unpinning is up to the view itself.</p>
+		<p>Sub-classes of TmfView may optionally support the pin feature by implementing the ITmfPinnable interface. The view then provides a pin button in its toolbar.
+			<br/>
+
+			<img border="0" src="images/TmfViewPinAction.png"/>
+			<br/>
+		</p>
+		<p>It is the view's responsibility to take the proper actions when the view is pinned.</p>
+		<pre>
+    @Override
+    public synchronized void setPinned(ITmfTrace trace) {
+        if (trace != null) {
+           /* pinned code */
+        } else {
+           /* unpinned code */
+        }
+    }
+</pre>
+		<h2 id="TMF_Built-in_Views_and_Viewers">TMF Built-in Views and Viewers</h2>
+		<p>TMF provides base implementations for several types of views and viewers for generating custom X-Y-Charts, Time Graphs, or Trees. They are well integrated with various TMF features such as reading traces and time synchronization with other views. They also handle mouse events for navigating the trace and view, zooming or presenting detailed information at mouse position. The code can be found in the TMF UI plug-in 
+			<i>org.eclipse.tracecompass.tmf.ui</i>. See below for a list of relevant java packages:
+		</p>
+		<ul>
+			<li>Generic
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.views</i>: Common TMF view base classes
+					</li>
+				</ul>
+			</li>
+			<li>X-Y-Chart
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.viewers.xycharts</i>: Common base classes for X-Y-Chart viewers based on SWTChart
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.viewers.xycharts.barcharts</i>: Base classes for bar charts
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.viewers.xycharts.linecharts</i>: Base classes for line charts
+					</li>
+				</ul>
+			</li>
+			<li>Time Graph View
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.widgets.timegraph</i>: Base classes for time graphs e.g. Gantt-charts
+					</li>
+				</ul>
+			</li>
+			<li>Tree Viewer
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.viewers.tree</i>: Base classes for TMF specific tree viewers
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<p>Several features in TMF and the Eclipse LTTng integration are using this framework and can be used as example for further developments:</p>
+		<ul>
+			<li>X-Y- Chart
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.internal.lttng2.ust.ui.views.memusage.MemUsageView.java</i>
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.os.linux.ui.views.cpuusage.CpuUsageView.java</i>
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.tracing.examples.ui.views.histogram.NewHistogramView.java</i>
+					</li>
+				</ul>
+			</li>
+			<li>Time Graph View
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.os.linux.ui.views.controlflow.ControlFlowView.java</i>
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.os.linux.ui.views.resources.ResourcesView.java</i>
+					</li>
+				</ul>
+			</li>
+			<li>Tree Viewer
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.views.statesystem.TmfStateSystemExplorer.java</i>
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.os.linux.ui.views.cpuusage.CpuUsageComposite.java</i>
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<h2 id="Timing_Analysis_Views_and_Viewers">Timing Analysis Views and Viewers</h2>
+		<p>Trace Compass provides base implementations for timing views and viewers for generating Latency Tables, Scatter Charts, Density Graphs and Statistics Tables. They are well integrated with various Trace Compass features such as reading traces and time synchronization with other views. They also handle mouse events for navigating the trace and view, zooming or presenting detailed information at mouse position. The code can be found in the Analysis Timing plug-in 
+			<i>org.eclipse.tracecompass.analysis.timing.ui</i>. See below for a list of relevant java packages:
+		</p>
+		<ul>
+			<li>Latency Table
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.table</i>: Base classes for Latency Tables
+					</li>
+				</ul>
+			</li>
+			<li>Scatter Chart
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.tmf.ui.views.tmfChartView.java</i>: Common base classes for X-Y-Chart viewers based on SWTChart
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.scatter</i>: Base classes for Scatter Charts
+					</li>
+				</ul>
+			</li>
+			<li>Density Graph
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.density</i>: Base classes for Density Graphs
+					</li>
+				</ul>
+			</li>
+			<li>Statistics Table
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.statistics</i>: Base classes for Statistics Tables
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<p>A default implementation of some of those views can be used by analyzes without requiring to extend existing classes. It just needs to use the default view's ID as primary ID and the analysis ID as the secondary ID.</p>
+		<ul>
+			<li>Table view: It will use the segment aspects as supplementary columns. In the plugin.xml, a view extension shoud be defined with class 
+				<i>org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.table.SegmentStoreTableView</i> and ID 
+				<i>org.eclipse.tracecompass.analysis.timing.ui.segstore.table:&lt;my.analysis.ID&gt;</i> where 
+				<i>&lt;my.analysis.ID&gt;</i> should be replaced by the segment store provider's analysis ID. This ID can then be used as view ID in the module's output.
+			</li>
+			<li>Statistics view: It will create a segment store statistics analysis and the type of segment is defined by its name, so this view applies only for segments implementing INamedSegment. In the plugin.xml, a view extension shoud be defined with class 
+				<i>org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.statistics.SegmentStoreStatisticsView</i> and ID 
+				<i>org.eclipse.tracecompass.analysis.timing.ui.segstore.statistics:&lt;my.analysis.ID&gt;</i> where 
+				<i>&lt;my.analysis.ID&gt;</i> should be replaced by the segment store provider's analysis ID. This ID can then be used as view ID in the module's output.
+			</li>
+		</ul>
+		<p>Several features in Trace Compass are using this framework and can be used as example for further development:</p>
+		<ul>
+			<li>Latency Table
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.latency.PatternLatencyTableView.java</i>
+					</li>
+				</ul>
+			</li>
+			<li>Scatter Chart
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.internal.analysis.os.linux.ui.views.latency.SystemCallLatencyScatterView.java</i>
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.latency.PatternScatterGraphView.java</i>
+					</li>
+				</ul>
+			</li>
+			<li>Density Graph
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.internal.analysis.os.linux.ui.views.latency.SystemCallLatencyDensityView.java</i>
+					</li>
+					<li>
+						<i>org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.latency.PatternDensityView.java</i>
+					</li>
+				</ul>
+			</li>
+			<li>Statistics Table
+				<ul>
+					<li>
+						<i>org.eclipse.tracecompass.internal.tmf.analysis.xml.ui.views.latency.PatternStatisticsView.java</i>
+					</li>
+				</ul>
+			</li>
+		</ul><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Implementing-a-New-Trace-Type.html" title="Implementing a New Trace Type">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Component-Interaction.html" title="Component Interaction">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Implementing a New Trace Type</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Component Interaction</td>
+			</tr>
+		</table>
+	</body>
+</html>

@@ -1,0 +1,358 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>GEF FX Developer Documentation</title>
+		<link type="text/css" rel="stylesheet" href="../../book.css"/>
+	</head>
+	<body>
+		<p>
+			<em>Note to non-wiki readers: This documentation is generated from the GEF@github.com wiki - if you have corrections or additions it would be awesome if you could contribute them to 
+				<a href="https://github.com/eclipse/gef/wiki/FX" target="doc_external">the original wiki page</a>
+			</em>.
+		</p>
+		<h2 id="introduction">Introduction</h2>
+		<p>The <span style="color:#4C6084">
+			<a href="FX.html">FX</a></span> component provides useful additions around JavaFX as well as for integrating JavaFX with SWT. It is internally composed out of three modules, namely 
+			<strong>
+				<a href="FX.html#fx">FX</a>
+			</strong>, 
+			<strong>
+				<a href="FX.html#fxswt">FX.SWT</a>
+			</strong>, and 
+			<strong>
+				<a href="FX.html#fxjface">FX.JFace</a>
+			</strong>. There are also a couple of undeployed 
+			<a href="FX-Examples.html#examples-undeployed">FX Examples</a> and 
+			<a href="FX-Examples.html#examplesswt-undeployed">FX SWT Examples</a>.
+		</p>
+		<p>
+			<img alt="" border="0" src="images/fx/components.fx.jpeg"/>
+		</p>
+		<hr/>
+		<h2 id="fx">FX</h2>
+		<p>The 
+			<strong>
+				<a href="FX.html#fx">FX</a>
+			</strong> module of 
+			<a href="FX.html">FX</a> provides enhancements for JavaFX, which can also be used independent of the Eclipse UI, e.g. visual anchors, gesture listeners, a connection implementation, or an IGeometry-based shape implementation.
+		</p>
+		<hr/><div id="FX:Root"></div>
+		<h3 id="root">{Root}</h3>
+		<p>The 
+			<a href="FX.html#fx:root">{Root}</a> package only provides the bundle activator, 
+			<a href="FX.html#fxbundle">FxBundle</a>.
+		</p>
+		<h4 id="fxbundle">FxBundle</h4>
+		<p>The 
+			<code>FxBundle</code> is the bundle activator.
+		</p>
+		<hr/>
+		<h3 id="anchors">Anchors</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.fx.anchors</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="FX.html#anchors">Anchors</a> package provides a visual anchor abstraction (
+			<a href="FX.html#ianchor-abstractanchor-anchorkey">IAnchor</a>), a related abstract base implementation (
+			<a href="FX.html#ianchor-abstractanchor-anchorkey">AbstractAnchor</a>), as well as concrete anchor implementations (
+			<a href="FX.html#staticanchor">StaticAnchor</a>, 
+			<a href="FX.html#dynamicanchor-icomputationstrategy-projectionstrategy-orthogonalprojectionstrategy-chopboxstrategy">DynamicAnchor</a>) to manage dynamic positioning of visuals in dependence of others.
+		</p>
+		<h4 id="ianchor-abstractanchor-anchorkey">IAnchor, AbstractAnchor, AnchorKey</h4>
+		<p>An 
+			<code>IAnchor</code> is associated with one 
+			<em>anchorage</em> visual and can provide positions for several 
+			<em>anchored</em> visuals. Every anchored visual, for which a position should be computed by the anchor, has to be 
+			<em>attached</em> to the anchor. In order to allow the computation of different positions for the same visual, the anchored is wrapped in an 
+			<code>AnchorKey</code>, which combines a 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/Node.html" target="doc_external">javafx.scene.Node</a> with a 
+			<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/String.html" target="doc_external">java.lang.String</a> role. For example, imagine a self-loop (an edge that connects a vertex to itself) where the same visual (the edge) is attached to one anchorage (the vertex) with two different roles: the start of the edge, and the end of the edge.
+		</p>
+		<p>The abstract base implementation 
+			<code>AbstractAnchor</code> triggers a re-computation for an attached 
+			<code>AnchorKey</code> when the anchorage visual changes relative to the anchored visual or vice versa. This is realized using a 
+			<a href="FX.html#visualchangelistener">VisualChangeListener</a>. When an 
+			<code>AnchorKey</code> is detached from an 
+			<code>IAnchor</code>, no further computations will be performed for that 
+			<code>AnchorKey</code>.
+		</p>
+		<p>The anchorage visual and the positions for the anchoreds are managed using JavaFX Properties (
+			<a href="http://docs.oracle.com/javafx/2/binding/jfxpub-binding.htm" target="doc_external">Using JavaFX Properties and Binding</a>), i.e. you can register change listeners and realize bindings based on those properties.
+		</p>
+		<h4 id="staticanchor">StaticAnchor</h4>
+		<p>The 
+			<code>StaticAnchor</code> is, conceivably, the most simple anchor implementation. It provides an anchor position based on a static reference position (either scene-global, or relative to its anchorage visual). This type of anchor proved itself useful as a placeholder when a position currently does not depend on an anchorage visual, but eventually will.
+		</p>
+		<h4 id="dynamicanchor-icomputationstrategy-projectionstrategy-orthogonalprojectionstrategy-chopboxstrategy">DynamicAnchor, IComputationStrategy, ProjectionStrategy, OrthogonalProjectionStrategy, ChopBoxStrategy</h4>
+		<p>The 
+			<code>DynamicAnchor</code> support calculation of 'dynamic' positions for anchored visuals, delegating the calculation to a respective 
+			<code>IComputationStrategy</code>, which can be exchanged.
+		</p>
+		<p>The 
+			<code>IComputationStrategy</code>'s position computation can be based on an arbitrary number of 
+			<code>Parameter</code>s, which may either depend on the anchorage visual (static) or on the anchored visual (dynamic). These parameters are maintained by the 
+			<code>DynamicAnchor</code> and need to be provided by clients. As they are implemented as object properties, their values may simply by provided through JavaFX bindings:
+		</p>
+		<pre><code>  getComputationParameter(AnchorageReferenceGeometry.class).bind(new ObjectBinding&lt;IGeometry&gt;() {
+    {
+      bind(anchorage.layoutBoundsProperty());
+    }
+  
+    @Override
+    protected IGeometry computeValue() {
+      return NodeUtils.getShapeOutline(anchorage);
+    }
+  });</code></pre>
+		<p>There are three concrete computation strategies, which may be used in different scenarios. The 
+			<code>ProjectionStrategy</code> computes the closest projection of a given anchored reference point to a reference anchorage geometry outline (usually the geometric or visual outline). The 
+			<code>ChopBoxStrategy</code> is a specific projection strategy that computes the intersection between a line through the center of the anchorage reference geometry and the given anchored reference point and the outline of the anchorage reference geometry. The 
+			<code>OrthogonalProjectionStrategy</code> is another specialization that computes the closest horizontal or vertical projection of the anchored reference point to the anchorage geometry outline.
+		</p>
+		<hr/>
+		<h3 id="listeners">Listeners</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.fx.listeners</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="FX.html#listeners">Listeners</a> package provides a 
+			<a href="FX.html#visualchangelistener">VisualChangeListener</a>, which can be used to recognize visual changes of one observed 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/Node.html" target="doc_external">javafx.scene.Node</a> visual relative to an observer visual.
+		</p>
+		<h4 id="visualchangelistener">VisualChangeListener</h4>
+		<p>A 
+			<code>VisualChangeListener</code> examines a visual's bounds-in-local and local-to-parent-transform properties (JavaFX Properties) and reports all related visual changes. A bounds-in-local change occurs when the observed visual's effect, clip, stroke, local transformations, or geometric bounds change. A local-to-parent-transform change occurs when the observed visual undergoes a transformation change. Transformation listeners are registered for all visuals in the hierarchy up to (but excluding) the common parent of observed and a respective observer visual, so that all changes relative to the observer visual are recognized.
+		</p>
+		<p>The 
+			<code>VisualChangeListener</code> is realized as an abstract class that has to be subclassed in order to implement callback methods, which are called when visual changes are observed.
+		</p>
+		<hr/>
+		<h3 id="nodes">Nodes</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.fx.nodes</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="FX.html#nodes">Nodes</a> package provides
+		</p>
+		<ul>
+			<li>an adaptation of an 
+				<a href="Geometry.html#igeometry-icurve-ishape-imultishape">org.eclipse.gef.geometry.planar.IGeometry</a> to 
+				<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/Node.html" target="doc_external">javafx.scene.Node</a>: 
+				<a href="FX.html#geometrynode">GeometryNode</a>.
+			</li>
+			<li>a connection abstraction that is based on 
+				<a href="FX.html#ianchor-abstractanchor-anchorkey">IAnchor</a>: 
+				<a href="FX.html#connection">Connection</a> as well as related abstractions (
+				<a href="FX.html#iconnectionrouter-straightrouter-orthogonalrouter">IConnectionRouter</a> and 
+				<a href="FX.html#iconnectioninterpolator-polylineinterpolator-polybezierinterpolator">IConnectionInterpolator</a>).
+			</li>
+			<li>a visual to display an image which is overlayed by another image on mouse hover: 
+				<a href="FX.html#hoveroverlayimageview">HoverOverlayImageView</a>.
+			</li>
+			<li>a custom infinite canvas implementation: 
+				<a href="FX.html#infinitecanvas">InfiniteCanvas</a>.
+			</li>
+			<li>utilities (picking nodes, querying the pointer location, transformations): 
+				<a href="FX.html#nodeutils">NodeUtils</a>, 
+				<a href="FX.html#cursorutils">CursorUtils</a>, 
+				<a href="FX.html#geometry2shape-shape2geometry">Geometry2Shape, Shape2Geometry</a>.
+			</li>
+		</ul>
+		<h4 id="geometrynode">GeometryNode</h4>
+		<p>The 
+			<code>GeometryNode</code> is a specific 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/layout/Region.html" target="doc_external">javafx.scene.layout.Region</a> that is capable of displaying an 
+			<a href="Geometry.html#igeometry-icurve-ishape-imultishape">org.eclipse.gef.geometry.planar.IGeometry</a>. In contrast to a 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/shape/Shape.html" target="doc_external">javafx.scene.shape.Shape</a> its resizable.
+		</p>
+		<pre><code>  GeometryNode&lt;RoundedRectangle&gt; n = new GeometryNode&lt;&gt;();
+  
+  // A GeometryNode has the same visible properties like a javafx.scene.shape.Shape...
+  n.setFill(Color.RED);
+  n.setStrokeWidth(5);
+  n.setStrokeType(StrokeType.OUTSIDE);
+  
+  // ... but it can either be relocated/resized based on the geometry (excluding stroke) ...
+  n.setGeometry(new RoundedRectangle(30, 40, 30, 40, 20, 20));
+  n.relocateGeometry(50, 60);
+  n.resizeGeometry(50, 60);
+  
+  // ... or based on the layout bounds (including stroke)
+  n.relocate(50, 60);
+  n.resize(50, 60);</code></pre>
+		<h4 id="infinitecanvas">InfiniteCanvas</h4>
+		<p>The 
+			<code>InfiniteCanvas</code> is an alternative to the 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/control/ScrollPane.html" target="doc_external">javafx.scene.control.ScrollPane</a>. It consists of multiple layers: <i>underlay group</i>, <i>scrolled underlay group</i>, <i>content group</i>, <i>scrolled overlay group</i>, <i>overlay group</i>.
+		</p>
+		<p>The 
+			<code>InfiniteCanvas</code> determines <i>scrollable bounds</i> and <i>content bounds</i>. Scrollbars will be automatically shown in case the content bounds exceed the canvas bounds.
+		</p>
+		<h4 id="hoveroverlayimageview">HoverOverlayImageView</h4>
+		<p>The 
+			<code>HoverOverlayImageView</code> displays a <i>base image</i>, for which a mouse hover effect is realized that displays an <i>overlay image</i> instead of the base image during hovering. Transitioning from one image to the other is done by gradually changing the opacities of both images. In the given example, the base image is the grey X and the overlay image is the red X.
+		</p>
+		<p>
+			<img alt="Base image (grey X)|104px" title="Base image (grey X)|104px" border="0" src="images/fx/GEF-FX-HoverOverlayImageView-1.png"/>
+		</p>
+		<p>
+			<img alt="Overlayed image (red X)|104px" title="Overlayed image (red X)|104px" border="0" src="images/fx/GEF-FX-HoverOverlayImageView-2.png"/>
+		</p>
+		<h4 id="connection">Connection</h4>
+		<p>The 
+			<code>Connection</code> is an implementation of a connection with two endpoints and an arbitrary number of way-/control-points. One of the endpoints is referred to as the <i>start point</i>, the other one is referred to as the <i>end point</i>. The positions for endpoints and waypoints are computed using anchors, i.e. an 
+			<code>Connection</code> provides one 
+			<a href="FX.html#ianchor-abstractanchor-anchorkey">AnchorKey</a> per point and manages one 
+			<a href="FX.html#ianchor-abstractanchor-anchorkey">IAnchor</a> per point. However, the API also allows directly specifying coordinates for each point, in which case a 
+			<a href="FX.html#staticanchor">StaticAnchor</a> is created internally.
+		</p>
+		<p>A 
+			<code>Connection</code> can have a <i>start decoration</i> and an <i>end decoration</i> which are displayed at the start point, or end point, respectively. Decorations can be used to display an arrow at one end of a connection, for example.
+		</p>
+		<h4 id="iconnectionrouter-straightrouter-orthogonalrouter">IConnectionRouter, StraightRouter, OrthogonalRouter</h4>
+		<p>An 
+			<code>IConnectionRouter</code> receives the coordinates of all points of the connection (start point, way points, end point) and may insert additional (implicit) points to satisfy certain routing constraints. Currently, two connection routers are provided: 1) the 
+			<code>StraightRouter</code> (default), and 2) the 
+			<code>OrthogonalRouter</code>.
+		</p>
+		<h4 id="iconnectioninterpolator-polylineinterpolator-polybezierinterpolator">IConnectionInterpolator, PolylineInterpolator, PolyBezierInterpolator</h4>
+		<p>A 
+			<code>Connection</code> manages a 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/Node.html" target="doc_external">javafx.scene.Node</a> (a 
+			<a href="FX.html#geometrynode">GeometryNode</a> by default), which is referred to as the <i>curve node</i>. The updating of the curve node based on the curve's points is delegated to an 
+			<code>IConnectionInterpolator</code>. It is also responsible for placing the curve's decorations as well as for clipping the decorations. Currently two interpolators are provided: 1) the 
+			<code>PolylineInterpolator</code> and 2) the 
+			<code>PolyBezierInterpolator</code>. The first one computes a 
+			<a href="Geometry.html#polyline">org.eclipse.gef.geometry.planar.Polyline</a> (only straight line segments) from the given points while the second one computes a 
+			<a href="Geometry.html#polybezier">org.eclipse.gef.geometry.planar.PolyBezier</a> (consecutive Bezier curves with smooth continuity) from the given points.
+		</p>
+		<h4 id="nodeutils">NodeUtils</h4>
+		<p>The 
+			<code>NodeUtils</code> class contains utility functionality, such as picking nodes at a current position on the scene graph, and performing local-to-parent, local-to-scene, parent-to-local, and scene-to-local transformations of geometries (GEF4 Geometry).
+		</p>
+		<h4 id="cursorutils">CursorUtils</h4>
+		<p>The 
+			<code>CursorUtils</code> provides utility functions related to cursors. It can be used for querying the current mouse pointer location for for forcing a cursor update.
+		</p>
+		<h4 id="geometry2shape-shape2geometry">Geometry2Shape, Shape2Geometry</h4>
+		<p>The 
+			<code>Geometry2Shape</code> and 
+			<code>Shape2Geometry</code> utility classes provide utilities to infer 
+			<a href="Geometry.html">Geometry</a> abstractions from a 
+			<a href="http://docs.oracle.com/javafx/2/api/javafx/scene/shape/Shape.html" target="doc_external">javafx.scene.shape.Shape</a> and vice versa.
+		</p>
+		<hr/>
+		<h2 id="fx-swt">FX.SWT</h2>
+		<p>The 
+			<strong>
+				<a href="FX.html#fxswt">FX.SWT</a>
+			</strong> module of 
+			<a href="FX.html">FX</a> provides enhanced support for integrating JavaFX with SWT.
+		</p>
+		<hr/>
+		<h3 id="canvas">Canvas</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.fx.swt.canvas</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="FX.html#canvas">Canvas</a> package provides a replacement for the 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/embed/swt/FXCanvas.html" target="doc_external">javafx.embed.swt.FXCanvas</a>, adding support for various JavaFX/SWT integration functionality.
+		</p>
+		<h4 id="fxcanvasex">FXCanvasEx</h4>
+		<p>The 
+			<code>FXCanvasEx</code> is a replacement for the 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/embed/swt/FXCanvas.html" target="doc_external">javafx.embed.swt.FXCanvas</a>, providing support for various functionality which is missing. The 
+			<code>FXCanvasEx</code> forwards SWT GestureEvents (touch events) to JavaFX, notifies all SWT FocusListeners (additional to forwarding them to JavaFX), and supports changing the SWT Cursor based on the 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/Cursor.html" target="doc_external">javafx.scene.Cursor</a>.
+		</p>
+		<h4 id="ifxcanvasfactory">IFXCanvasFactory</h4>
+		<p>The 
+			<code>IFXCanvasFactory</code> handles the construction of an 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/embed/swt/FXCanvas.html" target="doc_external">javafx.embed.swt.FXCanvas</a> to render the JavaFX scene graph.
+		</p>
+		<hr/>
+		<h3 id="controls">Controls</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.fx.swt.controls</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="FX.html#controls">Controls</a> package provides a counterpart to the JavaFX/SWT integration, i.e. embedding SWT Controls into a JavaFX scene graph.
+		</p>
+		<h4 id="fxcontroladapter">FXControlAdapter</h4>
+		<p>The 
+			<code>FXControlAdapter</code> extends 
+			<a href="http://docs.oracle.com/javafx/2/api/index.html?javafx/scene/layout/Region.html" target="doc_external">javafx.scene.layout.Region</a> and allows to embed an SWT Control into a JavaFX scene graph. The control will automatically be re-created using an FXControlAdapter.IControlFactory whenever the JavaFX scene graph changes, and its bounds will be updated whenever the 
+			<code>FXControlAdapter</code> is resized or relocated.
+		</p>
+		<h4 id="fxcolorpicker-fxsimplelineargradientpicker-fxadvancedlineargradientpicker">FXColorPicker, FXSimpleLinearGradientPicker, FXAdvancedLinearGradientPicker</h4>
+		<p>The 
+			<code>FXColorPicker</code> provides an SWT control which uses the system's 
+			<a href="PLUGINS_ROOT/org.eclipse.platform.doc.isv/reference/api/org.eclipse.swt.widgets.ColorDialog.html" target="doc_external">org.eclipse.swt.widgets.ColorDialog</a> to pick a new JavaFX color.
+		</p>
+		<p>
+			<img alt="" title="FXColorPicker" border="0" src="images/fx/GEF-FX-SWT-FXColorPicker.png"/>
+		</p>
+		<p>The 
+			<code>FXSimpleLinearGradientPicker</code> provides an SWT control which displays two 
+			<code>FXColorPicker</code> to specify a simple JavaFX linear gradient.
+		</p>
+		<p>
+			<img alt="" title="FXSimpleLinearGradientPicker" border="0" src="images/fx/GEF-FX-SWT-FXSimpleLinearGradientPicker.png"/>
+		</p>
+		<p>The 
+			<code>FXAdvancedLinearGradientPicker</code> provides an SWT control which displays/allows the manipulation of an advanced linear gradient (i.e. more than 2 stops).
+		</p>
+		<p>
+			<img alt="" title="FXAdvancedGradientPicker" border="0" src="images/fx/GEF-FX-SWT-FXAdvancedGradientPicker.png"/>
+		</p>
+		<hr/>
+		<h2 id="fx-jface">FX.JFace</h2>
+		<p>The 
+			<strong>
+				<a href="FX.html#fxjface">FX.JFace</a>
+			</strong> module of 
+			<a href="FX.html">FX</a> provides enhanced support for integrating JavaFX with JFace.
+		</p><div id="FX.JFace:Root"></div>
+		<h3 id="root2">{Root}</h3>
+		<p>The 
+			<a href="FX.html#fxjface:root">{Root}</a> package provides cell editors and corresponding dialogs to specify JavaFX properties.
+		</p>
+		<h4 id="fxpaintcelleditor">FXPaintCellEditor</h4>
+		<p>The 
+			<code>FXPaintCellEditor</code> is a 
+			<a href="PLUGINS_ROOT/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/DialogCellEditor.html" target="doc_external">org.eclipse.jface.viewers.DialogCellEditor</a> extension, which displays a currently selected JavaFX Paint and offers a button to change if via an 
+			<a href="FX.html#fxpaintselectiondialog">FXPaintSelectionDialog</a>.
+		</p>
+		<p>
+			<img alt="" title="FXPaintCellEditor" border="0" src="images/fx/GEF-FX-JFace-FXPaintCellEditor.png"/>
+		</p>
+		<h4 id="fxpaintlabelprovider">FXPaintLabelProvider</h4>
+		<p>The 
+			<code>FXPaintLabelProvider</code> is a 
+			<a href="PLUGINS_ROOT/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/LabelProvider.html" target="doc_external">org.eclipse.jface.viewers.LabelProvider</a> extension, which can be used to display a JavaFX Paint (color or gradient) value. It is used by the 
+			<a href="MVC.html#fxpaintpropertydescriptor">FXPaintPropertyDescriptor</a>.
+		</p>
+		<p>
+			<img alt="" title="FXPaintLabelProvider" border="0" src="images/fx/GEF-FX-JFace-FXPaintLabelProvider.png"/>
+		</p>
+		<h4 id="fxpaintselectiondialog">FXPaintSelectionDialog</h4>
+		<p>The 
+			<code>FXPaintSelectionDialog</code> is a 
+			<a href="PLUGINS_ROOT/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/dialogs/Dialog.html" target="doc_external">org.eclipse.jface.dialogs.Dialog</a> extension, which provides a menu to select a JavaFX Paint (color or gradient). It is used by the 
+			<code>FXPaintCellEditor</code>.
+		</p>
+		<p>
+			<img alt="" title="FXPaintSelectionDialog" border="0" src="images/fx/GEF-FX-JFace-FXPaintSelectionDialog.png"/>
+		</p>
+	</body>
+</html>

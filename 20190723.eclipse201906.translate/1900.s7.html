@@ -1,0 +1,260 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "../xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <link rel="stylesheet" type="text/css" href="../css/ot.css" />
+      <link rel="stylesheet" type="text/css" href="../css/otjld.css" />
+      <title>OT/J Language Definition v1.3.1</title>
+   </head>
+   <body class="otdt">
+      <div id="content">
+         <table class="nav">
+            <tr>
+               <td class="back"><a id="top"></a><a href="s6.html" rel="prev">&lt;&lt;&nbsp;&sect;6&nbsp;Object Teams API</a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s8.html" rel="next">&sect;8&nbsp;Join Point Queries&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="chapter" id="s7">
+            <div class="headl">
+               <div class="headr">
+                  <h1>&sect;7&nbsp;Role Encapsulation</h1>
+               </div>
+            </div>
+            <div id="toc-box">
+               <ul class="toc-box">
+                  <li><a href="s7.html">&sect;7&nbsp;Role Encapsulation</a></li>
+                  <li><a href="#s7.1">&sect;7.1&nbsp;Opaque roles</a></li>
+                  <li><a href="#s7.2">&sect;7.2&nbsp;Confined roles</a></li>
+               </ul>
+            </div>
+            <div class="intro">
+               <h3>Concepts of encapsulation</h3>
+               <div class="line"></div>
+               <div class="term">Protected roles</div>
+               <div class="termdesc">A role with visibility <code>protected</code> cannot be externalized, which means its type 
+                  				cannot be used outside the declaring team (<a href="s1.html#s1.2.3" title="&sect;1.2.3&nbsp;Protected roles" class="sect">&sect;1.2.3</a>).
+               </div>
+               <div class="line"></div>
+               <div class="term">Confined roles</div>
+               <div class="termdesc">Confined roles are encapsulated even stricter than protected roles: the compiler will ensure that 
+                  				by no means any object outside the enclosing team will ever have a reference to a confined role.
+               </div>
+               <div class="line"></div>
+               <div class="term">Opaque roles</div>
+               <div class="termdesc">Opaque roles build on the guarantees of confined roles but allow to be shared in a limited way such that
+                  				no information is exposed.
+               </div>
+               <div class="line"></div>
+            </div>
+            <div class="sect depth2" id="s7.1">
+               <h2 class="sect">&sect;7.1&nbsp;Opaque roles<a class="img" href="s7.html#s7.1"
+                     title="PermaLink to &sect;7.1&nbsp;Opaque roles"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a><span class="toplink"><a href="#top">&uarr;&nbsp;&sect;7</a></span></h2>
+               <p>The purpose of the two <code>IConfined</code> interfaces (see <a href="s6.html#s6.2.a"
+                     title="&sect;6.2.(a)&nbsp;Interfaces for role encapsulation"
+                     class="sect">&sect;6.2.(a)</a>) is to define
+                  <strong>opaque roles</strong>: Any role implementing <code>IConfined</code>
+                  can be externalized using this type, such that external clients
+                  cannot access any features of the role. The type <code>IConfined</code>
+                  exposes no features and references of this type cannot be widened
+                  to any type not even to <code>java.lang.Object</code>.
+                  <br />
+                  If the actual role type is furthermore invisible outside the team 
+                  (by not declaring it <code>public</code>), it is perfectly safe to externalize
+                  such roles using type <code>IConfined</code> (which is a public interface)
+                  and pass them back to the owning team. The encapsulation
+                  of the team is in no way breached by externalizing opaque roles,
+                  which can only be used as a handle into internal state of the team.
+                  	
+               </p>
+               <p>The difference between the two mentioned interfaces is that
+                  <code>ITeam.IConfined</code> requires to use this type or any subtype
+                  as externalized role. Such a reference contains the information of
+                  the enclosing team. Even stricter control can be imposed using the
+                  regular interface <code>IConfined</code>. Here not even team membership
+                  is visible to clients using a reference of this type.
+                  	
+               </p>
+            </div>
+            <div class="sect depth2" id="s7.2">
+               <h2 class="sect">&sect;7.2&nbsp;Confined roles<a class="img" href="s7.html#s7.2"
+                     title="PermaLink to &sect;7.2&nbsp;Confined roles"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a><span class="toplink"><a href="#top">&uarr;&nbsp;&sect;7</a></span></h2>
+               <p>
+                  			Subclassing <code>Team.Confined</code> with a protected class
+                  			yields a role class to which no object outside the team will
+                  			ever have a reference. 
+                  			The point here is that instances of a role class with a regular super class 
+                  			can be widened to this super class.
+                  			Widening can occur either in an assignment or when invoking a method which the role
+                  			inherits from the regular super class, where the <code>this</code> reference is widened.
+                  			In both cases the widened reference is no longer protected by the team and can leak out.
+                  This would break encapsulation of a role object that should only be accessible within the enclosing team.<br />
+                  			Subclasses of <code>Team.Confined</code> are not compatible to any class outside their enclosing team (including <code>java.lang.Object</code>) and do not inherit any methods
+                  			that have the danger of leaking <code>this</code>.
+                  		
+               </p>
+               <div class="subsect depth3" id="s7.2.a">
+                  <h4 class="subsect">(a)&nbsp;<span class="title">Inhibition of overriding</span><a class="img" href="s7.html#s7.2.a"
+                        title="PermaLink to (a)&nbsp;Inhibition of overriding"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>The types <code>ITeam.IConfined</code> and <code>Team.Confined</code>
+                     			cannot be overridden (cf. <a href="s1.html#s1.3.1.c"
+                        title="&sect;1.3.1.(c)&nbsp;Overriding and implicit inheritance"
+                        class="sect">&sect;1.3.1.(c)</a>).
+                     			
+                  </p>
+               </div>
+               <div class="subsect depth3" id="s7.2.b">
+                  <h4 class="subsect">(b)&nbsp;<span class="title">Arrays of Confined</span><a class="img" href="s7.html#s7.2.b"
+                        title="PermaLink to (b)&nbsp;Arrays of Confined"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>For any confined type <code>C</code>, i.e., a type which is not compatible to <code>Object</code>, an array of <code>C</code> is not compatible to an array of <code>Object</code> nor to <code>Object</code> itself. This rule ensures that confinement cannot be bypassed by a sequence of compatible assignments and casts.
+                     			
+                  </p>
+                  <div class="note">
+                     <h5>Upcoming:</h5>
+                     				Only by widening to a non-role super-type, a role instance can
+                     				be accessed from outside the team. In the future this can be inhibited by
+                     				restricted inheritance.
+                     			
+                  </div>
+               </div>
+               <h5 class="listing">Example code (Role Encapsulation):</h5>
+               <div class="listing example frame">
+                  <table class="listing">
+                     <tr class="line odd">
+                        <td class="ln">1</td>
+                        <td><pre><b>public</b> <b>team</b> <b>class</b> Company {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">2</td>
+                        <td><pre>  <b>private</b> HashMap&lt;String,Employee&gt; employees;</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">3</td>
+                        <td><pre>  ...</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">4</td>
+                        <td><pre>  <b>protected</b> <b>class</b> Employee <em><b>implements</b> IConfined</em> {</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">5</td>
+                        <td><pre>    <b>void</b> pay(<b>int</b> amount) { ... }</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">6</td>
+                        <td><pre>    ...</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">7</td>
+                        <td><pre>  }</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">8</td>
+                        <td><pre>  <b>public</b> <em>IConfined</em> getEmployee(String ID) {</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">9</td>
+                        <td><pre>    <b>return</b> employees.get(ID); <span class="comment">// implicit widening to IConfined</span></pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">10</td>
+                        <td><pre>  }</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">11</td>
+                        <td><pre>  <b>public</b> <b>void</b> payBonus(<em>IConfined</em> emp, <b>int</b> amount) {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">12</td>
+                        <td><pre>    ((Employee)emp).pay(amount); <span class="comment">// explicit narrowing</span></pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">13</td>
+                        <td><pre>  }</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">14</td>
+                        <td><pre>}</pre></td>
+                     </tr>
+                  </table>
+               </div>
+               <div class="listing example frame">
+                  <table class="listing">
+                     <tr class="line odd">
+                        <td class="ln">15</td>
+                        <td><pre><b>public</b> <b>class</b> Ma<b>in</b> {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">16</td>
+                        <td><pre>  <b>public</b> <b>static</b> <b>void</b> main(String[] args) {</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">17</td>
+                        <td><pre>    <b>final</b> Company comp = <b>new</b> Company();</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">18</td>
+                        <td><pre>    <em>IConfined</em>&lt;@comp&gt; emp = comp.getEmployee("emp1");</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">19</td>
+                        <td><pre>    <span class="comment">// System.out.println(emp); &lt;– <span class="error"><strong>forbidden!</strong></span></span></pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">20</td>
+                        <td><pre>    comp.payBonus(emp, 100);</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">21</td>
+                        <td><pre>  }</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">22</td>
+                        <td><pre>}</pre></td>
+                     </tr>
+                  </table>
+               </div>
+               <div class="codecomment">
+                  <h5>Effects:</h5>
+                  <ul>
+                     <li>The <code>protected</code> role <code>Employee</code> implements 
+                        					the above described interface <code>IConfined</code> and therefore 
+                        					becomes <strong>opaque</strong> (line 4). 
+                     </li>
+                     <li>Methods sharing such an opaque role with the outside of the enclosing team 
+                        					have to use the type <code>IConfined</code> (line 8, line 11).
+                     </li>
+                     <li>It is possible to obtain an instance of such a role by using the type <code>IConfined</code> (line 18).
+                     </li>
+                     <li>Trying to access any feature of this instance, for example <code>toString()</code>, 
+                        					will cause a compilation error (line 19).
+                     </li>
+                     <li>Passing the opaque role reference back into the team works well (line 20).</li>
+                     <li>Inside the team some conversions between the types <code>IConfined</code> 
+                        					and the intrinsic role type <code>Employee</code> may be necessary (line 9 and 12).
+                     </li>
+                  </ul>
+               </div>
+            </div>
+         </div>
+         <table class="nav">
+            <tr>
+               <td class="back"><a href="s6.html" rel="prev">&lt;&lt;&nbsp;&sect;6&nbsp;Object Teams API</a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s8.html" rel="next">&sect;8&nbsp;Join Point Queries&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+      </div>
+      <div id="footer">
+         <hr /><a class="w3c img" href="http://jigsaw.w3.org/css-validator/check/referer"
+            shape="rect"><img src="../images/valid-css2-blue.png" alt="Valid CSS!" height="31" width="88" /></a><a class="w3c img" href="http://validator.w3.org/check?uri=referer" shape="rect"><img src="../images/valid-xhtml10-blue.png" alt="Valid XHTML 1.0 Strict" height="31"
+                 width="88" /></a><address>&copy; Stephan Herrmann, Christine Hundt, Marco Mosconi</address>
+         			OT/J version 1.3.1 &mdash; last modified: 2013-05-28
+      </div>
+   </body>
+</html>

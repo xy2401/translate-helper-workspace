@@ -1,0 +1,1252 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - UML2 Sequence Diagram Framework</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">UML2 Sequence Diagram Framework</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Generic-State-System.html" title="Generic State System">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="CTF-Parser.html" title="CTF Parser">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Generic State System</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">CTF Parser</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="UML2_Sequence_Diagram_Framework">UML2 Sequence Diagram Framework</h1>
+		<p>The purpose of the UML2 Sequence Diagram Framework of TMF is to provide a framework for generation of UML2 sequence diagrams. It provides </p>
+		<ul>
+			<li>UML2 Sequence diagram drawing capabilities (i.e. lifelines, messages, activations, object creation and deletion)</li>
+			<li>a generic, re-usable Sequence Diagram View </li>
+			<li>Eclipse Extension Point for the creation of sequence diagrams </li>
+			<li>callback hooks for searching and filtering within the Sequence Diagram View</li>
+			<li>scalability
+				<br/>
+			</li>
+		</ul>
+		<p>The following chapters describe the Sequence Diagram Framework as well as a reference implementation and its usage.</p>
+		<h2 id="TMF_UML2_Sequence_Diagram_Extensions">TMF UML2 Sequence Diagram Extensions</h2>
+		<p>In the UML2 Sequence Diagram Framework an Eclipse extension point is defined so that other plug-ins can contribute code to create sequence diagram. </p>
+		<p>
+			<b>Identifier</b>: org.eclipse.linuxtools.tmf.ui.uml2SDLoader
+			<br/>
+
+			<b>Description</b>: This extension point aims to list and connect any UML2 Sequence Diagram loader.
+			<br/>
+
+			<b>Configuration Markup</b>:
+			<br/>
+		</p>
+		<pre>
+&lt;!ELEMENT extension (uml2SDLoader)+&gt;
+&lt;!ATTLIST extension
+point CDATA #REQUIRED
+id    CDATA #IMPLIED
+name  CDATA #IMPLIED
+&gt;
+</pre>
+		<ul>
+			<li>point - A fully qualified identifier of the target extension point.</li>
+			<li>id - An optional identifier of the extension instance.</li>
+			<li>name - An optional name of the extension instance.</li>
+		</ul>
+		<pre>
+&lt;!ELEMENT uml2SDLoader EMPTY&gt;
+&lt;!ATTLIST uml2SDLoader
+id      CDATA #REQUIRED
+name    CDATA #REQUIRED
+class   CDATA #REQUIRED
+view    CDATA #REQUIRED
+default (true | false)
+</pre>
+		<ul>
+			<li>id - A unique identifier for this uml2SDLoader. This is not mandatory as long as the id attribute cannot be retrieved by the provider plug-in. The class attribute is the one on which the underlying algorithm relies.</li>
+			<li>name - An name of the extension instance.</li>
+			<li>class - The implementation of this UML2 SD viewer loader. The class must implement org.eclipse.tracecompass.tmf.ui.views.uml2sd.load.IUml2SDLoader.</li>
+			<li>view - The view ID of the view that this loader aims to populate. Either org.eclipse.tracecompass.tmf.ui.views.uml2sd.SDView itself or a extension of org.eclipse.tracecompass.tmf.ui.views.uml2sd.SDView.</li>
+			<li>default - Set to true to make this loader the default one for the view; in case of several default loaders, first one coming from extensions list is taken.</li>
+		</ul>
+		<h2 id="Management_of_the_Extension_Point">Management of the Extension Point</h2>
+		<p>The TMF UI plug-in is responsible for evaluating each contribution to the extension point. 
+
+			<br/>
+
+			<br/>
+			With this extension point, a loader class is associated with a Sequence Diagram View. Multiple loaders can be associated to a single Sequence Diagram View. However, additional means have to be implemented to specify which loader should be used when opening the view. For example, an eclipse action or command could be used for that. This additional code is not necessary if there is only one loader for a given Sequence Diagram View associated and this loader has the attribute "default" set to "true". (see also 
+			<a href="#Using_one_Sequence_Diagram_View_with_Multiple_Loaders">Using one Sequence Diagram View with Multiple Loaders</a>)
+		</p>
+		<h2 id="Sequence_Diagram_View">Sequence Diagram View</h2>
+		<p>For this extension point a Sequence Diagram View has to be defined as well. The Sequence Diagram View class implementation is provided by the plug-in 
+			<i>org.eclipse.tracecompass.tmf.ui</i> (
+			<i>org.eclipse.tracecompass.tmf.ui.views.uml2sd.SDView</i>) and can be used as is or can also be sub-classed. For that, a view extension has to be added to the 
+			<i>plugin.xml</i>.
+		</p>
+		<h3 id="Supported_Widgets">Supported Widgets</h3>
+		<p>The loader class provides a frame containing all the UML2 widgets to be displayed. The following widgets exist:</p>
+		<ul>
+			<li>Lifeline</li>
+			<li>Activation</li>
+			<li>Synchronous Message </li>
+			<li>Asynchronous Message </li>
+			<li>Synchronous Message Return </li>
+			<li>Asynchronous Message Return</li>
+			<li>Stop</li>
+		</ul>
+		<p>For a lifeline, a category can be defined. The lifeline category defines icons, which are displayed in the lifeline header.</p>
+		<h3 id="Zooming">Zooming</h3>
+		<p>The Sequence Diagram View allows the user to zoom in, zoom out and reset the zoom factor.</p>
+		<h3 id="Printing">Printing</h3>
+		<p>It is possible to print the whole sequence diagram as well as part of it.  </p>
+		<h3 id="Key_Bindings">Key Bindings</h3>
+		<ul>
+			<li>SHIFT+ALT+ARROW-DOWN - to scroll down within sequence diagram one view page at a time</li>
+			<li>SHIFT+ALT+ARROW-UP - to scroll up within sequence diagram one view page at a time</li>
+			<li>SHIFT+ALT+ARROW-RIGHT - to scroll right within sequence diagram one view page at a time</li>
+			<li>SHIFT+ALT+ARROW-LEFT - to scroll left within sequence diagram one view page at a time</li>
+			<li>SHIFT+ALT+ARROW-HOME - to jump to the beginning of the selected message if not already visible in page</li>
+			<li>SHIFT+ALT+ARROW-END - to jump to the end of the selected message if not already visible in page</li>
+			<li>CTRL+F - to open find dialog if either the basic or extended find provider is defined (see 
+				<a href="#Using_the_Find_Provider_Interface">Using the Find Provider Interface</a>)
+			</li>
+			<li>CTRL+P - to open print dialog </li>
+		</ul>
+		<h3 id="Preferences">Preferences</h3>
+		<p>The UML2 Sequence Diagram Framework provides preferences to customize the appearance of the Sequence Diagram View. The color of all widgets and text as well as the fonts of the text of all widget can be adjust. Amongst others the default lifeline width can be alternated. To change preferences select 
+			<b>Windows-&gt;Preferences-&gt;Tracing-&gt;UML2 Sequence Diagrams</b>. The following preference page will show:
+			<br/>
+
+			<img border="0" src="images/SeqDiagramPref.png"/>  
+			<br/>
+			After changing the preferences select 
+			<b>OK</b>.
+		</p>
+		<h3 id="Callback_hooks">Callback hooks</h3>
+		<p>The Sequence Diagram View provides several callback hooks so that extension can provide application specific functionality. The following interfaces can be provided:</p>
+		<ul>
+			<li>Basic find provider or extended find Provider
+				<br/> For finding within the sequence diagram
+			</li>
+			<li>Basic filter provider and extended Filter Provider
+				<br/> For filtering within the sequnce diagram.
+			</li>
+			<li>Basic paging provider or advanced paging provider
+				<br/> For scalability reasons, used to limit number of displayed messages
+			</li>
+			<li>Properies provider
+				<br/> To provide properties of selected elements
+			</li>
+			<li>Collapse provider 
+				<br/> To collapse areas of the sequence diagram
+			</li>
+		</ul>
+		<h2 id="Tutorial">Tutorial</h2>
+		<p>This tutorial describes how to create a UML2 Sequence Diagram Loader extension and use this loader in the in Eclipse. </p>
+		<h3 id="Prerequisites_2">Prerequisites</h3>
+		<p>The tutorial is based on Eclipse 4.4 (Eclipse Luna) and TMF 3.0.0.</p>
+		<h3 id="Creating_an_Eclipse_UI_Plug-in_2">Creating an Eclipse UI Plug-in</h3>
+		<p>To create a new project with name org.eclipse.tracecompass.tmf.sample.ui select 
+			<b>File -&gt; New -&gt; Project -&gt; Plug-in Development -&gt; Plug-in Project</b>. 
+			<br/>
+
+			<img border="0" src="images/Screenshot-NewPlug-inProject1.png"/>
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/Screenshot-NewPlug-inProject2.png"/>
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/Screenshot-NewPlug-inProject3.png"/>
+			<br/>
+		</p>
+		<h3 id="Creating_a_Sequence_Diagram_View">Creating a Sequence Diagram View</h3>
+		<p>To open the plug-in manifest, double-click on the MANIFEST.MF file. 
+			<br/>
+
+			<img border="0" src="images/SelectManifest.png"/>
+			<br/>
+		</p>
+		<p>Change to the Dependencies tab and select 
+			<b>Add...</b> of the 
+			<i>Required Plug-ins</i> section. A new dialog box will open. Next find plug-ins 
+			<i>org.eclipse.tracecompass.tmf.ui</i> and 
+			<i>org.eclipse.tracecompass.tmf.core</i> and then press 
+			<b>OK</b>
+			<br/>
+
+			<img border="0" src="images/AddDependencyTmfUi.png"/>
+			<br/>
+		</p>
+		<p>Change to the Extensions tab and select 
+			<b>Add...</b> of the 
+			<i>All Extension</i> section. A new dialog box will open. Find the view extension 
+			<i>org.eclipse.ui.views</i> and press 
+			<b>Finish</b>.
+			<br/> 
+
+			<img border="0" src="images/AddViewExtension1.png"/>
+			<br/>
+		</p>
+		<p>To create a Sequence Diagram View, click the right mouse button. Then select 
+			<b>New -&gt; view</b>
+			<br/>
+
+			<img border="0" src="images/AddViewExtension2.png"/>
+			<br/>
+		</p>
+		<p>A new view entry has been created. Fill in the  fields 
+			<i>id</i>, 
+			<i>name</i> and 
+			<i>class</i>. Note that for 
+			<i>class</i> the SD view implementation (
+			<i>org.eclipse.tracecompass.tmf.ui.views.SDView</i>) of the TMF UI plug-in is used.
+			<br/>
+
+			<img border="0" src="images/FillSampleSeqDiagram.png"/>
+			<br/>
+		</p>
+		<p>The view is prepared. Run the Example. To launch the an Eclipse Application select the 
+			<i>Overview</i> tab and click on 
+			<b>Launch an Eclipse Application</b>
+			<br/>
+
+			<img border="0" src="images/RunEclipseApplication.png"/>
+			<br/>
+		</p>
+		<p>A new Eclipse application window will show. In the new window go to 
+			<b>Windows -&gt; Show View -&gt; Other... -&gt; Other -&gt; Sample Sequence Diagram</b>.
+			<br/> 
+
+			<img border="0" src="images/ShowViewOther.png"/>
+			<br/>
+		</p>
+		<p>The Sequence Diagram View will open with an blank page.
+			<br/>
+
+			<img border="0" src="images/BlankSampleSeqDiagram.png"/>
+			<br/>
+		</p>
+		<p>Close the Example Application.</p>
+		<h3 id="Defining_the_uml2SDLoader_Extension">Defining the uml2SDLoader Extension</h3>
+		<p>After defining the Sequence Diagram View it's time to create the 
+			<i>uml2SDLoader</i> Extension. 
+			<br/>
+		</p>
+		<p>To create the loader extension, change to the Extensions tab and select 
+			<b>Add...</b> of the 
+			<i>All Extension</i> section. A new dialog box will open. Find the extension 
+			<i>org.eclipse.linuxtools.tmf.ui.uml2SDLoader</i> and press 
+			<b>Finish</b>.
+			<br/>
+
+			<img border="0" src="images/AddTmfUml2SDLoader.png"/>
+			<br/>
+		</p>
+		<p>A new 'uml2SDLoader'' extension has been created. Fill in fields 
+			<i>id</i>, 
+			<i>name</i>, 
+			<i>class</i>, 
+			<i>view</i> and 
+			<i>default</i>. Use 
+			<i>default</i> equal true for this example. For the view add the id of the Sequence Diagram View of chapter 
+			<a href="#Creating_a_Sequence_Diagram_View">Creating a Sequence Diagram View</a>. 
+			<br/>
+
+			<img border="0" src="images/FillSampleLoader.png"/>
+			<br/>
+		</p>
+		<p>Then click on 
+			<i>class</i> (see above) to open the new class dialog box. Fill in the relevant fields and select 
+			<b>Finish</b>. 
+			<br/>
+
+			<img border="0" src="images/NewSampleLoaderClass.png"/>
+			<br/>
+		</p>
+		<p>A new Java class will be created which implements the interface 
+			<i>org.eclipse.tracecompass.tmf.ui.views.uml2sd.load.IUml2SDLoader</i>.
+			<br/>
+		</p>
+		<pre>
+package org.eclipse.tracecompass.tmf.sample.ui;
+
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.SDView;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.load.IUml2SDLoader;
+
+public class SampleLoader implements IUml2SDLoader {
+
+    public SampleLoader() {
+        // TODO Auto-generated constructor stub
+    }
+
+    @Override
+    public void dispose() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public String getTitleString() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setViewer(SDView arg0) {
+        // TODO Auto-generated method stub
+
+    }
+</pre>
+		<h3 id="Implementing_the_Loader_Class">Implementing the Loader Class</h3>
+		<p>Next is to implement the methods of the IUml2SDLoader interface method. The following code snippet shows how to create the major sequence diagram elements. Please note that no time information is stored.
+			<br/>
+		</p>
+		<pre>
+package org.eclipse.tracecompass.tmf.sample.ui;
+
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.SDView;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.AsyncMessage;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.AsyncMessageReturn;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.EllipsisMessage;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.ExecutionOccurrence;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.Frame;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.Lifeline;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.Stop;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.SyncMessage;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.core.SyncMessageReturn;
+import org.eclipse.tracecompass.tmf.ui.views.uml2sd.load.IUml2SDLoader;
+
+public class SampleLoader implements IUml2SDLoader {
+
+    private SDView fSdView;
+    
+    public SampleLoader() {
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+    @Override
+    public String getTitleString() {
+        return "Sample Diagram";
+    }
+
+    @Override
+    public void setViewer(SDView arg0) {
+        fSdView = arg0;
+        createFrame();
+    }
+    
+    private void createFrame() {
+
+        Frame testFrame = new Frame();
+        testFrame.setName("Sample Frame");
+
+        /*
+         *  Create lifelines
+         */
+        
+        Lifeline lifeLine1 = new Lifeline();
+        lifeLine1.setName("Object1");
+        testFrame.addLifeLine(lifeLine1);
+        
+        Lifeline lifeLine2 = new Lifeline();
+        lifeLine2.setName("Object2");
+        testFrame.addLifeLine(lifeLine2);
+        
+
+        /*
+         * Create Sync Message
+         */
+        // Get new occurrence on lifelines
+        lifeLine1.getNewEventOccurrence();
+        
+        // Get Sync message instances
+        SyncMessage start = new SyncMessage();
+        start.setName("Start");
+        start.setEndLifeline(lifeLine1);
+        testFrame.addMessage(start);
+
+        /*
+         * Create Sync Message
+         */
+        // Get new occurrence on lifelines
+        lifeLine1.getNewEventOccurrence();
+        lifeLine2.getNewEventOccurrence();
+        
+        // Get Sync message instances
+        SyncMessage syn1 = new SyncMessage();
+        syn1.setName("Sync Message 1");
+        syn1.setStartLifeline(lifeLine1);
+        syn1.setEndLifeline(lifeLine2);
+        testFrame.addMessage(syn1);
+
+        /*
+         * Create corresponding Sync Message Return
+         */
+        
+        // Get new occurrence on lifelines
+        lifeLine1.getNewEventOccurrence();
+        lifeLine2.getNewEventOccurrence();
+
+        SyncMessageReturn synReturn1 = new SyncMessageReturn();
+        synReturn1.setName("Sync Message Return 1");
+        synReturn1.setStartLifeline(lifeLine2);
+        synReturn1.setEndLifeline(lifeLine1);
+        synReturn1.setMessage(syn1);
+        testFrame.addMessage(synReturn1);
+        
+        /*
+         * Create Activations (Execution Occurrence)
+         */
+        ExecutionOccurrence occ1 = new ExecutionOccurrence();
+        occ1.setStartOccurrence(start.getEventOccurrence());
+        occ1.setEndOccurrence(synReturn1.getEventOccurrence());
+        lifeLine1.addExecution(occ1);
+        occ1.setName("Activation 1");
+        
+        ExecutionOccurrence occ2 = new ExecutionOccurrence();
+        occ2.setStartOccurrence(syn1.getEventOccurrence());
+        occ2.setEndOccurrence(synReturn1.getEventOccurrence());
+        lifeLine2.addExecution(occ2);
+        occ2.setName("Activation 2");
+        
+        /*
+         * Create Sync Message
+         */
+        // Get new occurrence on lifelines
+        lifeLine1.getNewEventOccurrence();
+        lifeLine2.getNewEventOccurrence();
+        
+        // Get Sync message instances
+        AsyncMessage asyn1 = new AsyncMessage();
+        asyn1.setName("Async Message 1");
+        asyn1.setStartLifeline(lifeLine1);
+        asyn1.setEndLifeline(lifeLine2);
+        testFrame.addMessage(asyn1);
+
+        /*
+         * Create corresponding Sync Message Return
+         */
+        
+        // Get new occurrence on lifelines
+        lifeLine1.getNewEventOccurrence();
+        lifeLine2.getNewEventOccurrence();
+
+        AsyncMessageReturn asynReturn1 = new AsyncMessageReturn();
+        asynReturn1.setName("Async Message Return 1");
+        asynReturn1.setStartLifeline(lifeLine2);
+        asynReturn1.setEndLifeline(lifeLine1);
+        asynReturn1.setMessage(asyn1);
+        testFrame.addMessage(asynReturn1);
+        
+        /*
+         * Create a note 
+         */
+        
+        // Get new occurrence on lifelines
+        lifeLine1.getNewEventOccurrence();
+        
+        EllipsisMessage info = new EllipsisMessage();
+        info.setName("Object deletion");
+        info.setStartLifeline(lifeLine2);
+        testFrame.addNode(info);
+        
+        /*
+         * Create a Stop
+         */
+        Stop stop = new Stop();
+        stop.setLifeline(lifeLine2);
+        stop.setEventOccurrence(lifeLine2.getNewEventOccurrence());
+        lifeLine2.addNode(stop);
+        
+        fSdView.setFrame(testFrame);
+    }
+}
+</pre>
+		<p>Now it's time to run the example application. To launch the Example Application select the 
+			<i>Overview</i> tab and click on 
+			<b>Launch an Eclipse Application</b>
+			<br/>
+
+			<img border="0" src="images/SampleDiagram1.png"/> 
+			<br/>
+		</p>
+		<h3 id="Adding_time_information">Adding time information</h3>
+		<p>To add time information in sequence diagram the timestamp has to be set for each message. The sequence diagram framework uses the 
+			<i>TmfTimestamp</i> class of plug-in 
+			<i>org.eclipse.tracecompass.tmf.core</i>. Use 
+			<i>setTime()</i> on each message 
+			<i>SyncMessage</i> since start and end time are the same. For each 
+			<i>AsyncMessage</i> set start and end time separately by using methods 
+			<i>setStartTime</i> and 
+			<i>setEndTime</i>. For example: 
+			<br/>
+		</p>
+		<pre>
+    private void createFrame() {
+        //...
+        start.setTime(TmfTimestamp.create(1000, -3));
+        syn1.setTime(TmfTimestamp.create(1005, -3));
+        synReturn1.setTime(TmfTimestamp.create(1050, -3));
+        asyn1.setStartTime(TmfTimestamp.create(1060, -3));
+        asyn1.setEndTime(TmfTimestamp.create(1070, -3));
+        asynReturn1.setStartTime(TmfTimestamp.create(1060, -3));
+        asynReturn1.setEndTime(TmfTimestamp.create(1070, -3));
+        //...
+    }
+</pre>
+		<p>When running the example application, a time compression bar on the left appears which indicates the time elapsed between consecutive events. The time compression scale shows where the time falls between the minimum and maximum delta times. The intensity of the color is used to indicate the length of time, namely, the deeper the intensity, the higher the delta time. The minimum and maximum delta times are configurable through the collbar menu 
+			<i>Configure Min Max</i>. The time compression bar and scale may provide an indication about which events consumes the most time. By hovering over the time compression bar a tooltip appears containing more information. 
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/SampleDiagramTimeComp.png"/> 
+			<br/>
+		</p>
+		<p>By hovering over a message it will show the time information in the appearing tooltip. For each 
+			<i>SyncMessage</i> it shows its time occurrence and for each 
+			<i>AsyncMessage</i> it shows the start and end time.
+		</p>
+		<p>
+			<img border="0" src="images/SampleDiagramSyncMessage.png"/> 
+			<br/>
+
+			<img border="0" src="images/SampleDiagramAsyncMessage.png"/> 
+			<br/>
+		</p>
+		<p>To see the time elapsed between 2 messages, select one message and hover over a second message. A tooltip will show with the delta in time. Note if the second message is before the first then a negative delta is displayed. Note that for 
+			<i>AsyncMessage</i> the end time is used for the delta calculation.
+			<br/>
+
+			<img border="0" src="images/SampleDiagramMessageDelta.png"/> 
+			<br/>
+		</p>
+		<h3 id="Default_Coolbar_and_Menu_Items">Default Coolbar and Menu Items</h3>
+		<p>The Sequence Diagram View comes with default coolbar and menu items. By default, each sequence diagram shows the following actions:</p>
+		<ul>
+			<li>Zoom in</li>
+			<li>Zoom out</li>
+			<li>Reset Zoom Factor </li>
+			<li>Selection</li>
+			<li>Configure Min Max (drop-down menu only)</li>
+			<li>Navigation -&gt; Show the node end (drop-down menu only)</li>
+			<li>Navigation -&gt; Show the node start (drop-down menu only)</li>
+		</ul>
+		<p>
+			<img border="0" src="images/DefaultCoolbarMenu.png"/>
+			<br/>
+		</p>
+		<h3 id="Implementing_Optional_Callbacks">Implementing Optional Callbacks</h3>
+		<p>The following chapters describe how to use all supported provider interfaces.</p>
+		<h4 id="Using_the_Paging_Provider_Interface">Using the Paging Provider Interface</h4>
+		<p>For scalability reasons, the paging provider interfaces exists to limit the number of messages displayed in the Sequence Diagram View at a time. For that, two interfaces exist, the basic paging provider and the advanced paging provider. When using the basic paging interface, actions for traversing page by page through the sequence diagram of a trace will be provided. 
+
+			<br/>
+			To use the basic paging provider, first the interface methods of the 
+			<i>ISDPagingProvider</i> have to be implemented by a class. (i.e. 
+			<i>hasNextPage()</i>, 
+			<i>hasPrevPage()</i>, 
+			<i>nextPage()</i>, 
+			<i>prevPage()</i>, 
+			<i>firstPage()</i> and 
+			<i>endPage()</i>. Typically, this is implemented in the loader class. Secondly, the provider has to be set in the Sequence Diagram View. This will be done in the 
+			<i>setViewer()</i> method of the loader class. Lastly, the paging provider has to be removed from the view, when the 
+			<i>dispose()</i> method of the loader class is called.      
+		</p>
+		<pre>
+public class SampleLoader implements IUml2SDLoader, ISDPagingProvider {
+    //...
+    private int page = 0;
+    
+    @Override
+    public void dispose() {
+        if (fSdView != null) {
+            fSdView.resetProviders();
+        }
+    }
+    
+    @Override
+    public void setViewer(SDView arg0) {
+        fSdView = arg0;
+        fSdView.setSDPagingProvider(this);
+        createFrame();
+    }
+    
+    private void createSecondFrame() {
+        Frame testFrame = new Frame();
+        testFrame.setName("SecondFrame");
+        Lifeline lifeline = new Lifeline();
+        lifeline.setName("LifeLine 0");
+        testFrame.addLifeLine(lifeline);
+        lifeline = new Lifeline();
+        lifeline.setName("LifeLine 1");
+        testFrame.addLifeLine(lifeline);
+        for (int i = 1; i &lt; 5; i++) {
+            SyncMessage message = new SyncMessage();
+            message.autoSetStartLifeline(testFrame.getLifeline(0));
+            message.autoSetEndLifeline(testFrame.getLifeline(0));
+            message.setName((new StringBuilder("Message ")).append(i).toString());
+            testFrame.addMessage(message);
+            
+            SyncMessageReturn messageReturn = new SyncMessageReturn();
+            messageReturn.autoSetStartLifeline(testFrame.getLifeline(0));
+            messageReturn.autoSetEndLifeline(testFrame.getLifeline(0));
+            
+            testFrame.addMessage(messageReturn);
+            messageReturn.setName((new StringBuilder("Message return ")).append(i).toString());
+            ExecutionOccurrence occ = new ExecutionOccurrence();
+            occ.setStartOccurrence(testFrame.getSyncMessage(i - 1).getEventOccurrence());
+            occ.setEndOccurrence(testFrame.getSyncMessageReturn(i - 1).getEventOccurrence());
+            testFrame.getLifeline(0).addExecution(occ);
+        }
+        fSdView.setFrame(testFrame);
+    }
+
+    @Override
+    public boolean hasNextPage() {
+        return page == 0;
+    }
+
+    @Override
+    public boolean hasPrevPage() {
+        return page == 1;
+    }
+
+    @Override
+    public void nextPage() {
+        page = 1;
+        createSecondFrame();
+    }
+
+    @Override
+    public void prevPage() {
+        page = 0;
+        createFrame();
+    }
+
+    @Override
+    public void firstPage() {
+        page = 0;
+        createFrame();
+    }
+
+    @Override
+    public void lastPage() {
+        page = 1;
+        createSecondFrame();
+    }
+    //...
+}
+
+</pre>
+		<p>When running the example application, new actions will be shown in the coolbar and the coolbar menu. 
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/PageProviderAdded.png"/>
+		</p>
+		<p>
+			<br/>
+			<br/>
+			To use the advanced paging provider, the interface 
+			<i>ISDAdvancePagingProvider</i> has to be implemented. It extends the basic paging provider. The methods 
+			<i>currentPage()</i>, 
+			<i>pagesCount()</i> and 
+			<i>pageNumberChanged()</i> have to be added. 
+
+			<br/>  
+		</p>
+		<h4 id="Using_the_Find_Provider_Interface">Using the Find Provider Interface</h4>
+		<p>For finding nodes in a sequence diagram two interfaces exists. One for basic finding and one for extended finding. The basic find comes with a dialog box for entering find criteria as regular expressions. This find criteria can be used to execute the find. Find criteria a persisted in the Eclipse workspace.
+
+			<br/>
+			For the extended find provider interface a 
+			<i>org.eclipse.jface.action.Action</i> class has to be provided. The actual find handling has to be implemented and triggered by the action.
+
+			<br/>
+			Only on at a time can be active. If the extended find provder is defined it obsoletes the basic find provider.
+
+			<br/>
+			To use the basic find provider, first the interface methods of the 
+			<i>ISDFindProvider</i> have to be implemented by a class. Typically, this is implemented in the loader class. Add the ISDFindProvider to the list of implemented interfaces, implement the methods 
+			<i>find()</i> and 
+			<i>cancel()</i> and set the provider in the 
+			<i>setViewer()</i> method as well as remove the provider in the 
+			<i>dispose()</i> method of the loader class. Please note that the 
+			<i>ISDFindProvider</i> extends the interface 
+			<i>ISDGraphNodeSupporter</i> which methods (
+			<i>isNodeSupported()</i> and 
+			<i>getNodeName()</i>) have to be implemented, too. The following shows an example implementation. Please note that only search for lifelines and SynchMessage are supported. The find itself will always find only the first occurrence the pattern to match.  
+		</p>
+		<pre>
+public class SampleLoader implements IUml2SDLoader, ISDPagingProvider, ISDFindProvider {
+
+    //...
+    @Override
+    public void dispose() {
+        if (fSdView != null) {
+            fSdView.resetProviders();
+        }
+    }
+
+    @Override
+    public void setViewer(SDView arg0) {
+        fSdView = arg0;
+        fSdView.setSDPagingProvider(this);
+        fSdView.setSDFindProvider(this);
+        createFrame();
+    }
+
+    @Override
+    public boolean isNodeSupported(int nodeType) {
+        switch (nodeType) {
+        case ISDGraphNodeSupporter.LIFELINE:
+        case ISDGraphNodeSupporter.SYNCMESSAGE:
+            return true;
+
+        default:
+            break;
+        }
+        return false;
+    }
+
+    @Override
+    public String getNodeName(int nodeType, String loaderClassName) {
+        switch (nodeType) {
+        case ISDGraphNodeSupporter.LIFELINE:
+            return "Lifeline";
+        case ISDGraphNodeSupporter.SYNCMESSAGE:
+            return "Sync Message";
+        }
+        return "";
+    }
+
+    @Override
+    public boolean find(Criteria criteria) {
+        Frame frame = fSdView.getFrame();
+        if (criteria.isLifeLineSelected()) {
+            for (int i = 0; i &lt; frame.lifeLinesCount(); i++) {
+                if (criteria.matches(frame.getLifeline(i).getName())) {
+                    fSdView.getSDWidget().moveTo(frame.getLifeline(i));
+                    return true;
+                }
+            }
+        }
+        if (criteria.isSyncMessageSelected()) {
+            for (int i = 0; i &lt; frame.syncMessageCount(); i++) {
+                if (criteria.matches(frame.getSyncMessage(i).getName())) {
+                    fSdView.getSDWidget().moveTo(frame.getSyncMessage(i));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void cancel() {
+        // reset find parameters
+    }
+    //...
+}
+</pre>
+		<p>When running the example application, the find action will be shown in the coolbar and the coolbar menu. 
+			<br/>
+
+			<img border="0" src="images/FindProviderAdded.png"/>
+		</p>
+		<p>To find a sequence diagram node press on the find button of the coolbar (see above). A new dialog box will open. Enter a regular expression in the 
+			<i>Matching String</i> text box, select the node types (e.g. Sync Message) and press 
+			<b>Find</b>. If found the corresponding node will be selected. If not found the dialog box will indicate not found. 
+			<br/> 
+
+			<img border="0" src="images/FindDialog.png"/>
+			<br/>
+		</p>
+		<p>Note that the find dialog will be opened by typing the key shortcut CRTL+F.</p>
+		<h4 id="Using_the_Filter_Provider_Interface">Using the Filter Provider Interface</h4>
+		<p>For filtering of sequence diagram elements two interfaces exist. One basic for filtering and one for extended filtering. The basic filtering comes with two dialog for entering filter criteria as regular expressions and one for selecting the filter to be used. Multiple filters can be active at a time. Filter criteria are persisted in the Eclipse workspace.
+
+			<br/>
+			To use the basic filter provider, first the interface method of the 
+			<i>ISDFilterProvider</i> has to be implemented by a class. Typically, this is implemented in the loader class. Add the 
+			<i>ISDFilterProvider</i> to the list of implemented interfaces, implement the method 
+			<i>filter()</i>and set the provider in the 
+			<i>setViewer()</i> method as well as remove the provider in the 
+			<i>dispose()</i> method of the loader class. Please note that the 
+			<i>ISDFindProvider</i> extends the interface 
+			<i>ISDGraphNodeSupporter</i> which methods (
+			<i>isNodeSupported()</i> and 
+			<i>getNodeName()</i>) have to be implemented, too. 
+			<br/>
+			Note that no example implementation of 
+			<i>filter()</i> is provided. 
+
+			<br/>
+		</p>
+		<pre>
+public class SampleLoader implements IUml2SDLoader, ISDPagingProvider, ISDFindProvider, ISDFilterProvider {
+
+    //...
+    @Override
+    public void dispose() {
+        if (fSdView != null) {
+            fSdView.resetProviders();
+        }
+    }
+
+    @Override
+    public void setViewer(SDView arg0) {
+        fSdView = arg0;
+        fSdView.setSDPagingProvider(this);
+        fSdView.setSDFindProvider(this);
+        fSdView.setSDFilterProvider(this);
+        createFrame();
+    }
+
+    @Override
+    public boolean filter(List&lt;FilterCriteria&gt; list) {
+        return false;
+    }
+    //...
+}
+</pre>
+		<p>When running the example application, the filter action will be shown in the coolbar menu. 
+			<br/>
+
+			<img border="0" src="images/HidePatternsMenuItem.png"/>
+		</p>
+		<p>To filter select the 
+			<b>Hide Patterns...</b> of the coolbar menu. A new dialog box will open. 
+			<br/>
+
+			<img border="0" src="images/DialogHidePatterns.png"/> 
+		</p>
+		<p>To Add a new filter press 
+			<b>Add...</b>. A new dialog box will open. Enter a regular expression in the 
+			<i>Matching String</i> text box, select the node types (e.g. Sync Message) and press 
+			<b>Create</b>'. 
+			<br/> 
+
+			<img border="0" src="images/DialogHidePatterns.png"/> 
+			<br/>
+		</p>
+		<p>Now back at the Hide Pattern dialog. Select one or more filter and select 
+			<b>OK</b>.
+		</p>
+		<p>To use the extended filter provider, the interface 
+			<i>ISDExtendedFilterProvider</i> has to be implemented. It will provide a 
+			<i>org.eclipse.jface.action.Action</i> class containing the actual filter handling and filter algorithm.
+		</p>
+		<h4 id="Using_the_Extended_Action_Bar_Provider_Interface">Using the Extended Action Bar Provider Interface</h4>
+		<p>The extended action bar provider can be used to add customized actions to the Sequence Diagram View. 
+			To use the extended action bar provider, first the interface method of the interface 
+			<i>ISDExtendedActionBarProvider</i> has to be implemented by a class. Typically, this is implemented in the loader class. Add the 
+			<i>ISDExtendedActionBarProvider</i> to the list of implemented interfaces, implement the method 
+			<i>supplementCoolbarContent()</i> and set the provider in the 
+			<i>setViewer()</i> method as well as remove the provider in the 
+			<i>dispose()</i> method of the loader class. 
+			<br/>
+		</p>
+		<pre>
+public class SampleLoader implements IUml2SDLoader, ISDPagingProvider, ISDFindProvider, ISDFilterProvider, ISDExtendedActionBarProvider {
+    //...
+    
+    @Override
+    public void dispose() {
+        if (fSdView != null) {
+            fSdView.resetProviders();
+        }
+    }
+
+    @Override
+    public void setViewer(SDView arg0) {
+        fSdView = arg0;
+        fSdView.setSDPagingProvider(this);
+        fSdView.setSDFindProvider(this);
+        fSdView.setSDFilterProvider(this);
+        fSdView.setSDExtendedActionBarProvider(this);
+        createFrame();
+    }
+
+    @Override
+    public void supplementCoolbarContent(IActionBars iactionbars) {
+        Action action = new Action("Refresh") {
+            @Override
+            public void run() {
+                System.out.println("Refreshing...");
+            }
+        };
+        iactionbars.getMenuManager().add(action);
+        iactionbars.getToolBarManager().add(action);
+    }
+    //...
+}
+</pre>
+		<p>When running the example application, all new actions will be added to the coolbar and coolbar menu according to the implementation of 
+			<i>supplementCoolbarContent()</i>
+			<br/>.
+			For the example above the coolbar and coolbar menu will look as follows.
+		</p>
+		<p>
+			<img border="0" src="images/SupplCoolbar.png"/>
+		</p>
+		<h4 id="Using_the_Properties_Provider_Interface">Using the Properties Provider Interface</h4>
+		<p>This interface can be used to provide property information. A property provider which returns an 
+			<i>IPropertyPageSheet</i> (see 
+			<i>org.eclipse.ui.views</i>) has to be implemented and set in the Sequence Diagram View. 
+			<br/>
+		</p>
+		<p>To use the property provider, first the interface method of the 
+			<i>ISDPropertiesProvider</i> has to be implemented by a class. Typically, this is implemented in the loader class. Add the 
+			<i>ISDPropertiesProvider</i> to the list of implemented interfaces, implement the method 
+			<i>getPropertySheetEntry()</i> and set the provider in the 
+			<i>setViewer()</i> method as well as remove the provider in the 
+			<i>dispose()</i> method of the loader class. Please note that no example is provided here.
+		</p>
+		<p>Please refer to the following Eclipse articles for more information about properties and tabed properties.</p>
+		<ul>
+			<li>
+				<a href="http://www.eclipse.org/articles/Article-Properties-View/properties-view.html">| Take control of your properties</a>
+			</li>
+			<li>
+				<a href="http://www.eclipse.org/articles/Article-Tabbed-Properties/tabbed_properties_view.html">| The Eclipse Tabbed Properties View</a>
+			</li>
+		</ul>
+		<h4 id="Using_the_Collapse_Provider_Interface">Using the Collapse Provider Interface</h4>
+		<p>This interface can be used to define a provider which responsibility is to collapse two selected lifelines. This can be used to hide a pair of lifelines.</p>
+		<p>To use the collapse provider, first the interface method of the 
+			<i>ISDCollapseProvider</i> has to be implemented by a class. Typically, this is implemented in the loader class. Add the ISDCollapseProvider to the list of implemented interfaces, implement the method 
+			<i>collapseTwoLifelines()</i> and set the provider in the 
+			<i>setViewer()</i> method as well as remove the provider in the 
+			<i>dispose()</i> method of the loader class. Please note that no example is provided here.
+		</p>
+		<h4 id="Using_the_Selection_Provider_Service">Using the Selection Provider Service</h4>
+		<p>The Sequence Diagram View comes with a build in selection provider service. To this service listeners can be added. To use the selection provider service, the interface 
+			<i>ISelectionListener</i> of plug-in  
+			<i>org.eclipse.ui</i> has to implemented. Typically this is implemented in loader class. Firstly, add the 
+			<i>ISelectionListener</i> interface to the list of implemented interfaces, implement the method 
+			<i>selectionChanged()</i> and set the listener in method 
+			<i>setViewer()</i> as well as remove the listener in the 
+			<i>dispose()</i> method of the loader class.
+		</p>
+		<pre>
+public class SampleLoader implements IUml2SDLoader, ISDPagingProvider, ISDFindProvider, ISDFilterProvider, ISDExtendedActionBarProvider, ISelectionListener {
+
+    //...
+    @Override
+    public void dispose() {
+        if (fSdView != null) {
+            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().removePostSelectionListener(this);
+            fSdView.resetProviders();
+        }
+    }
+
+    @Override
+    public String getTitleString() {
+        return "Sample Diagram";
+    }
+
+    @Override
+    public void setViewer(SDView arg0) {
+        fSdView = arg0;
+        PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().addPostSelectionListener(this);
+        fSdView.setSDPagingProvider(this);
+        fSdView.setSDFindProvider(this);
+        fSdView.setSDFilterProvider(this);
+        fSdView.setSDExtendedActionBarProvider(this);
+
+        createFrame();
+    }
+
+    @Override
+    public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+        ISelection sel = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService().getSelection();
+        if (sel != null &amp;&amp; (sel instanceof StructuredSelection)) {
+            StructuredSelection stSel = (StructuredSelection) sel;
+            if (stSel.getFirstElement() instanceof BaseMessage) {
+                BaseMessage syncMsg = ((BaseMessage) stSel.getFirstElement());
+                System.out.println("Message '" + syncMsg.getName() + "' selected.");
+            }
+        }
+    }
+    
+    //...
+}
+</pre>
+		<h3 id="Printing_a_Sequence_Diagram">Printing a Sequence Diagram</h3>
+		<p>To print a the whole sequence diagram or only parts of it, select the Sequence Diagram View and select 
+			<b>File -&gt; Print...</b> or type the key combination 
+			<i>CTRL+P</i>. A new print dialog will open. 
+			<br/>
+		</p>
+		<p>
+			<img border="0" src="images/PrintDialog.png"/> 
+			<br/>
+		</p>
+		<p>Fill in all the relevant information, select 
+			<b>Printer...</b> to choose the printer and the press 
+			<b>OK</b>.
+		</p>
+		<h3 id="Using_one_Sequence_Diagram_View_with_Multiple_Loaders">Using one Sequence Diagram View with Multiple Loaders</h3>
+		<p>A Sequence Diagram View definition can be used with multiple sequence diagram loaders. However, the active loader to be used when opening the view has to be set. For this define an Eclipse action or command and assign the current loader to the view. Here is a code snippet for that:</p>
+		<pre>
+public class OpenSDView extends AbstractHandler {
+    @Override
+    public Object execute(ExecutionEvent event) throws ExecutionException {
+        try {
+            IWorkbenchPage persp = TmfUiPlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
+            SDView view = (SDView) persp.showView("org.eclipse.linuxtools.ust.examples.ui.componentinteraction");
+            LoadersManager.getLoadersManager().createLoader("org.eclipse.tracecompass.tmf.ui.views.uml2sd.impl.TmfUml2SDSyncLoader", view);
+        } catch (PartInitException e) {
+            throw new ExecutionException("PartInitException caught: ", e);
+        }
+        return null;
+ }
+}
+</pre>
+		<h3 id="Downloading_the_Tutorial">Downloading the Tutorial</h3>
+		<p>Use the following link to download the source code of the tutorial 
+			<a href="https://wiki.eclipse.org/images/7/79/SamplePluginTC.zip">Plug-in of Tutorial</a>.
+		</p>
+		<h2 id="Integration_of_Tracing_and_Monitoring_Framework_with_Sequence_Diagram_Framework">Integration of Tracing and Monitoring Framework with Sequence Diagram Framework</h2>
+		<p>In the previous sections the Sequence Diagram Framework has been described and a tutorial was provided. In the following sections the integration of the Sequence Diagram Framework with other features of TMF will be described. Together it is a powerful framework to analyze and visualize content of traces. The integration is explained using the reference implementation of a UML2 sequence diagram loader which part of the TMF UI delivery. The reference implementation can be used as is, can be sub-classed or simply be an example for other sequence diagram loaders to be implemented. </p>
+		<h3 id="Reference_Implementation">Reference Implementation</h3>
+		<p>A Sequence Diagram View Extension is defined in the plug-in TMF UI as well as a uml2SDLoader Extension with the reference loader. </p>
+		<p>
+			<img border="0" src="images/ReferenceExtensions.png"/>
+		</p>
+		<h3 id="Used_Sequence_Diagram_Features">Used Sequence Diagram Features</h3>
+		<p>Besides the default features of the Sequence Diagram Framework, the reference implementation uses the following additional features:</p>
+		<ul>
+			<li>Advanced paging</li>
+			<li>Basic finding</li>
+			<li>Basic filtering</li>
+			<li>Selection Service</li>
+		</ul>
+		<h4 id="Advanced_paging">Advanced paging</h4>
+		<p>The reference loader implements the interface 
+			<i>ISDAdvancedPagingProvider</i> interface. Please refer to section 
+			<a href="#Using_the_Paging_Provider_Interface">Using the Paging Provider Interface</a> for more details about the advanced paging feature.
+		</p>
+		<h4 id="Basic_finding">Basic finding</h4>
+		<p>The reference loader implements the interface 
+			<i>ISDFindProvider</i> interface. The user can search for 
+			<i>Lifelines</i> and 
+			<i>Interactions</i>. The find is done across pages. If the expression to match is not on the current page a new thread is started to search on other pages. If expression is found the corresponding page is shown as well as the searched item is displayed. If not found then a message is displayed in the 
+			<i>Progress View</i> of Eclipse. Please refer to section 
+			<a href="#Using_the_Find_Provider_Interface">Using the Find Provider Interface</a> for more details about the basic find feature.
+		</p>
+		<h4 id="Basic_filtering">Basic filtering</h4>
+		<p>The reference loader implements the interface 
+			<i>ISDFilterProvider</i> interface. The user can filter on 
+			<i>Lifelines</i> and 
+			<i>Interactions</i>. Please refer to section 
+			<a href="#Using_the_Filter_Provider_Interface">Using the Filter Provider Interface</a> for more details about the basic filter feature.
+		</p>
+		<h4 id="Selection_Service">Selection Service</h4>
+		<p>The reference loader implements the interface 
+			<i>ISelectionListener</i> interface. When an interaction is selected a 
+			<i>TmfTimeSynchSignal</i> is broadcast (see 
+			<a href="#TMF_Signal_Framework">TMF Signal Framework</a>). Please also refer to section 
+			<a href="#Using_the_Selection_Provider_Service">Using the Selection Provider Service</a> for more details about the selection service and . 
+		</p>
+		<h3 id="Used_TMF_Features">Used TMF Features</h3>
+		<p>The reference implementation uses the following features of TMF:</p>
+		<ul>
+			<li>TMF Experiment and Trace for accessing traces</li>
+			<li>Event Request Framework to request TMF events from the experiment and respective traces</li>
+			<li>Signal Framework for broadcasting and receiving TMF signals for synchronization purposes</li>
+		</ul>
+		<h4 id="TMF_Experiment_and_Trace_for_accessing_traces">TMF Experiment and Trace for accessing traces</h4>
+		<p>The reference loader uses TMF Experiments to access traces and to request data from the traces.   </p>
+		<h4 id="TMF_Event_Request_Framework">TMF Event Request Framework</h4>
+		<p>The reference loader use the TMF Event Request Framework to request events from the experiment and its traces.</p>
+		<p>When opening a trace (which is triggered by signal 
+			<i>TmfTraceSelectedSignal</i>) or when opening the Sequence Diagram View after a trace had been opened previously, a TMF background request is initiated to index the trace and to fill in the first page of the sequence diagram. The purpose of the indexing is to store time ranges for pages with 10000 messages per page. This allows quickly to move to certain pages in a trace without having to re-parse from the beginning. The request is called indexing request.
+		</p>
+		<p>When switching pages, a TMF foreground event request is initiated to retrieve the corresponding events from the experiment. It uses the time range stored in the index for the respective page.</p>
+		<p>A third type of event request is issued for finding specific data across pages. </p>
+		<h4 id="TMF_Signal_Framework">TMF Signal Framework</h4>
+		<p>The reference loader extends the class 
+			<i>TmfComponent</i>. By doing that the loader is registered as a TMF signal handler for sending and receiving TMF signals. The loader implements signal handlers for the following TMF signals:
+		</p>
+		<ul>
+			<li>
+				<i>TmfTraceSelectedSignal</i>
+			</li>
+		</ul>
+		<p>This signal indicates that a trace or experiment was selected. When receiving this signal the indexing request is initiated and the first page is displayed after receiving the relevant information.</p>
+		<ul>
+			<li>
+				<i>TmfTraceClosedSignal</i>
+			</li>
+		</ul>
+		<p>This signal indicates that a trace or experiment was closed. When receiving this signal the loader resets its data and a blank page is loaded in the Sequence Diagram View.</p>
+		<ul>
+			<li>
+				<i>TmfTimeSynchSignal</i>
+			</li>
+		</ul>
+		<p>This signal is used to indicate that a new time or time range has been selected. It contains a begin and end time. If a single time is selected then the begin and end time are the same. When receiving this signal the corresponding message matching the begin time is selected in the Sequence Diagram View. If necessary, the page is changed.</p>
+		<ul>
+			<li>
+				<i>TmfRangeSynchSignal</i>
+			</li>
+		</ul>
+		<p>This signal indicates that a new time range is in focus. When receiving this signal the loader loads the page which corresponds to the start time of the time range signal. The message with the start time will be in focus.</p>
+		<p>Besides acting on receiving signals, the reference loader is also sending signals. A 
+			<i>TmfTimeSynchSignal</i> is broadcasted with the timestamp of the message which was selected in the Sequence Diagram View. 
+			<i>TmfRangeSynchSignal</i> is sent when a page is changed in the Sequence Diagram View. The start timestamp of the time range sent is the timestamp of the first message. The end timestamp sent is the timestamp of the first message plus the current time range window. The current time range window is the time window that was indicated in the last received 
+			<i>TmfRangeSynchSignal</i>.
+		</p>
+		<h3 id="Supported_Traces">Supported Traces</h3>
+		<p>The reference implementation is able to analyze traces from a single component that traces the interaction with other components. For example, a server node could have trace information about its interaction with client nodes. The server node could be traced and then analyzed using TMF and the Sequence Diagram Framework of TMF could used to visualize the interactions with the client nodes.
+			<br/>
+		</p>
+		<p>Note that combined traces of multiple components that contain the trace information about the same interactions are not supported in the reference implementation!</p>
+		<h3 id="Trace_Format">Trace Format</h3>
+		<p>The reference implementation in class 
+			<i>TmfUml2SDSyncLoader</i> in package 
+			<i>org.eclipse.tracecompass.tmf.ui.views.uml2sd.impl</i> analyzes events from type 
+			<i>ITmfEvent</i> and creates events type 
+			<i>ITmfSyncSequenceDiagramEvent</i> if the 
+			<i>ITmfEvent</i> contains all relevant information information. The parsing algorithm looks like as follows:
+		</p>
+		<pre>
+    /**
+     * @param tmfEvent Event to parse for sequence diagram event details
+     * @return sequence diagram event if details are available else null
+     */
+    protected ITmfSyncSequenceDiagramEvent getSequenceDiagramEvent(ITmfEvent tmfEvent){
+        //type = .*RECEIVE.* or .*SEND.*
+        //content = sender:&lt;sender name&gt;:receiver:&lt;receiver name&gt;,signal:&lt;signal name&gt;
+        String eventType = tmfEvent.getType().toString();
+        if (eventType.contains(Messages.TmfUml2SDSyncLoader_EventTypeSend) || eventType.contains(Messages.TmfUml2SDSyncLoader_EventTypeReceive)) {
+            Object sender = tmfEvent.getContent().getField(Messages.TmfUml2SDSyncLoader_FieldSender);
+            Object receiver = tmfEvent.getContent().getField(Messages.TmfUml2SDSyncLoader_FieldReceiver);
+            Object name = tmfEvent.getContent().getField(Messages.TmfUml2SDSyncLoader_FieldSignal);
+            if ((sender instanceof ITmfEventField) &amp;&amp; (receiver instanceof ITmfEventField) &amp;&amp; (name instanceof ITmfEventField)) {
+                ITmfSyncSequenceDiagramEvent sdEvent = new TmfSyncSequenceDiagramEvent(tmfEvent,
+                                ((ITmfEventField) sender).getValue().toString(),
+                                ((ITmfEventField) receiver).getValue().toString(),
+                                ((ITmfEventField) name).getValue().toString());
+
+                return sdEvent;
+            }
+        }
+        return null;
+    }
+</pre>
+		<p>The analysis looks for event type Strings containing 
+			<i>SEND</i> and 
+			<i>RECEIVE</i>. If event type matches these key words, the analyzer will look for strings 
+			<i>sender</i>, 
+			<i>receiver</i> and 
+			<i>signal</i> in the event fields of type 
+			<i>ITmfEventField</i>. If all the data is found a sequence diagram event can be created using this information. Note that Sync Messages are assumed, which means start and end time are the same.
+		</p>
+		<h3 id="How_to_use_the_Reference_Implementation">How to use the Reference Implementation</h3>
+		<p>An example CTF (Common Trace Format) trace is provided that contains trace events with sequence diagram information. To download the reference trace, use the following link: 
+			<a href="https://wiki.eclipse.org/images/3/35/ReferenceTrace.zip">Reference Trace</a>.
+		</p>
+		<p>Run an Eclipse application with Trace Compass 0.1.0 or later installed. To open the Reference Sequence Diagram View, select 
+			<b>Windows -&gt; Show View -&gt; Other... -&gt; Tracing -&gt; Sequence Diagram</b> 
+			<br/>
+
+			<img border="0" src="images/ShowTmfSDView.png"/>
+			<br/>
+		</p>
+		<p>A blank Sequence Diagram View will open.</p>
+		<p>Then import the reference trace to the 
+			<b>Project Explorer</b> using the 
+			<b>Import Trace Package...</b> menu option.
+			<br/>
+
+			<img border="0" src="images/ImportTracePackage.png"/>
+		</p>
+		<p>Next, open the trace by double-clicking on the trace element in the 
+			<b>Project Explorer</b>. The trace will be opened and the Sequence Diagram view will be filled.
+
+			<img border="0" src="images/ReferenceSeqDiagram.png"/>
+			<br/>
+		</p>
+		<p>Now the reference implementation can be explored. To demonstrate the view features try the following things:</p>
+		<ul>
+			<li>Select a message in the Sequence diagram. As result the corresponding event will be selected in the Events View.</li>
+			<li>Select an event in the Events View. As result the corresponding message in the Sequence Diagram View will be selected. If necessary, the page will be changed.</li>
+			<li>In the Events View, press key 
+				<i>End</i>. As result, the Sequence Diagram view will jump to the last page.  
+			</li>
+			<li>In the Events View, press key 
+				<i>Home</i>. As result, the Sequence Diagram view will jump to the first page.
+			</li>
+			<li>In the Sequence Diagram View select the find button. Enter the expression 
+				<b>REGISTER.*</b>, select 
+				<b>Search for Interaction</b> and press 
+				<b>Find</b>. As result the corresponding message will be selected in the Sequence Diagram and the corresponding event in the Events View will be selected. Select again 
+				<b>Find</b> the next occurrence of will be selected. Since the second occurrence is on a different page than the first, the corresponding page will be loaded.
+			</li>
+			<li>In the Sequence Diagram View, select menu item 
+				<b>Hide Patterns...</b>. Add the filter 
+				<b>BALL.*</b> for 
+				<b>Interaction</b> only and select 
+				<b>OK</b>. As result all messages with name 
+				<i>BALL_REQUEST</i> and 
+				<i>BALL_REPLY</i> will be hidden. To remove the filter, select menu item 
+				<b>Hide Patterns...</b>, deselect the corresponding filter and press 
+				<b>OK</b>. All the messages will be shown again.
+				<br/> 
+			</li>
+		</ul>
+		<h3 id="Extending_the_Reference_Loader">Extending the Reference Loader</h3>
+		<p>In some case it might be necessary to change the implementation of the analysis of each 
+			<i>TmfEvent</i> for the generation of 
+			<i>Sequence Diagram Events</i>. For that just extend the class 
+			<i>TmfUml2SDSyncLoader</i> and overwrite the method 
+			<i>protected ITmfSyncSequenceDiagramEvent getSequenceDiagramEvent(ITmfEvent tmfEvent)</i> with your own implementation.
+		</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Generic-State-System.html" title="Generic State System">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="CTF-Parser.html" title="CTF Parser">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Generic State System</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">CTF Parser</td>
+			</tr>
+		</table>
+	</body>
+</html>

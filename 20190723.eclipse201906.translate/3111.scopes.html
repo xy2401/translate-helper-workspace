@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>Scopes in RAP</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+</head>
+<body>
+
+  <h1>Scopes in RAP</h1>
+  <p>
+    While RAP inherits many traits of a desktop application framework from SWT/RCP, it is in fact
+    a multi-user, client-server based web framework. This means there are some significant
+    architectural differences that need to be considered when building RAP applications.
+  </p>
+  <p>
+    In a desktop environment, an instance of an application normally serves only a <b>single user</b>,
+    runs in its <b>own Java VM</b> instance, and the operating system usually provides a user-specific
+    <b>storage on the file system</b>. The <b>UI is rendered on the same machine</b> as
+    the application runs on, and when the user exits, the <b>application is terminated</b>.
+    For RAP applications, these things work differently.
+  </p>
+  <p>
+    A RAP application does not own the VM. It runs on a server and <b>shares the VM</b> with the
+    servlet container, other applications, maybe even other RAP applications.
+    There are <b>multiple users</b> accessing an application, each one with a <b>separate UI
+    connected via HTTP</b>, but all sharing
+    the same classes.
+    Moreover, a RAP application runs for a very long time.
+    When a user logs in, the application is already running, and it will <b>continue to run when
+    the user leaves</b>.
+  </p><p>
+    For these reasons, it is necessary to distinguish various scopes and threads in RAP.
+  </p>
+
+  <h2 id="application">ApplicationContext</h2>
+  <p>
+    There can be more than one RAP application running at the same time, e.g. in different web
+    applications, or even on different servlet containers listening on different network ports.
+    Every <a href="application-configuration.html">application</a> has it's own set of entry points,
+    registered resources and service handlers.
+    All these things have <em>application scope</em> and are kept in the
+    <em><a href="../reference/api/org/eclipse/rap/rwt/service/ApplicationContext.html">ApplicationContext</a></em>.
+    The current instance of the application context can be obtained via
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getApplicationContext--">RWT.getApplicationContext()</a></em>.
+  </p>
+  <p>
+    The ApplicationContext can be used to acquire application-scoped instances of framework
+    services such as the ResourceManager.
+    An application can also use the ApplicationContext to
+    <a href="data-stores.html">store any data</a> as attributes.
+    Objects stored in the application context have application scope, i.e. they are accessible
+    from everywhere in the application, but not from another application.
+  </p>
+  <p>
+    The application context lives as long as the application runs
+    on the server, even if there are currently no clients connected. When the application is
+    stopped (e.g. when the servlet context is destroyed), all data in this scope is lost.
+   The application context is <b>thread safe</b>, it can be accessed concurrently from different threads.
+   However, an instance of the application context can only be acquired from the context of a
+   UI Session (see <a href="threads.html">Threads</a>).
+  </p>
+
+  <h2 id="uisession">UISession</h2>
+  <p>
+    A UI session in RAP spans exactly one execution of an
+    <em><a href="../reference/api/org/eclipse/rap/rwt/application/EntryPoint.html">EntryPoint</a></em>.
+    It is created when the user connects to the server, and usually ends with a refresh or timeout.
+    While UI sessions are built on top of the servlet container's session management,
+    they are not identical to the underlying HTTP session.
+    For example, when the browser is refreshed (usually by hitting <em>F5</em>) to start over,
+    the user still has the same HTTP session, but a fresh UI session.
+  </p>
+  <p>
+    A UI session is represented by an
+    <em><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html">UISession</a></em>
+    instance that can be obtained by calling
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession()</a></em>.
+    It provides access to session details such as the
+    <a href="client.html">client object</a>, and also to the underlying
+    <a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#getHttpSession--">HTTP session</a>.
+    Similar to the ApplicationContext, the UISession it can be used to
+    <a href="data-stores.html">store session-scoped data</a> as attributes.
+    Often, what would be a singleton or static field in a desktop application, requires
+    UI Session scope in RAP.
+  </p>
+
+  <h3>Session Timeout</h3>
+  <p>
+    A UI session ends when the execution of an entry point is finished (display is disposed)
+    or when the underlying HTTP session times out.
+    The timeout interval must be be configured with the servlet container.
+    For web applications, this can be done in the web application's deployment descriptor (<em>web.xml</em>):
+  </p>
+<pre class="lang-xml">
+&lt;session-config&gt;
+  &lt;session-timeout&gt;30&lt;/session-timeout&gt;
+&lt;/session-config&gt;
+</pre>
+  <p>
+    The timeout value can also be changed programmatically on a per session basis:
+  </p>
+<pre class="lang-java">
+RWT.getUISession().getHttpSession().setMaxInactiveInterval(&lt;timeout in Seconds&gt;);
+</pre>
+  <p>
+    Note that when using the
+    <a href="launcher.html#rap-launcher">RAP launcher</a>,
+    sessions never expire by default.
+    To change this, adjust the timeout setting on the <em class="UiLabel">Main</em> tab.
+  </p>
+
+  <h3>Session Cleanup</h3>
+  <p>
+    To cleanup UI session-scoped objects, a
+    <em><a href="../reference/api/org/eclipse/rap/rwt/service/UISessionListener.html">UISessionListener</a></em>
+    can be registered with the UI session:
+  </p>
+<pre class="lang-java">
+RWT.getUISession().addUISessionListener( new UISessionListener() {
+  public void beforeDestroy( UISessionEvent event ) {
+    // Perform cleanup
+  }
+} );
+</pre>
+
+  <p>
+    Another way to run cleanup code is to register a dispose runnable with the <em>Display</em>
+    using its method <em>disposeExec()</em>.
+    This method also works in SWT.
+  </p>
+
+</body>
+</html>

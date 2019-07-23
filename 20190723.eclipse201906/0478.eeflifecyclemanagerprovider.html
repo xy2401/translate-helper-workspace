@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>eeflifecyclemanagerprovider</title>
+		<link type="text/css" rel="stylesheet" href="../assets/css/stylesheet.css"/>
+	</head>
+	<body>
+		<h2 id="IEEFLifecycleManagerProvider">IEEFLifecycleManagerProvider</h2>
+		<p>This extension point can be used in order to replace the original appearance and behavior of any existing widget or to provide the appearance and behavior of a custom widget description.</p>
+		<pre><code>&lt;extension
+      point="org.eclipse.eef.ide.ui.eefLifecycleManagerProvider"&gt;
+   &lt;descriptor
+         class="org.eclipse.eef.sample.internal.extensions.SampleLifecycleManagerProvider"
+         description="Provides EEF Lifecycle Managers"
+         id="org.eclipse.eef.sample.eefLifecycleManagerProvider"
+         label="EEF Sample Lifecycle Manager Provider"&gt;
+   &lt;/descriptor&gt;
+&lt;/extension&gt;
+</code></pre>
+		<p>Example of IEEFLifecycleManagerProvider contribution. In this example, we are providing a contribution to provide an IEEFLifecycleManager for a custom widget description. Once EEF has retrieved the description of the user interface to create, it will navigate in this description in order to build the necessary widgets and containers. For each description of containers or widgets found, it will ask the IEEFLifecycleManagerProviders registered if they can handle the description. The first lifecycle manager provider which can handle the given description will thus be used to create the lifecycle manager for this description using the whole available context. The lifecycle manager returned will have the following responsibilities:</p>
+		<ul>
+			<li>Creation of the SWT widgets for the description &#8211; IEEFLifecycleManager#createControls(...)</li>
+			<li>Registration of the listeners between the widgets &#8211; IEEFLifecycleManager#aboutToBeShown(...)</li>
+			<li>Refresh of the widgets &#8211; IEEFLifecycleManager#refresh(...)</li>
+			<li>Unregistration of the listeners &#8211; IEEFLifecycleManager#aboutToBeDisposed(...)</li>
+			<li>Removal of all additional resources &#8211; IEEFLifecycleManager#dispose(...)</li>
+		</ul>
+		<p>In order to perform those duties, the architecture of EEF encourages the creator of an IEEFLifecycleManager to separate the user interface-related behavior from the business behavior by using a controller to handle the business part. The controller should implement 
+			<code>org.eclipse.eef.core.api.controllers.IEEFController</code> in order to perform basic task in a similar fashion as other controllers. There are several abstract classes available in order to build a new controller quite easily:
+		</p>
+		<ul>
+			<li>
+				<code>org.eclipse.eef.core.api.controllers.AbstractEEFController</code>
+			</li>
+			<li>
+				<code>org.eclipse.eef.core.api.controllers.AbstractEEFWidgetController</code>
+			</li>
+			<li>
+				<code>org.eclipse.eef.core.api.controllers.AbstractEEFCustomWidgetController</code>
+			</li>
+		</ul>
+		<p>The AbstractEEFController provides support for the validation and the refresh. The AbstractEEFWidgetController, which extends the AbstractEEFController, adds support for the refresh of the label and the help of the widgets and finally the AbstractEEFCustomWidgetController, which extends the AbstractEEFWidgetController, adds on top of that utility methods for the execution of command expressions.</p>
+		<pre><code>package org.eclipse.eef.sample.internal.extensions;
+
+import org.eclipse.eef.EEFControlDescription;
+import org.eclipse.eef.core.api.EditingContextAdapter;
+import org.eclipse.eef.ide.ui.api.widgets.IEEFLifecycleManager;
+import org.eclipse.eef.ide.ui.api.widgets.IEEFLifecycleManagerProvider;
+import org.eclipse.sirius.common.interpreter.api.IInterpreter;
+import org.eclipse.sirius.common.interpreter.api.IVariableManager;
+
+public class SampleLifecycleManagerProvider implements IEEFLifecycleManagerProvider {
+
+    private static final String DESCRIPTION_IDENTIFIER = "org.eclipse.eef.sample.customwidget";
+
+    @Override
+    public boolean canHandle(EEFControlDescription controlDescription) {
+        // Only handle the control with our description
+        return DESCRIPTION_IDENTIFIER.equals(controlDescription.getIdentifier());
+    }
+
+    @Override
+    public IEEFLifecycleManager getLifecycleManager(EEFControlDescription controlDescription, IVariableManager variableManager, IInterpreter interpreter, EditingContextAdapter contextAdapter) {
+        // Returns a lifecycle manager for the control supported
+        return new SampleLifecycleManager(controlDescription, variableManager, interpreter, contextAdapter);
+    }
+
+}
+</code></pre>
+		<p>This example requires at least the following dependencies:</p>
+		<ul>
+			<li>org.eclipse.sirius.common.interpreter</li>
+			<li>org.eclipse.eef</li>
+			<li>org.eclipse.eef.core</li>
+			<li>org.eclipse.eef.ide.ui</li>
+		</ul>
+	</body>
+</html>

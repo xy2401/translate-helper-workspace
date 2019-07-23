@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>Threads in RAP</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+</head>
+<body>
+
+  <h1>Threads in RAP</h1>
+
+  <p>
+    Like in SWT, we have to distiguish two types of threads, the UI thread and other, non-UI threads,
+    also called “background threads”.
+  </p>
+
+  <h2>The UI Thread</h2>
+
+  <p>
+    In SWT, the <em>UI thread</em> is the thread in which the Display was created.
+    Widgets may only be created and accessed in this thread.
+    In RWT, this is no different, and in addition to that, the UI thread also provides the scope of
+    the UI session.
+    Thus, all methods in RWT that require the current UI Session or application context
+    must be called from this thread.
+    This includes most methods of
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT</a></em>, such as
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession()</a></em> and
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getApplicationContext--">RWT.getApplicationContext()</a></em>),
+    but also the
+    <em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil</a></em>.
+  </p>
+
+  <p>
+    Since entrypoints an all event listeners are executed in the UI thread,
+    all application code has full access by default.
+    However, when an application forks new threads (<q>non-UI</q> or <q>background</q> threads),
+    these threads cannot directly access the UI session or the application context.
+    See <a href="threads.html#access">Session access from a background threads</a>.
+  </p>
+
+  <h3 id="client">UI Updates from background threads</h3>
+  <p>
+    Any
+    <a href="client.html">RAP Client</a> that connects with a RAP server also stores some data,
+    usually for the duration of the UI Session.
+    Most notably, the client has a complete copy of the UI state, which it
+    presents to the user to interact with. It can only exchange data during HTTP requests,
+    which are triggered by user interactions. This means that if the UI state is changed by a
+    background thread, the client would normally not be updated until the next time the user does
+    something with the UI. See <a href="server-push.html">Server Push</a> for more.
+  </p>
+
+  <h2 id="uisession">Session access from a background thread</h2>
+
+  <p>
+    RWT determines the <a href="scopes.html#uisession">UI session</a>
+    based on the current thread. When <i>background
+    threads</i> try to do so, the code will fail with an <em>java.lang.IllegalStateException</em>,
+    saying that this thread has no access. This may happen when using any method of
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT</a></em>
+    or
+    <em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil</a></em>.
+    Example:
+  </p>
+<pre class="lang-java">
+// INCORRECT
+// will throw IllegalStateException: No context available ...
+Runnable runnable = new Runnable() {
+  public void run() {
+    UISession session = RWT.getUISession();
+    // ... or ...
+    Client client = RWT.getClient();
+    // ... or ...
+    MySessionSingleton sessionSingleton = MySessionSingleton.getInstance();
+    // ...
+  }
+};
+new Thread( runnable ).start();
+</pre>
+  <p>
+    The solution is to run the code in question in the context of the UI session.
+    To do so, it must be wrapped in a runnable and executed using the method
+    <em style="white-space:nowrap;"><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#exec-java.lang.Runnable-">UISession#exec( Runnable runnable )</a></em>.
+    This will execute the runnable in the context of the UI session, granting the code in its
+    <em>run()</em> method access to all session-scoped data.
+    However, the code can not access any widgets, because it is not executed in the UI Thread
+    (see <a href="#asyncexec">below</a>).
+  </p>
+  <p>
+    In case there is no reference to the current UISession available,
+    it can also be obtained from
+    <em style="white-space:nowrap;"><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession( Display display )</a></em>.
+  </p>
+<pre class="lang-java">
+// CORRECT
+final Display display = Display.getCurrent();
+final Runnable runnable = new Runnable() {
+  public void run() {
+    UISession uiSession = RWT.getUISession( display );
+    uiSession.exec( new Runnable() {
+      public void run() {
+        Client client = RWT.getClient();
+        // ... or ...
+        MySessionSingleton sessionSingleton = MySessionSingleton.getInstance();
+        // ...
+      }
+    } );
+  }
+};
+new Thread( runnable ).start();
+</pre>
+
+  <h2 id="asyncexec">Session access vs. UI access</h2>
+  <p>
+    <a href="/help/topic/org.eclipse.platform.doc.isv/guide/swt_threading.htm">
+    Like in SWT</a>, widgets can only be accessed from a <a href="scopes.html#uithread">UI thread</a>.
+    While <em>UISession#exec</em> executes a runnable in the context of the UI session,
+    it does <em>not</em> execute this runnable within the UI thread
+    but in the same thread that the method is called.
+    Hence, <em>UISession#exec</em> is not suitable to execute code that accesses the UI.
+    To do so,
+    <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#asyncExec-java.lang.Runnable-">Display#asyncExec</a></em>
+    (or <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#syncExec-java.lang.Runnable-">Display#syncExec</a></em>)
+    has to be used instead.
+    Please note that UI updates from a background thread will only be “pushed” to the client when the
+    <a href="server-push.html">Server Push</a> is active.
+    In contrast to <em>asyncExec</em>, running code using <em>UISession#exec</em> does not cause
+    any additional network traffic.
+  </p>
+  <p>
+    In summary, when a thread <i>only</i> needs to access the UI session context
+    (e.g. by using  <em>SingletonUtil</em>
+    or <em>RWT.getClient</em>), <em>UISession#exec</em> should be used.
+    But when the UI needs to be updated, <em>Display#asyncExec</em> <i>must</i> be used, as it
+    runs the code in the UI thread and thereby gives access to session scope <i>and</i> widgets.
+    Using <em>UISession#exec</em>
+    from within the UI thread is pointless.
+  </p>
+
+  <h2>Using a Helper</h2>
+
+  <p>
+    It can be helpful to create a helper class like this:
+  </p>
+<pre class="lang-java">
+abstract class SessionRunnable implements Runnable {
+
+  final private UISession session;
+
+  public SessionRunnable() {
+    session = RWT.getUISession();
+  }
+
+  @Override
+  public void run() {
+    session.exec( new Runnable() {
+      @Override
+      public void run() {
+        SessionRunnable.this.runInSession();
+      }
+    } );
+  }
+
+  abstract void runInSession();
+}
+</pre>
+  <p>
+    The above example could then be shortened to this:
+  </p>
+<pre class="lang-java">
+final Runnable runnable = new SessionRunnable() {
+  @Override
+  public void runInSession() {
+    Client client = RWT.getClient();
+    // ... etc ...
+  }
+};
+new Thread( runnable ).start();
+</pre>
+
+</body>
+</html>

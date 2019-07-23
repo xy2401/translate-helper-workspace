@@ -1,0 +1,148 @@
+<html>
+  <head>
+    <meta name="copyright" content="Copyright Technical University Berlin and others 2004, 2010. This page is made available under the Eclipse Public License v1.0. For full details see http://www.eclipse.org/legal/epl-v10.html" />
+	<link rel=stylesheet type="text/css" href="../css/book.css">
+	<link rel=stylesheet type="text/css" href="otjld/css/ot.css">
+	<link rel=stylesheet type="text/css" href="otguide.css">
+	<style type="text/css">
+.high { background-color:#fff0c8;color:black; }
+.pale { color:#b6b6d1; }
+.caption { text-decoration:underline; vertical-align:top;position:relative;top:20px; margin-top:10px;}
+	</style>
+    <title>Debugging OT/J programs - Team Monitor View</title>
+    <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  </head>
+  <body>
+    <h1>Stepping through OT/J code</h1>
+    The byte code into which OT/J programs are translated has some significant differences
+    to the original source code. In order to hide some generated code and to provide
+    convenient stepping even through declarative method bindings, the debug view has
+    been enhanced for OT/J.
+    <h2>Filtering infrastructure code</h2>
+    <p>
+    By default the debugger is configured to filter certain packages in order to hide
+    the Object Teams Runtime Environment (OTRE) and its libraries. This means that
+    the debugger will not show stack frames corresponding to the OTRE while stepping
+    through code. This filtering can be disabled on the preference page at <code class="high">Object&nbsp;Teams&nbsp;&mdash;&nbsp;Debug</code>
+    </p>
+    <a name="prefs"><img src="images/screenshots/debug_prefs_filtering.png" /></a>
+    <h2>Callin bindings</h2>
+    <p>
+    In order to realize the runtime dispatch for callin bindings, additional dispatch
+    code is generated and woven into the byte code of bound base classes. 
+    Most of this dispatch code is hidden by the debugger,
+    but an abstract view of it is presented
+    in order to support different paths of stepping into/through/over callin bindings.
+    </p>
+    <p>
+    Typical stepping paths will be explained using the example <code>OTSample-Flightbonus</code>
+    which can be installed using the wizard at 
+    <ul><li class="ui">New...<ul><li class="ui">Other... <ul><li class="ui">Code Samples</li></ul></li></ul></li></ul>
+  <p>
+    After the example has been installed and configured for running with the team
+    <code>GUIConnector</code> activated (see the example's documentation), 
+    assume a new passenger has been registered and subscribed for the bonus system.
+    Also assume a <img src="images/brkp_obj.gif"/>line breakpoint has been set somewhere in method <code>Segment#book()</code>.
+    When the lastly added passenger books a flight, this line breakpoint is triggered.
+  </p>
+  <table>
+  <tr><td colspan=2>
+    From here on stepping proceeds as follows:
+    <ul>
+    <li style="list-style-image: url('images/stepover_co.gif');"> Step (<b>F6</b>) out of method <code>book()</code> until the debugger jumps to the top of the current method <code>book(Passenger)</code>:</li>
+    </ul>
+  <tr><td class="caption">Hitting callin dispatch: <td><img src="images/screenshots/stack_hit_callin.png" />
+    
+  <tr><td colspan=2>
+    At this point the debug view signals that some dispatch is pending for method <code>book</code>. A few words on what you see in this picture:
+    <ul>
+    <li>The current stack frame says <code class="high">{{Dispatch callins for book}}</code>, at what time the list of currently active teams is investigated.<br>
+      This stack frame is drawn in a <span class="pale">pale color</span> (unless <span class="high">highlighted</span>) to visualize that this is generated code.<br> 
+      If multiple teams are active that have interest in this method, the generated dispatch code will be invoked recursively,
+      causing multiple stack frames to show up in the debug view.</li>
+    <li>Below you see another pale stack frame saying <code class="high">[about to enter]</code>. This stack frame contains no interesting code
+      and can safely be ignored.</li>
+    <li>The highlighted line in the editor has a <a href="callinmarker.html">callin marker</a> (<img src="../images/callinbinding_obj.gif">) associated, hinting at the callin bindings that are about to fire 
+        (see also the hover of this line's annotations).</li>
+    </ul>
+    You now have two options:
+    <ul>
+    <li style="list-style-image: url('images/stepreturn_co.gif');">If at this point <b>F7</b> is pressed the debugger skips over all dispatching and
+    proceeds in the base program.</li>
+    <li style="list-style-image: url('images/stepinto_co.gif');">By pressing <b>F5</b> you <i>enter</i> the current callin binding:
+    </ul>
+  
+  <tr><td class="caption">Entering a callin binding: <td><img src="images/screenshots/stack_entered_callin.png" />
+    
+  <tr><td colspan=2>
+    Now the debug view displays a new
+    faked stack frame labeled with the callin binding: <code class="high">[Item.earnCredit&lt;-book]</code>.
+    <ul>
+    <li style="list-style-image: url('images/stepinto_co.gif');">The next <b>F5</b> takes you to the lifting translation (this step is missing if dispatching to a static role method).</li>
+    </ul><br />
+
+  <tr><td class="caption">Lifting: <td><img src="images/screenshots/stack_lifting.png" />
+
+  <tr><td colspan=2>
+    The above screenshot shows the debugger while a lifting translation is pending. 
+    The Debug view signals this by the faked stack frame labeled <code class="high">{{Lift&nbsp;to&nbsp;Item}}</code>.<br>
+    Since no real source code exists for the lifting method the editor highlights the 
+    <code class="keyword">playedBy</code> declaration from the class header.<br>
+    This declaration tells you that the current lifting operation will translate a <code>Segment</code>
+    into an <code>Item</code>.
+    You'll normally want to just leave the lifting method:
+    <ol>
+    <li style="list-style-image: url('images/stepreturn_co.gif');"><b>F7</b> (or F6) takes you out off the lifting method and back to the callin binding.
+    <li style="list-style-image: url('images/stepinto_co.gif');"><a name="abouttoentermethod">Once more pressing <b>F5</b></a> finally steps into the bound role method.<br>
+    	If a guard predicate were present, the guard would be entered here, before finally proceeding to the role method.<br>
+    	Of course, entering a guard predicate can be skipped by pressing F6 at that point.
+    </ol>
+
+  <tr><td class="caption">Entering the role method: <td><img src="images/screenshots/stack_entered_earnCredit.png" />
+  <tr><td colspan=2>
+  	At this point you're back in a normal Java method (role method), just the pale and green stack frames tell you
+  	that you haven't entered this method via a normal method call but via callin dispatch.<br>
+  	If we would be looking at a callin method with a base call, stepping into that base call
+  	would also trigger some dispatch before either stepping into the original base method
+  	or proceeding with dispatching to other pending callin bindings.</td></tr>
+  </table>
+  <h2>Stack frame coloring</h2>
+  In the above screenshots you see some stack frames printed in colors. 
+  While the exact colors to use can be configured in the preference page shown <a href="#prefs">above</a>,
+  the meaning of colors is as follows:
+  <dl>
+  <dt style="color:#B6B6D1;">light purple
+  <dd>Dispatch code with no direct correspondence in the source code.</dd>
+  <dt style="color:#189810;">green</span>
+  <dd>Callin binding declarations and base-calls &ndash; each green stack frame signals a crossing of a team boundary.</dd>
+  </dl>
+  <h2><a name="configure"></a>Configuring the callin stepping behavior</h2>
+  <p>
+  In the above scenario the debugger stops at several locations where the current stack frame says: <code class="pale">{{Dispatching callins for book}}</code>.<br>
+  All these locations can be configured such that the debugger will automatically step into the next action.<br>
+  Looking again at the preference page <code class="high">Object Teams &mdash; Debug</code>:
+  </p>
+  <img src="images/screenshots/debug_prefs_callin_stepping.png" />
+  <p>
+  The highlighted section of this preference page shows three options, each of which represents a particular kind of dispatching situation:
+  <dl>
+  <dt>Pending dispatch to the callin binding:</dt>
+  	<dd>The next step-into will take you to a callin method binding, because an active team instance claims interest in the control flow.<br>
+  	At this stage the appropriate team instance has already been selected, however, guard predicates may still cancel dispatch to the role method.</dd> 
+  <dt>Pending recursive dispatch:</dt>
+  	<dd>The next step-into will take you into the next recursion of the current dispatch method.<br>
+  	This is relevant mostly if you want to analyze how multiple teams that affect the same base method are scheduled.<br>
+  	When enabling the display of OT/J internal variables you may inspect the internal iterator of team instances (an array of teams plus an index into the array).</dd> 
+  <dt>Pending call to the original base method</dt>
+  	<dd>This signifies the final iteration of the dispatch code at what point the original method will be entered by the next step-into.<br/>
+  	This stage can, e.g., be reached when a <code class="keyword">callin</code> method has issued a base-call.<br>
+  	Instead of directly entering the base method, the dispatch code needs to take over,
+  	because more team instances might be waiting to receive the control.</dd>
+  </dl>
+  By default all of these pending actions are visualized as mentioned.<br>
+  Disabling any of the check boxes causes the  debugger to skip the corresponding step and automatically step into the pending method.<br>
+  In this mode debugging may be faster,  because fewer steps are needed, but the execution may jump to unpredicted locations.<br>
+  If the scheduling of perhaps multiple active teams needs investigation, the more verbose modes might be of more help.
+  </p>
+  </body>
+</html>

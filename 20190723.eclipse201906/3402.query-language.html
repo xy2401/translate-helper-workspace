@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>The VIATRA Query Language</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
+</head>
+<body id="vql-basics" class="article">
+<div id="header">
+<h1>The VIATRA Query Language</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>For the query language, we reuse the concepts of graph patterns (which is a key concept in many graph transformation tools) as a concise and easy way to specify complex structural model queries. These graph-based queries can capture interrelated constellations of EMF objects, with the following benefits:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>the language is expressive and provides powerful features such as negation or counting,</p>
+</li>
+<li>
+<p>graph patterns are composable and reusable,</p>
+</li>
+<li>
+<p>queries can be evaluated with great freedom, i.e. input and output parameters can be selected at run-time,</p>
+</li>
+<li>
+<p>some frequently encountered shortcomings of EMF’s interfaces are addressed:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>easy and efficient enumeration of all instances of a class regardless of location,</p>
+</li>
+<li>
+<p>simple backwards navigation along all kinds of references (even without eOpposite),</p>
+</li>
+<li>
+<p>finding objects based on attribute value.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The current version of the VIATRA Query Language (VQL) owes many of its syntax to the <a href="https://wiki.eclipse.org/VIATRA2/GettingStarted/Creating_Transformations">VTCL language</a> of model transformation framework VIATRA2. If you would like to read more on the foundations of the new language, we kindly point you to our <a href="http://www.inf.mit.bme.hu/en/research/publications/graph-query-language-emf-models">ICMT 2011</a> paper (important note: the most up-to-date VIATRA Query language syntax differs slightly from the examples of the ICMT paper).</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_references_to_ecore_metamodels">1. References to Ecore metamodels</a></li>
+<li><a href="#_syntax_guide">2. Syntax Guide</a>
+<ul class="sectlevel2">
+<li><a href="#_file_header">2.1. File Header</a></li>
+<li><a href="#_pattern_structure">2.2. Pattern Structure</a></li>
+<li><a href="#_basic_pattern_constraints">2.3. Basic Pattern Constraints</a></li>
+<li><a href="#advanced-constraints">2.4. More Complex Issues</a></li>
+<li><a href="#_matches_variables_and_references">2.5. Matches, Variables and References</a></li>
+</ul>
+</li>
+<li><a href="#_advanced_language_features">3. Advanced Language Features</a>
+<ul class="sectlevel2">
+<li><a href="#_import_aliasing">3.1. Import aliasing</a></li>
+<li><a href="#_java_type_and_edatatype_references">3.2. Java type and EDataType references</a></li>
+<li><a href="#_working_with_emaps_in_viatra_query">3.3. Working with EMaps in VIATRA Query</a></li>
+<li><a href="#recursion">3.4. Recursive queries in VIATRA Query</a></li>
+<li><a href="#functional-dependencies">3.5. Functional dependencies</a></li>
+</ul>
+</li>
+<li><a href="#extensibility">4. Extensibility</a>
+<ul class="sectlevel2">
+<li><a href="#_function_whitelist">4.1. Function Whitelist</a></li>
+<li><a href="#_custom_aggregators">4.2. Custom Aggregators</a></li>
+</ul>
+</li>
+<li><a href="#_custom_annotations">5. Custom annotations</a></li>
+<li><a href="#_known_limitations_v1_7">6. Known Limitations (v1.7)</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references_to_ecore_metamodels"><a class="link" href="#_references_to_ecore_metamodels">1. References to Ecore metamodels</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A VQL file is statically bound to one or more Ecore metamodels, providing type inference and advanced validation of the implemented queries. Additionally, the tooling (especially the code generator) needs access to the corresponding EMF Generator models as well.</p>
+</div>
+<div class="paragraph">
+<p>Three different mechanisms are used to match the required EPackages (declared by nsUri) to their definitions (and generator models):</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>EPackages used in the EMF EPackage Registry are always available.</p>
+</li>
+<li>
+<p>The Eclipse plug-ins of the target platform and the currently developed ones might also contribute other plug-ins. For that, their corresponding plugin.xml file should contain an <code>org.eclipse.emf.ecore.generated_package</code> extension point.</p>
+</li>
+<li>
+<p>If neither of the previous mechanism works, you can put a VIATRA Query Generator model into your VIATRA Query project, and add a mapping between the EPackage nsUri and the uri to find a genmodel.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In normal cases, it is highly recommended to stick with the first two approaches whenever possible, and only rely on the VIATRA Query Generator Models if you are not capable of making the EMF model available as expected.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+As of some shortcomings of the EMF generator, the <code>org.eclipse.emf.ecore.generated_package</code> extension of the Ecore model project might contain incorrect EPackage nsUri (e.g. if the package was renamed), might not include a generator model reference or the entire definition might be missing (e.g. if a new EPackage was introduced after the code generator was executed). In such cases, try to manually repair the extension declaration, as it makes the integration of EMF models into most applications easier.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_syntax_guide"><a class="link" href="#_syntax_guide">2. Syntax Guide</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This page focuses on the entire syntax of the language. To get familiar with the basics, it is recommended to consult first <a href="../tutorial/tutorial.html#_pattern_language">the getting started tutorial</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_file_header"><a class="link" href="#_file_header">2.1. File Header</a></h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Enclose pattern definitions in a package: <code>package my.own.patterns</code></p>
+</li>
+<li>
+<p>Import declarations are required to indicate which EMF packages and Java classes are referenced in the query definitions.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Use the registered namespace URI for EMF package import declarations. Content assist is available:</p>
+</li>
+<li>
+<p><code>import "http://my.own.ePackage.nsUri/1.0"</code></p>
+</li>
+<li>
+<p>Use Java import declarations for importing Java classes from the project classpath, in order to be used (a) in expression evaluations, also (b) classes used as type restrictions (as of 1.4), or (c) as aggregators (as of 1.4).</p>
+</li>
+<li>
+<p><code>import java ^java.util.regex.Pattern</code></p>
+</li>
+<li>
+<p>Note that here and elsewhere, a caret character can be used to escape keywords, such as java.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_pattern_structure"><a class="link" href="#_pattern_structure">2.2. Pattern Structure</a></h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Introduce a pattern by the <code>pattern</code> keyword, a pattern name, and a list of parameter variables. Then enclose in curly braces a list of constraints that define when the pattern should match.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>pattern myPattern(a,b,c) {&#8230;&#8203;pattern contraints&#8230;&#8203;}</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Pattern parameters can be suffixed by a type declaration that will be valid in each pattern body. Here is an alternative way to express the type of variable <code>b</code>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>pattern myPattern(a,b : MyClass,c) {&#8230;&#8203;pattern contraints&#8230;&#8203;}</code></p>
+</li>
+<li>
+<p>In the language, these parameter types are considered the same as type constraints in the pattern body.</p>
+</li>
+<li>
+<p>Type declarations are optional, but <strong>strongly recommended</strong> to use. In future versions of VIATRA, they might become mandatory. We recommend using EClass types for all EObject parameter variables, and, since version 1.4, Java class types (prefixed with the <code>java</code> keyword) for attribute-valued and computed parameters.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Since version 1.4, parameters can optionally be marked as incoming (<code>in</code>) or outgoing (<code>out</code>). Incoming parameters <strong>must</strong> be bound when the pattern matcher initializes, while outgoing parameters <strong>must not</strong>. Unmarked parameters are neither incoming nor outgoing: they might be either bound or unbound when called. These declarations are used as only hints; the pattern matcher might ignore them if necessary.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>pattern myPattern(in a, out b, c) {&#8230;&#8203;}</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Since version 1.4, the evaluation backend can be specified as local search-only (<code>search</code>) or Rete-only (<code>incremental</code>), providing hints to the runtime what pattern matcher should be initialized for this pattern. If undefined, the default hints of the engine is used (by default, Rete).</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>search pattern myPattern(a,b,c) {&#8230;&#8203;}</code></p>
+</li>
+<li>
+<p><code>incremental pattern myPattern(a,b,c) {&#8230;&#8203;}</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Disjunction ("or") can be expressed by linking several pattern bodies with the <code>or</code> keyword:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>pattern myPattern(a,b,c) {&#8230;&#8203; pattern contraints &#8230;&#8203;} or {&#8230;&#8203; pattern constraints &#8230;&#8203;}</code></p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_basic_pattern_constraints"><a class="link" href="#_basic_pattern_constraints">2.3. Basic Pattern Constraints</a></h3>
+<div class="paragraph">
+<p>The most basic pattern constraints are type declarations: use EClasses, ERelations and EAttributes (or Java classes since version 1.4). The EMF data types should also be fine for attribute values, but not for computed values.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>An EClass constraint expressing that the variable <code>myEntityVariable</code> must take a value that is an EObject of the class MyClass (from EPackage my.own.ePackage, as imported above) looks like <code>MyClass(myEntityVariable);</code></p>
+</li>
+<li>
+<p>A relation constraint for the EReference MyReference expressing that myEntityVariable is of eClass MyClass and its MyReference EReference is pointing to TheReferencedEntity (or if MyReference is many-valued, then it is one of the target object contained in the EList): <code>MyClass.MyReference(myEntityVariable, theReferencedEntity);</code></p>
+</li>
+<li>
+<p>A relation constraint for an EAttribute, asserting that theAttributeVariable is the String/Integer/etc. object that is the MyAttribute value of myEntityVariable, looks exactly the same as the EReference constraint: <code>MyClass.MyAttribute(myEntityVariable, theAttributeVariable);</code></p>
+</li>
+<li>
+<p>Such reference navigations can be chained; the last step may either be a reference or attribute traversal: <code>MyClass.MyReference.ReferenceFromThere.AnotherReference.MyAttribute(myEntityVariable, myString);</code></p>
+</li>
+<li>
+<p>Starting from version 1.4, Java type constraints can be applied on attribute and computed values using the <code>java</code> keyword, to express that the values of the variable must be instances of a given Java class. Although available in pattern bodies, the most common usage should be as parameter types (see above) <code>java String(myPrettyPrintedString);</code>. (Don&#8217;t forget to use <code>import java &#8230;&#8203;</code> in the header to import the Java class from the classpath)</p>
+</li>
+<li>
+<p>You will probably not need this, but EDatatype type constraints can be applied on attribute values, with a syntax similar to that used for EObjects, and with the additional semantics that the attribute value must come from the model, not just any int/String/etc. computed e.g. by counting: <code>MyDatatype(myAttributeVariable);</code> or for the built-in datatypes (import the Ecore metamodel): <code>EString(myAttributeVariable);</code>. In general, it <strong>not recommended</strong> to rely on data type constraints directly, as the using them can cause surprises when combined with e.g. eval expressions.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="advanced-constraints"><a class="link" href="#advanced-constraints">2.4. More Complex Issues</a></h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>By default, each variable you define <strong>may be equal</strong> to every other variable in a query. This is especially important to know when using attributes or multiple variables with the same type (or supertype).</p>
+<div class="ulist">
+<ul>
+<li>
+<p>For example, if you have two variables MyClass(someObj1), MyClass(someObj2), then someObj1 and someObj2 may match to the same EObject.</p>
+</li>
+<li>
+<p>If you want to declare that two variables <strong>mustn&#8217;t</strong> be equal, you can write: <code>someObj1 != someObj2;</code></p>
+</li>
+<li>
+<p>If you want to declare, that two variables <strong>must</strong> take the same value, you can write: <code>someObj1 == someObj2;</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Pattern composition: you can reuse a previously define pattern by calling it in a different pattern&#8217;s body: <code>find otherPattern(oneParameter, otherParameter, thirdParameter);</code></p>
+</li>
+<li>
+<p>You can express negation with the <code>neg</code> keyword. Those actual parameters of the negative pattern call that are not used elsewhere in the calling body will be quantified; this means that the calling pattern only matches if no substitution of these calling variables could be found. See examples in order to understand. The below constraint asserts that for the given value of the (elsewhere defined) variable myEntityVariable, the pattern neighborPattern does not match for any values of otherParameter (not mentioned elsewhere).</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>neg find neighborPattern(myEntityVariable, otherParameter);</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In the above constraints, wherever you could reference a variable in a pattern body, you can also use:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Constant literals of primitive types, such as <code>10</code>, or <code>"Hello World"</code>.</p>
+</li>
+<li>
+<p>Constant literals of enumeration types, such as <code>MyEEnum::MY_LITERAL</code></p>
+</li>
+<li>
+<p>Aggregation of multiple matches of a called pattern into a single value, in a syntax analogous to negative pattern calls:</p>
+</li>
+<li>
+<p>The simplest case is match counting: <code>howManyNeighbors == count find neighborPattern(myEntityVariable, _);</code></p>
+</li>
+<li>
+<p>Since v1.4, we provide additional out-of-the-box aggregators. <code>sum</code> computes the sum of numbers. <code>min</code>/<code>max</code> select the smallest / greatest of a nonempty bag of number, date or string values. Unlike match counting, these aggregators require a marker symbol <code>#</code> to indicate which parameter of the called pattern shall be aggregated (e.g. summed).</p>
+</li>
+<li>
+<p><code>ageOfOldestFriendOfPerson == max find friendsAge(person, _friendOfPerson, #ageOfFriend);</code></p>
+</li>
+<li>
+<p>Attribute expression evaluation: the <code>eval()</code> construct lets you compute values by Java (actually <a href="https://www.eclipse.org/xtend/">Xbase</a>) expressions referencing variables of EDataTypes and java values.</p>
+</li>
+<li>
+<p><code>qualifiedName == eval(parentName + "." + simpleName);</code></p>
+</li>
+<li>
+<p>The Java types of variables are inferred based on the EMF Ecore specification (using the generated Java classes)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Additional attribute constraints using the check() construct, similarly to eval():</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>check(aNumberVariable &gt; aStringVariable.length());</code></p>
+</li>
+<li>
+<p>Semantically equivalent to <code>true == eval(aNumberVariable &gt; aStringVariable.length());</code></p>
+</li>
+<li>
+<p>The Java types of variables are inferred based on the EMF Ecore specification (using the generated Java classes).</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>One can also use the transitive closure of binary patterns in a pattern call, such as the transitive closure of pattern friend (note the <code>+</code> symbol after the name of the called pattern): <code>find friend+(myGuy, friendOfAFriendOfAFriend);</code></p>
+</li>
+</ol>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Starting with VIATRA 2.0, it is also possible to calculate the reflexive transitive closure of a pattern call, e.g. to return all friends and
+(note the <code>*</code> symbol after the name of the called pattern): <code>find friend*(myGuy, friendOfAFriendOfAFriend);</code>. This is equivalent with the following construct: <code>pattern friendOrMySelf(self, other) { other == self; } or { find friend+(self, other);}</code></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_matches_variables_and_references"><a class="link" href="#_matches_variables_and_references">2.5. Matches, Variables and References</a></h3>
+<div class="paragraph">
+<p>A <strong>pattern match</strong> is a substitution of all pattern variables that binds values, such as EObjects or attribute/computed values, to every pattern variable by satisfying all parameters. The <strong>match set</strong> of a pattern is the <strong>set</strong> of matches, where <em>two matches are considered the same only if they all parameter variables are bound to the same value</em>. So more precisely, a match of the pattern is a value substitution for the pattern parameters with the properties that there is at least one way to substitute values for the local variables of at least one of the pattern bodies so that the parameter and local variables together satisfy all constraint of that pattern body (plus type declarations suffixed on the parameter declarations directly).</p>
+</div>
+<div class="paragraph">
+<p>The match set of each query is expected to be <strong>enumerable</strong> over a given model without any further input. However, it is possible to evaluate the results by binding some parameter variables to concrete values; in this case a filtered result set is provided. To reason about this requirement, variable references inside a graph pattern body are categorized as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Variables references of a constraint are <strong>enumerable</strong>, if all possible values can be enumerated for a given model. E.g., all variables of type constraints like <code><code>Book(b);</code></code> and path expressions like <code><code>Book.title(b, t);</code></code> or positive pattern calls are enumerable.</p>
+</li>
+<li>
+<p>Parameters of negative pattern calls and aggregators are <strong>quantified</strong>, if they are not referenced anywhere else in the pattern.</p>
+</li>
+<li>
+<p><strong>Uncountable</strong> in every other case, e.g. variable references in check expressions, like <code><code>check(t.startsWith("The"));</code></code> or Java type constraints, like <code><code>java Integer(no);</code></code> are uncountable.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For a pattern body to be well-formed, the following rules are to be fulfilled:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Each parameter variable must have one or more <strong>enumerable</strong> references.</p>
+</li>
+<li>
+<p>Parameters of negative pattern calls and aggregators has to expressed by <strong>quantified variable reference</strong> referring to a variable not used anywhere else, or it <strong>must</strong> have an <strong>enumerable</strong> reference in the body.</p>
+</li>
+<li>
+<p>All local variables without quantified references must have one or more <strong>enumerable</strong> references.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Local variables with a single reference, such as <strong>quantified</strong> parameters, should be prefixed with an <code>_</code> (underscore) character to mark this. Furthermore, if you only use a variable once, it is OK not to name it at all; just use a single underscore instead of the variable reference. In fact, each occurrence of this anonymous variable will be treated as a separate, single-use variable that is distinguished from any other anonymous variable. (This should look self-evident to those who are familiar with Prolog.) Examples:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>find hasChild(person, _);</code> means that we are looking for parents</p>
+</li>
+<li>
+<p><code>neg find hasChild(_, _);</code> means that currently there are no parent-child relationships in the model at all.</p>
+</li>
+<li>
+<p><code>neg find hasChild(person, _);</code> means that this specific person has no children at all; the person variable must be used elsewhere by other (positive) pattern constraints.</p>
+</li>
+<li>
+<p><code>neg find hasChild(person, child);</code> means that this specific person is not the parent of this specific child; both variables must be used elsewhere by other (positive) pattern constraints.</p>
+</li>
+<li>
+<p><code>count find hasChild(_, _)</code> is the number of parent-child relationships in the model.</p>
+</li>
+<li>
+<p><code>count find hasChild(person, _)</code> is the number of children of this specific person; the person variable must be used elsewhere by other (positive) pattern constraints.</p>
+</li>
+<li>
+<p><code>count find hasChild(person, child)</code> is not very useful: it evaluates to 1 if this specific person is the parent of this specific child, 0 otherwise; both variables must be used elsewhere by other (positive) pattern constraints.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_advanced_language_features"><a class="link" href="#_advanced_language_features">3. Advanced Language Features</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_import_aliasing"><a class="link" href="#_import_aliasing">3.1. Import aliasing</a></h3>
+<div class="paragraph">
+<p>When writing queries over multiple metamodels, sometimes there are multiple EClass instances with the same name, but in different EPackages. To handle such cases, VQL supports import aliasing: it is possible to extend an import declaration with an alias that can later be used to differentiate between the sources.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The syntax to define the import is as follows: <code>import "http://my.own.ePackage.nsUri/1.0" as alias</code></p>
+</li>
+<li>
+<p>The alias can be used as a prefix for any EMF type reference, such as <code>alias::TypeName</code></p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If no alias is used to specify the used metamodel, the import declarations provided later shadow the previous ones.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As an example on how to use this feature effectively, consider the following example, where both the <code>custom</code> and the <code><a href="http://www.eclipse.org/uml2/5.0.0/UML" class="bare">http://www.eclipse.org/uml2/5.0.0/UML</a></code> EPackage instances define an <code>EClass NamedElement</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">import "custom" as custom
+import "http://www.eclipse.org/uml2/5.0.0/UML" as uml
+
+pattern importAliases(x : NamedElement) { // From UML metamodel, selected by order of  imports
+  uml::NamedElement(x); // From UML metamodel, selected explicitly
+  custom::NamedElement(x); // Selected from the custom metamodel
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If aliasing is used for referencing the types, only the selected metamodel will be considered. For example, if the custom metamodel would not define an <code>EClassifier NamedElement</code>, the <code>custom::NamedElement</code> type reference will not be resolved, regardless of the <code>EClassifier NamedElement</code> defined in the UML metamodel.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_java_type_and_edatatype_references"><a class="link" href="#_java_type_and_edatatype_references">3.2. Java type and EDataType references</a></h3>
+<div class="paragraph">
+<p>Type constraints with Java types and EDataTypes behave differently in two major aspects:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>EDataTypes only contain values that are explicitly present in the model. For example, an <code>EString</code> type usually includes all names and identifiers from a model, but does not include any computed string (with the exception if the calculated string is also present in the instance models). On the other hand, a <code>java String</code> includes both the names and identifiers and all the possible computed values as well.</p>
+</li>
+<li>
+<p>The match set of EDataType constraints is enumerable, while the set of instances of Java types is not. This is important for both performance optimization and well-formedness of the pattern; and the difference can be explained by the fact that all instances present in the model can be practically enumerated (e.g. by consulting all EObjects in the model that have an EString-typed EAttribute), but the instances of a Java type cannot (e.g. one cannot enumerate all java Strings, as there are virtually infinitely many).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The following example illustrates the difference between the various cases: when returning the number of <code>EClass</code> instances in the model, the <code>EDataType EInt</code> is inappropriate, as any non-negative integer can be result, but the model might not contain those. By explicitly using <code>java Integer</code> as type, any valid count can be returned.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">import "http://www.eclipse.org/emf/2002/Ecore"
+
+// Incorrect
+pattern numberOfClasses1(n : EInt) { // imports EInt EDataType from Ecore
+  n == count EClass(_c);
+}
+
+// Correct
+pattern numberOfClasses3(n : java Integer) { // Explicitly declares Java Integer
+  n == count EClass(_c);
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When in doubt, rely on java types instead of EDataType constraints. Use EDataTypes only if it is really required for the end result to be present in the instance models.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_working_with_emaps_in_viatra_query"><a class="link" href="#_working_with_emaps_in_viatra_query">3.3. Working with EMaps in VIATRA Query</a></h3>
+<div class="paragraph">
+<p>The eclipse.org EMF wiki gives a proper FAQ about the various modeling related issues, including the usage of EMaps in your metamodel. With VIATRA Query you can even write your own queries to extract the key-value pairs from your instance model.</p>
+</div>
+<div class="sect3">
+<h4 id="_emaps_in_your_metamodel"><a class="link" href="#_emaps_in_your_metamodel">3.3.1. EMaps in your metamodel</a></h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Creating the actual EMap type: Create an EClass with the name <code>«Type1»To«Type2»Map</code> where <code>«Type1»</code> represents the key&#8217;s type and the <code>«Type2»</code> represents the value&#8217;s type.</p>
+</li>
+<li>
+<p>Set the <code>Instance Type Name</code> property of the newly created EClass to <code>java.util.Map$Entry</code>.</p>
+</li>
+<li>
+<p>Create an EAttribute or EReference named <code>key</code> and set the EDataType or EClass for it.</p>
+</li>
+<li>
+<p>Create an EAttribute or EReference called <code>value</code> and set the EDataType or EClass for it.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>For example for an <code>EMap&lt;EString, EString&gt;</code> you would have an EClass named <code>EStringToEStringMap</code> if you follow the mentioned scheme. To actually use this newly created type follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create an EReference with its EClass set to be the map-entry class you created above.</p>
+</li>
+<li>
+<p>Set the Containment property of your EReference to be true.</p>
+</li>
+<li>
+<p>Set the upper-bound of your EReference to be -1 (unbounded).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The contents of the EMap instances can be modified like in every other instance model. One EStringToEstringMap instance will be used as a map entry (key-value pair).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_querying_emaps_from_viatra_query_patterns"><a class="link" href="#_querying_emaps_from_viatra_query_patterns">3.3.2. Querying EMaps from VIATRA Query patterns</a></h4>
+<div class="paragraph">
+<p>Here is an example query to extract the key-value pairs from an EMap:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">  pattern emapPattern(K : EString, V : EString) {
+    EMapTestElement(M);
+    EMapTestElement.map(M, Map);
+    EStringToEStringMap.key(Map, K);
+    EStringToEStringMap.value(Map, V);
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Parts of this overview are based on the <a href="http://wiki.eclipse.org/index.php/EMF-FAQ#How_do_i_create_a_Map_in_EMF.3F" class="bare">http://wiki.eclipse.org/index.php/EMF-FAQ#How_do_i_create_a_Map_in_EMF.3F</a> page.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="recursion"><a class="link" href="#recursion">3.4. Recursive queries in VIATRA Query</a></h3>
+<div class="paragraph">
+<p>As explained on the <a href="#advanced-constraints">Advanced Pattern Constraints section</a>, VIATRA Query supports pattern composition via the <code>find</code> keyword. Does it support recursive composition, i.e. a pattern calling itself, or multiple patterns cyclically referencing each other? Yes, it does, albeit with limits. The situation is complicated, as described below; see <a href="#recursion-summary">Summary and suggestions</a> for an executive summary.</p>
+</div>
+<div class="paragraph">
+<p>First of all, there are cases where recursion is plain nonsense, such as this query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern meaningless(x) {
+  neg find meaningless(x);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For every choice of value of the variable <code>x</code>, it is a match of pattern <code>meaningless</code> if and only if it is not a match of the same pattern. It is easy to see that this is a contradiction - do not expect VIATRA Query to be useful for evaluating such queries.</p>
+</div>
+<div class="paragraph">
+<p>To avoid such contradictions, VIATRA Query supports <strong>positive recursion</strong> only, i.e. patterns referencing themselves or each other cyclically, solely by positive <code>find</code> pattern calls, never by negation (<code>neg find</code>) or aggregation (<code>count find</code>). (In mathematics, this property is called <a href="https://en.wikipedia.org/wiki/Stratification_%28mathematics%29">stratification</a>.) Positively recursive queries are always meaningful - unfortunately, they still will not work in all cases, as explained below. From this point onward, the discussion will be restricted to stratified / positive recursion.</p>
+</div>
+<div class="sect3">
+<h4 id="_well_founded_recursion"><a class="link" href="#_well_founded_recursion">3.4.1. Well-founded recursion</a></h4>
+<div class="paragraph">
+<p>Suppose that we have elements of type <code>Node</code> forming a containment hierarchy of parents and children, and we want to assign them qualified names composed from their simple names and and the name of their parent. Let&#8217;s see the following recursive pattern:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern qualifiedName(node : Node, name) {
+    // for a child element, compose from parents qualified name
+    find parent(node, parentNode);
+    Node.simpleName(node, simpleName);
+    find qualifiedName(parent, parentName); // recursive call
+    name == eval (parentName + "." + simpleName);
+  } or {
+    // for a root element, just use the simple name
+    neg find parent(node, _anyParent);  // has no parents
+    Node.simpleName(node, name);
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is an example of correct usage of recursion in VIATRA Query.</p>
+</div>
+<div class="paragraph">
+<p>Take a moment to observe how recursion works here. The pattern <code>qualifiedName</code> recursively calls itself in one of its bodies. This means that the result of this query depends on itself, which is seemingly problematic - however, if we look carefully, we discover that on the level of individual pattern matches (i.e. tuples of nodes and their qualified name), there are no <strong>dependency cycles</strong>. To elaborate, the match <code>(node, name)</code> does not recursively depend on whether <code>(node, name)</code> is a match; it only depends on whether <code>(parent, name)</code> is match; which, in turn, will depend on the parent of the parent node, etc. As this dependency relationship follows the <code>parent</code> relationship, which represents a containment tree, there can be no dependency cycles.</p>
+</div>
+<div class="paragraph">
+<p>In general, VIATRA Query returns correct results for positively recursive queries that are <code>well-founded</code>, i.e. individual matches never support each other cyclically. This is typically found to be the case if the recursion traverses along a containment tree (in either direction), or any graph structure that is known to be a DAG (directed acyclic graph).</p>
+</div>
+<div class="sect4">
+<h5 id="_optional_reading_problems_in_the_ill_founded_case"><a class="link" href="#_optional_reading_problems_in_the_ill_founded_case">3.4.1.1. Optional reading: problems in the ill-founded case</a></h5>
+<div class="paragraph">
+<p>As an aside, one can draw parallels with imperative programs, where the well-founded property of a recursive subroutine would warrant that the recursion terminates. If a recursive program is not well-founded, the subroutine may not terminate. VIATRA Query, however, is guaranteed to terminate even for recursive queries that are not well-founded; the problem lies elsewhere.</p>
+</div>
+<div class="paragraph">
+<p>Suppose that we have a bunch of people on Earth, and we know that people called <em>Jane</em> are happy; furthermore, everyone else is happy who knows someone that is happy. Suppose now that there is also a society of Martians, who are Persons as well. There are no Janes on Mars, and no Martians know people on Earth.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">  pattern happy(x : Person) = {
+    Person.name(x, "Jane");
+  } or {
+    Person.knows(x, y);
+    find happy(y);  // ill-founded recursion
+  }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Since it is possible to have several people that cyclically know each other (in fact, two people are enough that mutually know each other), the recursion in the above query is not well-founded. Initially, though, the results returned will be correct: everyone on Earth is happy, as everyone knows a Jane transitively, while no Martian will be happy. Errors only pop up after incremental maintenance of results. If, by accident, we set the <code>knows</code> reference of a Martian to point to an Earthling, then suddenly all Martians will become happy as well. Later we realize our mistake and delete this reference - but surprisingly, VIATRA Query will still report that Martians are happy, even though the model was returned into its original state!</p>
+</div>
+<div class="paragraph">
+<p>The key to the issue is that the final result set, where everyone is happy, is not actually contradicted by the query definition (since everyone knows somebody who is happy). It is said that this incorrect result is still a fixpoint, i.e. a solution to the query; however, it is not the <strong>least fixpoint</strong>, which would be the actually desirable result. In this case, the least fixpoint would be the original, correct result: everyone on Earth is happy, while nobody on Mars is.</p>
+</div>
+<div class="paragraph">
+<p>Therefore VIATRA Query, in its default mode of operation, can return incorrect results even for positively recursive queries, if the recursion is not well-founded. Fortunately, the error is known not manifest as long as the initial model is unchanged, or there are only additions. However, if there is deletion, movement of elements, or changing attribute or reference values, then it is possible that VIATRA Query will yield a non-minimal fixpoint as result, which is typically not desired.</p>
+</div>
+<div class="paragraph">
+<p>Fortunately, there is a solution!</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="recursion-dred"><a class="link" href="#recursion-dred">3.4.2. Delete and REDerive: conquering the ill-founded case</a></h4>
+<div class="paragraph">
+<p>Since the 1.6 version, VIATRA Queries supports <em>Delete and REDerive</em> evaluation in the query engine. This evaluation strategy makes it possible to correctly compute the results of <em>recursive graph patterns</em> on <em>instance models that contain cycles</em> (i.e. when the recursion is ill-founded). Prior versions of VIATRA Queries supported only scenarios where at least one of the cycles was missing, that is, either the patterns were not recursive or the instance models were acyclic.</p>
+</div>
+<div class="paragraph">
+<p>As of now, the Delete and REDerive evaluation can be manually enabled using the query evaluation hint <code>ReteHintOptions.deleteRederiveEvaluation</code>. From version 2.0, this option can be selected for query evaluation through the Query Results View in the Preferences page for the VIATRA Query Explorer.</p>
+</div>
+<div class="sect4">
+<h5 id="_optional_reading_under_the_hood"><a class="link" href="#_optional_reading_under_the_hood">3.4.2.1. Optional reading: under the hood</a></h5>
+<div class="paragraph">
+<p>We demonstrate the problems of the old execution mode and the DRED solution by a concrete example.</p>
+</div>
+<div class="paragraph">
+<p>Suppose that once in a while, people share secrets with each other. For the sake of the example, imagine that if a person is in a "talks to" relationship with another, then that person will also share his/her secret with the other person. The other person will eventually also share the previous person&#8217;s secrets with others, that is, the sharing of secrets is transitive. In our example, it is also possible that a person revokes a secret, and, by that, the secret will be/should be also forgotten by all people that heard about that secret.</p>
+</div>
+<div class="paragraph">
+<p>Given these assumptions, let’s model some real people and their secrets. Assume that we have four people Ann (A), Bill (B), Jane (J), and Mike (M), and we have the following talks to relationships: A &#8594; B, B &#8594; J, J &#8594; M, J &#8594; B. The four people also have some secrets, four numbers, these are respectively A - 1, B - 2, J - 3, and M - 4. In this initial setup, Ann does not know any secrets, but the others know everybody&#8217;s secrets (including Ann&#8217;s).</p>
+</div>
+<div class="paragraph">
+<p>We can encode the secret sharing with VIATRA Queries graph patterns as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">// Directly known secrets by the given person through the talks to relationship
+pattern directSecrets(person : Person, secret : EString) {
+	Person(other);
+	Person.talksTo(other, person);
+	Person.secret(other, secret);
+}
+
+// Directly or transitively known secrets by the given person
+pattern allSecrets(person : Student, secret : EString) {
+	find directSecrets(person, secret);
+} or {
+	Person(other);
+	Person.talksTo(other, person);
+	find allSecrets(other, secret);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can observe that the allSecrets pattern is recursive, and that the input model has a cycle through the "talks to" relationship. We encourage you to actually model this scenario in VIATRA Queries, and observe what happens if you DELETE the A &#8594; B edge, that is, the scenario when Ann does not want to share her secret anymore. We would expect that the VIATRA Queries evaluation will derive that Ann&#8217;s secret will be forgotten by the others (as it should be according to our example). However, this is not the case, Ann&#8217;s secret is still known by everybody else. What has just happened?</p>
+</div>
+<div class="paragraph">
+<p>In order to better understand what is going on under the hood, we need to introduce the notion of an ''alternative derivation'' of a tuple. Lets focus on the [Bill, 1] tuple which represents that Bill knows Ann&#8217;s secret. Before the deletion of the A &#8594; B edge, this tuple had two alternative derivations. One of them directly came from Ann because she shared her secret with Bill by directly talking to him. Bill then shared this secret with Jane, Jane with Mike, and Mike with Bill again, that is, Bill got to know Ann&#8217;s secret through another alternative source, specifically, through Mike. Intuitively this means that two people shared Ann&#8217;s secret with Bill, even though Mike got to know that secret through Bill himself. More formally, one of the derivations of the [Bill, 1] tuple is derived from the path A &#8594; B, while the other is from A &#8594; B &#8594; J &#8594; M &#8594; B. Now, if we delete the A &#8594; B edge, Ann&#8217;s secret only loses one alternative derivation, but another one still remains because Bill relies on the information what Mike told him, while Mike relies on Jane, and, finally, Jane relies on Bill. What has happened is that the people in the cyclic "talks to" relationship are reinforcing each other in some false information (what is actually not true anymore). Because one alternative derivation remained, Bill is not forgetting Ann&#8217;s secret, even though, he should (!), any, by that, all the others also keep that secret to themselves.</p>
+</div>
+<div class="paragraph">
+<p>The Delete and REDerive evaluation mode helps in correctly computing the results in scenarios like this. The difference in the evaluation is as follows. When the A &#8594; B edge is deleted, we decrement the counter of alternative derivations at Bill for Ann&#8217;s secret from 2 to 1, ''but'' instead of concluding that Ann&#8217;s secret is still known because of the remaining derivation, we kind of put the remaining derivation onto the side and temporarily forget about it. We do that because we want to see if that alternative still holds, and we do not want to falsely reinforce anybody by using that alternative. First, we let all the deletions to purge whatever needs to be purged, and only then start re-deriving information from what has survived the delete phase. What this means is that upon the deletion of the A &#8594; B edge, Bill will say that he also does not know Ann&#8217;s secret anymore (even though he has put aside the fact that he heard it from Mike). In response to that, Jane will also say that she does not know the secret, and, finally, Mike will also revoke his knowledge about that. The last bit is crucial because that one invalidates Bill&#8217;s alternative information that was put aside before. The deletion phase has ended, and no tuples remained in the temporary store, which also means that we cannot re-derive anything. The evaluation has correctly derived that nobody knows Ann&#8217;s secret once she is not talking to Bill anymore.</p>
+</div>
+<div class="paragraph">
+<p>There are some important things to note:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The first one is related to the non-DRED evaluation. The VIATRA Queries engine propagates tuples as long as the results of some pattern(s) change, that is, until a fixpoint is reached. When we concluded that after the deletion of A &#8594; B everybody still knows Ann&#8217;s secret, the engine has reached a fixpoint, but it was not the LEAST (or minimal) fixpoint. Intuitively, we associated the non-minimal fixpoint to a wrong pattern result.</p>
+</li>
+<li>
+<p>Another important aspect is that Delete and REDerive evaluation is not required if the model is changed only through insertions even if we have both kinds of cycles (patterns + instance models). This is because insertions are just expanding the results of patterns, and the previously explained cyclic reinforcement is not an issue in this case.</p>
+</li>
+<li>
+<p>Note that for the very common special case of transitive closures, the dedicated language element (transitive pattern call) is still likely to be more efficient than the DRED-based recursive solutions.</p>
+</li>
+<li>
+<p>With a small penalty in execution time, DRed guarantees correct result maintenance for ''arbitrary'' recursive pattern structures as long as all recursive calls are positive (i.e. no negation or aggregation along cycles of recursion occur).</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="recursion-summary"><a class="link" href="#recursion-summary">3.4.3. Summary and suggestions</a></h4>
+<div class="paragraph">
+<p>In summary, VIATRA Query supports positive (stratified) recursion only. Even for positive recursion, correct (minimal fixpoint) results are only guaranteed if either (i) we enable the <a href="#recursion-dred">new DRED mode</a>, at a performance cost, or (ii) the recursion is well-founded (e.g. moves along a containment hierarchy or acyclic graph). Otherwise (in default mode, with ill-founded recursion), the results are OK only if the model is guaranteed to only ever change by monotonously inserting new stuff, never deleting, moving or replacing.</p>
+</div>
+<div class="paragraph">
+<p>Note that in many typical cases, the <a href="#advanced-constraints">transitive closure operator</a> (e.g. <code>find knows+(x,y);</code>) is sufficient to expressed the desired query, without having to resort to recursions. Transitive closures are successfully evaluated and incrementally maintained by VIATRA Query even in cases where recursion would be ill-founded and fail (e.g. reachability along relationships that may contain cycles). Even in case the recursion is well-founded, the transitive closure operator may or may not lead to better performance. Therefore our primary recommendation is to <strong>use transitive closure instead of recursion if possible</strong>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="functional-dependencies"><a class="link" href="#functional-dependencies">3.5. Functional dependencies</a></h3>
+<div class="paragraph">
+<p>The performance of query evaluation may benefit in various ways from knowing the <strong>functional dependencies</strong> among pattern variables. We say that variables <code>x1</code>, <code>x2</code>, <code>x3</code>, &#8230;&#8203; <code>xn</code> determine variable ''y'' if there can&#8217;t be more than one value of <code>y</code> given a combination of values for <code>x1</code>, <code>x2</code>, <code>x3</code>, &#8230;&#8203; <code>xn</code>. In other words, <code>x1</code>, <code>x2</code>, <code>x3</code>, &#8230;&#8203; <code>xn</code> together uniquely determine <code>y</code>. Yet another way to put it: if two matches of the pattern agree on the values of variables <code>x1</code>, <code>x2</code>, <code>x3</code>, &#8230;&#8203; <code>xn</code>, they must also agree on the value of <code>y</code>.</p>
+</div>
+<div class="paragraph">
+<p>In many cases, the recognition of functional dependencies can drastically improve the performance of the evaluation process. It is therefore important to have the dependencies known in case of performance-critical queries.</p>
+</div>
+<div class="sect3">
+<h4 id="_automatic_inference"><a class="link" href="#_automatic_inference">3.5.1. Automatic inference</a></h4>
+<div class="paragraph">
+<p>Viatra Query has two ways to determine the functional dependencies of your queries: it does its best to automatically infer such dependencies, and you can also help by manually specifying some dependencies (see below). Automatic inference covers cases such as the source of a many-to-one reference uniquely determining its target; or the result of an <code>eval()</code> expression being determined by the variables used in the expression. Since version 1.5, dependencies among parameters for called patterns are also taken into account, though this kind of inference has its limits.</p>
+</div>
+<div class="paragraph">
+<p>In particular, there are the following two main cases where Viatra is unable to automatically determine functional dependencies:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Domain-specific knowledge</strong>: such as relative keys, or any other relationship that is not expressed in the metamodel (ecore). Say that Streets contain Houses that have their integer house numbers; in that case it is automatically known that a House determines the Street is resides in (as the containment reference is one-to-many) as well as its own house number; but it requires domain knowledge to understand that a Street and a house number together uniquely determine a House.</p>
+</li>
+<li>
+<p><strong>Disjunctive patterns</strong>: as of version 1.5, there is no automatic inference of functional dependencies among parameters of patterns that have multiple pattern bodies in an &lt;code&gt;or&lt;/code&gt; relationship.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_manually_specifying_dependencies_since_v1_5"><a class="link" href="#_manually_specifying_dependencies_since_v1_5">3.5.2. Manually specifying dependencies (since v1.5)</a></h4>
+<div class="paragraph">
+<p>The <code>@FunctionalDependency</code> annotation can be used inform the query engine about additional functional dependencies that it would be unable to automatically recognize. The annotation is placed on a pattern, and expresses a functional dependency among pattern parameters. Annotation parameters indicate which query parameters determine which other ones. Note that is is not the evaluation of the annotated pattern, but rather other patterns calling it, that can take advantage of the supplied information.</p>
+</div>
+<div class="paragraph">
+<p>A single occurrence of the annotation expresses a single dependency rule; it is possible to decorate a single pattern with multiple such annotations. Each parameter listed with <code>forEach</code> is taken to appear on the left-hand-side of the dependency (see variables <code>x1</code>, etc. above), and parameters listed with <code>unique</code> are on the right-hand-side (like <code>y</code>), so that for each combination of values assigned to the <code>forEach</code> variables, the value of each <code>unique</code> variable has to be unique. See below for examples:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">// Here the first annotation is superfluous, as it is inferred automatically anyway
+// The second annotation expresses valuable domain knowledge though
+@FunctionalDependency(forEach = house, unique = street, unique = houseNumber)
+@FunctionalDependency(forEach = street, forEach = houseNumber, unique = house)
+pattern address(house: House, street: Street, houseNumber: java Integer) {
+	Street.houses(street, house);
+	House.number(house, houseNumber);
+}
+
+// Houses are either on a Street or on a Road, but not both at the same time;
+//  however Viatra is not smart enough (yet) to figure that out.
+// In disjunctive patterns, all dependencies have to be specified manually!
+@FunctionalDependency(forEach = house, unique = location)
+pattern locatedOnThoroughfare(house: House, location: Thoroughfare) {
+	Street.houses(location, house);
+} or {
+	Road.houses(location, house);
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="extensibility"><a class="link" href="#extensibility">4. Extensibility</a></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_function_whitelist"><a class="link" href="#_function_whitelist">4.1. Function Whitelist</a></h3>
+<div class="paragraph">
+<p>By default, <code>check()</code>/<code>eval()</code> constraints do not support calling arbitrary Java methods, since they are generally assumed to be impure. However, if you have a pure method and want to call it in these types of constraints, you have two options:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>if it is implemented by you, annotate it with the <code>@Pure</code> annotation of Xbase (<code>org.eclipse.xtext.xbase.lib.Pure</code>)</p>
+</li>
+<li>
+<p>if it comes from a third-party library, register it via the <code>org.eclipse.viatra.query.patternlanguage.purewhitelist</code> extension point and a . Using this extension, some standard library methods are marked as pure by default, including methods from <code>java.lang.Math</code> and <code>java.lang.String</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Starting with version 2.0, the registration method has changed to support the <a href="https://docs.oracle.com/javase/tutorial/ext/basics/spi.html">Java ServiceLoader</a> mechanism. This allows extending the standalone compiler, e.g. the maven plug-ins with support for these extensions. However, because of the limitations of the mechanism, both the extension and the serviceloader entries are required - the ServiceLoader is used in standalone environments, while the Eclipse IDE relies on the extensions. For example usages, see the following links:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.patternlanguage.emf/src/org/eclipse/viatra/query/patternlanguage/emf/validation/whitelist/extensions/MathWhitelistProvider.java">Extension library for the class java.lang.Math</a></p>
+</li>
+<li>
+<p><a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.patternlanguage.emf/src/META-INF/services/org.eclipse.viatra.query.patternlanguage.emf.validation.whitelist.IPureElementProvider">ServiceLoader registration</a></p>
+</li>
+<li>
+<p><a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.patternlanguage.emf/plugin.xml">Extension registration for Eclipse plug-ins</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_custom_aggregators"><a class="link" href="#_custom_aggregators">4.2. Custom Aggregators</a></h3>
+<div class="paragraph">
+<p>Starting with version 1.4, the Viatra Query ships with the following built-in aggregation operators: <code>count</code>, <code>sum</code>, <code>min</code>, <code>max</code> and <code>avg</code> together with a preliminary API for extending this set with your custom, user-defined aggregators.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+the custom aggregator implementations should be considered an experimental feature. In future releases the API required to define new aggregators might change without notice. However, the syntax and semantics of using the existing aggregators in the language should remain stable.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The first step is to provide a class that implements the Java interface <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.runtime.matchers/src/org/eclipse/viatra/query/runtime/matchers/psystem/aggregations/IMultisetAggregationOperator.java">IMultisetAggregationOperator</a> by subclassing <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.runtime.matchers/src/org/eclipse/viatra/query/runtime/matchers/psystem/aggregations/AbstractMultisetAggregationOperator.java">AbstractMultisetAggregationOperator</a>. An instance of your class would represent a mathematical aggregation operator (independently of any context, such as patterns, variables, etc.) and provide incremental computation of the aggregate results from a changing multiset of values. Please read the Javadoc carefully to ensure that you meet all assumed contracts; you may also want to inspect the provided built-in implementors to gain a better understanding.</p>
+</div>
+<div class="paragraph">
+<p>In order to actually use your aggregator in the query language, the second step is to provide an implementation of <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.runtime.matchers/src/org/eclipse/viatra/query/runtime/matchers/psystem/aggregations/IAggregatorFactory.java">IAggregatorFactory</a> that must be on the classpath of the query project in order to be accessible from queries. It is customary to take exception to Java naming conventions and use a lower-case class name, as the name of this class will be the aggregator operator name in the query language. The role of this class is twofold:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>First, to provide type information to the query language via the annotation <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/plugins/org.eclipse.viatra.query.runtime.matchers/src/org/eclipse/viatra/query/runtime/matchers/psystem/aggregations/AggregatorType.java">@AggregatorType</a>. This is achieved by listing the acceptable types of aggregable values; and, in a separate list with the same order, the respective types of the aggregate result.</p>
+</li>
+<li>
+<p>Second, to actually instantiate the previously implemented operator class(es) for a given context in a query. The returned operator implementation and its output type may depend on the type of the aggregated values.
+Once again, please read the Javadoc carefully and take a look at the built-in implementations as well.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_custom_annotations"><a class="link" href="#_custom_annotations">5. Custom annotations</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Annotations can be used to provide additional information about graph patterns. These can be used by the query runtime as hints (e.g. <code>@FunctionalDependency</code>), the query development interface (e.g. <code>@Label</code> in the <em>Query Results</em> view) or various generic components (e.g. <code>@Constraint</code> is used by the VIATRA validation framework). Such annotations are defined in a similar fashion to the pure function whitelist:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Annotations are defined by instances of <code>IPatternAnnotationValidator</code>.</p>
+</li>
+<li>
+<p>The extension point <code>org.eclipse.viatra.query.patternlanguage.emf.annotation</code> is used to register such annotations in Eclipse.</p>
+</li>
+<li>
+<p>Additionally, service loaders are used to register them to standalone applications.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_known_limitations_v1_7"><a class="link" href="#_known_limitations_v1_7">6. Known Limitations (v1.7)</a></h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Meta-level queries (instanceOf etc.) will not currently work (although Ecore models can be processed as any other model).</p>
+</li>
+<li>
+<p>Derived features (EAttributes and EReferences) must either be marked as well-behaving or have a surrogate query. Other derived features are not supported in patterns as they can have arbitrary Java implementations and VIATRA Query is unable to predict when their value will change.</p>
+</li>
+<li>
+<p>Make sure that the result of the check()/eval() expressions can change '''only if''' one of the variables defined in the query changes. This can be achieved by using only:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Pure methods that always return the same value given the same arguments. For example:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>You <strong>can</strong> use <code>check(name.contains("foo"));</code> if name is a String pattern variable because <code>contains</code> is a pure (side-effect free) function.</p>
+</li>
+<li>
+<p>But you <strong>mustn&#8217;t</strong> use <code>check(someObject.name.contains("foo");</code> as the name of <code>someObject</code> might change without the Java reference <code>someObject</code> changing!</p>
+</li>
+<li>
+<p>Don&#8217;t rely on side-effects such as logger calls, as these calls might be called at surprising times or not called at all if other constraints filter the results before.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>The optional markers for backend selection and parameter directions are not validated in the context of the provided pattern. Use them only if necessary.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

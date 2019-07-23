@@ -1,0 +1,241 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "../xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <link rel="stylesheet" type="text/css" href="../css/ot.css" />
+      <link rel="stylesheet" type="text/css" href="../css/otjld.css" />
+      <title>OT/J Language Definition v1.3.1</title>
+   </head>
+   <body class="otdt">
+      <div id="content">
+         <table class="nav">
+            <tr>
+               <td class="back"><a id="top"></a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s6.2.html" rel="next">&sect;6.2&nbsp;Other API Elements&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="breadcrumb"><a class="nav" href="s6.html" rel="section">&sect;6&nbsp;Object Teams API</a></div>
+         <div class="sect depth2" id="s6.1">
+            <h2 class="sect">&sect;6.1&nbsp;Reflection<a class="img" href="s6.1.html" title="PermaLink to &sect;6.1&nbsp;Reflection"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                       alt="" /></a></h2>
+            <p>Object Teams supports reflection with respect to teams, roles, and role-base relationships.
+               		
+            </p>
+            <div class="subsect depth3" id="s6.1.a">
+               <h4 class="subsect">(a)&nbsp;<span class="title">Interface to the role registry</span><a class="img" href="s6.1.a.html"
+                     title="PermaLink to (a)&nbsp;Interface to the role registry"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>Each team instance internally has a registry of known role objects indexed by their base object. 
+                  		Programmers may make use of this registry using the following reflective methods defined in 
+                  		<code>org.objectteams.ITeam</code>:
+                  			
+               </p>
+               <dl>
+                  <dt><code>boolean hasRole ( Object aBase ) ;</code></dt>
+                  <dd>This method checks whether a role for the passed base object already exists in the target team.
+                     				
+                  </dd>
+                  <dt><code>boolean hasRole ( Object aBase, Class roleType ) ;</code></dt>
+                  <dd>This method checks whether a instance of type <code>roleType</code> as a role for the passed base object 
+                     					<code>aBase</code> already exists in the target team.
+                     				    The role may also be of any subtype of the specified role type.<br />
+                     				    If <code>roleType</code> is not a member type of the current team an <code>IllegalArgumentException</code> is thrown.
+                     				
+                  </dd>
+                  <dt><code>Object getRole ( Object aBase ) ;</code></dt>
+                  <dd>If the passed base object <code>aBase</code> already has a role in the target team, this role is returned. 
+                     					Otherwise <code>null</code> is returned.
+                     				
+                  </dd>
+                  <dt><code>&lt;T&gt; T getRole ( Object aBase, Class&lt;T&gt; roleType ) ;</code></dt>
+                  <dd>If the passed base object <code>aBase</code> already has a role in the target team that is assignable to the type represented by <code>roleType</code>, 
+                     					this role is returned. Otherwise <code>null</code> is returned.<br />
+                     				    If <code>roleType</code> is not a member type of the current team an <code>IllegalArgumentException</code> is thrown.
+                     				
+                  </dd>
+                  <dt><code>Object[] getAllRoles () ;</code></dt>
+                  <dd>Retrieves all existing (registered) <a href="s2.1.a.html" title="&sect;2.1.(a)&nbsp;Role-base binding"
+                        class="sect">bound roles (&sect;2.1.(a))</a> in the target team.
+                     					<br />
+                     This method uses internal structures of weak references. For that reason it may return role instances which were about 
+                     to be reclaimed by the garbage collector. If performance permits, it is thus advisable to always call <code>System.gc()</code> 
+                     prior to calling <code>getAllRoles()</code> in order to achieve deterministic results (see also <a href="s2.1.f.html" title="&sect;2.1.(f)&nbsp;Effect on garbage collection"
+                        class="sect">&sect;2.1.(f)</a>).
+                     				
+                  </dd>
+                  <dt><code>&lt;T&gt; T[] getAllRoles ( Class&lt;T&gt; roleType ) ;</code></dt>
+                  <dd>Retrieves all existing (registered) <a href="s2.1.a.html" title="&sect;2.1.(a)&nbsp;Role-base binding"
+                        class="sect">bound roles (&sect;2.1.(a))</a> in the target team that are assignable to the type represented by <code>roleType</code>. 
+                     					<br />
+                     				    If <code>roleType</code> is not a member type of the current team an <code>IllegalArgumentException</code> is thrown.
+                     <br />
+                     See the note about garbage collection above.
+                     				
+                  </dd>
+                  <dt><code>void unregisterRole ( Object aRole ) ;</code></dt>
+                  <dd>This method unregisters the passed role object from the target team. Thus the corresponding base looses this role. 
+                     					After calling this method the role should no longer be used.
+                     				
+                  </dd>
+                  <dt><code>void unregisterRole ( Object aRole, Class roleType ) ;</code></dt>
+                  <dd>This method unregisters the passed role object from the target team. Thus the corresponding base loses this role. 
+                     					After calling this method the role should no longer be used. 
+                     					The only difference to the previous method is improved speed because no search for the corresponding registry 
+                     					has to be performed.
+                     					<br />
+                     				    If <code>roleType</code> is not a member type of the current team an <code>IllegalArgumentException</code> is thrown.
+                     				
+                  </dd>
+               </dl>
+               <p>It is desirable and possible to use these methods within guards (see <a href="s5.4.html" title="&sect;5.4&nbsp;Guard predicates" class="sect">&sect;5.4</a>). 
+                  		These methods allow to write the specification of guards in a more concise and more expressive way. Determined by the signature,
+                  
+                  		the first four methods can only be used in a base-level guard (<a href="s5.4.2.html" title="&sect;5.4.2&nbsp;Base guards" class="sect">&sect;5.4.2</a>) because they require a reference to a base object.
+                  			
+               </p>
+               <h5 class="listing">Example code (Guards and Reflection):</h5>
+               <div class="listing example frame">
+                  <table class="listing">
+                     <tr class="line odd">
+                        <td class="ln">1</td>
+                        <td><pre><b>public</b> <b>team</b> <b>class</b> SpecialConditions {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">2</td>
+                        <td><pre>  <b>public</b> <b>void</b> participate(Account <b>as</b> BonusAccount ba) {}</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">3</td>
+                        <td><pre>  <b>public</b> <b>class</b> BonusAccount <b>playedBy</b> Account</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">4</td>
+                        <td><pre>    <b>base</b> when(SpecialConditions.this.<em>hasRole</em>(base, BonusAccount.class))</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">5</td>
+                        <td><pre>  {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">6</td>
+                        <td><pre>    <b>callin</b> <b>void</b> creditBonus(<b>int</b> amount) {</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">7</td>
+                        <td><pre>      base.creditBonus(amount + bonus);</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">8</td>
+                        <td><pre>    }</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">9</td>
+                        <td><pre>    <b>void</b> creditBonus(<b>int</b> amount) <b>&lt;-</b> <b>replace</b> <b>void</b> credit(<b>int</b> i)</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">10</td>
+                        <td><pre>      <b>base</b> <b>when</b> (i &gt; 1000);</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">11</td>
+                        <td><pre>  }</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">12</td>
+                        <td><pre>}</pre></td>
+                     </tr>
+                  </table>
+               </div>
+               <div class="codecomment">
+                  <h5>Effects:</h5>
+                  				This teams provides a bonus system for registered <code>Account</code>s. Every time an amount of more than 1000 is 
+                  				deposited to a registered account, additional 1% of the amount is credited.
+                  				 
+                  <ul>
+                     <li>The team level method <code>participate</code> in line 2 uses declared lifting (see <a href="s2.3.2.html" title="&sect;2.3.2&nbsp;Declared lifting" class="sect">&sect;2.3.2</a>) 
+                        to allow the passed <code>Account</code> object to participate the bonus system provided by the 
+                        <code>SpecialConditions</code> team.
+                        	
+                     </li>
+                     <li>The base guard in line 4 uses the reflective method <code>hasRole</code> to check whether the base object already has a role 
+                        	of type <code>BonusAccount</code> in the surrounding team. The expression <code>BonusAccount.class</code> returns 
+                        	the <code>java.lang.Class</code> object representing the role <code>BonusAccount</code> 
+                        	(see <a href="http://java.sun.com/docs/books/jls/second_edition/html/expressions.doc.html#251530"
+                           class="ext">JLS &sect;15.8.2</a>). 
+                        	This guard ensures, that only accounts explicitly registered via <code>participate</code> are ever decorated with a role of type <code>BonusAccount</code>.
+                        
+                     </li>
+                     <li>The method binding guard in line 10 restricts the callin to <code>creditBonus</code> to calls where 
+                        					the base method argument <code>amount</code> is greater than 1000.
+                        					
+                     </li>
+                  </ul>
+               </div>
+            </div>
+            <div class="subsect depth3" id="s6.1.b">
+               <h4 class="subsect">(b)&nbsp;<span class="title">Behavioral reflection</span><a class="img" href="s6.1.b.html"
+                     title="PermaLink to (b)&nbsp;Behavioral reflection"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>The following reflective methods defined in org.objectteams.ITeam can be used to
+                  			   inspect the dynamic behavior of a team:
+                  			
+               </p>
+               <dl>
+                  <dt><code>boolean isExecutingCallin () ;</code></dt>
+                  <dd>This method is used to inspect whether a control flow has already been intercepted by at least one callin binding of the current
+                     team. 
+                     					It can be used to avoid undesirable re-entrance to a team.
+                     				
+                  </dd>
+                  <dt><code>boolean isActive () ;</code></dt>
+                  <dd>This method checks whether the team instance is active for the current thread.
+                     				
+                  </dd>
+                  <dt><code>boolean isActive ( Thread aThread ) ;</code></dt>
+                  <dd>This method checks whether the team instance is active for the thread <code>aThread</code>.
+                     				
+                  </dd>
+               </dl>
+            </div>
+            <div class="subsect depth3" id="s6.1.c">
+               <h4 class="subsect">(c)&nbsp;<span class="title">Class literals for roles</span><a class="img" href="s6.1.c.html"
+                     title="PermaLink to (c)&nbsp;Class literals for roles"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>The Java syntax for so-called class literals, <code>MyClass<strong>.class</strong></code> 
+                  		(see <a href="http://java.sun.com/docs/books/jls/second_edition/html/expressions.doc.html#251530"
+                     class="ext">JLS &sect;15.8.2</a>) 
+                  		can be used for role types with slightly changed semantics: Role types are virtual types (<a href="s1.3.1.html"
+                     title="&sect;1.3.1&nbsp;Acquisition and implicit inheritance of role classes"
+                     class="sect">&sect;1.3.1</a>) 
+                  		that are bound dynamically  (<a href="s1.3.1.e.html" title="&sect;1.3.1.(e)&nbsp;Dynamic binding of types"
+                     class="sect">&sect;1.3.1.(e)</a>). This applies to role class literals, too. 
+                  		From this follows the constraint that a role class literal can only be used within the non-static context of a team, 
+                  		ie., for evaluating a role class literal an enclosing team instance must be in scope.
+                  		<br />
+                  Unlike regular type checking for role types, the class literal itself does not have a dependent type. 
+                  Thus type checking of calls to methods like <code>hasRole(Object, Class)</code> cannot detect, whether the <code>Class</code> instance 
+                  has actually been obtained from the correct team instance. Any attempt to pass a class that is not known 
+                  as a bound role within the given team results in an <code>IllegalArgumentException</code> at run-time.
+                  			
+               </p>
+            </div>
+         </div>
+         <table class="nav">
+            <tr>
+               <td class="back"></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s6.2.html" rel="next">&sect;6.2&nbsp;Other API Elements&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="breadcrumb"><a class="nav" href="s6.html" rel="section">&sect;6&nbsp;Object Teams API</a></div>
+      </div>
+      <div id="footer">
+         <hr /><a class="w3c img" href="http://jigsaw.w3.org/css-validator/check/referer"
+            shape="rect"><img src="../images/valid-css2-blue.png" alt="Valid CSS!" height="31" width="88" /></a><a class="w3c img" href="http://validator.w3.org/check?uri=referer" shape="rect"><img src="../images/valid-xhtml10-blue.png" alt="Valid XHTML 1.0 Strict" height="31"
+                 width="88" /></a><address>&copy; Stephan Herrmann, Christine Hundt, Marco Mosconi</address>
+         			OT/J version 1.3.1 &mdash; last modified: 2013-05-28
+      </div>
+   </body>
+</html>

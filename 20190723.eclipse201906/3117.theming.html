@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>RWT Theming</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+</head>
+<body>
+
+  <h1>RWT Theming</h1>
+
+  <p>Index:</p>
+
+  <ul>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#primer">Writing Themes</a></li>
+    <li><a href="#rwt">Setting Themes in an Application Configuration</a></li>
+    <li><a href="#workbench">Setting Themes for Workbench Applications</a></li>
+  </ul>
+
+  <p>
+    If you want to go directly to the theming reference, click
+    <a href="../reference/theming/index.html">here</a>.
+  </p>
+
+  <h2 id="intro">Introduction</h2>
+
+  <p>
+    This article describes the CSS theming of RWT, the RAP Widget Toolkit.
+    Like the theming preferences commonly provided by desktop
+    systems, it allows developers to set the widgets default colors, fonts, borders, and more.
+  </p>
+
+  <p>
+    As an example, the following screenshots show the same dialog with the
+    default theme and with a custom theme.
+    As you can see, a custom theme does not only alter some colors, it also
+    affects the widgets, size, fonts, shadows, and more.
+    Even effects like hover and appear animations are different.
+    <br/>
+    <img src="../images/theming-dialog-new.png" style="margin-top:10px"/>
+    <img src="../images/theming-dialog.png" style="margin-top:10px"/>
+  </p>
+
+  <p id="custom">
+    A <q>custom theme</q> is a complete set of rules for all properties of all RAP widgets
+    found in the theming reference, just like the <q>default</q> theme. (Such a complete theme
+    is also called a <q>main theme</q>).
+    A custom theme can replace the default theme of RAP, which is used if no custom theme is set.
+    Custom themes are usually created by copying an existing main theme
+    (like the default or example themes) and modifying it. <a name="contribution"></a>A
+    <q>theme contribution</q> only adds some rules to an existing main theme.
+    This is often useful when only a few properties are to be changed, or when working with
+    <a href="#variants" >custom variants</a>.
+  </p>
+  <p><small><b>Note:</b>
+   The default theme file can be found in the bundle &quot;org.eclipse.rap.rwt&quot;,
+   file &quot;resources/resource/theme/default.css&quot;. The example themes can be found
+   in the bundle &quot;org.eclipse.rap.design.example&quot;, folder &quot;theme&quot;. Both are part
+   of the RAP target platform.
+  </small></p>
+  <h3>What this is not</h3>
+  <p>
+    The RWT theming is not related to any Eclipse workbench concepts like the workbench theming
+    or custom stack presentations. Also, the CSS files are not directly passed to the client's
+    browser, but parsed and processed by RAP on the server side, as they are required for
+    layout calculations.
+    Therefore you can not add any arbitrary rules and expect them to be available in the
+    client document. If you want to do that (e.g. for
+    <a href="custom-widget.html">custom widgets</a>), use the
+    <a href="application-configuration.html">application configuration</a> /
+    <a href="branding.html">branding</a> API to add your CSS to the documents <em>head</em>,
+    or load CSS files dynamically using
+    <em><a href="client.html#jsexec">JavaScriptExecuter</a></em>
+    or
+    <em><a href="client.html#jsloader">JavaScriptLoader</a></em>.
+  </p>
+
+  <h2 id="primer">Writing and Extending Themes</h2>
+
+  <h3>Creating a Theme File (CSS)</h3>
+
+  <p>
+    This section explains the basic rules for writing CSS theme files.
+    Themes are written in CSS using widget types as element names.
+    The syntax must be valid
+    <a href="http://www.w3.org/TR/CSS21/">CSS 2.1</a>,
+    although RAP does not support the complete CSS syntax.
+    Some advanced concepts like &quot;@&quot;-rules and certain selector types are
+    not supported.
+  </p>
+
+  <p>
+    Create a new <em>.css</em> file and place it anywhere in your project.
+    Since the theme file can refer to images kept in the same project,
+    so an extra theme folder is recommended.
+    If the file contains non-ASCII characters, it has to be UTF-8 encoded.
+    Don't forget to include everything in the project's
+    <em>build.properties</em> file to make them available in a deployment.
+  </p>
+
+  <h3>Structure</h3>
+
+  <p>
+    A CSS file is simply a sequence of style rules.
+    A style rule is a selector or a comma separated selector list, followed by
+    a block of declarations enclosed in braces.
+    Declarations start with a property name, followed by a colon, followed by a
+    value and end with a semicolon.
+    There is no inherent difference between the structure of a custom theme and
+    a theme contribution. A custom theme simply needs to cover all widgets, while a theme
+    contribution may consist of a single rule.
+    The following is an example of a simple theme file, consisting of two style
+    rules:
+  </p>
+
+  <pre class="lang-css">  Button[PUSH], Button[TOGGLE] {
+    border: 2px solid blue;
+    color: rgb( 17, 23, 103 );
+    background-color: #f9f9f9;
+  }
+
+  Button[PUSH]:hover, Button[TOGGLE]:hover {
+    background-color: white;
+  }
+  </pre>
+
+  <h3>Selectors</h3>
+
+  <p>
+    A selector defines to which widgets or components of a widget a rule applies.
+    Selectors can refer to SWT style flags and also to certain widget states.
+    The element names to be used are either simple widget type names,
+    such as
+    <em><a href="../reference/theming/Button.html">Button</a></em>
+    and
+    <em><a href="../reference/theming/Table.html">Table</a></em>,
+    or names of sub-components of a widget like
+    <em><a href="../reference/theming/ProgressBar.html#ProgressBar-Indicator">ProgressBar-Indicator</a></em>.
+    A complete list of themeable widgets and their element names can be found in
+    the <a href="../reference/theming/index.html">theming reference</a>.
+  </p>
+
+  <h4>Styles and States</h4>
+
+  <p>
+    Certain SWT style flags can be referred to in CSS selectors to allow to define
+    a styling depending on the widget type.
+    For style flags, the attribute syntax from CSS must be used:
+  </p>
+
+  <pre class="lang-css">
+Button[BORDER] {
+  ...
+} </pre>
+
+  <p>
+    In addition to style flags, which do not change during a widget's lifetime,
+    there are also dynamic widget states a theme can refer to.
+    To do so, use the CSS attribute syntax:
+  </p>
+
+  <pre class="lang-css">
+Button:hover {
+  ...
+} </pre>
+  <p>
+  Attributes and states can be mixed freely. For example, the following selector
+  applies only to buttons that have the style flags
+  <em><a href="../reference/api/org/eclipse/swt/SWT.html#PUSH">SWT.PUSH</a></em>
+  <i>and</i>
+  <em><a href="../reference/api/org/eclipse/swt/SWT.html#BORDER">SWT.BORDER</a></em>
+  <i>and</i> are currently in state
+  <em>hover</em>:
+  </p>
+  <pre class="lang-css">
+Button[PUSH][BORDER]:hover {
+  ...
+}</pre>
+
+  <p>
+    The styles and states that a theme can refer to depend on the widget and are
+    also listed in the <a href="../reference/theming/index.html">theming reference</a>.
+  </p>
+
+  <h4 id="variants" >Custom Variants</h4>
+
+  <p>
+    Normally, a theme setting affects all widgets of a given type equally.
+    By defining custom variants it is possible to apply an individual presentation
+    to particular widgets without affecting all widgets of that type.
+    As an example, imagine an application that uses buttons in a special banner bar.
+    These buttons should have a different font and text color than normal buttons.
+    By making these buttons part of a variant (e.g. &quot;mybutton&quot;), you can define
+    separate CSS rules for these widgets.
+  </p>
+
+  <p>
+    To implement this, the buttons in the banner bar are marked as belonging to a
+    custom variant (e.g. &quot;mybutton&quot;) in the Java code using
+    <a href="../reference/api/org/eclipse/swt/widgets/Widget.html#setData-java.lang.String-java.lang.Object-">SWT widget data</a>
+    with the constant <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#CUSTOM_VARIANT">RWT.CUSTOM_VARIANT</a></em>:
+  </p>
+
+  <pre class="lang-java">
+button.setData( RWT.CUSTOM_VARIANT, &quot;mybutton&quot; );</pre>
+
+  <p>
+    In the theme CSS file, these widget variants can be referred to using the
+    <q>class</q> notation known from CSS used for HTML:
+  </p>
+
+  <pre class="lang-css">
+Button.mybutton {
+  ...
+}</pre>
+
+  <h3>Properties</h3>
+
+  <p>
+    The themeable properties are also widget specific.
+    Not all RWT widgets are equally customizable, some provide a large
+    set of themeable properties, others less.
+    An overview of all available elements and their themeable CSS properties can
+    be found in the
+    <a href="../reference/theming/index.html">theming reference</a>.
+    As well as the properties itself, also the syntax for the property values is
+    a subset from CSS.
+    It is also documented in the reference.
+  </p>
+
+  <h3>Precedence in CSS</h3>
+
+  <p>
+    If more than one rule applies to a given element, property values defined in
+    one rule can overwrite those in another rule.
+    The precedence of rules and properties is defined in the CSS specification.
+    In short, it is defined by the specificity of a rule and its position in the
+    CSS file.
+    Please refer to the
+    <a href="http://www.w3.org/TR/CSS2/cascade.html#specificity">CSS specification</a>
+    for a detailed description.
+  </p>
+
+  <p>
+    When making theme contributions, they are simply concatenated to the
+    main theme file, thereby overwriting the rules from the theme they contribute to.
+    However, many contributions can be added to the same theme, and the order in which
+    they are appended is undefined.
+    Therefore, you should only add rules to the extension CSS file that will not
+    be overridden by other contributions.
+    As an example, rules for custom variants (see <a href="#variants">above</a>)
+    that are defined in the same theme will be safe as long as other theme contributions do not
+    reference the same variants.
+  </p>
+
+  <h3>Setting SWT Defaults</h3>
+
+  <p>
+    The SWT classes Display and Device contain methods that return default system
+    colors, a system font, and system images.
+    In RAP, these defaults are also controlled by the theme.
+    For details, see the theme reference of the
+    <a href="../reference/theming/Widget.html">Display element</a>.
+  </p>
+
+
+  <h2 id="rwt">Setting Themes in an Application Configuration</h2>
+
+  <p><b>Note:</b> For workbench applications, please read
+  <q><a href="#workbench">Setting Themes for Workbench Applications</a></q> instead.
+  </p>
+
+  <h3>Register a Custom Theme</h3>
+
+  <p>
+    In order to make your theme available for a RAP application, you have to register it
+    in the application configuration first. This is done using the method
+    <em><a href="../reference/api/org/eclipse/rap/rwt/application/Application.html#addStyleSheet-java.lang.String-java.lang.String-">Application#addStyleSheet</a></em>.
+    Example:
+  </p>
+
+  <pre class="lang-java">
+application.addStyleSheet( "my.application.aquablue", "theme/aquablue.css" );</pre>
+
+  <p>
+    Now your theme is registered with the id &quot;my.application.aquablue&quot;,
+    but it still needs to be activated.
+  </p>
+
+  <h3>Activate a Custom Theme</h3>
+  <p>
+    To make your application use the custom theme, you need to configure your entry point
+    accordingly using the same theme id. Example:
+  </p>
+
+  <pre class="lang-java">
+Map&lt;String, String&gt; properties = new HashMap&lt;String, String&gt;();
+properties.put( WebClient.THEME_ID, "my.application.aquablue" );
+application.addEntryPoint( "/example", Example.class, properties );</pre>
+
+  <p>
+    Different entry points can of course use different themes.
+  </p>
+
+  <h3>Register a Theme Contribution</h3>
+
+  <p>
+    Registering contribution file is done the same way a main theme file is registered,
+    only the order defines which is which.
+  </p>
+
+  <pre class="lang-java">
+application.addStyleSheet( "my.application.aquablue", "theme/aquablue.css" );
+application.addStyleSheet( "my.application.aquablue", "aqua-extensions.css" );</pre>
+
+  <p>
+    The theme contribution <em>aqua-extensions.css</em> will now be added to the
+    existing theme <em>my.application.aquablue</em>.
+    To contribute to the default theme, use the constant
+    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#DEFAULT_THEME_ID">RWT.DEFAULT_THEME_ID</a></em>:
+  </p>
+
+  <pre class="lang-java">
+application.addStyleSheet( RWT.DEFAULT_THEME_ID, "default-theme-extension.css" );</pre>
+
+  <p>
+    In that case it is not necessary to register or activate a main theme, as the default
+    theme is both already.
+  </p>
+
+  <h2 id="workbench">Setting Themes for Workbench Applications</h2>
+
+  <h3>Register a Custom Theme</h3>
+
+  <p>
+    In order to make your theme available for workbench applications, you have to register it with
+    the extension point
+    <em><a href="../reference/extension-points/org_eclipse_rap_ui_themes.html">org.eclipse.rap.ui.themes</a></em>.
+    In the <em>plugin.xml</em> of your application project, add an extension
+    like this:
+  </p>
+
+  <pre class="lang-xml">
+&lt;extension
+   point=&quot;org.eclipse.rap.ui.themes&quot;&gt;
+ &lt;theme
+     id=&quot;my.application.aquablue&quot;
+     name=&quot;Aqua Blue Test Theme&quot;
+     file=&quot;theme/aquablue.css&quot; /&gt;
+&lt;/extension&gt;</pre>
+
+  <p>
+    Now your theme is registered with the id <em>my.application.aquablue</em>,
+    but it still needs to be activated.
+  </p>
+
+  <h3>Activate a Custom Theme</h3>
+  <p>
+    To make your application use the custom theme you have to register a branding.
+    In short, a branding defines several settings, that
+    may then be bound to a registered entry point. To assign a theme, simply
+    put the id used in the theme registration in the extensions <em>themeId</em> property.
+    For more details, refer to the article on
+    <a href="./branding.html">RAP Branding</a>.
+  </p>
+
+  <h3>Register a Theme Contribution</h3>
+
+  <p>
+    Register the contribution file with the extension point
+    <em><a href="../reference/extension-points/org_eclipse_rap_ui_themes.html">org.eclipse.rap.ui.themes</a></em>,
+    using a
+    <em><a href="../reference/extension-points/org_eclipse_rap_ui_themes.html#e.themeContribution">themeContribution</a></em>
+    element.
+    In the <em>plugin.xml</em> of your application project, the extension
+    will look like this:
+  </p>
+
+  <pre class="lang-xml">
+&lt;extension
+    point=&quot;org.eclipse.rap.ui.themes&quot;&gt;
+  &lt;themeContribution
+      themeId=&quot;my.application.aquablue&quot;
+      file=&quot;aqua-extensions.css&quot; /&gt;
+&lt;/extension&gt;</pre>
+
+  <p>
+    Now your theme contribution is registered and will automatically added to the
+    existing theme. To contribute to the default theme, use
+    <q><em>org.eclipse.rap.rwt.theme.Default</em></q> in the <em>themeId</em> property;
+    In that case it is not necessary to register or activate a main theme, as the default
+    theme is both already.
+  </p>
+
+
+</body>
+</html>

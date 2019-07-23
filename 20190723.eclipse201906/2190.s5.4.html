@@ -1,0 +1,404 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "../xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <link rel="stylesheet" type="text/css" href="../css/ot.css" />
+      <link rel="stylesheet" type="text/css" href="../css/otjld.css" />
+      <title>OT/J Language Definition v1.3.1</title>
+   </head>
+   <body class="otdt">
+      <div id="content">
+         <table class="nav">
+            <tr>
+               <td class="back"><a id="top"></a><a href="s5.3.html" rel="prev">&lt;&lt;&nbsp;&sect;5.3&nbsp;Implicit team activation</a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s5.5.html" rel="next">&sect;5.5&nbsp;Unanticipated team activation&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="breadcrumb"><a class="nav" href="s5.html" rel="section">&sect;5&nbsp;Team Activation</a></div>
+         <div class="sect depth2" id="s5.4">
+            <h2 class="sect">&sect;5.4&nbsp;Guard predicates<a class="img" href="s5.4.html"
+                  title="PermaLink to &sect;5.4&nbsp;Guard predicates"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                       alt="" /></a></h2>
+            <div class="syntaxlink"><a href="sA.7.html" title="&sect;A.7&nbsp;Guard predicates" class="syntax">&rarr;&nbsp;Syntax&nbsp;&sect;A.7</a></div>
+            <p>The effect of callins can further be controlled using so called guard predicates. 
+               	Guards appear at four different levels:
+               		
+            </p>
+            <ul>
+               <li>callin method binding</li>
+               <li>role method</li>
+               <li>role class</li>
+               <li>team class</li>
+            </ul>
+            <p>Guards can be specified as <em>regular</em> guards or <code>base</code> guards, 
+               	which affects the exact point in the control flow, where the guard will be evaluated.
+               		
+            </p>
+            <div class="subsect depth3" id="s5.4.a">
+               <h4 class="subsect">(a)&nbsp;<span class="title">General syntax for guards</span><a class="img" href="s5.4.a.html"
+                     title="PermaLink to (a)&nbsp;General syntax for guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>A guard is declared using the keyword <code>when</code> followed by a 
+                  		boolean expression in parentheses:
+                  			
+               </p>
+               <div class="listing plain"><pre><em><b>when</b> (</em><i>predicateExpression</i><em>)</em></pre></div>
+               <p>Depending on the kind of guard different objects are in scope using
+                  special identifiers like <code>this</code>, <code>base</code>.<br />
+                  Any predicate expression that evaluates to <code>true</code> enables
+                  the callin binding(s) to which it applies.
+                  Evaluation to <code>false</code> disables the callin binding(s).
+                  			
+               </p>
+            </div>
+            <div class="subsect depth3" id="s5.4.b">
+               <h4 class="subsect">(b)&nbsp;<span class="title">No side effects</span><a class="img" href="s5.4.b.html" title="PermaLink to (b)&nbsp;No side effects"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>A guard predicate should have no side effects. 
+                  			   A compiler should optionally check this condition, but inter-procedural analysis
+                  			   actually depends on the availability of appropriate means to mark any method as side-effect free.
+                  			
+               </p>
+            </div>
+            <div class="subsect depth3" id="s5.4.c">
+               <h4 class="subsect">(c)&nbsp;<span class="title">Exceptions</span><a class="img" href="s5.4.c.html" title="PermaLink to (c)&nbsp;Exceptions"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>A guard predicate should not throw any exceptions. 
+                  			   Yet, any exception thrown within a guard predicate cause the guard to evaluate to <code>false</code> 
+                  			   rather than propagating the exception, meaning that the evaluation of a guard predicate will never
+                  			   interrupt the current base behaviour.<br />
+                  			   A compiler should flag any checked exception that is thrown within a guard.
+                  			   Such diagnosis should by default be treated as an error, with the option of configuring
+                  			   its severity to warning or ignore.
+                  			
+               </p>
+            </div>
+            <div class="sect depth3" id="s5.4.1">
+               <h3 class="sect">&sect;5.4.1&nbsp;Regular guards<a class="img" href="s5.4.1.html"
+                     title="PermaLink to &sect;5.4.1&nbsp;Regular guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a><span class="toplink"><a href="#top">&uarr;&nbsp;&sect;5.4</a></span></h3>
+               <p>This group of guards evaluates within the context of a given role. 
+                  		These guards are evaluated <em>after</em> a callin target is lifted and 
+                  		<em>before</em> a callin bound role method is invoked.
+                  			
+               </p>
+               <div class="subsect depth4" id="s5.4.1.a">
+                  <h4 class="subsect">(a)&nbsp;<span class="title">Method binding guards</span><a class="img" href="s5.4.1.a.html"
+                        title="PermaLink to (a)&nbsp;Method binding guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>A guard may be attached to a callin method binding as in:
+                     				
+                  </p>
+                  <div class="listing plain"><pre><b>void</b> roleMethod(<b>int</b> ir) <b>&lt;-</b> <b>after</b> <b>void</b> baseMethod(<b>int</b> ib)
+  <b>when</b> (ir &gt; MyTeam.this.threshold);</pre></div>
+                  <p>Such a guard only affects the callin binding to which it is attached, 
+                     			i.e., this specific callin binding is only effective, 
+                     			if the predicate evaluates to <code>true</code>.
+                     			<br />
+                     			The following values are within the scope of the predicate expression, 
+                     			and thus can be used to express the condition:
+                     				
+                  </p>
+                  <ul>
+                     <li>The role instance denoted by <code>this</code>.<br />
+                        				Features of the role instance can also be accessed relative to
+                        				<code>this</code> with or without explicit qualifying <code>this</code>.
+                        					
+                     </li>
+                     <li>The team instance denoted by a qualified this reference as in 
+                        				<code>MyTeam.this</code>.
+                        					
+                     </li>
+                     <li>If the callin binding includes signatures (as in the example above): 
+                        				Parameters of the role method.<br />
+                        				If parameter mappings are involved, they will be evaluated before evaluating the guard.
+                        					
+                     </li>
+                  </ul>
+               </div>
+               <div class="subsect depth4" id="s5.4.1.b">
+                  <h4 class="subsect">(b)&nbsp;<span class="title">Method guards</span><a class="img" href="s5.4.1.b.html" title="PermaLink to (b)&nbsp;Method guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>A method guard is similar to a method binding guard, but it applies 
+                     			to all callin method bindings of this method.<br />
+                     			A method guard is declared between the method signature and the method body:
+                     				
+                  </p>
+                  <div class="listing plain"><pre><b>void</b> roleMethod(<b>int</b> ir)
+  <b>when</b> (ir &gt; MyTeam.this.threshold) { <i>body statements</i> }</pre></div>
+               </div>
+               <div class="subsect depth4" id="s5.4.1.c">
+                  <h4 class="subsect">(c)&nbsp;<span class="title">Role level guards</span><a class="img" href="s5.4.1.c.html"
+                        title="PermaLink to (c)&nbsp;Role level guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>When a guard is specified at the role level, i.e., directly before the 
+                     			class body of a role class, it applies to all callin method bindings of 
+                     			the role class:
+                     				
+                  </p>
+                  <div class="listing plain"><pre><b>protected</b> <b>class</b> MyRole
+  <b>when</b> (value &gt; MyTeam.this.threshold)
+{
+    <b>int</b> value;
+    <i>other <b>class</b> body declarations</i>
+}</pre></div>
+                  <p>The following values are within the scope of the predicate expression:
+                     				
+                  </p>
+                  <ul>
+                     <li>The role instance denoted by <code>this</code> (explicit or implicit, see above). 
+                        				Thus, in the example <code>value</code> will be interpreted as a field of the enclosing role.
+                        					
+                     </li>
+                     <li>The team instance denoted by a qualified this reference as in <code>MyTeam.this</code></li>
+                  </ul>
+               </div>
+               <div class="subsect depth4" id="s5.4.1.d">
+                  <h4 class="subsect">(d)&nbsp;<span class="title">Team level guards</span><a class="img" href="s5.4.1.d.html"
+                        title="PermaLink to (d)&nbsp;Team level guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>A guard specified in the header of a team class may disable the callin 
+                     			bindings of all contained role classes. The syntax corresponds to the syntax 
+                     			of role level guards.<br />
+                     			The only value directly available within team level guard is the 
+                     			team instance (denoted by <code>this</code>) and its features.
+                     				
+                  </p>
+               </div>
+               <p>Of course all guards can also access any visible static feature of a visible class.
+                  			
+               </p>
+               <p>Even if a guard has no direct effect, because, e.g., a role class has no callin 
+                  		bindings (maybe not even a role-base binding), predicates at such abstract 
+                  		levels are useful, because all predicates are inherited by all sub classes 
+                  		(explicit and implicit).
+                  			
+               </p>
+            </div>
+            <div class="sect depth3" id="s5.4.2">
+               <h3 class="sect">&sect;5.4.2&nbsp;Base guards<a class="img" href="s5.4.2.html"
+                     title="PermaLink to &sect;5.4.2&nbsp;Base guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a><span class="toplink"><a href="#top">&uarr;&nbsp;&sect;5.4</a></span></h3>
+               <p>The intention behind base guards is to prevent lifting of a callin-target
+                  		if a guard evaluates to <code>false</code> and thus refuses to invoke the
+                  		callin bound role method. Using base guards it is easier to prevent any
+                  		side-effects caused by a callin binding, because lifting could cause side-effects
+                  		at two levels:
+                  			
+               </p>
+               <ul>
+                  <li>Creating a role on-demand already is a side-effect (observable e.g.
+                     			by the reflective function <code><a href="s6.1.html" title="&sect;6.1&nbsp;Reflection" class="sect">hasRole (&sect;6.1)</a></code>)
+                     				
+                  </li>
+                  <li>Role creation triggers execution of a role constructor 
+                     			(see <a href="s2.3.1.c.html"
+                        title="&sect;2.3.1.(c)&nbsp;Custom lifting constructor"
+                        class="sect">custom lifting constructor (&sect;2.3.1.(c))</a>) 
+                     			which could produce arbitrary side-effects.
+                     				
+                  </li>
+               </ul>
+               <p>Both kinds of side-effects can be avoided using a base guard which prevents
+                  		unnecessary lifting.
+                  			
+               </p>
+               <p>Any guard (5.4.1 (b)-(e)) can be turned into a base guard by adding 
+                  		the modifier <code>base</code> as in:
+                  			
+               </p>
+               <div class="listing plain"><pre><b>protected</b> <b>class</b> MyRole <b>playedBy</b> MyBase
+  <em><b>base</b> when</em> (base.value &gt; MyTeam.this.threshold)
+{
+    <i><b>class</b> body declarations</i>
+}</pre></div>
+               <p>However, different scoping rules apply for the identifiers 
+                  		that can be used in a base guard:
+                  			
+               </p>
+               <div class="subsect depth4" id="s5.4.2.a">
+                  <h4 class="subsect">(a)&nbsp;<span class="title">Base object reference</span><a class="img" href="s5.4.2.a.html"
+                        title="PermaLink to (a)&nbsp;Base object reference"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>In all base guard predicates the special identifier <code>base</code> 
+                     			can be used to denote the base object that is about to be lifted.
+                     				
+                  </p>
+               </div>
+               <div class="subsect depth4" id="s5.4.2.b">
+                  <h4 class="subsect">(b)&nbsp;<span class="title">Method binding guards</span><a class="img" href="s5.4.2.b.html"
+                        title="PermaLink to (b)&nbsp;Method binding guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>A base method binding guard may access parameters as passed to the
+                     			base method. Parameter mappings are not considered.<br />
+                     Additionally, for <code>after</code> callin bindings, the identifier <code>result</code> 
+                     may be used to refer to the result of the base method (if any).
+                     				
+                  </p>
+                  <div class="note">
+                     <h5>Note:</h5>
+                     <p>In order to achieve the same effect of accessing
+                        	the base method's result, a regular binding guard (not a base guard)
+                        	must use a suitable parameter mapping (see <a href="s4.4.c.html"
+                           title="&sect;4.4.(c)&nbsp;Mapping the result of a base method"
+                           class="sect">&sect;4.4.(c)</a>).
+                        					
+                     </p>
+                  </div>
+               </div>
+               <div class="subsect depth4" id="s5.4.2.c">
+                  <h4 class="subsect">(c)&nbsp;<span class="title">Method guards</span><a class="img" href="s5.4.2.c.html" title="PermaLink to (c)&nbsp;Method guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>In contrast to regular method guards, a <em>base</em> guard attached to a role method 
+                     			cannot access any method parameters. See the next item (d) for values that are actually in scope.
+                     				
+                  </p>
+               </div>
+               <div class="subsect depth4" id="s5.4.2.d">
+                  <h4 class="subsect">(d)&nbsp;<span class="title">Role level guards</span><a class="img" href="s5.4.2.d.html"
+                        title="PermaLink to (d)&nbsp;Role level guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>Role level base guards may use these values:
+                     				
+                  </p>
+                  <ul>
+                     <li>The base instance using the special identifier <code>base</code>.
+                     </li>
+                     <li>The team instance using a qualified this references (<code>MyTeam.this</code>).
+                     </li>
+                  </ul>
+               </div>
+               <div class="subsect depth4" id="s5.4.2.e">
+                  <h4 class="subsect">(e)&nbsp;<span class="title">Team level guards</span><a class="img" href="s5.4.2.e.html"
+                        title="PermaLink to (e)&nbsp;Team level guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>Team level base guards have the same scope as role level base guards (d). 
+                     			However, the type of the role instance is not known here, i.e., here <code>base</code> 
+                     			has the static type <code>java.lang.Object</code>.
+                     				
+                  </p>
+               </div>
+               <div class="subsect depth4" id="s5.4.2.f">
+                  <h4 class="subsect">(f)&nbsp;<span class="title">Unbound roles</span><a class="img" href="s5.4.2.f.html" title="PermaLink to (f)&nbsp;Unbound roles"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                             alt="" /></a></h4>
+                  <p>In contrast to regular guards, base guards cannot be attached to
+                     	unbound role classes nor to their methods.<br />
+                     	Only team level base guards are independent of role binding.
+                     				
+                  </p>
+               </div><img src="../images/guards.png" alt="Overview: Guard predicates" /></div>
+            <div class="sect depth3" id="s5.4.3">
+               <h3 class="sect">&sect;5.4.3&nbsp;Multiple guards<a class="img" href="s5.4.3.html"
+                     title="PermaLink to &sect;5.4.3&nbsp;Multiple guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a><span class="toplink"><a href="#top">&uarr;&nbsp;&sect;5.4</a></span></h3>
+               <p>Due to the different ranges of applicability different guards may affect the same method binding. 
+                  		In that case all applicable guards are conjoined using a logical <code>and</code>.<br />
+                  Any guard is interpreted as the conjunction of these predicates (if present):
+                  			
+               </p>
+               <ul>
+                  <li>The direct predicate expression of the guard.</li>
+                  <li>The next outer guard along the chain 
+                     			<em>method binding -&gt; method -&gt; role level -&gt; team level</em></li>
+                  <li>The guard at the same level that is inherited from the <em>implicit</em> super role.
+                  </li>
+                  <li>The guard at the same level that is inherited from the <em>explicit</em> super role.
+                  </li>
+               </ul>
+               <h5 class="listing">Example code (Guard Predicates):</h5>
+               <div class="listing example frame">
+                  <table class="listing">
+                     <tr class="line odd">
+                        <td class="ln">1</td>
+                        <td><pre><b>public</b> <b>team</b> <b>class</b> ATM {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">2</td>
+                        <td><pre>  <b>private</b> Bank myBank;</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">3</td>
+                        <td><pre>  <b>public</b> <b>class</b> ForeignAccount <b>playedBy</b> Account</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">4</td>
+                        <td><pre>    <em><b>base</b> when</em> (!ATM.this.myBank.equals(<em>base</em>.getBank()))</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">5</td>
+                        <td><pre>  {</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">6</td>
+                        <td><pre>    <b>callin</b> <b>void</b> debitWithFee(<b>int</b> amount) {</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">7</td>
+                        <td><pre>      base.debitWithFee(fee+amount);</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">8</td>
+                        <td><pre>    }</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">9</td>
+                        <td><pre>    <b>void</b> debitWithFee(<b>int</b> i) <b>&lt;-</b> <b>replace</b> <b>void</b> debit(<b>int</b> amount)</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">10</td>
+                        <td><pre>      <em><b>base</b> when</em> (amount &lt; 1000);</pre></td>
+                     </tr>
+                     <tr class="line odd">
+                        <td class="ln">11</td>
+                        <td><pre>  }</pre></td>
+                     </tr>
+                     <tr class="line even">
+                        <td class="ln">12</td>
+                        <td><pre>}</pre></td>
+                     </tr>
+                  </table>
+               </div>
+               <div class="codecomment">
+                  <h5>Effects:</h5>
+                  				The team in this example causes that an additional fee has to be payed while debiting 
+                  				less than 1000 Euros from a "foreign" account.
+                  				
+                  <ul>
+                     <li>The base guard in line 4 ensures that <code>Account</code> objects only get 
+                        				<code>ForeignAccount</code> roles, if they belong to a different bank than the 
+                        				surrounding <code>ATM</code> team.<br />
+                        				It accesses the bank of the base via the <code>base</code> identifier.
+                        					
+                     </li>
+                     <li>The method binding guard in line 10 restricts the callin to 
+                        				<code>debitWithFee</code> to calls where the base method argument 
+                        				<code>amount</code> is lower than 1000.
+                        					
+                     </li>
+                     <li>A call to <code>Account.debit</code> causes a replace callin to 
+                        				<code>debitWithFee</code><em> only</em> if <em>both</em> predicates evaluate to true.
+                        					
+                     </li>
+                  </ul>
+               </div>
+            </div>
+         </div>
+         <table class="nav">
+            <tr>
+               <td class="back"><a href="s5.3.html" rel="prev">&lt;&lt;&nbsp;&sect;5.3&nbsp;Implicit team activation</a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s5.5.html" rel="next">&sect;5.5&nbsp;Unanticipated team activation&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="breadcrumb"><a class="nav" href="s5.html" rel="section">&sect;5&nbsp;Team Activation</a></div>
+      </div>
+      <div id="footer">
+         <hr /><a class="w3c img" href="http://jigsaw.w3.org/css-validator/check/referer"
+            shape="rect"><img src="../images/valid-css2-blue.png" alt="Valid CSS!" height="31" width="88" /></a><a class="w3c img" href="http://validator.w3.org/check?uri=referer" shape="rect"><img src="../images/valid-xhtml10-blue.png" alt="Valid XHTML 1.0 Strict" height="31"
+                 width="88" /></a><address>&copy; Stephan Herrmann, Christine Hundt, Marco Mosconi</address>
+         			OT/J version 1.3.1 &mdash; last modified: 2013-05-28
+      </div>
+   </body>
+</html>

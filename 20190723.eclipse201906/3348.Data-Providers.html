@@ -1,0 +1,177 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - Data Providers</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Data Providers</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="OS-Execution-Graph-Extension.html" title="OS Execution Graph Extension">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right"></td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">OS Execution Graph Extension</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top"></td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Data_Providers">Data Providers</h1>
+		<p>Starting in Trace Compass 3.3, the core and UI are being decoupled with the data provider interface. This interface aims to provide a standard data model for different types of views.</p>
+		<p>Data providers are queried with a filter object, which usually contains a time range as well as other parameters required to correctly filter and sample the returned data. They also take an optional progress monitor to cancel the task. The returned models are encapsulated in a 
+			<b>TmfModelResponse</b> object, which is generic (to the response's type) and also encapsulates the Status of the reponse:
+		</p>
+		<ul>
+			<li>CANCELLED if the query was cancelled by the progress monitor</li>
+			<li>FAILED if an error occurred inside the data provider</li>
+			<li>RUNNING if the response was returned before the underlying analysis was completed, and querying the provider again with the same parameters can return a different model.</li>
+			<li>COMPLETED if the underlying analysis is finished and we do not expect a different model for the query parameters.</li>
+		</ul>
+		<h2 id="Data_provider_types">Data provider types</h2>
+		<p>The base data provider returns a tree, as a list of 
+			<b>TmfTreeDataModel</b>, with a name, ID and parent ID. The ID is unique to a provider type and the parent ID indicates which element from the list is the entry's parent to rebuild the tree from the list of models.
+		</p>
+		<p>The base 
+			<b>TimeGraphEntryModel</b> class extends this with a start time and end time. Concrete classes are free to add other required fields, as long as the model is serializable.
+		</p>
+		<h3 id="Tree_XY">Tree XY</h3>
+		<p>The tree XY data provider type is used to associate XY series to an entry from the tree. The data provider is queried with a filter that also contains a Collection of the IDs of the entries for which we want XY series. The response contains a map of the series for the desired IDs.</p>
+		<p>Each XY series can have its own x axis (
+			<b>ISeriesModel</b> / 
+			<b>SeriesModel</b> - encapsulated in an 
+			<b>ITmfXyModel</b> / 
+			<b>TmfXyModel</b>) or they can be shared by all models (
+			<b>IYModel</b> / 
+			<b>YModel</b> encapsulated in an 
+			<b>ITmfCommonXAxisModel</b> / 
+			<b>TmfCommonXAxisModel</b>). The X axis is an array of longs, which makes it useful for a time axis or time buckets, but it can be used for any XY content.
+		</p>
+		<p>The interface to implement is 
+			<b>ITmfTreeXYDataProvider</b>.
+		</p>
+		<h3 id="Time_Graph">Time Graph</h3>
+		<p>The Time Graph data provider is used to associate states to tree entries, i.e. a sampled list of states, with a start time, duration, integer value and optional label. The time graph states (
+			<b>ITimeGraphState</b> / 
+			<b>TimeGraphState</b>) are encapsulated in an 
+			<b>ITimeGraphRowModel</b> which also provides the ID of the entry they map to.
+		</p>
+		<p>The time graph data provider can also supply arrows to link entries one to another with a start time and start ID as well as a duration and target ID. The interface to implement is 
+			<b>ITimeGraphArrow</b>, else 
+			<b>TimeGraphArrow</b> can be extended.
+		</p>
+		<p>Additional information can be added to the states with tooltips, which are maps of tooltip entry names to tooltip entry values.</p>
+		<p>The interface to implement is 
+			<b>ITimeGraphDataProvider</b>.
+		</p>
+		<h2 id="Data_provider_management">Data provider management</h2>
+		<p>Data providers can be handled by the 
+			<b>DataProviderManager</b> class, which uses an extension point and factories for data providers.
+			This manager associates a unique data provider per trace and extension point ID, ensuring that data providers can be reused and that each entry for a trace reuses the same unique entry ID.
+		</p>
+		<h3 id="Extension_point">Extension point</h3>
+		<p>example:</p>
+		<pre>
+&lt;extension point="org.eclipse.tracecompass.tmf.core.dataprovider"&gt;
+    &lt;dataProviderFactory
+        class="org.eclipse.tracecompass.analysis.graph.core.dataprovider.CriticalPathDataProviderFactory"
+        id="org.eclipse.tracecompass.analysis.graph.core.dataprovider.CriticalPathDataProvider"&gt;
+    &lt;/dataProviderFactory&gt;
+&lt;/extension&gt;
+</pre>
+		<h3 id="Experiments">Experiments</h3>
+		<p>In the data provider manager, experiments also get a unique instance of a data provider, which can be specific or encapsulate the data providers from the child traces. For example, an experiment can have its own concrete data provider when required (an analysis that runs only on experiments), or the factory would create a 
+			<b>CompositeDataProvider</b> (using 
+			<b>TmfTreeXYCompositeDataProvider</b> or 
+			<b>TmfTimeGraphCompositeDataProvider</b>) encapsulating the providers from its traces. The benefit of encapsulating the providers from child traces is that their entries/IDs can be reused, limiting the number of created objects and ensuring consistency in views. These composite data providers dispatch the request to all the encapsulated providers and aggregates the results into the expected data structure.
+		</p>
+		<h2 id="Utilities">Utilities</h2>
+		<p>Abstract base classes are provided for TreeXY and time graph data providers based on 
+			<b>TmfStateSystemAnalysisModule</b>s (
+			<b>AbstractTreeCommonXDataProvider</b> and 
+			<b>AbstractTimeGraphDataProvider</b>, respectively). They handle concurrency, mapping of state system attributes to unique IDs, exceptions, caching and encapsulating the model in a response with the correct status.
+		</p>
+		<p>On the view side, we recommend building TreeXY views from 
+			<b>AbstractSelectTreeViewer</b> and 
+			<b>TmfFilteredXYChartViewer</b> and building Time Graph Views by extending  
+			<b>BaseDataProviderTimeGraphView</b>.
+		</p>
+		<h3 id="Example_Tree_XY_code">Example Tree XY code</h3>
+		<p>Below is an example of the minimum implementation required to display the data from a tree XY data provider.</p>
+		<p>Out of the box, it supports experiments, updating during the trace analysis, Pin &amp; Clone and a number of chart viewer features.</p>
+		<pre>
+public class TreeXyView extends TmfChartView {
+
+    /**
+     * Constructor
+     */
+    public TreeXyView() {
+        super("Tree XY View");
+    }
+
+    @Override
+    protected TmfXYChartViewer createChartViewer(Composite parent) {
+        TmfXYChartSettings settings = new TmfXYChartSettings(null, null, null, 1);
+        return new TmfFilteredXYChartViewer(parent, settings, DataProvider.ID);
+    }
+
+    private static final class TreeXyViewer extends AbstractSelectTreeViewer {
+
+        private final class TreeXyLabelProvider extends TreeLabelProvider {
+            @Override
+            public Image getColumnImage(Object element, int columnIndex) {
+                if (columnIndex == 1 &amp;&amp; element instanceof TmfTreeViewerEntry &amp;&amp; isChecked(element)) {
+                    return getLegendImage(((TmfTreeViewerEntry) element).getName());
+                }
+                return null;
+            }
+        }
+
+        public TreeXyViewer(Composite parent) {
+            super(parent, 1, DataProvider.ID);
+            setLabelProvider(new TreeXyLabelProvider());
+        }
+
+        @Override
+        protected ITmfTreeColumnDataProvider getColumnDataProvider() {
+            return () -&gt; ImmutableList.of(createColumn("Name", Comparator.comparing(TmfTreeViewerEntry::getName)),
+                    new TmfTreeColumnData("Legend"));
+        }
+    }
+
+    @Override
+    protected @NonNull TmfViewer createLeftChildViewer(Composite parent) {
+        return new TreeXyViewer(parent);
+    }
+}
+</pre><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="OS-Execution-Graph-Extension.html" title="OS Execution Graph Extension">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right"></td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">OS Execution Graph Extension</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top"></td>
+			</tr>
+		</table>
+	</body>
+</html>

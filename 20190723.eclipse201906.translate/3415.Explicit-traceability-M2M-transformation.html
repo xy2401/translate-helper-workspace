@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Explicit Traceability M2M Transformation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Explicit Traceability M2M Transformation</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This page contains the documentation of the incremental model transformation using Xtend and VIATRA Query with the  explicit traceability model used for identifying unsynchronized changes between the CPS and deployment models.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This transformation variant uses the <a href="https://wiki.eclipse.org/VIATRA/Transformation/EventDrivenVM">Event-driven Virtual Machine (EVM)</a> that is part of VIATRA for specifying and executing a set of independent transformation rules. The rules are developed to monitor the traceability model between a CPS and a deployment model and any element in the CPS model without corresponding traces is transformed to synchronize the CPS and deployment models.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_does_it_work">How does it work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For each type in the CPS metamodel, we create several rules for identifying their appearance, disappearance and optionally updates. The preconditions of these rules are defined by VIATRA Query patterns <a href="https://git.eclipse.org/c/viatra/org.eclipse.viatra.examples.git/tree/cps/transformations/org.eclipse.viatra.examples.cps.xform.m2m.incr.expl/src/org/eclipse/viatra/examples/cps/xform/m2m/incr/expl/queries/cpsXformM2M.vql">cpsXformM2M.eiq</a> with the following naming convention:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>unmappedCPSElement</strong>: match a <em>CPSElement</em> (e.g. host instance) that has no corresponding trace</p>
+</li>
+<li>
+<p><strong>monitoredCPSElement</strong>: match a <em>CPSElement</em> that has complete trace</p>
+</li>
+<li>
+<p><strong>deletedDeploymentElement</strong>: match a <em>DeploymentElement</em> that has a trace, but the related CPS element does not exist</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The naming convention of <a href="https://git.eclipse.org/c/viatra/org.eclipse.viatra.examples.git/tree/cps/transformations/org.eclipse.viatra.query.examples.cps.xform.m2m.incr.expl/src/org/eclipse/viatra/query/examples/cps/xform/m2m/incr/expl/rules">rules</a> that use these patterns is the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>CPSElementMapping</strong>: matches of <em>unmappedCPSElement</em> pattern are processed to create corresponding elements in the deployment model (e.g. DeploymentApplication for ApplicationInstance) and the trace</p>
+</li>
+<li>
+<p><strong>CPSElementUpdate</strong>: matches of <em>monitoredCPSElement</em> pattern are processed to monitor the <em>CPSElement</em> and synchronize attribute changes (e.g. the IP of the host instance is changed)</p>
+</li>
+<li>
+<p><strong>CPSElementRemoval</strong>: matches of <em>deletedDeploymentElement</em> pattern are processed to remove the corresponding elements from the deployment model and the trace</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>There are rules defined for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Host instances</p>
+</li>
+<li>
+<p>Application instances allocated to mapped hosts</p>
+</li>
+<li>
+<p>State machines for each mapped application instance</p>
+</li>
+<li>
+<p>States</p>
+</li>
+<li>
+<p>Transitions</p>
+</li>
+<li>
+<p>Triggers (<em>update is not used</em>)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The transformation execution is completely event-driven, without any priority between rules or imperative control structures. The set of rules are collected and an execution schema is created with a scheduler that is called every time the model has changed. The scheduler invokes the EVM executor that fires all activations that are enabled for any of the rules. Activations are not ordered in any way, the executor simply takes the next enabled in a while loop that runs as long as there is any enabled activation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_of_1_to_n_mappings">Handling of 1-to-n mappings</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since the transformation watches the traceability model, a missing mapping for any 1-to-n mapping is represented as a match of the corresponding <em>unmappedCPSElement</em> pattern. If an application type has 3 instances which are already transformed then there will be 3 <em>unmappedStateMachine</em> matches and also 3 activations of the <em>StateMachineMapping</em> rule.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creation_of_triggers">Creation of triggers</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Triggers are found in the CPS model by VIATRA Query patterns that evaluate the actions of transitions, check communication between host instance and check allocation of application instances to hosts. In addition, the traceability model is used to find those BehaviorTransition elements that correspond to the CPS transitions. Note that this is needed since instances of the application type may be allocated to different hosts. Therefore, two CPS transitions with matching send and wait actions may only represent triggers for some or none of the application instances.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_technical_details">Technical details</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_api">API</h3>
+<div class="paragraph">
+<p>The API of the transformation is the following class:
+<code>CPS2DeploymentTransformation.xtend</code> (<a href="https://git.eclipse.org/c/viatra/org.eclipse.viatra.examples.git/tree/cps/transformations/org.eclipse.viatra.query.examples.cps.xform.m2m.incr.expl/src/org/eclipse/viatra/query/examples/cps/xform/m2m/incr/expl/CPS2DeploymentTransformation.xtend">source</a>)</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_usage_example">Usage example</h3>
+<div class="paragraph">
+<p>The following is a simple example for executing the transformation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">// assume cps2dep is a CPSToDeployment object
+// assume engine is an VIATRA Query engine initialized on the resource set containing cps2dep
+xform = new CPS2DeploymentTransformation
+xform.initialize(cps2dep, engine)
+xform.execute()
+// model changes are incrementally synchronized
+// calling execute later has no effect
+xform.dispose</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary_and_comparison">Summary and comparison</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The explicit traceability variant implements the CPS-to-Deployment transformation by watching the state of the traceability model and synchronizes any changes incrementally from the CPS model to the Deployment model. After the initial execution (when the traceability and deployment models are empty), the event-driven rules are executed whenever model changes happen and only changed elements are transformed instead of the whole model. Additionally, this variant can be started even if the CPS, deployment and traceability models are already transformed (e.g. by a batch transformation) and it is able to correctly work incrementally from that point. Compared to the <a href="Queryresult-traceability-M2M-transformation.html">Query result bookmarking M2M transformation</a>, it behaves correctly even if only the CPS model has been changed after a previous transformation.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

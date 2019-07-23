@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Help Search Participant</title>
+<style type="text/css">@import url("../../book.css");</style>
+<style type="text/css">@import url("../../schema.css");</style>
+</HEAD>
+<BODY>
+<H1 style="text-align:center">Help Search Participant</H1>
+<p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Identifier: </h6>org.eclipse.help.base.searchParticipant<p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Since: </h6>3.5
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">Description: </h6>This extension point should be used to add document content to the search index. There are two cases were you would want to add a search participant:
+<ol>
+<li>
+To index documents registered with the help system's TOC that are not of the HTML format (e.g. XML). In this case, the participant must declare file extensions it can handle. It will be called to index each matching document. In this case, the participant has the plug-in scope.
+</li>
+<li>
+To index documents outside of the help system's TOC. In this case, the participant will be given a chance to index all the documents it knows about at once. In addition, the participant will be delegated the task of opening the search result because the help system will not know how to open the documents outside the TOC. In this case, the participant has global scope.
+</li>
+</ol>
+<p>
+Search participants are associated with the plug-in the extension appears in. In order to reuse the participant in other plug-ins, <code>binding</code> should be used to reference them. This strategy prevents a plug-in from imposing its participant on the entire product for the file extensions it was registered with. By adding an explicit reference, the plug-in declares that it allows the referenced search participant to handle indexing of documents with those extensions. For documents that are not part of the TOC, there is no such danger. For this reason, they are global and <code>binding</code> should not be used.
+</p><p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Configuration Markup:</h6>
+<p></p>
+<p class="code SchemaDtd">&lt;!ELEMENT <a name="e.extension">extension</a> (<a href="#e.searchParticipant">searchParticipant</a> | <a href="#e.binding">binding</a>)+&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST extension</p>
+<p class="code SchemaDtdAttlist">point&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">id&nbsp;&nbsp;&nbsp;&nbsp;CDATA #IMPLIED</p>
+<p class="code SchemaDtdAttlist">name&nbsp;&nbsp;CDATA #IMPLIED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.searchParticipant">searchParticipant</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST searchParticipant</p>
+<p class="code SchemaDtdAttlist">id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CDATA #IMPLIED</p>
+<p class="code SchemaDtdAttlist">icon&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CDATA #IMPLIED</p>
+<p class="code SchemaDtdAttlist">participant&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">extensions&nbsp;&nbsp;CDATA #IMPLIED</p>
+<p class="code SchemaDtdAttlist">headless&nbsp;&nbsp;&nbsp;&nbsp;(true | false) "false"&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>id</b> - a unique identifier of this search participant</li>
+<li><b>name</b> - an optional translatable name that will be used to represent the participant as a category of documents that can be included in the search. The name is not required when the participant is used for documents in the TOC (i.e. when <code>extensions</code> attribute is set).</li>
+<li><b>icon</b> - an optional icon to be used to render search hits from the documents indexed by this participant. The icon will be used for the documents outside of the help's TOC to indicate that opening the search hit may result in an action different from showing the regular help document. Consequently, icon is not required when the participant is used for documents in the TOC (i.e. when <code>extensions</code> attribute is set).</li>
+<li><b>participant</b> - The implementation class for the help search participant.  This class must implement the <samp>org.eclipse.help.search.SearchParticipant</samp> interface.  This attribute may be omitted, and the nested <samp>participant</samp> element may be provided instead.</li>
+<li><b>extensions</b> - an optional field containing the list of file types handled by the search participant. This is a string containing comma separate file extensions (e.g. "abc, xyz"). This attribute should be used when files are made explicitly known to the help system in the <code>org.eclipse.help.toc</code> extension point. The absence of this attribute is an indication that the participant will index all the documents it is responsible for by itself. 
+<p>Note also that participants that are registered for known documents have plug-in scope. If you want a participant to apply to documents in another plug-in, you must use the <code>binding</code> element to extend the scope. In contrast, participants that do not specify this attribute have global scope.</li>
+<li><b>headless</b> - specifies whether or not this search participant should be used when running the help system outside an eclipse workbench, i.e. it is running in either standalone or infocenter mode. The default value is <code>false</code>.</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.binding">binding</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST binding</p>
+<p class="code SchemaDtdAttlist">participantId&nbsp;IDREF #IMPLIED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>participantId</b> - a reference to the search participant declared elsewhere using <code>searchParticipant</code> element. Binding can be used to reuse search participants in plug-ins without violating the top-down policy. Binding is only needed for indexing documents that are part of the TOC. Otherwise, participant has global scope.</li>
+</ul>
+<br><h6 class="CaptionFigColumn SchemaHeader">Examples: </h6>The following is a sample usage of the extension point:
+
+<p>
+<pre class="Example"><span class="code SchemaTag">
+  &lt;extension point=</span><span class="code SchemaCstring">&quot;org.eclipse.help.base.searchParticipant&quot;</span><span class="code SchemaTag">&gt;
+   &lt;searchParticipant id=</span><span class="code SchemaCstring">&quot;org.eclipse.myGlobalParticipant&quot;</span><span class="code SchemaTag">
+     name=</span><span class="code SchemaCstring">&quot;Global Participant&quot;</span><span class="code SchemaTag">
+     icon=</span><span class="code SchemaCstring">&quot;icons/mydoc.gif&quot;</span><span class="code SchemaTag">
+     participant=</span><span class="code SchemaCstring">&quot;org.eclipse.myPlugin.myPackage.MyGlobalParticipant&quot;</span><span class="code SchemaTag">
+     headless=</span><span class="code SchemaCstring">&quot;true&quot;</span><span class="code SchemaTag">/&gt;
+   &lt;searchParticipant id=</span><span class="code SchemaCstring">&quot;org.eclipse.myXYZParticipant&quot;</span><span class="code SchemaTag">
+     extensions=</span><span class="code SchemaCstring">&quot;xyz&quot;</span><span class="code SchemaTag">
+     participant=</span><span class="code SchemaCstring">&quot;org.eclipse.myPlugin.myPackage.MyXYZParticipant&quot;</span><span class="code SchemaTag">/&gt;
+  &lt;/extension&gt;
+</span></pre>
+</p>
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">API Information: </h6>The supplied search participant class must extend the <samp>org.eclipse.help.search.SearchParticipant</samp> abstract class.
+<p></p>
+
+<br>
+<p class="note SchemaCopyright">
+Copyright (c) 2010, 2012 IBM Corporation and others.<br>
+
+This program and the accompanying materials are made 
+available under the terms of the Eclipse Public License 2.0 which accompanies 
+this distribution, and is available at <a href="https://www.eclipse.org/legal/epl-2.0">https://www.eclipse.org/legal/epl-v20.html</a>/
+
+SPDX-License-Identifier: EPL-2.0
+
+</p>
+</BODY>
+</HTML>

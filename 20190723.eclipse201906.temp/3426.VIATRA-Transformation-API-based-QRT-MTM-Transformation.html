@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>VIATRA transformation API based QRT M2M transformation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>VIATRA transformation API based QRT M2M transformation</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This gives a short introduction on the QRT transformation variant that uses the VIATRA transformation API to define its transformation rules.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This transformation variant is closely related to the <a href="Query-result-traceability-M2M-transformation.html">Query Result Tracebility</a> variant. The basic concept of the transformation and the transformation rules are identical to those of the aforementioned variant, as the VIATRA transformation API basically provides a simplified, more model transformation oriented interface for the <a href="https://wiki.eclipse.org/VIATRA/Transformation/EventDrivenVM">Event-driven Virtual Machine (EVM)</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_does_it_work">How does it work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>On the contrary to its sister variant, this method uses the <a href="http://wiki.eclipse.org/VIATRA/Transformation_API">VIATRA transformation API</a> to access the EVM. Similar to the aforementioned QRT method, each transformation step is triggered by an appearing or disappearing VIATRA Query pattern match. The transformation steps are detailed in the listing below.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>HostInstance</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Related patterns:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>hostInstance</em> (Event Trigger)</p>
+</li>
+<li>
+<p><em>cps2depTrace</em> (Used in transformation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Appear: Create a new DeploymentHost in the deployment model representing the appeared HostInstance. Add trace to traceability.</p>
+</li>
+<li>
+<p>Update: Update the IP address if required.</p>
+</li>
+<li>
+<p>Disappear: Remove the DeploymentHost representing the disappeared HostInstance from the deployment model. Remove trace from traceability.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>ApplicationInstance</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Related patterns:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>applicationInstance</em> (Event Trigger)</p>
+</li>
+<li>
+<p><em>cps2depTrace</em> (Used in transformation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Appear: Create a new DeploymentApplication in the deployment model representing the appeared ApplicationInstance. Add trace to traceability.</p>
+</li>
+<li>
+<p>Update: Update the id if required.</p>
+</li>
+<li>
+<p>Disappear: Remove the DeploymentApplication representing the disappeared ApplicationInstance from the deployment model. Remove trace from traceability.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>StateMachine</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Related patterns:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>stateMachine</em> (Event Trigger)</p>
+</li>
+<li>
+<p><em>applicationInstance</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>cps2depTrace</em> (Used in transformation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Appear: Create a new DeploymentBehavior in the deployment model representing the appeared StateMachine for the ApplicationInstance specified by the pattern. This happens for every ApplicationInstance with a type that defines the StateMachine. Add DeploymentBehavior to proper trace in traceability. If it does not exist, create it.</p>
+</li>
+<li>
+<p>Update: Update the description if required.</p>
+</li>
+<li>
+<p>Disappear: Remove the DeploymentBehaviors representing the disappeared StateMachines from the deployment model. Remove DeploymentBehavior from proper trace in traceability. If no DeploymentBehaviors are left in the trace, remove it.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>State</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Related patterns:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>state</em> (Event Trigger)</p>
+</li>
+<li>
+<p><em>stateMachine</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>applicationInstance</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>cps2depTrace</em> (Used in transformation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Appear: Create a new BehaviorState in the deployment model representing the appeared State for the ApplicationInstance specified by the pattern. This happens for every ApplicationInstance with a type that defines the StateMachine containing the State. Set the DeploymentBehavior&#8217;s current state to the created BehaviorState if the original State was an initial state of it&#8217;s state machine. Add BehaviorState to proper trace in traceability. If it does not exist, create it.</p>
+</li>
+<li>
+<p>Update: Update the description and the current state of the state machine if required.</p>
+</li>
+<li>
+<p>Disappear: Remove the BehaviorStates representing the disappeared State from the deployment model. If this BehaviorState was the current state of it&#8217;s DeploymentBehavior, set the behavior&#8217;s current state to null. Remove BehaviorStates from proper trace in traceability. If no BehaviorStates are left in the trace, remove it.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Transition</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Related patterns:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>transition</em> (Event Trigger)</p>
+</li>
+<li>
+<p><em>state</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>stateMachine</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>applicationInstance</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>cps2depTrace</em> (Used in transformation)</p>
+</li>
+<li>
+<p><em>depBehaviorsStateAndTransitions</em> (Used in transformation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Appear: Create a new BehaviorTransition in the deployment model representing the appeared State for the ApplicationInstance specified by the pattern. This happens for every ApplicationInstance with a type that defines the StateMachine containing the State containing the Transition. Add BehaviorTransition to proper trace in traceability. If it does not exist, create it.</p>
+</li>
+<li>
+<p>Update: Update the description, the source and target states if required.</p>
+</li>
+<li>
+<p>Disappear: Remove the BehaviorTransitions representing the disappeared Transition from the deployment model. Remove BehaviorTransitions from proper trace in traceability. If no BehaviorTransitions are left in the trace, remove it.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Trigger</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Related patterns:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>triggerPair</em> (Event Trigger)</p>
+</li>
+<li>
+<p><em>sendTransitionAppSignal</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>waitTransitionAppSignal</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>appInstanceTransition</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>applicationInstance</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>applicationInstanceWithHost</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>reachableHosts</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>hostCommunication</em> (Referenced by event trigger)</p>
+</li>
+<li>
+<p><em>cps2depTrace</em> (Used in transformation)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Appear: Set the trigger between the BehaviorTransitions representing the matched Transitions.</p>
+</li>
+<li>
+<p>Disappear: Remove the trigger between the BehaviorTransitions representing the matched Transitions.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To resolve ordering issues, the events processing order is defined based on priorities as follows:
+HostInstance &gt; ApplicationInstance &gt; StateMachine &gt; State &gt; Transition &gt; Trigger</p>
+</div>
+<div class="paragraph">
+<p>(A &gt; B means event A will be processed before event B)</p>
+</div>
+<div class="paragraph">
+<p>The above order is true for each appear and update event. In the case of disappear events the order is reversed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_of_1_to_n_mappings">Handling of 1-to-n mappings</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The 1-to-n mappings are mainly handled inside the event trigger patterns. Each pattern is written in a way so that it will create an event for each applicable ApplicationInstance, e.g. if a new State is added to the CPS model and there are 3 ApplicationInstances of the type that defines the StateMachine, then 3 appeared events will occur, and each of them will add a new BehaviorState to the corresponding DeploymentApplication&#8217;s DeploymentBehavior.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creation_of_triggers">Creation of triggers</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Detecting new trigger pairs is entirely the job of VIATRA Query using the above specified patterns.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_class_of_the_transformation">Class of the transformation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The implementation of the transformation can be found in the following class:
+<code>CPS2DeploymentTransformationViatra.xtend</code></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary_and_comparison">Summary and comparison</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If compared to the QRT variant, while being simpler and easier to maintain than its counterpart due to the simplified, more transformation oriented VIATRA API, this implementation offers the same functionality and performance as well.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

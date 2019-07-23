@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Simple and Optimized Xtend Batch M2M Transformation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Simple and Optimized Xtend Batch M2M Transformation</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This is a pure Xtend implementation for the example transformation described in <a href="CPS-to-Deployment-Transformation.html">CPS to Deployment Transformation</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The basic idea for the batch transformations - both for the simple and optimized versions - is to programmatically traverse the model that is to be transformed and apply all the transformation rules where they are applicable. Model traversal is done by using only basic language concepts and without using any advanced technologies or complex frameworks.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_does_it_work">How does it work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The basic concept of this batched transformation is to transform a CPS model to a complete deployment model. This solution doesn&#8217;t support incremental transformation, only the whole model can be transformed, and it uses the following steps:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>It receives a root element for a mapping model which connects a CPS model root and a Deployment model root. The initialization step is to clear all traces from the mapping model and to delete all deployment hosts, if there is any.</p>
+</li>
+<li>
+<p>Iterates over every HostInstance in the CPS model using foreach and transforms each of them to DeploymentHosts. In every iteration DeploymentApplications are also created from ApplicationInstances (see next step) and added to the hosts' containments which are allocated to the host being processed.</p>
+</li>
+<li>
+<p>For each ApplicationInstance a DeploymentApplication is created. If the ApplicationType of the ApplicationInstance refers to a StateMachine, a DeploymentBehavior is also added for the ApplicationInstance (see next step)</p>
+</li>
+<li>
+<p>The States of the StateMachine referred by the ApplicationType are transformed to BehaviorStates. For each State, the Transitions are transformed to BehaviorTransitions (see next step)</p>
+</li>
+<li>
+<p>For each Transition between States of a StateMachine a BehaviorTransition is created connecting the corresponding BehaviorStates.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_of_1_to_n_mappings">Handling of 1-to-n mappings</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Mappings with 1-to-n multiplicity are created in the following cases</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>StateMachine - DeploymentBehavior</p>
+</li>
+<li>
+<p>State - BehaviorState</p>
+</li>
+<li>
+<p>Transition - BehaviorTransition</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This means that a trace is only created once for each of these CPS elements, and as the transformation advances the list of deployment elements of the trace might expand.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creation_of_triggers">Creation of triggers</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Triggers are created after all other model elements are created. First all mappings for Transitions in the CPS model are collected. In the next step all Transitions are selected which are sending a message (at this point we use that every transition can send/receive up to one message). When this is done all corresponding receiver Transitions are searched based on the action string. After this a trigger is created for each BehaviorTransition mapped to the sender Trace and each BehaviorTransition mapped to the receiver Traces if their container DeploymentHosts can communicate with each other.</p>
+</div>
+<div class="paragraph">
+<p>To inspect DeploymentHost communication capability, their corresponding HostInstances are used: the communicatesWith relation is traversed using DFS. When the receiver HostInstances in the CPS model can be reached, the corresponding DeploymentHost is regarded as reachable.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_class_of_the_transformation_and_example">Class of the transformation and example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The class for the transformation is an Xtend class named <code>CPS2DeploymentBatchTransformationSimple</code>. To apply the transformation, just instantiate the class with a traceability model pointing to the CPS and Deployment model roots and invoke the <code>execute</code> method :</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>// we assume there is an initialization row before like CPSToDeployment cps2dep = ...
+xform = new CPS2DeploymentBatchTransformationSimple(cps2dep)
+xform.execute</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_optimized_batch_m2m_transformation">Optimized batch M2M transformation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In order to speed up the Xtend based variant we also developed a so called optimized version (<code>CPS2DeploymentBatchTransformationOptimized</code>). It is based on the simple batch transformation, however, includes the following optimizations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A caching mechanism that is to store the created traceability information for created model elements in map data structures (one map for both directions) to avoid traversal of traceability model. In case of BehaviorTransitions, the application type ID, action ID and HostInstance are also stored based on the CPS model for faster trigger creation.</p>
+</li>
+<li>
+<p>Code restructuring for better loop execution</p>
+</li>
+<li>
+<p>When creating triggers, the data for the receiver behavior transition are obtained in the outer for loop instead of the inner for loop.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This version can be executed using the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>xform = new CPS2DeploymentBatchTransformationOptimized(cps2dep)
+xform.execute</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary_and_comparison">Summary and comparison</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>These two batch transformation methods, compared to the other implemented transformation techniques, have proven to be the least time-effective. However, it can be said that the optimized version preformed the same transformation during half the time of the simple transformation. The memory consumption is not necessarily low, but it was not the bottleneck concerning the performance.</p>
+</div>
+<div class="paragraph">
+<p>The introduced transformations are not taking changes into consideration, they always perform a complete traversal of the CPS model. This is the main reason for the bad performance results compared to the incremental transformations when there is a change in the CPS model, that needs to be propagated via a repeated, complete transformation to the Deployment model.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

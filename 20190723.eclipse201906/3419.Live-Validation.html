@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Live Validation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Live Validation</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The VIATRA <a href="https://wiki.eclipse.org/index.php?title=VIATRA/Addon/Validation">Validation Framework</a> offers a declarative approach for defining complex constraints on instance models that are evaluated incrementally during model editing.</p>
+</div>
+<div class="paragraph">
+<p>In the CPS demonstrator we defined a set of constraints for <a href="Domains.html#cyber-physical-system">Cyber Physical System</a> instance models in the <code>model/validation/rules.eiq</code> file in the <code>cps.queries</code> project. The constraints include the following examples:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Host instances must have unique IP addresses</p>
+</li>
+<li>
+<p>The initial state of a state machine must be among the states of the same state machine</p>
+</li>
+<li>
+<p>Transitions must have target states, which must be in the same state machine as the source state</p>
+</li>
+<li>
+<p>Actions of outgoing transitions from a given state must be unique</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_definition_of_constraints">Definition of constraints</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Each constraint is defined using <code>@Constraint</code> annotations on patterns. The annotation has three required parameters:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <strong>location</strong> identifies which element is the focus of the violation</p>
+</li>
+<li>
+<p>The <strong>message</strong> is a format string that specifies what will be displayed for each violation</p>
+</li>
+<li>
+<p>The <strong>severity</strong> specifies the type of the created marker (error or warning)</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>@Constraint(
+    location = state,
+    message = "Multiple outgoing transitions of $state.id$ define the same action ($action$)",
+    severity = "error"
+)
+pattern multipleTransitionsWithSameAction(state, action) {
+    State.outgoingTransitions(state, transition);
+    State.outgoingTransitions(state, otherTransition);
+    find actionOfTransition(transition, action);
+    find actionOfTransition(otherTransition, action);
+    transition != otherTransition;
+}
+
+private pattern actionOfTransition(transition, action) {
+    Transition.action(transition, action);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The VIATRA Query generator fragment generates the required source code and other artefacts automatically when the builder is invoked by saving the query definition file. The code is placed in the <code>cps.queries.validation</code> project.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_usage_of_live_validation">Usage of live validation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The live validation can be demonstrated in the generated editor for CPS models:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start a Runtime Eclipse</p>
+</li>
+<li>
+<p>Open a CPS instance model (e.g. by importing the <code>cps.instances</code> project) in the generated editor</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Right click on a <code>.cyberphysicalsystem</code> file in the <em>Package explorer</em>, <code>Open with &#8594; CyberPhysicalSystem Model Editor</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Initialize the validation</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Right click in the tree editor, <code>VIATRA Validation &#8594; Initialize VIATRA Validators on Editor</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Violations of constraints are displayed in the <em>Problems</em> view</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Double clicking the violation will set the selection of the editor to the location element</p>
+</li>
+<li>
+<p>Changes in the model will update problem markers immediately</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

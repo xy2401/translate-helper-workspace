@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Partial batch M2M transformation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Partial batch M2M transformation</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This page provides a summary for the partial batch transformation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The partial batch transformation performs an initial, complete transformation for the model, which is basically the simple VIATRA Query solution described in <a href="Simple-Xtend-and-Query-M2M-transformation.html">Simple Xtend and Query M2M-transformation</a>. Then, the changes of the source CyberPhysicalSystem model are traced and collected using a change monitor. From the collected changes in source cyber physical system model the transformation - when run again - modifies only the corresponding parts of the deployment model, this way dramatically reducing re-transformation time if the source model contains changes.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_does_it_work">How does it work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This transformation uses the <a href="https://wiki.eclipse.org/VIATRA/Transformation/EventDrivenVM">Event-driven Virtual Machine (EVM)</a> feature of VIATRA Query. Registrations of changes are triggered by an appearing or disappearing VIATRA Query pattern match. Based on the appearance, disappearance or update of a model element since the last transformation, actions are to be taken when the transformation is initiated again.</p>
+</div>
+<div class="paragraph">
+<p>The VIARA Query query definitions used for the transformation of the model elements are detailed below.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>hostInstances</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Finds all host instances who have host type assigned.</p>
+</li>
+<li>
+<p>Used for transforming host instances to deployment hosts. The attribute values are obtained from the host instance object.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>appInstances</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Finds all application instance which have application type.</p>
+</li>
+<li>
+<p>Used for creating deployment applications.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>appTypes</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Returns all application types in the cyber physical system model.</p>
+</li>
+<li>
+<p>Used for determining the state machine application based on the type. The state machine is transformed to a behavior using the rule assigned to the <code>stateMachines</code> pattern.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>stateMachines</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Gets the state machines assigned to any application type.</p>
+</li>
+<li>
+<p>Used for creating behaviors of deployment applications.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>states</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Returns states that are part of a given state machine.</p>
+</li>
+<li>
+<p>Used for the creation of deployment behavior states within a behavior.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>transitions</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Gets all transitions that are outgoing transitions of a state.</p>
+</li>
+<li>
+<p>Based on the matches of this pattern behavior transitions and triggers between them are created.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_of_1_to_n_mappings">Handling of 1-to-n mappings</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The 1-to-n mappings are handled within a separate method called <code>addTraceOneToN</code>. This is required for transforming state machines, states and transitions. When deletions occur in the source model, then the corresponding mappings are found using an VIATRA Query matcher, then removed by hand from the mappings.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_class_of_the_transformation">Class of the transformation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The implementation of the transformation can be found in the following class:
+<code>CPS2DeploymentPartialBatchTransformationEiq.xtend</code>, which is located in the <code>org.eclipse.viatra.query.examples.cps.xform.m2m.incr.aggr</code> package.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary">Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This transformation has almost the same memory footprint as the batch VIATRA Query transformation. The first transformation time is about the same, however, the time needed to transform the changes in the initial model is half the time needed for the batch VIATRA Query variant.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

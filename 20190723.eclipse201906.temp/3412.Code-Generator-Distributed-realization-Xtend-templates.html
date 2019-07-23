@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Code Generator (Distributed realization, Xtend templates)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Code Generator (Distributed realization, Xtend templates)</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>org.eclipse.viatra.query.examples.cps.m2t.distributed.generator</code> project implements a basic model-to-text transformation. It is a basic template based generator written in <em>Xtend</em> .</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_deployment_realization">Deployment realization</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The generated Java code realizes a "<em>distributed</em>" <code>Deployment</code> model where <code>Hosts</code> are the base elements of the distribution. Each host is a separated entity which can be run on <code>HostRunner</code> (threads). Hosts can communicate with each other via the <code>CommunicationNetwork</code> shared object.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/cps/codegenerator.png" alt="Code Generator">
+</div>
+</div>
+<div class="paragraph">
+<p><code>Hosts</code> and <code>Applications</code> are data objects with states. <code>HostRunner</code> is a simple engine which triggers its hosts to fire available transitions on every applications. The communication is asynchronous and realized with queues.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_code_generator">Code Generator</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The public API of the transformation contains four methods.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface ICPSGenerator {
+    def CharSequence generateHostCode(DeploymentHost host) throws CPSGeneratorException
+    def CharSequence generateApplicationCode(DeploymentApplication application) throws CPSGeneratorException
+    def CharSequence generateBehaviorCode(DeploymentBehavior behavior) throws CPSGeneratorException
+    def CharSequence generateDeploymentCode(Deployment deployment) throws CPSGeneratorException
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This implementation of the code generator is stateless. Each separate model element is generated individually.</p>
+</div>
+<div class="sect2">
+<h3 id="_host">Host</h3>
+<div class="paragraph">
+<p>The host objects keep references to their own applications.
+==== Generated Code</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">public class Host152661025 extends BaseHost {
+
+    public Host152661025(CommunicationNetwork network) {
+        super(network);
+        // Add Applications of Host
+        applications = Lists.&lt;Application&gt;newArrayList(
+            new AlarmApplication(this),
+                        new OtherApplication(this),
+        );
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_application">Application</h4>
+<div class="paragraph">
+<p>Applications store their <code>ApplicationID</code> and their current state of the behavior (State machine).
+==== Generated Code</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">public class AlarmApplication extends BaseApplication&lt;BehaviorAlarmB&gt; {
+
+    protected static final String APP_ID = "Alarm";
+
+    public AlarmApplication(Host host) {
+        super(host);
+
+        // Set initial State
+        currentState = BehaviorAlarmB.AInit;
+    }
+
+    @Override
+    public String getAppID() {
+        return APP_ID;
+    }
+
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_behavior">Behavior</h3>
+<div class="paragraph">
+<p>Behavior represents a statemachine of the application. It stores and manages the possible state transitions.
+==== Generated Code</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">public enum BehaviorAlarmB implements State&lt;BehaviorAlarmB&gt; {
+     ///////////
+    // States
+    AInit {
+        @Override
+        public List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleNextStates(Application app) {
+            List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleStates = Lists.newArrayList();
+
+            // Add Neutral Transitions
+
+            // Add Send Transitions
+            possibleStates.add(ASent);
+
+            // Add Wait Transitions
+
+            return possibleStates;
+        }
+
+        @Override
+        public BehaviorAlarmB stepTo(BehaviorAlarmB nextState, Application app) {
+            // Send triggers
+            if(nextState == ASent){
+                app.sendTrigger("152.66.102.5", "Alarm", "ISSReceiving");
+                return super.stepTo(nextState, app);
+            }
+
+            // Other cases (wait, neutral)
+            return super.stepTo(nextState, app);
+        }
+    },
+    ASent {
+        @Override
+        public List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleNextStates(Application app) {
+            List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleStates = Lists.newArrayList();
+
+            // Add Neutral Transitions
+            possibleStates.add(AInit);
+
+            // Add Send Transitions
+
+            // Add Wait Transitions
+
+            return possibleStates;
+        }
+    };
+
+    private static Logger logger = Logger.getLogger("cps.proto.distributed.state");
+
+     ////////////
+    // Triggers
+
+     /////////////////
+    // General part
+    @Override
+    abstract public List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleNextStates(Application app);
+
+    @Override
+    public BehaviorAlarmB stepTo(BehaviorAlarmB nextState, Application app){
+        if(possibleNextStates(app).contains(nextState)){
+            logger.info("Step from " + this.name() + " to " + nextState.name());
+            return nextState;
+        }else{
+            logger.info("!!! Warning: Unable to step from " + this.name() + " to " + nextState.name()
+                    + " because the target state is not possible state.");
+        }
+        return this;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In addition to the generated code <code>org.eclipse.viatra.query.examples.cps.m2t.proto.distributed</code> project contains the shared part of the working code (<em>general</em> package). Implementation of the CommunicationNetwork, the HostRunner, the BaseApplication, the BaseHost, State and the interfaces are placed there.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

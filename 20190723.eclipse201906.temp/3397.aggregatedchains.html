@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Aggregated Feature Chains</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Aggregated Feature Chains</h1>
+</div>
+<div id="content">
+<div class="paragraph">
+<p>Aggregating feature chains can result in surprising results, as multiple paths with the same start and end elements are merged together. This can be caused by (1) having multiple EObject instances reachable with the same checked attribute value (e.g. multiple machines with the same amount of RAM) or (2) reaching the same object in multiple paths. The duplicates can be correctly handled by making all objects through the path parameters, but the embedded aggregation syntax does not provide such support.</p>
+</div>
+<div class="paragraph">
+<p>To demonstrate the issue, consider the following query (based on the CPS domain): we are interested in the total amount of RAM available in hosts of a dedicated host type. Naively, we could write the following query:</p>
+</div>
+<div id="vql-embedded" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAMTotal_Wrong_Embedded(ht : HostType, total : java Integer) {
+	total == sum HostType.instances.totalRam(ht, #);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>However, this results in an incorrect match set if there are multiple host instances of the same host type that have the same value assigned to the total RAM attribute.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/language/aggregated_chain_embedded_result.png" alt="Match set of the embedded subpattern">
+</div>
+</div>
+<div class="paragraph">
+<p>This embedded query is equivalent of the following version without embedded aggregation:</p>
+</div>
+<div id="vql-incorrect" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAM_Simple(ht : HostType, ram : java Integer) {
+	HostType.instances.totalRam(ht, ram);
+}
+
+pattern hostTypeRAMTotal_Wrong(ht : HostType, total : java Integer) {
+	total == sum find hostTypeRAM_Simple(ht, #);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The problematic part is the hostTypeRAM_Simple pattern where the removal of the interim host instance variable results in multiple rows having the same value:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/language/aggregated_chain_result.png" alt="Match set with the helper pattern">
+</div>
+</div>
+<div class="paragraph">
+<p>By modifying the called pattern not to remove the host instance variable, the result set becomes the expected one:</p>
+</div>
+<div id="vql-correct" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAM(ht : HostType, hi : HostInstance, ram : java Integer) {
+	HostType.instances(ht, hi);
+	HostInstance.totalRam(hi, ram);
+}
+
+pattern hostTypeRAMTotal(ht : HostType, total : java Integer) {
+	total == sum find hostTypeRAM(ht, _, #);
+}</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/language/aggregated_chain_correct_result.png" alt="Match set with the fixed pattern">
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

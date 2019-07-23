@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Project Natures</title>
+<style type="text/css">@import url("../../book.css");</style>
+<style type="text/css">@import url("../../schema.css");</style>
+</HEAD>
+<BODY>
+<H1 style="text-align:center">Project Natures</H1>
+<p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Identifier: </h6>org.eclipse.core.resources.natures<p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Description: </h6>The workspace supports the notion of project natures 
+(or "natures" for short").  A nature associates lifecycle 
+behaviour with a project.  Natures are installed on 
+a per-project basis using the setDescription method defined on 
+<samp>org.eclipse.core.resources.IProject</samp>.  They are 
+configured when added to a project and deconfigured 
+when removed from the project.  For example, the Java nature 
+might install a Java builder and do other project 
+configuration when added to a project.
+<p>
+The natures extension-point allows nature writers 
+to register their nature implementation under a 
+symbolic name that is then used from within the 
+workspace to find and configure natures. 
+The symbolic name is id of the nature extension.  When 
+defining a nature extension, users are encouraged to include a
+human-readable value for the "name" attribute which identifies
+their meaning and potentially may be presented to users.
+</p>
+<p>
+Natures can specify relationship constraints with other natures.
+The "one-of-nature" constraint specifies that at most one nature
+belonging to a given set can exist on a project at any given time.
+This enforces mutual exclusion between natures that are not compatible
+with each other.  The "requires-nature" constraint specifies a
+dependency on another nature.  When a nature is added to a project,
+all required natures must also be added.  The natures are guaranteed
+to be configured and deconfigured in such a way that their required
+natures will always be configured before them and deconfigured after
+them.  For this reason, cyclic dependencies between natures are not
+permitted.
+</p>
+<p>
+Natures cannot be added to or removed from a project if that change would
+violate any constraints that were previously satisfied.  If a nature is
+configured on a project, but later finds that its constraints are not 
+satisfied, that nature and all natures that require it are marked as
+<i>disabled</i>, but remain on the project.  This can happen, for example,
+when a required nature goes missing from the install.  Natures that are 
+missing from the install, and natures involved in dependency cycles are 
+also marked as disabled.
+</p>
+<p>
+Natures can also specify which incremental project builders, if any, are 
+configured by them.  With this information, the workspace will ensure that 
+builders will only run when their corresponding nature is present and 
+enabled on the project being built.  If a nature is removed from a project,
+but the nature's deconfigure method fails to remove its corresponding builders,
+the workspace will remove those builders from the spec automatically.  It 
+is not permitted for two natures to specify the same incremental project builder
+in their markup.
+</p>
+<p>
+Natures also have the ability to disallow the creation of linked resources on projects they are associated with.  By setting the <code>allowLinking</code> attribute to &quot;false&quot;, a nature can declare that linked resources should never be created.  This feature is new in release 2.1.
+</p>
+<p>
+Starting with release 3.1, natures can declare affinity 
+with arbitrary content types, affecting the way content 
+type determination happens for files in the workspace. 
+In case of conflicts (two or more content types deemed
+equally suitable for a given file), the content type having affinity with any of the natures configured for the corresponding project will be chosen.
+</p><p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Configuration Markup:</h6>
+<p></p>
+<p class="code SchemaDtd">&lt;!ELEMENT <a name="e.extension">extension</a> (<a href="#e.runtime">runtime</a> , (<a href="#e.one-of-nature">one-of-nature</a> | <a href="#e.requires-nature">requires-nature</a> | <a href="#e.builder">builder</a> | <a href="#e.content-type">content-type</a>)* , <a href="#e.options">options</a>?)&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST extension</p>
+<p class="code SchemaDtdAttlist">point&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">id&nbsp;&nbsp;&nbsp;&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">name&nbsp;&nbsp;CDATA #IMPLIED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>point</b> - a fully qualified identifier of the target extension point</li>
+<li><b>id</b> - The simple identifier of the nature. This is appended to the plug-in id to form the fully qualified nature id.</li>
+<li><b>name</b> - an optional name of the extension instance</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.runtime">runtime</a> (<a href="#e.run">run</a>)&gt;</p>
+<p></p>
+<br><br>
+<p class="code SchemaDtd">&lt;!ELEMENT <a name="e.run">run</a> (<a href="#e.parameter">parameter</a>*)&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST run</p>
+<p class="code SchemaDtdAttlist">class&nbsp;CDATA #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>class</b> - the fully-qualified name of a class which implements 
+<samp>org.eclipse.core.resources.IProjectNature</samp></li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.parameter">parameter</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST parameter</p>
+<p class="code SchemaDtdAttlist">name&nbsp;&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">value&nbsp;CDATA #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>name</b> - the name of this parameter made available to instances of the specified nature class</li>
+<li><b>value</b> - an arbitrary value associated with the given name and made available to instances of the specificed nature class</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.one-of-nature">one-of-nature</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST one-of-nature</p>
+<p class="code SchemaDtdAttlist">id&nbsp;CDATA #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>id</b> - the name of an exclusive project nature category.</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.requires-nature">requires-nature</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST requires-nature</p>
+<p class="code SchemaDtdAttlist">id&nbsp;IDREF #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>id</b> - the fully-qualified id of another nature extension that this nature extension requires.</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.builder">builder</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST builder</p>
+<p class="code SchemaDtdAttlist">id&nbsp;IDREF #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>id</b> - the fully-qualified id of an incremental project builder extension that this nature controls.</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.options">options</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST options</p>
+<p class="code SchemaDtdAttlist">allowLinking&nbsp;(true | false) &gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>allowLinking</b> - an option to specify whether this nature allows the creation of linked resources.  By default, linking is allowed.</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.content-type">content-type</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST content-type</p>
+<p class="code SchemaDtdAttlist">id&nbsp;IDREF #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>id</b> - the fully-qualified id of a content type associated to this nature.</li>
+</ul>
+<br><h6 class="CaptionFigColumn SchemaHeader">Examples: </h6>Following is an example of three nature configurations.  The
+waterNature and fireNature belong
+to the same exclusive set, so they cannot co-exist on the same
+project.  The snowNature requires
+waterNature, so snowNature will be disabled on a project that
+is missing waterNature.  It 
+naturally follows that snowNature cannot be enabled on a project
+with fireNature.  The fireNature also doesn't allow the creation of linked resources.
+
+<p>
+<pre class="Example"><span class="code SchemaTag"> 
+   &lt;extension id=</span><span class="code SchemaCstring">&quot;fireNature&quot;</span><span class="code SchemaTag"> name=</span><span class="code SchemaCstring">&quot;Fire Nature&quot;</span><span class="code SchemaTag"> point=</span><span class="code SchemaCstring">&quot;org.eclipse.core.resources.natures&quot;</span><span class="code SchemaTag">&gt; 
+       &lt;runtime&gt;
+           &lt;run class=</span><span class="code SchemaCstring">&quot;com.xyz.natures.Fire&quot;</span><span class="code SchemaTag">/&gt; 
+       &lt;/runtime&gt; 
+       &lt;one-of-nature id=</span><span class="code SchemaCstring">&quot;com.xyz.stateSet&quot;</span><span class="code SchemaTag">/&gt;
+       &lt;options allowLinking=</span><span class="code SchemaCstring">&quot;false&quot;</span><span class="code SchemaTag">/&gt;
+   &lt;/extension&gt;
+   
+   &lt;extension id=</span><span class="code SchemaCstring">&quot;waterNature&quot;</span><span class="code SchemaTag"> name=</span><span class="code SchemaCstring">&quot;Water Nature&quot;</span><span class="code SchemaTag"> point=</span><span class="code SchemaCstring">&quot;org.eclipse.core.resources.natures&quot;</span><span class="code SchemaTag">&gt;
+       &lt;runtime&gt;
+           &lt;run class=</span><span class="code SchemaCstring">&quot;com.xyz.natures.Water&quot;</span><span class="code SchemaTag">/&gt;
+       &lt;/runtime&gt;
+       &lt;one-of-nature id=</span><span class="code SchemaCstring">&quot;com.xyz.stateSet&quot;</span><span class="code SchemaTag">/&gt;
+   &lt;/extension&gt;
+   
+   &lt;extension id=</span><span class="code SchemaCstring">&quot;snowNature&quot;</span><span class="code SchemaTag"> name=</span><span class="code SchemaCstring">&quot;Snow Nature&quot;</span><span class="code SchemaTag"> point=</span><span class="code SchemaCstring">&quot;org.eclipse.core.resources.natures&quot;</span><span class="code SchemaTag">&gt;
+       &lt;runtime&gt;
+           &lt;run class=</span><span class="code SchemaCstring">&quot;com.xyz.natures.Snow&quot;</span><span class="code SchemaTag">&gt;
+               &lt;parameter name=</span><span class="code SchemaCstring">&quot;installBuilder&quot;</span><span class="code SchemaTag"> value=</span><span class="code SchemaCstring">&quot;true&quot;</span><span class="code SchemaTag">/&gt;
+           &lt;/run&gt;
+       &lt;/runtime&gt;
+       &lt;requires-nature id=</span><span class="code SchemaCstring">&quot;com.xyz.coolplugin.waterNature&quot;</span><span class="code SchemaTag">/&gt;
+       &lt;builder id=</span><span class="code SchemaCstring">&quot;com.xyz.snowMaker&quot;</span><span class="code SchemaTag">/&gt;
+   &lt;/extension&gt;
+</span></pre>
+</p>
+
+If these extensions were defined in a plug-in with id "com.xyz.coolplugin", the fully qualified name 
+of these natures would be "com.xyz.coolplugin.fireNature", "com.xyz.coolplugin.waterNature" and 
+"com.xyz.coolplugin.snowNature".
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">API Information: </h6>The value of the class attribute must represent an 
+implementor of 
+<samp>org.eclipse.core.resources.IProjectNature</samp>.
+Nature definitions can be examined using the
+<samp>org.eclipse.core.resources.IProjectNatureDescriptor</samp> interface.
+The descriptor objects can be obtained using the methods 
+<samp>getNatureDescriptor(String)</samp> and <samp>getNatureDescriptors()</samp>
+on <samp>org.eclipse.core.resources.IWorkspace</samp>.
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">Supplied Implementation: </h6>The platform itself does not have any predefined natures. 
+Particular product installs may include natures as required.
+<p></p>
+
+<br>
+<p class="note SchemaCopyright">
+Copyright (c) 2002, 2009 IBM Corporation and others.<br>
+
+This program and the accompanying materials are made 
+available under the terms of the Eclipse Public License 2.0 which 
+accompanies 
+this distribution, and is available at 
+<a 
+href="https://www.eclipse.org/legal/epl-2.0">https://www.eclipse.org/legal/epl-v20.html</a>/
+
+SPDX-License-Identifier: EPL-2.0
+
+</p>
+</BODY>
+</HTML>

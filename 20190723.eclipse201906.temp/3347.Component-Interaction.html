@@ -1,0 +1,398 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - Component Interaction</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Component Interaction</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="View-Tutorial.html" title="View Tutorial">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Generic-State-System.html" title="Generic State System">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">View Tutorial</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Generic State System</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Component_Interaction">Component Interaction</h1>
+		<p>TMF provides a mechanism for different components to interact with each other using signals. The signals can carry information that is specific to each signal.</p>
+		<p>The TMF Signal Manager handles registration of components and the broadcasting of signals to their intended receivers.</p>
+		<p>Components can register as VIP receivers which will ensure they will receive the signal before non-VIP receivers.</p>
+		<h2 id="Sending_Signals">Sending Signals</h2>
+		<p>In order to send a signal, an instance of the signal must be created and passed as argument to the signal manager to be dispatched. Every component that can handle the signal will receive it. The receivers do not need to be known by the sender.</p>
+		<pre>
+TmfExampleSignal signal = new TmfExampleSignal(this, ...);
+TmfSignalManager.dispatchSignal(signal);
+</pre>
+		<p>If the sender is an instance of the class TmfComponent, the broadcast method can be used:</p>
+		<pre>
+TmfExampleSignal signal = new TmfExampleSignal(this, ...);
+broadcast(signal);
+</pre>
+		<h2 id="Receiving_Signals">Receiving Signals</h2>
+		<p>In order to receive any signal, the receiver must first be registered with the signal manager. The receiver can register as a normal or VIP receiver.</p>
+		<pre>
+TmfSignalManager.register(this);
+TmfSignalManager.registerVIP(this);
+</pre>
+		<p>If the receiver is an instance of the class TmfComponent, it is automatically registered as a normal receiver in the constructor.</p>
+		<p>When the receiver is destroyed or disposed, it should deregister itself from the signal manager.</p>
+		<pre>
+TmfSignalManager.deregister(this);
+</pre>
+		<p>To actually receive and handle any specific signal, the receiver must use the @TmfSignalHandler annotation and implement a method that will be called when the signal is broadcast. The name of the method is irrelevant.</p>
+		<pre>
+@TmfSignalHandler
+public void example(TmfExampleSignal signal) {
+    ...
+}
+</pre>
+		<p>The source of the signal can be used, if necessary, by a component to filter out and ignore a signal that was broadcast by itself when the component is also a receiver of the signal but only needs to handle it when it was sent by another component or another instance of the component.</p>
+		<h2 id="Signal_Throttling">Signal Throttling</h2>
+		<p>It is possible for a TmfComponent instance to buffer the dispatching of signals so that only the last signal queued after a specified delay without any other signal queued is sent to the receivers. All signals that are preempted by a newer signal within the delay are discarded.</p>
+		<p>The signal throttler must first be initialized:</p>
+		<pre>
+final int delay = 100; // in ms
+TmfSignalThrottler throttler = new TmfSignalThrottler(this, delay);
+</pre>
+		<p>Then the sending of signals should be queued through the throttler:</p>
+		<pre>
+TmfExampleSignal signal = new TmfExampleSignal(this, ...);
+throttler.queue(signal);
+</pre>
+		<p>When the throttler is no longer needed, it should be disposed:</p>
+		<pre>
+throttler.dispose();
+</pre>
+		<h2 id="Ignoring_inbound.2Foutbound_signals">Ignoring inbound/outbound signals</h2>
+		<p>It is possible to stop certain signals from being sent or received.</p>
+		<p>To block all incoming signals to an object:</p>
+		<pre>
+    TmfSignalManager.addIgnoredInboundSignal(objectInstance, TmfSignal.class);
+</pre>
+		<p>To block all outgoing signals originating from an object:</p>
+		<pre>
+    TmfSignalManager.addIgnoredOutboundSignal(objectInstance, TmfSignal.class);
+</pre>
+		<p>The blocked signal filtering is based on type hierarchy. Blocking <code>TmfSignal.class</code> will result in blocking all signals derived from TmfSignal. Blocking <code>TmfTraceSelectedSignal</code> will block all signals of this type and derived signals from <code>TmfTraceSelectedSignal</code></p>
+		<p>To remove an ignore rule or clear them all:</p>
+		<pre>
+    TmfSignalManager.removeIgnoredOutboundSignal(Object source, Class&lt;? extends TmfSignal&gt; signal)
+    TmfSignalManager.removeIgnoredInboundSignal(Object listener, Class&lt;? extends TmfSignal&gt; signal)
+    TmfSignalManager.clearIgnoredOutboundSignalList(Object source)
+    TmfSignalManager.clearIgnoredInboundSignalList(Object listener)
+</pre>
+		<h2 id="Signal_Reference">Signal Reference</h2>
+		<p>The following is a list of built-in signals defined in the framework.</p>
+		<h3 id="TmfStartSynchSignal">TmfStartSynchSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate the start of broadcasting of a signal. Internally, the data provider will not fire event requests until the corresponding TmfEndSynchSignal signal is received. This allows coalescing of requests triggered by multiple receivers of the broadcast signal.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfSignalManager before dispatching a signal to all receivers.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by TmfDataProvider.</p>
+		<h3 id="TmfEndSynchSignal">TmfEndSynchSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate the end of broadcasting of a signal. Internally, the data provider fire all pending event requests that were received and buffered since the corresponding TmfStartSynchSignal signal was received. This allows coalescing of requests triggered by multiple receivers of the broadcast signal.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfSignalManager after dispatching a signal to all receivers.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by TmfDataProvider.</p>
+		<h3 id="TmfTraceOpenedSignal">TmfTraceOpenedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a trace has been opened in an editor.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by a TmfEventsEditor instance when it is created.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by TmfTrace, TmfExperiment, TmfTraceManager and every view that shows trace data. Components that show trace data should handle this signal.</p>
+		<h3 id="TmfTraceSelectedSignal">TmfTraceSelectedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a trace has become the currently selected trace.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by a TmfEventsEditor instance when it receives focus. Components can send this signal to make a trace editor be brought to front.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by TmfTraceManager and every view that shows trace data. Components that show trace data should handle this signal.</p>
+		<h3 id="TmfTraceClosedSignal">TmfTraceClosedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a trace editor has been closed.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by a TmfEventsEditor instance when it is disposed.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by TmfTraceManager and every view that shows trace data. Components that show trace data should handle this signal.</p>
+		<h3 id="TmfTraceRangeUpdatedSignal">TmfTraceRangeUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the valid time range of a trace has been updated. This triggers indexing of the trace up to the end of the range. In the context of streaming, this end time is considered a safe time up to which all events are guaranteed to have been completely received. For non-streaming traces, the end time is set to infinity indicating that all events can be read immediately. Any processing of trace events that wants to take advantage of request coalescing should be triggered by this signal.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfExperiment and non-streaming TmfTrace. Streaming traces should send this signal in the TmfTrace subclass when a new safe time is determined by a specific implementation.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by TmfTrace, TmfExperiment and components that process trace events. Components that need to process trace events should handle this signal.</p>
+		<h3 id="TmfTraceUpdatedSignal">TmfTraceUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that new events have been indexed for a trace.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfCheckpointIndexer when new events have been indexed and the number of events has changed.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by components that need to be notified of a new trace event count.</p>
+		<h3 id="TmfSelectionRangeUpdatedSignal">TmfSelectionRangeUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a new time or time range has been
+			selected. It contains a begin and end time. If a single time is selected then
+			the begin and end time are the same.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by any component that allows the user to select a time or time range.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that needs to be notified of the currently selected time or time range.</p>
+		<h3 id="TmfWindowRangeUpdatedSignal">TmfWindowRangeUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a new time range window has been set.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by any component that allows the user to set a time range window.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that needs to be notified of the current visible time range window.</p>
+		<h3 id="TmfEventFilterAppliedSignal">TmfEventFilterAppliedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a filter has been applied to a trace.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfEventsTable when a filter is applied.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that shows trace data and needs to be notified of applied filters.</p>
+		<h3 id="TmfEventSearchAppliedSignal">TmfEventSearchAppliedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a search has been applied to a trace.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfEventsTable when a search is applied.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that shows trace data and needs to be notified of applied searches.</p>
+		<h3 id="TmfTimestampFormatUpdateSignal">TmfTimestampFormatUpdateSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the timestamp format preference has been updated.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by TmfTimestampFormat when the default timestamp format preference is changed.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that needs to refresh its display for the new timestamp format.</p>
+		<h3 id="TmfStatsUpdatedSignal">TmfStatsUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the statistics data model has been updated.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by statistic providers when new statistics data has been processed.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by statistics viewers and any component that needs to be notified of a statistics update.</p>
+		<h3 id="TmfPacketStreamSelected">TmfPacketStreamSelected</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the user has selected a packet stream to analyze.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by the Stream List View when the user selects a new packet stream.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by views that analyze packet streams.</p>
+		<h3 id="TmfStartAnalysisSignal">TmfStartAnalysisSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that an analysis has started.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by an analysis module when it starts to execute the analyis.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by components that need to be notified of the start of an analysis
+			or that need to receive the analysis module.</p>
+		<h3 id="TmfCpuSelectedSignal">TmfCpuSelectedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the user has selected a CPU core.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by any component that allows the user to select a CPU.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by viewers that show information specific to a selected CPU.</p>
+		<h3 id="TmfThreadSelectedSignal">TmfThreadSelectedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the user has selected a thread.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by any component that allows the user to select a thread.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by viewers that show information specific to a selected thread.</p>
+		<h3 id="TmfSymbolProviderUpdatedSignal">TmfSymbolProviderUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that the user has updated the symbol mapping.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by symbol providers or managers when more information is available.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by viewers that show information specific to mapped symbol, typically a function call.</p>
+		<h3 id="TmfTraceSynchronizedSignal">TmfTraceSynchronizedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that trace synchronization has been completed.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by the experiment after trace synchronization.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that needs to be notified of trace synchronization.</p>
+		<h3 id="TmfMarkerEventSourceUpdatedSignal">TmfMarkerEventSourceUpdatedSignal</h3>
+		<p>
+			<i>Purpose</i>
+		</p>
+		<p>This signal is used to indicate that a marker event source has been updated.</p>
+		<p>
+			<i>Senders</i>
+		</p>
+		<p>Sent by a component that has triggered a change in a marker event source.</p>
+		<p>
+			<i>Receivers</i>
+		</p>
+		<p>Received by any component that needs to refresh the markers due to the change in marker event source.</p>
+		<h2 id="Debugging">Debugging</h2>
+		<p>TMF has built-in Eclipse tracing support for the debugging of signal interaction between components. To enable it, open the 
+			<b>Run/Debug Configuration...</b> dialog, select a configuration, click the 
+			<b>Tracing</b> tab, select the plug-in 
+			<b>org.eclipse.tracecompass.tmf.core</b>, and check the 
+			<b>signal</b> item.
+		</p>
+		<p>All signals sent and received will be logged to the file TmfTrace.log located in the Eclipse home directory.</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="View-Tutorial.html" title="View Tutorial">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Generic-State-System.html" title="Generic State System">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">View Tutorial</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Generic State System</td>
+			</tr>
+		</table>
+	</body>
+</html>

@@ -1,0 +1,789 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - Network Tracing</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Network Tracing</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Performance-Tests.html" title="Performance Tests">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Markers.html" title="Markers">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Performance Tests</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Markers</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Network_Tracing">Network Tracing</h1>
+		<h2 id="Adding_a_protocol">Adding a protocol</h2>
+		<p>Supporting a new network protocol in TMF is straightforward. Minimal effort is required to support new protocols. In this tutorial, the UDP protocol will be added to the list of supported protocols.</p>
+		<h3 id="Architecture">Architecture</h3>
+		<p>All the TMF pcap-related code is divided in three projects (not considering the tests plugins):</p>
+		<ul>
+			<li>
+				<b>org.eclipse.tracecompass.pcap.core</b>, which contains the parser that will read pcap files and constructs the different packets from a ByteBuffer. It also contains means to build packet streams, which are conversation (list of packets) between two endpoints. To add a protocol, almost all of the work will be in that project.
+			</li>
+			<li>
+				<b>org.eclipse.tracecompass.tmf.pcap.core</b>, which contains TMF-specific concepts and act as a wrapper between TMF and the pcap parsing library. It only depends on org.eclipse.tracecompass.tmf.core and org.eclipse.tracecompass.pcap.core. To add a protocol, one file must be edited in this project.
+			</li>
+			<li>
+				<b>org.eclipse.tracecompass.tmf.pcap.ui</b>, which contains all TMF pcap UI-specific concepts, such as the views and perspectives. No work is needed in that project.
+			</li>
+		</ul>
+		<h3 id="UDP_Packet_Structure">UDP Packet Structure</h3>
+		<p>The UDP is a transport-layer protocol that does not guarantee message delivery nor in-order message reception. A UDP packet (datagram) has the following 
+			<a href="http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure">structure</a>:
+		</p>
+		<table class="wikitable" style="margin: 0 auto; text-align: center;">
+			<tr>
+				<th style="border-bottom:none; border-right:none;">
+					<i>Offsets</i>
+				</th>
+				<th style="border-left:none;">Octet</th>
+				<th colspan="8">0</th>
+				<th colspan="8">1</th>
+				<th colspan="8">2</th>
+				<th colspan="8">3</th>
+			</tr>
+			<tr>
+				<th style="border-top: none">Octet</th>
+				<th><tt>Bit</tt></th>
+				<th><tt>&nbsp;0</tt></th>
+				<th><tt>&nbsp;1</tt></th>
+				<th><tt>&nbsp;2</tt></th>
+				<th><tt>&nbsp;3</tt></th>
+				<th><tt>&nbsp;4</tt></th>
+				<th><tt>&nbsp;5</tt></th>
+				<th><tt>&nbsp;6</tt></th>
+				<th><tt>&nbsp;7</tt></th>
+				<th><tt>&nbsp;8</tt></th>
+				<th><tt>&nbsp;9</tt></th>
+				<th><tt>10</tt></th>
+				<th><tt>11</tt></th>
+				<th><tt>12</tt></th>
+				<th><tt>13</tt></th>
+				<th><tt>14</tt></th>
+				<th><tt>15</tt></th>
+				<th><tt>16</tt></th>
+				<th><tt>17</tt></th>
+				<th><tt>18</tt></th>
+				<th><tt>19</tt></th>
+				<th><tt>20</tt></th>
+				<th><tt>21</tt></th>
+				<th><tt>22</tt></th>
+				<th><tt>23</tt></th>
+				<th><tt>24</tt></th>
+				<th><tt>25</tt></th>
+				<th><tt>26</tt></th>
+				<th><tt>27</tt></th>
+				<th><tt>28</tt></th>
+				<th><tt>29</tt></th>
+				<th><tt>30</tt></th>
+				<th><tt>31</tt></th>
+			</tr>
+			<tr>
+				<th>0</th>
+				<th><tt> 0</tt></th>
+				<td style="background:#fdd;" colspan="16">Source port</td>
+				<td colspan="16">Destination port</td>
+			</tr>
+			<tr>
+				<th>4</th>
+				<th><tt>32</tt></th>
+				<td colspan="16">Length</td>
+				<td style="background:#fdd;" colspan="16">Checksum</td>
+			</tr>
+		</table>
+		<p>Knowing that, we can define an UDPPacket class that contains those fields.</p>
+		<h3 id="Creating_the_UDPPacket">Creating the UDPPacket</h3>
+		<p>First, in org.eclipse.tracecompass.pcap.core, create a new package named 
+			<b>org.eclipse.tracecompass.pcap.core.protocol.name</b> with name being the name of the new protocol. In our case name is udp so we create the package 
+			<b>org.eclipse.tracecompass.pcap.core.protocol.udp</b>. All our work is going in this package.
+		</p>
+		<p>In this package, we create a new class named UDPPacket that extends Packet. All new protocol must define a packet type that extends the abstract class Packet. We also add different fields:</p>
+		<ul>
+			<li>
+				<i>Packet</i> 
+				<b>fChildPacket</b>, which is the packet encapsulated by this UDP packet, if it exists. This field will be initialized by findChildPacket().
+			</li>
+			<li>
+				<i>ByteBuffer</i> 
+				<b>fPayload</b>, which is the payload of this packet. Basically, it is the UDP packet without its header.
+			</li>
+			<li>
+				<i>int</i> 
+				<b>fSourcePort</b>, which is an unsigned 16-bits field, that contains the source port of the packet (see packet structure).
+			</li>
+			<li>
+				<i>int</i> 
+				<b>fDestinationPort</b>, which is an unsigned 16-bits field, that contains the destination port of the packet (see packet structure).
+			</li>
+			<li>
+				<i>int</i> 
+				<b>fTotalLength</b>, which is an unsigned 16-bits field, that contains the total length (header + payload) of the packet.
+			</li>
+			<li>
+				<i>int</i> 
+				<b>fChecksum</b>, which is an unsigned 16-bits field, that contains a checksum to verify the integrity of the data.
+			</li>
+			<li>
+				<i>UDPEndpoint</i> 
+				<b>fSourceEndpoint</b>, which contains the source endpoint of the UDPPacket. The UDPEndpoint class will be created later in this tutorial.
+			</li>
+			<li>
+				<i>UDPEndpoint</i> 
+				<b>fDestinationEndpoint</b>, which contains the destination endpoint of the UDPPacket.
+			</li>
+			<li>
+				<i>ImmutableMap&lt;String, String&gt;</i> 
+				<b>fFields</b>, which is a map that contains all the packet fields (see in data structure) which assign a field name with its value. Those values will be displayed on the UI.
+			</li>
+		</ul>
+		<p>We also create the UDPPacket(PcapFile file, @Nullable Packet parent, ByteBuffer packet) constructor. The parameters are:</p>
+		<ul>
+			<li>
+				<i>PcapFile</i> 
+				<b>file</b>, which is the pcap file to which this packet belongs.
+			</li>
+			<li>
+				<i>Packet</i> 
+				<b>parent</b>, which is the packet encasulating this UDPPacket
+			</li>
+			<li>
+				<i>ByteBuffer</i> 
+				<b>packet</b>, which is a ByteBuffer that contains all the data necessary to initialize the fields of this UDPPacket. We will retrieve bytes from it during object construction.
+			</li>
+		</ul>
+		<p>The following class is obtained:</p>
+		<pre>
+package org.eclipse.tracecompass.pcap.core.protocol.udp;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+import org.eclipse.tracecompass.internal.pcap.core.endpoint.ProtocolEndpoint;
+import org.eclipse.tracecompass.internal.pcap.core.packet.BadPacketException;
+import org.eclipse.tracecompass.internal.pcap.core.packet.Packet;
+
+public class UDPPacket extends Packet {
+
+    private final @Nullable Packet fChildPacket;
+    private final @Nullable ByteBuffer fPayload;
+
+    private final int fSourcePort;
+    private final int fDestinationPort;
+    private final int fTotalLength;
+    private final int fChecksum;
+
+    private @Nullable UDPEndpoint fSourceEndpoint;
+    private @Nullable UDPEndpoint fDestinationEndpoint;
+
+    private @Nullable ImmutableMap&lt;String, String&gt; fFields;
+
+    /**
+     * Constructor of the UDP Packet class.
+     *
+     * @param file
+     *            The file that contains this packet.
+     * @param parent
+     *            The parent packet of this packet (the encapsulating packet).
+     * @param packet
+     *            The entire packet (header and payload).
+     * @throws BadPacketException
+     *             Thrown when the packet is erroneous.
+     */
+    public UDPPacket(PcapFile file, @Nullable Packet parent, ByteBuffer packet) throws BadPacketException {
+        super(file, parent, PcapProtocol.UDP);
+        // TODO Auto-generated constructor stub
+    }
+
+
+    @Override
+    public Packet getChildPacket() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ByteBuffer getPayload() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean validate() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    protected Packet findChildPacket() throws BadPacketException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ProtocolEndpoint getSourceEndpoint() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ProtocolEndpoint getDestinationEndpoint() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map&lt;String, String&gt; getFields() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getLocalSummaryString() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getSignificationString() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+}
+</pre>
+		<p>Now, we implement the constructor. It is done in four steps:</p>
+		<ul>
+			<li>We initialize fSourceEndpoint, fDestinationEndpoint and fFields to null, since those are lazy-loaded. This allows faster construction of the packet and thus faster parsing.</li>
+			<li>We initialize fSourcePort, fDestinationPort, fTotalLength, fChecksum using ByteBuffer packet. Thanks to the packet data structure, we can simply retrieve packet.getShort() to get the value. Since there is no unsigned in Java, special care is taken to avoid negative number. We use the utility method ConversionHelper.unsignedShortToInt() to convert it to an integer, and initialize the fields.</li>
+			<li>Now that the header is parsed, we take the rest of the ByteBuffer packet to initialize the payload, if there is one. To do this, we simply generate a new ByteBuffer starting from the current position.</li>
+			<li>We initialize the field fChildPacket using the method findChildPacket()</li>
+		</ul>
+		<p>The following constructor is obtained:</p>
+		<pre>
+    public UDPPacket(PcapFile file, @Nullable Packet parent, ByteBuffer packet) throws BadPacketException {
+        super(file, parent, Protocol.UDP);
+
+        // The endpoints and fFields are lazy loaded. They are defined in the get*Endpoint()
+        // methods.
+        fSourceEndpoint = null;
+        fDestinationEndpoint = null;
+        fFields = null;
+
+        // Initialize the fields from the ByteBuffer
+        packet.order(ByteOrder.BIG_ENDIAN);
+        packet.position(0);
+
+        fSourcePort = ConversionHelper.unsignedShortToInt(packet.getShort());
+        fDestinationPort = ConversionHelper.unsignedShortToInt(packet.getShort());
+        fTotalLength = ConversionHelper.unsignedShortToInt(packet.getShort());
+        fChecksum = ConversionHelper.unsignedShortToInt(packet.getShort());
+
+        // Initialize the payload
+        if (packet.array().length - packet.position() &gt; 0) {
+            byte[] array = new byte[packet.array().length - packet.position()];
+            packet.get(array);
+
+            ByteBuffer payload = ByteBuffer.wrap(array);
+            payload.order(ByteOrder.BIG_ENDIAN);
+            payload.position(0);
+            fPayload = payload;
+        } else {
+            fPayload = null;
+        }
+
+        // Find child
+        fChildPacket = findChildPacket();
+
+    }
+</pre>
+		<p>Then, we implement the following methods:</p>
+		<ul>
+			<li>
+				<i>public Packet</i> 
+				<b>getChildPacket()</b>: simple getter of fChildPacket
+			</li>
+			<li>
+				<i>public ByteBuffer</i> 
+				<b>getPayload()</b>: simple getter of fPayload
+			</li>
+			<li>
+				<i>public boolean</i> 
+				<b>validate()</b>: method that checks if the packet is valid. In our case, the packet is valid if the retrieved checksum fChecksum and the real checksum (that we can compute using the fields and payload of UDPPacket) are the same.
+			</li>
+			<li>
+				<i>protected Packet</i> 
+				<b>findChildPacket()</b>: method that create a new packet if a encapsulated protocol is found. For instance, based on the fDestinationPort, it could determine what the encapsulated protocol is and creates a new packet object.
+			</li>
+			<li>
+				<i>public ProtocolEndpoint</i> 
+				<b>getSourceEndpoint()</b>: method that initializes and returns the source endpoint.
+			</li>
+			<li>
+				<i>public ProtocolEndpoint</i> 
+				<b>getDestinationEndpoint()</b>: method that initializes and returns the destination endpoint.
+			</li>
+			<li>
+				<i>public Map&lt;String, String&gt;</i> 
+				<b>getFields()</b>: method that initializes and returns the map containing the fields matched to their value.
+			</li>
+			<li>
+				<i>public String</i> 
+				<b>getLocalSummaryString()</b>: method that returns a string summarizing the most important fields of the packet. There is no need to list all the fields, just the most important one. This will be displayed on UI.
+			</li>
+			<li>
+				<i>protected String</i> 
+				<b>getSignificationString()</b>: method that returns a string describing the meaning of the packet. If there is no particular meaning, it is possible to return getLocalSummaryString().
+			</li>
+			<li>public boolean'' 
+				<b>equals(Object obj)</b>: Object's equals method.
+			</li>
+			<li>public int'' 
+				<b>hashCode()</b>: Object's hashCode method.
+			</li>
+		</ul>
+		<p>We get the following code:</p>
+		<pre>
+    @Override
+    public @Nullable Packet getChildPacket() {
+        return fChildPacket;
+    }
+
+    @Override
+    public @Nullable ByteBuffer getPayload() {
+        return fPayload;
+    }
+
+    /**
+     * Getter method that returns the UDP Source Port.
+     *
+     * @return The source Port.
+     */
+    public int getSourcePort() {
+        return fSourcePort;
+    }
+
+    /**
+     * Getter method that returns the UDP Destination Port.
+     *
+     * @return The destination Port.
+     */
+    public int getDestinationPort() {
+        return fDestinationPort;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * See http://www.iana.org/assignments/service-names-port-numbers/service-
+     * names-port-numbers.xhtml or
+     * http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+     */
+    @Override
+    protected @Nullable Packet findChildPacket() throws BadPacketException {
+        // When more protocols are implemented, we can simply do a switch on the fDestinationPort field to find the child packet.
+        // For instance, if the destination port is 80, then chances are the HTTP protocol is encapsulated. We can create a new HTTP
+        // packet (after some verification that it is indeed the HTTP protocol).
+        ByteBuffer payload = fPayload;
+        if (payload == null) {
+            return null;
+        }
+
+        return new UnknownPacket(getPcapFile(), this, payload);
+    }
+
+    @Override
+    public boolean validate() {
+        // Not yet implemented. ATM, we consider that all packets are valid.
+        // TODO Implement it. We can compute the real checksum and compare it to fChecksum.
+        return true;
+    }
+
+    @Override
+    public UDPEndpoint getSourceEndpoint() {
+        @Nullable
+        UDPEndpoint endpoint = fSourceEndpoint;
+        if (endpoint == null) {
+            endpoint = new UDPEndpoint(this, true);
+        }
+        fSourceEndpoint = endpoint;
+        return fSourceEndpoint;
+    }
+
+    @Override
+    public UDPEndpoint getDestinationEndpoint() {
+        @Nullable UDPEndpoint endpoint = fDestinationEndpoint;
+        if (endpoint == null) {
+            endpoint = new UDPEndpoint(this, false);
+        }
+        fDestinationEndpoint = endpoint;
+        return fDestinationEndpoint;
+    }
+
+    @Override
+    public Map&lt;String, String&gt; getFields() {
+        ImmutableMap&lt;String, String&gt; map = fFields;
+        if (map == null) {
+            @SuppressWarnings("null")
+            @NonNull ImmutableMap&lt;String, String&gt; newMap = ImmutableMap.&lt;String, String&gt; builder()
+                    .put("Source Port", String.valueOf(fSourcePort)) //$NON-NLS-1$
+                    .put("Destination Port", String.valueOf(fDestinationPort)) //$NON-NLS-1$
+                    .put("Length", String.valueOf(fTotalLength) + " bytes") //$NON-NLS-1$ //$NON-NLS-2$
+                    .put("Checksum", String.format("%s%04x", "0x", fChecksum)) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    .build();
+            fFields = newMap;
+            return newMap;
+        }
+        return map;
+    }
+
+    @Override
+    public String getLocalSummaryString() {
+        return "Src Port: " + fSourcePort + ", Dst Port: " + fDestinationPort; //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    @Override
+    protected String getSignificationString() {
+        return "Source Port: " + fSourcePort + ", Destination Port: " + fDestinationPort; //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + fChecksum;
+        final Packet child = fChildPacket;
+        if (child != null) {
+            result = prime * result + child.hashCode();
+        } else {
+            result = prime * result;
+        }
+        result = prime * result + fDestinationPort;
+        final ByteBuffer payload = fPayload;
+        if (payload != null) {
+            result = prime * result + payload.hashCode();
+        } else {
+            result = prime * result;
+        }
+        result = prime * result + fSourcePort;
+        result = prime * result + fTotalLength;
+        return result;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        UDPPacket other = (UDPPacket) obj;
+        if (fChecksum != other.fChecksum) {
+            return false;
+        }
+        final Packet child = fChildPacket;
+        if (child != null) {
+            if (!child.equals(other.fChildPacket)) {
+                return false;
+            }
+        } else {
+            if (other.fChildPacket != null) {
+                return false;
+            }
+        }
+        if (fDestinationPort != other.fDestinationPort) {
+            return false;
+        }
+        final ByteBuffer payload = fPayload;
+        if (payload != null) {
+            if (!payload.equals(other.fPayload)) {
+                return false;
+            }
+        } else {
+            if (other.fPayload != null) {
+                return false;
+            }
+        }
+        if (fSourcePort != other.fSourcePort) {
+            return false;
+        }
+        if (fTotalLength != other.fTotalLength) {
+            return false;
+        }
+        return true;
+    }
+</pre>
+		<p>The UDPPacket class is implemented. We now have the define the UDPEndpoint.</p>
+		<h3 id="Creating_the_UDPEndpoint">Creating the UDPEndpoint</h3>
+		<p>For the UDP protocol, an endpoint will be its source or its destination port, depending if it is the source endpoint or destination endpoint. Knowing that, we can create our UDPEndpoint class.</p>
+		<p>We create in our package a new class named UDPEndpoint that extends ProtocolEndpoint. We also add a field: fPort, which contains the source or destination port. We finally add a constructor public ExampleEndpoint(Packet packet, boolean isSourceEndpoint):</p>
+		<ul>
+			<li>
+				<i>Packet</i> 
+				<b>packet</b>: the packet to build the endpoint from.
+			</li>
+			<li>
+				<i>boolean</i> 
+				<b>isSourceEndpoint</b>: whether the endpoint is the source endpoint or destination endpoint.
+			</li>
+		</ul>
+		<p>We obtain the following unimplemented class:</p>
+		<pre>
+package org.eclipse.tracecompass.pcap.core.protocol.udp;
+
+import org.eclipse.tracecompass.internal.pcap.core.endpoint.ProtocolEndpoint;
+import org.eclipse.tracecompass.internal.pcap.core.packet.Packet;
+
+public class UDPEndpoint extends ProtocolEndpoint {
+
+    private final int fPort;
+
+    public UDPEndpoint(Packet packet, boolean isSourceEndpoint) {
+        super(packet, isSourceEndpoint);
+        // TODO Auto-generated constructor stub
+    }
+
+    @Override
+    public int hashCode() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+}
+</pre>
+		<p>For the constructor, we simply initialize fPort. If isSourceEndpoint is true, then we take packet.getSourcePort(), else we take packet.getDestinationPort().</p>
+		<pre>
+    /**
+     * Constructor of the {@link UDPEndpoint} class. It takes a packet to get
+     * its endpoint. Since every packet has two endpoints (source and
+     * destination), the isSourceEndpoint parameter is used to specify which
+     * endpoint to take.
+     *
+     * @param packet
+     *            The packet that contains the endpoints.
+     * @param isSourceEndpoint
+     *            Whether to take the source or the destination endpoint of the
+     *            packet.
+     */
+    public UDPEndpoint(UDPPacket packet, boolean isSourceEndpoint) {
+        super(packet, isSourceEndpoint);
+        fPort = isSourceEndpoint ? packet.getSourcePort() : packet.getDestinationPort();
+    }
+</pre>
+		<p>Then we implement the methods:</p>
+		<ul>
+			<li>
+				<i>public int</i> 
+				<b>hashCode()</b>: method that returns an integer based on the fields value. In our case, it will return an integer depending on fPort, and the parent endpoint that we can retrieve with getParentEndpoint().
+			</li>
+			<li>
+				<i>public boolean</i> 
+				<b>equals(Object obj)</b>: method that returns true if two objects are equals. In our case, two UDPEndpoints are equal if they both have the same fPort and have the same parent endpoint that we can retrieve with getParentEndpoint().
+			</li>
+			<li>
+				<i>public String</i> 
+				<b>toString()</b>: method that returns a description of the UDPEndpoint as a string. In our case, it will be a concatenation of the string of the parent endpoint and fPort as a string.
+			</li>
+		</ul>
+		<pre>
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        ProtocolEndpoint endpoint = getParentEndpoint();
+        if (endpoint == null) {
+            result = 0;
+        } else {
+            result = endpoint.hashCode();
+        }
+        result = prime * result + fPort;
+        return result;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof UDPEndpoint)) {
+            return false;
+        }
+
+        UDPEndpoint other = (UDPEndpoint) obj;
+
+        // Check on layer
+        boolean localEquals = (fPort == other.fPort);
+        if (!localEquals) {
+            return false;
+        }
+
+        // Check above layers.
+        ProtocolEndpoint endpoint = getParentEndpoint();
+        if (endpoint != null) {
+            return endpoint.equals(other.getParentEndpoint());
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        ProtocolEndpoint endpoint = getParentEndpoint();
+        if (endpoint == null) {
+            @SuppressWarnings("null")
+            @NonNull String ret = String.valueOf(fPort);
+            return ret;
+        }
+        return endpoint.toString() + '/' + fPort;
+    }
+</pre>
+		<h3 id="Registering_the_UDP_protocol">Registering the UDP protocol</h3>
+		<p>The last step is to register the new protocol. There are three places where the protocol has to be registered. First, the parser has to know that a new protocol has been added. This is defined in the enum org.eclipse.tracecompass.internal.pcap.core.protocol.PcapProtocol. Simply add the protocol name here, along with a few arguments:</p>
+		<ul>
+			<li>
+				<i>String</i> 
+				<b>longname</b>, which is the long version of name of the protocol. In our case, it is "User Datagram Protocol".
+			</li>
+			<li>
+				<i>String</i> 
+				<b>shortName</b>, which is the shortened name of the protocol. In our case, it is "UDP".
+			</li>
+			<li>
+				<i>Layer</i> 
+				<b>layer</b>, which is the layer to which the protocol belongs in the OSI model. In our case, this is the layer 4.
+			</li>
+			<li>
+				<i>boolean</i> 
+				<b>supportsStream</b>, which defines whether or not the protocol supports packet streams. In our case, this is set to true.
+			</li>
+		</ul>
+		<p>Thus, the following line is added in the PcapProtocol enum:</p>
+		<pre>
+    UDP("User Datagram Protocol", "udp", Layer.LAYER_4, true),
+</pre>
+		<p>Also, TMF has to know about the new protocol. This is defined in org.eclipse.tracecompass.internal.tmf.pcap.core.protocol.TmfPcapProtocol. We simply add it, with a reference to the corresponding protocol in PcapProtocol. Thus, the following line is added in the TmfPcapProtocol enum:</p>
+		<pre>
+    UDP(PcapProtocol.UDP),
+</pre>
+		<p>You will also have to update the 
+			<i>ProtocolConversion</i> class to register the protocol in the switch statements. Thus, for UDP, we add:
+		</p>
+		<pre>
+    case UDP:
+        return TmfPcapProtocol.UDP;
+</pre>
+		<p>and</p>
+		<pre>
+    case UDP:
+        return PcapProtocol.UDP;
+</pre>
+		<p>Finally, all the protocols that could be the parent of the new protocol (in our case, IPv4 and IPv6) have to be notified of the new protocol. This is done by modifying the findChildPacket() method of the packet class of those protocols. For instance, in IPv4Packet, we add a case in the switch statement of findChildPacket, if the Protocol number matches UDP's protocol number at the network layer:</p>
+		<pre>
+    @Override
+    protected @Nullable Packet findChildPacket() throws BadPacketException {
+        ByteBuffer payload = fPayload;
+        if (payload == null) {
+            return null;
+        }
+
+        switch (fIpDatagramProtocol) {
+        case IPProtocolNumberHelper.PROTOCOL_NUMBER_TCP:
+            return new TCPPacket(getPcapFile(), this, payload);
+        case IPProtocolNumberHelper.PROTOCOL_NUMBER_UDP:
+            return new UDPPacket(getPcapFile(), this, payload);
+        default:
+            return new UnknownPacket(getPcapFile(), this, payload);
+        }
+    }
+</pre>
+		<p>The new protocol has been added. Running TMF should work just fine, and the new protocol is now recognized.</p>
+		<h2 id="Adding_stream-based_views">Adding stream-based views</h2>
+		<p>To add a stream-based View, simply monitor the TmfPacketStreamSelectedSignal in your view. It contains the new stream that you can retrieve with signal.getStream(). You must then make an event request to the current trace to get the events, and use the stream to filter the events of interest. Therefore, you must also monitor TmfTraceOpenedSignal, TmfTraceClosedSignal and TmfTraceSelectedSignal. Examples of stream-based views include a view that represents the packets as a sequence diagram, or that shows the TCP connection state based on the packets SYN/ACK/FIN/RST flags. A (very very very early) draft of such a view can be found at 
+			<a href="https://git.eclipse.org/r/#/c/31054/">https://git.eclipse.org/r/#/c/31054/</a>.
+		</p>
+		<h2 id="TODO_2">TODO</h2>
+		<ul>
+			<li>Add more protocols. At the moment, only four protocols are supported. The following protocols would need to be implemented: ARP, SLL, WLAN, USB, IPv6, ICMP, ICMPv6, IGMP, IGMPv6, SCTP, DNS, FTP, HTTP, RTP, SIP, SSH and Telnet. Other VoIP protocols would be nice.</li>
+			<li>Add a network graph view. It would be useful to produce graphs that are meaningful to network engineers, and that they could use (for presentation purpose, for instance). We could use the XML-based analysis to do that!</li>
+			<li>Add a Stream Diagram view. This view would represent a stream as a Sequence Diagram. It would be updated when a TmfNewPacketStreamSignal is thrown. It would be easy to see the packet exchange and the time delta between each packet. Also, when a packet is selected in the Stream Diagram, it should be selected in the event table and its content should be shown in the Properties View. See 
+				<a href="https://git.eclipse.org/r/#/c/31054/">https://git.eclipse.org/r/#/c/31054/</a> for a draft of such a view.
+			</li>
+			<li>Make adding protocol more "plugin-ish", via extension points for instance. This would make it easier to support new protocols, without modifying the source code.</li>
+			<li>Control dumpcap directly from eclipse, similar to how LTTng is controlled in the Control View.</li>
+			<li>Support pcapng. See: 
+				<a href="http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html">http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html</a> for the file format.
+			</li>
+			<li>Add SWTBOT tests to org.eclipse.tracecompass.tmf.pcap.ui</li>
+			<li>Add a Raw Viewer, similar to Wireshark. We could use the “Show Raw” in the event editor to do that.</li>
+			<li>Externalize strings in org.eclipse.tracecompass.pcap.core. At the moment, all the strings are hardcoded. It would be good to externalize them all.</li>
+		</ul><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Performance-Tests.html" title="Performance Tests">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Markers.html" title="Markers">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Performance Tests</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Markers</td>
+			</tr>
+		</table>
+	</body>
+</html>

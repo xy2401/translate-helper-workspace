@@ -1,0 +1,246 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - TMF Remote API</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">TMF Remote API</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Analysis-Framework.html" title="Analysis Framework">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Performance-Tests.html" title="Performance Tests">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Analysis Framework</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Performance Tests</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="TMF_Remote_API">TMF Remote API</h1>
+		<p>The TMF remote API is based on the remote services implementation of the Eclipse PTP project. It comes with a built-in SSH implementation based JSch as well as with support for a local connection. The purpose of this API is to provide a programming interface to the PTP remote services implementation for connection handling, command-line execution and file transfer handling. It provides utility functions to simplify repetitive tasks.</p>
+		<p>The TMF Remote API can be used for remote trace control, fetching of traces from a remote host into the Eclipse Tracing project or uploading files to the remote host. For example, the LTTng tracer control feature uses the TMF remote API to control an LTTng host remotely and to download corresponding traces.</p>
+		<p>In the following chapters the relevant classes and features of the TMF remote API is described.</p>
+		<h2 id="Prerequisites_3">Prerequisites</h2>
+		<p>To use the TMF remote API one has to add the relevant plug-in dependencies to a plug-in project. To create a plug-in project see chapter 
+			<a href="View-Tutorial.html#Creating_an_Eclipse_UI_Plug-in">Creating an Eclipse UI Plug-in</a>.
+		</p>
+		<p>To add plug-in dependencies double-click on the MANIFEST.MF file. Change to the Dependencies tab and select 
+			<b>Add...</b> of the 
+			<i>Required Plug-ins</i> section. A new dialog box will open. Next find plug-in 
+			<i>org.eclipse.tracecompass.tmf.remote.core</i> and press 
+			<b>OK</b>. Follow the same steps, add 
+			<i>org.eclipse.remote.core</i>. If UI elements are needed in the plug-in also add 
+			<i>org.eclipse.tracecompass.tmf.remote.ui</i> and 
+			<i>org.eclipse.remote.ui</i>.
+		</p>
+		<h2 id="TmfRemoteConnectionFactory">TmfRemoteConnectionFactory</h2>
+		<p>This class is a utility class for creating 
+			<i>IRemoteConnection</i> instances of PTP programatically. It also provides access methods to the OSGI remote services of PTP.
+		</p>
+		<h3 id="Accessing_the_remote_services_manager_.28OSGI_service.29">Accessing the remote services manager (OSGI service)</h3>
+		<p>The main entry point into the PTP remote services system is the 
+			<i>IRemoteServicesManager</i> OSGI service. It provides a list of connection types and the global list of all connections.
+		</p>
+		<p>To access an OSGI service, use the method 
+			<b>getService()</b> of the 
+			<b>TmfRemoteConnectionFactory</b> class:
+		</p>
+		<pre>
+IRemoteServicesManager manager = TmfRemoteConnectionFactory.getService(IRemoteServicesManager.class);
+</pre>
+		<h3 id="Obtaining_a_IRemoteConnection">Obtaining a IRemoteConnection</h3>
+		<p>To obtain an 
+			<b>IRemoteConnection</b> instance use the method 
+			<b>TmfRemoteConnectionFactory.getRemoteConnection(String remoteServicesId, String name)</b>, where 
+			<i>remoteServicesId</i> is the ID of service ID for the connection, and 
+			<i>name</i> the name of the connection. For built-in SSH the 
+			<i>remoteServicesId</i> is "org.eclipse.remote.JSch".
+		</p>
+		<pre>
+IRemoteConnection connection = TmfRemoteConnectionFactory.getRemoteConnection("org.eclipse.remote.JSch", "My Connection");
+</pre>
+		<p>Note that the connection needs to be created beforehand using the Remote Connection wizard implementation (
+			<b>Window -&gt; Preferences -&gt; Remote Development -&gt; Remote Connection</b>) in the Eclipse application that executes this plug-in. For more information about creating connections using the Remote Connections feature of PTP refer to 
+			<a href="http://help.eclipse.org/luna/index.jsp?topic=%2Forg.eclipse.ptp.doc.user%2Fhtml%2FremoteTools.html&amp;anchor=remote">link</a>. Alternatively it can be created programmatically using the corresponding API of TMF (
+			<a href="#Creating_an_IRemoteConnection_instance">Creating an IRemoteConnection instance</a>).
+		</p>
+		<p>To obtain an 
+			<b>IRemoteConnection</b> instance use method 
+			<b>TmfRemoteConnectionFactory.getLocalConnection()</b>.
+		</p>
+		<pre>
+IRemoteConnection connection = TmfRemoteConnectionFactory.getLocalConnection();
+</pre>
+		<h3 id="Creating_an_IRemoteConnection_instance">Creating an IRemoteConnection instance</h3>
+		<p>It is possible to create an 
+			<b>IRemoteConnection</b> instance programmatically using the 
+			<b>TmfRemoteConnectionFactory</b>. Right now only build-in SSH or Local connection is supported.
+		</p>
+		<p>To create an 
+			<b>IRemoteConnection</b> instance use the method 
+			<b>createConnection(URI hostURI, String name)</b> of class 
+			<b>TmfRemoteConnectionFactory</b>, where 
+			<i>hostURI</i> is the URI of the remote connection, and 
+			<i>name</i> the name of the connection. For a built-in SSH use:
+		</p>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+...
+    try {
+        URI hostUri = URIUtil.fromString("ssh://userID@127.0.0.1:22");
+        IRemoteConnection connection = TmfRemoteConnectionFactory.createConnection(hostUri, "MyHost");
+    } catch (URISyntaxException e) {
+        return new Status(IStatus.ERROR, "my.plugin.id", "URI syntax error", e);
+    } catch (RemoteConnectionException e) {
+        return new Status(IStatus.ERROR, "my.plugin.id", "Connection cannot be created", e);
+    }
+...
+</pre>
+		<p>Note that if a connection already exists with the given name then this connection will be returned.</p>
+		<h3 id="Providing_a_connection_factory">Providing a connection factory</h3>
+		<p>Right now only build-in SSH or Local connection of PTP is supported. If one wants to provide another connection factory with a different remote service implementation use the interface 
+			<b>IConnectionFactory</b> to implement a new connection factory class. Then, register the new factory to 
+			<b>TmfRemoteConnectionFactory</b> using method 
+			<b>registerConnectionFactory(String connectionTypeId, IConnectionFactory factory)</b>, where 
+			<i>connectionTypeId</i> is a unique ID and 
+			<i>factory</i> is the corresponding connection factory implementation.
+		</p>
+		<h2 id="RemoteSystemProxy">RemoteSystemProxy</h2>
+		<p>The purpose of the RemoteSystemProxy is to handle the connection state of 
+			<b>IRemoteConnection</b> (connect/disconnect). Before opening a connection it checks if the connection had been open previously. If it was open, disconnecting the proxy will not close the connection. This is useful if multiple components using the same connection at the same time for different features (e.g. Tracer Control and remote fetching of traces) without impacting each other.
+		</p>
+		<h3 id="Creating_a_RemoteSystemProxy">Creating a RemoteSystemProxy</h3>
+		<p>Once one has an 
+			<b>IRemoteConnection</b> instance a 
+			<b>RemoteSystemProxy</b> can be constructed by:
+		</p>
+		<pre>
+// Get local connection (for example)
+IRemoteConnection connection = TmfRemoteConnectionFactory.getLocalConnection();
+RemoteSystemProxy proxy = new RemoteSystemProxy(connection);
+</pre>
+		<h3 id="Opening_the_remote_connection">Opening the remote connection</h3>
+		<p>To open the connection call method 
+			<b>connect()</b>:
+		</p>
+		<pre>
+    proxy.connect();
+</pre>
+		<p>This will open the connection. If the connection has been previously opened then it will immediately return.</p>
+		<h3 id="Closing_the_remote_connection">Closing the remote connection</h3>
+		<p>To close the connection call method 
+			<b>disconnect()</b>:
+		</p>
+		<pre>
+    proxy.disconnect();
+</pre>
+		<p>Note: This will close the connection if the connection was opened by this proxy. Otherwise it will stay open.</p>
+		<h3 id="Disposing_the_remote_connection">Disposing the remote connection</h3>
+		<p>If a remote system proxy is not needed anymore the proxy instance needs to be disposed by calling method 
+			<b>dispose()</b>. This may close the connection if the connection was opened by this proxy. Otherwise it will stay open.
+		</p>
+		<pre>
+    proxy.dispose();
+</pre>
+		<h3 id="Checking_the_connection_state">Checking the connection state</h3>
+		<p>To check the connection state use method 
+			<b>isConnected()</b> of the 
+			<b>RemoteSystemProxy</b> class.
+		</p>
+		<pre>
+    if (proxy.isConnected()) {
+        // do something
+    }
+</pre>
+		<h3 id="Retrieving_the_IRemoteConnection_instance">Retrieving the IRemoteConnection instance</h3>
+		<p>To retrieve the 
+			<b>IRemoteConnection</b> instance use the 
+			<b>getRemoteConnection()</b> method of the 
+			<b>RemoteSystemProxy</b> class. Using this instance relevant features of the remote connection implementation can be accessed, for example remote file service (
+			<b>IRemoteFileService</b>) or remote process service (
+			<b>IRemoteProcessService</b>).
+		</p>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+import org.eclipse.remote.core.IRemoteFileService;
+...
+    IRemoteRemoteConnection connection = proxy.getRemoteConnection();
+    IRemoteFileService fileService = connection.getService(IRemoteFileService.class);
+    if (fileService != null) {
+        // do something (e.g. download or upload a file)
+    }
+</pre>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+import org.eclipse.remote.core.IRemoteFileService;
+...
+    IRemoteRemoteConnection connection = proxy.getRemoteConnection();
+    IRemoteFileService processService = connection.getService(IRemoteProcessService.class);
+    if (processService != null) {
+        // do something (e.g. execute command)
+    }
+</pre>
+		<h3 id="Obtaining_a_command_shell">Obtaining a command shell</h3>
+		<p>The TMF remote API provides a Command shell implementation to execute remote command-line commands. To obtain a command-line shell use the RemoteSystemProxy. </p>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+import org.eclipse.remote.core.IRemoteFileService;
+import org.eclipse.tracecompass.tmf.remote.core.shell.ICommandShell
+...
+    ICommandShell shell = proxy.createCommandShell();
+    ICommandInput command = fCommandShell.createCommand();
+    command.add("ls");
+    command.add("-l");
+    ICommandResult result = shell.executeCommand(command, new NullProgressMonitor);
+    System.out.println("Return value: " result.getResult());
+    for (String line : result.getOutput()) {
+        System.out.println(line);
+    }
+    for (String line : result.getErrorOutput()) {
+        System.err.println(line);
+    }
+    shell.dispose();
+</pre>
+		<p>Note that the shell needs to be disposed if not needed anymore.</p>
+		<p>Note for creating a command with parameters using the 
+			<b>CommandInput</b> class, add the command and each parameter separately instead of using one single String.
+		</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Analysis-Framework.html" title="Analysis Framework">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Performance-Tests.html" title="Performance Tests">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Analysis Framework</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Performance Tests</td>
+			</tr>
+		</table>
+	</body>
+</html>

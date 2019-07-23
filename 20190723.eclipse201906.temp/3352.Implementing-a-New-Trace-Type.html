@@ -1,0 +1,465 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - Implementing a New Trace Type</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Implementing a New Trace Type</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Introduction.html" title="Introduction">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="View-Tutorial.html" title="View Tutorial">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Introduction</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">View Tutorial</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Implementing_a_New_Trace_Type">Implementing a New Trace Type</h1>
+		<p>The framework can easily be extended to support more trace types. To make a new
+			trace type, one must define the following items:</p>
+		<ul>
+			<li>The event type</li>
+			<li>The trace type</li>
+			<li>The trace context</li>
+			<li>The trace location</li>
+			<li>The 
+				<i>org.eclipse.linuxtools.tmf.core.tracetype</i> plug-in extension point
+			</li>
+			<li>(Optional) The 
+				<i>org.eclipse.linuxtools.tmf.ui.tracetypeui</i> plug-in extension point
+			</li>
+		</ul>
+		<p>The 
+			<b>event type</b> must implement an 
+			<i>ITmfEvent</i> or extend a class that
+			implements an 
+			<i>ITmfEvent</i>. Typically it will extend 
+			<i>TmfEvent</i>. The event
+			type must contain all the data of an event.
+		</p>
+		<p>The 
+			<b>trace type</b> must be of an 
+			<i>ITmfTrace</i> type. The 
+			<i>TmfTrace</i> class
+			will supply many background operations so that the reader only needs to
+			implement certain functions. This includes the 
+			<i>event aspects</i> for events of
+			this trace type. See the section below.
+		</p>
+		<p>The 
+			<b>trace context</b> can be seen as the internals of an iterator. It is
+			required by the trace reader to parse events as it iterates the trace and to
+			keep track of its rank and location. It can have a timestamp, a rank, a file
+			position, or any other element, it should be considered to be ephemeral.
+		</p>
+		<p>The 
+			<b>trace location</b> is an element that is cloned often to store
+			checkpoints, it is generally persistent. It is used to rebuild a context,
+			therefore, it needs to contain enough information to unambiguously point to one
+			and only one event. Finally the 
+			<i>tracetype</i> plug-in extension associates a
+			given trace, non-programmatically to a trace type for use in the UI.
+		</p>
+		<h2 id="Event_Aspects">Event Aspects</h2>
+		<p>In Trace Compass, an 
+			<i>event aspect</i> represents any type of information that
+			can be extracted from a trace event. The simple case is information that is
+			present directly in the event. For example, the timestamp of an event, a field
+			of an LTTng event, or the "payload" that is on the same line of a text trace
+			entry. But it could also be the result of an indirect operation, for example a
+			state system query at the timestamp of the given event (see the section
+
+			<a href="Generic-State-System.html#Generic_State_System">Generic State System</a>).
+		</p>
+		<p>All aspects should implement the 
+			<b>ITmfEventAspect</b> interface. The important
+			method in there is 
+			<i>resolve(ITmfEvent)</i>, which tells this aspect what to
+			output for a given event. The singleton pattern fits well for pre-defined aspect
+			classes, in general.
+		</p>
+		<p>The aspects defined for a trace type determine the initial columns in the Event
+			Table, as well as the elements on which the trace can be filtered, among other
+			things.</p>
+		<h3 id="Base_and_custom_aspects">Base and custom aspects</h3>
+		<p>Some base aspects are defined in 
+			<b>TmfTrace#BASE_ASPECTS</b>. They use generic
+			methods found in 
+			<b>ITmfEvent</b>, so they should be applicable for any event
+			type defined in the framework. If one does not override
+
+			<b>TmfTrace#getEventAspects</b>, then only the base aspects will be used with
+			this trace.
+		</p>
+		<p>Overriding the method does not append to this list, it replaces it. So if you
+			wish to define additional aspects for a new trace type, do not forget to include
+			the BASE_ASPECTS you want to use, if any, within the list.</p>
+		<p>The order of the elements in the returned 
+			<i>Iterable</i> may matter to other
+			components. For instance, the initial ordering of the columns in the Events
+			Table will match it.
+		</p>
+		<p>Defining additional aspects allows to expose more data from the trace events
+			without having to update all the views using the aspects API.</p>
+		<h3 id="Creating_event_aspects_programmatically">Creating event aspects programmatically</h3>
+		<p>Another advantage of event aspects is that they can be created programmatically,
+			without having to modify the base trace or event classes. A new analysis
+			applying to a pre-existing trace type may wish to define additional aspects to
+			make its job easier.</p>
+		<p>While the notion of event aspects should not be exposed to users directly, it is
+			possible to create new aspects based on user input. For example, an "event
+			field" dialog could ask the user to enter a field name, which would then create
+			an aspect that would look for the value of a field with this name in every
+			event. The user could then be able to display or filter on this aspect.</p>
+		<h2 id="Optional_Trace_Type_Attributes">Optional Trace Type Attributes</h2>
+		<p>After defining the trace type as described in the previous chapters it is
+			possible to define optional attributes for the trace type.</p>
+		<h3 id="Default_Editor">Default Editor</h3>
+		<p>The 
+			<b>defaultEditor</b> attribute of the 
+			<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>
+			extension point allows for configuring the editor to use for displaying the
+			events. If omitted, the 
+			<i>TmfEventsEditor</i> is used as default.
+		</p>
+		<p>To configure an editor, first add the 
+			<b>defaultEditor</b> attribute to the trace
+			type in the extension definition. This can be done by selecting the trace type
+			in the plug-in manifest editor. Then click the right mouse button and select
+
+			<b>New -&gt; defaultEditor</b> in the context sensitive menu. Then select the newly
+			added attribute. Now you can specify the editor id to use on the right side of
+			the manifest editor. For example, this attribute could be used to implement an
+			extension of the class 
+			<i>org.eclipse.ui.part.MultiPageEditor</i>. The first page
+			could use the 
+			<i>TmfEventsEditor</i>' to display the events in a table as usual and
+			other pages can display other aspects of the trace.
+		</p>
+		<h3 id="Events_Table_Type">Events Table Type</h3>
+		<p>The  
+			<b>eventsTableType</b> attribute of the 
+			<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>
+			extension point allows for configuring the events table class to use in the
+			default events editor. If omitted, the default events table will be used.
+		</p>
+		<p>To configure a trace type specific events table, first add the
+
+			<b>eventsTableType</b> attribute to the trace type in the extension definition.
+			This can be done by selecting the trace type in the plug-in manifest editor.
+			Then click the right mouse button and select 
+			<b>New -&gt; eventsTableType</b> in the
+			context sensitive menu. Then select the newly added attribute and click on
+
+			<i>class</i> on the right side of the manifest editor. The new class wizard will
+			open. The 
+			<i>superclass</i> field will be already filled with the class 
+			<i>org.eclipse.tracecompass.tmf.ui.viewers.events.TmfEventsTable</i>.
+		</p>
+		<p>By using this attribute, a table with different columns than the default columns
+			can be defined. See the class
+
+			<i>org.eclipse.tracecompass.internal.gdbtrace.ui.views.events.GdbEventsTable</i>
+			for an example implementation.
+		</p>
+		<h3 id="Perspective">Perspective</h3>
+		<p>The  
+			<b>perspective</b> element of the 
+			<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>
+			extension point allows for configuring the default perspective associated with a
+			trace type. If omitted, the current perspective will be used.
+		</p>
+		<p>To configure an associated perspective, first add the
+
+			<b>perspective</b> element to the trace type in the extension definition.
+			This can be done by selecting the trace type in the plug-in manifest editor.
+			Then click the right mouse button and select 
+			<b>New -&gt; perspective</b> in the
+			context sensitive menu. Then select the newly added element and select the
+
+			<i>id</i> text field on the right side of the manifest editor. Enter the associated
+			perspective id, which can be found in the 
+			<b>org.eclipse.ui.perspectives</b>
+			extension that defines the perspective.
+		</p>
+		<p>By using this element, the workbench will switch to the associated perspective
+			when a trace of this trace type is opened. This behavior can be controlled by a
+			user dialog or preference.</p>
+		<h2 id="Other_Considerations">Other Considerations</h2>
+		<p>Other views and components may provide additional features that are active only
+			when the event or trace type class implements certain additional interfaces.</p>
+		<h3 id="Collapsing_of_repetitive_events">Collapsing of repetitive events</h3>
+		<p>By implementing the interface
+
+			<i>org.eclipse.tracecompass.tmf.core.event.collapse.ITmfCollapsibleEvent</i> the
+			event table will allow to collapse repetitive events by selecting the menu item
+
+			<b>Collapse Events</b> after pressing the right mouse button in the table.
+		</p>
+		<h2 id="Best_Practices">Best Practices</h2>
+		<ul>
+			<li>Do not load the whole trace in RAM, it will limit the size of the trace that can be read.</li>
+			<li>Reuse as much code as possible, it makes the trace format much easier to maintain.</li>
+			<li>Use Eclipse's editor instead of editing the XML directly.</li>
+			<li>Do not forget Java supports only signed data types, there may be special care needed to handle unsigned data.</li>
+			<li>If the support for your trace has custom UI elements (like icons, views, etc.), split the core and UI parts in separate plugins, named identically except for a 
+				<i>.core</i> or 
+				<i>.ui</i> suffix.
+				<ul>
+					<li>Implement the 
+						<i>tmf.core.tracetype</i> extension in the core plugin, and the 
+						<i>tmf.ui.tracetypeui</i> extension in the UI plugin if applicable.
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<h2 id="An_Example:_Nexus-lite_parser">An Example: Nexus-lite parser</h2>
+		<h3 id="Description_of_the_file">Description of the file</h3>
+		<p>This is a very small subset of the nexus trace format, with some changes to make
+			it easier to read. There is one file. This file starts with 64 Strings
+			containing the event names, then an arbitrarily large number of events. The
+			events are each 64 bits long. the first 32 are the timestamp in microseconds,
+			the second 32 are split into 6 bits for the event type, and 26 for the data
+			payload.</p>
+		<p>The trace type will be made of two parts, part 1 is the event description, it is
+			just 64 strings, comma separated and then a line feed.</p>
+		<pre>
+Startup,Stop,Load,Add, ... ,reserved\n
+</pre>
+		<p>Then there will be the events in this format</p>
+		<table>
+			<tr>
+				<td style="width: 50%; background-color: #ffffcc;">timestamp (32 bits)</td>
+				<td style="width: 10%; background-color: #ffccff;">type (6 bits)</td>
+				<td style="width: 40%; background-color: #ccffcc;">payload (26 bits)</td>
+			</tr>
+			<tr>
+				<td style="background-color: #ffcccc;" colspan="3">64 bits total</td>
+			</tr>
+		</table>
+		<p>all events will be the same size (64 bits).</p>
+		<h3 id="NexusLite_Plug-in">NexusLite Plug-in</h3>
+		<p>Create a 
+			<b>New</b>, 
+			<b>Project...</b>, 
+			<b>Plug-in Project</b>, set the title to
+
+			<b>com.example.nexuslite</b>, click 
+			<b>Next &gt;</b> then click on 
+			<b>Finish</b>.
+		</p>
+		<p>Now the structure for the Nexus trace Plug-in is set up.</p>
+		<p>Add a dependency to TMF core and UI by opening the 
+			<b>MANIFEST.MF</b> in
+
+			<b>META-INF</b>, selecting the 
+			<b>Dependencies</b> tab and 
+			<b>Add ...</b>
+
+			<b>org.eclipse.tracecompass.tmf.core</b> and 
+			<b>org.eclipse.tracecompass.tmf.ui</b>.
+		</p>
+		<p>
+			<img border="0" src="images/NTTAddDepend.png"/>
+			<br/>
+
+			<img border="0" src="images/NTTSelectProjects.png"/>
+			<br/>
+		</p>
+		<p>Now the project can access TMF classes.</p>
+		<h3 id="Trace_Event">Trace Event</h3>
+		<p>The 
+			<b>TmfEvent</b> class will work for this example. No code required.
+		</p>
+		<h3 id="Trace_Reader">Trace Reader</h3>
+		<p>The trace reader will extend a 
+			<b>TmfTrace</b> class.
+		</p>
+		<p>It will need to implement:</p>
+		<ul>
+			<li>validate (is the trace format valid?)</li>
+		</ul>
+		<ul>
+			<li>initTrace (called as the trace is opened)</li>
+		</ul>
+		<ul>
+			<li>seekEvent (go to a position in the trace and create a context)</li>
+		</ul>
+		<ul>
+			<li>getNext (implemented in the base class)</li>
+		</ul>
+		<ul>
+			<li>parseEvent (read the next element in the trace)</li>
+		</ul>
+		<p>For reference, there is an example implementation of the Nexus Trace file in
+			org.eclipse.tracecompass.tracing.examples.core.trace.nexus.NexusTrace.java.</p>
+		<p>In this example, the 
+			<b>validate</b> function first checks if the file
+			exists, then makes sure that it is really a file, and not a directory. Then we
+			attempt to read the file header, to make sure that it is really a Nexus Trace.
+			If that check passes, we return a TraceValidationStatus with a confidence of 20.
+		</p>
+		<p>Typically, TraceValidationStatus confidences should range from 1 to 100. 1 meaning
+			"there is a very small chance that this trace is of this type", and 100 meaning
+			"it is this type for sure, and cannot be anything else". At run-time, the
+			auto-detection will pick the type which returned the highest confidence. So
+			checks of the type "does the file exist?" should not return a too high
+			confidence. If confidence 0 is returned the auto-detection won't pick this type.</p>
+		<p>Here we used a confidence of 20, to leave "room" for more specific trace types
+			in the Nexus format that could be defined in TMF.</p>
+		<p>The 
+			<b>initTrace</b> function will read the event names, and find where the data
+			starts. After this, the number of events is known, and since each event is 8
+			bytes long according to the specs, the seek is then trivial.
+		</p>
+		<p>The 
+			<b>seek</b> here will just reset the reader to the right location.
+		</p>
+		<p>The 
+			<b>parseEvent</b> method needs to parse and return the current event and
+			store the current location.
+		</p>
+		<p>The 
+			<b>getNext</b> method (in base class) will read the next event and update the
+			context. It calls the 
+			<b>parseEvent</b> method to read the event and update the
+			location. It does not need to be overridden and in this example it is not. The
+			sequence of actions necessary are parse the next event from the trace, create an
+
+			<b>ITmfEvent</b> with that data, update the current location, call
+
+			<b>updateAttributes</b>, update the context then return the event.
+		</p>
+		<p>Traces will typically implement an index, to make seeking faster. The index can
+			be rebuilt every time the trace is opened. Alternatively, it can be saved to
+			disk, to make future openings of the same trace quicker. To do so, the trace
+			object can implement the 
+			<b>ITmfPersistentlyIndexable</b> interface.
+		</p>
+		<h3 id="Trace_Context">Trace Context</h3>
+		<p>The trace context will be a 
+			<b>TmfContext</b>.
+		</p>
+		<h3 id="Trace_Location">Trace Location</h3>
+		<p>The trace location will be a long, representing the rank in the file. The
+
+			<b>TmfLongLocation</b> will be the used, once again, no code is required.
+		</p>
+		<h3 id="The_.27.27org.eclipse.linuxtools.tmf.core.tracetype.27.27_and_.27.27org.eclipse.linuxtools.tmf.ui.tracetypeui.27.27_plug-in_extension_points">The 
+			<i>org.eclipse.linuxtools.tmf.core.tracetype</i> and 
+			<i>org.eclipse.linuxtools.tmf.ui.tracetypeui</i> plug-in extension points
+		</h3>
+		<p>One should use the 
+			<i>tmf.core.tracetype</i> extension point in their own plug-in.
+			In this example, the Nexus trace plug-in will be modified.
+		</p>
+		<p>The 
+			<b>plugin.xml</b> file in the ui plug-in needs to be updated if one wants
+			users to access the given event type. It can be updated in the Eclipse plug-in
+			editor.
+		</p>
+		<ol>
+			<li>In Extensions tab, add the 
+				<b>org.eclipse.linuxtools.tmf.core.tracetype</b> extension point.
+			</li>
+		</ol>
+		<p>
+			<img border="0" src="images/NTTExtension.png"/>
+			<br/>
+
+			<img border="0" src="images/NTTTraceType.png"/>
+			<br/>
+
+			<img border="0" src="images/NTTExtensionPoint.png"/>
+			<br/>
+		</p>
+		<ol>
+			<li>Add in the 
+				<b>org.eclipse.linuxtools.tmf.ui.tracetype</b> extension a new type. To do that, 
+				<b>right click</b> on the extension then in the context menu, go to 
+				<b>New &gt;</b>, 
+				<b>type</b>.
+			</li>
+		</ol>
+		<p>
+			<img border="0" src="images/NTTAddType.png"/>
+			<br/>
+		</p>
+		<p>The 
+			<b>id</b> is the unique identifier used to refer to the trace.
+		</p>
+		<p>The 
+			<b>name</b> is the field that shall be displayed when a trace type is selected.
+		</p>
+		<p>The 
+			<b>trace type</b> is the canonical path refering to the class of the trace.
+		</p>
+		<p>The 
+			<b>event type</b> is the canonical path refering to the class of the events of a given trace.
+		</p>
+		<p>The  
+			<b>category</b> (optional) is the container in which this trace type will be stored.
+		</p>
+		<ol>
+			<li>(Optional) To also add UI-specific properties to your trace type, use the 
+				<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b> extension. To do that, 
+				<b>right click</b> on the extension then in the context menu, go to 
+				<b>New &gt;</b>, 
+				<b>type</b>.
+			</li>
+		</ol>
+		<p>The 
+			<b>tracetype</b> here is the 
+			<b>id</b> of the
+
+			<i>org.eclipse.linuxtools.tmf.core.tracetype</i> mentioned above.
+		</p>
+		<p>The 
+			<b>icon</b> is the image to associate with that trace type.
+		</p>
+		<p>In the end, the extension menu should look like this.</p>
+		<p>
+			<img border="0" src="images/NTTPluginxmlComplete.png"/>
+			<br/>
+		</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Introduction.html" title="Introduction">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="View-Tutorial.html" title="View Tutorial">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Introduction</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">View Tutorial</td>
+			</tr>
+		</table>
+	</body>
+</html>

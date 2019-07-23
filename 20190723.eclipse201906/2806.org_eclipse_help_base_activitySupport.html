@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Activity Support</title>
+<style type="text/css">@import url("../../book.css");</style>
+<style type="text/css">@import url("../../schema.css");</style>
+</HEAD>
+<BODY>
+<H1 style="text-align:center">Activity Support</H1>
+<p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Identifier: </h6>org.eclipse.help.base.activitySupport<p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Since: </h6>3.1
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">Description: </h6>This extension point is used by product plug-ins to configure the behaviour of the Help system when activities are used. It provides for configuring the following aspects:
+<p>
+<ul>
+<li>By default, table of contents view hides topics that belong to disabled activities. A local tool bar button allows this filter to be turned off. A subsequent message box text can be plugged in using this extension point.</li>
+<li>When activity filter is turned off, topics that belong to disabled activities will have a message injected at the top warning them about the possibility that they may not see the user interface artifact mentioned in the topic in the running UI. This message can be plugged in.
+<li>Optionally, if the message contains a link to take the users to the UI component that provides for enabling activites, a class can be plugged in to do the work.
+</li>
+</ul>
+<p>
+<b>This extension point is experimental and is likely to change in the future releases as the activity support evolves.</b><p></p>
+<h6 class="CaptionFigColumn SchemaHeader">Configuration Markup:</h6>
+<p></p>
+<p class="code SchemaDtd">&lt;!ELEMENT <a name="e.extension">extension</a> (<a href="#e.support">support</a>+)&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST extension</p>
+<p class="code SchemaDtdAttlist">point&nbsp;CDATA #REQUIRED</p>
+<p class="code SchemaDtdAttlist">id&nbsp;&nbsp;&nbsp;&nbsp;CDATA #IMPLIED</p>
+<p class="code SchemaDtdAttlist">name&nbsp;&nbsp;CDATA #IMPLIED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.support">support</a> (<a href="#e.localScopeCheckbox">localScopeCheckbox</a>? , <a href="#e.documentMessage">documentMessage</a> , <a href="#e.showAllMessage">showAllMessage</a>)&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST support</p>
+<p class="code SchemaDtdAttlist">productId&nbsp;CDATA #REQUIRED&gt;</p>
+<p></p>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>productId</b> - a product identifier that this support should be associated with. When multiple <code>support</code> elements are found, the one whose <code>productId</code> value matches the active product id will be chosen.</li>
+</ul>
+<br><p class="code SchemaDtd">&lt;!ELEMENT <a name="e.showAllMessage">showAllMessage</a> (#PCDATA)&gt;</p>
+<p></p>
+<p class="ConfigMarkupElementDesc">
+a plain text message that will be shown in the dialog when activity filtering is turned off. The intent of the message is to warn that without the filter some documents may be referring to user interface elements that are not visible.</p>
+<br><br>
+<div style="color: red; font-style: italic;">The <b>localScopeCheckbox</b> element is deprecated</div> <p class="code SchemaDtd">&lt;!ELEMENT <a name="e.localScopeCheckbox">localScopeCheckbox</a> (#PCDATA)&gt;</p>
+<p></p>
+<p class="ConfigMarkupElementDesc">
+a label of the checkbox in the local search scope preference page. When the checkbox is selected, search hits in documents that belong to disabled activites will be included in the search results. <strong>As of 3.6, this element is no longer used</strong>.</p>
+<br><br>
+<p class="code SchemaDtd">&lt;!ELEMENT <a name="e.documentMessage">documentMessage</a> EMPTY&gt;</p>
+<p class="code SchemaDtd">&lt;!ATTLIST documentMessage</p>
+<p class="code SchemaDtdAttlist">class&nbsp;&nbsp;&nbsp;&nbsp;CDATA #IMPLIED</p>
+<p class="code SchemaDtdAttlist">pluginId&nbsp;CDATA #REQUIRED&gt;</p>
+<p></p>
+<div class="ConfigMarkupElementDesc">
+an HTML snippet that will be injected at the top of the help topic that belongs to the disabled activity. The intent of the message is to notify the user that the topic may contain references to the UI elements that are not visible. Since the message text is inside an XML file, HTML tags must be escaped using standard XML entities for special characters.
+<p>The message may contain a hyperlink that takes the user to the activity editor that provides for changing activity enablement state. Attribute <code>class</code> must be used in this case.</div>
+<br>
+<ul class="ConfigMarkupAttlistDesc">
+<li><b>class</b> - a fully qualified name of a Java class that implements <code>org.eclipse.help.ILiveHelpAction</code>. This class will be used when the document message contains a hyperlink or a button whose <code>href</code> value contains the substitution string <b>ACTIVITY_EDITOR</b>. The class should be implemented in such a way as to programmatically invoke and show a UI component (e.g. a preference page) that the product offers for changing the activity enablement state.</li>
+<li><b>pluginId</b> - an identifier of the plug-in in which the activity editor class resides.</li>
+</ul>
+<br><h6 class="CaptionFigColumn SchemaHeader">Examples: </h6>The following is a sample usage of the activity support extension point:
+<p>
+<pre class="Example"><span class="code SchemaTag">
+ &lt;extension point=</span><span class="code SchemaCstring">&quot;org.eclipse.help.base.activitySupport&quot;</span><span class="code SchemaTag">&gt;
+  &lt;support productId=</span><span class="code SchemaCstring">&quot;com.example.xyzProduct&quot;</span><span class="code SchemaTag">&gt;
+     &lt;showAllMessage&gt;
+        This actions will reveal all topics in the table of contents.
+     &lt;/showAllMessage&gt;
+     &lt;documentMessage class=</span><span class="code SchemaCstring">&quot;com.example.xyz.OpenRolePreference&quot;</span><span class="code SchemaTag">&gt;
+        This topic belongs to the role that is currently disabled.
+        &amp;lt;p&amp;gt;
+        To enable the role, open &amp;lt;a href="ACTIVITY_EDITOR"&amp;gt;Role Preference Page.&amp;lt;/a&amp;gt;
+     &lt;/documentMessage&gt;
+  &lt;/support&gt;
+ &lt;/extension&gt;
+</span></pre>
+</p>
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">API Information: </h6>Attribute <code>class</code> of the element <code>documentMessage</code> must implement <code>org.eclipse.help.ILiveHelpAction</code> interface.
+<p></p>
+
+<h6 class="CaptionFigColumn SchemaHeader">Supplied Implementation: </h6>Eclipse SDK provides the default activity support that uses the term 'capability' and and opens the Capabilities preference page from the hyperlink in disabled topics. When overriding, make sure that the changes and the terminology match those in the platform UI.
+<p></p>
+
+<br>
+<p class="note SchemaCopyright">
+Copyright (c) 2005, 2013 IBM Corporation and others.<br>
+
+This program and the accompanying materials are made 
+available under the terms of the Eclipse Public License 2.0 which accompanies 
+this distribution, and is available at <a href="https://www.eclipse.org/legal/epl-2.0">https://www.eclipse.org/legal/epl-v20.html</a>/
+
+SPDX-License-Identifier: EPL-2.0
+
+</p>
+</BODY>
+</HTML>

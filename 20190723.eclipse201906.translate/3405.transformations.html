@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>VIATRA Transformation Language</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>VIATRA Transformation Language</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The transformation language of VIATRA is developed as a set of internal DSLs over the <a href="https://eclipse.org/xtend/">Xtend language</a>, making use of its features such as extension methods and closure support. The goal of these DSLs is to support creating specialized transformations over <a href="evm.html">EVM</a> while keeping the construction simple.</p>
+</div>
+<div class="paragraph">
+<p>All languages are based on similar concepts, and feature the same general structure. In VIATRA 1.7 there are two such languages available: <strong>batch transformations</strong> where the control flow, e.g. firing of rules is directed by the transformation developer and <strong>event-driven transformations</strong> where the transformation reacts to various model change events.</p>
+</div>
+<div class="paragraph">
+<p>For an introduction to the transformation languages consult the <a href="tutorial.html">Getting Started Tutorial</a>; this document focuses more on the capabilities of the transformation sublanguages instead of the basic structure.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#batch-transformations">1. Batch Transformations</a>
+<ul class="sectlevel2">
+<li><a href="#_batch_transformation_rules">1.1. Batch Transformation Rules</a></li>
+</ul>
+</li>
+<li><a href="#event-driven-transformations">2. Event-driven Transformations</a>
+<ul class="sectlevel2">
+<li><a href="#_the_event_driven_transformation_rule_eventdriventransformationrule">2.1. The event-driven transformation rule (EventDrivenTransformationRule)</a></li>
+<li><a href="#_the_essential_ideology_behind_the_api_structure">2.2. The essential ideology behind the API structure</a></li>
+<li><a href="#_example_model_transformations_for_automaton_simulation">2.3. Example: model transformations for automaton simulation</a></li>
+</ul>
+</li>
+<li><a href="#model-manipulation">3. Model Manipulation Primitives</a></li>
+<li><a href="#transformation-debugger">4. Allow Debugging and other Adapters</a>
+<ul class="sectlevel2">
+<li><a href="#_viatra_transformation_debugger">4.1. VIATRA Transformation Debugger</a></li>
+<li><a href="#_trace_coder_listener">4.2. Trace coder listener</a></li>
+<li><a href="#_trace_executor_adapter">4.3. Trace Executor adapter</a></li>
+<li><a href="#_usage_examples">4.4. Usage Examples</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="batch-transformations"><a class="link" href="#batch-transformations">1. Batch Transformations</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Three extension classes used for transformations:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">BatchTransformation</dt>
+<dd>
+<p>hides ViatraQueryEngine and RuleEngine; manages group initialization of rules - instead of an extension method, this can also be used as a base class</p>
+</dd>
+<dt class="hdlist1">BatchTransformationStatements</dt>
+<dd>
+<p>control structure</p>
+</dd>
+<dt class="hdlist1">IModelManipulations</dt>
+<dd>
+<p>generic model manipulation primitives; hides details of EditingDomains (if necessary); implementation not batch transformation specific</p>
+</dd>
+</dl>
+</div>
+<div class="sect2">
+<h3 id="_batch_transformation_rules"><a class="link" href="#_batch_transformation_rules">1.1. Batch Transformation Rules</a></h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Special rule type</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Precondition + action</p>
+</li>
+<li>
+<p>Life cycle:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Stateless</p>
+<div class="ulist">
+<ul>
+<li>
+<p>rule does not maintain state whether an activation has fired or not</p>
+</li>
+<li>
+<p>Lifecycle: firing: active &#8594; active</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Stateful</p>
+<div class="ulist">
+<ul>
+<li>
+<p>rule maintains whether an an activation has fired or not</p>
+</li>
+<li>
+<p>Lifecycle: firing: active &#8594; fired</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Batch Transformation Statements</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Parameters</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>fireOne</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch Transformation Rule, (opt: filter)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fires a single activation</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>fireAllCurrent</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch Transformation Rule, (opt: filter)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fires all current activations. If the firings change the set of activations, it won&#8217;t change the set of fired activations.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>fireWhilePossible</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch Transformation Rule, (opt: filter)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fires  the activations one by one. Useful for iterate-choose scenarios. Break conditions are implemented using Match Predicates - functions that receive Match instances as parameters.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>fireUntil</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch Transformation Rule, break condition, (opt: filter)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">After firing the first activation, it checks whether the break condition became true; if yes, exits, if not, it restarts. It does not store the initial set of activations. Useful for iterate-choose scenarios. Break conditions are implemented using Match Predicates - functions that receive Match instances as parameters.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="event-driven-transformations"><a class="link" href="#event-driven-transformations">2. Event-driven Transformations</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The event-driven API aims at defining and executing model transformations in an event-driven manner. In this case, the preconditions of the single transformations are checked on every related model change in an incremental fashion (using VIATRA Query) and the actions are fired once the preconditions are fulfilled. Model changes are captured as events, hence the naming of the basic concepts below.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">EventDrivenTransformation</dt>
+<dd>
+<p>Similarly to the <code>BatchTransformation</code>, it hides the ViatraQueryEngine and RuleEngine and serves as the basic concept for this part of the API.</p>
+</dd>
+<dt class="hdlist1">EventContext</dt>
+<dd>
+<p>We distinguish two types or contexts of events: point and interval. The former one is described with a single point of appearance on the timeline; the latter one is characterized by its appearance <em>and</em> disappearance on the timeline. It&#8217;s up to the user to select whether a transformation is associated with an event of point or interval context. In the background, the event context is translated into an EVM activation life cycle, which can be overridden by the user if required. This concept slightly resembles the concept of batch transformation rules of <em>stateless</em> and <em>stateful</em> life cycle.</p>
+</dd>
+</dl>
+</div>
+<div class="sect2">
+<h3 id="_the_event_driven_transformation_rule_eventdriventransformationrule"><a class="link" href="#_the_event_driven_transformation_rule_eventdriventransformationrule">2.1. The event-driven transformation rule (EventDrivenTransformationRule)</a></h3>
+<div class="paragraph">
+<p>In contrast with the batch mode, in incremental mode, there are no arbitrarily assembled local conflict sets; instead: every transformation rule is handled in a global conflict set. <em>EventDrivenTransformationRuleFactory</em> is a factory designed for instantiating the rules.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_essential_ideology_behind_the_api_structure"><a class="link" href="#_the_essential_ideology_behind_the_api_structure">2.2. The essential ideology behind the API structure</a></h3>
+<div class="paragraph">
+<p>When designing the API, we reused the concepts of the <em>fluent interface</em> and the <em>builder pattern</em>. It heavily utilizes the capabilities of Xtend, resulting in a concise way for defining rules, transformations and transformation groups, as presented below.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example_model_transformations_for_automaton_simulation"><a class="link" href="#_example_model_transformations_for_automaton_simulation">2.3. Example: model transformations for automaton simulation</a></h3>
+<div class="listingblock">
+<div class="title">Defining the event-driven transformation rule</div>
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">val createEnabledTransitionRule = ruleFactory.createRule.
+  precondition(EnabledTransitionMatcher.querySpecification).
+  action[
+   eventModelManager.strategy.fireTransition(t, et)
+  ].build</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is the precondition for your transformation. The above snippet assumes the <em>EnabledTransition</em> VIATRA Query pattern to be defined, which the <em>EnabledTransitionMatcher</em> has been generated from. The expression in the closure is the action and is totally up to you to define. (In this case, the manager class maintaining the model will fire a transition.)
+You can also provide a name for the rule as well as override the default event context (point).</p>
+</div>
+<div class="listingblock">
+<div class="title">Optionally grouping the rules into rule groups</div>
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def getRules() {
+  new EventDrivenTransformationRuleGroup(
+    createEnabledTransitionRule,
+    createFinishedStateMachineRule,
+    createTokenInTrapStateRule
+  )
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This one is pretty straightforward; just enumerate your rules in a closure.
+Remember, there is only one global conflict set for these rules to get conflicted. It does not really matter whether you group your rules or not, although it can make the further parts of code more concise.</p>
+</div>
+<div class="listingblock">
+<div class="title">Register the transformation rules</div>
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRules() {
+  EventDrivenTransformation.
+    forSource(eventModelManager.resourceSet).
+    addRules(rules).
+    build()
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once you have your transformation rules, there are just a few steps to take in order to register the rules into the execution schema. Let&#8217;s look at this snippet:</p>
+</div>
+<div class="paragraph">
+<p>The benefits of the fluent API approach are obvious here. Notice the mandatory <code>build()</code> method at the tail of the method chain as the essence of the builder pattern. This method chain will deal with the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>it instantiates an EventDrivenTransformation;</p>
+</li>
+<li>
+<p>the resource or resource set the transformations are executed upon is passed to the transformation (<code>forSource()</code>);</p>
+</li>
+<li>
+<p>the transformation rules are registered (<code>addRules()</code>);</p>
+</li>
+<li>
+<p>in the background, the default conflict resolver (arbitrary ConflictResolver) is selected to deal with global conflicts.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="title">Using a conflict resolver</div>
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRulesWithCustomPriorities() {
+  val resolver = ConflictResolvers.createFixedPriorityResolver();
+  resolver.setPriority(createEnabledTransitionRule.ruleSpecification, 100)
+  resolver.setPriority(createFinishedStateMachineRule.ruleSpecification, 50)
+  resolver.setPriority(createTokenInTrapStateRule.ruleSpecification, 0)
+
+  EventDrivenTransformation.
+    forSource(eventModelManager.resourceSet).
+    addRules(rules).
+    setConflictResolver(resolver).
+    build()
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>However, as a useful feature, the API is capable to construct a fixed priority resolver based on the <em>order of the rules</em> handed over to the EventDrivenTransformation. So the results of the above code could be just achieved with this one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRulesWithAutomatedPriorities() {
+  val resolver = new RuleOrderBasedFixedPriorityResolver()
+  resolver.setPrioritiesFromScratch(new ArrayList(rules.ruleSpecifications))
+
+  EventDrivenTransformation.
+    forSource(eventModelManager.resourceSet).
+    addRules(rules).
+    setConflictResolver(resolver).
+    create()
+  }</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="model-manipulation"><a class="link" href="#model-manipulation">3. Model Manipulation Primitives</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Model manipulation primitives are implemented by instances of IModelManipulations interface. Currently, two implementations are available:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>SimpleModelManipulations - uses plain EMF API</p>
+</li>
+<li>
+<p>ModelManipulationsWithEditingDomain - uses EMF Edit commands on EditingDomain instances</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If some transformation needs specific primitives (e.g. transaction support), new instances can introduce extra methods as required.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. Model Manipulation Primitives</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Parameters</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">create</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource; EClass</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creates an object with the corresponding EClass type, and puts it into the root of the selected resource</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">createChild</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject (container); EReference; EClass</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creates an object with the corresponding EClass type, and puts it into the selected reference; the reference must be of containment type</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">addTo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject (container); EStructuralFeature; Object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adds an existing object to the corresponding container with a reference; if using a reference it must <strong>not</strong> be of containment type</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes the EObject from the model</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject (container); EStructuralFeature; Object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes an object from the selected container; when using a containment EReference, also removes it from the resource set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">remove</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject (container); EStructuralFeature</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Removes all objects from a multivalued feature; when using a containment EReference, also removes them from the resource set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">set</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject (container); EStructuralFeature; Object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the value of a single-valued feature</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">moveTo</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EObject(s), EObject (new container), EStructuralFeature</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Moves elements to a new container, and removes them from an old one. <strong>Remark</strong>: The implementation here is specific, as it relies on features of the index.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="transformation-debugger"><a class="link" href="#transformation-debugger">4. Allow Debugging and other Adapters</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Apart from the VIATRA transformation debugger, the VIATRA transformation adapter framework contains a number of default adapter implementations, that realize model transformation related use cases:</p>
+</div>
+<div class="sect2">
+<h3 id="_viatra_transformation_debugger"><a class="link" href="#_viatra_transformation_debugger">4.1. VIATRA Transformation Debugger</a></h3>
+<div class="paragraph">
+<p>The VIATRA transformation debugger implements a breakpoint based debugging approach (similar to JDT). It utilizes the Eclipse Debug framework, as well as some custom debug-related views. It contains the logic for stopping the transformation execution if a breakpoint condition matches, and updating the Transformation Debug Model, based on which the current transformation state is displayed. To support various debugging use cases, the debugger supports various breakpoint implementations as well. The debugger consists of two main components:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>VIATRA Debugger Runtime</em>: It contains the debugger elements associated with the running model transformation instance. These elements are responsible for instrumenting the transformation instance and propagating the gathered information to the tooling elements. They also enable the tooling elements to control the instrumented transformation instance.</p>
+</li>
+<li>
+<p><em>VIATRA Debugger Tooling</em>: It contains elements associated with extending the <em>Eclipse Debug Framework</em>. They allow the information provided by the runtime elements to be displayed on the Eclipse debug UI, and enable the user to control the transformation under debugging.</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/transformation/transformation_debugger.png" alt="Debugger Overview">
+</div>
+<div class="title">Figure 1. Debug Adapter</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Debugger Runtime</em></p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Transformation Debugger</em>: Observes and manipulates the execution of a VIATRA transformation.</p>
+</li>
+<li>
+<p><em>Runtime Communication Agent</em>: Responsible for orchestrating the communication between the tooling and runtime components. Uses JMX-based communication.</p>
+</li>
+<li>
+<p><em>Debug Information</em>: Data that is propagated between the runtime and tooling components. I contains information about the state of the transformation under debugging, and the involved model instances as well. This information is displayed by debugger tooling components.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Transformation State</em>: It contains information about the transformation under debugging. Including the state of the transformation conflict set and the next activation to be executed.</p>
+</li>
+<li>
+<p><em>Model Instance Representation</em>: Represents model instances that are associated with the transformation, using a generic, serializable meta-model.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><em>Debug Actions</em>: User actions that are sent from the tooling to the runtime components.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Breakpoints</em>: The debugger framework supports a set of different transformation breakpoints.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Rule Activation Breakpoints</em>: Identifies a transformation rule activation. If the given activation is about to be fired, the transformation execution will be halted.</p>
+</li>
+<li>
+<p><em>Conditional Breakpoints</em>: These breakpoints are able to define global constraints that are not only affected by the current activation. A similar concept is available in the Eclipse Java Development Tools (JDT). The constraints are defined by using the VIATRA query language.</p>
+</li>
+<li>
+<p><em>Rule Breakpoints</em>: These breakpoints identify a given VIATRA transformation rule. The execution is halted if an activation of this rule is about to be fired.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><em>Debugger Commands</em>: User commands that are sent from the tooling components to the runtime components.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><em>Debugger Tooling</em></p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>VIATRA Debugger UI Elements</em>: UI elements that display transformation-specific information that cannot be visualizes via using Eclipse debug UI elements.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>VIATRA Transformation Browser</em>: Displays the current state of the model transformation. Shows the set of activations to be fired, and allows the user to control the execution of the transformation or define breakpoints as well. The activations displayed can either be grouped by their parent rule, or their position in the transformation conflict set.</p>
+</li>
+<li>
+<p><em>VIATRA Transformation Model Instance Viewer</em>: Displays the current state of the model instances related to the transformation using a tree-view with properties support.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><em>Eclipse Debugger UI Elements</em>: Eclipse debugger UI elements that display transformation debugger-related information.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_trace_coder_listener"><a class="link" href="#_trace_coder_listener">4.2. Trace coder listener</a></h3>
+<div class="paragraph">
+<p>The transformation debug configuration contains a transformation debugger that follows the breakpoint-based approach. However, the execution sequence of VIATRA-based event-driven model transformations is typically non-deterministic. The trace coder is responsible for logging the transformation execution sequence (i.e.: order of transformation rule activation firings). This <strong>transformation trace</strong> can later be analyzed or used during re-execution of the transformation.</p>
+</div>
+<div class="paragraph">
+<p>Transformation traces are hierarchical object structures aiming at storing transformation execution sequences. Transformation traces consist of activation and rule parameter traces. Activation traces identify the fired rule, and rule parameter traces specify which elements have triggered the execution of the given rule. Based on this information, the transformation can be re-executed for further evaluation, or erroneous rules can be detected during post mortem analysis.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/transformation/coder_adapter.png" alt="Trace Coder Adapter" width="1000">
+</div>
+</div>
+<div class="paragraph">
+<p>Similar to the previously introduced components, the trace coder listener utilizes interchangeable subcomponents:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Activation coder</dt>
+<dd>
+<p>Creates Activation Trace objects, using the parameters extracted from the activation object.</p>
+</dd>
+<dt class="hdlist1">Trace model serializer</dt>
+<dd>
+<p>Responsible for saving and loading trace models</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_trace_executor_adapter"><a class="link" href="#_trace_executor_adapter">4.3. Trace Executor adapter</a></h3>
+<div class="paragraph">
+<p>This adapter is responsible for re-executing a transformation sequence recorded by the trace coder adapter. Particularly useful during debugging, as it allows the determinization of the otherwise random execution sequence of VIATRA event-driven transformations.
+It operates the following way: as the transformation is being executed, the activation at hand is compared to the upcoming entry in a previously loaded transformation trace. If the activation matches the trace record, it is executed, if not the executor finds the matching one.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/transformation/executor_adapter.png" alt="Trace Executor Adapter" width="1000">
+</div>
+</div>
+<div class="paragraph">
+<p>As seen here, the trace executor component utilizes the same sub-components as the trace coder.</p>
+</div>
+<div class="paragraph">
+<p>Noteable information regarding the trace executor:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The usage of this adapter has a heavy effect on transformation performance, it is only advised to use it on small scale test models.</p>
+</li>
+<li>
+<p>Also keep in mind that the trace executor needs an already existing transformation trace, hence it should not be used simultaneously with the trace coder.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_usage_examples"><a class="link" href="#_usage_examples">4.4. Usage Examples</a></h3>
+<div class="paragraph">
+<p>Adapters and listeners can be added to new or already existing VIATRA transformations in a simple and straightforward fashion. The VIATRA transformation API allows the transformation developer to attach these adapters and listeners directly to the model transformation, without needing to alter the transformation code itself. The transformation API classes create a modified, adapter supporting background structure, however this step is completely transparent to the transformation developer. Both Batch and event driven VIATRA transformations are supported, and will be presented in this section. The example shown here uses the VIATRA CPS example model transformations, to emphasize, that adding adapters does only require changes in the transformation setup, but does not require any change in the transformation code itself.</p>
+</div>
+<div class="paragraph">
+<p>Note that these examples only show the method for adding adapters to VIATRA transformations. The Adapters used in these examples will not work if used all together (especially true to the trace coder and executor components). In order to ensure that the adapters do not have adverse effects on each other use the predefined adapter configurations or individual adapters.</p>
+</div>
+<div class="listingblock">
+<div class="title">Adding adapters to a batch transformation</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">transformation = BatchTransformation.forEngine(engine)
+    //Create trace coder listener
+    //This listener is responsible for storing the transformation execution sequence (i.e.: order of transformation rule activation firings)
+    //This transformation trace can later be analyzed or used during re-execution
+    //Transformation trace --&gt; hierarchical object structure --&gt; aiming at storing a transformation execution sequence.
+    //Consists of Activation and rule parameter traces --&gt; activation traces identify the fired rule, and specify which elements have triggered the execution of the given rule.
+    .addListener( new TraceCoder(URI.createURI("transformationtrace/batchtrace.transformationtrace")))
+
+    //Create trace executor adapter
+    //This adapter is responsible for re-executing a transformation sequence recorded by the trace coder adapter.
+    //Particularly useful during debugging, as it allows the determinization of the otherwise random execution sequence of VIATRA event-driven transformations.
+    //Note, that the usage of this adapter has a heavy effect on transformation performance, it is only advised to use it on small scale test models.
+    //Also keep in mind that the trace executor needs an already existing transformation trace, hence it should not be used simultaneously with the trace coder.
+    .addAdapter(new TraceExecutor(URI.createURI("transformationtrace/trace.transformationtrace")))
+
+    //This listener implements a basic logging functionality
+    .addListener(new LoggingEVMListener(logger))
+    .build</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Adding adapters to an event-driven transformation</div>
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">transformation = EventDrivenTransformation.forEngine(engine)
+    .setConflictResolver(createConflictResolver)
+    .addRule(hostRule)
+    .addRule(applicationRule)
+    .addListener( new TraceCoder(URI.createURI("transformationtrace/trace.transformationtrace")))
+    .addAdapter(new TraceExecutor(URI.createURI("transformationtrace/edtrace.transformationtrace")))
+    .addListener(new LoggingEVMListener(logger))
+    .build</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

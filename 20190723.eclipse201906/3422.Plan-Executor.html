@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Plan Executor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Plan Executor</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The PlanExecutor is a simple workflow engine which is able to execute plans. The plan is separated by phases which consist of Operations. The other input of the PlanExecutor is one of the <code>Initializer</code> interface implementation. <code>Initializer</code> shall initialize the Fragment object and it is able to store extra information for phases and operations. During the execution operations working on the shared object, called fragment. The output of the process is the fragment.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/cps/planexecutor.png" alt="PlanExecutor">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_building_blocks">Building blocks</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_fragment">Fragment</h3>
+<div class="paragraph">
+<p>The fragment represents the artefact that the executor is operating on. In the <a href="CPS-Model-Generator.html">CPS model generator</a>, the fragment refers to the CPS instance model that is built. The fragment is introduced as a type parameter to ensure that operations can call the methods in a type-safe way on the fragment object.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_initializer">Initializer</h3>
+<div class="paragraph">
+<p>The initializer is responsible for creating an initial fragment object at the start of the execution. This approach allows the creation of the initializer object without performing possible expensive processing for creating the fragment before it is required.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface Initializer&lt;FragmentType&gt; {
+    def FragmentType getInitialFragment();
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_operation">Operation</h3>
+<div class="paragraph">
+<p>Operations are defined for a given fragment type and are executed as part of phases. The same operation implementation may be used in multiple phases. The operation receives the fragment object as a parameter when it is executed.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface IOperation&lt;FragmentType&gt; {
+    def boolean execute(FragmentType fragment);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase">Phase</h3>
+<div class="paragraph">
+<p>Phases represent standalone execution steps that define a list of operations on the same fragment type. The phase receives the fragment object as a parameter when assembling the operations, which means that the operation list can be dependent of the current state of the fragment.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface IPhase&lt;FragmentType&gt; {
+    def Iterable&lt;IOperation&lt;FragmentType&gt;&gt; getOperations(FragmentType fragment);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_plan">Plan</h3>
+<div class="paragraph">
+<p>The plan is created by adding phases that were already prepared by the same fragment. During the execution, the list of phases are requested by the executor.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface IPlan&lt;FragmentType&gt; {
+    def void addPhase(IPhase&lt;FragmentType&gt; phase);
+    def Iterable&lt;IPhase&lt;FragmentType&gt;&gt; getPhases();
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_technical_details">Technical details</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First step is to create custom implementations of <code>IPlan</code>, <code>IPhase</code>, <code>IOperation</code>, <code>Initializer</code> interfaces and create the <code>Fragment</code> type like in the followings.</p>
+</div>
+<div class="paragraph">
+<p><strong>MyFragment</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class MyFragment {
+    SecretStore secretStore = "";
+
+    def addSecretInformation(String info) {
+        secretStore.add(info);
+    }
+
+    def encryptStore() {
+        secretStore.encrypt;
+    }
+
+    def print() {
+        secretStore.print;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>MyInitializer</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class MyInitializer implements Initializer&lt;MyFragment&gt; {
+
+    override getInitialFragment() {
+        return new MyFragment();
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>MyPlan</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class MyPlan implements IPlan&lt;MyFragment&gt; {
+
+    List&lt;IPhase&lt;MyFragment&gt;&gt; phases = Lists.newArrayList;
+
+    override addPhase(IPhase&lt;MyFragment&gt; phase) {
+        phases.add(phase);
+    }
+
+    override getPhases() {
+        return phases;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>MyPhase</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class MyPhase implements IPhase&lt;MyFragment&gt;{
+
+    override getOperations(MyFragment fragment) {
+        Lists.newArrayList(
+                   new AddSecretOperation(),
+                   new EncryptStoreOperation(),
+                );
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>AddSecretOperation</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class AddSecretOperation implements IOperation&lt;MyFragment&gt; {
+
+    override execute(MyFragment fragment) {
+        fragment.addSecretInformation("My Secret Information");
+        return true;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>EncryptStoreOperation</strong>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class EncryptStoreOperation implements IOperation&lt;MyFragment&gt; {
+
+    override execute(MyFragment fragment) {
+        fragment.encryptStore;
+        return true;
+    }
+
+}</code></pre>
+</div>
+</div>
+<hr>
+<div class="paragraph">
+<p>Second step is to build plan and the initializer.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class Example {
+    def static void main(String[] args) {
+        var MyPlan plan = new MyPlan;
+        plan.addPhase(new MyPhase());
+        plan.addPhase(new MyOtherPhase());
+
+        var MyInitializer initializer = new MyInitializer;
+    }
+}</code></pre>
+</div>
+</div>
+<hr>
+<div class="paragraph">
+<p>The last step is to instantiate correct <code>PlanExecutor</code> and call the <code>process</code> method.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class Example {
+    def static void main(String[] args) {
+        var MyPlan plan = new MyPlan;
+        plan.addPhase(new MyPhase());
+        plan.addPhase(new MyOtherPhase());
+
+        var MyInitializer initializer = new MyInitializer;
+
+        var PlanExecutor&lt;MyFragment, MyInitializer&gt; planExecutor = new PlanExecutor();
+        var output = planExecutor.process(plan, initializer);
+
+        output.print;
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

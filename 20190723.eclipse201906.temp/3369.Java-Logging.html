@@ -1,0 +1,134 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass User Guide - Java Logging</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Java Logging</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Counters-Analysis.html" title="Counters Analysis">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Limitations.html" title="Limitations">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Counters Analysis</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Limitations</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Java_Logging">Java Logging</h1>
+		<p>Trace Compass contains some Java Utility Logging (JUL) tracepoints in various places in the code. To diagnose issues with Trace Compass or when reporting problems with the application, a JUL trace may be useful to help pinpoint the problem. The following sections explain how to enable JUL logging in Trace Compass and use various handlers to handle the data.</p>
+		<h2 id="Enable_JUL_Logging">Enable JUL Logging</h2>
+		<p>By default, all the logging of the Trace Compass namespace is disabled. To enable it, one needs to add the following property to the 
+			<i>vmargs</i>: 
+			<i>-Dorg.eclipse.tracecompass.logging=true</i>.
+		</p>
+		<p>The log levels and components can be controlled via a configuration file whose path is specified also in the 
+			<i>vmargs</i> like this: 
+			<i>-Djava.util.logging.config.file=/path/to/logger.properties</i>. An example configuration file can be found in the next section.
+		</p>
+		<p>If running the RCP, these arguments can be appended at the end of the 
+			<i>tracecompass.ini</i> file located in the folder where the executable is located. If running from Eclipse in development mode, in the 
+			<i>Run configurations...</i>, the arguments should be added in the 
+			<i>Arguments</i> tab in the 
+			<i>VM args</i> box.
+		</p>
+		<h2 id="Configuring_JUL_logging">Configuring JUL logging</h2>
+		<p>JUL logging can be fine-tuned to log only specific components, specific levels, but also to different log handlers, with different formats, etc. Or else, the default level is INFO and the default log handler is a ConsoleHandler which displays all log message to the Console, which can be quite cumbersome.</p>
+		<p>Here is an example 
+			<i>logger.properties</i> file to control what is being logged and where.
+		</p>
+		<pre>   # Specify the handlers to create in the root logger
+   # (all loggers are children of the root logger)
+   # These are example handlers
+</pre>
+		<pre>   # Console handler
+   handlers = java.util.logging.ConsoleHandler
+   # Console and file handlers
+   #handlers = java.util.logging.ConsoleHandler, java.util.logging.FileHandler
+   # No handler
+   #handlers =
+</pre>
+		<pre>   # Set the default logging level for the root logger
+   # Possible values: OFF, SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST, ALL
+   .level = OFF
+</pre>
+		<pre>   # Fine tune log levels for specific components
+   # Use the INFO level for all tracecompass, but FINEST for the StateSystem component
+   #org.eclipse.tracecompass.internal.statesystem.core.StateSystem.level = FINEST
+   org.eclipse.tracecompass.level = INFO
+</pre>
+		<h2 id="LTTng_JUL_log_handler">LTTng JUL log handler</h2>
+		<p>The various log handlers have an overhead on the application. The ConsoleHandler has a visible impact on Trace Compass performance. The FileHandler also has an overhead though less visible, but when logging from multiple threads at the same time, the file becomes a bottleneck, so that logging data cannot be used with accuracy for performance analysis. The 
+			<a href="http://lttng.org/docs/#doc-java-application">LTTng log handler</a> is much better in a multi-threads context.
+		</p>
+		<p>LTTng-UST comes with the Java JUL agent in most distros. Otherwise, it is possible to manually compile lttng-ust with options 
+			<i>--enable-java-agent-jul</i> and install it.
+		</p>
+		<pre>   git clone git://git.lttng.org/lttng-ust.git
+   cd lttng-ust
+   ./bootstrap
+   ./configure --enable-java-agent-jul
+   make
+   sudo make install
+</pre>
+		<p>The necessary classes for the java agent will have been installed on the system. Since Equinox (the OSGi implementation used by Eclipse and thus Trace Compass) uses its own classpath and ignores any classpath entered on the command line for security reasons, one needs to specify the agent class path with the bootclasspath argument:</p>
+		<pre>   -Xbootclasspath/a:/usr/local/share/java/lttng-ust-agent-jul.jar:/usr/local/share/java/lttng-ust-agent-common.jar
+</pre>
+		<p>Note that unlike the -classpath argument, -Xbootsclasspath does not follow the dependencies specified by a jar's Manifest, thus it is required to list both the -jul and the -common jars here.</p>
+		<p>These classes need to load the LTTng JNI library. Because they were loaded from the boot class path by the boot ClassLoader, the library path entered on the command line is ignored. A workaround is to manually copy the library to the jvm's main library path. For example</p>
+		<pre>   sudo cp /usr/local/lib/liblttng-ust-jul-jni.so /usr/lib/jvm/java-8-openjdk/jre/lib/amd64/
+</pre>
+		<p>Or to overwrite the JVM's library path with the following VM argument.</p>
+		<pre>   -Dsun.boot.library.path=/usr/local/lib
+</pre>
+		<p>
+			<i>Disclaimer: this last method overwrites the main java library path. It may have unknown side-effects. None were found yet.</i>
+		</p>
+		<p>LTTng can now be used as a handler for Trace Compass's JUL, by adding the following line to the logger.properties file</p>
+		<pre>   handlers = org.lttng.ust.agent.jul.LttngLogHandler
+</pre>
+		<p>The tracepoints will be those logged by a previously defined configuration file. Here is how to setup LTTng to handle JUL logging:</p>
+		<pre>   lttng create
+   lttng enable-event -j -a
+   lttng start
+</pre><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Counters-Analysis.html" title="Counters Analysis">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="User-Guide.html" title="Trace Compass User Guide">
+						<img alt="Trace Compass User Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Limitations.html" title="Limitations">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Counters Analysis</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Limitations</td>
+			</tr>
+		</table>
+	</body>
+</html>

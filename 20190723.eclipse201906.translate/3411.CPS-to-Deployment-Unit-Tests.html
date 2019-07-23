@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>CPS to Deployment Unit Tests</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>CPS to Deployment Unit Tests</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>xform.m2m.tests</code> project specifies a high number of test cases that are independent of transformation implementations and are created for allowing Test Driven Development of transformations based on the specification.</p>
+</div>
+<div class="paragraph">
+<p>The tests are grouped together into classes following the rules found in the specification of the <a href="CPS-to-Deployment-Transformation.html">CPS-to-Deployment</a> transformation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>HostMappingTest</p>
+</li>
+<li>
+<p>ApplicationMappingTest</p>
+</li>
+<li>
+<p>StateMachineMappingTest</p>
+</li>
+<li>
+<p>StateMappingTest</p>
+</li>
+<li>
+<p>TransitionMappingTest</p>
+</li>
+<li>
+<p>ActionMappingTest</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In addition, the <code>TransformationApiTest</code> class ensures that all variants behave the same way for incorrect input parameters, while the <code>WrapperTest</code> class can contain additional tests for specific transformation variant wrappers.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_technical_details">Technical details</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_run_the_tests">Run the tests</h3>
+<div class="paragraph">
+<p>Simply right-click on the <code>xform.m2m.tests</code> project and select <code>Run as&#8230;&#8203; &#8594; JUnit Plugin Test</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_test_case_structure">Test case structure</h3>
+<div class="paragraph">
+<p>All specification related tests extend the <code>CPS2DepTest</code> class, which defines some extension fields:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">class CPS2DepTest {
+    protected extension Logger logger = Logger.getLogger("cps.xform.CPS2DepTest")
+    protected extension CPSTransformationWrapper xform
+    protected extension CPSModelBuilderUtil modelBuilder</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A simple test case is structured as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">@Test
+def hostIncremental() {
+ val testId = "hostIncremental"
+ info("START TEST: " + testId)
+
+ // use model builder to create initial model
+ val cps2dep = prepareEmptyModel(testId)
+
+ // use transformation wrapper to initialize (e.g. create rules)
+ cps2dep.initializeTransformation
+ // use transformation wrapper to execute
+ executeTransformation
+
+ // modify model
+ val instance = cps2dep.prepareHostInstance
+ // re-execute transformation (incremental usually ignores this call)
+ executeTransformation
+
+ // check results
+ cps2dep.assertHostMapping(instance)
+
+ info("END TEST: " + testId)
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_test_with_existing_input_model">Test with existing input model</h3>
+<div class="paragraph">
+<p>If you would like to test the transformation on your own input CPS model, take a look at the <code>specificInputModel</code> test case in <code>InstanceModelTest.xtend</code> in the <code>&lt;cps&gt;.xform.m2m.tests.integration</code> package.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">@Ignore
+@Test
+def specificInputModel(){
+  val testId = "specificInputModel"
+  info("START TEST: " + testId)
+
+  val cpsUri = "file://my-cps-git-location/models/org.eclipse.viatra.query.examples.cps.instances/example.cyberphysicalsystem"
+
+  val cps2dep = prepareCPSModel(cpsUri)
+
+  cps2dep.initializeTransformation
+  executeTransformation
+
+  info("END TEST: " + testId)
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Just change the resource URI to a full file path, remove or comment out the <code>@Ignore</code> and run the tests.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

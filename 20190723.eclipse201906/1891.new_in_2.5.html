@@ -1,0 +1,182 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <link rel=stylesheet type="text/css" href="../css/style.css">
+    <link rel=stylesheet type="text/css" href="../css/nn.css">
+	<title>OTDT 2.5 - New and Noteworthy</title>
+</head>
+<script language="JavaScript">
+	// web:	var OTJLD_BASE = "http://www.objectteams.org/def/1.3.1"; //"../otjld/def"
+	// help:
+	var OTJLD_BASE = "../otjld/def"
+	var HELP_ROOT = "http://help.eclipse.org/neon/topic" // only if not already replaced
+  	function replaceROOTS() {
+  		var baseURLskip = document.URL.lastIndexOf("/");
+    	var anchors = document.getElementsByTagName("a");
+    	for (i = 0; i < anchors.length; i++) {
+      		var item = anchors[i];
+      		var relref = item.href.substring(baseURLskip+1)
+      		if (relref.indexOf("OTJLD") == 0) {
+  				item.href = relref.replace("OTJLD", OTJLD_BASE);
+      		} else if (relref.indexOf("PLUGINS_ROOT") == 0) {
+      			item.href = relref.replace("PLUGINS_ROOT", HELP_ROOT);
+      		}
+    	}
+  	}
+</script>
+<body onload="replaceROOTS();">
+<h1>OTDT 2.5 - New and Noteworthy</h1>
+<div class="navigation">On this page:
+<!--a href="#metrics">&bull; Metrics Plug-in</a-->
+<!--a href="#configuration">&bull; Configuration</a-->
+<!--a href="#views">&bull; Views/Dialogs</a--> 
+<!--a href="#assist">&bull; Content Assist</a-->  
+<!--a href="#refactor">&bull; Refactoring</a-->  
+<!--a href="#formatting">&bull; Formatting</a-->
+<a href="#otre">&bull; Runtime</a>
+<a href="#compiler">&bull; Compiler</a>
+<a href="#otequinox">&bull; OT/Equinox</a>
+<a href="#debug">&bull; Run/Debug</a>
+<!--a href="#language">&bull; Language</a-->
+<!--a href="#api">&bull; API</a-->
+<!--a href="#releng">&bull; Release Engineering</a-->  
+</div>
+<table cellpadding="10" cellspacing="0" width="100%">
+  <colgroup>
+  <col width="20%">
+  <col width="80%">
+  </colgroup>
+  <tbody>
+<!--
+  <tr><td colspan="2" id="NAME"><h2>HEADING</h2></td></tr>
+  <tr>
+    <td><p align="right"><b>DESC</b><br>
+        <span class="since">since&nbsp;0.7.1</span><br>
+        <a class="buglink" title="TITLE" href="https://bugs.eclipse.org/308029">308029</a></p></td>
+    <td><p>
+    		
+    	</p>
+    	<p><img alt="TEXT" src="../images/screenshots/NN07/.png"></p>
+    	<p></p>
+    </td>
+  </tr>
+  <div class="listbox"><div class="listing"><pre><code class="keyword">public team class</code> <font color="blue">MyTeam</font> {
+}</pre></div></div>
+-->
+
+  <tr><td colspan="2" id="otre"><h2>Object Teams Runtime Environment</h2></td></tr>
+  <tr id="OTDRE">
+    <td><p align="right"><b>New byte code weaver</b><br>
+        &nbsp;<br>
+        <a class="buglink" target="_blank" title="[otdre] ability to run OTDT on OTDRE" href="https://bugs.eclipse.org/462605">462605</a><br/>
+        <a class="buglink" target="_blank" title="[otdre] run OTDT on OTDRE as its own runtime by default" href="https://bugs.eclipse.org/480068">480068</a></p></td>
+    <td><p>The new byte code weaver, initially released with OTDT 2.3, has matured to the point where it is considered production-ready in 2.5.</p>
+    	<p>This weaver, called "<strong>Object Teams Dynamic Runtime Environment (OTDRE)</strong>",
+    		has two advantages over the traditional OTRE:
+    	</p>
+    	<ul>
+    	<li>It supports <strong>runtime weaving</strong>, 
+    		i.e., the option to weave and activate roles and teams that are not known during application launch. </li>
+    	<li>It is fully capable of handling Java 8 byte code.
+    		This is a side-effect of using the byte code library <strong>ASM</strong>
+    		(as opposed to the BCEL-based implementation of OTRE).
+    		</li>
+    	</ul>
+    	<p>Maturity of the new weaver is witnessed by the fact that OTDT 2.5 in fact runs on this new runtime.</p>
+    	<p>Both weavers are supported by the compiler by generating specific infrastructure to be invoked
+    		from woven code. Due to the fundamental difference in <strong>weaving schemes</strong>, 
+    		it is necessary to selected at compile time, which weaver should be targeted. Please see the section on
+    		<a href="PLUGINS_ROOT/org.eclipse.objectteams.otdt.doc/guide/weavingscheme.html">target weaving schemes</a> in the developers' guide.</p>
+    </td>
+  </tr>
+  <tr>
+    <td><p align="right"><b>Tuning the weaver</b><br>
+        &nbsp;<br>
+        <a class="buglink" target="_blank" title="[otdre] Tuning of thread weaving" href="https://bugs.eclipse.org/493556">493556</a></p></td>
+    <td><p>When per-thread activation of teams (<a class="otjldlink" href="OTJLD/s5.html#s5.1.1" target=_blank>&sect;5.1.1</a>) is used,
+    	the runtime needs to be notified when new threads are started.
+    	This happens by weaving into sub classes of <code>Thread</code> and <code>Runnable</code>, which may incur some performance penalty.
+    	For optimization in applications where this notification is not needed, such weaving can now be tuned / disabled using the
+    	<strong>system property <code>otequinox.weave.thread</code></strong> with one of the following values:</p>
+    	<dl>
+    	<dt>"false"</dt>
+    	<dd>Completely disable weaving into subtypes of Thread and Runnable.</dd>
+    	<dt>"base"</dt>
+    	<dd>Weave only into those subtypes of Thread and Runnable that reside in a plug-in that is also
+    		affected by an <code>aspectBinding</code> (OT/Equinox only).</dd>
+    	<dt>any other value (including unset)</dt>
+    	<dd>Enable normal weaving into subtypes of Thread and Runnable.</dd>
+    	</dl>
+    </td>
+  </tr>
+   <tr>
+    <td><p align="right"><b>Define weavable regions</b><br>
+        <span class="since">since&nbsp;2.5M3</span><br>
+        <a class="buglink" target="_blank" title="[otdre] support definition of &quot;weavable code regions&quot;" href="https://bugs.eclipse.org/480760">480760</a></p></td>
+    <td><p>Under OTDRE, every class in the system should be seen as the potential base class of some role to be loaded at runtime.
+    	It may be desirable to restrict this to specified "weavable code regions".
+    	Possible reasons include performance and protection (of sensitive code regions, e.g.).</p>
+    	<p>It is now possible to define such "weavable code regions" by providing a simple text file.
+    	Each line in this file will be interpreted as a prefix of class names (no support for wildcards at this point).
+    	A class whose fully qualified name matches one of these prefixes is weavable, all others cannot be woven into.</p>
+    	<p>The text file is announced to the runtime by providing its path in the file system as the value to the
+    	<strong>system property <code>ot.weavable</code></strong>.</p>
+    </td>
+  </tr>
+
+  <!-- normally below, between API and Releng:  -->
+  <tr><td colspan="2" id="compiler"><h2>Compiler</h2></td></tr>
+  <tr>
+    <td><p align="right"><b>Preference UI for weaving scheme</b><br>
+        <span class="since">since&nbsp;2.5M3</span><br>
+        <a class="buglink" title="Preference UI for weaving scheme" href="https://bugs.eclipse.org/481065">481065</a></p></td>
+    <td><p>New UI is provided for selecting the <a href="PLUGINS_ROOT/org.eclipse.objectteams.otdt.doc/guide/weavingscheme.html">weaving scheme</a>:</p>
+    <a href="../images/screenshots/NN25/configure-compiler-weavingScheme.png"><img src="../images/screenshots/NN25/configure-compiler-weavingScheme.png" width=519 alt="Selecting the weaving scheme to compile for"/></a>
+    </td>
+  </tr>
+
+  <tr><td colspan="2" id="otequinox"><h2>OT/Equinox</h2></td></tr>
+  <tr>
+    <td><p align="right"><b>Use OTDRE by default</b><br>
+        <span class="since">since&nbsp;2.5M3</span><br>
+        <a class="buglink" target="_blank" title="[otdre] run OTDT on OTDRE as its own runtime by default" href="https://bugs.eclipse.org/480068">480068</a></p></td>
+    <td><p>When installing OT/Equinox (i.e., the plug-in <code>org.eclipse.objectteams.otequinox</code>),
+    	the new weaver <a href="#OTDRE">OTDRE</a> is by default selected in <code>eclipse.ini</code>.</p>
+  	</td>
+  </tr>
+  	
+
+  <tr><td colspan="2" id="debug"><h2>Run / Debug</h2></td></tr>
+  <tr>
+    <td><p align="right"><b>Auto-select weaver</b><br>
+        <span class="since">since&nbsp;2.5M7</span><br>
+        <a class="buglink" title="[otdre][debug] automatically select weaver when launching" href="https://bugs.eclipse.org/462785">462785</a></p></td>
+    <td><p>When launching an OT/Equinox-enabled application, the correct weaving scheme is now automatically selected
+    	by inspecting any OT/J projects involved in the launch. It is not necessary to explicitly pass any Object Teams specific arguments.</p>
+    	<p><em>For plain OT/J applications this was solved already in OTDT 2.3.</em></p>
+    </td>
+  </tr>
+
+<!--
+
+  <tr><td colspan="2" id="api"><h2>API</h2></td></tr>
+  <tr>
+    <td><p align="right"><b>HEADING</b><br>
+        <span class="since">since&nbsp;2.1M6</span><br>
+        <a class="buglink" title="TITLE" href="https://bugs.eclipse.org/301314">301314</a></p></td>
+    <td><p>PARA</p>
+    </td>
+  </tr>
+
+ 
+  <tr><td colspan="2" id="releng"><h2>Release Engineering</h2></td></tr>
+  <tr>
+    <td><p align="right"><b>HEADING</b><br>
+        <span class="since">since&nbsp;2.1M6</span><br>
+        <a class="buglink" title="TITLE" href="https://bugs.eclipse.org/301314">301314</a></p></td>
+    <td><p>PARA</p>
+    </td>
+  </tr>
+-->  
+</table>
+</body>

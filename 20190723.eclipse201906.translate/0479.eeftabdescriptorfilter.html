@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>eeftabdescriptorfilter</title>
+		<link type="text/css" rel="stylesheet" href="../assets/css/stylesheet.css"/>
+	</head>
+	<body>
+		<h2 id="IEEFTabDescriptorFilter">IEEFTabDescriptorFilter</h2>
+		<p>This extension point allows to filter tabs contributed to the EEF tabbed property sheet page by implementing org.eclipse.eef.properties.ui.api.IEEFTabDescriptorFilter.</p>
+		<pre><code>&lt;extension
+      point="org.eclipse.eef.properties.ui.eefTabDescriptorFilter"&gt;
+   &lt;descriptor
+         class="org.eclipse.eef.sample.internal.extensions.SampleTabDescriptorFilter"
+         description="Provides EEF Tab filter"
+         id="org.eclipse.eef.sample.eefTabDescriptorFilter"
+         label="EEF Sample Tab Descriptor Filter"&gt;
+   &lt;/descriptor&gt;
+&lt;/extension&gt;
+</code></pre>
+		<p>Example of IEEFTabDescriptorFilter contribution. In this example, we are providing a contribution used to filter legacy tabs to the Properties view created by EEF.</p>
+		<pre><code>import org.eclipse.eef.properties.ui.api.IEEFTabDescriptor;
+import org.eclipse.eef.properties.ui.api.IEEFTabDescriptorFilter;
+
+public class SampleTabDescriptorFilter implements IEEFTabDescriptorFilter {
+
+    @Override
+    public boolean filter(IEEFTabDescriptor tabDescriptor) {
+     // Write here a useful condition
+        return false;
+    }
+
+}
+</code></pre>
+		<p>This example requires at least the following dependencies:</p>
+		<ul>
+			<li>org.eclipse.eef.common</li>
+			<li>org.eclipse.eef.properties.ui</li>
+		</ul>
+		<h3 id="eefextreferenceviewerfilterprovider">IEEFExtReferenceViewerFilterProvider</h3>
+		<p>This extension point allows the contribution of an org.eclipse.eef.ide.ui.ext.widgets.reference.api.IEEFExtReferenceViewerFilterProvider which can be used to filter the content of the tree viewers used to display the objects that can be selected and where an object can be created using the reference widget.</p>
+		<pre><code>&lt;extension
+      point="org.eclipse.eef.ide.ui.ext.widgets.reference.eefExtReferenceViewerFilterProvider"&gt;
+    &lt;descriptor
+          class="org.eclipse.sirius.ui.properties.ext.widgets.reference.internal.EEFExtReferenceViewerFilterProvider"
+          description="%viewerFilterProvider.Description"
+          id="org.eclipse.sirius.ui.properties.ext.widgets.reference.viewerFilterProvider"
+          label="%viewerFilterProvider.Label"&gt;
+    &lt;/descriptor&gt;
+&lt;/extension&gt;
+</code></pre>
+		<p>Example of the contribution of a viewer filter provider. This contribution will let a plugin filter the content displayed in the tree viewers used to show where a new value can be created and which value can be selected for a reference. Eclipse Sirius provides the following basic implementation which is used to filter everything not contained in a semantic resource:</p>
+		<pre><code>import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.eef.ide.ui.ext.widgets.reference.api.IEEFExtReferenceViewerFilterProvider;
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.sirius.business.api.session.Session;
+import org.eclipse.sirius.business.api.session.SessionManager;
+
+
+public class EEFExtReferenceViewerFilterProvider implements IEEFExtReferenceViewerFilterProvider {
+
+    @Override
+    public List&lt;ViewerFilter&gt; getViewerFilters(ContextKind contextKind) {
+        List&lt;ViewerFilter&gt; viewerFilters = new ArrayList&lt;&gt;();
+
+        ViewerFilter viewFilter = new ViewerFilter() {
+            @Override
+            public boolean select(Viewer viewer, Object parentElement, Object element) {
+                // Used to filter aird, odesign, etc
+                if (element instanceof Resource) {
+                    Session session = SessionManager.INSTANCE.getSession((Resource) element);
+                    return session != null;
+                }
+                return true;
+            }
+        };
+
+        viewerFilters.add(viewFilter);
+        return viewerFilters;
+    }
+
+}
+</code></pre>
+		<p>This example requires at least the following dependencies:</p>
+		<ul>
+			<li>org.eclipse.eef.ide.ui.ext.widgets.reference</li>
+			<li>org.eclipse.emf.ecore</li>
+			<li>org.eclipse.jface.viewers</li>
+			<li>org.eclipse.sirius</li>
+		</ul>
+	</body>
+</html>

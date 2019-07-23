@@ -1,0 +1,564 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass User Guide - LTTng-UST Analyses</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">LTTng-UST Analyses</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="LTTng-Kernel-Analysis.html" title="LTTng Kernel Analysis">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Trace-synchronization.html" title="Trace synchronization">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">LTTng Kernel Analysis</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Trace synchronization</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="LTTng-UST_Analyses">LTTng-UST Analyses</h1>
+		<p>The Userspace traces are taken on an application level. With kernel traces, you know what events you will have as the domain is known and cloistered. Userspace traces can contain pretty much anything. Some analyses are offered if certain events are enabled.</p>
+		<h2 id="Call_Stack_View">Call Stack View</h2>
+		<p>The Call Stack view allows the user to visualize the call stack per thread over time, if the application and trace provide this information.</p>
+		<p>To open this view go in 
+			<b>Window</b> -&gt; 
+			<b>Show View</b> -&gt; 
+			<b>Other...</b> and select 
+			<b>Tracing/Call Stack</b> in the list. The view shows the call stack information for the currently selected trace. Conversely, you can select a trace and expand it in the 
+			<b>Project Explorer</b> then expand 
+			<b>LTTng-UST CallStack Analysis</b> (the trace must be loaded) and open 
+			<b>Call Stack</b>.
+		</p>
+		<p>The table on the left-hand side of the view shows the threads and call stack. The function name, depth, entry and exit time and duration are shown for the call stack at the selected time.</p>
+		<p>Double-clicking on a function entry in the table will zoom the time graph to the selected function's range of execution.</p>
+		<p>The time graph on the right-hand side of the view shows the call stack state graphically over time. The function name is visible on each call stack event if size permits. The color of each call stack event is randomly assigned based on the function name, allowing for easy identification of repeated calls to the same function.</p>
+		<p>Clicking on the time graph will set the current time and consequently update the table with the current call stack information.</p>
+		<p>Shift-clicking on the time graph will select a time range. When the selection is a time range, the begin time is used to update the stack information.</p>
+		<p>Double-clicking on a call stack event will zoom the time graph to the selected function's range of execution.</p>
+		<p>Clicking the 
+			<b>Select Next State Change</b> or 
+			<b>Select Previous State Change</b> or using the left and right arrows will navigate to the next or previous call stack event, and select the function currently at the top of the call stack. Note that pressing the 
+			<b>Shift</b> key at the same time will update the selection end time of the current selection.
+		</p>
+		<p>Clicking the 
+			<b>Configure how addresses are mapped to function names</b> (
+			<img border="0" src="images/binaries_obj.gif"/>) icon will open the symbol providers dialog. Depending on the available symbol providers for the given trace, you can specify: 1) a text or binary file containing mappings from function addresses to function names or 2) the root location of the binaries of the trace target. If the call stack provider for the current trace type only provides function addresses, a mapping file will be required to get the function names in the view. See the following sections for an example with LTTng-UST traces.
+		</p>
+		<h3 id="Using_the_Callstack_View_with_LTTng-UST_traces">Using the Callstack View with LTTng-UST traces</h3>
+		<p>There is support in the LTTng-UST integration plugin to display the callstack
+			of applications traced with the 
+			<i>liblttng-ust-cyg-profile.so</i> library (see
+			the 
+			<i>liblttng-ust-cyg-profile</i> man page for additional information). To do
+			so, you need to:
+		</p>
+		<ul>
+			<li>Recompile your application with "
+				<i>-g -finstrument-functions</i>".
+			</li>
+			<li>Set up a tracing session with the the 
+				<i>vpid</i>, 
+				<i>vtid</i> and 
+				<i>procname</i> contexts. See the 
+				<a href="LTTng-Tracer-Control.html#Enabling_UST_Events_On_Session_Level">Enabling UST Events On Session Level</a> and 
+				<a href="LTTng-Tracer-Control.html#Adding_Contexts_to_Channels_and_Events_of_a_Domain">Adding Contexts to Channels and Events of a Domain</a> sections. Or if using the command-line:
+				<ul>
+					<li><pre>lttng enable-event -u -a</pre></li>
+					<li><pre>lttng add-context -u -t vpid -t vtid -t procname</pre></li>
+				</ul>
+			</li>
+			<li>Preload the 
+				<i>liblttng-ust-cyg-profile</i> library when running your program:
+				<ul>
+					<li><pre>LD_PRELOAD=/usr/lib/liblttng-ust-cyg-profile.so ./myprogram</pre></li>
+				</ul>
+			</li>
+		</ul>
+		<p>Once you load the resulting trace, the Callstack View should be populated with
+			the relevant information.</p>
+		<p>Note that for non-trivial applications, 
+			<i>liblttng-ust-cyg-profile</i> generates a
+
+			<b>lot</b> of events! You may need to increase the channel's subbuffer size to
+			avoid lost events. Refer to the
+
+			<a href="http://lttng.org/docs/#doc-fine-tuning-channels">LTTng documentation</a>.
+		</p>
+		<p>For traces taken with LTTng-UST 2.8 or later, the Callstack View should show the
+			function names automatically, since it will make use of the debug information
+			statedump events (which are enabled when using 
+			<i>enable-event -u -a</i>).
+		</p>
+		<p>For traces taken with prior versions of UST, you would need to set the path to
+			the binary file or mapping manually:</p>
+		<h3 id="Importing_a_binary_or_function_name_mapping_file_.28for_LTTng-UST_.3C2.8_traces.29">Importing a binary or function name mapping file (for LTTng-UST &lt;2.8 traces)</h3>
+		<p>
+			<i>For LTTng-UST 2.8+, if it doesn't resolve symbols automatically, see the 
+				<a href="#Binary_file_location_configuration">Source Lookup's Binary file location configuration</a>.
+			</i>
+		</p>
+		<p>If you followed the steps in the previous section, you should have a Callstack
+			View populated with function entries and exits. However, the view will display
+			the function addresses instead of names in the intervals, which are not very
+			useful by themselves. To get the actual function names, you need to:</p>
+		<ul>
+			<li>Click the 
+				<b>Configure how addresses are mapped to function names</b> (
+				<img border="0" src="images/binaries_obj.gif"/>) button in the Callstack View.
+			</li>
+		</ul>
+		<p>Once again, multiple symbol providers can be available for a unique trace. Each symbol provider can be configured through its own tab. Thus, multiple sources can be used to map the function names to addresses. Below is an image of the basic symbol provider preference page which allows us to import binary or function name mapping files.</p>
+		<p>
+			<img border="0" src="images/BasicSymbolProviderPreferencePage.png"/>
+		</p>
+		<p>Simply click the 
+			<b>Add...</b> button to add one or multiple mapping files. The mapping file could be one of two options:
+		</p>
+		<ul>
+			<li>
+				<img border="0" src="images/binary_mapping_file.gif"/>: a binary that was used for taking the trace.
+			</li>
+		</ul>
+		<ul>
+			<li>
+				<img border="0" src="images/text_mapping_file.gif"/>: a file generated from the binary using 
+				<i>nm myprogram &gt; mapping.txt</i>. Select the 
+				<i>mapping.txt</i> file that was just created. If you are dealing with C++ executables, you may want to use 
+				<i>nm --demangle</i> instead to get readable function names.
+			</li>
+		</ul>
+		<p>The view should now update to display the function names instead. Make sure the
+			binary used for taking the trace is the one used for this step too (otherwise,
+			there is a good chance of the addresses not being the same).</p>
+		<p>Lastly, the basic symbol provider introduces the notion of priorities between the mapping files. The resolved symbols from the file at the top of the list will have a higher priority than the files listed below. The files can be moved using the 
+			<b>Up</b> and 
+			<b>Down</b> buttons.
+		</p>
+		<h3 id="Navigation_5">Navigation</h3>
+		<p>See Control Flow View's 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Using_the_mouse">Using the mouse</a>
+			</b>, 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Using_the_keyboard">Using the keyboard</a>
+			</b> and 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Zoom_region">Zoom region</a>
+			</b>.
+		</p>
+		<h3 id="Marker_Axis_3">Marker Axis</h3>
+		<p>See Control Flow View's 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Marker_Axis">Marker Axis</a>
+			</b>.
+		</p>
+		<h2 id="Flame_Graph_View">Flame Graph View</h2>
+		<p>This is an aggregate view of the function calls from the 
+			<b>Call Stack View</b>. This shows a bird's eye view of what are the main
+			time sinks in the traced applications. Each entry in the 
+			<b>Flame Graph</b> represents an aggregation of all the calls to a function
+			in a certain depth of the call stack having the same caller. So, functions in the 
+			<b>Flame Graph</b> are aggregated by depth and
+			caller. This enables the user to find the most executed code path easily.
+		</p>
+		<ul>
+			<li>In a 
+				<b>Flame Graph</b>, each entry (box) represents a function in the stack.
+			</li>
+			<li>If one takes a single vertical line in the view, it represents a full call stack with parents calling children.</li>
+			<li>The 
+				<i>x-axis</i> represents total duration (execution time) and not absolute time, so it is not aligned with the other views.
+			</li>
+			<li>The width of an entry is the total time spent in that function, including time spent calling the children.</li>
+			<li>The total time can exceed the longest duration, if the program is pre-empted and not running during its trace time.</li>
+			<li>Each thread traced makes its own flame graph.</li>
+		</ul>
+		<p>The function name is visible on each Flame graph event if the size permits. Each box in the 
+			<b>Flame Graph</b>
+			has the same color as the box representing the same function in the 
+			<b>Call Stack</b>.
+		</p>
+		<p>To open this view, select a trace, expand it in the 
+			<b>Project Explorer</b>, then expand the
+
+			<b>Call Graph Analysis</b> (the trace must be loaded) and open the 
+			<b>Flame Graph</b>.
+			It's also possible to go in 
+			<b>Window</b> -&gt; 
+			<b>Show View</b> -&gt; 
+			<b>Tracing</b> then
+			select 
+			<b>Flame Graph</b> in the list.
+		</p>
+		<p>
+			<img title="Flame Graph View" alt="Flame Graph View" border="0" src="images/Flame_Graph.png"/>
+		</p>
+		<p>To use the 
+			<b>Flame graph</b>, one can navigate it and find which function is consuming the most self-time.
+			This can be seen as a large plateau. Then the entry can be inspected. At this point, the worst offender in
+			terms of CPU usage will be highlighted, however, it is not a single call to investigate, but rather the
+			aggregation of all the calls. Right mouse-clicking on that entry will open a context sensitive menu.
+			Selecting 
+			<b>Go to minimum</b> or 
+			<b>Go to maximum</b> will take the user to the minimum or maximum
+			recorded times in the trace. This is interesting to compare and contrast the two.
+		</p>
+		<p>Hovering over a function will show a tooltip with the statistics on a per-function basis. One can see the total and self times
+			(
+			<i>worst-case</i>, 
+			<i>best-case</i>, 
+			<i>average</i>, 
+			<i>total time</i>, 
+			<i>standard deviation</i>, 
+			<i>number of calls</i>) for that function.
+		</p>
+		<p>If one wishes to explore at a medium detail level between the "classic" flame graph view and the call stack view, a per-thread flame
+			graph view is available by selecting the coarser menu and clicking on 
+			<b>Content Presentation</b> then 
+			<b>Per-thread</b>. To return to
+			the default mode, return to that menu and click on 
+			<b>Aggregate Threads</b>.
+		</p>
+		<h3 id="How_to_use_a_Flame_Graph">How to use a Flame Graph</h3>
+		<p>Observing the time spent in each function can show where most of the time is spent and where one could optimize.
+			An example in the image above: one can see that 
+			<i>mp_sort</i> is a recursive sort function, it takes approximately
+			40% of the execution time of the program. That means that perfectly parallelizing it can yield a gain of 20% for 2 threads, 33% for 3
+			and so forth. Looking at the function 
+			<b>print_current_files</b>, it takes about 30% of the time, and it has a child 
+			<i>print_many_per_line</i> that has a large
+			self time (above 10%). This could be another area that can be targeted for optimization. Knowing this in advance helps developers
+			know where to aim their efforts.
+		</p>
+		<p>It is recommended to have a kernel trace as well as a user space trace in an experiment
+			while using the 
+			<b>Flame Graph</b> as it will show what is causing the largest delays.
+			When using the 
+			<b>Flame Graph</b> together with a call stack and a kernel trace,
+			an example work flow would be to find the worst offender in terms of time taken for a function
+			that seems to be taking too long. Then, using the context menu 
+			<b>Go to maximum</b>, one can navigate
+			to the maximum duration and see if the OS is, for example, preempting the function for too long,
+			or if the issue is in the code being executed.
+		</p>
+		<h2 id="Function_Duration_Statistics">Function Duration Statistics</h2>
+		<p>This displays the descriptive statistics of the 'wall time' durations of given functions. It gives an
+			overview of how often a function is called, how much total time it took, its mean duration as well as
+			its maximum, minimum times and the standard deviation.</p>
+		<p>If a time range is selected it will display the local statistics too.</p>
+		<p>This analysis is available if the 
+			<i>Flame Graph</i> is available.
+		</p>
+		<h3 id="Using_the_mouse_3">Using the mouse</h3>
+		<ul>
+			<li>
+				<b>Double-click on the duration ruler</b> will zoom the graph to the selected duration range.
+			</li>
+			<li>
+				<b>Shift-left-click or drag</b>: Extend or shrink the selection range
+			</li>
+			<li>
+				<b>Mouse wheel up/down</b>: scroll up or down
+			</li>
+			<li>
+				<b>Shift-mouse wheel up/down</b>: scroll left or right
+			</li>
+			<li>
+				<b>Ctrl-mouse wheel up/down</b>: zoom in or out horizontally
+			</li>
+			<li>
+				<b>Shift-Ctrl-mouse wheel up/down</b>: zoom in or out vertically
+			</li>
+		</ul>
+		<p>When the mouse cursor is over entries (left pane):</p>
+		<ul>
+			<li>
+				<b>-</b>: Collapse the 
+				<b>Flame Graph</b> of the selected thread
+			</li>
+			<li>
+				<b>+</b>: Expand the 
+				<b>Flame Graph</b> of the selected thread
+			</li>
+		</ul>
+		<h3 id="Using_the_keyboard_3">Using the keyboard</h3>
+		<p>The following keyboard shortcuts are available:</p>
+		<ul>
+			<li>
+				<b>Down Arrow</b>: selects the next stack depth
+			</li>
+			<li>
+				<b>Up Arrow</b>: selects the previous stack depth
+			</li>
+			<li>
+				<b>Home</b>: selects the first thread's 
+				<b>Flame Graph</b>
+			</li>
+			<li>
+				<b>End</b>: selects the last thread's  
+				<b>Flame Graph</b>'s deepest depth
+			</li>
+			<li>
+				<b>Enter</b>: toggles the expansion state of the current thread in the tree
+			</li>
+			<li>
+				<b>Ctrl + +</b>: Zoom-in vertically
+			</li>
+			<li>
+				<b>Ctrl + -</b>: Zoom-out vertically
+			</li>
+			<li>
+				<b>Ctrl + 0</b>: Reset the vertical zoom
+			</li>
+		</ul>
+		<h3 id="Toolbar_6">Toolbar</h3>
+		<table>
+			<tr>
+				<td>
+					<img border="0" src="images/sort_alpha.gif"/>
+				</td>
+				<td>Sort by thread name</td>
+				<td>Sort the threads by thread name. Clicking the icon a second time will sort the threads by name in reverse order and change the icon to 
+					<img border="0" src="images/sort_alpha_rev.gif"/>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<img border="0" src="images/sort_num.gif"/>
+				</td>
+				<td>Sort by thread id</td>
+				<td>Sort the threads by thread ID. Clicking the icon a second time will sort the threads by ID in reverse order and change the icon to 
+					<img border="0" src="images/sort_num_rev.gif"/>.
+				</td>
+			</tr>
+		</table>
+		<h3 id="Importing_a_binary_or_function_name_mapping_file_.28for_LTTng-UST_.3C2.8_traces.29_2">Importing a binary or function name mapping file (for LTTng-UST &lt;2.8 traces)</h3>
+		<p>See Call Stack View's 
+			<b>
+				<a href="#Call_Stack_View">Importing a binary or function name mapping file (for LTTng-UST &lt;2.8 traces) </a>
+			</b>.
+		</p>
+		<h2 id="Function_Duration_Density">Function Duration Density</h2>
+		<p>The 
+			<b>Function Duration Density</b> view shows the function duration of function displayed by duration for the current active time window range. This is useful to find global outliers.
+		</p>
+		<p>
+			<img title="Function Duration Density View" alt="Function Duration Density View" border="0" src="images/FunctionDensityView.png"/>
+		</p>
+		<p>Using the right mouse button to drag horizontally it will update the table and graph to show only the density for the selected durations. Durations outside the selection range will be filtered out. Using the toolbar button 
+			<img border="0" src="images/zoomout_nav.gif"/> the zoom range will be reset.
+		</p>
+		<h2 id="Memory_Usage">Memory Usage</h2>
+		<p>The Memory Usage view allows the user to visualize the active memory usage per thread over time, if the application and trace provide this information.</p>
+		<p>The view shows the memory consumption for the currently selected trace.</p>
+		<p>The time chart plots heap memory usage graphically over time. There is one line per process, unassigned memory usage is mapped to "Other". Processes can be checked and unchecked in the tree on the left hand side.</p>
+		<p>The filter button: 
+			<img border="0" src="images/filter_items.gif"/> can be used to show only the active threads in the tree viewer. By default only the threads which have had memory usage variations in the visible time range will be shown, clicking the button will reveal all the threads.
+		</p>
+		<p>In this implementation, the user needs to trace while hooking the 
+			<i>liblttng-ust-libc-wrapper</i> by running  
+			<i>LD_PRELOAD=liblttng-ust-libc-wrapper.so</i> 
+			<b>&lt;exename&gt;</b>. This will add tracepoints to memory allocation and freeing to the heap, NOT shared memory or stack usage. If the contexts 
+			<b>vtid</b> and 
+			<b>procname</b> are enabled, then the view will associate the heap usage to processes. As detailed earlier, to enable the contexts, see the 
+			<a href="LTTng-Tracer-Control.html#Adding_Contexts_to_Channels_and_Events_of_a_Domain">Adding Contexts to Channels and Events of a Domain</a> section. Or if using the command-line:
+		</p>
+		<ul>
+			<li><pre>lttng add-context -u -t vtid -t procname</pre></li>
+		</ul>
+		<p>If thread information is available the view will look like this:</p>
+		<p>
+			<img border="0" src="images/memoryUsage/memory-usage-multithread.png"/>
+		</p>
+		<p>If thread information is not available it will look like this:</p>
+		<p>
+			<img border="0" src="images/memoryUsage/memory-usage-no-thread-info.png"/>
+		</p>
+		<p>The time axis is aligned with other views that support automatic time axis alignment (see 
+			<a href="Trace-Compass-Main-Features.html#Automatic_Time_Axis_Alignment">Automatic Time Axis Alignment</a>).
+		</p>
+		<p>The time range can be fully zoomed out by double-clicking the time axis or the home button.</p>
+		<p>Please note this view will not show shared memory or stack memory usage.</p>
+		<h3 id="Navigation_6">Navigation</h3>
+		<p>For navigation, see CPU Usage view's 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Using_the_mouse_2">Using the mouse</a>
+			</b>, 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Using_the_keyboard_2">Using the keyboard</a>
+			</b> and 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Zoom_region">Zoom region</a>
+			</b>.
+		</p>
+		<h3 id="Toolbar_7">Toolbar</h3>
+		<p>The view 
+			<b>toolbar</b>, located at the top right of the view, has shortcut buttons to perform common actions.
+		</p>
+		<p>For details about the see CPU Usage view's 
+			<b>
+				<a href="LTTng-Kernel-Analysis.html#Toolbar_3">Toolbar</a>
+			</b>.
+		</p>
+		<h3 id="View_Menu_4">View Menu</h3>
+		<p>The Memory Usage View 
+			<b>view menu</b>, located at the top right of the view, has shortcut buttons to perform common actions:
+		</p>
+		<table>
+			<tr>
+				<td>New Memory Usage view</td>
+				<td>Spawn a new Memory Usage view. The new view can be pinned to a new instance of the current trace, pinned to any opened trace, or unpinned.</td>
+			</tr>
+			<tr>
+				<td>Align Views</td>
+				<td>Disable and enable the automatic time axis alignment of time-based views. Disabling the alignment in this view will disable this feature across all the views because it's a workspace preference.</td>
+			</tr>
+		</table>
+		<p>
+			<img border="0" src="images/LTTng_CpuUsageViewToolTip.png"/>
+		</p>
+		<p>Please note this view will not show shared memory or stack memory usage.</p>
+		<h2 id="Source_Lookup_.28for_LTTng-UST_2.8.2B.29">Source Lookup (for LTTng-UST 2.8+)</h2>
+		<p>Starting with LTTng 2.8, the tracer can now provide enough information to
+			associate trace events with their location in the original source code.</p>
+		<p>To make use of this feature, first make sure your binaries are compiled with
+			debug information (-g), so that the instruction pointers can be mapped to source
+			code locations. This lookup is made using the 
+			<i>addr2line</i> command-line utility,
+			which needs to be installed and on the 
+			<b>$PATH</b> of the system running Trace
+			Compass. 
+			<i>addr2line</i> is available in most Linux distributions, Mac OS X, Windows using Cygwin and others.
+		</p>
+		<p>The following trace events need to be present in the trace:</p>
+		<ul>
+			<li>lttng_ust_statedump:start</li>
+			<li>lttng_ust_statedump:end</li>
+			<li>lttng_ust_statedump:bin_info</li>
+			<li>lttng_ust_statedump:build_id</li>
+		</ul>
+		<p>as well as the following contexts:</p>
+		<ul>
+			<li>vpid</li>
+			<li>ip</li>
+		</ul>
+		<p>For ease of use, you can simply enable all the UST events when setting up your
+			session:</p>
+		<pre> lttng enable-event -u -a
+ lttng add-context -u -t vpid -t ip
+</pre>
+		<p>Note that you can also create and configure your session using the 
+			<a href="LTTng-Tracer-Control.html#Control_View">Control View</a>.
+		</p>
+		<p>If you want to track source locations in shared libraries loaded by the
+			application, you also need to enable the "lttng_ust_dl:*" events, as well
+			as preload the UST library providing them when running your program:</p>
+		<pre> LD_PRELOAD=/path/to/liblttng-ust-dl.so ./myprogram
+</pre>
+		<p>If all the required information is present, then the 
+			<i>Source Location</i> column
+			of the Event Table should be populated accordingly, and the 
+			<i>Open Source Code</i>
+			action should be available. Refer to the section 
+			<a href="Trace-Compass-Main-Features.html#Event_Source_Lookup">Event Source Lookup</a> for
+			more details.
+		</p>
+		<p>The 
+			<i>Binary Location</i> information should be present even if the original
+			binaries are not available, since it only makes use of information found in the
+			trace. A 
+			<b>+</b> denotes a relative address (i.e. an offset within the object
+			itself), whereas a 
+			<b>@</b> denotes an absolute address, for
+			non-position-independent objects.
+		</p>
+		<p>
+			<img border="0" src="images/sourceLookup/trace-with-debug-info.png"/>
+		</p>
+		<p>
+			<i>Example of a trace with debug info and corresponding Source Lookup information, showing a tracepoint originating from a shared library</i>
+		</p>
+		<h3 id="Binary_file_location_configuration">Binary file location configuration</h3>
+		<p>To resolve addresses to function names and source code locations, the analysis
+			makes use of the binary files (executables or shared libraries) present on the
+			system. By default, it will look for the file paths as they are found in the
+			trace, which means that it should work out-of-the-box if the trace was taken on
+			the same machine that Trace Compass is running.</p>
+		<p>It is possible to configure a 
+			<i>root directory</i> that will be used as a prefix
+			for all file path resolutions. The button to open the configuration dialog is
+			called 
+			<b>Configure how addresses are mapped to function names</b> and is
+			currently located in the 
+			<a href="#Call_Stack_View">Call Stack View</a>. Note that the Call Stack View
+			will also make use of this configuration to resolve its function names.
+		</p>
+		<p>
+			<img border="0" src="images/sourceLookup/symbol-mapping-config-ust28.png"/>
+		</p>
+		<p>
+			<i>The symbol configuration dialog for LTTng-UST 2.8+ traces</i>
+		</p>
+		<p>This can be useful if a trace was taken on a remote target, and an image of that
+			target is available locally.</p>
+		<p>If a binary file is being traced on a target, the paths in the trace will refer
+			to the paths on the target. For example, if they are:</p>
+		<ul>
+			<li>/usr/bin/program</li>
+			<li>/usr/lib/libsomething.so</li>
+			<li>/usr/local/lib/libcustom.so</li>
+		</ul>
+		<p>and an image of that target is copied locally on the system at
+
+			<i>/home/user/project/image</i>, which means the binaries above end up at:
+		</p>
+		<ul>
+			<li>/home/user/project/image/usr/bin/program</li>
+			<li>/home/user/project/image/usr/lib/libsomething.so</li>
+			<li>/home/user/project/image/usr/local/lib/libcustom.so</li>
+		</ul>
+		<p>Then selecting the 
+			<i>/home/user/project/image</i> directory in the configuration
+			dialog above will allow Trace Compass to read the debug symbols correctly.
+		</p>
+		<p>Note that this path prefix will apply to both binary file and source file
+			locations, which may or may not be desirable.</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="LTTng-Kernel-Analysis.html" title="LTTng Kernel Analysis">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="User-Guide.html" title="Trace Compass User Guide">
+						<img alt="Trace Compass User Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Trace-synchronization.html" title="Trace synchronization">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">LTTng Kernel Analysis</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Trace synchronization</td>
+			</tr>
+		</table>
+	</body>
+</html>

@@ -1,0 +1,298 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>GEF Layout Developer Documentation</title>
+		<link type="text/css" rel="stylesheet" href="../../book.css"/>
+	</head>
+	<body>
+		<p>
+			<em>Note to non-wiki readers: This documentation is generated from the GEF@github.com wiki - if you have corrections or additions it would be awesome if you could contribute them to 
+				<a href="https://github.com/eclipse/gef/wiki/Layout" target="doc_external">the original wiki page</a>
+			</em>.
+		</p>
+		<h2 id="introduction">Introduction</h2>
+		<p>The <span style="color:#7C866A">
+			<a href="Layout.html">Layout</a></span> component provides basic abstractions for layout algorithms and related listeners, as well as a set of layout algorithm implementations. It is internally decomposed into the single 
+			<strong>
+				<a href="Layout.html#layout">Layout</a>
+			</strong> module. There are also a couple of undeployed 
+			<a href="Layout-Examples.html">Layout Examples</a>.
+		</p>
+		<p>
+			<img alt="" border="0" src="images/layout/components.layout.jpeg"/>
+		</p>
+		<hr/>
+		<h2 id="layout">Layout</h2>
+		<ul>
+			<li>
+				<strong>feature: org.eclipse.gef.layout</strong>
+			</li>
+			<li>
+				<strong>bundle: org.eclipse.gef.layout</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Layout.html#layout">Layout</a> module of 
+			<a href="Layout.html">Layout</a> provides abstractions and related to auto-layout (
+			<a href="Layout.html#layout:root">{Root}</a>) as well as concrete layout algorithm implementations(
+			<a href="Layout.html#algorithms">Algorithms</a>).
+		</p>
+		<hr/><div id="Layout:Root"></div>
+		<h3 id="root">{Root}</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.layout</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Layout.html#layout:root">{Root}</a> package provides support for automatic layout. Automatic layout is performed by 
+			<a href="Layout.html#ilayoutalgorithm">ILayoutAlgorithm</a> implementations. Each 
+			<a href="Layout.html#ilayoutalgorithm">ILayoutAlgorithm</a> is bound to a 
+			<a href="Layout.html#layoutcontext">LayoutContext</a>, which provides all necessary information about 
+			<em>what</em> is to be layouted and 
+			<em>how</em>. The 
+			<em>what</em> is described in terms of a 
+			<a href="Graph.html">Graph</a> input model. An 
+			<a href="Layout.html#ilayoutfilter">ILayoutFilter</a> can be used to sort out those graph elements that are (currently) not of relevance for layouting. Details about the 
+			<em>what</em> can be inferred from 
+			<em>properties</em> (
+			<a href="Layout.html#layoutproperties">LayoutProperties</a>) that can be attributed to all layout abstractions. These can also be used to influence 
+			<em>how</em> the layout algorithm performs the layout.
+		</p>
+		<h4 id="ilayoutalgorithm">ILayoutAlgorithm</h4>
+		<p>
+			<code>ILayoutAlgorithm</code> is the base abstraction for all layout algorithm implementations. To perform a layout pass, an 
+			<code>ILayoutAlgorithm</code> needs a reference to a 
+			<a href="Layout.html#layoutcontext">LayoutContext</a>, which provides information about what is to be layouted in terms of a 
+			<a href="Graph.html#graph-node-edge">Graph</a>, which will have to be attributed in addition with respective properties that are required by the algorithm.
+		</p>
+		<h4 id="layoutcontext">LayoutContext</h4>
+		<p>A 
+			<code>LayoutContext</code> provides the necessary context information needed by an 
+			<a href="Layout.html#ilayoutalgorithm">ILayoutAlgorithm</a>. The 
+			<code>LayoutContext</code> is the central entry point for clients to trigger layout. It provides the input 
+			<a href="Graph.html#graph-node-edge">Graph</a> model that indicates 
+			<em>what</em> is to be layouted, and references the layout algorithm that is to be applied. The 
+			<code>LayoutContext</code> further supports scheduling 
+			<em>pre-layout-passes</em> and 
+			<em>post-layout-passes</em> which are executed before or after applying a layout, respectively. These can, for example, be used to update the information which the 
+			<code>LayoutContext</code> provides, prior to applying a layout, or transfering information back from the 
+			<code>LayoutContext</code> to the underlying data model after applying a layout.
+		</p>
+		<p>When applying a layout, the configured algorithm will evaluate all 
+			<a href="Graph.html#graph-node-edge">Graph</a> model returned by the 
+			<code>LayoutContext</code> when computing the layout. If not all model elements of the input model are relevant for layout, an 
+			<a href="Layout.html#ilayoutfilter">ILayoutFilter</a> can be applied to filter input model elements.
+		</p>
+		<h4 id="ilayoutfilter">ILayoutFilter</h4>
+		<p>An 
+			<code>ILayoutFilter</code> is used to filter out 
+			<a href="Graph.html">Graph</a> input elements, so that they are not returned by the context, and therefore, are not layed out. For example, this is how 
+			<a href="Zest.html">Zest</a> filters out hidden nodes and edges:
+		</p>
+		<pre><code>  // add layout filter for hidden/layout irrelevant elements
+  final HidingModel hidingModel = getHost().getRoot().getViewer().getAdapter(HidingModel.class);
+  if (hidingModel != null) {
+    getLayoutContext().addLayoutFilter(new ILayoutFilter() {
+      @Override
+      public boolean isLayoutIrrelevant(Edge edge) {
+        return Boolean.TRUE.equals(ZestProperties.getLayoutIrrelevant(edge))
+               || isLayoutIrrelevant(edge.getSource()) || isLayoutIrrelevant(edge.getTarget());
+      }
+
+      @Override
+      public boolean isLayoutIrrelevant(org.eclipse.gef.graph.Node node) {
+        return Boolean.TRUE.equals(ZestProperties.getLayoutIrrelevant(node)) || hidingModel.isHidden(node);
+      }
+    });
+  }</code></pre>
+		<h4 id="layoutproperties">LayoutProperties</h4>
+		<p>The 
+			<code>LayoutProperties</code> class defines the layout properties for 
+			<a href="Graph.html#graph-node-edge">Graph</a>, 
+			<a href="Graph.html#graph-node-edge">Node</a>, and 
+			<a href="Graph.html#graph-node-edge">Edge</a> elements processed by the 
+			<a href="Layout.html#ilayoutalgorithm">ILayoutAlgorithm</a>. The algorithms access these properties to read/write node locations and sizes, among other things.
+		</p>
+		<p>The following properties are supported for graphs (g), nodes (n), and edges (e):</p>
+		<ul>
+			<li>
+				<code>BOUNDS_PROPERTY</code>, 
+				<a href="Geometry.html#rectangle">org.eclipse.gef.geometry.planar.Rectangle</a> (g): Specifies the rectangular area in which nodes can be placed by layout algorithms.
+			</li>
+			<li>
+				<code>LOCATION_PROPERTY</code>, 
+				<a href="Geometry.html#point">org.eclipse.gef.geometry.planar.Point</a> (n): Specifies the node's location.
+			</li>
+			<li>
+				<code>SIZE_PROPERTY</code>, 
+				<a href="Geometry.html#dimension">org.eclipse.gef.geometry.planar.Dimension</a> (n): Specifies the node's size (i.e. width and height).
+			</li>
+			<li>
+				<code>MOVABLE_PROPERTY</code>, 
+				<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/Boolean.html" target="doc_external">java.lang.Boolean</a> (n): Specifies if the location of the node can be changed by layout algorithms.
+			</li>
+			<li>
+				<code>RESIZABLE_PROPERTY</code>, 
+				<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/Boolean.html" target="doc_external">java.lang.Boolean</a> (n): Specifies if the size of the node can be changed by layout algorithms.
+			</li>
+			<li>
+				<code>ASPECT_RATIO_PROPERTY</code>, 
+				<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/Double.html" target="doc_external">java.lang.Double</a> (n): Specifies the node's preferred aspect ratio, i.e. the quotient of its width and height.
+			</li>
+			<li>
+				<code>WEIGHT_PROPERTY</code>, 
+				<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/Double.html" target="doc_external">java.lang.Double</a> (e): Specifies the edge's weight, which can be accessed and interpreted by layout algorithms.
+			</li>
+		</ul>
+		<p>The following code snippet demonstrates how to use 
+			<code>LayoutProperties</code>:
+		</p>
+		<pre><code>public static void main(String[] args) {
+  
+  // create graph
+  Graph graph = new Graph();
+  Node n1 = new Node();
+  n1.setGraph(graph);
+  Node n2 = new Node();
+  n2.setGraph(graph);
+  graph.getNodes().addAll(Arrays.asList(new Node[] { n1, n2 }));
+  Edge e = new Edge(n1, n2);
+  e.setGraph(graph);
+  
+  // create layout context
+  LayoutContext context = new LayoutContext();
+  
+  // provide the input model
+  context.setGraph(graph);
+  
+  // set layout bounds
+  LayoutProperties.setBounds(graph, new Rectangle(0, 0, 100, 100));
+  
+  // set node layout sizes
+  LayoutProperties.setSize(n1, 25, 25);
+  LayoutProperties.setSize(n2, 25, 25);
+
+  // set layout algorithm
+  context.setLayoutAlgorithm(new SpringLayoutAlgorithm());
+
+  // apply layout
+  context.applyLayout(true);
+
+  // read locations after layout
+  System.out.println("n1 at " + LayoutProperties.getLocation(n1));
+  System.out.println("n2 at " + LayoutProperties.getLocation(n2));
+
+}</code></pre>
+		<hr/>
+		<h3 id="algorithms">Algorithms</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.layout.algorithms</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Layout.html#algorithms">Algorithms</a> package provides different implementations of concrete layout algorithms. There are a couple of simple algorithms that arrange nodes in a grid (
+			<a href="Layout.html#gridlayoutalgorithm">GridLayoutAlgorithm</a>), a single column or row (
+			<a href="Layout.html#boxlayoutalgorithm">BoxLayoutAlgorithm</a>), or which simply prevent overlapping of nodes (
+			<a href="Layout.html#horizontalshiftlayoutalgorithm">HorizontalShiftLayoutAlgorithm</a>).
+		</p>
+		<p>There are also tree-based algorithms that arrange nodes in a classical (
+			<a href="Layout.html#treelayoutalgorithm">TreeLayoutAlgorithm</a>) or radial tree (
+			<a href="Layout.html#radiallayoutalgorithm">RadialLayoutAlgorithm</a>), as well as a dedicated algorithm that optimizes folding and unfolding of sub-trees based on the available size (
+			<a href="Layout.html#spacetreelayoutalgorithm">SpaceTreeLayoutAlgorithm</a>).
+		</p>
+		<p>Last, there is the implementation (
+			<a href="Layout.html#sugiyamalayoutalgorithm">SugiyamaLayoutAlgorithm</a>) of a rank-based algorithm as published by Kozo Sugiyama, Shojiro Tagawa, and Mitsuhiko Toda in their paper about 
+			<a href="http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=4308636" target="doc_external">Methods for Visual Understanding of Hierarchical System Structures</a>.
+		</p>
+		<h4 id="gridlayoutalgorithm">GridLayoutAlgorithm</h4>
+		<p>A 
+			<code>GridLayoutAlgorithm</code> is a simple layout algorithm that places all elements into a grid, where the number of columns and rows is computed by the algorithm.
+		</p>
+		<h4 id="boxlayoutalgorithm">BoxLayoutAlgorithm</h4>
+		<p>A 
+			<code>BoxLayoutAlgorithm</code> is a simple layout algorithm that places all elements in a single column or row, depending on a specifiable orientation.
+		</p>
+		<h4 id="springlayoutalgorithm">SpringLayoutAlgorithm</h4>
+		<p>
+			<img alt="" title="GEF-Layout-spring.png" border="0" src="images/layout/GEF-Layout-spring.png"/>
+		</p>
+		<h4 id="horizontalshiftlayoutalgorithm">HorizontalShiftLayoutAlgorithm</h4>
+		<p>A 
+			<code>HorizontalShiftLayoutAlgorithm</code> is a simple layout algorithm that shifts overlapping nodes to the right.
+		</p>
+		<h4 id="treelayoutalgorithm">TreeLayoutAlgorithm</h4>
+		<p>The 
+			<code>TreeLayoutAlgorithm</code> is a simple algorithm to arrange nodes in a layered, tree-like layout.
+		</p>
+		<p>
+			<img alt="" title="Zest-tree-layout-dag.png" border="0" src="images/layout/Zest-tree-layout-dag.png"/>
+		</p>
+		<h4 id="radiallayoutalgorithm">RadialLayoutAlgorithm</h4>
+		<p>The 
+			<code>RadialLayoutAlgorithm</code> lays out a tree in a circular fashion, where the roots are located in the center.
+		</p>
+		<p>
+			<img alt="" title="GEF-Layout-radial.png" border="0" src="images/layout/GEF-Layout-radial.png"/>
+		</p>
+		<h4 id="spacetreelayoutalgorithm">SpaceTreeLayoutAlgorithm</h4>
+		<p>The 
+			<code>SpaceTreeLayoutAlgorithm</code> keeps track of node positions all the time, always trying to form a nice tree structure. This means movement of nodes with the mouse is somehow restricted (you can move a node within its current layer, but only if it doesn't cause nodes to be pushed out of the graph area.
+		</p>
+		<p>
+			<img alt="" title="Zest-tree-layout-spacetree.png" border="0" src="images/layout/Zest-tree-layout-spacetree.png"/>
+		</p>
+		<h4 id="sugiyamalayoutalgorithm">SugiyamaLayoutAlgorithm</h4>
+		<p>The 
+			<code>SugiyamaLayoutAlgorithm</code> lays out nodes in ranks. Its an implementation of the algorithm published by Kozo Sugiyama, Shojiro Tagawa, and Mitsuhiko Today in their paper about 
+			<a href="http://ieeexplore.ieee.org/xpl/abstractAuthors.jsp?arnumber=4308636" target="doc_external">Methods for Visual Understanding of Hierarchical System Structures</a>.
+		</p>
+		<p>
+			<img alt="" title="GEF-Layout-sugiyama.png" border="0" src="images/layout/GEF-Layout-sugiyama.png"/>
+		</p>
+		<hr/>
+		<h2 id="migration-from-zest-1-x-to-gef-layout">Migration from Zest 1.x to GEF Layout</h2>
+		<p>The layout API that was part of Zest 1.x has been migrated into the 
+			<a href="Layout.html">Layout</a> component, where it has been reworked (see 
+			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=372365" target="doc_external">\#372365</a>, 
+			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=469472" target="doc_external">\#469472</a>, 
+			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=484421" target="doc_external">\#484421</a>, and 
+			<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=491097" target="doc_external">\#491097</a> for details).
+		</p>
+		<h3 id="custom-layouts">Custom Layouts</h3>
+		<p>To define custom layouts, instead of extending 
+			<em>AbstractLayoutAlgorithm</em> implement 
+			<em>ILayoutAlgorithm</em> (see example below and full code in 
+			<a href="https://github.com/eclipse/gef/blob/master/org.eclipse.gef.layout.examples/src/org/eclipse/gef/layout/examples/CustomLayoutExample.java" target="doc_external">CustomLayoutExample.java</a> in the examples bundle).
+		</p>
+		<pre><code>  ILayoutAlgorithm layoutAlgorithm = new ILayoutAlgorithm() {
+    private LayoutContext context;
+
+    @Override
+    public void applyLayout(boolean clean) {
+      Node[] entitiesToLayout = context.getNodes();
+      int totalSteps = entitiesToLayout.length;
+      double distance = LayoutProperties.getBounds(context.getGraph()).getWidth() / totalSteps;
+      int xLocation = 0;
+
+      for (int currentStep = 0; currentStep &lt; entitiesToLayout.length; currentStep++) {
+        Node layoutEntity = entitiesToLayout[currentStep];
+        LayoutProperties.setLocation(layoutEntity, new Point(xLocation,0));
+        xLocation += distance;
+      }
+    }
+
+    @Override
+    public LayoutContext getLayoutContext() {
+      return context;
+    }
+
+    @Override
+    public void setLayoutContext(LayoutContext context) {
+      this.context = context;
+    }
+  };</code></pre>
+	</body>
+</html>

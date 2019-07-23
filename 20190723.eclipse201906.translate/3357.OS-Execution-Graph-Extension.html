@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - OS Execution Graph Extension</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">OS Execution Graph Extension</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="XML-schema-extension.html" title="XML schema extension">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Data-Providers.html" title="Data Providers">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">XML schema extension</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Data Providers</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="OS_Execution_Graph_Extension">OS Execution Graph Extension</h1>
+		<p>The execution graph is an analysis of some 
+			<i>worker</i> status and the relations between them. A 
+			<i>worker</i> is any object in the model acting during the execution. For a typicaly operating system analysis, the workers are the threads.
+		</p>
+		<p>The Linux Kernel Plugin provides a base execution graph, obtained by kernel events and tracking the running state of processes, who/what wakes who, network traffic and communication between threads, etc. But that analysis may not contain all the possible relations between threads or may miss some information that are only available in userspace. For example, traces in a virtual machines experiment may contain additional events to get the relation between the machines. And spin locks are a kind of lock that blocks a thread but are not visible from the kernel only.</p>
+		<p>The operating system execution graph can thus be extended by plugin who have additional information to add to the graph.</p>
+		<h2 id="Write_the_graph_extension">Write the graph extension</h2>
+		<p>To extend the execution graph, the plugin must first add the 
+			<b>org.eclipse.tracecompass.analysis.os.linux.core</b> plugin to its dependencies. Then one needs to write a class that extends the 
+			<b>AbstracTraceEventHandler</b> and another small one, possibly inline, implementing 
+			<b>IOsExecutionGraphHandlerBuilder</b>, to build the handler.
+		</p>
+		<p>The 
+			<b>handleEvent</b> method is the one to override in the event handler. The following code snippet show an example class to extend the graph:
+		</p>
+		<pre>   public class PThreadLockGraphHandler extends AbstractTraceEventHandler {
+</pre>
+		<pre>       /**
+        * Constructor
+        *
+        * @param provider
+        *            The graph provider
+        * @param priority
+        *            The priority of this handler
+        */
+       public PThreadLockGraphHandler(OsExecutionGraphProvider provider, int priority) {
+           super(priority);
+           fProvider = provider;
+           fLastRequest = HashBasedTable.create();
+       }
+</pre>
+		<pre>       /**
+        * The handler builder for the event context handler
+        */
+       public static class HandlerBuilderPThreadLock implements IOsExecutionGraphHandlerBuilder {
+</pre>
+		<pre>           @Override
+           public ITraceEventHandler createHandler(@NonNull OsExecutionGraphProvider provider, int priority) {
+               return new PThreadLockGraphHandler(provider, priority);
+           }
+       }
+</pre>
+		<pre>       private OsWorker getOrCreateKernelWorker(ITmfEvent event, Integer tid) {
+           HostThread ht = new HostThread(event.getTrace().getHostId(), tid);
+           OsWorker worker = fProvider.getSystem().findWorker(ht);
+           if (worker != null) {
+               return worker;
+           }
+           worker = new OsWorker(ht, "kernel/" + tid, event.getTimestamp().getValue()); //$NON-NLS-1$
+           worker.setStatus(ProcessStatus.RUN);
+           fProvider.getSystem().addWorker(worker);
+           return worker;
+       }
+</pre>
+		<pre>       @Override
+       public void handleEvent(ITmfEvent event) {
+           String name = event.getName();
+           if ("myevent".equals(name)) {
+               // Get the TID and corresponding worker
+               Integer tid = TmfTraceUtils.resolveIntEventAspectOfClassForEvent(event.getTrace(), LinuxTidAspect.class, event);
+               if (tid == null) {
+                   return;
+               }
+               OsWorker worker = getOrCreateKernelWorker(event, tid);
+               // Get the graph to update
+               TmfGraph graph = fProvider.getAssignedGraph();
+               // Create a new vertex at the time of the event to add to the graph
+               TmfVertex vertex = new TmfVertex(event.getTimestamp().toNanos());
+               // The following code shows different possibilities for the graph
+               // Append the vertex to the worker and create an horizontal edge of a specific type
+               graph.append(worker, vertex, EdgeType.BLOCKED);
+               // To create a relation between 2 workers, one needs another vertex
+               // TmfVertex otherVertex = getOriginVertexForThisEvent([...]);
+               // otherVertex.linkVertical(vertex);
+           }
+       }
+   }
+</pre>
+		<p>This class typically has all the logic it needs to retrieve information on the relations between threads. It will create vertices at any location of interest for a worker. Those vertices can be appended to the graph. The class may keep this vertex for future use in a link when the worker that acts in response to this action arrives.</p>
+		<p>Note that since many classes may add vertices to the graph, it is recommended to only append vertices at the current timestamp, as otherwise, it may add vertices at times earlier than the last vertex.</p>
+		<h2 id="Adding_the_extension_point_2">Adding the extension point</h2>
+		<p>To advertise this extension to the execution graph, the following extension should be added in the plugin:</p>
+		<pre>   &lt;extension
+        point="org.eclipse.tracecompass.analysis.os.linux.core.graph.handler"&gt;
+       &lt;handler
+          class="org.eclipse.tracecompass.incubator.internal.lttng2.ust.extras.core.pthread.PThreadLockGraphHandler$HandlerBuilderPThreadLock"
+           priority="10"&gt;
+       &lt;/handler&gt;
+   &lt;/extension&gt;
+</pre>
+		<p>The 
+			<i>class</i> attribute links to the handler builder class and the 
+			<i>priority</i> attribute indicates at which priority the handler will be registered. A handler with a lower priority will be executed before a handler with a higher one. The default priority is 10 and this is the priority at which the kernel graph itself is built.
+		</p><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="XML-schema-extension.html" title="XML schema extension">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Data-Providers.html" title="Data Providers">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">XML schema extension</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Data Providers</td>
+			</tr>
+		</table>
+	</body>
+</html>

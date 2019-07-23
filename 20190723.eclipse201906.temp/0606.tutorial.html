@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head><body><h1 id="First_generation">First generation</h1><p>This first tutorial will show you the common use of EEF. It describes the steps to obtain the EEF models and generate the associated code. Finally, it shows how to link the generated code with a simple EMF treeview editor.</p><h2 id="Environment">Environment</h2><p>To do this tutorial, you need to have an "EEF ready" environment. To obtain this environment, read the <a href="/wiki/EEF_Installation_Guide" title="EEF Installation Guide">EEF Installation Guide</a>.</p><h2 id="EEF_Models_initialization">EEF Models initialization</h2><p>In the EEF environment, the first step is to initialize the EEF models. These models describe the visual elements of the generated editing components and the binding between these elements and the meta-classes of your meta-model. EEF provides an action to create these models. To call this action, perform a right click on the .genmodel file generated from your metamodel and select the action <i>EEF > Initialize EEF models</i>.</p><p><img align="middle" border="0" src="../pics/initializeEEFmodels.png"/></p><h2 id="Generation_and_parameterization">Generation and parameterization</h2><p>The initializer has just created elements for meta-class attributes choosing predefined default widgets. So you need to parameterize the EEF models to model correctly the generation. For example, references representations, widgets changes...</p><p>By default, the generation is done in the plug-in project where the example model is. The parameterization model assigns a "src-gen" directory to know where the code is going to be generated. This information can be modified.</p><p>When parameterization is done, generation can be called with the action "Generate EEF Architecture", just right click on the EEFGen model.</p><p><img align="middle" border="0" src="../pics/generateEEFArchitecture.png"/></p><p>The generation creates an architecture displaying properties views corresponding to the parametrized models. What is generated is :</p><ul><li>Components for the control part</li><li>Parts for views</li><li>Providers for the structure instantiation</li></ul><p>Global providers are also generated. They defined the structure instantiation and the elements edition strategies. Two providers have to be declared in the plugin.xml file with the extension points defined by the EEF runtime (explained in the next part : <a href="#EEF_generation_with_EMF_treeview_editor">EEF generation with EMF treeview editor</a>).</p><h2 id="EEF_Generation_in_EMF_treeview_editor">EEF Generation in EMF treeview editor</h2><h3 id="Add_dependency_on_EEF_runtime">Add dependency on EEF runtime</h3><p>In order to compile the generated code, the plug-in with the generated code must have a dependency on the EEF runtime : "org.eclipse.emf.eef.runtime". The treeview editor also have to depend on it.</p><h3 id="Extension_points_declaration">Extension points declaration</h3><p>For the generation, EEF creates two generic providers which have to be configured with extension points in the project where the code is generated. The extension point declares a "PropertiesEditionProviders" and a "PropertieEditionPolicyProviders".</p><p>Here is an example for the demo project :</p><p><!-- &lt;source lang="xml"> --></p><pre>&lt;extension
+       point="org.eclipse.emf.eef.runtime.PropertiesEditionProvider">
+  &lt;PropertiesEditionComponentProvider
+       providerClass="org.eclipse.emf.eef.nonreg.providers.NonregPackagePropertiesEditionProvider">
+  &lt;/PropertiesEditionComponentProvider>
+&lt;/extension>
+&lt;extension
+     point="org.eclipse.emf.eef.runtime.PropertiesEditionPolicyProvider">
+  &lt;PropertiesEditionPolicyProvider
+       providerClass="org.eclipse.emf.eef.nonreg.providers.NonregPackagePropertiesEditionPolicyProvider">
+  &lt;/PropertiesEditionPolicyProvider>
+&lt;/extension>
+&lt;extension
+     point="org.eclipse.emf.eef.runtime.PropertiesEditionPartProvider">
+  &lt;PropertiesEditionPartProvider
+       providerClass="org.eclipse.emf.eef.nonreg.providers.NonregPropertiesEditionPartProvider">
+  &lt;/PropertiesEditionPartProvider>
+&lt;/extension>
+</pre><p><!-- &lt;/source> --></p><p>Extension points to declare properties views in the editor project have also to be added. They are generated in the file "src-gen/properties.plugin.xml". For example :</p><p><!-- &lt;source lang="xml"> --></p><pre>&lt;extension
+        point="org.eclipse.ui.views.properties.tabbed.propertyContributor">
+     &lt;propertyContributor
+           contributorId="org.eclipse.emf.eef.components.properties">
+        &lt;propertyCategory
+              category="default">
+        &lt;/propertyCategory>
+        &lt;propertyCategory
+              category="extended">
+        &lt;/propertyCategory>
+        &lt;propertyCategory
+              category="advanced">
+        &lt;/propertyCategory>
+     &lt;/propertyContributor>
+  &lt;/extension>
+  &lt;extension
+        point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+     &lt;propertyTabs
+           contributorId="org.eclipse.emf.eef.components.properties">
+        &lt;propertyTab
+              label="Base"
+              category="default"
+              id="Base">
+        &lt;/propertyTab>
+     &lt;/propertyTabs>
+  &lt;/extension>
+  &lt;extension
+        point="org.eclipse.ui.views.properties.tabbed.propertySections">
+     &lt;propertySections
+           contributorId="org.eclipse.emf.eef.components.properties">
+        &lt;propertySection
+              tab="Base"
+              class="org.eclipse.emf.eef.runtime.ui.properties.sections.PropertiesEditionSection"
+              id="org.eclipse.emf.eef.components.section.PropertiesEditionContext">
+            &lt;input
+                   type="org.eclipse.emf.eef.components.PropertiesEditionContext">
+            &lt;/input>
+        &lt;/propertySection>
+        &lt;propertySection
+              tab="Base"
+              class="org.eclipse.emf.eef.runtime.ui.properties.sections.PropertiesEditionSection"
+              id="org.eclipse.emf.eef.components.section.PropertiesEditionComponent">
+            &lt;input
+                   type="org.eclipse.emf.eef.components.PropertiesEditionComponent">
+            &lt;/input>
+        &lt;/propertySection>
+        &lt;propertySection
+              tab="Base"
+              class="org.eclipse.emf.eef.runtime.ui.properties.sections.PropertiesEditionSection"
+              id="org.eclipse.emf.eef.components.section.PropertiesEditionElement">
+            &lt;input
+                   type="org.eclipse.emf.eef.components.PropertiesEditionElement">
+            &lt;/input>
+        &lt;/propertySection>
+        &lt;propertySection
+              tab="Base"
+              class="org.eclipse.emf.eef.runtime.ui.properties.sections.PropertiesEditionSection"
+              id="org.eclipse.emf.eef.components.section.PropertiesMultiEditionElement">
+            &lt;input
+                   type="org.eclipse.emf.eef.components.PropertiesMultiEditionElement">
+            &lt;/input>
+        &lt;/propertySection>
+     &lt;/propertySections>
+  &lt;/extension>
+</pre><p><!-- &lt;/source> --></p><h3 id="EMF_treeview_editor_modification">EMF treeview editor modification</h3><p>The standard EMF  codegen generates an editor that uses standard properties views (with grid layout). So, you need to update it to use the EEF properties view (with tabs).</p><p>You might create a dependency between the EEF runtime ('org.eclipse.emf.eef.runtime') and the EMF generated editor plugin.</p><p>Open the XYZEditor.java located in the EMF generated xxx.editor plugin. </p><ul><li>The editor must implement an additional interface : <i>"org.eclipse.ui.views.properties.tabbed.ITabbedPropertySheetPageContributor"</i></li></ul><ul><li>With this interface, you have to implement the methods <i>"getContributorId()"</i></li></ul><p><!-- &lt;source lang="java"> --></p><pre>/** (non-Javadoc)
+ * @see org.eclipse.ui.views.properties.tabbed.ITabbedPropertySheetPageContributor#getContributorId()
+ * @generated NOT
+ */
+public String getContributorId() {
+    return PROPERTIES_CONTRIBUTOR;
+}
+</pre><p><!-- &lt;/source> --></p><ul><li>The identifier returned by this method is a constant which is added to the editor. It is generated by EEF with the following pattern : <i>"&lt;basepackage>.&lt;packagename>.properties"</i>.</li></ul><p>For example, for our example demo :</p><p><!-- &lt;source lang="java"> --></p><pre>public static final String PROPERTIES_CONTRIBUTOR = "org.eclipse.emf.eef.nonreg.properties";
+</pre><p><!-- &lt;/source> --></p><ul><li>Then, you need to replace the declaration of the Eclipse standard properties view by a tabbed properties view. </li></ul><p>The original code :</p><p><!-- &lt;source lang="java"> --></p><pre>protected PropertySheetPage propertySheetPage;
+</pre><p><!-- &lt;/source> --></p><p>becomes</p><p><!-- &lt;source lang="java"> --></p><pre>protected TabbedPropertySheetPage propertySheetPage;
+</pre><p><!-- &lt;/source> --></p><ul><li>Replace also its instantiation, done in the method <i>"getPropertySheetPage()"</i> :</li></ul><p>The original code :
+<!-- &lt;source lang="java"> --></p><pre> public IPropertySheetPage getPropertySheetPage() {
+     if (propertySheetPage == null) {
+         propertySheetPage = new ExtendedPropertySheetPage(editingDomain) {
+               @Override
+               public void setSelectionToViewer(List&lt;?> selection) {
+                    NonregEditor.this.setSelectionToViewer(selection);
+                    NonregEditor.this.setFocus();
+               }
+               @Override
+               public void setActionBars(IActionBars actionBars) {
+                    super.setActionBars(actionBars);
+                    getActionBarContributor().shareGlobalActions(this, actionBars);
+               }
+        };
+        propertySheetPage.setPropertySourceProvider(new AdapterFactoryContentProvider(adapterFactory));
+     }
+     return propertySheetPage;
+}
+</pre><p><!-- &lt;/source> --></p><p>becomes </p><p><!-- &lt;source lang="java"> --></p><pre> public IPropertySheetPage getPropertySheetPage() {
+     if (propertySheetPage == null || propertySheetPage.getControl().isDisposed()) {
+        propertySheetPage = new TabbedPropertiesEditionSheetPage(XXXEditor.this);
+     }
+     return propertySheetPage;
+ }
+</pre><p><!-- &lt;/source> --></p><ul><li>Finally, it is possible to add properties edition wizard on double click on a tree element. You just have to call the following listener in the method <i>"createPages()"</i> in the editor (on the selectionViewer) :</li></ul><p><!-- &lt;source lang="java"> --></p><pre>selectionViewer.addDoubleClickListener(new OpenWizardOnDoubleClick(editingDomain));
+</pre><p><!-- &lt;/source> --></p></body></html>

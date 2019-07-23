@@ -1,0 +1,885 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>extensions-provide_custom-arrange-all</title>
+		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css"/>
+		<link type="text/css" rel="stylesheet" href="../resources/custom.css"/>
+	</head>
+	<body>
+		<h1 id="ProvidingacustomdiagramlayoutalgorithmArrangeAll">Providing a custom diagram layout algorithm (&#8220;Arrange All&#8221;)</h1>
+		<ol class="toc" style="list-style: disc;">
+			<li>
+				<a href="#ProvidingacustomdiagramlayoutalgorithmArrangeAll">Providing a custom diagram layout algorithm ("Arrange All")</a>
+				<ol style="list-style: disc;">
+					<li>
+						<a href="#TheArrangeAllfunctionalityinshort">The Arrange All functionality in short</a>
+					</li>
+					<li>
+						<a href="#TheArrangeAllconceptasimplementedbyGMF">The Arrange All concept as implemented by GMF</a>
+						<ol style="list-style: disc;">
+							<li>
+								<a href="#Theviewsandeditparts">The views and edit parts</a>
+							</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#SiriusLayoutingAPI">Sirius Layouting API</a>
+						<ol style="list-style: disc;">
+							<li>
+								<a href="#siriusLayoutProviders">Sirius Layout providers</a>
+							</li>
+							<li>
+								<a href="#Theviewordering">The view ordering</a>
+							</li>
+							<li>
+								<a href="#Writeyourcustomlayoutalgorithm">Write your custom layout algorithm</a>
+							</li>
+							<li>
+								<a href="#IntegrateyourcustomlayoutalgorithmtoSirius">Integrate your custom layout algorithm to Sirius </a>
+							</li>
+						</ol>
+					</li>
+				</ol>
+			</li>
+		</ol>
+		<h2 id="TheArrangeAllfunctionalityinshort">The Arrange All functionality in short</h2>
+		<p>The arrange-all functionality is available in Sirius diagram editors in the form of a button and a context menu:</p>
+		<p>
+			<img border="0" src="images/arrange-all/arrange-all-ui.png"/>
+		</p>
+		<p>Its effect is to layout the selected diagram elements (or the whole diagram if no elements are selected) based on the layout algorithm defined for the diagram, or using a default, generic algorithm if nothing is specified. </p>
+		<p>By default, there are two different layout algorithm that can be configured in the VSM for a diagram:</p>
+		<ul>
+			<li>The 
+				<code>Ordered Tree Layout</code> algorithm: useful to represent elements in a hierarchical way. 
+			</li>
+			<li>The 
+				<code>Composite Layout</code> algorithm: used to customize specific aspects of the default algorithm, i.e. the general layout orientation and the padding between elements.
+			</li>
+		</ul>
+		<img border="0" src="images/arrange-all/arrange-all-vsm.png"/>
+		<p>If none of these algorithms fit your needs, Sirius provides two extension points 
+			<code>org.eclipse.sirius.diagram.ui.layoutProvider</code> and 
+			<code>org.eclipse.sirius.diagram.ui.viewOrderingProvider</code> as well as an API to ease the writing of your own layout algorithms and their usage in Sirius diagram editors.
+		</p>
+		<p>This API reuse the GMF &#8220;Arrange All&#8221; API and augments it with features needed by Sirius layout algorithms like:</p>
+		<ul>
+			<li>The need to take in consideration pinned diagram elements</li>
+			<li>The need to take in consideration bordered nodes connected to edges</li>
+		</ul>
+		<h2 id="TheArrangeAllconceptasimplementedbyGMF">The Arrange All concept as implemented by GMF</h2>
+		<p>GMF provides basic API and implementations to ease the customization of the &#8220;Arrange All&#8221; mechanism. It also implements a complete algorithm that is based on the graphical elements.</p>
+		<p>The top level type of this this API is 
+			<code>ILayoutNodeProvider</code> :
+		</p>
+		<img border="0" src="images/arrange-all/arrange-all-iproviderApi.png"/>
+		<p>This interface is very generic, but GMF provides abstract classes that handle the low-level work while letting you define only the layouting business rules:</p>
+		<img border="0" src="images/arrange-all/arrange-all-ilayoutNodeproviderApi.png"/>
+		<p>This can be done by creating a component inheriting the abstract class 
+			<code>AbstractLayoutEditPartProvider</code> and implementing its methods:
+		</p>
+		<ul>
+			<li>
+				<code>boolean provides(IOperation operation)</code>  from 
+				<code>IProvider</code> super interface
+			</li>
+			<li>
+				<code>Command layoutEditParts(GraphicalEditPart containerEditPart, IAdaptable layoutHint)</code>
+			</li>
+			<li>
+				<code>Command layoutEditParts(selectedObjectst List, IAdaptable layoutHint)</code>
+			</li>
+		</ul>
+		<p>The 
+			<code>provides</code> operation is meant to return true if the class can arrange the diagram for the specified operation. 
+		</p>
+		<p>The 
+			<code>layoutEditParts</code> operations will return the commands that will actually be in charge of arranging the diagrams' edit parts. The first one takes the main container that is to be arranged while the latter accepts a list of edit parts to arrange. 
+		</p>
+		<p>The implementation of those three methods forms your layout algorithm.</p>
+		<p>With this API comes an extension point 
+			<code>org.eclipse.gmf.runtime.diagram.ui.layoutProviders</code>. It allows your own 
+			<code>AbstractLayoutEditPart</code> layout algorithm to be used. 
+		</p>
+		<h3 id="Theviewsandeditparts">The views and edit parts</h3>
+		<p>When doing layouting with GMF based tools like Sirius you will hear about views and edit parts. It is important to understand what they are.</p>
+		<p>The views are persisted model elements that when interpreted represent your diagram visually. You have the 
+			<code>Node</code>, 
+			<code>Edge</code>, 
+			<code>Style</code>, etc...
+		</p>
+		<p>They contain all visual information like the position, the size of the element, its color, etc... 
+			<br/>Edit parts ties the model (the views) to a visual representation with a one on one relationship. One edit part points at one view. They are responsible for making changes to the model and interpret and display graphically the view.
+		</p>
+		<h2 id="SiriusLayoutingAPI">Sirius Layouting API</h2>
+		<p>The Sirius Layouting API simplifies the writing of a custom layout algorithm by providing different layout providers specific to Sirius context that you can reuse easily in addition of your own layout algorithm if it does not conflict with these. </p>
+		<p>It also provides utility methods that you can find useful</p>
+		<p>The Sirius API for layouting Sirius diagrams is the following:</p>
+		<p>
+			<img border="0" src="images/arrange-all/arrange-all-layoutingAPI.png"/>
+		</p>
+		<h3 id="siriusLayoutProviders">Sirius Layout providers</h3>
+		<p>Sirius defines and already uses various different layout providers in different contexts.</p>
+		<p>Here is a list of all of those with a basic description of each:</p>
+		<h5 id="DefaultLayoutProvider">DefaultLayoutProvider</h5>
+		<p>It is used by Sirius as entry point to dispatch arrange requests on a Sirius diagram to registered layout providers. The dispatch takes in consideration layout algorithm specified in the VSM and layout providers provided from the Sirius extension point 
+			<code>org.eclipse.sirius.diagram.ui.layoutProvider</code>.
+		</p>
+		<h5 id="LineLayoutProvider">LineLayoutProvider</h5>
+		<p>Lays out all views on a single line (either vertical or horizontal). </p>
+		<h5 id="GridLayoutProvider">GridLayoutProvider</h5>
+		<p>Lays out all views as a grid.</p>
+		<h5 id="InlineEdgeLayoutProvider">InlineEdgeLayoutProvider</h5>
+		<p>Lays out connections alongside their source and target nodes (useful on the sequence diagram for example).</p>
+		<h5 id="ArrangeSelectionLayoutProvider">ArrangeSelectionLayoutProvider</h5>
+		<p>This provider only purpose is to delegate arrangement to attached layout provider after having added information about not selected parts in the layout hint. </p>
+		<p>It is used for example with our composite layout providers to keep fixed the not selected parts and to avoid putting other selected parts on it when layouting. </p>
+		<p>It is used primary by default provider whenever the arrange-all action is called because the arrangement can be done on a selection and not on all diagram elements.</p>
+		<h5 id="ArrangeAllOnlyLayoutProvider">ArrangeAllOnlyLayoutProvider</h5>
+		<p>This provider is used to delegate layouting to attached provider only when an arrange-all is done on a diagram and not an arrange selection. </p>
+		<p>When used as primary provider, the arrange selection action is not available in the menu of a Sirius editor using this provider. </p>
+		<p>It is used for example in the 
+			<code>OrderedTreeLayoutProvider</code> where it does not make sense to make a tree of just some elements because the all concept is to have a complete tree representation.
+		</p>
+		<h5 id="PinnedElementLayoutProvider">PinnedElementLayoutProvider</h5>
+		<p>This provider is designed to work with another layout provider. When its attached layout provider has done its layouting part, this provider iterates on all diagram elements that are pinned (should not have its position changes by an automatic layout) to put it back at its original position. In case of visual overlap conflict with a non-pinned element, the non-pinned element is move near the pinned one where no overlap is visible.</p>
+		<h5 id="CompoundLayoutProvider">CompoundLayoutProvider</h5>
+		<p>This provider allows to compose different layout providers into a compound one. It is useful to reuse some layouting rules that does not conflict with others needed ones.</p>
+		<p>For example the providers 
+			<code>CompositeDownTopLayoutProvider</code> and 
+			<code>PinnedElementLayoutProvider</code> can be attached to a compound instance. Then those providers are called in their attach order one after another to do their layouting parts. It avoids the composite provider to duplicate code to handle pinned elements.
+		</p>
+		<h5 id="BorderedItemAwareLayoutProvider">BorderedItemAwareLayoutProvider</h5>
+		<p>This provider arranges all the bordered nodes which are connected to one edge. It reduces the path of the edge between each extremity. For example:</p>
+		<img border="0" src="images/arrange-all/arrange-all-border1.png"/>
+		<p>Becomes </p>
+		<img border="0" src="images/arrange-all/arrange-all-border2.png"/>
+		<h3 id="Theviewordering">The view ordering</h3>
+		<h4 id="API">API</h4>
+		<p>The view ordering is an API used by layout algorithms provided by Sirius. It allows to define a sub class of 
+			<code>ViewOrdering</code> that will sort children views of a parent view. The layouting will be done on sorted views instead of the original order in the layout provider.
+		</p>
+		<p>For example, if I use the 
+			<code>LineLayoutProvider</code> with default view ordering component in a diagram with two elements, views will be aligned in their natural iteration order:
+		</p> 
+		<img border="0" src="images/arrange-all/arrange-all-viewOrdering.png"/>
+		<p>If I define a view ordering component that reorder view in the lexicographic order, views will be aligned accordingly:</p>  
+		<img border="0" src="images/arrange-all/arrange-all-viewOrdering2.png"/>
+		<p>This mechanism avoid to rewrite a layout provider if the only thing that should be changed is the order the layout provider lays out its views.</p>
+		<p>Its architecture is the following:</p>
+		<img border="0" src="images/arrange-all/arrange-all-viewOrderingArchitecture.png"/>
+		<h4 id="Compatibleproviders">Compatible providers</h4>
+		<p>Layout providers need to sort view by using the view ordering framework so your view ordering component can be used. The Sirius providers using this framework are the following:</p>
+		<ul>
+			<li>
+				<code>GridLayoutProvider</code>
+			</li>
+			<li>
+				<code>InlineEdgeLAyoutProvider</code>
+			</li>
+			<li>
+				<code>LineLAyoutProvider</code>
+			</li>
+		</ul>
+		<h4 id="WritingaViewOrdering">Writing a ViewOrdering</h4>
+		<p>To contribute a 
+			<code>ViewOrdering</code> that should be used in a Sirius provider, you have to create a sub class of 
+			<code>AbstractViewOrdering</code> or 
+			<code>AbstractViewOrdering</code> or 
+			<code>ViewOrdering</code> if you need to do an ordering different from what Sirius offers with its abstract classes.
+			<br/>Sirius abstract classes offers ordering only on Node views by default.
+		</p>
+		<p>For example the lexicographic view ordering component would be the following:</p>
+		<pre><code>public class LexicographicViewOrdering extends AbstractViewOrdering {
+
+        @Override
+        protected List&lt;View&gt; sortViews(List&lt;View&gt; views) {
+            Comparator&lt;View&gt; comparing = Comparator.comparing(new Function&lt;View, String&gt;() {
+                @Override
+                public String apply(View t) {
+                    DDiagramElement element = (DDiagramElement) t.getElement();
+                    return element.getName();
+                }
+            });
+            Collections.sort(views, comparing);
+            return views;
+        }
+    }
+
+</code></pre>
+		<h4 id="ContributingyourViewOrderingwithextensionpoint">Contributing your ViewOrdering with extension point</h4>
+		<p>Once your view ordering component has been written you have to make Sirius aware of it so it can be used.
+			<br/>To do that Sirius provides an extension point 
+			<code>org.eclipse.sirius.diagram.viewOrderingProvider</code>. 
+			<br/>It allows to register a 
+			<code>ViewOrderingProvider</code> that will provide your view ordering component:
+		</p>
+		<img border="0" src="images/arrange-all/arrange-all-viewOrderingProvider.png"/>
+		<p>It contains the following methods:
+			<br/>- 
+			<code>provides</code>:  tell Sirius if your ordering component should be used when layouting views associated to the given mapping.
+			<br/>- 
+			<code>getViewOrdering</code>: tell Sirius what view ordering component to use to order views when the provides method returns true.
+		</p>
+		<p>For example with the lexicographic you will have:</p> 
+		<img border="0" src="images/arrange-all/arrange-all-viewOrderingExtensionPoint.png"/>
+		<pre><code>&lt;extension point="org.eclipse.sirius.diagram.viewOrderingProvider"&gt;
+   &lt;viewOrderingProvider providerClass="org.eclipse.sirius.diagram.ui.tools.internal.providers.LexicographicViewOrderingProvider" /&gt;
+&lt;/extension&gt;
+
+
+</code></pre>
+		<p>The 
+			<code>LexicographicViewOrderingProvider</code> code would be:
+		</p>
+		<pre><code>public class LexicographicViewOrderingProvider implements ViewOrderingProvider {
+
+    public LexicographicViewOrderingProvider() {
+    }
+
+    @Override
+    public boolean provides(DiagramElementMapping mapping) {
+        return true;
+    }
+
+    @Override
+    public ViewOrdering getViewOrdering(DiagramElementMapping mapping) {
+        return new LexicographicViewOrdering();
+    }
+}
+
+
+</code></pre>
+		<h3 id="Writeyourcustomlayoutalgorithm">Write your custom layout algorithm</h3>
+		<p>To create your own layout algorithm with Sirius API you have to subclass one Sirius abstract class depending on what you need to use:</p>
+		<h5 id="DefaultLayoutProvider2">DefaultLayoutProvider</h5>
+		<p>This provider is the recommended one to use if you don&#8217;t need the liberty of composition of others below. If you want to have the capability for specifiers to be able to configure your layout algorithm directly in the VSM you must use this provider.</p>
+		<p>For example the ELK layout algorithms if installed are using it:</p>
+		<pre><code>/**
+ * Layout node provider allowing to apply an ELK layout algorithm while
+ * arranging diagram elements.
+ * 
+ * @author &lt;a href=mailto:pierre.guilet@obeo.fr&gt;Pierre Guilet&lt;/a&gt;
+ *
+ */
+public class ELKLayoutNodeProvider extends DefaultLayoutProvider {
+
+    @Override
+    public Command layoutEditParts(final List selectedObjects, final IAdaptable layoutHint) {
+        Injector injector = LayoutConnectorsService.getInstance().getInjector(null, selectedObjects);
+        ElkDiagramLayoutConnector connector = injector.getInstance(ElkDiagramLayoutConnector.class);
+        LayoutMapping layoutMapping = connector.buildLayoutGraph(null, selectedObjects);
+        connector.layout(layoutMapping);
+        connector.transferLayout(layoutMapping);
+        return connector.getApplyCommand(layoutMapping);
+    }
+
+}
+
+</code></pre>
+		<h5 id="AbstractLayoutEditPartProvider">AbstractLayoutEditPartProvider</h5>
+		<p>This class should be extended if you do not need what AbstractLayoutProvider provides.
+			<br/>Its API is:
+		</p>
+		<p>
+			<img border="0" src="images/arrange-all/arrange-all-abstractLayoutEditPart.png"/>
+		</p>
+		<p>Only the abstract methods 
+			<code>layoutEditParts</code> should be override. It is these methods that do the layouting by providing commands modifying underlying views information.
+		</p>
+		<h5 id="AbstractLayoutProvider">AbstractLayoutProvider</h5>
+		<p>This class should be extended if your layouting algorithm is meant to be used in addition to others during a same layouting pass and if you need to be aware of the bound changes produced by the other algorithms. It also should be used if you need all the utility methods regarding view bounds manipulation provided by this abstract class.</p>
+		<p>When sub classing this one, you only have to implement 
+			<code>layoutEditParts(List, IAdaptable)</code> and to override 
+			<code>provides(IOperation)</code> methods.
+		</p>
+		<p>For example the 
+			<code>LineLayoutProvider</code> have the following code:
+		</p>
+		<pre><code>public class LineLayoutProvider extends AbstractLayoutProvider {
+
+    /** The default padding. */
+    private static final Insets DEFAULT_PADDING = new Insets(30, 30, 30, 30);
+
+    /**
+     * &lt;code&gt;true&lt;/code&gt; if the line is horizontal, &lt;code&gt;false&lt;/code&gt; if the line is vertical.
+     */
+    private boolean horizontal = true;
+
+    /**
+     * &lt;code&gt;true&lt;/code&gt; if the line is horizontal, &lt;code&gt;false&lt;/code&gt; if the line is vertical.
+     * 
+     * @param horizontal
+     *            &lt;code&gt;true&lt;/code&gt; if the line is horizontal, &lt;code&gt;false&lt;/code&gt; if the line is vertical.
+     */
+    public void setHorizontal(final boolean horizontal) {
+        this.horizontal = horizontal;
+    }
+
+    @Override
+    public Command layoutEditParts(final List selectedObjects, final IAdaptable layoutHint) {
+        final Iterator&lt;?&gt; iterEditParts = selectedObjects.iterator();
+        final List&lt;View&gt; views = new ArrayList&lt;View&gt;(selectedObjects.size());
+        final Map&lt;View, ShapeEditPart&gt; viewsToEditPartMap = new HashMap&lt;View, ShapeEditPart&gt;();
+        while (iterEditParts.hasNext()) {
+            final Object next = iterEditParts.next();
+            if (next instanceof ShapeEditPart &amp;&amp; !(next instanceof IBorderItemEditPart)) {
+                final ShapeEditPart shapeEditPart = (ShapeEditPart) next;
+                final View view = shapeEditPart.getNotationView();
+                viewsToEditPartMap.put(view, shapeEditPart);
+                views.add(view);
+            } else {
+                iterEditParts.remove();
+            }
+        }
+        ViewOrdering viewOrdering = ViewOrderingHint.getInstance().consumeViewOrdering(getContainerEditPart(selectedObjects).getNotationView());
+        if (viewOrdering == null) {
+            // use a simple view ordering ... too bad.
+            viewOrdering = new SimpleViewOrdering();
+        }
+
+        viewOrdering.setViews(views);
+        final List&lt;View&gt; sortedViews = viewOrdering.getSortedViews();
+        final List&lt;ShapeEditPart&gt; sortedEditParts = new ArrayList&lt;ShapeEditPart&gt;(sortedViews.size());
+        final Iterator&lt;View&gt; iterSortedViews = sortedViews.listIterator();
+        while (iterSortedViews.hasNext()) {
+            final View currentView = iterSortedViews.next();
+            final ShapeEditPart currentEditPart = viewsToEditPartMap.get(currentView);
+            sortedEditParts.add(currentEditPart);
+        }
+        return createNodeChangeBoundCommands(sortedEditParts);
+    }
+
+    /**
+     * Create the change bounds commands.
+     * 
+     * @param sortedNodes
+     *            the nodes to move.
+     * @return the change bounds command.
+     */
+    protected Command createNodeChangeBoundCommands(final List&lt;ShapeEditPart&gt; sortedNodes) {
+        final CompoundCommand result = new CompoundCommand();
+        final Iterator&lt;ShapeEditPart&gt; iterEditParts = sortedNodes.iterator();
+        int currentX = 0;
+        while (iterEditParts.hasNext()) {
+            final ShapeEditPart shapeEditPart = iterEditParts.next();
+            if (!(shapeEditPart instanceof IBorderItemEditPart)) {
+
+                final View view = shapeEditPart.getNotationView();
+                // the zoom.
+                double scale = 1.0;
+                if (shapeEditPart.getRoot() instanceof DiagramRootEditPart) {
+                    final ZoomManager zoomManager = ((DiagramRootEditPart) shapeEditPart.getRoot()).getZoomManager();
+                    scale = zoomManager.getZoom();
+                }
+                //
+                // Compute request data.
+                final Point ptOldLocation = shapeEditPart.getFigure().getBounds().getLocation();
+                // shapeEditPart.getFigure().translateToAbsolute(ptOldLocation);
+                final int locationX = horizontal ? currentX + this.getPadding().left : this.getPadding().left;
+                final int locationY = horizontal ? this.getPadding().top : currentX + this.getPadding().top;
+                final Point ptLocation = new Point(locationX, locationY);
+                final Dimension delta = ptLocation.getDifference(ptOldLocation);
+
+                final Object existingRequest = this.findRequest(view, org.eclipse.gef.RequestConstants.REQ_MOVE);
+                int step = 0;
+                if (existingRequest == null) {
+                    final ChangeBoundsRequest request = new ChangeBoundsRequest(org.eclipse.gef.RequestConstants.REQ_MOVE);
+                    request.setEditParts(shapeEditPart);
+                    request.setMoveDelta(new PrecisionPoint(delta.width * scale, delta.height * scale));
+                    request.setLocation(new PrecisionPoint(ptLocation.x * scale, ptLocation.y * scale));
+                    step = this.horizontal ? getBounds(shapeEditPart).width : getBounds(shapeEditPart).height;
+
+                    final Command cmd = this.buildCommandWrapper(request, shapeEditPart);
+                    if (cmd != null &amp;&amp; cmd.canExecute()) {
+                        result.add(cmd);
+                        // this.getViewsToChangeBoundsRequest().put(view,
+                        // request);
+                    }
+                } else if (existingRequest instanceof ChangeBoundsRequest) {
+                    final ChangeBoundsRequest changeBoundsRequest = (ChangeBoundsRequest) existingRequest;
+                    changeBoundsRequest.setMoveDelta(new PrecisionPoint(delta.width * scale, delta.height * scale));
+                    changeBoundsRequest.setLocation(new PrecisionPoint(ptLocation.x * scale, ptLocation.y * scale));
+
+                    step = this.horizontal ? getBounds(shapeEditPart).width : getBounds(shapeEditPart).height;
+                }
+                currentX += horizontal ? step + getPadding().right + getPadding().left : step + this.getPadding().bottom + this.getPadding().top;
+
+                // check the size of the container.
+                EditPart container = shapeEditPart.getParent();
+                while (container instanceof CompartmentEditPart) {
+                    container = container.getParent();
+                }
+                if (container instanceof ShapeEditPart) {
+                    final ShapeEditPart containerEditPart = (ShapeEditPart) container;
+
+                    // The minimum witdh
+                    final int minWidth = this.horizontal ? ((getPadding().left + getPadding().right) * sortedNodes.size()) + (getNodeMaxWidth(sortedNodes) * sortedNodes.size())
+                            : getPadding().left + getNodeMaxWidth(sortedNodes) + getPadding().right;
+                    // The minimum height
+                    final int minHeight = this.horizontal ? getPadding().top + this.getNodeMaxHeight(sortedNodes) + this.getPadding().bottom
+                            : ((getPadding().top + getPadding().bottom) * sortedNodes.size()) + (this.getNodeMaxHeight(sortedNodes) * sortedNodes.size());
+
+                    final Dimension minDimension = new Dimension(minWidth, minHeight);
+
+                    final Dimension difference = minDimension.getShrinked(containerEditPart.getFigure().getBounds().getSize());
+                    if (difference.width &gt; 0 || difference.height &gt; 0) {
+                        final Object existingContainerRequest = this.findRequest(containerEditPart, org.eclipse.gef.RequestConstants.REQ_RESIZE); // ;this.getViewsToChangeBoundsRequest().get(containerEditPart.getNotationView());
+                        createChangeBoundsCommand(result, existingContainerRequest, containerEditPart, difference, scale);
+                    }
+
+                }
+
+            }
+        }
+        return result;
+    }
+
+    private void createChangeBoundsCommand(final CompoundCommand compoundCommand, final Object existingContainerRequest, final ShapeEditPart containerEditPart, final Dimension difference,
+            final double scale) {
+
+        if (existingContainerRequest == null) {
+            final ChangeBoundsRequest changeBoundsRequest = new ChangeBoundsRequest();
+            changeBoundsRequest.setEditParts(containerEditPart);
+            changeBoundsRequest.setResizeDirection(PositionConstants.SOUTH_EAST);
+            changeBoundsRequest.setSizeDelta(new Dimension((int) (difference.width * scale), (int) (difference.height * scale)));
+            changeBoundsRequest.setLocation(new Point(0, 0));
+            changeBoundsRequest.setType(org.eclipse.gef.RequestConstants.REQ_RESIZE);
+            final Command cmd = this.buildCommandWrapper(changeBoundsRequest, containerEditPart);
+            if (cmd.canExecute()) {
+                compoundCommand.add(cmd);
+                // this.getViewsToChangeBoundsRequest().put(containerEditPart.getNotationView(),
+                // changeBoundsRequest);
+            }
+        } else if (existingContainerRequest instanceof ChangeBoundsRequest) {
+            final ChangeBoundsRequest changeBoundsRequest = (ChangeBoundsRequest) existingContainerRequest;
+            changeBoundsRequest.setResizeDirection(PositionConstants.SOUTH_EAST);
+            changeBoundsRequest.setSizeDelta(new Dimension((int) (difference.width * scale), (int) (difference.height * scale)));
+        }
+    }
+
+    /**
+     * Return the maximum width of all nodes (instances of {@link ShapeEditPart} ) that are in the specified list.
+     * 
+     * @param nodes
+     *            the nodes.
+     * @return the maximum width of all nodes that are in the specified list.
+     */
+    protected int getNodeMaxWidth(final List&lt;ShapeEditPart&gt; nodes) {
+        int max = -1;
+        for (final ShapeEditPart shapeEditPart : nodes) {
+            final Object existingRequest = this.getViewsToChangeBoundsRequest().get(shapeEditPart.getNotationView());
+            int width = shapeEditPart.getFigure().getBounds().width;
+            if (existingRequest instanceof ChangeBoundsRequest) {
+                width = width + ((ChangeBoundsRequest) existingRequest).getSizeDelta().width;
+            }
+            if (width &gt; max) {
+                max = width;
+            }
+        }
+        return max;
+    }
+
+    /**
+     * Return the maximum height of all nodes (instances of {@link ShapeEditPart}) that are in the specified list.
+     * 
+     * @param nodes
+     *            the nodes.
+     * @return the maximum width of all nodes that are in the specified list.
+     */
+    protected int getNodeMaxHeight(final List&lt;ShapeEditPart&gt; nodes) {
+        int max = -1;
+        for (final ShapeEditPart shapeEditPart : nodes) {
+            final int height = this.getBounds(shapeEditPart).height;
+            if (height &gt; max) {
+                max = height;
+            }
+        }
+        return max;
+    }
+
+    @Override
+    public boolean provides(final IOperation operation) {
+        final View cview = getContainer(operation);
+        if (cview == null) {
+            return false;
+        }
+        final IAdaptable layoutHint = ((ILayoutNodeOperation) operation).getLayoutHint();
+        final String layoutType = layoutHint.getAdapter(String.class);
+        return LayoutType.DEFAULT.equals(layoutType);
+    }
+
+    /**
+     * Return the padding to use.
+     * 
+     * @return the padding to use.
+     */
+    public Insets getPadding() {
+        return DEFAULT_PADDING;
+    }
+
+    /**
+     * Get the container edit part of an object list. Currently the function takes only the first object of the list
+     * 
+     * @param selectedObjects
+     *            the selected object
+     * @return the container edit part
+     */
+    protected IGraphicalEditPart getContainerEditPart(final List&lt;EditPart&gt; selectedObjects) {
+        if (selectedObjects != null &amp;&amp; !selectedObjects.isEmpty()) {
+            return (IGraphicalEditPart) (selectedObjects.iterator().next()).getParent();
+        }
+        return null;
+    }
+
+}
+</code></pre>
+		<h4 id="Allowvieworderingcustomization">Allow view ordering customization</h4>
+		<p>If you want to add the capability for other developers to customize the order the views are laid out in your layout algorithm, you have to use the Sirius view ordering API. For example you will have in your 
+			<code>org.eclipse.sirius.diagram.ui.tools.api.layout.provider.LineLayoutProvider.layoutEditParts(List, IAdaptable)</code> method of your layout provider the following code:
+		</p>
+		<pre><code>ViewOrdering viewOrdering = ViewOrderingHint.getInstance().consumeViewOrdering(getContainerEditPart(selectedObjects).getNotationView());
+        if (viewOrdering == null) {
+            //Use the default one that return the same order.
+            viewOrdering = new SimpleViewOrdering();
+        }
+
+        viewOrdering.setViews(views);
+        final List&lt;View&gt; sortedViews = viewOrdering.getSortedViews();
+</code></pre>
+		<p>with the method 
+			<code>getContainerEditPart</code> that would be :
+		</p>
+		<pre><code>protected IGraphicalEditPart getContainerEditPart(final List&lt;EditPart&gt; selectedObjects) {
+        if (selectedObjects != null &amp;&amp; !selectedObjects.isEmpty()) {
+            return (IGraphicalEditPart) (selectedObjects.iterator().next()).getParent();
+        }
+        return null;
+    }
+</code></pre>
+		<p>Then you will apply your layout algorithm on those ordered views.</p>
+		<h3 id="IntegrateyourcustomlayoutalgorithmtoSirius">Integrate your custom layout algorithm to Sirius </h3>
+		<p>Three extension points are available to provide your custom algorithms.</p>
+		<ul>
+			<li>the GMF one 
+				<code>org.eclipse.gmf.runtime.diagram.ui.layoutProviders</code> is the high level one. It does not contains specificities linked to Sirius API. You will have to handle those on your own. 
+			</li>
+			<li>
+				<code>org.eclipse.sirius.diagram.ui.layoutProvider</code> is the oldest Sirius extension point. It avoids you to handle specificities linked to Sirius API. 
+			</li>
+			<li>
+				<code>org.eclipse.sirius.diagram.ui.customLayoutAlgorithmProvider</code> is the new one used by ELK it avoids you to handle specificities linked to Sirius API. It also allows you to let specifiers configure your layout algorithm directly in the VSM. The layout algorithm from PinnedElementLayoutProvider and BorderedItemAwareLayoutProvider will be applied after your layouting pass.  You should use this one if it fits your needs.
+			</li>
+		</ul>
+		<h4 id="org.eclipse.sirius.diagram.ui.customLayoutAlgorithmProvider">org.eclipse.sirius.diagram.ui.customLayoutAlgorithmProvider</h4>
+		<p>This extension point requires a sub class of 
+			<code>CustomLayoutAlgorithmProvider</code> that will provide your layout algorithm(s) as 
+			<code>CustomLayoutAlgorithm</code> based on 
+			<code>DefaultLayoutProvider</code> class. 
+		</p>
+		<p>When provided, Sirius will expose your algorithm in the VSM like for ELK integration:</p>
+		<img border="0" src="images/arrange-all/arrange-all-siriusVSMIntegration.png"/>
+		<p>The API is the following: </p>
+		<img border="0" src="images/arrange-all/arrange-all-customLayoutAlgorithmProvider.png"/>
+		<h5 id="CustomLayoutAlgorithmProvider">CustomLayoutAlgorithmProvider</h5>
+		<p>This interface contains one method to implement: </p>
+		<ul>
+			<li>
+				<code>List&lt;CustomLayoutAlgorithm&gt; getCustomLayoutAlgorithms()</code> It must returns a 
+				<code>CustomLayoutAlgorithm</code> per layout algorithm you want to provide to the Sirius environment.
+			</li>
+		</ul>
+		<h5 id="CustomLayoutAlgorithm">CustomLayoutAlgorithm</h5>
+		<p>Allows you to provide an instance of the layout algorithm to be used by Sirius as well as all the options to configure it and that will be available from the VSM. 
+			<br/>The API is the following:
+		</p>
+		<img border="0" src="images/arrange-all/arrange-all-customLayoutAlgorithm.png"/>
+		<p>You will have to provide it by using the constructor: </p>
+		<ul>
+			<li>an id for your algorithm. This id should be unique.</li>
+			<li>a label that will be used when displaying information about your algorithm in Sirius.</li>
+			<li>a 
+				<code>Supplier&lt;DefaultLayoutProvider&gt;</code> that will allow Sirius to instantiate your layout algorithm when needed.
+			</li>
+			<li>a map of 
+				<code>Map&lt;String, LayoutOption&gt;</code> that will contain the options allowing to configure your algorithm and that will be readable by Sirius. To create option you must use the 
+				<code>LayoutOptionFactory</code> described below. Option type supported are the following:
+				<ul>
+					<li>
+						<code>Boolean</code>
+					</li>
+					<li>
+						<code>Integer</code>
+					</li>
+					<li>
+						<code>String</code>
+					</li>
+					<li>
+						<code>Double</code>
+					</li>
+					<li>
+						<code>Enum</code>
+					</li>
+					<li>
+						<code>EnumSet</code>
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<h5 id="LayoutOptionFactory">LayoutOptionFactory</h5>
+		<p>The 
+			<code>LayoutOptionFactory</code> must be used to create an option to give to a 
+			<code>CustomLayoutAlgorithm</code>. This option will be readable by Sirius and offered to VSM specifiers.
+		</p>
+		<pre><code>LayoutOptionFactory layoutOptionFactory = new LayoutOptionFactory();
+
+</code></pre>
+		<p>This factory contains a method per option type handled. The created option will have:</p>
+		<ul>
+			<li>An 
+				<strong>id</strong> to identify it. Should be unique.
+			</li>
+			<li>A 
+				<strong>label</strong> to be display in the Sirius environment.
+			</li>
+			<li>A 
+				<strong>description</strong> that will be available to Sirius specifier when modifying it.
+			</li>
+			<li>The available 
+				<strong>value(s)</strong> to select for enum and enum set.
+			</li>
+		</ul>
+		<p>For example, the ELK integration is the following:</p>
+		<pre><code>public class ELKAlgorithmProvider implements CustomLayoutAlgorithmProvider {
+
+    @Override
+    public List&lt;CustomLayoutAlgorithm&gt; getCustomLayoutAlgorithms() {
+        List&lt;CustomLayoutAlgorithm&gt; layoutAlgorithms = new ArrayList&lt;&gt;();
+        // we fill the Sirius layout algorithm registry with all ELK algorithms.
+        Collection&lt;LayoutAlgorithmData&gt; algorithmData = LayoutMetaDataService.getInstance().getAlgorithmData();
+        for (LayoutAlgorithmData layoutAlgorithmData : algorithmData) {
+
+            List&lt;LayoutOptionData&gt; optionDatas = LayoutMetaDataService.getInstance().getOptionData(layoutAlgorithmData, Target.PARENTS);
+            Map&lt;String, LayoutOption&gt; layoutOptions = new HashMap&lt;&gt;();
+            LayoutOptionFactory layoutOptionFactory = new LayoutOptionFactory();
+            for (LayoutOptionData layoutOptionData : optionDatas) {
+                if (!CoreOptions.ALGORITHM.getId().equals(layoutOptionData.getId()) &amp;&amp; !layoutOptionData.getVisibility().equals(Visibility.HIDDEN)) {
+                    switch (layoutOptionData.getType()) {
+                    case STRING:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createStringOption((String) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case BOOLEAN:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createBooleanOption((Boolean) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case INT:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createIntegerOption((Integer) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case DOUBLE:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createDoubleOption((Double) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case ENUMSET:
+                    case ENUM:
+
+                        String[] choices = layoutOptionData.getChoices();
+                        List&lt;EnumChoice&gt; choicesList = new ArrayList&lt;&gt;();
+                        for (int i = 0; i &lt; choices.length; i++) {
+                            String choiceId = choices[i];
+                            choicesList.add(new EnumChoice(choiceId, ""));
+
+                        }
+                        String defaultValue = null;
+                        Object defaultObject = layoutOptionData.getDefaultDefault();
+                        if (defaultObject instanceof Enum) {
+                            defaultValue = ((Enum&lt;?&gt;) defaultObject).name();
+                        }
+                        if (layoutOptionData.getType() == Type.ENUM) {
+                            layoutOptions.put(layoutOptionData.getId(),
+                                    layoutOptionFactory.createEnumOption(choicesList, layoutOptionData.getId(), layoutOptionData.getDescription(), layoutOptionData.getName(), defaultValue));
+                        } else {
+                            layoutOptions.put(layoutOptionData.getId(),
+                                    layoutOptionFactory.createEnumSetOption(choicesList, layoutOptionData.getId(), layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        }
+
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            layoutAlgorithms.add(new CustomLayoutAlgorithm(layoutAlgorithmData.getId(), layoutAlgorithmData.getName(), () -&gt; new ELKLayoutNodeProvider(), layoutOptions));
+        }
+        return layoutAlgorithms;
+    }
+
+}
+
+</code></pre>
+		<h5 id="DefaultLayoutProvider3">DefaultLayoutProvider</h5>
+		<p>This class contains the core layout algorithm. When a user calls an arrange-all on a diagram that will be configured to use your layout algorithm, an instance of this class is created. You will be given the parts to layout. Then it is your job to layout it as you want. </p>
+		<p>For example, the ELK integration have the following:</p>
+		<pre><code>public class ELKLayoutNodeProvider extends DefaultLayoutProvider {
+
+    @Override
+    public Command layoutEditParts(final List selectedObjects, final IAdaptable layoutHint) {
+        Injector injector = LayoutConnectorsService.getInstance().getInjector(null, selectedObjects);
+        ElkDiagramLayoutConnector connector = injector.getInstance(ElkDiagramLayoutConnector.class);
+        LayoutMapping layoutMapping = connector.buildLayoutGraph(null, selectedObjects);
+        connector.layout(layoutMapping);
+        connector.transferLayout(layoutMapping);
+        return connector.getApplyCommand(layoutMapping);
+    }
+
+}
+
+
+</code></pre>
+		<h4 id="org.eclipse.sirius.diagram.ui.layoutProvider">org.eclipse.sirius.diagram.ui.layoutProvider</h4>
+		<p>To be used, your custom algorithm should be declared to Sirius with the provided extension point 
+			<code>org.eclipse.sirius.diagram.ui.layoutProvider</code>. This extension point requires a sub class of 
+			<code>LayoutProvider</code> that will provide your layout algorithm. Its API is the following:
+		</p>
+		<img border="0" src="images/arrange-all/arrange-all-layoutProvider.png"/>
+		<p>The 
+			<code>LayoutProvider</code> interface contains the following methods:
+		</p>
+		<ul>
+			<li>
+				<code>isDiagramLayoutProvider</code>: This method should return true if the provided layout algorithm can handle layouting from root diagram part when this part is layout action&#8217;s target. It means your provider will be called with 
+				<code>org.eclipse.gmf.runtime.diagram.ui.services.layout.AbstractLayoutEditPartProvider.layoutEditParts(GraphicalEditPart, IAdaptable)</code> in this case. The call will only be done if your provider inherits from 
+				<code>org.eclipse.sirius.diagram.ui.tools.api.layout.provider.AbstractLayoutProvider</code>. If not or if 
+				<code>isDiagramLayoutProvider</code> returns false, then the method 
+				<code>org.eclipse.sirius.diagram.ui.tools.api.layout.provider.DefaultLayoutProvider.layoutEditParts(List, IAdaptable)</code> is called and will delegate to the method 
+				<code>layoutEditParts(List, IAdaptable)</code> of your provider.
+			</li>
+			<li>
+				<code>provides</code>: Should return true if your 
+				<code>LayoutProvider</code> do provide a layout algorithm for the view associated to the given edit part and should be used. False otherwise.
+			</li>
+			<li>
+				<code>getLayoutNodeProvider</code>: Return the layout algorithm component to use to lay out the diagram elements target of the layout action.
+			</li>
+		</ul>
+		<p>For example the left right composite providers is declared as followed:</p>
+		<pre><code>public class CompositeLeftRightProvider implements LayoutProvider {
+	 /** The delegated GMF provider. */
+	 private AbstractLayoutEditPartProvider layoutNodeProvider;
+	 public AbstractLayoutEditPartProvider getLayoutNodeProvider(final IGraphicalEditPart container) {
+        if (this.layoutNodeProvider == null) {
+            final CompoundLayoutProvider clp = new CompoundLayoutProvider();
+            final CompositeLeftRightLayoutProvider cdtp = new CompositeLeftRightLayoutProvider();
+            clp.addProvider(cdtp);
+            clp.addProvider(new PinnedElementsLayoutProvider(cdtp));
+            if (ENABLE_BORDERED_NODES_ARRANGE_ALL) {
+                // ArrangeSelectionLayoutProvider wrap all providers to manage
+                // the selected diagram element on diagram "Arrange all"
+                AbstractLayoutProvider abstractLayoutProvider = BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider(clp);
+                this.layoutNodeProvider = new ArrangeSelectionLayoutProvider(abstractLayoutProvider);
+            } else {
+                this.layoutNodeProvider = new ArrangeSelectionLayoutProvider(clp);
+            }
+        }
+        return this.layoutNodeProvider;
+    }
+
+    public boolean provides(final IGraphicalEditPart container) {
+        return isInDDiagramWithConfiguredLeftRightLayout(container.getNotationView());
+    }
+
+    private boolean isInDDiagramWithConfiguredLeftRightLayout(final View view) {
+        final Layout foundLayout = DiagramLayoutCustomization.findLayoutSettings(view);
+        if (foundLayout instanceof CompositeLayout) {
+            return ((CompositeLayout) foundLayout).getDirection() == LayoutDirection.LEFT_TO_RIGHT;
+        }
+        return false;
+    }
+
+    public boolean isDiagramLayoutProvider() {
+        return true;
+    }
+}
+
+</code></pre>
+		<p>The layout algorithm provided by this 
+			<code>LayoutProvider</code> will be used if the view to layout is associated to a Sirius mapping contained by a diagram mapping declaring the left right composite provider in the VSM.
+		</p>
+		<p>After this provider creation, you have to registered it with the extension point:
+			<br/> 
+			<img border="0" src="images/arrange-all/arrange-all-layoutprovider-extension.png"/>
+		</p>
+		<p>A priority can be set. If two layout providers provide layouting for a same object, the one with the higher priority will be used.</p>
+		<h5 id="Composingyourlayoutproviders">Composing your layout providers</h5>
+		<p>You may want to reuse some of the Sirius layout providers in addition of your own layout provider to avoid code rewrite or duplication if the layouting you are doing does not conflict with the layouting other providers are doing.</p>
+		<p>To do that, Sirius offers a 
+			<code>CompoundLayoutProvider</code> allowing to trigger layouting of many compatible providers in their insertion order. The compatible providers are:
+		</p>
+		<ul>
+			<li>The PinnedElementsLayoutProvider</li>
+			<li>The LineLayoutProvider</li>
+			<li>The GridLayoutProvider</li>
+		</ul>
+		<p>Also some providers are not compatible with the compound one but instead use a wrapping mechanism. They wrap another provider. Then their layouting code is called before or after the wrapped&#8217;s code:</p>
+		<ul>
+			<li>The ArrangeSelectionLayoutProvider is called before wrapped provider</li>
+			<li>The ArrangeAllOnlyLayoutProvider is called before wrapped provider</li>
+			<li>The BorderItemAwareLayoutProvider is called after wrapped provider. Its initialization is done with the code </li>
+		</ul>
+		<pre><code>BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider(clp);
+</code></pre>
+		<p>
+			<code>PinnedElementsLayoutProvider</code> should always do its layouting before BorderItemAwareLayoutProvider but after any other layouting.
+			<br/>
+			<code>BorderItemAwareLayoutProvider</code> should always do its layouting at the end.
+			<br/>To know more about these providers you can read the section 
+			<a href="#siriusLayoutProviders">Sirius Layout Providers</a>.
+		</p>
+		<p>The 
+			<code>CompoundLayoutProvider</code> API is the following:
+		</p>
+		<img border="0" src="images/arrange-all/arrange-all-CompoundLayoutProvider.png"/>
+		<p>The 
+			<code>provides</code> and 
+			<code>layoutEditParts</code> methods delegate to registered providers. You should not override those.
+			<br/>You only have to add all the providers that should be used to layout with method 
+			<code>addProvider</code>.
+		</p>
+		<h6 id="Example">Example</h6>
+		<p>Compound and wrapping providers are used for example by the composite providers that can be used from a VSM declaration:</p>
+		<pre><code>public AbstractLayoutEditPartProvider getLayoutNodeProvider(final IGraphicalEditPart container) {
+        if (this.layoutNodeProvider == null) {
+            final CompoundLayoutProvider clp = new CompoundLayoutProvider();
+            final CompositeDownTopLayoutProvider cdtp = new CompositeDownTopLayoutProvider();
+            clp.addProvider(cdtp);
+            clp.addProvider(new PinnedElementsLayoutProvider(cdtp));
+            AbstractLayoutProvider abstractLayoutProvider = BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider(clp);
+            this.layoutNodeProvider = new ArrangeSelectionLayoutProvider(abstractLayoutProvider);
+        }
+        return this.layoutNodeProvider;
+    }
+</code></pre>
+		<p>We see that this composite provider is composed with the 
+			<code>PinnedElementsLayoutProvider</code> in a compound provider. The composite provider does its layouting first but does not handle pinned elements. The pinned one restore pinned elements to their original position and fix potential overlaps.
+			<br/>Then the compound provider is wrapped in a 
+			<code>BorderItemAwareLayoutProvider</code> that is also wrapped in the 
+			<code>ArrangeSelectionLayoutProvider</code>.
+			<br/>The layout execution flow is the following:
+			<br/>
+			<code>ArrangeSelectionLayoutProvider</code> is called first. Then 
+			<code>CompoundLayoutProvider</code> is called and delegates to 
+			<code>CompositeDownTopLayoutProvider</code> first and 
+			<code>PinnedElementsLayoutProvider</code> second. Lastly 
+			<code>BorderItemAwareLayoutProvider</code> is called.
+		</p>
+		<h4 id="ProvideacustomlayoutalgorithmwithGMFextensionpoint">Provide a custom layout algorithm with GMF extension point</h4>
+		<p>This extension point provided by GMF can be used to provide your custom layout algorithm in Sirius diagram editors if you don&#8217;t need any of the features and implementation ease brought by Sirius API.</p>
+		<p>To do that, your layout algorithm in the form of an 
+			<code>AbstractLayoutEditPartProvider</code> can be declared in GMF extension point 
+			<code>org.eclipse.gmf.runtime.diagram.ui.layoutProviders</code>.
+		</p>
+		<p>The priority of the default one used by Sirius is medium. To be override your priority must be lowest than medium.</p>
+	</body>
+</html>

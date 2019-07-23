@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Addons and Integrations</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Addons and Integrations</h1>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In addition to these components, VIATRA also provides a set of addons built over the query and transformation capabilities of VIATRA to (1) demonstrate the capabilities of the framework, (2) provide reusable features and (3) help integration to other editors and tools.</p>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle" class="title">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#viatra-validation">VIATRA Validation Framework</a>
+<ul class="sectlevel2">
+<li><a href="#_main_concepts">Main concepts</a></li>
+<li><a href="#_creating_constraints_from_graph_patterns">Creating constraints from graph patterns</a></li>
+<li><a href="#_validation_api">Validation API</a></li>
+</ul>
+</li>
+<li><a href="#_derived_feature_support">Derived feature support</a>
+<ul class="sectlevel2">
+<li><a href="#_well_behaving_structural_features">Well-behaving structural features</a></li>
+<li><a href="#viatra-qbf">Query-based Features</a></li>
+<li><a href="#surrogate-queries">Surrogate queries for derived features</a></li>
+</ul>
+</li>
+<li><a href="#_displaying_query_results_in_the_user_interface">Displaying Query Results in the User Interface</a>
+<ul class="sectlevel2">
+<li><a href="#databinding">VIATRA Data Binding</a></li>
+<li><a href="#viewers">VIATRA Viewers</a></li>
+</ul>
+</li>
+<li><a href="#uml-integration">UML support for VIATRA</a>
+<ul class="sectlevel2">
+<li><a href="#_surrogate_queries_for_uml_derived_features">Surrogate queries for UML derived features</a></li>
+<li><a href="#_static_profile_support">Static profile support</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="viatra-validation"><a class="link" href="#viatra-validation">VIATRA Validation Framework</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>VIATRA provides facilities to create validation rules based on the pattern language of the framework. These rules can be evaluated on various EMF instance models and upon violations of constraints, and the processed, e.g. markers can automatically be created in the Eclipse Problems View.</p>
+</div>
+<div class="sect2">
+<h3 id="_main_concepts"><a class="link" href="#_main_concepts">Main concepts</a></h3>
+<div class="sect3">
+<h4 id="_constraint_specification"><a class="link" href="#_constraint_specification">Constraint specification</a></h4>
+<div class="paragraph">
+<p>A constraint specification represents a well-formedness or structural validation rule that is specified with concepts from metamodels and can be evaluated over instance models.</p>
+</div>
+<div class="paragraph">
+<p>E.g. a constraint specification is <em>"A terminated data port cannot be the end of a port connection"</em>, where <em>"terminated"</em>, <em>"data port"</em>, <em>"port connection"</em> and <em>"connection end"</em> are concepts in the metamodel.</p>
+</div>
+<div class="paragraph">
+<p>The constraint specification contains:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>the converting mechanism for creating the location information for a violation</p>
+</li>
+<li>
+<p>the format message that is used to create the message of a violation</p>
+</li>
+<li>
+<p>the severity level (e.g. error, warning)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When constraint specifications are represented by VIATRA patterns, the corresponding query specification is stored.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_constraint"><a class="link" href="#_constraint">Constraint</a></h4>
+<div class="paragraph">
+<p>We differentiate between <strong>Constraint Specification</strong> that represents the validation rule and <strong>Constraint</strong> that represents an instance of a constraint specification on a validation engine.</p>
+</div>
+<div class="paragraph">
+<p>Each constraint stores its specification and refers to a validation engine. It provides capabilities for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>listing the set of violations</p>
+</li>
+<li>
+<p>registering listeners for notifications on the changes in the violation set and other events related to the life cycle of the constraint.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For constraints specified by VIATRA patterns, the corresponding matcher is stored.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_violation"><a class="link" href="#_violation">Violation</a></h4>
+<div class="paragraph">
+<p>A violation is set of model elements in an instance model that satisfy the specification of a constraint.</p>
+</div>
+<div class="paragraph">
+<p>E.g. for the above constraint, a violation is a port P which is terminated and a port connection PC with "PC.end = P".</p>
+</div>
+<div class="paragraph">
+<p>Each violation has:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>a corresponding constraint</p>
+</li>
+<li>
+<p>a location (one or more model elements that are relevant for the violation (e.g. the port and the port connection in the example)</p>
+</li>
+<li>
+<p>a formatted message.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The violation should provide capabilities for registering listeners for notifications on life cycle events, e.g. a change in the message.</p>
+</div>
+<div class="paragraph">
+<p>For violation of constraints based on VIATRA patterns, the match is also stored.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_validation_engine"><a class="link" href="#_validation_engine">Validation Engine</a></h4>
+<div class="paragraph">
+<p>A validation engine is responsible for managing the constraints existing in the scope of a VIATRA Query Engine (e.g. resource set) for a set of constraint specifications added to the validation engine.</p>
+</div>
+<div class="paragraph">
+<p>The validation engine provides capabilities for</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>adding constraint specifications</p>
+</li>
+<li>
+<p>listing the set of constraints</p>
+</li>
+<li>
+<p>registering listeners for notifications on the changes in the constraint set and other events related to the life cycle of the validation engine.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_validation_manager"><a class="link" href="#_validation_manager">Validation Manager</a></h4>
+<div class="paragraph">
+<p>The validation manager is singleton that serves as a single entry point for using the validation that provides capabilities for</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>accessing the constraint specifications registered through extensions (see VIATRA <code>@Constraint</code> annotation)</p>
+</li>
+<li>
+<p>initializing a new validation engine</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_creating_constraints_from_graph_patterns"><a class="link" href="#_creating_constraints_from_graph_patterns">Creating constraints from graph patterns</a></h3>
+<div class="paragraph">
+<p>The validation framework provides a <code>@Constraint</code> annotation that is used to provide the extra information required to create constraints from the pattern definition.</p>
+</div>
+<div class="dlist">
+<div class="title">The parameters of the constraint annotation</div>
+<dl>
+<dt class="hdlist1">key</dt>
+<dd>
+<p>(list of parameter names as strings) The keys of a constraint represent the parameters that together identify a given violation. Multiple matches of the same constraint pattern with the same parameter values for keys will be considered as a single violation. Non-key parameters can be accessed as tuples by the API.</p>
+</dd>
+<dt class="hdlist1">message</dt>
+<dd>
+<p>(format string): The message to display when the constraint violation is found. The message may refer the key variables between $ symbols, or their EMF features, such as in $keyParam1.name$.</p>
+</dd>
+<dt class="hdlist1">severity</dt>
+<dd>
+<p>(string) "info", "warning" or "error"</p>
+</dd>
+<dt class="hdlist1">targetEditorId</dt>
+<dd>
+<p>(string) An Eclipse editor ID where the validation framework should register itself to the context menu. Use * as a wildcard if the constraint should be used always when validation is started.</p>
+</dd>
+<dt class="hdlist1">symmetric</dt>
+<dd>
+<p>(possibly multiple list of parameter names as strings) Parameters listed as symmetric are considered to correspond to the same violation for matches where the values are in a different permutation. Symmetric parameters can be either keys or non-keys, mixing is not allowed.</p>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="title">Example annotation</div>
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Constraint(
+  key = {key1, sk1, sk2},
+  severity = "error",
+  symmetric = {sk1, sk2},
+  symmetric = {sp1, sp2},
+  message = "Some message $key1$ and $param$ and $sp2$"
+)
+pattern myPattern(key1, sk1, sk2, sp1, sp2, param) {...}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_validation_api"><a class="link" href="#_validation_api">Validation API</a></h3>
+<div class="paragraph">
+<p>Once you specified your constraints with patterns and the <code>@Constraint</code> annotation, you can either use the marker based validation as before, or use the API to process violations yourself:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">ResourceSet myModel; // already initialized
+Logger myLogger; // Log4J logger, use Logger.getLogger(this.class) if you need one
+IConstraintSpecification constraintSpec = new MyPatternNameConstraint0(); // generated for pattern called MyPatternName
+
+ValidationEngine validationEngine = new ValidationEngine(notifier, logger);
+IConstraint constraint = validationEngine.addConstraintSpecification(constraintSpecification);
+validationEngine.initialize();
+
+Collection&lt;IViolation&gt; violations = constraint.listViolations();
+for(IViolation violation : violations) {
+  System.out.println(violation.getMessage());
+  Map&lt;String, Object&gt; keyMap = violation.getKeyObjects()
+  for(String key : keyMap.keySet()){
+    System.out.println("Key " + key + " is " + keyMap.get(key));
+  }
+}
+
+// you can filter violations
+Collection&lt;IViolation&gt; filteredViolations = constraint.listViolations(new IViolationFilter(){
+  public boolean apply(IViolation violation){
+    return violation.getMessage().contains("MyFilterWord");
+  }
+});
+
+// you can add listeners on IConstraint to get notified on violation list changes
+constraint.addListener(new ConstraintListener(){
+  public void violationAppeared(IViolation violation){
+    System.out.println("Appeared: " + violation.getMessage());
+  }
+  public void violationDisappeared(IViolation violation){
+    System.out.println("Disappeared: " + violation.getMessage());
+  }
+});
+
+// or on IViolations to get notified of message and parameter changes
+violations.iterator().next().addListener(new ViolationListener(){
+  public void violationEntryAppeared(IViolation violation, IEntry entry){
+    System.out.println("Entry appeared: " + entry);
+  }
+
+  public void violationMessageUpdated(IViolation violation){
+    System.out.println("Message updated: " + violation.getMessage());
+  }
+
+  public void violationEntryDisappeared(IViolation violation, IEntry entry){
+    System.out.println("Entry disappeared: " + entry);
+  }
+});
+
+// you can also remove constraint specifications from an engine
+validationEngine.removeConstraintSpecification(constraintSpecification);
+
+// and dispose it when no longer needed
+validationEngine.dispose();</code></pre>
+</div>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_derived_feature_support"><a class="link" href="#_derived_feature_support">Derived feature support</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Derived features in EMF models represent information (attribute values, references) computed from the rest of the model, such as the number of elements in a given collection or the set of elements satisfying some additional conditions. Such derived features can ease the handling of models significantly, as they appear in the same way as regular features. However, in order to achieve complete transparency for derived features, the developer must ensure that proper change notifications are sent when model modifications cause changes in the value of the derived feature as well. Finally, since the value of the derived feature might be retrieved often, complete recalculation of the value may impact application performance. Therefore, it is better to keep a cached version of the value and update it incrementally based on changes in the model.</p>
+</div>
+<div class="paragraph">
+<p>Usually, developers who use derived features in EMF have to manually solve each of these challenges for each derived feature they introduce into their model. Furthermore, although the derived features almost always represent the result of a model query (including type constraints, navigation, aggregation), they are implemented as imperative Java code.</p>
+</div>
+<div class="paragraph">
+<p>In order to help developers in using derived features, VIATRA supports the definition of model queries that provide the results for the derived feature value calculation and includes out-of-the-box change notification and incremental maintenance of results. Additionally, the automatic generation of the Ecore annotations or glue code between the EMF model code and VIATRA offers easy integration into any existing EMF application.</p>
+</div>
+<div class="paragraph">
+<p>VIATRA supports the definition of efficient, incrementally maintained, well-behaving derived features in EMF by using advanced model queries and incremental evaluation for calculating the value of derived features and providing automated code generation for integrating into existing applications.</p>
+</div>
+<div class="ulist">
+<div class="title">Main scope of query-based features</div>
+<ul>
+<li>
+<p>Integrate model query results into EMF applications as structural features</p>
+</li>
+<li>
+<p>Replace low performance derived feature implementations with incrementally evaluated model queries</p>
+</li>
+<li>
+<p>Provide a flexible interlinking method for fragmented models</p>
+</li>
+<li>
+<p>Support declarative definition of high-performance computed features with automatic code generation and validation</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_well_behaving_structural_features"><a class="link" href="#_well_behaving_structural_features">Well-behaving structural features</a></h3>
+<div class="paragraph">
+<p>The incremental approach of the VIATRA queries relies on change notifications from every object and every feature in the model that is used in the query definitions. Therefore, a regular volatile feature that has no field, therefore there it does not store the current value of the feature and usually does not send proper change notifications (e.g. SET oldValue to newValue). Such features are ignored by VIATRA, unless there is an explicit declaration, that the feature implementation sends proper change notifications at all times. These are called well-behaving structural features.</p>
+</div>
+<div class="paragraph">
+<p>If your application uses volatile (and often derived) features, you provide proper notifications for them and would like to include them in query definitions, you can explicitly tell VIATRA that the feature is well-behaving. There are two ways to do this:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>extend the <code>org.eclipse.viatra.query.runtime.base.wellbehaving.derived.features</code> extension point as described <a href="https://github.com/FTSRG/publication-pages/wiki/Using-queries-for-derived-features-(ECMFA12)">here</a></p>
+</li>
+<li>
+<p>provide a surrogate query, see later</p>
+</li>
+<li>
+<p>register your feature directly into the <code>org.eclipse.viatra.query.runtime.base.comprehension.WellbehavingDerivedFeatureRegistry</code> using the various <code>registerX</code> methods. <strong>Warning</strong>: you must call this method before executing any queries (i.e. before the first <code>getMatcher()</code> or <code>getEngine()</code> call), since VIATRA checks the registry when it traverses the model.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="viatra-qbf"><a class="link" href="#viatra-qbf">Query-based Features</a></h3>
+<div class="paragraph">
+<p>For demonstration, we will use the BPM metamodel from the <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.examples.git/tree/query/bpm">examples repository</a>.</p>
+</div>
+<div class="paragraph">
+<p>Other examples include the Simulink model in <a href="https://github.com/viatra/massif/">Massif</a> uses query based features for supporting library blocks, model references, port filtering and many more.</p>
+</div>
+<div class="sect3">
+<h4 id="_user_documentation"><a class="link" href="#_user_documentation">User documentation</a></h4>
+<div class="paragraph">
+<p>VIATRA only provides the back-end for derived features, the developer must define the feature itself in the metamodel first. Once that is complete, the developer creates the query in a regular VIATRA query project in a query definition file and adds a specific annotation with the correct parameters to have the derived feature implementation generated. These steps are detailed in the following:</p>
+</div>
+<div class="sect4">
+<h5 id="_definition_of_the_derived_feature"><a class="link" href="#_definition_of_the_derived_feature">Definition of the derived feature</a></h5>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the Ecore model (.ecore file), create the desired EAttribute or EReference in the selected EClass and set the name, type and multiplicity information correctly.</p>
+</li>
+<li>
+<p>Use the following configuration for the other attributes of the created EStructuralFeature:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>derived = true (to indicate that the value of the feature is computed from the model)</p>
+</li>
+<li>
+<p>changeable = false (to remove setter methods)</p>
+</li>
+<li>
+<p>transient = true (to avoid persisting the value into file)</p>
+</li>
+<li>
+<p>volatile = true (to remove the field declaration in the object)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In the Generator model (.genmodel), right-click on the top-level element and select Reload, click Next, Load, and Finish to update the Generator model with the changes done in the Ecore model.</p>
+</li>
+<li>
+<p>Right-click on the top-level element and select Generate Model Code to ensure that the getters are properly generated into the EMF model code. You can regenerate the Edit and Editor code as well, though those are not necessary here.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_definition_of_the_model_query"><a class="link" href="#_definition_of_the_model_query">Definition of the model query</a></h5>
+<div class="ulist">
+<ul>
+<li>
+<p>Create a VIATRA query project and query definition (.vql) file as described in the cheat sheet or this tutorial.</p>
+</li>
+<li>
+<p>Make sure that you imported your metamodel into the query definition. Create the VIATRA generator model, if necessary (.vqlgen file).</p>
+</li>
+<li>
+<p>Make sure that the project containing the Ecore model or generated code is in the same workspace as the VIATRA query project.</p>
+</li>
+<li>
+<p>Create the query corresponding to your derived feature. For example, the tasks corresponding by identifiers to a given job feature would look like this:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>package org.eclipse.viatra.examples.bpm.queries.system
+
+import "http://process/1.0"
+import "http://system/1.0"
+
+@QueryBasedFeature(feature = "tasks")
+pattern JobTaskCorrespondence(Job : Job, Task : Task) = {
+ Job.taskIds(Job,TaskId);
+ Task.id(Task,TaskId);
+}</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>When you save, the VIATRA query builder runs automatically and places the setting delegate annotations in the Ecore model.</p>
+</li>
+<li>
+<p>If new query-based feature queries were introduced or the fully qualified name of the pattern for a given feature has changed, the EMF Generator must be invoked. This is needed since the generator uses the setting delegate annotations to create the model code.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that the first parameter of the pattern is the source of the derived feature and the second is the target. Although not mandatory, is is good practice to use the <code>(This : EClass, Target)</code> format to ease understanding. The @QueryBasedFeature annotation indicates to the code generator that it should create the setting delegate annotations in the Ecore model.</p>
+</div>
+<div class="paragraph">
+<p>Saving the query definition initiates the code generation. After it completes, you can open the Ecore model to ensure that the new annotations were correctly created. Note that a well-behaving derived feature extension is also generated into the plugin.xml of the VIATRA Query project to indicate that the given derived feature correctly sends change notifications if the project is loaded.</p>
+</div>
+<div class="paragraph">
+<p>Once the annotations are generated and the EMF Generator is invoked, you can use the derived features by including the VIATRA Query project into your runtime together with the model project.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_annotation_parameters"><a class="link" href="#_annotation_parameters">Annotation parameters</a></h5>
+<div class="paragraph">
+<p>The @QueryBasedFeature annotation uses defaults for each possible parameters, which allows developers to avoid using any parameters if the query is correctly written.</p>
+</div>
+<div class="paragraph">
+<p>In short, parameters are not needed, if the following conditions are satisfied:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The name of the pattern is the same as the name of the derived feature (comparison uses String.equals())</p>
+</li>
+<li>
+<p>The first parameter is the defining EClass and its type is correctly given (e.g. This : Course)</p>
+</li>
+<li>
+<p>The second parameter is the target of the derived feature</p>
+</li>
+<li>
+<p>The derived feature value is a single EObject or a collection of EObjects</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If the derived feature and its query does not satisfy the above conditions, the following parameters can be used in the annotation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>feature ="featureName"</code> (default: pattern name) - indicates which derived feature is defined by the pattern</p>
+</li>
+<li>
+<p><code>source ="Src"</code> (default: first parameter) - indicates which query parameter (using its name) is the source EObject, the inferred type of this parameter indicates which EClass generated code has to be modified</p>
+</li>
+<li>
+<p><code>target ="Trg"</code> (default: second parameter) - indicates which query parameter (using its name) is the target of the derived feature</p>
+</li>
+<li>
+<p><code>kind ="single/many/counter/sum/iteration"</code> (default: feature.isMany?many:single) - indicates what kind of calculation should be done on the query results to map them to derived feature values</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_common_issues"><a class="link" href="#_common_issues">Common issues</a></h5>
+<div class="sect5">
+<h6 id="_code_generation_fails_for_derived_feature_query"><a class="link" href="#_code_generation_fails_for_derived_feature_query">Code generation fails for derived feature query</a></h6>
+<div class="paragraph">
+<p>Ensure that the .ecore file is available and writeable in the same workspace as the VIATRA query project with the query definitions.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_multiple_results_for_a_query_used_in_a_single_upper_bound_1_feature"><a class="link" href="#_multiple_results_for_a_query_used_in_a_single_upper_bound_1_feature">Multiple results for a query used in a single (upper bound = 1) feature</a></h6>
+<div class="paragraph">
+<p>If you define a query for a single feature that returns multiple results for a given source model element, the value of the derived feature will in most cases be the value from the last match that appeared. However, it is possible to change the values in a way that the feature will have no value, even though it might have exactly one. Therefore, it is important to define the queries for the feature in a way that only one result is possible. You can either make assumptions on your models and use other ways to ensure that there is only one match, or you can explicitly declare in the pattern, that it should only match once for a given source element. Additionally, you can use the Validation framework of VIATRA to create feedback for the user when the query would have multiple results indicating that the model is invalid.</p>
+</div>
+<div class="paragraph">
+<p>The following is an example for a validated, ensured single feature:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@QueryBasedFeature
+pattern singleFeature(This : SourceType, Target : TargetType){
+ find internalQuery(This, Target);
+ 1 == count find internalQuery(This, Target);
+}
+
+private pattern internalQuery(This : SourceType, Target : TargetType){
+ // actual query definition
+}
+
+@Constraint(location = "This", severity = "error",
+   message="Multiple values for $This.name$.singleFeature!")
+pattern singleFeatureInvalid(This : SourceType){
+ 1 &lt; count find internalQuery(This, _Target);
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_overview_of_the_implementation"><a class="link" href="#_overview_of_the_implementation">Overview of the implementation</a></h5>
+<div class="paragraph">
+<p>To support query-backed features captured as derived features, the outputs of the VIATRA query engine need to be integrated into the EMF model access layer at two points: (1) query results are provided in the getter functions of derived features, and (2) query result deltas are processed to generate EMF Notification objects that are passed through the standard EMF API so that application code can process them transparently.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/addons/qbf-overview.png" alt="qbf overview" width="600">
+</div>
+</div>
+<div class="paragraph">
+<p>The application accesses both the model and the query results through the standard EMF model access layer&#8201;&#8212;&#8201;hence, no modification of application source code is necessary. In the background, our novel derived feature handlers are attached to the EMF model plugin that integrate the generated query components (pattern matchers).
+When an EMF application intends to read a soft link (B1), the current value is provided by the corresponding handler (B2) by simply retrieving the value from the cache of the related query. When the application modifies the EMF model (A1), this change is propagated to the generated query components of VIATRA along notifications (A2), which may update the delta monitors of the handlers (A3). Changes of derived features may in turn trigger further changes in the results sets of other derived features (A4).</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_using_setting_delegates"><a class="link" href="#_using_setting_delegates">Using setting delegates</a></h5>
+<div class="paragraph">
+<p>The Query-based features relies on setting delegates instead of overwriting the generated code. Setting delegates are the recommended way of integrating derived feature computation into EMF models. This means that only the Ecore file is modified when the pattern definitions are changed, however that the code generation from the genmodel will have to be invoked as well.</p>
+</div>
+<div class="paragraph">
+<p>To set up setting delegates, the generator automatically puts annotations on the EPackage and EStructuralFeatures</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>on the EPackage, to declare which setting delegates to use:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&lt;eAnnotations source="http://www.eclipse.org/emf/2002/Ecore"&gt;
+  &lt;details key="settingDelegates" value="org.eclipse.viatra.query.querybasedfeature"/&gt;
+&lt;/eAnnotations&gt;</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>on the EStructuralFeature which is a query-based feature:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&lt;eAnnotations source="org.eclipse.viatra.query.querybasedfeature"&gt;
+  &lt;details key="patternFQN" value="querypackage.patternName"/&gt;
+&lt;/eAnnotations&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The setting delegate factory is registered by the query-based feature runtime plug-in and EMF will use the factory to create the setting delegate for query-based derived features.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="surrogate-queries"><a class="link" href="#surrogate-queries">Surrogate queries for derived features</a></h3>
+<div class="paragraph">
+<p>Query-based features capture the definition of well-behaving derived features of Ecore models by queries, and allow the use of such derived features in the body of other queries. But when an Ecore model is not allowed to be modified, you could not use derived features in query bodies in the past. EMF-IncQuery 1.0.0 introduced <strong>surrogate queries</strong> for derived features, where a derived feature used in a query is replaced by a subpattern call during query execution time (runtime).</p>
+</div>
+<div class="sect3">
+<h4 id="_usage"><a class="link" href="#_usage">Usage</a></h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Surrogate
+pattern superClass(self : Classifier, super : Classifer) {
+  Classifier.generalization(self, generalization);
+  Generalization.general(generalization, classifier);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In order to create a surrogate query, simply add a @Surrogate annotation for a pattern and the generator will take care of defining the correct extension points. When the query plug-in is included in the host, the VIATRA Query runtime will automatically replace path expressions including the feature with a subpattern call. In addition, if the plug-in is available in the host or target platform, the warning for a derived feature usage will be different (instead of warning about not representable feature, it will include the fully qualified name of the surrogate query). So the following will work correctly during runtime:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern superClassWithName(self : Classifier) {
+  Classifier.superClass(self, superClass);
+  Classifier.name(superClass, "mySuperClass");
+}</code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_important_information_on_developing_surrogate_queries"><a class="link" href="#_important_information_on_developing_surrogate_queries">Important information on developing surrogate queries</a></h5>
+<div class="paragraph">
+<p>Surrogate queries defined in workspace projects are not yet visible to the Query Explorer, so loading queries that use those derived features will result in incorrect match results. If you want to try such queries in the Query Explorer, do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If the surrogate query definition and the pattern using it are in different projects, simply start a runtime Eclipse where at least the defining query is included.</p>
+</li>
+<li>
+<p>If the surrogate query definition and the pattern using it are in the same project, simply use a subpattern call (find) instead.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_example"><a class="link" href="#_example">Example</a></h4>
+<div class="paragraph">
+<p>The UML metamodel used in EMF-UML contains a large number of derived features (see <a href="#uml-integration">UML support for VIATRA</a> for details), most of which are not well-behaving, which significantly complicated the definition of patterns over UML models in the past.</p>
+</div>
+<div class="paragraph">
+<p>Consider the following pattern:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern superClassWithQualifiedName(self : Classifier) {
+  Classifier.superClass(self, superClass);
+  Classifier.qualifiedName(superClass, "my::favorite::package::SuperSuperClass");
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Both Classifer.superClass and NamedElement.qualifiedName are derived features, therefore</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>the pattern editor will display a warning about these features are not amenable to incremental evaluation;</p>
+</li>
+<li>
+<p>the runtime will index the value of these features and no matches will be returned.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Since the value of these feature can be computed from the rest of the model, users often manually defined helper patterns, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern superClass(self : Classifier, super : Classifer) {
+  Classifier.generalization(self, generalization);
+  Generalization.general(generalization, classifier);
+}
+
+pattern superClassWithQualifiedName(self : Classifier) {
+  find superClass(self, superClass);
+  Classifier.qualifiedName(superClass, "my::favorite::package::SuperSuperClass");
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>However, this approach has several drawbacks:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Reinventing the wheel: derived features are redefined over and over again.</p>
+</li>
+<li>
+<p>Error-prone definition: you can easily overlook some detail in the computation and get unexpected results.</p>
+</li>
+<li>
+<p>Disallowed use in patterns: the derived feature cannot be used directly in other pattern bodies, you need to explicitly call the helper pattern (by the ''find'' construct).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Surrogate queries are introduced to help overcome these issues.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_technical_details"><a class="link" href="#_technical_details">Technical details</a></h4>
+<div class="paragraph">
+<p>Surrogate query support includes the <code>@Surrogate</code> annotation in the pattern editor, the corresponding code generator fragment, the runtime loading and usage of surrogate query registry, the runtime replacement of derived feature usage in queries. However, when running outside of Eclipse, some additional setup is required.</p>
+</div>
+<div class="sect4">
+<h5 id="_definition_of_surrogate_queries"><a class="link" href="#_definition_of_surrogate_queries">Definition of surrogate queries</a></h5>
+<div class="paragraph">
+<p>The <code>@Surrogate</code> annotation has a single, optional parameter <code>feature</code> which specifies the name of the EStructuralFeature that the surrogate query replaces. If omitted, the name of the pattern must match the name of the feature. The first parameter of the pattern is always the source, and the second parameter is the target.</p>
+</div>
+<div class="paragraph">
+<p>Let us assume you want to surrogate a derived feature <code>someExternalModelFeature</code> in EClass <code>ExternalClass</code> with type <code>OtherExternalClass</code>.</p>
+</div>
+<div class="paragraph">
+<p>You can choose between:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Surrogate(feature = "someExternalModelFeature")
+pattern mySurrogatePattern(this : ExternalClass, target : OtherExternalClass) {
+  [...] // pattern body
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Surrogate
+pattern someExternalModelFeature(this : ExternalClass, target : OtherExternalClass) {
+  [...] // pattern body
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The annotation is defined by the <em>querybasedfeatures.runtime</em> plug-in together with a validator (also provided by the same plug-in), which checks several things:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>the pattern has exactly two parameters</p>
+</li>
+<li>
+<p>the feature specified by the pattern name or the parameter of the annotation exists in the source EClass</p>
+</li>
+<li>
+<p>the target type of the feature is compatible with the second parameter of the pattern</p>
+</li>
+<li>
+<p>there is only one Surrogate annotation for a pattern or each of them define different features</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The code generator fragment is defined by the <em>querybasedfeatures.tooling</em> plug-in and it simply creates an extension for the surrogate query extension point in the plugin.xml:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension id="extension.surrogate.mySurrogates.mySurrogatePattern" point="org.eclipse.viatra.query.patternlanguage.emf.surrogatequeryemf"&gt;
+  &lt;surrogate-query-emf class-name="ExternalClass" feature-name="someExternalModelFeature" package-nsUri="external.ecore.uri"
+    surrogate-query="org.eclipse.viatra.query.runtime.extensibility.PQueryExtensionFactory:mySurrogates.MySurrogatePatternQuerySpecification"/&gt;
+&lt;/extension&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_runtime_behavior"><a class="link" href="#_runtime_behavior">Runtime behavior</a></h5>
+<div class="paragraph">
+<p>During runtime, the surrogate queries are loaded into a surrogate query registry (defined in the ''runtime.matchers'' plug-in) by reading the extension registry of Eclipse.
+When a given pattern is loaded into an engine, path expressions including derived features with defined surrogate queries are replaced in the PSystem representation.</p>
+</div>
+<div class="paragraph">
+<p>This means that the surrogate queries are only used if they are available and registered. Additionally, for query backends that can handle non well-behaving derived features (e.g. the local search backend), this rewriting is skipped.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_usage_outside_of_eclipse"><a class="link" href="#_usage_outside_of_eclipse">Usage outside of Eclipse</a></h5>
+<div class="paragraph">
+<p>Since the extension registry is not available when running outside of Eclipse, users have to manually register surrogate queries before they can be used for query evaluation.</p>
+</div>
+<div class="paragraph">
+<p>In addition to basic infrastructure, the following setup is required for each surrogate query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">SurrogateQueryRegistry.instance().registerSurrogateQueryForFeature(
+  new EStructuralFeatureInstancesKey(ExternalPackage.Literals.EXTERNAL_CLASS_SOME_EXTERNAL_MODEL_FEATURE),
+  MySurrogatePatternQuerySpecification.instance.getInternalQueryRepresentation());</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/integration/plugins/org.eclipse.viatra.integration.uml/src/org/eclipse/viatra/integration/uml/ViatraQueryUMLStandaloneSetup.java">the VIATRA UML standalone setup</a> for an example.</p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_displaying_query_results_in_the_user_interface"><a class="link" href="#_displaying_query_results_in_the_user_interface">Displaying Query Results in the User Interface</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As far as the visualization of VIATRA pattern matching results is concerned, the VIATRA framework provides two approaches:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>VIATRA Data Binding Addon</em>: Using this addon, VIATRA pattern matches can be directly incorporated in newly developed applications that utilize JFace Data Binding.</p>
+</li>
+<li>
+<p><em>VIATRA Viewers Addon</em>: The VIATRA Viewers component helps developing model-driven user interfaces by filling and updating model viewer results with the results of model queries. The implementation relies on (and is modeled after) the Event-driven Virtual Machine and JFace Viewers libraries.</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="databinding"><a class="link" href="#databinding">VIATRA Data Binding</a></h3>
+<div class="paragraph">
+<p>VIATRA provides a simple data binding facility that can be used to bind pattern matches to UI elements. The feature is mainly intended to be used to integrate VIATRA queries to newly developed user interfaces. In order to utilize this functionality, the source patterns need to be annotated, and the used UI components need to be bound to the Observables provided by the data binding API. In the following sections an example is shown which uses VIATRA Data Binding.</p>
+</div>
+<div class="sect3">
+<h4 id="_required_annotations"><a class="link" href="#_required_annotations">Required annotations</a></h4>
+<div class="ulist">
+<ul>
+<li>
+<p><em>@ObservableValue</em>: allows the developer to customize the appearance of a match. It defines an observable value (as defined in JFace Data Binding) which can be bound to an Eclipse/JFace UI.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>name</em> (String): the name of the parameter</p>
+</li>
+<li>
+<p><em>expression</em> (String): the attribute to be observed definition without '$' marks. For example <code>@ObservableValue(name = "id", expression = "host.identifier")</code></p>
+</li>
+<li>
+<p><em>labelExpression</em>: this annotation makes it possible to create observable string properties, which are useful when presenting relations between objects inside a JFace viewer component.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div id="databinding-annotations" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@ObservableValue(name = "id", expression = "host.identifier")
+@ObservableValue(name = "node_ip", expression = "host.nodeIp")
+@ObservableValue(name = "current_cpu", expression = "host.availableCpu")
+@ObservableValue(name = "current_hdd", expression = "host.availableHdd")
+@ObservableValue(name = "current_ram", expression = "host.availableRam")
+@ObservableValue(name = "total_cpu", expression = "host.totalCpu")
+@ObservableValue(name = "total_hdd", expression = "host.totalHdd")
+@ObservableValue(name = "total_ram", expression = "host.totalRam")
+pattern hostInstances(host: HostInstance) {
+    HostInstance(host);
+}
+
+@ObservableValue(name = "id", expression = "app.identifier")
+@ObservableValue(name = "state", expression = "app.state")
+@ObservableValue(name = "db_user", expression = "app.dbUser")
+@ObservableValue(name = "db_pass", expression = "app.dbPassword")
+@ObservableValue(name = "allocatedTo", expression = "app.allocatedTo")
+pattern applicationInstances(app: ApplicationInstance) {
+    ApplicationInstance(app);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_listening_to_change_via_an_observable"><a class="link" href="#_listening_to_change_via_an_observable">Listening to change via an Observable</a></h4>
+<div class="paragraph">
+<p>There are some usecases where you don’t want to follow every change of a pattern’s match, just gather them together and process them when you’re ready. VIATRA Query provides several means of doing this, but we recommend using JFace databinding for basic purposes. To this end, the <strong>ViatraObservables</strong> utility class can transform the result set of your matcher into an observable list or set that can be tracked and even data bound easily.</p>
+</div>
+<div class="paragraph">
+<p>For headless (or non-UI thread) execution, please use the simple DefaultRealm implementation provided in the example (and invoke it on the appropriate thread).</p>
+</div>
+<div id="query-api-databinding" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">// (+) changes can also be tracked using JFace Databinding
+// this approach provides good performance, as the observable callbacks are guaranteed to be called
+//   in a consistent state, and only when there is a relevant change; anything
+//   can be written into the callback method
+// (-) * the databinding API introduces additional dependencies
+//     * is does not support generics, hence typesafe programming is not possible
+//     * a "Realm" needs to be set up for headless execution
+DefaultRealm realm = new DefaultRealm(); // this is necessary for headless execution (or when you
+// wish to execute outside of the UI thread. make sure to invoke it on the appropriate thread!
+IObservableSet set = ViatraObservables.observeMatchesAsSet(matcher);
+set.addSetChangeListener(new ISetChangeListener() {
+ @Override
+ public void handleSetChange(SetChangeEvent event) {
+  for (Object _o : event.diff.getAdditions()) {
+   if (_o instanceof EPackageMatch) {
+    results.append("\tNew EPackage found by changeset databinding: " + ((EPackageMatch)_o).getP().getName()+"\n");
+   }
+  }
+});</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_using_data_binding_to_populate_a_table"><a class="link" href="#_using_data_binding_to_populate_a_table">Using data binding to populate a table</a></h4>
+<div id="databinding-table" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">//Initialize VIATRA query engine
+ViatraQueryEngine engine = ViatraQueryEngine.on(new EMFScope(resourceSet));
+//Get the matcher for the query to be observed (HostInstances pattern)
+HostInstancesMatcher matcher = HostInstancesMatcher.on(engine);
+//Create a generic data binding adapter for the query specification
+//It is responsible for creating observable value properties based on the annotations of the pattern
+GenericDatabindingAdapter adapter = new GenericDatabindingAdapter(HostInstancesMatcher.querySpecification());
+//Bind the matches to the given TableViewer
+ViewerSupport.bind(
+    tableViewer,
+    //Get the matching results as an observable list
+        ViatraObservables.observeMatchesAsList(matcher),
+        //Specify observed proeprties
+        new IValueProperty[] {
+        adapter.getProperty("id"),
+        adapter.getProperty("node_ip"),
+        adapter.getProperty("current_cpu"),
+        adapter.getProperty("current_hdd"),
+        adapter.getProperty("current_ram"),
+        adapter.getProperty("total_cpu"),
+        adapter.getProperty("total_hdd"),
+        adapter.getProperty("total_ram") });</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_master_detail_data_binding_with_a_list"><a class="link" href="#_master_detail_data_binding_with_a_list">Master - detail data binding with a list</a></h4>
+<div class="paragraph">
+<p>The following code fragment is responsible for binding a list to the results of a VIATRA query, and also displays match details in text boxes. (Uses Master-detail binding)</p>
+</div>
+<div id="databinding-masterdetail" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">//Create new data binding context
+//It will be used for binding the pattern match details
+DataBindingContext dataBindingContext = new DataBindingContext();
+//Initialize VIATRA query engine
+ViatraQueryEngine engine = ViatraQueryEngine.on(new EMFScope(resourceSet));
+//Get the matcher for the query to be observed (ApplicationInstances pattern)
+ApplicationInstancesMatcher matcher = ApplicationInstancesMatcher.on(engine);
+//Create a generic data binding adapter for the query specification
+//It is responsible for creating observable value properties based on the annotations of the pattern
+GenericDatabindingAdapter adapter = new GenericDatabindingAdapter(ApplicationInstancesMatcher.querySpecification());
+//Bind the matches to the given ListViewer
+ViewerSupport.bind(listViewer, ViatraObservables.observeMatchesAsSet(matcher), adapter.getProperty("id"));
+
+//At this point, the results of the given pattern will appear in the list Viewer, the details however still need to be implemented
+//Define target observable values for both textboxes
+IObservableValue dbUserTarget = WidgetProperties.text().observe(dbUser);
+IObservableValue dbPassTarget = WidgetProperties.text().observe(dbPass);
+
+//Observe the changes in the list selection
+IViewerObservableValue listSelection = ViewerProperties
+    .singleSelection().observe(listViewer);
+
+//Use the data binding context to bind the text property of the target textbox and the given property of the matcher.
+dataBindingContext.bindValue(
+    //Target textbox observable value
+    dbPassTarget,
+    //Get the source observable value from the adapter
+    adapter.getProperty("db_pass").observeDetail(listSelection),
+    //Define EMF update value strategy
+    //In this case its one directional
+    new EMFUpdateValueStrategy(UpdateValueStrategy.POLICY_NEVER),
+    new EMFUpdateValueStrategy());
+
+dataBindingContext.bindValue(dbUserTarget, adapter.getProperty("db_user").observeDetail(listSelection),
+    new EMFUpdateValueStrategy(UpdateValueStrategy.POLICY_NEVER),
+    new EMFUpdateValueStrategy());</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="viewers"><a class="link" href="#viewers">VIATRA Viewers</a></h3>
+<div class="paragraph">
+<p>The VIATRA Viewers component can bind the results of queries to various JFace Viewers: JFace ListViewer and TreeViewers are currently supported. Additionally, by installing extra features from the extra update site GraphViewers (based on GEF4 Zest) are also supported. In the following example, and during the lab excersize as well, usage of GraphViewers will be presented. These GraphViewers are capable of displaying query results as graphs.</p>
+</div>
+<div class="sect3">
+<h4 id="_usage_2"><a class="link" href="#_usage_2">Usage</a></h4>
+<div class="paragraph">
+<p>In order to use the VIATRA Viewers addon the following steps need to be undertaken:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Annotate VIATRA query patterns with the @Item, @ContainsItem and @Edge annotations</p>
+<div class="ulist">
+<ul>
+<li>
+<p><em>@Item</em> will be represented as a graph node</p>
+</li>
+<li>
+<p><em>@ContainsItem</em> will be represented as a node and an edge (edge is between the parent and child nodes)</p>
+</li>
+<li>
+<p><em>@Edge</em> will be displayed as an edge (targeted)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Initialize the Viewers based UI component</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_pattern_annotations"><a class="link" href="#_pattern_annotations">Pattern Annotations</a></h4>
+<div id="viewers-annotations" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">//Host Type objects will be nodes of the displayed graph
+@Item(item = host, label = "$host.identifier$")
+//Format options can be set using the @Format annotation
+@Format(color = "#0033CC", textColor = "#FFFFFF")
+pattern hostTypes(host) {
+    HostType(host);
+}
+//Host types contain host instances
+//Displayed as nodes which have common edges with their parents
+@ContainsItem(container = type, item = instance)
+pattern connectTypesAndInstancesHost(type, instance) {
+    HostType.instances(type,instance);
+}
+//Host instances can communicate with each other
+//Displayed as an edge between the two nodes
+@Edge(source = i1, target = i2, label = "comm")
+pattern communications(i1, i2) {
+    HostInstance.communicateWith(i1,i2);
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_initializing_a_viewer_programmatically"><a class="link" href="#_initializing_a_viewer_programmatically">Initializing a viewer programmatically</a></h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add a dependency to <code>org.eclipse.viatra.addon.viewers.runtime</code> (and <code>org.eclipse.viatra.addon.viewers.runtime.zest</code> if necessary) to your plug-in.</p>
+</li>
+<li>
+<p>Create a <code>ViewerState</code> instance from a group of query specification. Useful (static) helper methods are  available in the <code>ViatraViewerDataModel</code> class, that require a collection of query specifications; a data filter and the required features.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Collection of query specifications: only the query specifications with the corresponding Viewers annotations will be used; other specifications will be ignored.</p>
+</li>
+<li>
+<p>ViewerDataFilter: it is used to filter the result of the queries by its parameters. For each pattern a separate filter can be initialized, that binds some of its parameters.</p>
+</li>
+<li>
+<p>Required features: The ViewerStateFeature enum can be used to list the features required by the visualization. List viewers need no specific features; tree viewers require containment relations; Zest viewer requires edge relations (and possibly containment relations). Features not required will not create</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Use the corresponding bind methods from <code>ViatraViewers</code> or <code>ViatraGraphViewers</code> classes on a manually created <code>Viewer</code> together with the <code>ViewerState</code> and your instance model.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>ViewerState</code> instance can be re-used between different viewers.</p>
+</li>
+<li>
+<p>If the filters added to the <code>ViewerState</code> are changed, all the viewers will become obsolete, and have to be recreated.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div id="viewers-code" class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">//Create the graph viewer component and add it to the containing SWT control
+GraphViewer viewer = new GraphViewer(parent, SWT.None);
+//Create a new Viewer state based on the created VIATRA query engine and a set of annotated VIATRA query specifications
+ViewerState state = ViatraViewerDataModel.newViewerState(getEngine(), getSpecifications(), ViewerDataFilter.UNFILTERED,
+        ImmutableSet.of(ViewerStateFeature.EDGE, ViewerStateFeature.CONTAINMENT));
+//This method of binding supports isolated nodes
+ViatraGraphViewers.bindWithIsolatedNodes(viewer, state, true);
+//Define layout algorithm
+viewer.setLayoutAlgorithm(new SpaceTreeLayoutAlgorithm());
+//Apply layout
+viewer.applyLayout();</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_examples"><a class="link" href="#_examples">Examples</a></h4>
+<div class="sect4">
+<h5 id="_uml_visualization"><a class="link" href="#_uml_visualization">UML visualization</a></h5>
+<div class="paragraph">
+<p>To illustrate the approach, a simple example was prepared in the <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/examples/papyrus-uml">examples repository of the VIATRA project</a> based on UML class diagrams. The examples are relying on the notion of example classes: <em>UML classes that do not have operations or properties (neither in their parent classes)</em>.</p>
+</div>
+<div class="paragraph">
+<p>To present most features of the framework, four specific patterns are used (for the entire implementations visit the git repository):</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><code>pattern emptyClass (cl : Class)</code> - for listing all empty classes in the model</p>
+</li>
+<li>
+<p><code>pattern nonEmptyClass(cl : Class)</code> - for listing all classes in the model, that are not empty</p>
+</li>
+<li>
+<p><code>pattern superClass(sub : Class, sup : Class)</code> - for listing all direct superclass relations between classes</p>
+</li>
+<li>
+<p><code>pattern transitiveSuperClass(sub : Class, sup : Class)</code> - for listing all indirect superclass relations between classes (but not the direct ones)</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The visualizer illustrations below correspond to the <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/examples/papyrus-uml/org.eclipse.viatra.examples.uml.queries/testmodels/Testmodel.uml">test model</a> in the repository.</p>
+</div>
+<div class="sect5">
+<h6 id="_jface_list_viewer_example"><a class="link" href="#_jface_list_viewer_example">JFace List Viewer example</a></h6>
+<div class="paragraph">
+<p>List Viewers can be used to display a collection of elements as a list. To define the list, only the <code>Item</code> annotation is used. Its <code>item</code> parameter selects a pattern parameter, representing the data to display, while its <code>label</code> parameter is used to define a label string (with the same syntax as the label features of Data Binding or the labels of Validation Framework.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Item(item = cl, label="Empty class $cl$")
+pattern emptyClass(cl : Class) {
+...
+}
+
+@Item(item = cl, label = "Class $cl$")
+pattern nonEmptyClass(cl : Class) {
+...
+}</code></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/addons/viewers_uml_list.png" alt="viewers uml list">
+</div>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_binding_contents_to_a_jface_tree_viewer"><a class="link" href="#_binding_contents_to_a_jface_tree_viewer">Binding contents to a JFace Tree Viewer</a></h5>
+<div class="paragraph">
+<p>To support binding elements to a JFace Tree Viewer, in addition to the list of items, a set of containment relations needs also be specified using the &lt;code&gt;ContainsItem&lt;/code&gt; annotation, that describes the container and contained items as pattern parameters. A containment reference is only displayed if both ends of the match result are present as Items in the viewer - otherwise it is simply ignored.</p>
+</div>
+<div class="paragraph">
+<p>A unique property of the Tree Viewer support is that a single Item of the Viewers framework may appear multiple times in the tree. This happens if an element has multiple parents.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@ContainsItem(container = sup, item = sub)
+pattern superClass(sub : Class, sup : Class) {
+...
+}
+@Item(item = cl, label="Empty class $cl$")
+pattern emptyClass(cl : Class) {
+...
+}
+@Item(item = cl, label = "Class $cl$")
+pattern nonEmptyClass(cl : Class) {
+...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./images/addons/viewers_uml_tree.png" alt="viewers uml tree"></span></p>
+</div>
+<div class="ulist">
+<div class="title">Additional notes</div>
+<ul>
+<li>
+<p>In addition to basic binding support where all items appear both as root and child items as needed, it is possible to limit Items to appear only as root or only as child positions using the hierarchy parameter.</p>
+</li>
+<li>
+<p>If creating a TreeViewer binding programmatically, and an item appear in multiple places, make sure you set up the <code>useHashLookup</code> property of your TreeViewer, otherwise the update of the TreeViewer would fail.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_zest_graph_viewer_example"><a class="link" href="#_zest_graph_viewer_example">Zest Graph Viewer example</a></h5>
+<div class="paragraph">
+<p>The definition of graph viewers requires a set of Items and a set of Edges. Edges are connecting two different Items; edges where the end points are not Items are not displayed. As opposed to the Tree Viewer support, a single item only appears once.</p>
+</div>
+<div class="paragraph">
+<p>Additionally, based upon the formatting capabilities of Zest some basic display options are available in the form of <code>Format</code> annotation. The various parameters can be used to depict colors, line width, etc. If a selected format is not applicable for the current element, it is simply ignored.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Edge(source = sup, target = sub, label = "direct")
+@Format(color = "#7f004b", lineWidth = 2)
+pattern superClass(sub : Class, sup : Class) {
+...
+}
+@Edge(source = sup, target = sub)
+pattern transitiveSuperClass(sub : Class, sup : Class) {
+...
+}
+@Item(item = cl, label="Empty class $cl$")
+@Format(color="#3770d7", textColor = "#ffffff")
+pattern emptyClass(cl : Class) {
+...
+}
+@Item(item = cl, label = "Class $cl$")
+pattern nonEmptyClass(cl : Class) {
+...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./images/addons/viewers_uml_zest.png" alt="viewers uml zest"></span></p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ecore_visualization"><a class="link" href="#_ecore_visualization">Ecore visualization</a></h4>
+<div class="paragraph">
+<p>We have developed another demonstrating example in the context of the headless example. As the queries of the headless example match against .ecore models (that is, EMF metamodels), the visualization example below can be used to visualize metamodels and containment relationships in a simple way. This example is focused mainly on the 2D graph visualization supported by the GEF5 Zest framework.</p>
+</div>
+<div class="sect4">
+<h5 id="_specification"><a class="link" href="#_specification">Specification</a></h5>
+<div class="paragraph">
+<p>The example defines two graph node types and three graph edge types (<a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/examples/headless/org.eclipse.viatra.query.application.queries/src/org/eclipse/viatra/query/application/queries/headlessQueries.vql">code</a>):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Nodes are EPackage and EClass instances</p>
+</li>
+<li>
+<p>Edges are <strong>classes contained in a package</strong>, <strong>subpackage</strong> relationships, and a special transitive containment relationship between packages and classes <strong>classes in a package hierarchy</strong> that enumerates all classes that are contained by a root package or some subpackage (transitively) below this root.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Item(item = p, label = "P: $p.name$")
+@Format(color = "#791662", textColor = "#ffffff")
+pattern ePackage(p : EPackage) { EPackage(p); }
+
+@Item(item = ec, label = "EC: $ec.name$")
+@Format(color = "#e8da2c")
+pattern eClass(ec : EClass) { EClass(ec); }
+
+@Edge(source = p, target = ec, label = "classIn")
+pattern classesInPackage(p : EPackage, ec: EClass) { EPackage.eClassifiers(p,ec); }
+
+@Edge(source = p, target = sp, label = "sub")
+pattern subPackage(p: EPackage, sp: EPackage){ EPackage.eSubpackages(p,sp); }
+
+@Edge(source = rootP, target = containedClass, label = "classIn+")
+@Format(color = "#0033ff")
+pattern classesInPackageHierarchy(rootP: EPackage, containedClass: EClass)
+{
+	find classesInPackage(rootP,containedClass);
+} or {
+	find subPackage+(rootP,somePackage);
+	find classesInPackage(somePackage,containedClass);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<div class="title">The visualization of a simple test model (<a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/examples/headless/org.eclipse.viatra.query.application.queries/testmodels/Test.ecore">file</a>)</div>
+<p><span class="image"><img src="./images/addons/viewers_ecore.png" alt="Ecore metamodel visualization with VIATRA Viewers" width="700"></span></p>
+</div>
+<div class="paragraph">
+<p>Observe the following details:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>EPackages and EClasses are shown in purple and yellow, respectively</p>
+</li>
+<li>
+<p>direct relationships (subpackage and contained packages) are shown in grey</p>
+</li>
+<li>
+<p>inferred transitive containment relationships are shown in blue</p>
+</li>
+</ul>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="uml-integration"><a class="link" href="#uml-integration">UML support for VIATRA</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In order to work seamlessly with UML editors, VIATRA provides two relevant integration features: (1) The GMF integration feature is required for the Query Result view to work with GMF-based editors such as Papyrus; and (2) a set of surrogate queries for the UML metamodel. Both of these features are available from the <a href="https://eclipse.org/viatra/downloads.html">VIATRA update sites</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="_surrogate_queries_for_uml_derived_features"><a class="link" href="#_surrogate_queries_for_uml_derived_features">Surrogate queries for UML derived features</a></h3>
+<div class="paragraph">
+<p>The EMF metamodel for UML 2 contains several derived features which are not supported in VIATRA patterns by default. This optional integration component provides support for them via defining appropriate surrogate queries.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add the ''org.eclipse.viatra.integration.uml'' plugin to your dependencies.
+<span class="image"><img src="./images/addons/uml-integration-deps.png" alt="uml integration deps"></span></p>
+</li>
+<li>
+<p>Now you can use most of the derived features like every other feature.
+<span class="image"><img src="./images/addons/uml-integration-surrogates.png" alt="uml integration surrogates" width="815px"></span></p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>As of version 1.7.0, VIATRA does not provide support for all derived features defined in the UML model. In the following, the current status is detailed.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Status of derived features</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Derived feature</th>
+<th class="tableblock halign-left valign-top">Status</th>
+<th class="tableblock halign-left valign-top">Remark</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action.context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action.input</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Action.output</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Activity.group</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Activity.node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityEdge.inGroup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityGroup.containedEdge</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityGroup.containedNode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityGroup.inActivity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityGroup.subgroup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityGroup.superGroup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityNode.activity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ActivityNode.inGroup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Association.endType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Behavior.context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Class.extension</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Buggy in 1.0.0, disabled in 1.1.0 (implementation checks Metaclass stereotype application, so it will be incorrect if used on classes that are <em>not</em> metaclasses)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Class.superClass</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Classifier.attribute</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Classifier.feature</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Classifier.general</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Classifier.inheritedMember</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Component.provided</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Component.required</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ConnectableElement.end</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Connector.kind</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ConnectorEnd.definingEnd</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DeploymentTarget.deployedElement</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DirectedRelationship.source</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DirectedRelationship.target</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Element.ownedElement</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Element.owner</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EncapsulatedClassifier.ownedPort</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extension.isRequired</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extension.metaclass</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Feature.featuringClassifier</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Incorrect</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0, known problems (opposite of Classifier.feature according to specification, but implementation gives different result in some corner cases involving signals)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Message.messageKind</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MultiplicityElement.lower</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MultiplicityElement.upper</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NamedElement.clientDependency</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NamedElement.namespace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NamedElement.qualifiedName</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Incorrect in 1.0.0, fixed in 1.1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace.importedMember</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Incorrect</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0, known problems (imported members of Profiles are not fully correct)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace.member</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Incorrect</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0, known problems (inherited class members are not included)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Namespace.ownedMember</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OpaqueExpression.result</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operation.isOrdered</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operation.isUnique</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operation.lower</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operation.type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operation.upper</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Package.nestedPackage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Package.nestingPackage</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.1.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Package.ownedStereotype</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Package.ownedType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Parameter.default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Port.provided</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Port.required</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Property.default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Property.isComposite</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Property.opposite</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ProtocolTransition.referred</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RedefinableElement.redefinedElement</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RedefinableElement.redefinitionContext</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">RedefinableTemplateSignature.inheritedParameter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Relationship.relatedElement</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">State.isComposite</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">State.isOrthogonal</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">State.isSimple</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">State.isSubmachineState</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stereotype.profile</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">StructuredClassifier.part</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">StructuredClassifier.role</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type.package</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Vertex.incoming</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Vertex.outgoing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Done</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Since 1.0.0</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When using UML in a headless environment, make sure to call <a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/integration/plugins/org.eclipse.viatra.integration.uml/src/org/eclipse/viatra/integration/uml/ViatraQueryUMLStandaloneSetup.java">ViatraQueryUMLStandaloneSetup.doSetup()</a> to ensure everything is registered.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_static_profile_support"><a class="link" href="#_static_profile_support">Static profile support</a></h3>
+<div class="paragraph">
+<p>If you have an EMF-UML profile, you can query over applications of its stereotypes and their tagged values as if they were ordinary EClasses and EAttributes. As of 1.1.0, VIATRA only supports static profiles, so you have to define one as described in <a href="http://nyssen.blogspot.hu/2009/09/defining-static-profiles-with-eclipse.html">this blog post</a>.</p>
+</div>
+<div class="paragraph">
+<p>On the example below continuing the blog post, in the started runtime Eclipse, we created a pattern that matches &lt;tt&gt;ExampleStereotype&lt;/tt&gt; applications, and as we can see in the Query Explorer, it has matches on a simple UML instance model:</p>
+</div>
+<div id="File:Static-profile.png" class="paragraph">
+<p>Note for Papyrus users: it is recommended to also register your profile with Papyrus. To accomplish this, add an extension for the <code>org.eclipse.papyrus.uml.extensionpoints.UMLProfile</code> extension point, pointing to the UML model file containing your profile. For more information, refer to <a href="https://www.eclipse.org/forums/index.php/t/604098/">this thread</a>.</p>
+</div>
+<div class="paragraph">
+<p>The code for this example can be found in <a href="https://github.com/thSoft/viatra-uml-support">this repository</a>.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

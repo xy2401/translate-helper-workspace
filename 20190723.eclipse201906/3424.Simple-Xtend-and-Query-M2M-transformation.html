@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<title>Simple Xtend and Query M2M transformation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Simple Xtend and Query M2M transformation</h1>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The idea behind this transformation variant is similar in concept to the <a href="Simple-and-optimized-Xtend-batch-M2M-transformation.html">simple Xtend batch</a> variant. Traverse the model and transform the elements according to the specification. The main difference is the usage of VIATRA Query patterns in place of complex queries (e.g. finding send and wait signal pairs), making the transformation faster and more memory efficient.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_does_it_work">How does it work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The transformation can be separated into 2 distinct steps. Building the deployment model itself and, wherever required, setting the relationships of the model elements.</p>
+</div>
+<div class="paragraph">
+<p>To build the model, the transformation walks through the CPS model in the following hierarchy:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>HostInstance</p>
+<div class="ulist">
+<ul>
+<li>
+<p>ApplicationInstance</p>
+<div class="ulist">
+<ul>
+<li>
+<p>StateMachine</p>
+<div class="ulist">
+<ul>
+<li>
+<p>State</p>
+</li>
+<li>
+<p>Transition</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The transformation is described by the following steps.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The first step is to iterate through each HostInstance and create the DeploymentHost representing it, set its IP address and add it to the Deployment model.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>For each ApplicationInstance inside the HostInstance a DeploymentInstance is created, its id is set to be the same as the ApplicationInstance&#8217;s and is added to the proper DeploymentHost.</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>If the ApplicationInstance&#8217;s type has a StateMachine specified a DeploymentBehavior representing it is created,  its description is set and is added to the proper ApplicationInstance.</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>For each State in the StateMachine a BehaviorState based on the original State is created, its description is set and is added to the proper DeploymentBehavior.</p>
+</li>
+<li>
+<p>For each State&#8217;s each Transition a BehaviorTransition is created, its description is set and is added to both the proper DeploymentBehavior and as an outgoing transition of the BehaviorState. At this point using the Transition&#8217;s target state, the BehaviorTransition&#8217;s to reference can be set.</p>
+</li>
+<li>
+<p>The DeploymentBehavior&#8217;s current state is set to the corresponding StateMachine&#8217;s initial state.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>At this point, the triggers are set as specified by the transformation. This is done via getting the Transition for each BehaviorTransition. If the Transition has a send action, the directly reachable hosts are checked for Transitions under the correct ApplicationType&#8217;s StateMachine, and if any are found, their BehaviorTransition counterparts are added.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Each time a new element of the deployment model is created, the traceability model gets modified as required.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_of_1_to_n_mappings">Handling of 1-to-n mappings</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since the transformation is done via traversing the CPS model hierarchy, the 1-to-n mappings are created automatically. The most important thing to consider is the nature of the traceability model. Since for example each State can have multiple corresponding BehaviorStates, when searching for a specific DeploymentApplication&#8217;s BehaviorState using the traceability model, the correct one should be filtered.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creation_of_triggers">Creation of triggers</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The creation of the triggers was mostly done leveraging the power of VIATRA Query.</p>
+</div>
+<div class="paragraph">
+<p>The main pattern used is the one named "triggerPair". This pattern returns the BehaviorTransition for every Tansition with wait action corresponding to the specified Transition with send action.</p>
+</div>
+<div class="paragraph">
+<p>The other important pattern is "communicatingAppInstances". This pattern searches for every ApplicationInstance pair allocated to hosts that can directly communicate with each other.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_class_of_the_transformation">Class of the transformation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The implementation of the transformation can be found in the following class:
+<code>CPS2DeploymentBatchTransformationEiq.xtend</code></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary_and_comparison">Summary and comparison</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This method of transformation proved to be the fastest of all alternatives, while being the most memory efficient of the transformation variants using VIATRA Query. This is mainly due to the fact that it is not required to build complex VIATRA Query patterns aimed at tracking changes in the model. This is also it&#8217;s main handicap since the transformation is not incremental, thus it needs to traverse the cps model and rebuild the traceability and deployment model to maintain consistency.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+</div>
+</div>
+</body>
+</html>

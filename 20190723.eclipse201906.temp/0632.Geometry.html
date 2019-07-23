@@ -1,0 +1,847 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>GEF Geometry Developer Documentation</title>
+		<link type="text/css" rel="stylesheet" href="../../book.css"/>
+	</head>
+	<body>
+		<p>
+			<em>Note to non-wiki readers: This documentation is generated from the GEF@github.com wiki - if you have corrections or additions it would be awesome if you could contribute them to 
+				<a href="https://github.com/eclipse/gef/wiki/Geometry" target="doc_external">the original wiki page</a>
+			</em>.
+		</p>
+		<h2 id="introduction">Introduction</h2>
+		<p>The <span style="color:#268558">
+			<a href="Geometry.html">Geometry</a></span> component provides classes to store geometric objects and to perform geometric computations based on those objects. It is internally structured into three modules, namely 
+			<strong>
+				<a href="Geometry.html#geometry">Geometry</a>
+			</strong>, 
+			<strong>
+				<a href="Geometry.html#geometryconvertfx">Geometry.Convert.FX</a>
+			</strong>, and 
+			<strong>
+				<a href="Geometry.html#geometryconvertswt">Geometry.Convert.SWT</a>
+			</strong>. There are also a couple of undeployed 
+			<a href="Geometry-Examples.html#examples-undeployed">Geometry Examples</a>.
+		</p>
+		<p>
+			<img alt="" border="0" src="images/geometry/components.geometry.jpeg"/>
+		</p>
+		<hr/>
+		<h2 id="geometry">Geometry</h2>
+		<ul>
+			<li>
+				<strong>feature: org.eclipse.gef.geometry</strong>
+			</li>
+			<li>
+				<strong>bundle: org.eclipse.gef.geometry</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#geometry">Geometry</a> module of 
+			<a href="Geometry.html">Geometry</a> provides abstractions to support different kinds of geometric calculations within 2-dimensional Euclidean vector space or its related projective space, or based on 2-dimensional planar objects. Furthermore, conversions are supported to import/export from/to related AWT representations.
+		</p>
+		<p>The API is universally based on double precision calculations. Result values are computed as precise as possible, most of the time. In situations where result values are approximated, the approximation is as precise as required for the related test methods to agree on the values. An imprecision is used in the comparisons of double precision values throughout the implementation. These imprecise comparisons shall ensure consistency with regard to floating point and approximation errors.</p>
+		<p>|
+			<a href="Geometry.html#planar">Planar</a>| | | |
+			<a href="Geometry.html#euclidean">Euclidean</a>|
+			<a href="Geometry.html#projective">Projective</a>|
+			<a href="Geometry.html#convertawt">Convert.AWT</a>|
+			| --- | --- | --- | --- | --- | --- | --- |
+			|ICurve|IShape|IMultiShape|
+			<a href="Geometry.html#path">Path</a>|
+			<a href="Geometry.html#angle">Angle</a>|
+			<a href="Geometry.html#straight3d">Straight3D</a>|
+			<a href="Geometry.html#geometry2awt">Geometry2AWT</a>|
+			|
+			<a href="Geometry.html#arc">Arc</a>|
+			<a href="Geometry.html#ellipse">Ellipse</a>|
+			<a href="Geometry.html#region">Region</a>| |
+			<a href="Geometry.html#straight">Straight</a>|
+			<a href="Geometry.html#vector3d">Vector3D</a>|
+			<a href="Geometry.html#awt2geometry">AWT2Geometry</a>|
+			|
+			<a href="Geometry.html#beziercurve">BezierCurve</a>|
+			<a href="Geometry.html#pie">Pie</a>|
+			<a href="Geometry.html#ring">Ring</a>| |
+			<a href="Geometry.html#vector">Vector</a>| | |
+			|
+			<a href="Geometry.html#cubiccurve">CubicCurve</a>|
+			<a href="Geometry.html#polygon">Polygon</a>| | | | | |
+			|
+			<a href="Geometry.html#line">Line</a>|
+			<a href="Geometry.html#rectangle">Rectangle</a>| | | | | |
+			|
+			<a href="Geometry.html#quadraticcurve">QuadraticCurve</a>|
+			<a href="Geometry.html#roundedrectangle">RoundedRectangle</a>| | | | | |
+			|
+			<a href="Geometry.html#polybezier">PolyBezier</a>|
+			<a href="Geometry.html#curvedpolygon">CurvedPolygon</a>| | | | | |
+			|
+			<a href="Geometry.html#polyline">Polyline</a>| | | | | | |
+		</p><small>To ease navigation, the following sections are organized around the source code packages (org.eclipse.gef.geomtry.\*) of the API, as they were designed to represent the different domains of abstractions.</small>
+		<hr/>
+		<h3 id="planar">Planar</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.geometry.planar</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#planar">Planar</a> package provides basic abstractions for computations based on 2-dimensional geometric objects.
+		</p>
+		<p>
+			<img alt="Interface hierarchy" title="Interface hierarchy" border="0" src="images/geometry/GEFGeometry-planar-overview.png"/>
+		</p>
+		<h4 id="igeometry-icurve-ishape-imultishape">IGeometry, ICurve, IShape, IMultiShape</h4>
+		<p>As outlined above, with the exception of the 
+			<a href="Geometry.html#path">Path</a> abstraction, all objects are classified into either being curves, shapes, or multi shapes by means of respective interfaces. An 
+			<code>ICurve</code> is a one dimensional geometry, i.e. the result that you get by drawing a continuous line with a pencil. It has a start and an end point and you can approximate it by a series of 
+			<a href="Geometry.html#beziercurve">BezierCurves</a>. An 
+			<code>IShape</code> is a two dimensional geometry, i.e. it continuously encloses a region on the drawing area, without holes. An 
+			<code>IMultiShape</code> is a (possibly) non-continuous set of 
+			<code>IShape</code>s. An example for an 
+			<code>IMultiShape</code> is the 
+			<a href="Geometry.html#region">Region</a>. A 
+			<a href="Geometry.html#region">Region</a> represents the area that results from composing multiple 
+			<a href="Geometry.html#rectangle">Rectangles</a>. Accordingly, a 
+			<a href="Geometry.html#ring">Ring</a> represents the area that results from composing multiple 
+			<a href="Geometry.html#polygon">Polygons</a>. It corresponds to the 
+			<a href="PLUGINS_ROOT/org.eclipse.platform.doc.isv/reference/api/org/eclipse/swt/graphics/Region.html" target="doc_external">org.eclipse.swt.graphics.Region</a>.
+		</p>
+		<p>The most general type in the hierarchy is the 
+			<a href="Geometry.html#path">Path</a>, because every geometric object can be transfered into it. Unfortunately, the 
+			<a href="Geometry.html#path">Path</a> is incompatible to the rest of the API in that it does not implement the different interfaces, it does not ensure a certain precision for the results of its test and manipulation methods, and it cannot be transferred back into compatible objects.
+		</p>
+		<p>
+			<img alt="Important functionality" title="Important functionality" border="0" src="images/geometry/GEFGeometry-planar-abstractions-hierarchy.png"/>
+		</p>
+		<p>As you can see in this diagram, an 
+			<code>ICurve</code> can be approximated by a number of 
+			<a href="Geometry.html#beziercurve">BezierCurves</a> using the toBezier() method. The outline of an 
+			<code>IShape</code> can be retrieved using its getOutline() method. Additionally, you can split an 
+			<code>IShape</code> into a number of 
+			<code>ICurve</code>s -- which form the outline -- using the getOutlineSegments() method. 
+			<code>IMultiShape</code> provides a getShapes() method to get the individual 
+			<code>IShape</code>s that are combined by the 
+			<code>IMultiShape</code>. It does provide a getOutlineSegments() method, too, which is used to split the 
+			<code>IMultiShape</code> into several 
+			<code>ICurve</code>s. These transfer methods allow the decomposition of any geometric object into a bunch of 
+			<a href="Geometry.html#beziercurve">BezierCurves</a>:
+		</p>
+		<pre><code>BezierCurve[] fromCurve = curve.toBezier();
+BezierCurve[] fromShape = shape.getOutline().toBezier();
+
+ICurve[] fromPolyShape = polyShape.getOutlineSegments();
+List&lt;BezierCurve&gt; beziers = new ArrayList&lt;BezierCurve&gt;();
+for (ICurve c : fromPolyShape)
+    beziers.addAll(Arrays.asList(c.toBezier()));</code></pre>
+		<p>An important part of a geometry API in general, is the possibility to test the relationship of two geometric objects. 
+			<a href="Geometry.html">Geometry</a> provides four methods that perform relation tests. Universally usable is the touches() method, which is supported for each 
+			<code>IGeometry</code>. It tests if two objects have at least one point in common. Additionally, 
+			<code>ICurve</code>s can be tested for points of intersection using the intersects() method and for an overlap using the overlaps() method, among each other. An 
+			<code>IShape</code> provides a contains() method to test if it fully contains a given planar object. Moreover, the point test is available for every geometric object. It tests if a given 
+			<a href="Geometry.html#point">Point</a> is incidental to the particular object. Supplementary to the intersects() test, a getIntersections() method is offered among ICurves. 
+			<a href="Geometry.html#beziercurve">BezierCurves</a> do also facilitate the extraction of overlapping segments via the getOverlap() method.
+		</p>
+		<p>So, let us consider a few examples:</p>
+		<pre><code>boolean contained = arc.contains(point);
+boolean contained = pie.contains(point);
+Point[] intersections = line1.getIntersections(line2);
+Point[] intersections = line.getIntersections(polygon.getOutline());
+Point[] intersections = polygon.getOutline().getIntersections(roundedRectangle.getOutline());
+boolean contained = ellipse.contains(line);
+boolean contained = rectangle.contains(ellipse);
+boolean contained = region.contains(polygon);</code></pre>
+		<h4 id="irotatable-iscalable-itranslatable">IRotatable, IScalable, ITranslatable</h4>
+		<p>Noticeably, the use of interfaces unifies similar operations on different types. Therefore, the fundamental interfaces (ICurve, IShape, etc.) are complemented by three transformation interfaces: 
+			<code>Rotatable</code>, 
+			<code>IScalable</code>, and 
+			<code>ITranslatable</code>.
+		</p>
+		<p>
+			<img alt="Transformation interfaces" title="Transformation interfaces" border="0" src="images/geometry/GEFGeometry-planar-transformations-overview.png"/>
+		</p>
+		<p>You can either transform your geometric objects via instances of the AffineTransform class, or by using the short-cut methods provided by the 
+			<code>Rotatable</code>, 
+			<code>IScalable</code>, and 
+			<code>ITranslatable</code> interfaces. Transformations can either be directly applied to an object, modifying the object in-place, or to a copy of the original object. This distinction is represented by the names of the short-cut methods. All names starting with 'get' are applied to a copy of the original object. The other methods modify the object in-place.
+		</p>
+		<p>Translating an object means moving the object. You can move an object in x- and y-direction. Scaling an object means resizing the object. You can individually scale the object in x- and y-direction. Additionally, scaling requires a relative 
+			<a href="Geometry.html#point">Point</a> to scale to/away from. If you omit this 
+			<a href="Geometry.html#point">Point</a>, the scaling method will appropriately choose the relative 
+			<a href="Geometry.html#point">Point</a>. Normally, this will be the center 
+			<a href="Geometry.html#point">Point</a> of the geometric object that you want to scale. Rotation is special in that not all geometric objects can be rotated in-place. 
+			<a href="Geometry.html#rectangle">Rectangles</a>, for example, are always parallel to the x- and y-axes. That's why the IRotatable interface does only include the getRotated*() short-cut methods which are not directly applied. However, some geometric objects do provide in-place rotation methods. As with scaling, rotation is performed around a relative 
+			<a href="Geometry.html#point">Point</a>. If you omit this 
+			<a href="Geometry.html#point">Point</a>, the rotation method will appropriately choose it. Normally, this will be the center 
+			<a href="Geometry.html#point">Point</a> of the geometric object that you want to rotate.
+		</p>
+		<pre><code>Polygon rhomb = new Rectangle(10, 10, 10, 10).getRotatedCCW(Angle.fromDeg(45));
+PolyBezier slanted = new Ellipse(100, 100, 100, 50).getRotatedCCW(Angle.fromDeg(30));
+Ring rotatedClippingArea = region.getRotatedCCW(Angle.fromDeg(300));</code></pre>
+		<h4 id="abstractgeometry-abstractrectanglebasedgeometry-abstractarcbasedgeometry-abstractpointlistbasedgeometry-abstractmultishape">AbstractGeometry, AbstractRectangleBasedGeometry, AbstractArcBasedGeometry, AbstractPointListBasedGeometry, AbstractMultiShape</h4>
+		<p>Augmenting the interface hierarchy, all concrete classes are based on abstract geometry classes, depending on the type of geometry used for constructing the objects (i.e. 
+			<a href="Geometry.html#ellipse">Ellipse</a> is an 
+			<code>AbstractRectangleBasedGeometry</code>, because it is constructed by means of a 
+			<a href="Geometry.html#rectangle">Rectangle</a>).
+		</p>
+		<p>
+			<img alt="Inheritance hierarchy" title="Inheritance hierarchy" border="0" src="images/geometry/GEFGeometry-planar-inheritance-hierarchy.png"/>
+		</p>
+		<p>This classification by the construction type of the individual geometry objects allows the generalization of many operations in a few abstract classes. Those abstract classes implement methods that should return an object of the same type as the inheriting class. Thus, type parameters are used to specify such return types.</p>
+		<h4 id="point">Point</h4>
+		<p>
+			<code>Point</code> objects represent a point in 2-dimensional space. For the purpose of imagination, you can assume the coordinate system to be originated in the top left corner of your drawing area, expanding to the right and to the bottom. From a list of 
+			<code>Point</code> objects, you can build up most of the planar geometric objects:
+		</p>
+		<pre><code>Point p0 = new Point(); // defaults: x=0, y=0
+Point p1 = new Point(5, 0);
+Point p2 = new Point(0, 5);
+Polygon triangle = new Polygon(p0, p1, p2);</code></pre>
+		<p>Additionally, the 
+			<code>Point</code> class provides static utility methods to operate on a list of 
+			<code>Point</code>s: getBounds(Point...), getCentroid(Point...), and getConvexHull(Point...). They construct a bounding box, the centroid, and a convex hull of the given 
+			<code>Point</code> list, respectively.
+		</p>
+		<pre><code>Polygon convexHull = Point.getConvexHull(points);</code></pre>
+		<h4 id="dimension">Dimension</h4>
+		<p>The 
+			<a href="Geometry.html#dimension">Dimension</a> class is the pendant of the org.eclipse.draw2d.geometry.Dimension class. It decouples the location and the width and height of a rectangular object.
+		</p>
+		<pre><code>Rectangle bounds = new Rectangle(
+    new Point(50, 50),
+    new Dimension(80, 20)
+);</code></pre>
+		<h4 id="line">Line</h4>
+		<p>
+			<img alt="Line example" title="Line example" border="0" src="images/geometry/GEFGeometry-planar-line-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> 
+				<a href="Geometry.html#beziercurve">BezierCurve</a>
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Line</code> is the straight connection of two 
+			<a href="Geometry.html#point">Points</a>:
+		</p>
+		<pre><code>Line line = new Line(p0, p1)</code></pre>
+		<p>As it inherits from the 
+			<a href="Geometry.html#beziercurve">BezierCurve</a> class, all the operations for 
+			<a href="Geometry.html#beziercurve">BezierCurves</a> are available for 
+			<code>Line</code> objects, too. Because of its frequent use, 
+			<code>Line</code> overrides many of those operations to provide faster implementations for the 
+			<code>Line</code>/
+			<code>Line</code> and 
+			<code>Line</code>/
+			<a href="Geometry.html#point">Point</a> cases (equals(), touches(), contains(), intersects(), overlaps(), getIntersections(), and many more). If you want to display a 
+			<code>Line</code> using SWT, you can use the Geometry2SWT.toSWTPointArray() method as follows:
+		</p>
+		<pre><code>gc.drawPolyline(Geometry2SWT.toSWTPointArray(line));</code></pre>
+		<h4 id="rectangle">Rectangle</h4>
+		<p>
+			<img alt="Rectangle example" title="Rectangle example" border="0" src="images/geometry/GEFGeometry-planar-rectangle-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractRectangleBasedGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> IShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Rectangle</code> is the axes-parallel rectangle defined by a location (x- and y-coordinates) and a 
+			<a href="Geometry.html#dimension">Dimension</a> (width and height):
+		</p>
+		<pre><code>Rectangle rect = new Rectangle(x, y, w, h);</code></pre>
+		<p>Rotating a 
+			<code>Rectangle</code> results in a 
+			<a href="Geometry.html#polygon">Polygon</a>:
+		</p>
+		<pre><code>Polygon slanted = rect.getRotatedCCW(Angle.fromDeg(30));</code></pre>
+		<p>
+			<code>Rectangle</code> objects are frequently used, that's why some operations are overridden to provide faster implementations for designated parameter types (equals(), contains(), touches()). If you want to display a 
+			<code>Rectangle</code> using SWT, you can use the Geometry2SWT.toSWTRectangle() method as follows:
+		</p>
+		<pre><code>gc.drawRectangle(Geometry2SWT.toSWTRectangle(rect));</code></pre>
+		<h4 id="polyline">Polyline</h4>
+		<p>
+			<img alt="PolyLine example" title="PolyLine example" border="0" src="images/geometry/GEFGeometry-planar-polyline-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractPointListBasedGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Polyline</code> combines multiple 
+			<a href="Geometry.html#line">Line</a> segments to address them as a whole. Consecutive 
+			<a href="Geometry.html#line">Line</a> segments of a 
+			<code>Polyline</code> share at least one end 
+			<a href="Geometry.html#point">Point</a>. The outline of some of the IShape implementations can be represented by a 
+			<code>Polyline</code> (
+			<a href="Geometry.html#rectangle">Rectangle</a> and 
+			<a href="Geometry.html#polygon">Polygon</a>):
+		</p>
+		<pre><code>Polyline polyLine = new Polyline(new Line(p0, p1), new Line(p1, p2));
+Polyline outline = Polygon.getOutline();</code></pre>
+		<p>To render a 
+			<code>Polyline</code> with SWT, you can use the Geometry2SWT.toSWTPointArray() method as follows:
+		</p>
+		<pre><code>gc.drawPolyline(Geometry2SWT.toSWTPointArray(polyline));</code></pre>
+		<h4 id="polygon">Polygon</h4>
+		<p>
+			<img alt="Polygon example" title="Polygon example" border="0" src="images/geometry/GEFGeometry-planar-polygon-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractPointListBasedGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> IShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Polygon</code> represents a simple polygon, i.e one that does not have intersecting sides:
+		</p>
+		<pre><code>Polygon rhomb = new Polygon(0, 0, 1, -1, 2, 0, 1, 1);</code></pre>
+		<p>If you need to process self-intersecting polygons, you can use the 
+			<a href="Geometry.html#ring">Ring</a> instead.
+		</p>
+		<p>A 
+			<code>Polygon</code> can be rendered with SWT using the Geometry2SWT.toSWTPointArray() method as follows:
+		</p>
+		<pre><code>gc.drawPolyline(Geometry2SWT.toSWTPointArray(polygon));</code></pre>
+		<h4 id="ellipse">Ellipse</h4>
+		<p>
+			<img alt="Ellipse example" title="Ellipse example" border="0" src="images/geometry/GEFGeometry-planar-ellipse-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractRectangleBasedGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> IShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>An 
+			<code>Ellipse</code> is the axes-symmetric oval that can be put into an axes-parallel 
+			<a href="Geometry.html#rectangle">Rectangle</a>:
+		</p>
+		<pre><code>Ellipse ellipse = new Ellipse(rect);</code></pre>
+		<p>Therefore, rotating an 
+			<code>Ellipse</code> does not result in another 
+			<code>Ellipse</code>, but in a 
+			<a href="Geometry.html#polybezier">PolyBezier</a> which approximates the rotated 
+			<code>Ellipse</code>:
+		</p>
+		<pre><code>PolyBezier rotatedEllipse = ellipse.getRotatedCCW(Angle.fromDeg(45));</code></pre>
+		<p>You can always transfrom a 
+			<a href="Geometry.html#polybezier">PolyBezier</a> into an 
+			<code>Ellipse</code> by using the 
+			<a href="Geometry.html#polybezier">PolyBezier</a>'s bounds as the 
+			<code>Ellipse</code>'s bounds:
+		</p>
+		<pre><code>Ellipse rotated = new Ellipse(rotatedEllipse.getBounds());</code></pre>
+		<p>If you want to draw an 
+			<code>Ellipse</code> using SWT, you can directly use the GC's drawOval() method as follows:
+		</p>
+		<pre><code>gc.drawOval((int) ellipse.getX(), (int) ellipse.getY(), (int) ellipse.getWidth(), (int) ellipse.getHeight());</code></pre>
+		<h4 id="arc">Arc</h4>
+		<p>
+			<img alt="Arc example" title="Arc example" border="0" src="images/geometry/GEFGeometry-planar-arc-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractArcBasedGeometry (which 
+				<strong>extends</strong> AbstractRectangleBasedGeometry)
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>An 
+			<code>Arc</code> is an open segment of an 
+			<a href="Geometry.html#ellipse">Ellipse</a>:
+		</p>
+		<pre><code>Arc arc = new Arc(ellipse, Angle.fromDeg(45), Angle.fromDeg(90));</code></pre>
+		<p>Rotating an 
+			<code>Arc</code> does not necessarily result in another 
+			<code>Arc</code>, that's why the rotation methods return 
+			<a href="Geometry.html#polybezier">PolyBeziers</a> instead:
+		</p>
+		<pre><code>PolyBezier polyBezier = arc.getRotatedCCW(Angle.fromDeg(15), new Point());</code></pre>
+		<p>Unfortunately, it is impossible to transfrom a 
+			<a href="Geometry.html#polybezier">PolyBezier</a> into an 
+			<code>Arc</code>.
+		</p>
+		<h4 id="pie">Pie</h4>
+		<p>
+			<img alt="Pie example" title="Pie example" border="0" src="images/geometry/GEFGeometry-planar-pie-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractArcBasedGeometry (which 
+				<strong>extends</strong> AbstractRectangleBasedGeometry)
+			</li>
+			<li>
+				<strong>implements:</strong> IShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Pie</code> is a closed 
+			<a href="Geometry.html#arc">Arc</a>. Closing the 
+			<a href="Geometry.html#arc">Arc</a> is done by creating two segments: one from the mid 
+			<a href="Geometry.html#point">Point</a> of the related 
+			<a href="Geometry.html#ellipse">Ellipse</a> to the start 
+			<a href="Geometry.html#point">Point</a> of the related 
+			<a href="Geometry.html#arc">Arc</a>, the other from the mid 
+			<a href="Geometry.html#point">Point</a> of the 
+			<a href="Geometry.html#ellipse">Ellipse</a> to the end 
+			<a href="Geometry.html#point">Point</a> of the 
+			<a href="Geometry.html#arc">Arc</a>.
+		</p>
+		<pre><code>Pie pie = new Pie(arc);</code></pre>
+		<p>Rotating a 
+			<code>Pie</code> results in a 
+			<a href="Geometry.html#path">Path</a>, which, unfortunately, cannot be transformed back into a 
+			<code>Pie</code>:
+		</p>
+		<pre><code>Path rotatedPie = pie.getRotatedCCW(Angle.fromDeg(15), new Point());#</code></pre>
+		<h4 id="roundedrectangle">RoundedRectangle</h4>
+		<p>
+			<img alt="RoundedRectangle example" title="RoundedRectangle example" border="0" src="images/geometry/GEFGeometry-planar-roundedrectangle-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractRectangleBasedGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> IShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>RoundedRectangle</code> is a rectangle with round corners. The corners are 90 degrees 
+			<a href="Geometry.html#arc">Arc</a> objects:
+		</p>
+		<pre><code>RoundedRectangle rr = new RoundedRectangle(bounds, arcWidth, arcHeight);</code></pre>
+		<p>Rotating a 
+			<code>RoundedRectangle</code> does not result in another 
+			<code>RoundedRectangle</code>, but rather in a 
+			<a href="Geometry.html#polybezier">PolyBezier</a> describing the rotated outline:
+		</p>
+		<pre><code>PolyBezier rotated = rr.getRotatedCCW();</code></pre>
+		<p>Unfortunately, it is impossible to transform a 
+			<a href="Geometry.html#polybezier">PolyBezier</a> into a 
+			<code>RoundedRectangle</code>.
+		</p>
+		<h4 id="beziercurve">BezierCurve</h4>
+		<p>
+			<img alt="BezierCurve example" title="BezierCurve example" border="0" src="images/geometry/GEFGeometry-planar-beziercurve-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>BezierCurve</code> is constructed by a number of control 
+			<a href="Geometry.html#point">Points</a>: the start 
+			<a href="Geometry.html#point">Point</a>, an arbitrary number of handle 
+			<a href="Geometry.html#point">Points</a>, and the end 
+			<a href="Geometry.html#point">Point</a>. The curve approaches the handle 
+			<a href="Geometry.html#point">Points</a>. Therefore, the handle 
+			<a href="Geometry.html#point">Points</a> describe the flow of the curve. The more handle 
+			<a href="Geometry.html#point">Points</a> used, the more converges the 
+			<code>BezierCurve</code> to the 
+			<a href="Geometry.html#polyline">Polyline</a> through the control 
+			<a href="Geometry.html#point">Points</a>:
+		</p>
+		<pre><code>BezierCurve curve = new BezierCurve(pStart, pHandle0, pHandle1, pHandle2, ..., pEnd);</code></pre>
+		<h4 id="quadraticcurve">QuadraticCurve</h4>
+		<p>
+			<img alt="QuadraticCurve example" title="QuadraticCurve example" border="0" src="images/geometry/GEFGeometry-planar-quadraticcurve-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> 
+				<a href="Geometry.html#beziercurve">BezierCurve</a>
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>QuadraticCurve</code> is a 
+			<a href="Geometry.html#beziercurve">BezierCurve</a> with three control 
+			<a href="Geometry.html#point">Points</a>: the start 
+			<a href="Geometry.html#point">Point</a>, one handle 
+			<a href="Geometry.html#point">Point</a>, and the end 
+			<a href="Geometry.html#point">Point</a>.
+		</p>
+		<h4 id="cubiccurve">CubicCurve</h4>
+		<p>
+			<img alt="CubicCurve example" title="CubicCurve example" border="0" src="images/geometry/GEFGeometry-planar-cubiccurve-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> 
+				<a href="Geometry.html#beziercurve">BezierCurve</a>
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>CubicCurve</code> is a 
+			<a href="Geometry.html#beziercurve">BezierCurve</a> with four control 
+			<a href="Geometry.html#point">Points</a>: the start 
+			<a href="Geometry.html#point">Point</a>, two handle 
+			<a href="Geometry.html#point">Points</a>, and the end 
+			<a href="Geometry.html#point">Point</a>. Many geometry objects approximate their round outline segments using a number of 
+			<code>CubicCurve</code>s (
+			<a href="Geometry.html#ellipse">Ellipse</a>, 
+			<a href="Geometry.html#arc">Arc</a>, 
+			<a href="Geometry.html#pie">Pie</a>, and 
+			<a href="Geometry.html#roundedrectangle">RoundedRectangle</a>).
+		</p>
+		<h4 id="polybezier">PolyBezier</h4>
+		<p>
+			<img alt="PolyBezier example" title="PolyBezier example" border="0" src="images/geometry/GEFGeometry-planar-polybezier-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> ICurve, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>PolyBezier</code> combines multiple 
+			<a href="Geometry.html#beziercurve">BezierCurve</a> segments to address them as a whole:
+		</p>
+		<pre><code>PolyBezier polyBezier = new PolyBezier(line, quadCurve, cubicCurve, arbitraryBezierCurve);</code></pre>
+		<p>Consecutive 
+			<a href="Geometry.html#beziercurve">BezierCurves</a> are connected with each other, i.e. the end 
+			<a href="Geometry.html#point">Point</a> of one 
+			<a href="Geometry.html#beziercurve">BezierCurve</a> is the start 
+			<a href="Geometry.html#point">Point</a> of the subsequent 
+			<a href="Geometry.html#beziercurve">BezierCurve</a>. The outline of several IShape implementations can be represented by a 
+			<code>PolyBezier</code> (
+			<a href="Geometry.html#ellipse">Ellipse</a>, 
+			<a href="Geometry.html#pie">Pie</a>, and 
+			<a href="Geometry.html#roundedrectangle">RoundedRectangle</a>):
+		</p>
+		<pre><code>PolyBezier outline = pie.getOutline();</code></pre>
+		<p>Besides, the 
+			<code>PolyBezier</code> class provides a method to interpolate a number of 
+			<a href="Geometry.html#cubiccurve">CubicCurves</a> through a set of 
+			<a href="Geometry.html#point">Points</a>:
+		</p>
+		<pre><code>PolyBezier interpolation = PolyBezier.interpolateCubic(p0, p1, p2, p3, ...);</code></pre>
+		<h4 id="curvedpolygon">CurvedPolygon</h4>
+		<p>
+			<img alt="CurvedPolygon example" title="CurvedPolygon example" border="0" src="images/geometry/GEFGeometry-planar-CurvedPolygon-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractGeometry
+			</li>
+			<li>
+				<strong>implements:</strong> IShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A CurvedPolygon is composed by a number of BezierCurves where two subsequent BezierCurves have to share one end Point. Moreover, a CurvedPolygon is always closed, so the end Point of the last BezierCurve has to be equal to the start Point of the first BezierCurve.</p>
+		<h4 id="region">Region</h4>
+		<p>
+			<img alt="Region example" title="Region example" border="0" src="images/geometry/GEFGeometry-planar-Region-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractPolyShape
+			</li>
+			<li>
+				<strong>implements:</strong> IMultiShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Region</code> is built up of multiple 
+			<a href="Geometry.html#rectangle">Rectangles</a> to address their enclosing area as a unit. The 
+			<a href="Geometry.html#rectangle">Rectangles</a> that build up the 
+			<code>Region</code> do not have to touch each other. If they intersect, the 
+			<a href="Geometry.html#rectangle">Rectangles</a> are divided into a number of internal 
+			<a href="Geometry.html#rectangle">Rectangles</a> that do not intersect:
+		</p>
+		<pre><code>Region region = new Region(rect0, rect1, rect2);</code></pre>
+		<p>You can use a 
+			<code>Region</code> as a clipping area as in the example image above. For this purpose, it can be transfered into a SWT 
+			<a href="PLUGINS_ROOT/org.eclipse.platform.doc.isv/reference/api/org/eclipse/swt/graphics/Region.html" target="doc_external">org.eclipse.swt.graphics.Region</a> using the Geometry2SWT.toSWTRegion() method as follows:
+		</p>
+		<pre><code>gc.setClipping(Geometry2SWT.toSWTRegion(region));</code></pre>
+		<p>Rotating a 
+			<code>Region</code> results in a 
+			<a href="Geometry.html#ring">Ring</a>:
+		</p>
+		<pre><code>Ring rotatedRegion = region.getRotatedCCW(Angle.fromDeg(45));</code></pre>
+		<h4 id="ring">Ring</h4>
+		<p>
+			<img alt="Ring example" title="Ring example" border="0" src="images/geometry/GEFGeometry-planar-ring-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractPolyShape
+			</li>
+			<li>
+				<strong>implements:</strong> IMultiShape, ITranslatable, IScalable, IRotatable
+			</li>
+		</ul>
+		<p>A 
+			<code>Ring</code> is build up of multiple 
+			<a href="Geometry.html#polygon">Polygons</a> to address their enclosing area as a unit. The 
+			<a href="Geometry.html#polygon">Polygons</a> that build up the 
+			<code>Ring</code> do not have to touch each other. They are transfered into an internal number of triangles that do not intersect:
+		</p>
+		<pre><code>Ring ring = new Ring(poly0, poly1, poly2);</code></pre>
+		<h4 id="path">Path</h4>
+		<p>
+			<img alt="Path example" title="Path example" border="0" src="images/geometry/GEFGeometry-planar-path-example.png"/>
+		</p>
+		<ul>
+			<li>
+				<strong>extends:</strong> AbstractGeometry
+			</li>
+		</ul>
+		<p>Using a 
+			<code>Path</code> is like drawing the joker. You can transfer every other geometric object into a 
+			<code>Path</code> using the toPath() method. But the 
+			<code>Path</code> does not implement the 
+			<a href="Geometry.html">Geometry</a> interfaces. It simply delegates to the java.awt.geom.Path2D. That's why you should try to avoid using the 
+			<code>Path</code> if you want to perform further computations. On the other hand, a 
+			<code>Path</code> is easy to render via SWT:
+		</p>
+		<pre><code>gc.drawPath(new org.eclipse.swt.graphics.Path(Display.getCurrent(), Geometry2SWT.toSWTPathData(gef4Path));
+gc.fillPath(new org.eclipse.swt.graphics.Path(Display.getCurrent(), Geometry2SWT.toSWTPathData(gef4Path));</code></pre>
+		<hr/>
+		<h3 id="euclidean">Euclidean</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.geometry.euclidean</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#euclidean">Euclidean</a> package provides core abstractions (
+			<a href="Geometry.html#vector">Vector</a>, 
+			<a href="Geometry.html#straight">Straight</a>, and 
+			<a href="Geometry.html#angle">Angle</a>) to support calculations within 2-dimensional Euclidean space.
+		</p>
+		<h4 id="angle">Angle</h4>
+		<p>Considering rotation and the angular relationship of two straight lines, 
+			<code>Angle</code> objects come into play. They abstract over the two commonly used angle units, degrees and radians. The user has to specify the unit of the value an 
+			<code>Angle</code> object is constructed from. Moreover, the user can read the value of an 
+			<code>Angle</code> object in either degrees or radians. Therefore, the use of 
+			<code>Angle</code> objects assures that correct values are used in calculations. This indirection is done due to an inconsistency of several APIs, for example, org.eclipse.swt.graphics.Transform vs. org.eclipse.draw2d.geometry.Transform.
+		</p>
+		<pre><code>// creates a 75% pie chart
+Pie chart = new Pie(0, 0, 100, 100, Angle.fromDeg(15), Angle.fromDeg(270));</code></pre>
+		<h4 id="vector">Vector</h4>
+		<p>A 
+			<code>Vector</code> has two components x and y. It can be interpreted as a planar 
+			<a href="Geometry.html#point">Point</a> (toPoint()). The 
+			<code>Vector</code> class implements the common arithmetic operations for vectors: addition, multiplication with a scalar, dot product, cross product, and 
+			<a href="Geometry.html#angle">Angle</a> calculation between two 
+			<code>Vector</code>s:
+		</p>
+		<pre><code>Vector u = new Vector(1, 0);
+Vector v = new Vector(0, 1);
+double zero = u.getDotProduct(v);</code></pre>
+		<h4 id="straight">Straight</h4>
+		<p>A 
+			<code>Straight</code> is an infinite planar line. You can build it up from either two 
+			<a href="Geometry.html#point">Points</a> which the 
+			<code>Straight</code> passes through, or by specifying a position and a direction 
+			<a href="Geometry.html#vector">Vector</a>:
+		</p>
+		<pre><code>Straight diagonal = new Straight(new Point(1, 1), new Point(2, 2));
+Straight diagonal = new Straight(new Vector(1, 1), new Vector(1, 1)); // exactly the same Straight</code></pre>
+		<hr/>
+		<h3 id="projective">Projective</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.geometry.projective</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#projective">Projective</a> package provides classes (
+			<a href="Geometry.html#vector3d">Vector3D</a>, 
+			<a href="Geometry.html#straight3d">Straight3D</a>) to represent euclidean elements in the projective plane.
+		</p>
+		<p>Projective geometry is an interesting perspective to (planar) geometry. A point and a line can both be represented by a (x, y, z) triple. And, in fact, people speak of the duality between points and lines, because for any relation between points and lines, the inverse relation holds if you substitute point by line and vice versa. To retain the semantic distinction of points and lines, both concepts are separated in the 
+			<a href="Geometry.html#vector3d">Vector3D</a> and 
+			<a href="Geometry.html#straight3d">Straight3D</a> classes. You may wonder why 2-dimensional objects are specified by three components. This is the case, because a planar projective point is really a three dimensional euclidean line, that passes through the origin of the three dimensional coordinate system. The x, y, and z values are the components of the direction vector of that line. Similarly, a planar projective line is really a three dimensional euclidean plane, that contains the origin of the three dimensional coordinate system. The x, y, and z components specify that plane's normal vector. Notice that the z = 1 plane is considered to be the 2-dimensional plane. Therefore, a 
+			<a href="Geometry.html#vector3d">Vector3D</a> with the components (x, y, z) represents a 
+			<a href="Geometry.html#point">Point</a> with components (x/z, y/z).
+		</p>
+		<p>This approach leads to elegant mathematical solutions to some of the basic planar geometric operations. You want to know if a point lies on a line? Simply substitute its coordinate values into the 
+			<a href="Geometry.html#straight3d">Straight3D</a>'s formula. You want to know the distance of a point to a line? If the 
+			<a href="Geometry.html#straight3d">Straight3D</a>'s vector is normalized (a\^2 + b\^2 = 1), the formula evaluates to the signed distance of the point to the line, i.e. on one side of the line it is positive and on the other side it is negative. You want to know where two lines are intersecting? Simply compute the cross product of two (x, y, z) triples. These operations are packed in appropriately named methods.
+		</p>
+		<pre><code>Straight3D s = Straight3D.through(new Vector3D(s0), new Vector3D(s1)); // s0, s1 are Points
+double signedDistance = s.getSignedDistanceCW(p); // Math.abs() =&gt; absolute distance
+Straight3D r = Straight3D.through(new Vector3D(r0), new Vector3D(r1)); // r0, r1 are Points
+Vector3D intersection = s.getIntersection(r);
+Point poi = intersection.toPoint();</code></pre>
+		<h4 id="vector3d">Vector3D</h4>
+		<p>A 
+			<code>Vector3D</code> consists of three components (x, y, z). It represents the 
+			<a href="Geometry.html#point">Point</a> (x/z, y/z) in 2-dimensional space. You can use the common arithmetic operations for vectors on a 
+			<code>Vector3D</code> object:
+		</p>
+		<pre><code>Vector3D v = new Vector3D(1, 2, 3);
+Vector3D u = v.getAdded(new Vector3D(3, -6, 1));
+double zero = v.getDotProduct(u);</code></pre>
+		<h4 id="straight3d">Straight3D</h4>
+		<p>A 
+			<code>Straight3D</code> consists of three components (x, y, z). It represents the line ax + by + z = 0 in 2-dimensional space, where (a, b) is a planar 
+			<a href="Geometry.html#point">Point</a>. You can use a 
+			<code>Straight3D</code> to calculate the distance of a 
+			<a href="Geometry.html#vector3d">Vector3D</a> to the 
+			<code>Straight3D</code>. Moreover, you can compute the point of intersection of two 
+			<code>Straight3D</code>s:
+		</p>
+		<pre><code>Straight3D s = Straight3D.through(new Vector3D(1, 1, 1), new Vector3D(2, 1, 1));
+double one = s.getSignedDistanceCW(new Vector3D(1.5, 2, 1));</code></pre>
+		<hr/>
+		<h3 id="a-name-convertawt-a-convert-awt"><a name="convertawt"></a>Convert.AWT</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.geometry.convert.awt</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#convertawt">Convert.AWT</a> package contains helper classes to transfer data from AWT/Geometry to one another.
+		</p>
+		<h4 id="geometry2awt">Geometry2AWT</h4>
+		<p>
+			<a href="Geometry.html#point">Point</a>, 
+			<a href="Geometry.html#line">Line</a>, 
+			<a href="Geometry.html#rectangle">Rectangle</a>, 
+			<a href="Geometry.html#roundedrectangle">RoundedRectangle</a>, and AffineTransform objects can be transfered into their AWT pendants using the toAWT*() methods of the 
+			<a href="Geometry.html#geometry2awt">Geometry2AWT</a> class:
+		</p>
+		<pre><code>RoundRectangle2D rr2d = Geometry2AWT.toAWTRoundedRectangle(rr);</code></pre>
+		<h4 id="awt2geometry">AWT2Geometry</h4>
+		<p>Correspondingly, the 
+			<a href="Geometry.html#awt2geometry">AWT2Geometry</a> class provides methods to transfer AWT objects into GEF 4 Geometry objects:
+		</p>
+		<pre><code>RoundedRectangle rr = AWT2Geometry.toRoundedRectangle(rr2d);</code></pre>
+		<hr/>
+		<h2 id="geometry-convert-fx">Geometry.Convert.FX</h2>
+		<ul>
+			<li>
+				<strong>feature: org.eclipse.gef.geometry.convert.fx</strong>
+			</li>
+			<li>
+				<strong>bundle: org.eclipse.gef.geometry.convert.fx</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#geometryconvertfx">Geometry.Convert.FX</a> module of 
+			<a href="Geometry.html">Geometry</a> contains helper classes for the conversion of JavaFX/Geometry objects to one another.
+		</p>
+		<hr/>
+		<h3 id="a-name-convertfx-a-convert-fx"><a name="convertfx"></a>Convert.FX</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.geometry.convert.fx</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#convertfx">Convert.FX</a> package contains helper classes to transfer data from JavaFX/Geometry to one another.
+		</p>
+		<h4 id="geometry2javafx">Geometry2JavaFX</h4>
+		<p>AffineTransform, Path, Point, and Rectangle objects can be transfered into their JavaFX pendants using the toFX*() methods provided by the 
+			<code>Geometry2JavaFX</code> class:
+		</p>
+		<pre><code>Rectangle rect = new Rectangle(10, 10, 100, 50);
+javafx.geometry.Bounds rectFx = Geometry2JavaFX.toFXBounds(rect);</code></pre>
+		<p>Additionally, the #toPathElements(Path) method allows the conversion of a Path object into JavaFX PathElements.</p>
+		<h4 id="javafx2geometry">JavaFX2Geometry</h4>
+		<p>JavaFX Bounds, Transform, Path, and Point2D can be transfered into their Geometry pendants using the to*() methods provided by the 
+			<code>JavaFX2Geometry</code> class.
+		</p>
+		<hr/>
+		<h2 id="geometry-convert-swt">Geometry.Convert.SWT</h2>
+		<ul>
+			<li>
+				<strong>feature: org.eclipse.gef.geometry.convert.swt</strong>
+			</li>
+			<li>
+				<strong>bundle: org.eclipse.gef.geometry.convert.swt</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#geometryconvertswt">Geometry.Convert.SWT</a> module of 
+			<a href="Geometry.html">Geometry</a> contains helper classes for the conversion of SWT/Geometry objects to one another and SWT/AWT objects to one another.
+		</p>
+		<hr/>
+		<h3 id="a-name-convertswt-a-convert-swt"><a name="convertswt"></a>Convert.SWT</h3>
+		<ul>
+			<li>
+				<strong>package: org.eclipse.gef.geometry.convert.swt</strong>
+			</li>
+		</ul>
+		<p>The 
+			<a href="Geometry.html#convertswt">Convert.SWT</a> package contains helper classes to transfer data from SWT/Geometry to one another and from SWT/AWT to one another.
+		</p>
+		<h4 id="geometry2swt">Geometry2SWT</h4>
+		<p>
+			<a href="Geometry.html#path">Path</a>, 
+			<a href="Geometry.html#point">Point</a>, 
+			<a href="Geometry.html#line">Line</a>, 
+			<a href="Geometry.html#polygon">Polygon</a>, 
+			<a href="Geometry.html#polyline">Polyline</a>, 
+			<a href="Geometry.html#rectangle">Rectangle</a>, 
+			<a href="Geometry.html#region">Region</a>, and 
+			<a href="Geometry.html#ring">Ring</a> objects can be transfered into their SWT pendants using the toSWT*() methods provided by the 
+			<code>Geometry2SWT</code> class:
+		</p>
+		<pre><code>Rectangle rect = new Rectangle(10, 10, 100, 50);
+org.eclipse.swt.graphics.Rectangle rectSWT = Geometry2SWT.toSWTRectangle(rect);</code></pre>
+		<p>Using the IGeometry#toPath() method, you can easily convert any 
+			<a href="Geometry.html">Geometry</a> object into an SWT PathData representation:
+		</p>
+		<pre><code>CubicCurve curve = new CubicCurve(0, 0, 50, 0, 0, 50, 50, 50);
+PathData pd = Geometry2SWT.toSWTPathData(curve.toPath());</code></pre>
+		<h4 id="swt2geometry">SWT2Geometry</h4>
+		<p>The 
+			<code>SWT2Geometry</code> class contains methods to transfer SWT objects into 
+			<a href="Geometry.html">Geometry</a> representations.
+		</p>
+		<h4 id="swt2awt">SWT2AWT</h4>
+		<p>The 
+			<code>SWT2AWT</code> class contains a toPathIterator() method which transfers an SWT PathData into a 
+			<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/awt/geom/PathIterator.html" target="doc_external">java.awt.geom.PathIterator</a>.
+		</p>
+		<pre><code>PathIterator pathIterator = SWT2AWT.toPathIterator(pathData, windingRule);</code></pre>
+		<h4 id="awt2swt">AWT2SWT</h4>
+		<p>The 
+			<code>AWT2SWT</code> class contains a toSWTPathData() method which transfers an 
+			<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/awt/geom/PathIterator.html" target="doc_external">java.awt.geom.PathIterator</a> into an org.eclipse.swt.graphics.PathData. Consider that the winding rule of the AWT PathIterator is not kept in the SWT PathData, because the latter does not store this information. Instead, it is provided by an SWT Path or by the SWT GC that is used to draw the SWT PathData object:
+		</p>
+		<pre><code>PathData pathData = AWT2SWT.toSWTPathData(pathIterator);</code></pre>
+	</body>
+</html>

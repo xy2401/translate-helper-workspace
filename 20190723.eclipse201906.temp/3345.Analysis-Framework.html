@@ -1,0 +1,415 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - Analysis Framework</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Analysis Framework</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Event-matching-and-trace-synchronization.html" title="Event matching and trace synchronization">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="TMF-Remote-API.html" title="TMF Remote API">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Event matching and trace synchronization</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">TMF Remote API</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Analysis_Framework">Analysis Framework</h1>
+		<p>Analysis modules are useful to tell the user exactly what can be done with a trace. The analysis framework provides an easy way to access and execute the modules and open the various outputs available.</p>
+		<p>Analyses can have parameters they can use in their code. They also have outputs registered to them to display the results from their execution.</p>
+		<h2 id="Creating_a_new_module">Creating a new module</h2>
+		<p>All analysis modules must implement the 
+			<b>IAnalysisModule</b> interface from the o.e.l.tmf.core project. An abstract class, 
+			<b>TmfAbstractAnalysisModule</b>, provides a good base implementation. It is strongly suggested to use it as a superclass of any new analysis.
+		</p>
+		<h3 id="Example">Example</h3>
+		<p>This example shows how to add a simple analysis module for an LTTng kernel trace with two parameters. It also specifies two mandatory events by overriding 
+			<b>getAnalysisRequirements</b>. The analysis requirements are further explained in the section 
+			<a href="#Providing_requirements_to_analyses">Providing requirements to analyses</a>.
+		</p>
+		<pre>
+public class MyLttngKernelAnalysis extends TmfAbstractAnalysisModule {
+
+    public static final String PARAM1 = "myparam";
+    public static final String PARAM2 = "myotherparam";
+
+    @Override
+    public Iterable&lt;TmfAnalysisRequirement&gt; getAnalysisRequirements() {
+
+        // initialize the requirement: events
+        Set&lt;@NonNull String&gt; requiredEvents = ImmutableSet.of("sched_switch", "sched_wakeup");
+        TmfAbstractAnalysisRequirement eventsReq = new TmfAnalysisEventRequirement(requiredEvents, PriorityLevel.MANDATORY);
+
+        return ImmutableList.of(eventsReq);
+    }
+
+    @Override
+    protected void canceling() {
+	     /* The job I am running in is being cancelled, let's clean up */
+    }
+
+    @Override
+    protected boolean executeAnalysis(final IProgressMonitor monitor) {
+        /*
+         * I am running in an Eclipse job, and I already know I can execute
+         * on a given trace.
+         *
+         * In the end, I will return true if I was successfully completed or
+         * false if I was either interrupted or something wrong occurred.
+         */
+        Object param1 = getParameter(PARAM1);
+        int param2 = (Integer) getParameter(PARAM2);
+    }
+
+    @Override
+    public Object getParameter(String name) {
+        Object value = super.getParameter(name);
+        /* Make sure the value of param2 is of the right type. For sake of
+           simplicity, the full parameter format validation is not presented
+           here */
+        if ((value != null) &amp;&amp; name.equals(PARAM2) &amp;&amp; (value instanceof String)) {
+            return Integer.parseInt((String) value);
+        }
+        return value;
+    }
+
+}
+</pre>
+		<h3 id="Available_base_analysis_classes_and_interfaces">Available base analysis classes and interfaces</h3>
+		<p>The following are available as base classes for analysis modules. They also extend the abstract 
+			<b>TmfAbstractAnalysisModule</b>
+		</p>
+		<ul>
+			<li>
+				<b>TmfStateSystemAnalysisModule</b>: A base analysis module that builds one state system. A module extending this class only needs to provide a state provider and the type of state system backend to use. All state systems should now use this base class as it also contains all the methods to actually create the state sytem with a given backend.
+			</li>
+		</ul>
+		<p>The following interfaces can optionally be implemented by analysis modules if they use their functionalities. For instance, some utility views, like the State System Explorer, may have access to the module's data through these interfaces.</p>
+		<ul>
+			<li>
+				<b>ITmfAnalysisModuleWithStateSystems</b>: Modules implementing this have one or more state systems included in them. For example, a module may "hide" 2 state system modules for its internal workings. By implementing this interface, it tells that it has state systems and can return them if required.
+			</li>
+		</ul>
+		<h3 id="How_it_works">How it works</h3>
+		<p>Analyses are managed through the 
+			<b>TmfAnalysisManager</b>. The analysis manager is a singleton in the application and keeps track of all available analysis modules, with the help of 
+			<b>IAnalysisModuleHelper</b>. It can be queried to get the available analysis modules, either all of them or only those for a given tracetype. The helpers contain the non-trace specific information on an analysis module: its id, its name, the tracetypes it applies to, etc.
+		</p>
+		<p>When a trace is opened, the helpers for the applicable analysis create new instances of the analysis modules. The analyses are then kept in a field of the trace and can be executed automatically or on demand.</p>
+		<p>The analysis is executed by calling the 
+			<b>IAnalysisModule#schedule()</b> method. This method makes sure the analysis is executed only once and, if it is already running, it won't start again. The analysis itself is run inside an Eclipse job that can be cancelled by the user or the application. The developer must consider the progress monitor that comes as a parameter of the 
+			<b>executeAnalysis()</b> method, to handle the proper cancellation of the processing. The 
+			<b>IAnalysisModule#waitForCompletion()</b> method will block the calling thread until the analysis is completed. The method will return whether the analysis was successfully completed or if it was cancelled.
+		</p>
+		<p>A running analysis can be cancelled by calling the 
+			<b>IAnalysisModule#cancel()</b> method. This will set the analysis as done, so it cannot start again unless it is explicitly reset. This is done by calling the protected method 
+			<b>resetAnalysis</b>.
+		</p>
+		<h2 id="Telling_TMF_about_the_analysis_module">Telling TMF about the analysis module</h2>
+		<p>Now that the analysis module class exists, it is time to hook it to the rest of TMF so that it appears under the traces in the project explorer. The way to do so is to add an extension of type 
+			<i>org.eclipse.linuxtools.tmf.core.analysis</i> to a plugin, either through the 
+			<i>Extensions</i> tab of the Plug-in Manifest Editor or by editing directly the plugin.xml file.
+		</p>
+		<p>The following code shows what the resulting plugin.xml file should look like.</p>
+		<pre>
+&lt;extension
+         point="org.eclipse.linuxtools.tmf.core.analysis"&gt;
+      &lt;module
+         id="my.lttng.kernel.analysis.id"
+         name="My LTTng Kernel Analysis"
+         analysis_module="my.plugin.package.MyLttngKernelAnalysis"
+         automatic="true"&gt;
+         &lt;parameter
+               name="myparam"&gt;
+         &lt;/parameter&gt;
+         &lt;parameter
+               default_value="3"
+               name="myotherparam"&gt;
+         &lt;tracetype
+               class="org.eclipse.tracecompass.lttng2.kernel.core.trace.LttngKernelTrace"&gt;
+         &lt;/tracetype&gt;
+      &lt;/module&gt;
+&lt;/extension&gt;
+</pre>
+		<p>This defines an analysis module where the 
+			<i>analysis_module</i> attribute corresponds to the module class and must implement IAnalysisModule. This module has 2 parameters: 
+			<i>myparam</i> and 
+			<i>myotherparam</i> which has default value of 3. The 
+			<i>tracetype</i> element tells which tracetypes this analysis applies to. There can be many tracetypes. Also, the 
+			<i>automatic</i> attribute of the module indicates whether this analysis should be run when the trace is opened, or wait for the user's explicit request.
+		</p>
+		<p>Note that with these extension points, it is possible to use the same module class for more than one analysis (with different ids and names). That is a desirable behavior. For instance, a third party plugin may add a new tracetype different from the one the module is meant for, but on which the analysis can run. Also, different analyses could provide different results with the same module class but with different default values of parameters.</p>
+		<h2 id="Attaching_outputs_and_views_to_the_analysis_module">Attaching outputs and views to the analysis module</h2>
+		<p>Analyses will typically produce outputs the user can examine. Outputs can be a text dump, a .dot file, an XML file, a view, etc. All output types must implement the 
+			<b>IAnalysisOutput</b> interface.
+		</p>
+		<p>An output can be registered to an analysis module at any moment by calling the 
+			<b>IAnalysisModule#registerOutput()</b> method. Analyses themselves may know what outputs are available and may register them in the analysis constructor or after analysis completion.
+		</p>
+		<p>The various concrete output types are:</p>
+		<ul>
+			<li>
+				<b>TmfAnalysisViewOutput</b>: It takes a view ID as parameter and, when selected, opens the view.
+			</li>
+		</ul>
+		<h3 id="Using_the_extension_point_to_add_outputs">Using the extension point to add outputs</h3>
+		<p>Analysis outputs can also be hooked to an analysis using the same extension point 
+			<i>org.eclipse.linuxtools.tmf.core.analysis</i> in the plugin.xml file. Outputs can be matched either to a specific analysis identified by an ID, or to all analysis modules extending or implementing a given class or interface.
+		</p>
+		<p>The following code shows how to add a view output to the analysis defined above directly in the plugin.xml file. This extension does not have to be in the same plugin as the extension defining the analysis. Typically, an analysis module can be defined in a core plugin, along with some outputs that do not require UI elements. Other outputs, like views, who need UI elements, will be defined in a ui plugin.</p>
+		<pre>
+&lt;extension
+         point="org.eclipse.linuxtools.tmf.core.analysis"&gt;
+      &lt;output
+            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
+            id="my.plugin.package.ui.views.myView"&gt;
+         &lt;analysisId
+               id="my.lttng.kernel.analysis.id"&gt;
+         &lt;/analysisId&gt;
+      &lt;/output&gt;
+      &lt;output
+            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
+            id="my.plugin.package.ui.views.myMoreGenericView"&gt;
+         &lt;analysisModuleClass
+               class="my.plugin.package.core.MyAnalysisModuleClass"&gt;
+         &lt;/analysisModuleClass&gt;
+      &lt;/output&gt;
+&lt;/extension&gt;
+</pre>
+		<h2 id="Providing_help_for_the_module">Providing help for the module</h2>
+		<p>For now, the only way to provide a meaningful help message to the user is by overriding the 
+			<b>IAnalysisModule#getHelpText()</b> method and return a string that will be displayed in a message box.
+		</p>
+		<p>What still needs to be implemented is for a way to add a full user/developer documentation with mediawiki text file for each module and automatically add it to Eclipse Help. Clicking on the Help menu item of an analysis module would open the corresponding page in the help.</p>
+		<h2 id="Using_analysis_parameter_providers">Using analysis parameter providers</h2>
+		<p>An analysis may have parameters that can be used during its execution. Default values can be set when describing the analysis module in the plugin.xml file, or they can use the 
+			<b>IAnalysisParameterProvider</b> interface to provide values for parameters. 
+			<b>TmfAbstractAnalysisParamProvider</b> provides an abstract implementation of this interface, that automatically notifies the module of a parameter change.
+		</p>
+		<h3 id="Example_parameter_provider">Example parameter provider</h3>
+		<p>The following example shows how to have a parameter provider listen to a selection in the LTTng kernel Control Flow view and send the thread id to the analysis.</p>
+		<pre>
+public class MyLttngKernelParameterProvider extends TmfAbstractAnalysisParamProvider {
+
+    private ControlFlowEntry fCurrentEntry = null;
+
+    private static final String NAME = "My Lttng kernel parameter provider"; //$NON-NLS-1$
+
+    private ISelectionListener selListener = new ISelectionListener() {
+        @Override
+        public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+            if (selection instanceof IStructuredSelection) {
+                Object element = ((IStructuredSelection) selection).getFirstElement();
+                if (element instanceof ControlFlowEntry) {
+                    ControlFlowEntry entry = (ControlFlowEntry) element;
+                    setCurrentThreadEntry(entry);
+                }
+            }
+        }
+    };
+
+    /*
+     * Constructor
+     */
+    public MyLttngKernelParameterProvider() {
+        super();
+        registerListener();
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public Object getParameter(String name) {
+        if (fCurrentEntry == null) {
+            return null;
+        }
+        if (name.equals(MyLttngKernelAnalysis.PARAM1)) {
+            return fCurrentEntry.getThreadId();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean appliesToTrace(ITmfTrace trace) {
+        return (trace instanceof LttngKernelTrace);
+    }
+
+    private void setCurrentThreadEntry(ControlFlowEntry entry) {
+        if (!entry.equals(fCurrentEntry)) {
+            fCurrentEntry = entry;
+            this.notifyParameterChanged(MyLttngKernelAnalysis.PARAM1);
+        }
+    }
+
+    private void registerListener() {
+        final IWorkbench wb = PlatformUI.getWorkbench();
+
+        final IWorkbenchPage activePage = wb.getActiveWorkbenchWindow().getActivePage();
+
+        /* Add the listener to the control flow view */
+        view = activePage.findView(ControlFlowView.ID);
+        if (view != null) {
+            view.getSite().getWorkbenchWindow().getSelectionService().addPostSelectionListener(selListener);
+            view.getSite().getWorkbenchWindow().getPartService().addPartListener(partListener);
+        }
+    }
+
+}
+</pre>
+		<h3 id="Register_the_parameter_provider_to_the_analysis">Register the parameter provider to the analysis</h3>
+		<p>To have the parameter provider class register to analysis modules, it must first register through the analysis manager. It can be done in a plugin's activator as follows:</p>
+		<pre>
+@Override
+public void start(BundleContext context) throws Exception {
+    /* ... */
+    TmfAnalysisManager.registerParameterProvider("my.lttng.kernel.analysis.id", MyLttngKernelParameterProvider.class)
+}
+</pre>
+		<p>where 
+			<b>MyLttngKernelParameterProvider</b> will be registered to analysis 
+			<i>"my.lttng.kernel.analysis.id"</i>. When the analysis module is created, the new module will register automatically to the singleton parameter provider instance. Only one module is registered to a parameter provider at a given time, the one corresponding to the currently selected trace.
+		</p>
+		<h2 id="Providing_requirements_to_analyses">Providing requirements to analyses</h2>
+		<h3 id="Analysis_requirement_provider_API">Analysis requirement provider API</h3>
+		<p>A requirement defines the needs of an analysis. For example, an analysis could need an event named 
+			<i>"sched_switch"</i> in order to be properly executed. The requirements are represented by extending the class 
+			<b>TmfAbstractAnalysisRequirement</b>. Since 
+			<b>IAnalysisModule</b> extends the 
+			<b>IAnalysisRequirementProvider</b> interface, all analysis modules must provide their requirements. If the analysis module extends 
+			<b>TmfAbstractAnalysisModule</b>, it has the choice between overriding the requirements getter (
+			<b>IAnalysisRequirementProvider#getAnalysisRequirements()</b>) or not, since the abstract class returns an empty collection by default (no requirements).
+		</p>
+		<h3 id="Requirement_values">Requirement values</h3>
+		<p>Each concrete analysis requirement class will define how a requirement is verified on a given trace. 
+			When creating a requirement, the developer will specify a set of values for that class.
+			With an 'event' type requirement, a trace generator like the LTTng Control could automatically
+			enable the required events. 
+			Another point we have to take into consideration is the priority level when creating a requirement object.
+			The enum 
+			<b>TmfAbstractAnalysisRequirement#PriorityLevel</b> gives the choice
+			between 
+			<b>PriorityLevel#OPTIONAL</b>, 
+			<b>PriorityLevel#ALL_OR_NOTHING</b>,
+
+			<b>PriorityLevel#AT_LEAST_ONE</b> or 
+			<b>PriorityLevel#MANDATORY</b>. That way, we
+			can tell if an analysis can run without a value or not.
+		</p>
+		<p>To create a requirement one has the choice to extend the abstract class
+
+			<b>TmfAbstractAnalysisRequirement</b> or use the existing implementations:
+
+			<b>TmfAnalysisEventRequirement</b> (will verify the presence of events identified by name),
+
+			<b>TmfAnalysisEventFieldRequirement</b> (will verify the presence of fields for some or all events) or
+
+			<b>TmfCompositeAnalysisRequirement</b> (join requirements together with one of the priority levels).
+		</p>
+		<p>Moreover, information can be added to requirements. That way, the developer can explicitly give help details at the requirement level instead of at the analysis level (which would just be a general help text). To add information to a requirement, the method 
+			<b>TmfAnalysisRequirement#addInformation()</b> must be called. Adding information is not mandatory.
+		</p>
+		<h3 id="Example_of_providing_requirements">Example of providing requirements</h3>
+		<p>In this example, we will implement a method that initializes a requirement object
+			and return it in the 
+			<b>IAnalysisRequirementProvider#getAnalysisRequirements()</b>
+			getter. The example method will return a set with three requirements.
+			The first one will indicate a mandatory event needed by a specific analysis,
+			the second one will tell an optional event name and the third will indicate
+			mandatory event fields for the given event type.
+		</p>
+		<p>Note that in LTTng event contexts are considered as event fields. Using the
+
+			<b>TmfAnalysisEventFieldRequirement</b> it's possible to define requirements
+			on event contexts (see 3rd requirement in example below).
+		</p>
+		<pre>
+    @Override
+    public @NonNull Iterable&lt;@NonNull TmfAbstractAnalysisRequirement&gt; getAnalysisRequirements() {
+
+        /* Requirement on event name */
+        Set&lt;@NonNull String&gt; requiredEvents = ImmutableSet.of("sched_wakeup");
+        TmfAbstractAnalysisRequirement eventsReq1 = new TmfAnalysisEventRequirement(requiredEvents, PriorityLevel.MANDATORY);
+
+        requiredEvents = ImmutableSet.of("sched_switch");
+        TmfAbstractAnalysisRequirement eventsReq2 = new TmfAnalysisEventRequirement(requiredEvents, PriorityLevel.OPTIONAL);
+
+        /* An information about the events */
+        eventsReq2.addInformation("The event sched_wakeup is optional because it's not properly handled by this analysis yet.");
+
+        /* Requirement on event fields */
+        Set&lt;@NonNull String&gt; requiredEventFields = ImmutableSet.of("context._procname", "context._ip");
+        TmfAbstractAnalysisRequirement eventFieldRequirement = new TmfAnalysisEventFieldRequirement(
+                 "event name",
+                 requiredEventFields,
+                 PriorityLevel.MANDATORY);
+
+         Set&lt;TmfAbstractAnalysisRequirement&gt; requirements = ImmutableSet.of(eventsReq1, eventsReq2, eventFieldRequirement);
+         return requirements;
+    }
+</pre>
+		<h2 id="TODO">TODO</h2>
+		<p>Here's a list of features not yet implemented that would improve the analysis module user experience:</p>
+		<ul>
+			<li>Implement help using the Eclipse Help facility (without forgetting an eventual command line request)</li>
+			<li>The abstract class 
+				<b>TmfAbstractAnalysisModule</b> executes an analysis as a job, but nothing compels a developer to do so for an analysis implementing the 
+				<b>IAnalysisModule</b> interface. We should force the execution of the analysis as a job, either from the trace itself or using the TmfAnalysisManager or by some other mean.
+			</li>
+			<li>Views and outputs are often registered by the analysis themselves (forcing them often to be in the .ui packages because of the views), because there is no other easy way to do so. We should extend the analysis extension point so that .ui plugins or other third-party plugins can add outputs to a given analysis that resides in the core.</li>
+			<li>Improve the user experience with the analysis:
+				<ul>
+					<li>Allow the user to select which analyses should be available, per trace or per project.</li>
+					<li>Allow the user to view all available analyses even though he has no imported traces.</li>
+					<li>Allow the user to generate traces for a given analysis, or generate a template to generate the trace that can be sent as parameter to the tracer.</li>
+					<li>Give the user a visual status of the analysis: not executed, in progress, completed, error.</li>
+					<li>Give a small screenshot of the output as icon for it.</li>
+					<li>Allow to specify parameter values from the GUI.</li>
+				</ul>
+			</li>
+			<li>Add the possibility for an analysis requirement to be composed of another requirement.</li>
+			<li>Generate a trace session from analysis requirements.</li>
+		</ul><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="Event-matching-and-trace-synchronization.html" title="Event matching and trace synchronization">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="TMF-Remote-API.html" title="TMF Remote API">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">Event matching and trace synchronization</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">TMF Remote API</td>
+			</tr>
+		</table>
+	</body>
+</html>

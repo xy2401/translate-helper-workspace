@@ -1,0 +1,361 @@
+<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<title>Trace Compass Developer Guide - Event matching and trace synchronization</title>
+		<link type="text/css" rel="stylesheet" href="book.css"/>
+	</head>
+	<body>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<th style="width: 100%" align="center" colspan="3">Event matching and trace synchronization</th>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="CTF-Parser.html" title="CTF Parser">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right">
+					<a href="Analysis-Framework.html" title="Analysis Framework">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">CTF Parser</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Analysis Framework</td>
+			</tr>
+		</table><hr class="navigation-separator"/>
+		<h1 id="Event_matching_and_trace_synchronization">Event matching and trace synchronization</h1>
+		<p>Event matching consists in taking an event from a trace and linking it to another event in a possibly different trace. The example that comes to mind is matching network packets sent from one traced machine to another traced machine. These matches can be used to synchronize traces.</p>
+		<p>Trace synchronization consists in taking traces, taken on different machines, with a different time reference, and finding the formula to transform the timestamps of some of the traces, so that they all have the same time reference.</p>
+		<h2 id="Event_matching_interfaces">Event matching interfaces</h2>
+		<p>Here's a description of the major parts involved in event matching.  These classes are all in the 
+			<i>org.eclipse.tracecompass.tmf.core.event.matching</i> package:
+		</p>
+		<ul>
+			<li>
+				<b>ITmfEventMatching</b>: Controls the event matching process
+			</li>
+			<li>
+				<b>ITmfMatchEventDefinition</b>: Describes how events are matched
+			</li>
+			<li>
+				<b>IMatchProcessingUnit</b>: Processes the matched events
+			</li>
+		</ul>
+		<h2 id="Implementation_details_and_how_to_extend_it">Implementation details and how to extend it</h2>
+		<h3 id="ITmfEventMatching_interface_and_derived_classes">ITmfEventMatching interface and derived classes</h3>
+		<p>This interface controls the event matching itself. Their only public method is 
+			<i>matchEvents</i>. The implementing classes needs to manage how to setup the traces, and any initialization or finalization procedures.
+		</p>
+		<p>The is one concrete implementation of this interface: 
+			<b>TmfEventMatching</b>. It makes a request on the traces and match events where a 
+			<i>cause</i> event can be uniquely matched with a 
+			<i>effect</i> event. It creates a 
+			<b>TmfEventDependency</b> between the source and destination events. The dependency is added to the processing unit.
+		</p>
+		<p>To match events requiring other mechanisms (for instance, a series of events can be matched with another series of events), one would need to add another class either implementing 
+			<b>ITmfEventMatching</b>. It would most probably also require a new 
+			<b>ITmfMatchEventDefinition</b> implementation.
+		</p>
+		<h3 id="ITmfMatchEventDefinition_interface_and_its_derived_classes">ITmfMatchEventDefinition interface and its derived classes</h3>
+		<p>These are the classes that describe how to actually match specific events together.</p>
+		<p>The 
+			<b>canMatchTrace</b> method will tell if a definition is compatible with a given trace.
+		</p>
+		<p>The 
+			<b>getEventKey</b> method will return a key for an event that uniquely identifies this event and will match the key from another event.
+		</p>
+		<p>The 
+			<b>getDirection</b> method indicates whether this event is a 
+			<i>cause</i> or 
+			<i>effect</i> event to be matched with one from the opposite direction.
+		</p>
+		<p>As examples, two concrete network match definitions have been implemented in the 
+			<i>org.eclipse.tracecompass.internal.lttng2.kernel.core.event.matching</i> package for two compatible methods of matching TCP packets (See the Trace Compass User Guide on 
+			<i>trace synchronization</i> for information on those matching methods). Each one tells which events need to be present in the metadata of a CTF trace for this matching method to be applicable. It also returns the field values from each event that will uniquely match 2 events together.
+		</p>
+		<p>Each 
+			<b>IMatchEventDefinition</b> needs to be registered to the 
+			<b>TmfEventMatching</b> class using the following code for example
+		</p>
+		<pre>
+TmfEventMatching.registerMatchObject(new TcpEventMatching());
+</pre>
+		<h3 id="IMatchProcessingUnit_interface_and_derived_classes">IMatchProcessingUnit interface and derived classes</h3>
+		<p>While matching events is an exercise in itself, it's what to do with the match that really makes this functionality interesting. This is the job of the 
+			<b>IMatchProcessingUnit</b> interface.
+		</p>
+		<p>
+			<b>TmfEventMatches</b> provides a default implementation that only stores the matches to count them. When a new match is obtained, the 
+			<i>addMatch</i> is called with the match and the processing unit can do whatever needs to be done with it.
+		</p>
+		<p>A match processing unit can be an analysis in itself. For example, trace synchronization is done through such a processing unit. One just needs to set the processing unit in the TmfEventMatching constructor.</p>
+		<h2 id="Code_examples">Code examples</h2>
+		<h3 id="Using_network_packets_matching_in_an_analysis">Using network packets matching in an analysis</h3>
+		<p>This example shows how one can create a processing unit inline to create a link between two events. In this example, the code already uses an event request, so there is no need here to call the 
+			<i>matchEvents</i> method, that will only create another request.
+		</p>
+		<pre>
+class MyAnalysis extends TmfAbstractAnalysisModule {
+
+    private TmfNetworkEventMatching tcpMatching;
+
+    ...
+
+    protected void executeAnalysis() {
+
+        IMatchProcessingUnit matchProcessing = new IMatchProcessingUnit() {
+            @Override
+            public void matchingEnded() {
+            }
+
+            @Override
+            public void init(ITmfTrace[] fTraces) {
+            }
+
+            @Override
+            public int countMatches() {
+                return 0;
+            }
+
+            @Override
+            public void addMatch(TmfEventDependency match) {
+                log.debug("we got a tcp match! " + match.getSourceEvent().getContent() + " " + match.getDestinationEvent().getContent());
+                TmfEvent source = match.getSourceEvent();
+                TmfEvent destination = match.getDestinationEvent();
+                /* Create a link between the two events */
+            }
+        };
+
+        ITmfTrace[] traces = { getTrace() };
+        tcpMatching = new TmfEventMatching(traces, matchProcessing);
+        tcpMatching.initMatching();
+
+        MyEventRequest request = new MyEventRequest(this, i);
+        getTrace().sendRequest(request);
+    }
+
+    public void analyzeEvent(TmfEvent event) {
+        ...
+        tcpMatching.matchEvent(event, 0);
+        ...
+    }
+
+    ...
+
+}
+
+class MyEventRequest extends TmfEventRequest {
+
+    private final MyAnalysis analysis;
+
+    MyEventRequest(MyAnalysis analysis, int traceno) {
+        super(CtfTmfEvent.class,
+            TmfTimeRange.ETERNITY,
+            0,
+            TmfDataRequest.ALL_DATA,
+            ITmfDataRequest.ExecutionType.FOREGROUND);
+        this.analysis = analysis;
+    }
+
+    @Override
+    public void handleData(final ITmfEvent event) {
+        super.handleData(event);
+        if (event != null) {
+            analysis.analyzeEvent(event);
+        }
+    }
+}
+</pre>
+		<h3 id="Match_events_from_UST_traces">Match events from UST traces</h3>
+		<p>Suppose a client-server application is instrumented using LTTng-UST. Traces are collected on the server and some clients on different machines. The traces can be synchronized using network event matching.</p>
+		<p>The following metadata describes the events:</p>
+		<pre>
+    event {
+        name = "myapp:send";
+        id = 0;
+        stream_id = 0;
+        loglevel = 13;
+        fields := struct {
+            integer { size = 32; align = 8; signed = 1; encoding = none; base = 10; } _sendto;
+            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _messageid;
+            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _data;
+        };
+    };
+
+    event {
+        name = "myapp:receive";
+        id = 1;
+        stream_id = 0;
+        loglevel = 13;
+        fields := struct {
+            integer { size = 32; align = 8; signed = 1; encoding = none; base = 10; } _from;
+            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _messageid;
+            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _data;
+        };
+    };
+</pre>
+		<p>One would need to write an event match definition for those 2 events as follows:</p>
+		<pre>
+public class MyAppUstEventMatching implements ITmfMatchEventDefinition {
+
+    public class MyEventMatchingKey implements IEventMatchingKey {
+
+        private static final HashFunction HF = checkNotNull(Hashing.goodFastHash(32));
+        private final int fTo;
+        private final long fId;
+
+        public MyEventMatchingKey(int to, long id) {
+            fTo = to;
+            fId = id;
+        }
+
+        @Override
+        public int hashCode() {
+            return HF.newHasher()
+                .putInt(fTo)
+                .putLong(fId).hash().asInt();
+        }
+
+        @Override
+        public boolean equals(@Nullable Object o) {
+            if (o instanceof MyEventMatchingKey) {
+                MyEventMatchingKey key = (MyEventMatchingKey) o;
+                return (key.fTo == fTo &amp;&amp;
+                    key.fId == fId);
+            }
+            return false;
+        }
+    }
+
+
+    @Override
+    public Direction getDirection(ITmfEvent event) {
+        String evname = event.getType().getName();
+        if (evname.equals("myapp:receive")) {
+            return Direction.EFFECT;
+        } else if (evname.equals("myapp:send")) {
+            return Direction.CAUSE;
+        }
+        return null;
+    }
+
+    @Override
+    public IEventMatchingKey getEventKey(ITmfEvent event) {
+        IEventMatchingKey key;
+
+        if (evname.equals("myapp:receive")) {
+            key = new MyEventMatchingKey(event.getContent().getField("from").getValue(),
+                event.getContent().getField("messageid").getValue());
+        } else {
+            key = new MyEventMatchingKey(event.getContent().getField("sendto").getValue(),
+                event.getContent().getField("messageid").getValue());
+        }
+
+        return key;
+    }
+
+    @Override
+    public boolean canMatchTrace(ITmfTrace trace) {
+        Set&lt;String&gt; events = ImmutableSet.of("myapp:receive", "myapp:send");
+        if (!(trace instanceof ITmfTraceWithPreDefinedEvents)) {
+            return false;
+        }
+        ITmfTraceWithPreDefinedEvents ktrace = (ITmfTraceWithPreDefinedEvents) trace;
+
+        Set&lt;String&gt; traceEvents = TmfEventTypeCollectionHelper.getEventName(ktrace.getContainedEventTypes());
+        traceEvents.retainAll(events);
+        return !traceEvents.isEmpty();
+    }
+
+}
+</pre>
+		<p>The following code will have to be run before the trace synchronization takes place, for example in the Activator of the plugin:</p>
+		<pre>
+TmfEventMatching.registerMatchObject(new MyAppUstEventMatching());
+</pre>
+		<p>Now, only adding the traces in an experiment and clicking the 
+			<b>Synchronize traces</b> menu item will synchronize the traces using the new definition for event matching.
+		</p>
+		<h2 id="Trace_synchronization">Trace synchronization</h2>
+		<p>Trace synchronization classes and interfaces are located in the 
+			<i>org.eclipse.tracecompass.tmf.core.synchronization</i> package.
+		</p>
+		<h3 id="Synchronization_algorithm">Synchronization algorithm</h3>
+		<p>Synchronization algorithms are used to synchronize traces from events matched between traces. After synchronization, traces taken on different machines with different time references see their timestamps modified such that they all use the same time reference (typically, the time of at least one of the traces). With traces from different machines, it is impossible to have perfect synchronization, so the result is a best approximation that takes network latency into account.</p>
+		<p>The abstract class 
+			<b>SynchronizationAlgorithm</b> is a processing unit for matches. New synchronization algorithms must extend this one, it already contains the functions to get the timestamp transforms for different traces.
+		</p>
+		<p>The 
+			<i>fully incremental convex hull</i> synchronization algorithm is the default synchronization algorithm.
+		</p>
+		<p>While the synchronization system provisions for more synchronization algorithms, there is not yet a way to select one, the experiment's trace synchronization uses the default algorithm. To test a new synchronization algorithm, the synchronization should be called directly like this:</p>
+		<pre>
+SynchronizationAlgorithm syncAlgo = new MyNewSynchronizationAlgorithm();
+syncAlgo = SynchronizationManager.synchronizeTraces(syncFile, traces, syncAlgo, true);
+</pre>
+		<h3 id="Timestamp_transforms">Timestamp transforms</h3>
+		<p>Timestamp transforms are the formulae used to transform the timestamps from a trace into the reference time. The 
+			<b>ITmfTimestampTransform</b> is the interface to implement to add a new transform.
+		</p>
+		<p>The following classes implement this interface:</p>
+		<ul>
+			<li>
+				<b>TmfTimestampTransform</b>: default transform. It cannot be instantiated, it has a single static object 
+				<i>TmfTimestampTransform.IDENTITY</i>, which returns the original timestamp.
+			</li>
+			<li>
+				<b>TmfConstantTransform</b>: simply applies an offset to the timestamp, so the formula would be: 
+				<i>f(t) = t + c</i> where 
+				<i>c</i> is the offset to apply.
+			</li>
+			<li>
+				<b>TmfTimestampTransformLinear</b>: transforms the timestamp using a linear formula: 
+				<i>f(t) = at + b</i>, where 
+				<i>a</i> and 
+				<i>b</i> are computed by the synchronization algorithm.
+			</li>
+		</ul>
+		<p>These classes are not accessible directly, to create any timestamp transform, one needs to use one of the methods from the 
+			<b>TimestampTransformFactory</b> utility class.
+		</p>
+		<p>One could extend the interface for other timestamp transforms, for instance to have a transform where the formula would change over the course of the trace.</p>
+		<h2 id="Todo">Todo</h2>
+		<p>Here's a list of features not yet implemented that would enhance trace synchronization and event matching:</p>
+		<ul>
+			<li>Ability to select a synchronization algorithm</li>
+			<li>Implement the minimum spanning tree algorithm by Masoume Jabbarifar (article on the subject not published yet) to automatically select the best reference trace</li>
+			<li>Instead of having the timestamp transforms per trace, have the timestamp transform as part of an experiment context, so that the trace's specific analysis, like the state system, are in the original trace, but are transformed only when needed for an experiment analysis.</li>
+			<li>Add more views to display the synchronization information (only textual statistics are available for now)</li>
+		</ul><hr class="navigation-separator"/>
+		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<tr>
+				<td style="width: 20%" align="left">
+					<a href="CTF-Parser.html" title="CTF Parser">
+						<img alt="Previous" border="0" src="images/prev.gif"/>
+					</a>
+				</td>
+				<td style="width: 60%" align="center">
+					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
+						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+					</a>
+				</td>
+				<td style="width: 20%" align="right">
+					<a href="Analysis-Framework.html" title="Analysis Framework">
+						<img alt="Next" border="0" src="images/next.gif"/>
+					</a>
+				</td>
+			</tr>
+			<tr>
+				<td style="width: 20%" align="left" valign="top">CTF Parser</td>
+				<td style="width: 60%" align="center"></td>
+				<td style="width: 20%" align="right" valign="top">Analysis Framework</td>
+			</tr>
+		</table>
+	</body>
+</html>

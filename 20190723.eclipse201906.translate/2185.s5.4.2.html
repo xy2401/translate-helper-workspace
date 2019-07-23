@@ -1,0 +1,148 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "../xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+   <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <link rel="stylesheet" type="text/css" href="../css/ot.css" />
+      <link rel="stylesheet" type="text/css" href="../css/otjld.css" />
+      <title>OT/J Language Definition v1.3.1</title>
+   </head>
+   <body class="otdt">
+      <div id="content">
+         <table class="nav">
+            <tr>
+               <td class="back"><a id="top"></a><a href="s5.4.1.html" rel="prev">&lt;&lt;&nbsp;&sect;5.4.1&nbsp;Regular guards</a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s5.4.3.html" rel="next">&sect;5.4.3&nbsp;Multiple guards&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="breadcrumb"><a class="nav" href="s5.html" rel="section">&sect;5&nbsp;Team Activation</a>&nbsp;&gt;&nbsp;<a class="nav" href="s5.4.html" rel="section">&sect;5.4&nbsp;Guard predicates</a></div>
+         <div class="sect depth3" id="s5.4.2">
+            <h3 class="sect">&sect;5.4.2&nbsp;Base guards<a class="img" href="s5.4.2.html"
+                  title="PermaLink to &sect;5.4.2&nbsp;Base guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                       alt="" /></a></h3>
+            <p>The intention behind base guards is to prevent lifting of a callin-target
+               		if a guard evaluates to <code>false</code> and thus refuses to invoke the
+               		callin bound role method. Using base guards it is easier to prevent any
+               		side-effects caused by a callin binding, because lifting could cause side-effects
+               		at two levels:
+               			
+            </p>
+            <ul>
+               <li>Creating a role on-demand already is a side-effect (observable e.g.
+                  			by the reflective function <code><a href="s6.1.html" title="&sect;6.1&nbsp;Reflection" class="sect">hasRole (&sect;6.1)</a></code>)
+                  				
+               </li>
+               <li>Role creation triggers execution of a role constructor 
+                  			(see <a href="s2.3.1.c.html"
+                     title="&sect;2.3.1.(c)&nbsp;Custom lifting constructor"
+                     class="sect">custom lifting constructor (&sect;2.3.1.(c))</a>) 
+                  			which could produce arbitrary side-effects.
+                  				
+               </li>
+            </ul>
+            <p>Both kinds of side-effects can be avoided using a base guard which prevents
+               		unnecessary lifting.
+               			
+            </p>
+            <p>Any guard (5.4.1 (b)-(e)) can be turned into a base guard by adding 
+               		the modifier <code>base</code> as in:
+               			
+            </p>
+            <div class="listing plain"><pre><b>protected</b> <b>class</b> MyRole <b>playedBy</b> MyBase
+  <em><b>base</b> when</em> (base.value &gt; MyTeam.this.threshold)
+{
+    <i><b>class</b> body declarations</i>
+}</pre></div>
+            <p>However, different scoping rules apply for the identifiers 
+               		that can be used in a base guard:
+               			
+            </p>
+            <div class="subsect depth4" id="s5.4.2.a">
+               <h4 class="subsect">(a)&nbsp;<span class="title">Base object reference</span><a class="img" href="s5.4.2.a.html"
+                     title="PermaLink to (a)&nbsp;Base object reference"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>In all base guard predicates the special identifier <code>base</code> 
+                  			can be used to denote the base object that is about to be lifted.
+                  				
+               </p>
+            </div>
+            <div class="subsect depth4" id="s5.4.2.b">
+               <h4 class="subsect">(b)&nbsp;<span class="title">Method binding guards</span><a class="img" href="s5.4.2.b.html"
+                     title="PermaLink to (b)&nbsp;Method binding guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>A base method binding guard may access parameters as passed to the
+                  			base method. Parameter mappings are not considered.<br />
+                  Additionally, for <code>after</code> callin bindings, the identifier <code>result</code> 
+                  may be used to refer to the result of the base method (if any).
+                  				
+               </p>
+               <div class="note">
+                  <h5>Note:</h5>
+                  <p>In order to achieve the same effect of accessing
+                     	the base method's result, a regular binding guard (not a base guard)
+                     	must use a suitable parameter mapping (see <a href="s4.4.c.html"
+                        title="&sect;4.4.(c)&nbsp;Mapping the result of a base method"
+                        class="sect">&sect;4.4.(c)</a>).
+                     					
+                  </p>
+               </div>
+            </div>
+            <div class="subsect depth4" id="s5.4.2.c">
+               <h4 class="subsect">(c)&nbsp;<span class="title">Method guards</span><a class="img" href="s5.4.2.c.html" title="PermaLink to (c)&nbsp;Method guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>In contrast to regular method guards, a <em>base</em> guard attached to a role method 
+                  			cannot access any method parameters. See the next item (d) for values that are actually in scope.
+                  				
+               </p>
+            </div>
+            <div class="subsect depth4" id="s5.4.2.d">
+               <h4 class="subsect">(d)&nbsp;<span class="title">Role level guards</span><a class="img" href="s5.4.2.d.html"
+                     title="PermaLink to (d)&nbsp;Role level guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>Role level base guards may use these values:
+                  				
+               </p>
+               <ul>
+                  <li>The base instance using the special identifier <code>base</code>.
+                  </li>
+                  <li>The team instance using a qualified this references (<code>MyTeam.this</code>).
+                  </li>
+               </ul>
+            </div>
+            <div class="subsect depth4" id="s5.4.2.e">
+               <h4 class="subsect">(e)&nbsp;<span class="title">Team level guards</span><a class="img" href="s5.4.2.e.html"
+                     title="PermaLink to (e)&nbsp;Team level guards"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>Team level base guards have the same scope as role level base guards (d). 
+                  			However, the type of the role instance is not known here, i.e., here <code>base</code> 
+                  			has the static type <code>java.lang.Object</code>.
+                  				
+               </p>
+            </div>
+            <div class="subsect depth4" id="s5.4.2.f">
+               <h4 class="subsect">(f)&nbsp;<span class="title">Unbound roles</span><a class="img" href="s5.4.2.f.html" title="PermaLink to (f)&nbsp;Unbound roles"><img style="vertical-align:text-top;margin-left:5px;" src="../images/permalink.png"
+                          alt="" /></a></h4>
+               <p>In contrast to regular guards, base guards cannot be attached to
+                  	unbound role classes nor to their methods.<br />
+                  	Only team level base guards are independent of role binding.
+                  				
+               </p>
+            </div><img src="../images/guards.png" alt="Overview: Guard predicates" /></div>
+         <table class="nav">
+            <tr>
+               <td class="back"><a href="s5.4.1.html" rel="prev">&lt;&lt;&nbsp;&sect;5.4.1&nbsp;Regular guards</a></td>
+               <td class="top"><a href="index.html" rel="contents">&uarr;&nbsp;Table of Contents&nbsp;&uarr;</a></td>
+               <td class="next"><a href="s5.4.3.html" rel="next">&sect;5.4.3&nbsp;Multiple guards&nbsp;&gt;&gt;</a></td>
+            </tr>
+         </table>
+         <div class="breadcrumb"><a class="nav" href="s5.html" rel="section">&sect;5&nbsp;Team Activation</a>&nbsp;&gt;&nbsp;<a class="nav" href="s5.4.html" rel="section">&sect;5.4&nbsp;Guard predicates</a></div>
+      </div>
+      <div id="footer">
+         <hr /><a class="w3c img" href="http://jigsaw.w3.org/css-validator/check/referer"
+            shape="rect"><img src="../images/valid-css2-blue.png" alt="Valid CSS!" height="31" width="88" /></a><a class="w3c img" href="http://validator.w3.org/check?uri=referer" shape="rect"><img src="../images/valid-xhtml10-blue.png" alt="Valid XHTML 1.0 Strict" height="31"
+                 width="88" /></a><address>&copy; Stephan Herrmann, Christine Hundt, Marco Mosconi</address>
+         			OT/J version 1.3.1 &mdash; last modified: 2013-05-28
+      </div>
+   </body>
+</html>

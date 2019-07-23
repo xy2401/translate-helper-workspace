@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>Custom widgets</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+</head>
+<body>
+
+  <h1>How to Create a Custom Widget for RAP?</h1>
+
+  <p>
+    Like in SWT, you can also create custom widgets to extend the RAP widget set to your needs.
+    Examples range from simple compositions of existing controls to complex widgets such as
+    custom tab folders, or animated graphs and charts.
+  </p>
+  <p>
+    There are different types of custom widgets which will be described below.
+    But no matter which type of custom widget you implement, you will end up with a RAP widget
+    that has an SWT-like API and inherits some methods from an SWT super class.
+    Therefore you should make yourself familiar with some important rules of SWT before you get
+    started.<br/><br/>
+    We highly recommend to read this article by the creators of SWT. <a href="#ext1">[1]</a><br/>
+    The RAP Wiki may cover more recent issues regarding custom widgets. <br/>
+  </p>
+
+  <h2>Different types of custom widgets</h2>
+  <p>
+    These types differ a lot with regard to the features they support, the dependency on a certain
+    platform, and also the effort and knowledge it takes to create them.
+  </p>
+
+  <h3 id="compound">Compound widgets</h3>
+  <p>
+    These are the simplest ones.
+    Compound widgets are compositions of existing SWT/RAP widgets.
+    These widgets have to extend
+    <em><a href="../reference/api/org/eclipse/swt/widgets/Composite.html">Composite</a></em>.
+    There is no fundamental difference between SWT and RAP for compound widgets.
+    Everything that is said about compound widgets in <a href="#ext1">[1]</a> also applies to RAP.
+    If you want to make your compound widget visually distinct,
+    use a <a href="theming.html#variants">custom variants</a> to style the
+    composite and its children.
+  </p>
+  <ul>
+    <li>Writing a compound widget does not require any JavaScript knowledge.</li>
+    <li>Cross-browser compatibility is ensured by RAP.</li>
+    <li>The widgets are re-usable in desktop applications with SWT.</li>
+  </ul>
+  <h3 id="selfdrawing">Self-drawing widgets</h3>
+  <p>
+    These are also simple in design.
+    Sometimes you might want a widget that completely draws itself.
+    This can be done by extending <em><a href="../reference/api/org/eclipse/swt/widgets/Canvas.html">Canvas</a></em>.
+    For writing this kind of widgets, you can also follow <a href="#ext1">[1]</a>.
+    Please note that the drawing capabilities of RAP are limited compared to SWT.
+    Especially in Internet Explorer 7 and 8, the performance degrades with the number of drawing
+    operations.
+  </p>
+  <ul>
+    <li>Writing a canvas widget does not require any JavaScript knowledge.</li>
+    <li>Cross-browser compatibility is ensured by RAP.</li>
+    <li>The widgets are re-usable in desktop applications with SWT.</li>
+  </ul>
+  <p>
+    <span style="font-size:smaller">
+    <b>Hint</b>:
+    If performance becomes an issue and your custom widgets has layers or areas that need to be
+    redrawn less often than others, you should consider combining this with the
+    compound approach. Either stack multiple canvases on top of each other (use
+    <a href="../reference/api/org/eclipse/swt/SWT.html#INHERIT_FORCE">SWT.INHERIT_FORCE</a> on the
+    <a href="../reference/api/org/eclipse/swt/widgets/Composite.html#setBackgroundMode-int-">parent background</a>
+    to make their background transparent),
+    or put them in any layout as you would other widgets.
+    This can reduce the number of operations by calling &quot;redraw&quot; only on the canvases that need to be updated.
+    </span>
+  </p>
+
+  <h3 id="browser">Browser-based widgets</h3>
+
+  <p>
+    These can still be rather simple.
+    The SWT <code>Browser</code> widget lets you place any HTML into your application.
+    See <a href="web-embedding.html">Embedding Web-Components</a>.
+  </p>
+  <ul>
+    <li>
+      Writing a Browser-based widget requires only minor-to-moderate JavaScript knowledge, unless
+      you write the client component from scratch.
+    </li>
+    <li>
+      Cross-browser compatibility is ensured by RAP only for the Browser widget itself, but
+      not for the code that is running inside it.
+    </li>
+    <li>
+      The widgets are re-usable in desktop applications with SWT when all resources are either
+      inlined or provided externally. (See the Google Maps Widget for RCP/RAP <a href="#ext3">[3]</a>
+      as an example for the former.)
+    </li>
+  </ul>
+
+  <h3 id="clientscripting">Scripting-enhanced widgets</h3>
+  <p>
+    <a href="scripting.html">RWT Scripting</a> allows adding client-side behavior to
+    existing RAP widgets. When your custom-widget can graphically be represented by one or more
+    existing SWT/RAP-widgets, but cannot be reasonably well implemented as a compound widget
+    because of the latency of the
+    HTTP-requests involved, RWT Scripting may be the best solution. It can also help in
+    <i>some</i> cases where certain SWT events are not implemented in RAP
+    (<em><a href="key-and-mouse-events.html#mouse">MouseEnter</a></em>/<em><a href="key-and-mouse-events.html#mouse">MouseExit</a></em>),
+    or are limited compared to SWT (<em><a href="rwt.html#verify">Verify</a></em>).
+    RWT Scripting is <strong>not</strong> to be confused with developing a Remote-API based
+    custom widget. While it also runs partially on the client, the difference is that
+    RWT Scripting does not require registering any JavaScript resources and does not need to interact
+    with DOM in any way.
+  </p>
+  <ul>
+    <li>
+      Writing scripting-enhanced widgets requires minor-to-moderate JavaScript knowledge,
+      and no knowledge of any other browser technology.</li>
+    <li>
+      Cross-browser compatibility is ensured by RAP as long as EcmaScript-standards are followed
+      and no DOM-elements or RAP-internals are accessed.
+    </li>
+    <li>
+      The widgets are currently not innately re-usable in desktop applications with SWT.
+      Please consult the projects wiki for more information on Single-Sourcing. <a href="#ext4">[4]</a>
+    </li>
+  </ul>
+
+  <h3 id="native">Remote-API based Custom Widgets</h3>
+  <p>
+    RAP 2.0 introduced the "Remote-API" which provides a simple way to write custom widgets
+    that function with the same efficiency as RAP/RWT core widgets. Both sides can send messages
+    to the other by using a <q>Remote Object</q>. While the server
+    <em><a href="../reference/api/org/eclipse/rap/rwt/remote/RemoteObject.html">RemoteObject</a></em>
+    can be
+    <a href="../reference/api/org/eclipse/rap/rwt/remote/Connection.html#createRemoteObject-java.lang.String-">created</a> by
+    the custom widget code, the client <em><a href="../reference/jsdoc/symbols/RemoteObject.html">RemoteObject</a></em>
+    is
+    <a href="../reference/jsdoc/symbols/rap.html#.getRemoteObject">provided</a> by the framework.
+    To process messages, the server side
+    <a href="../reference/api/org/eclipse/rap/rwt/remote/RemoteObject.html#setHandler-org.eclipse.rap.rwt.remote.OperationHandler-">registers</a>
+    an
+    <em><a href="../reference/api/org/eclipse/rap/rwt/remote/OperationHandler.html">OperationHandler</a></em>
+    on the <em><a href="../reference/api/org/eclipse/rap/rwt/remote/RemoteObject.html">RemoteObject</a></em>
+    instance, while the client registers a
+    <a href="../reference/jsdoc/symbols/rap.html#.registerTypeHandler">TypeHandler</a> once
+    globally. The RAP Wiki provides a FAQ for this kind of custom widget. <a href="#ext2">[2]</a>.
+  </p>
+  <ul>
+    <li>
+      Writing a Remote-API based widget may require moderate-to-advanced knowledge of JavaScript,
+      HTML/DOM, CSS and any other browser-technology you might want to use.
+    </li>
+    <li>
+      Cross-browser compatibility has to be ensured by the widget-developer.
+    </li>
+    <li>
+      Remote-API based widgets are not re-usable in SWT desktop applications unless an additional
+      SWT-specific version is being developed.
+    </li>
+  </ul>
+
+  <h3>External Resources</h3>
+  <ul>
+    <li id="ext1">
+      [1] <a href="http://www.eclipse.org/articles/Article-Writing%20Your%20Own%20Widget/Writing%20Your%20Own%20Widget.htm">SWT: Writing Your Own Widget</a>
+    </li>
+    <li id="ext2">
+      [2] <a href="http://wiki.eclipse.org/RAP/Custom_Widgets_FAQ">RAP Wiki - Custom Widgets FAQ</a>
+    </li>
+    <li id="ext3">
+      [3] <a href="http://wiki.eclipse.org/RAP/Add-Ons">RAP Wiki - Add-Ons</a>
+    </li>
+    <li id="ext4">
+      [4] <a href="http://wiki.eclipse.org/RAP/Incubator/ClientScripting">RAP Wiki - ClientScripting</a>
+    </li>
+  </ul>
+
+</body>
+</html>
