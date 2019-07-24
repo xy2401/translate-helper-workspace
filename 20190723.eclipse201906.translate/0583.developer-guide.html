@@ -1,1266 +1,604 @@
-<?xml version='1.0' encoding='utf-8' ?>
-<html xmlns="http://www.w3.org/1999/xhtml">
+﻿<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Developer guide</title>
-		<style type="text/css">
-			.info {border: 1px solid #3c78b5;background-color: #D8E4F1;margin: 20px;padding: 0px 6px 0px 6px;}
-			.note {border: 1px solid #F0C000;background-color: #FFFFCE;margin: 20px;padding: 0px 6px 0px 6px;}
-			.panel {border: 1px solid #ccc;background-color: #FFFFCE;margin: 10px;padding: 0px 6px 0px 6px;}
-			.tip {border: 1px solid #090;background-color: #dfd;margin: 20px;padding: 0px 6px 0px 6px;}
-			.warning {border: 1px solid #c00;background-color: #fcc;margin: 20px;padding: 0px 6px 0px 6px;}
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<title>开发者指南</title>
+		<style type="text/css">.info {
+  border: 1px solid #3c78b5;
+  background-color: #d8e4f1;
+  margin: 20px;
+  padding: 0px 6px 0px 6px;
+}
+.note {
+  border: 1px solid #f0c000;
+  background-color: #ffffce;
+  margin: 20px;
+  padding: 0px 6px 0px 6px;
+}
+.panel {
+  border: 1px solid #ccc;
+  background-color: #ffffce;
+  margin: 10px;
+  padding: 0px 6px 0px 6px;
+}
+.tip {
+  border: 1px solid #090;
+  background-color: #dfd;
+  margin: 20px;
+  padding: 0px 6px 0px 6px;
+}
+.warning {
+  border: 1px solid #c00;
+  background-color: #fcc;
+  margin: 20px;
+  padding: 0px 6px 0px 6px;
+}
 </style>
-		<link type="text/css" rel="stylesheet" href="/help/topic/org.eclipse.emf.compare.doc/help/resources/bootstrap.css"/>
-		<link type="text/css" rel="stylesheet" href="/help/topic/org.eclipse.emf.compare.doc/help/resources/custom.css"/>
+		<link type="text/css" rel="stylesheet" href="/help/topic/org.eclipse.emf.compare.doc/help/resources/bootstrap.css"></link>
+		<link type="text/css" rel="stylesheet" href="/help/topic/org.eclipse.emf.compare.doc/help/resources/custom.css"></link>
 	</head>
-	<body>
-		<h1 id="Developer_Guide">Developer Guide</h1>
-		<h2 id="Architecture">Architecture</h2>
-		<h3 id="Comparison_Process">Comparison Process</h3>
+	<body dir="ltr">
+		<h1 id="Developer_Guide">开发者指南</h1>
+		<h2 id="Architecture">建筑</h2>
+		<h3 id="Comparison_Process">比较过程</h3>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Process_Full.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Process_Full.png">
 		</p>
-		<p>The above figure represents the comparison process of EMF Compare. It can be roughly divided in 6 main phases.</p>
-		<h4 id="Model_Resolving">Model Resolving</h4>
-		<p>From a given "starting point" (the file a user decided to compare), finding all other fragments required for the comparison of the whole logical model.</p>
-		<h4 id="Matching">Matching</h4>
-		<p>Iterating over the two (or three) loaded logical models in order to map elements together two-by-two (or three-by-three). For example, determine that class Class1 from the first model corresponds to class Class1' from the second model.</p>
-		<h4 id="Differencing">Differencing</h4>
-		<p>The matching phase told us which elements were matching together. The differencing phase will browse through these mappings and determine whether the two (or three) elements are equal or if they present differences (for example, the name of the class changed from Class1 to Class1').</p>
-		<h4 id="Equivalences">Equivalences</h4>
-		<p>The differencing phases detected a number of differences between the compared models. However, two distinct differences might actually represent the same change. This phase will browse through all differences and link them together when they can be seen as equivalent (for example, differences on opposite references).</p>
-		<h4 id="Requirements">Requirements</h4>
-		<p>For the purpose of merging differences, there might be dependencies between them. For example, the addition of a class C1 in package P1 depends on the addition of package P1 itself. During this phase, we'll browse through all detected differences and link them together when we determine that one cannot be merged without the other.</p>
-		<h4 id="Conflicts">Conflicts</h4>
-		<p>When we're comparing our file with one from EGit, there might actually be conflicts between the changes we've made locally, and the changes that were made to the file on the remote repository. This phase will browse through all detected differences and detect these conflicts. It could also happen on three-way comparisons.</p>
-		<p>The Model resolving phase itself can be further decomposed in its own two distinct phases. More on the logical model and its resolution can be found on the 
-			<a href="./logical-model.html" title="./logical-model.html">dedicated page</a>.
+		<p>上图表示EMF比较的比较过程。它可以大致分为6个主要阶段。</p>
+		<h4 id="Model_Resolving">模型解析</h4>
+		<p>从给定的“起始点”（用户决定比较的文件），找到比较整个逻辑模型所需的所有其他片段。</p>
+		<h4 id="Matching">匹配</h4>
+		<p>迭代两个（或三个）加载的逻辑模型，以便将元素一起映射到二乘（或三乘三）。例如，确定第一个模型中的类Class1对应于第二个模型中的类Class1'。</p>
+		<h4 id="Differencing">差分</h4>
+		<p>匹配阶段告诉我们哪些元素匹配在一起。差异阶段将浏览这些映射并确定两个（或三个）元素是否相等，或者它们是否存在差异（例如，类的名称从Class1更改为Class1'）。</p>
+		<h4 id="Equivalences">等价</h4>
+		<p>差异阶段检测到比较模型之间的许多差异。但是，两个明显的差异实际上可能代表相同的变化。此阶段将浏览所有差异并将它们链接在一起，因为它们可以被视为等效（例如，相反参考的差异）。</p>
+		<h4 id="Requirements">要求</h4>
+		<p>为了合并差异，它们之间可能存在依赖关系。例如，在包P1中添加类C1取决于包P1本身的添加。在此阶段，我们将浏览所有检测到的差异并将它们链接在一起，以确定在没有另一个的情况下无法合并。</p>
+		<h4 id="Conflicts">冲突</h4>
+		<p>当我们将文件与EGit中的文件进行比较时，我们在本地进行的更改与对远程存储库上的文件所做的更改之间可能存在实际冲突。此阶段将浏览所有检测到的差异并检测这些冲突。它也可能发生在三方比较上。</p>
+		<p>模型解析阶段本身可以在其自己的两个不同阶段中进一步分解。有关逻辑模型及其解决方案的更多信息，请参见<a href="./logical-model.html" title="./logical-model.html">专用页面</a> 。
 		</p>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Model_Resolving.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Model_Resolving.png">
 		</p>
-		<h3 id="Project_Architecture">Project Architecture</h3>
+		<h3 id="Project_Architecture">项目架构</h3>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_2_Architecture.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_2_Architecture.png">
 		</p>
-		<p>EMF Compare is built on top of the Eclipse platform. We depend on the Eclipse Modeling Framework (EMF), the Eclipse Compare framework and, finally, Eclipse Team, the framework upon which the repository providers (EGit, CVS, Subversive...) are built.</p>
-		<p>The EMF Compare extensions target specific extensions of the modeling framework: UML, the Graphical Modeling Framework (and its own extensions, ecoretools, ...).</p>
-		<p>Whilst we are built atop bricks that are tightly coupled with the eclipse platform, it should be noted that the core of EMF Compare can be run in a standalone application with no runtime dependencies towards Eclipse; as can EMF itself.</p>
-		<h3 id="The_Comparison_Model">The Comparison Model</h3>
-		<p>EMF Compare uses a single model, whose root is a 
-			<i>Comparison</i> object, to represent all of the information regarding the comparison: matched objects, matched resources, detected differences, links between these references, etc. The root 
-			<i>Comparison</i> is created at the beginning of the Match process, and will undergo a set of successive refinements during the remainder of the Comparison: Diff, Equivalence, Dependencies... will all add their own information to the 
-			<i>Comparison</i>.
+		<p>EMF Compare构建于Eclipse平台之上。我们依赖于Eclipse Modeling Framework（EMF），Eclipse Compare框架，最后是Eclipse Team，它是构建存储库提供程序（EGit，CVS，Subversive ...）的框架。</p>
+		<p>EMF Compare扩展针对建模框架的特定扩展：UML，图形建模框架（以及它自己的扩展，生态工具......）。</p>
+		<p>虽然我们是在与eclipse平台紧密耦合的砖块上构建的，但应该注意的是，EMF Compare的核心可以在独立的应用程序中运行，而不依赖于Eclipse的运行时依赖性; EMF本身也是如此。</p>
+		<h3 id="The_Comparison_Model">比较模型</h3>
+		<p>EMF Compare使用单个模型，其根是<i>比较</i>对象，表示有关比较的所有信息：匹配的对象，匹配的资源，检测到的差异，这些引用之间的链接等。根<i>比较</i>是在开始时创建的。匹配过程，并将在比较的其余部分进行一系列连续的改进：Diff，Equivalence，Dependencies ...都将自己的信息添加到<i>比较中</i> 。
 		</p>
-		<p>Here is an overview of the EMF Compare metamodel:</p>
+		<p>以下是EMF Compare元模型的概述：</p>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_Class_Diagram.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_Class_Diagram.png">
 		</p>
-		<p>So, how exactly is all of the information the Comparison model can hold represented, and how to make sense of it all?</p>
-		<h3 id="Match">Match</h3>
-		<p>A 
-			<i>Match</i> element is how we represent that the 
-			<i>n</i> compared versions have elements that are basically the same. For example, if we are comparing two different versions 
-			<i>v1</i> and 
-			<i>v2</i> of a given model which look like:
-		</p>
+		<p>那么，比较模型能够代表的所有信息究竟是如何表达的，以及如何理解这一切？</p>
+		<h3 id="Match">比赛</h3>
+		<p><i>Match</i>元素是我们如何表示<i>n个</i>比较版本具有基本相同的元素。例如，如果我们比较给定模型的两个不同版本<i>v1</i>和<i>v2</i> ，它们看起来像：</p>
 		<table border="1" cellpadding="5" cellspacing="0">
 			<tr>
-				<th align="center">Master</th>
+				<th align="center">主</th>
 				<th align="center">Borrowables</th>
 			</tr>
 			<tr>
 				<td>
-					<img align="middle" border="0" src="./../images/v1.png"/>
+					<img align="middle" border="0" src="./../images/v1.png">
 				</td>
 				<td>
-					<img align="middle" border="0" src="./../images/v2.png"/>
+					<img align="middle" border="0" src="./../images/v2.png">
 				</td>
 			</tr>
 		</table>
-		<p>Comparing these two models, we'll have a Comparison model containing three matches:</p>
+		<p>比较这两个模型，我们将得到一个包含三个匹配的比较模型：</p>
 		<ol>
-			<li>library &lt;-&gt; library</li>
-			<li>Book &lt;-&gt; Novel</li>
-			<li>title &lt;-&gt; title</li>
+			<li>库&lt; - &gt;库</li>
+			<li>预订&lt; - &gt;小说</li>
+			<li>标题&lt; - &gt;标题</li>
 		</ol>
-		<p>In other words, the comparison model contains an aggregate of the two or three compared models, in the form of 
-			<i>Match</i> elements linking the elements of all versions together. Differences will then be detected on these 
-			<i>Match</i> and added under them, thus allowing us to know both:
-		</p>
+		<p>换句话说，比较模型包含两个或三个比较模型的集合，以<i>匹配</i>元素的形式将所有版本的元素链接在一起。然后将在这些<i>匹配</i>上检测到差异并在其下添加，从而允许我们知道两者：</p>
 		<ul>
-			<li>what the difference is (for example, "attribute name has been changed from 
-				<i>Book</i> to 
-				<i>Novel</i>"), and
-			</li>
-			<li>what the original elements were.</li>
+			<li>有什么区别（例如，“属性名称已从<i>书籍</i>改为<i>小说</i> ”），以及</li>
+			<li>原始元素是什么。</li>
 		</ul>
-		<h4 id="Diff">Diff</h4>
+		<h4 id="Diff">DIFF</h4>
 		<p>
-			<i>Diff</i> elements are created during the differencing process in order to represent the actual modifications that can be detected within the source model(s). The 
-			<i>Diff</i> concept itself is only there as the super-class of the three main kind of differences EMF Compare can detect in a model, namely 
-			<i>ReferenceChange</i>, 
-			<i>AttributeChange</i> and 
-			<i>ResourceAttachmentChange</i>. We'll go back to these three sub-classes in a short while.
+			在差分处理期间创建<i>Diff</i>元素，以便表示可在源模型内检测到的实际修改。<i>Diff</i>概念本身只是作为EMF Compare可以在模型中检测到的三种主要差异的超类，即<i>ReferenceChange</i> ， <i>AttributeChange</i>和<i>ResourceAttachmentChange</i> 。我们将在短时间内回到这三个子类。
 		</p>
-		<p>Whatever their type, the differences share a number of common elements:</p>
+		<p>无论其类型如何，差异都有许多共同点：</p>
 		<ul>
-			<li>a parent 
-				<i>match</i>: differences are detected on a given 
-				<i>Match</i>. Having a difference basically means that one of the elements paired through this 
-				<i>Match</i> differs from its "reference" side (see 
-				<i>source</i> description below). 
+			<li>父<i>匹配</i> ：在给定的<i>匹配</i>上检测到差异。产生差异基本上意味着通过此<i>匹配</i>配对的其中一个元素与其“参考”方面不同（请参阅下面的<i>源</i>描述）。
 			</li>
-			<li>a 
-				<i>source</i>: differences are detected on one side of their match. The source really only holds meaning in three-way comparisons, where a difference can be detected in either right or left. All differences detected through two-way comparisons have their source in the left side. This is because we always compare according to a "reference" side. During two-way comparisons, the reference side is the right: differences will always be detected on the left side as compared with the right side. During three-way comparisons though, differences can be detected on either left or right side as compared with their common ancestor; but never as compared to themselves (in other words, this is 
-				<i>roughly</i> equivalent to two two-way comparisons, first the left as compared to the origin, then the right as compared to the origin).
+			<li><i>来源</i> ：在比赛的一侧检测到差异。源实际上只在三向比较中具有意义，其中可以在右侧或左侧检测差异。通过双向比较检测到的所有差异都来自左侧。这是因为我们总是根据“参考”方面进行比较。在双向比较期间，参考侧是右侧：与右侧相比，始终在左侧检测到差异。然而，在三方比较期间，与其共同的祖先相比，可以在左侧或右侧检测到差异;但从来没有与自己相比（换句话说，这<i>大致</i>相当于两个双向比较，首先是左边与原点相比，然后是右边与原点相比）。
 			</li>
-			<li>a current 
-				<i>state</i>: all differences start off in their initial 
-				<i>unresolved</i> state. The user can then choose to:
-				<ul>
-					<li>merge the difference (towards either right or left, applying or reverting the difference in the process), in which case the difference becomes 
-						<i>merged</i>, or
-					</li>
-					<li>discard it, thus marking the change as 
-						<i>discarded</i>. For example, if there is a conflicting edit of a textual attribute, the user can decide that neither right nor left are satisfying, and instead settle for a mix of the two.
+			<li>当前<i>状态</i> ：所有差异都以其初始<i>未解决</i>状态开始。然后，用户可以选择：<ul>
+					<li>合并差异（向右或向左，应用或恢复过程中的差异），在这种情况下差异<i>合并</i> ，或</li>
+					<li>丢弃它，从而将更改标记为<i>丢弃</i> 。例如，如果存在文本属性的冲突编辑，则用户可以确定右侧和左侧都不满足，而是选择两者的混合。
 					</li>
 				</ul>
 			</li>
-			<li>a 
-				<i>kind</i>: this is used by the engine to describe the type of difference it detected. Differences can be of four general types:
-				<ul>
+			<li><i>一种</i> ：引擎使用它来描述它检测到的差异类型。差异可以是四种一般类型：<ul>
 					<li>
-						<i>Add</i>: There are two distinct things that EMF Compare considers as an "addition". First, adding a new element within the values of a 
-						<b>multi-valued feature</b> is undeniably an addition. Second, any change in a 
-						<b>containment reference</b>, even if that reference is mono-valued, that represents a "new" element in the model is considered to be an addition. Note that this second case is an exception to the rule for 
-						<i>change</i> differences outlined below.
+						<i>添加</i> ：EMF Compare认为有两个不同的东西是“添加”。首先，在<b>多值特征</b>的值中添加新元素无疑是一个补充。其次， <b>包含引用中的</b>任何更改（即使该引用是单值的）代表模型中的“新”元素都被视为添加。请注意，第二种情况是下面列出的<i>变更</i>差异规则的例外情况。
 					</li>
 					<li>
-						<i>Delete</i>: this is used as the counterpart of 
-						<i>add</i> differences, and it presents the same exception for 
-						<b>mono-valued containment references</b>.
+						<i>删除</i> ：这用作<i>添加</i>差异的对应物，它为<b>单值包含引用</b>提供相同的例外。
 					</li>
 					<li>
-						<i>Change</i>: any modification to a 
-						<b>mono-valued feature</b> is considered as a 
-						<i>change</i> difference by the engine. Take note that containment references are an exception to this rule: no 
-						<i>change</i> will ever be detected on those.
+						<i>更改</i> ：对<b>单值特征的</b>任何修改<b>都</b>被视为引擎的<i>更改</i>差异。请注意，包含引用是此规则的一个例外：在这些规则上不会检测到任何<i>更改</i> 。
 					</li>
 					<li>
-						<i>Move</i>: once again, two distinct things are represented as 
-						<i>move</i> differences in the comparison model. First, 
-						<b>reordering</b> the values of a multi-valued feature is considered as a series of MOVE: one difference for each moved value (EMF Compare computes the smallest number of differences needed between the two sides' values). Second, moving an object from 
-						<b>one container to another</b> (changing the containing feature of the EObject) will be detected as a 
-						<i>move</i>.
+						<i>移动</i> ：再次，两个不同的事物表示为比较模型中的<i>移动</i>差异。首先， <b>重新排序</b>多值特征的值被视为一系列移动：每个移动值的一个差异（EMF比较计算双方值之间所需的最小差异数）。其次，将对象从<b>一个容器</b>移动<b>到另一个容器</b> （更改EObject的包含特征）将被检测为<i>移动</i> 。
 					</li>
 				</ul>
 			</li>
 		</ul>
-		<p>In order to ensure that the model remains consistent through individual merge operations, we've also decided to link differences together through a number of associations and references. For example, there are times when one difference cannot be merged without first merging another, or some differences which are exactly equivalent to one another. In no specific order:</p>
+		<p>为了确保模型通过单独的合并操作保持一致，我们还决定通过一些关联和引用将差异链接在一起。例如，有些情况下，如果没有先合并另一个差异，或者某些完全相同的差异，则无法合并一个差异。没有特定的顺序：</p>
 		<ul>
 			<li>
-				<i>dependency</i>: EMF Compare uses two opposite references in order to track dependencies between differences. Namely, 
-				<i>requires</i> and 
-				<i>requiredBy</i> represent the two ends of this association. If the user has added a package 
-				<i>P1</i>, then added a new Class 
-				<i>C1</i> within this package, we will detect both differences. However the addition of 
-				<i>C1</i> cannot be merged without first adding its container 
-				<i>P1</i>. In such a case, the addition of 
-				<i>C1</i> 
-				<b>requires</b> the addition of 
-				<i>P1</i>, and the later is 
-				<b>requiredBy</b> the former.
+				<i>依赖性</i> ：EMF Compare使用两个相反的引用来跟踪差异之间的依赖关系。即， <i>要求</i>和<i>要求</i>代表这种关联的两端。如果用户添加了包<i>P1</i> ，然后在此包中添加了新的<i>C1</i>类，我们将检测这两个差异。但是，如果没有首先添加其容器<i>P1</i> ，则无法合并<i>C1的</i>添加。在这种情况下， <i>C1</i>的添加<b>需要</b>添加<i>P1</i> ，后者是前者所<b>必需</b>的。
 			</li>
 			<li>
-				<i>refinement</i>: this link is mainly used by extensions of EMF Compare in order to create high-level differences to hide the complexity of the comparison model. For example, this is used by the UML extension of EMF Compare to tell that the three differences "adding an association 
-				<i>A1</i>", "adding a property 
-				<i>P1</i> in association 
-				<i>A1</i>" and "adding a property 
-				<i>P2</i> in association 
-				<i>A1</i>" is actually one single high-level difference, "adding an association 
-				<i>A1</i>". This high-level difference is 
-				<b>refinedBy</b> the others, which all 
-				<b>refines</b> it.
+				<i>细化</i> ：此链接主要用于EMF Compare的扩展，以创建高级别差异以隐藏比较模型的复杂性。例如，这是使用EMF的UML扩展比较，以告诉三个异“添加的关联<i>A1”，“</i>添加相关联<i>A1</i>属性<i>P1”</i>和“添加相关联<i>A1</i>属性<i>P2”</i>实际上是一个单一的高- 级差异，“添加关联<i>A1</i> ”。这种高层次的区别是<b>refinedBy</b>别人，而这一切<b>提炼</b>它。
 			</li>
 			<li>
-				<i>equivalence</i>: this association is used by the comparison engine in order to link together differences which are equivalent in terms of merging. For example, Ecore has a concept of 
-				<b>eOpposite</b> references. Updating one of the two sides of an 
-				<i>eOpposite</i> will automatically update the other. In such an event, EMF Compare will detect both sides as an individual difference. However, merging one of the two will trigger the update of the other side of the 
-				<i>eOpposite</i> as well. In such cases, the two differences are set to be 
-				<i>equivalent</i> to one another. Merging one difference part of an equivalence relationship will automatically mark all of the others as 
-				<i>merged</i> (see 
-				<i>state</i> above).
+				<i>等价</i> ：比较引擎使用此关联，以便将合并方面的差异链接在一起。例如，Ecore有一个<b>eOpposite</b>参考的概念。更新<i>eOpposite的</i>两面之一将自动更新另一面。在这种情况下，EMF Compare会将双方检测为个体差异。但是，合并两者中的一个也将触发<i>eOpposite</i>另一方的更新。在这种情况下，两个差异被设置为彼此<i>相等</i> 。合并等价关系的一个差异部分将自动将所有其他部分标记为<i>合并</i> （参见上面的<i>状态</i> ）。
 			</li>
 			<li>
-				<i>implication</i>: implications are a special kind of "directed equivalence". A difference D1 that is linked as "implied by" another D2 means that merging D1 requires us to merge D2 instead. In other words, D2 will be automatically merged if we merge D1, but D1 will not be automatically merged if we merge D2. Implications are mostly used with UML models, where subsets and supersets may trigger such linked changes.
+				<i>含义</i> ：含义是一种特殊的“直接对等”。链接为“暗示”另一个D2的差异D1意味着合并D1需要我们合并D2。换句话说，如果我们合并D1，D2将自动合并，但如果合并D2，D1将不会自动合并。含义主要与UML模型一起使用，其中子集和超集可以触发这种链接的更改。
 			</li>
 			<li>
-				<i>conflict</i>: during three-way comparisons, we compare two versions of a given model with their common ancestor. We can thus detect changes that were made in either left or right side (see the description of 
-				<i>source</i> above). However, there are cases when changes in the left conflict with changes in the right. For example, a class named "Book" in the origin model can have been renamed to "Novel" in the left model whereas it has been renamed to "Essay" in the right model. In such a case, the two differences will be marked as being in conflict with one another.
+				<i>冲突</i> ：在三方比较中，我们将给定模型的两个版本与它们的共同祖先进行比较。因此，我们可以检测左侧或右侧的变化（参见上面的<i>源</i>描述）。但是，有些情况下，左侧的变化与右侧的变化发生冲突。例如，原始模型中名为“Book”的类可以在左侧模型中重命名为“Novel”，而在右侧模型中已将其重命名为“Essay”。在这种情况下，这两个差异将被标记为彼此冲突。
 			</li>
 		</ul>
-		<p>As mentioned above, there are only three kind of differences that we will detect through EMF Compare, which will be sufficient for all use cases. 
-			<i>ReferenceChange</i> differences will be detected for every value of a reference for which we detect a change. Either the value was added, deleted, or moved (within the reference or between distinct references). 
-			<i>AttributeChange</i> differences are the same, but for attributes instead of references. Lastly, the 
-			<i>ResourceAttachmentChange</i> differences, though very much alike the ReferenceChanges we create for containment references, are specifically aimed at describing changes within the roots of one of the compared resources.
+		<p>如上所述，我们将通过EMF比较检测到只有三种差异，这对于所有用例都是足够的。
+			将为检测到更改的参考的每个值检测<i>ReferenceChange</i>差异。值已添加，删除或移动（在引用内或不同引用之间）。
+			<i>AttributeChange的</i>差异是相同的，但是对于属性而不是引用。最后， <i>ResourceAttachmentChange的</i>差异虽然与我们为包含引用创建的ReferenceChange非常相似，但它们专门用于描述其中一个比较资源的根中的更改。
 		</p>
-		<h4 id="Conflict">Conflict</h4>
+		<h4 id="Conflict">冲突</h4>
 		<p>
-			<b>Conflict</b> will only be detected during three-way comparisons. There can only be "conflicts" when we are comparing two different versions of a same model along with their common ancestor. In other words, we need to able to compare two versions of a common element with a "reference" version of that element.
+			<b>冲突</b>只会在三方比较中检测到。当我们比较同一模型的两个不同版本及其共同祖先时，只能存在“冲突”。换句话说，我们需要能够将公共元素的两个版本与该元素的“引用”版本进行比较。
 		</p>
-		<p>There are many different kinds of conflicts; to name a few:</p>
+		<p>有许多种不同的冲突;仅举几例：</p>
 		<ul>
-			<li>changing an element on one side (in any way, for example, renaming it) whilst that element has been removed from the other side</li>
-			<li>changing the same attribute of an element on both sides, to different values (for example, renaming "Book" to "Novel" on the left while be renamed "Book" to "Essay" on the right)</li>
-			<li>creating a new reference to an element on one side whilst it had been deleted from the other side</li>
+			<li>在从另一侧移除该元素的同时更改一侧的元素（以任何方式，例如，重命名它）</li>
+			<li>将两侧元素的相同属性更改为不同的值（例如，在左侧将“Book”重命名为“Novel”，而在右侧将“Book”重命名为“Essay”）</li>
+			<li>在从另一侧删除元素的同时创建对元素的新引用</li>
 		</ul>
-		<p>Conflicts can be of two kinds. We call 
-			<i>PSEUDO</i> conflict a conflict where the two sides of a comparison have changed as compared to their common ancestor, but where the two sides are actually now equal. In other words, the end result is that the left is now equal to the right, even though they are both different from their ancestor. This is the opposite of 
-			<i>REAL</i> conflict where the value on all three sides is different. In terms of merging, pseudo conflicts do not need any particular action, whilst real conflicts actually need resolution.
+		<p>冲突可以有两种。我们称<i>PSEUDO</i>冲突是一场冲突，与其共同祖先相比，双方的比较发生了变化，但双方现在实际上是平等的。换句话说，最终结果是左边现在等于右边，即使它们都与它们的祖先不同。这与<i>真实</i>冲突相反，三方面的价值不同。在合并方面，伪冲突不需要任何特定的行动，而真正的冲突实际上需要解决。
 		</p>
-		<p>There can be more than two differences conflicting with each other. For example, the deletion of an element from one side will most likely conflict with a number of differences from the other side.</p>
-		<h4 id="Equivalence">Equivalence</h4>
-		<p>EMF Compare uses 
-			<b>Equivalence</b> elements in order to link together a number of differences which can ultimately be considered to be the same. For example, ecore's 
-			<i>eOpposite</i> references will be maintained in sync with one another. As such, modifying one of the two references will automatically update the second one accordingly. The manual modification and the automatic update are two distinct modifications of the model, resulting in two differences detected. However, merging any of these two differences will automatically merge the other one. Therefore both are marked as being equivalent to each other.
+		<p>可能有两个以上的差异相互冲突。例如，从一侧删除元素很可能与另一方的许多差异冲突。</p>
+		<h4 id="Equivalence">等价</h4>
+		<p>EMF Compare使用<b>等价</b>元素将多个差异链接在一起，这些差异最终可以被认为是相同的。例如，ecore的<i>eOpposite</i>引用将保持彼此同步。因此，修改两个引用中的一个将相应地自动更新第二个引用。手动修改和自动更新是模型的两个不同修改，导致检测到两个差异。但是，合并这两个差异中的任何一个都会自动合并另一个差异。因此两者都被标记为彼此相同。
 		</p>
-		<p>There can be more than two differences equivalent with each other; in which case all will be added to a single 
-			<i>Equivalence</i> object, representing their relations.
+		<p>可以有两个以上的差异相互之间;在这种情况下，所有将被添加到单个<i>Equivalence</i>对象，表示它们的关系。
 		</p>
-		<h2 id="Core_Concepts">Core Concepts</h2>
-		<h3 id="Proxy_Resolution">Proxy Resolution</h3>
-		<p>When cross-referencing objects from another resource, EMF may use proxies instead of the actual object. As long as you do not access the element in question, EMF does not need to load the resource in which it is contained. The proxy is kind of a placeholder that tells EMF what resource should be loaded, and which of this resource's objects is referenced, when we actually need to access its value.</p>
-		<p>Proxy resolution is generally transparent, but a lot of tools based on EMF do not consider these proxies as first-class citizens: they simply resolve them without considering that they might not be needed. On the other hand, EMF Compare will never resolve proxies except for those strictly necessary. Whatever the phase of comparison, we strive to never hold the whole model in memory.</p>
-		<p>The 
-			<a href="#Model_Resolving">initial resolution phase</a> is the most intensive in terms of proxy resolution and I/O operations. Though we will never hold the whole logical model in memory at any given time, we do resolve all cross-references of the compared resources, on all sides of the comparison. Since the logical model may be located in a lot of different files on disk, it might also be very heavy in memory if loaded entirely. However, even if EMF Compare does resolve all fragments composing that logical model, it also unloads them as soon as the cross-references are registered. In other words, what we create is a dependency graph between the resources, not a loaded model. Afterwards, we only reload in memory those resources that have actually changed, and can thus contain differences. There will be proxies between these "changed" resources and the unchanged ones we have decided not to reload, but EMF Compare will never resolve these proxies again (and, in fact, will prevent other tools from resolving them).
+		<h2 id="Core_Concepts">核心概念</h2>
+		<h3 id="Proxy_Resolution">代理解析</h3>
+		<p>当交叉引用来自其他资源的对象时，EMF可以使用代理而不是实际对象。只要您不访问相关元素，EMF就不需要加载包含它的资源。代理是一种占位符，告诉EMF在我们实际需要访问其值时，应该加载哪些资源以及引用该资源的哪些对象。</p>
+		<p>代理解析通常是透明的，但许多基于EMF的工具并不认为这些代理是一等公民：他们只是解决它们而不考虑可能不需要它们。另一方面，除了严格必要的代理之外，EMF Compare永远不会解析代理。无论比较阶段如何，我们都努力永远不要将整个模型保留在记忆中。</p>
+		<p>在代理解析和I / O操作方面， <a href="#Model_Resolving">初始解析阶段</a>是最密集的<a href="#Model_Resolving">阶段</a> 。虽然我们永远不会在任何给定时间将整个逻辑模型保存在内存中，但我们确实在比较的所有方面解决了比较资源的所有交叉引用。由于逻辑模型可能位于磁盘上的许多不同文件中，因此如果完全加载，它在内存中也可能非常繁重。但是，即使EMF Compare确实解析了构成该逻辑模型的所有片段，它也会在注册交叉引用后立即卸载它们。换句话说，我们创建的是资源之间的依赖图，而不是加载的模型。之后，我们只在内存中重新加载那些实际已经发生变化的资源，从而可以包含差异。这些“已更改”资源与我们已决定不重新加载的未更改资源之间将存在代理，但EMF Compare将永远不会再次解析这些代理（实际上，将阻止其他工具解析它们）。
 		</p>
 		<p>
-			<b>Note:</b> At the time of writing, the user interface will never resolve any proxies either. This might change in the future for a better user experience since proxies usually end up displayed in strange manners.
+			<b>注意：</b>在撰写本文时，用户界面永远不会解析任何代理。由于代理通常最终会以奇怪的方式显示，因此未来可能会改变以获得更好的用户体验。
 		</p>
-		<h3 id="Equality_Helper">Equality Helper</h3>
-		<p>The equality helper is a very central concept of EMF Compare. Of course, EMF Compare's aim is to be able to compare objects together, objects whose comparison is not trivial and cannot be done through a mere "equal or not" concept. However, we still need to be able to compare these objects at all time and, whenever possible, without a full-fledged comparison.</p>
-		<p>The equality helper will be used in all phases of the comparison, from matching to merging (please see the 
-			<a href="#Comparison_Process">comparison process</a> for a bird's eye view of the different comparison phases, or their detailed descriptions down below). The matching phase is precisely the time when EMF Compare is trying to match the elements from one side to the elements from the other side, by pairs. As such, we do not have -yet- the knowledge of which element matches with which other. However, for all subsequent phases, the equality helper will rely on information from the comparison itself (the 
-			<i>Match</i> elements) to make a fail-fast test for element 'equality'.
+		<h3 id="Equality_Helper">平等帮助者</h3>
+		<p>平等助手是EMF比较的核心概念。当然，EMF Compare的目标是能够将对象进行比较，这些对象的比较不是微不足道的，并且不能仅通过“相同或不相同”的概念来完成。但是，我们仍然需要能够在任何时候比较这些对象，并且尽可能不进行全面的比较。</p>
+		<p>平等助手将用于比较的所有阶段，从匹配到合并（请参阅<a href="#Comparison_Process">比较过程</a> ，了解不同比较阶段的鸟瞰图，或下面的详细说明）。匹配阶段恰好是EMF Compare试图通过成对匹配从一侧到另一侧的元素的元素的时间。因此，我们没有-yet-知道哪个元素与哪个元素匹配。但是，对于所有后续阶段，相等帮助程序将依赖来自比较本身的信息（ <i>Match</i>元素）来对元素“相等”进行快速失败测试。
 		</p>
-		<p>When we do not have this information, the equality helper will resort to less optimal algorithms. For any object that is not an EMF EObject, we will use strict equality through 
-			<i>==</i> and 
-			<i>Object#equals()</i> calls. One of the cause for EMF Compare failing to match attribute values together is in fact the lack of implementation of the 
-			<i>equals</i> method on custom datatypes (see the 
-			<a href="./../FAQ.html#Custom_data_types_are_always_marked_as_modified_by_EMF_Compare" title="./../FAQ.html#Custom data types are always marked as modified by EMF Compare">FAQ</a> for more on that particular issue).
+		<p>当我们没有这些信息时，相等帮助程序将采用不太优化的算法。对于任何不是EMF EObject的对象，我们将通过<i>==</i>和<i>Object＃equals（）</i>调用使用严格相等。EMF Compare无法将属性值匹配在一起的原因之一实际上是缺少自定义数据类型上的<i>equals</i>方法的实现（有关该特定问题的更多信息，请参阅<a href="./../FAQ.html#Custom_data_types_are_always_marked_as_modified_by_EMF_Compare" title="。/ ../FAQ.html#Custom数据类型始终被EMF Compare标记为已修改">常见问题解答</a> ）。
 		</p>
 		<p>
-			<b>Note:</b> The equality helper is used 
-			<i>extensively</i>, and any performance hit or improvement here will make a huge difference on the whole comparison process. Likewise, any mistake in a custom equality helper will introduce a lot of bugs.
+			<b>注意：</b>平等帮助程序被<i>广泛</i>使用，并且此处的任何性能影响或改进将在整个比较过程中产生巨大差异。同样，自定义平等助手中的任何错误都会引入很多错误。
 		</p>
-		<h3 id="Comparison_Scope">Comparison Scope</h3>
-		<p>As seen above, EMF Compare considers proxies as first-class citizens of the EMF realm. This mainly shows in the matching mechanism. EMF Compare uses a scoping mechanism to determine which elements should be matched together, and which others should be ignored. Any element that is outside of the comparison scope will be ignored by the comparison engine and left alone (if it is a proxy, it won't even be loaded). This also means that we won't really have a way to compare these proxy (or otherwise out-of-scope values) when the Diff process encounters them.</p>
-		<p>For example, an element that is outside of the comparison scope, but referenced by another element which 
-			<i>is</i> in the scope will need specific comparison means: we've ignored it during the matching phase, so we don't know which 'out-of-scope' element corresponds to which 'other out-of-scope' element. Consider the following: in the first model, a package 
-			<i>P1</i> contains another package 
-			<i>P2</i>. In the right, a package 
-			<i>P1' 
-				<i> contains a package </i>P2' ''. We've told EMF Compare that ''P2
-			</i> and 
-			<i>P2' 
-				<i> are out of the comparison scope. Now how do we determine that the reference from </i>P1
-			</i> to 
-			<i>P2</i> has changed (or, in this example, that it did not change)?
+		<h3 id="Comparison_Scope">比较范围</h3>
+		<p>如上所述，EMF Compare将代理视为EMF领域的一等公民。这主要表现在匹配机制上。EMF Compare使用作用域机制来确定哪些元素应该匹配在一起，哪些元素应该被忽略。任何超出比较范围的元素都将被比较引擎忽略并单独保留（如果它是代理，则甚至不会加载它）。这也意味着当Diff进程遇到它们时，我们真的没有办法比较这些代理（或其他超出范围的值）。</p>
+		<p>例如，这是比较范围之外，而是由另一元素<i>是</i>在范围将需要特定的比较参照的元素表示：我们已经在匹配阶段忽略了它，所以我们不知道这“乱-scope'元素对应于“其他超出范围”的元素。请考虑以下事项：在第一个模型中，包<i>P1</i>包含另一个包<i>P2</i> 。在右边，包<i>P1' <i>包含包</i> P2'''。我们已经告诉EMF比较''P2</i>和<i>P2' <i>不在比较范围内。现在我们如何确定从</i> P1</i>到<i>P2</i> 的引用</i></i>已经改变（或者，在这个例子中，它没有改变）？
 		</p>
-		<p>This is a special case that is handled by the IEqualityHelper. Specifically, when such cases are encountered, EMF Compare falls back to using the URI of the two objects to check for equality. This behavior can be changed by customizing the IEqualityHelper (see 
-			<a href="#Equality_Helper">above</a>).
+		<p>这是一个由IEqualityHelper处理的特殊情况。具体来说，遇到这种情况时，EMF Compare会回退到使用两个对象的URI来检查是否相等。可以通过自定义IEqualityHelper来更改此行为（请参见<a href="#Equality_Helper">上文</a> ）。
 		</p>
-		<p>By default, the only thing that EMF Compare considers "out of scope" are Ecore's "EGenericType" elements. These are usually meaningless as far as comparison is concerned (as they are located in derived references and will be merged along with their "true" difference anyway). Please take note that, when used from the user interface, EMF Compare will narrow down the scope even further through the resolution of the 
-			<a href="./../developer/logical-model.html" title="./../developer/logical-model.html">logical model</a> and determining which resources are actually candidates for differences.
+		<p>默认情况下，EMF Compare认为“超出范围”的唯一内容是Ecore的“EGenericType”元素。就比较而言，这些通常是毫无意义的（因为它们位于派生的参考文献中，并且将与它们的“真实”差异一起合并）。请注意，当从用户界面使用时，EMF Compare将通过<a href="./../developer/logical-model.html" title="。/../developer/logical-model.html">逻辑模型</a>的分辨率进一步缩小范围，并确定哪些资源实际上是差异的候选对象。
 		</p>
-		<p>The comparison scope provides EMF Compare with information on the content of ResourceSets, Resources or EObjects, according to the entry point of the comparison. Take note that 
-			<b>the scope is only used during the matching phase</b>. The differencing phase only uses the result of the matching phase to proceed.
+		<p>根据比较的入口点，比较范围提供EMF比较以及有关ResourceSets，Resources或EObjects内容的信息。请注意， <b>范围仅在匹配阶段使用</b> 。差分阶段仅使用匹配阶段的结果来继续。
 		</p>
-		<h3 id="Longest_Common_Subsequence">Longest Common Subsequence</h3>
-		<p>PENDING description of the algorithm, why do we use it, references</p>
-		<h2 id="Default_Behavior_and_Extensibility">Default Behavior and Extensibility</h2>
-		<p>All main components of EMF Compare have been designed for extensibility. Some are only extensible when comparing models through your own actions, some can be customized globally for a given kind of model or metamodel... We'll outline the customization options of all 6 comparison phases in this section. (Any dead link? Report them on the 
-			<a href="http://www.eclipse.org/forums/index.php/f/164/">forum</a>!)
+		<h3 id="Longest_Common_Subsequence">最长的共同子序列</h3>
+		<p>PENDING算法的描述，为什么我们使用它，引用</p>
+		<h2 id="Default_Behavior_and_Extensibility">默认行为和可扩展性</h2>
+		<p>EMF Compare的所有主要组件都是为可扩展性而设计的。有些只在通过您自己的行为比较模型时是可扩展的，有些可以针对给定类型的模型或元模型进行全局定制...我们将在本节中概述所有6个比较阶段的自定义选项。（任何死链接？在<a href="http://www.eclipse.org/forums/index.php/f/164/">论坛</a>上报告他们！）
 		</p>
-		<h3 id="Model_Resolving_2">Model Resolving</h3>
-		<p>To adequately handle the comparison and merging of models that span across several resources (files), EMF Compare has to determine all dependencies among model resources in order to avoid breaking cross-references among model resources during a merge. It is not enough to only follow outgoing cross-references from model resources. Instead, EMF Compare needs to resolve outgoing and incoming cross-references to and from other model resources. Therefore, EMF Compare traverses through all model files within a configurable scope (container, project or the whole workspace in the EMF Compare preferences) before the comparison and merging, and tracks the dependencies among the visited model resources. The dependencies are stored and cached in terms of a graph, whereas nodes are model resources and edges are dependencies to other model resources. Based on this dependency graph, EMF Compare determines the set of model resources that must be included in a subsequent model comparison or merge.</p>
-		<p>The default implementation of the model resolution is multi-threaded and can be found in the class 
-			<i>org.eclipse.emf.compare.ide.ui.internal.logical.resolver.ThreadedModelResolver</i>.
+		<h3 id="Model_Resolving_2">模型解析</h3>
+		<p>为了充分处理跨越多个资源（文件）的模型的比较和合并，EMF Compare必须确定模型资源之间的所有依赖关系，以避免在合并期间破坏模型资源之间的交叉引用。仅仅遵循模型资源的传出交叉引用是不够的。相反，EMF Compare需要解决与其他模型资源之间的传出和传入交叉引用。因此，EMF Compare在比较和合并之前遍历可配置范围内的所有模型文件（容器，项目或EMF比较首选项中的整个工作空间），并跟踪访问模型资源之间的依赖关系。依赖关系以图形的形式存储和缓存，而节点是模型资源，边缘是对其他模型资源的依赖关系。基于此依赖关系图，EMF Compare确定必须包含在后续模型比较或合并中的模型资源集。</p>
+		<p>模型解析的默认实现是多线程的，可以在类<i>org.eclipse.emf.compare.ide.ui.internal.logical.resolver中找到<i>。ThreadedModelResolver</i> 。
 		</p>
-		<h4 id="Customization">Customization</h4>
-		<p>The default implementation of the model resolution described above can be replaced completely with a custom implementation of a model resolver or it can be extended by registering custom dependency providers.</p>
-		<h5 id="Model_Resolver_Extension_Point">Model Resolver Extension Point</h5>
-		<p>The "modelResolvers" extension point in the "org.eclipse.emf.compare.ide.ui" plug-in allows to register custom model resolvers. These model resolvers replace the default implementation (ThreadedModelResolver) and can therefore implement their own strategy.</p>
+		<h4 id="Customization">定制</h4>
+		<p>上述模型解析的默认实现可以完全替换为模型解析器的自定义实现，也可以通过注册自定义依赖关系提供程序来扩展。</p>
+		<h5 id="Model_Resolver_Extension_Point">模型旋转变压器扩展点</h5>
+		<p>“org.eclipse.emf.compare.ide.ui”插件中的“modelResolvers”扩展点允许注册自定义模型解析器。这些模型解析器替换了默认实现（ThreadedModelResolver），因此可以实现自己的策略。</p>
 		<p>
-			<b>Note:</b> This extension point is currently in beta and may be removed in the future since the ThreadedModelResolver seems flexible enough to support all common usecases.
+			<b>注意：</b>此扩展点目前处于测试阶段，可能会在将来删除，因为ThreadedModelResolver似乎足够灵活，可以支持所有常见用例。
 		</p>
-		<p>The custom model resolver must implement the IModelResolver interface (
-			<i>org.eclipse.emf.compare.ide.ui.logical.IModelResolver</i>) or extend the AbstractModelResolver (
-			<i>org.eclipse.emf.compare.ide.ui.logical.AbstractModelResolver</i>).
+		<p>自定义模型解析程序必须实现IModelResolver接口（ <i>org.eclipse.emf.compare.ide.ui.logical。IModelResolver</i> ）或扩展AbstractModelResolver（ <i>org.eclipse.emf.compare.ide.ui.logical。AbstractModelResolver</i> ）。
 		</p>
 		<p>
-			<b>Warning:</b> Replacing the default ThreadedModelResolver is NOT recommended since the logic to be implemented is very complex. Make sure there is no alternative way to reach your goal!
+			<b>警告：</b>不建议更换默认的ThreadedModelResolver，因为要实现的逻辑非常复杂。确保没有其他方法可以达到目标！
 		</p>
-		<h5 id="Model_Dependency_Provider_Extension_Point">Model Dependency Provider Extension Point</h5>
-		<p>The "modelDependencyProvider" extension point in the "org.eclipse.emf.compare.ide.ui" plugin allows to extend the default model resolution mechanism. It allows to add additional custom dependencies for model resources that are not manifested in actual cross-references otherwise.</p>
+		<h5 id="Model_Dependency_Provider_Extension_Point">模型依赖提供者扩展点</h5>
+		<p>“org.eclipse.emf.compare.ide.ui”插件中的“modelDependencyProvider”扩展点允许扩展默认的模型解析机制。它允许为模型资源添加其他自定义依赖项，否则这些依赖项不会显示在实际的交叉引用中。</p>
 		<p>
-			<b>Note:</b> This extension point is currently in beta and may change in the future.
+			<b>注意：</b>此扩展点目前处于测试阶段，将来可能会发生变化。
 		</p>
-		<p>The registered model dependency providers must implement the IDependencyProvider interface (
-			<i>org.eclipse.emf.compare.ide.ui.dependency.IDependencyProvider</i>).
+		<p>注册的模型依赖项提供程序必须实现IDependencyProvider接口（ <i>org.eclipse.emf.compare.ide.ui.dependency。IDependencyProvider</i> ）。
 		</p>
-		<p>The dependencies determined via the dependency providers are used in two ways in the default model resolver:</p>
+		<p>通过依赖关系提供程序确定的依赖关系在默认模型解析程序中以两种方式使用：</p>
 		<ul>
-			<li>The dependencies are resolved when the given URI is resolved</li>
-			<li>The dependencies are added to the dependency graph</li>
+			<li>解析给定URI时解析依赖关系</li>
+			<li>依赖关系将添加到依赖关系图中</li>
 		</ul>
-		<p>This functionality can be used to express dependencies among model resources that exist "by design" but are not physically manifested in the model resources (as resolvable proxies). For example, this extension point is used by Papyrus to express a dependency between .di, .uml, and .notation files even if these model resources are not actually referencing each other.</p>
-		<h3 id="Match_2">Match</h3>
-		<p>Before we can compute differences between two versions of a same Object, we must determine which are actually the "same" Object. For example, let's consider that my first model contains a Package P1 which itself contains a class C1; and that my second model contains a package P1 which contains a class C1. It may seem obvious for a human reader that "P1" and "C1" are the same object in both models. However, since their features might have changed in-between the two versions (for example, the "C1" might now be abstract, or it could have been converted to an Interface), this "equality" is not that obvious for a computer.</p>
-		<p>The goal of the "Match" phase is to discover which of the objects from model 2 match with which objects of model 1. In other words, this is when we'll say that two objects are one and the same, and that any difference between the two sides of this couple is actually a difference that should be reported as such to the user.</p>
-		<p>By default, EMF Compare browses through elements that are within the scope, and matches them through their identifier if they have one, or through a distance mechanism for all elements that have none. If the scope contains resources, EMF Compare will first match those two-by-two before browsing through all of their contained objects.</p>
-		<p>EMF Compare "finds" the identifier of a given object through a basic function that can be found in 
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/eobject/IdentifierEObjectMatcher.java#n268">IdentifierEObjectMatcher.DefaultIDFunction</a>. In short, if the object is a proxy, its identifier is its URI fragment. Otherwise its XMI ID (the identifier it was given in the XMI file) takes precedence over its functional ID (in ecore, an attribute that serves as an identifier). If the object is not a proxy and has neither XMI nor functional identifier, then the default behavior will simply pass that object over to the proximity algorithms so that it can be matched through its distance with other objects.
+		<p>此功能可用于表示“按设计”存在但未在模型资源（作为可解析代理）中物理表现的模型资源之间的依赖关系。例如，Papyrus使用此扩展点来表示.di，.uml和.notation文件之间的依赖关系，即使这些模型资源实际上并未相互引用。</p>
+		<h3 id="Match_2">比赛</h3>
+		<p>在我们计算同一个Object的两个版本之间的差异之前，我们必须确定哪些实际上是“相同”的对象。例如，让我们考虑我的第一个模型包含一个包P1，它本身包含一个C1类;并且我的第二个模型包含一个包含C1类的包P1。对于人类读者而言，“P1”和“C1”在两个模型中都是相同的对象似乎是显而易见的。但是，由于它们的功能可能在两个版本之间发生了变化（例如，“C1”现在可能是抽象的，或者它可能已经转换为接口），因此对于计算机而言，这种“相等”并不明显。</p>
+		<p>“匹配”阶段的目标是发现模型2中的哪些对象与模型1的哪些对象匹配。换句话说，这就是我们说两个对象是同一个，并且这对夫妻双方之间的任何差异实际上是应该向用户报告的差异。</p>
+		<p>默认情况下，EMF Compare浏览范围内的元素，如果有标识符，则通过标识符匹配它们，或者通过距离机制匹配所有元素。如果范围包含资源，则在浏览所有包含的对象之前，EMF Compare将首先匹配那些2到2。</p>
+		<p>EMF比较通过可在<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/eobject/IdentifierEObjectMatcher.java#n268">IdentifierEObjectMatcher中找到的基本函数“查找”给定对象的<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/eobject/IdentifierEObjectMatcher.java#n268">标识符。DefaultIDFunction</a> 。简而言之，如果对象是代理，则其标识符是其URI片段。否则，其XMI ID（在XMI文件中给出的标识符）优先于其功能ID（在ecore中，用作标识符的属性）。如果对象不是代理并且既没有XMI也没有功能标识符，则默认行为将简单地将该对象传递给邻近算法，以便可以通过其与其他对象的距离进行匹配。
 		</p>
-		<p>PENDING: brief description of the proximity algorithm</p>
-		<p>This behavior can be customized in a number of ways.</p>
-		<h4 id="Overriding_the_Match_engine">Overriding the Match engine</h4>
-		<p>The most powerful (albeit most cumbersome) customization you can implement is to override the match engine EMF Compare uses. To this end you can either implement the whole contract, [
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/IMatchEngine.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/IMatchEngine.java</a> 
-			<i>IMatchEngine</i>], in which case you will have to carefully follow the javadoc's recommendations, or extend the default implementation, [
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/DefaultMatchEngine.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/DefaultMatchEngine.java</a> 
-			<i>DefaultMatchEngine</i>].
+		<p>PENDING：接近算法的简要说明</p>
+		<p>可以通过多种方式自定义此行为。</p>
+		<h4 id="Overriding_the_Match_engine">覆盖匹配引擎</h4>
+		<p>您可以实现的最强大（尽管最麻烦）自定义是覆盖匹配引擎EMF比较使用。为此，您可以实施整个合同，[ <a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/IMatchEngine.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/ org / eclipse / emf / compare / match / IMatchEngine.java</a> <i>IMatchEngine</i> ]，在这种情况下你必须仔细遵循javadoc的建议，或者扩展默认实现，[ <a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/DefaultMatchEngine.java">http://git.eclipse.org/c/emfcompare/ org.eclipse.emf.compare.git / tree / plugins / org.eclipse.emf.compare / src / org / eclipse / emf / compare / match / DefaultMatchEngine.java</a> <i>DefaultMatchEngine</i> ]。
 		</p>
-		<p>A custom match engine can be used for your model comparison needs:</p>
-		<pre class="source-java">// for standalone usage
-IMatchEngine.Factory.Registry registry = MatchEngineFactoryRegistryImpl.createStandaloneInstance();
-// for OSGi (IDE, RCP) usage
-// IMatchEngine.Factory.Registry registry = EMFCompareRCPPlugin.getDefault().getMatchEngineFactoryRegistry();
-final IMatchEngine customMatchEngine = new MyMatchEngine(...);
-IMatchEngine.Factory engineFactory = new MatchEngineFactoryImpl() {
-  public IMatchEngine getMatchEngine() {
-    return customMatchEngine;
-  }
-};
-engineFactory.setRanking(20); // default engine ranking is 10, must be higher to override.
-registry.add(engineFactory);
-EMFCompare.builder().setMatchEngineFactoryRegistry(registry).build().compare(scope);
-
-</pre>
-		<h4 id="Changing_how_resources_are_matched">Changing how resources are matched</h4>
-		<p>By default, the logic EMF Compare uses to match resources together is very simple: if two resources have the same name (strict equality on the name, without considering folders), they match. When this is not sufficient, EMF Compare will look at the XMI ID of the resources' root(s). If the two resources share at least one root with an equal XMI ID, they match.</p>
-		<p>This can be changed by just implementing your own subclass of the DefaultMatchEngine and overriding its resource matcher. The method of interest here is 
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/DefaultMatchEngine.java#n319">DefaultMatchEngine#createResourceMatcher()</a>.
+		<p>自定义匹配引擎可用于您的模型比较需求：</p>
+		<pre class="source-java">//用于独立使用IMatchEngine。厂。Registry registry = MatchEngineFactoryRegistryImpl.createStandaloneInstance（）; //用于OSGi（IDE，RCP）用法// IMatchEngine。厂。Registry registry = EMFCompareRCPPlugin.getDefault（）。getMatchEngineFactoryRegistry（）;最终IMatchEngine customMatchEngine = new MyMatchEngine（...）; IMatchEngine。factory engineFactory = new MatchEngineFactoryImpl（）{public IMatchEngine getMatchEngine（）{return customMatchEngine; }}; engineFactory.setRanking（20）; //默认引擎排名为10，必须更高才能覆盖。registry.add（engineFactory）; 。EMFCompare.builder（）setMatchEngineFactoryRegistry（注册表）.build（）比较（范围）;</pre>
+		<h4 id="Changing_how_resources_are_matched">更改资源的匹配方式</h4>
+		<p>默认情况下，逻辑EMF比较用于将资源匹配在一起非常简单：如果两个资源具有相同的名称（名称上严格相等，而不考虑文件夹），则它们匹配。如果这还不够，EMF Compare将查看资源根的XMI ID。如果两个资源共享至少一个具有相同XMI ID的根，则它们匹配。</p>
+		<p>这可以通过实现自己的DefaultMatchEngine子类并覆盖其资源匹配器来更改。这里感兴趣的方法是<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/match/DefaultMatchEngine.java#n319">DefaultMatchEngine #createResourceMatcher（）</a> 。
 		</p>
-		<h4 id="Defining_custom_identifiers">Defining custom identifiers</h4>
-		<p>In some cases, there might be ways to identify your objects via "identifiers" that cannot be recognized as such by the default mechanism. For example, you might want each of your objects to be matched through their name alone, or through the composition of their name and their type... This can be achieved through code by simply redefining the function used by EMF Compare to find the ID of an object. The following code will tell EMF Compare that the identifier of all "MyEObject" elements is their name, and that any other element should go through the default behavior.</p>
-		<pre class="source-java">Function&lt;EObject, String&gt; idFunction = new Function&lt;EObject, String&gt;() {
-	public String apply(EObject input) {
-		if (input instanceof MyEObject) {
-			return ((MyEObject)input).getName();
-		}
-		// a null return here tells the match engine to fall back to the other matchers
-		return null;
-	}
-};
-// Using this matcher as fall back, EMF Compare will still search for XMI IDs on EObjects
-// for which we had no custom id function.
-IEObjectMatcher fallBackMatcher = DefaultMatchEngine.createDefaultEObjectMatcher(UseIdentifiers.WHEN_AVAILABLE);
-IEObjectMatcher customIDMatcher = new IdentifierEObjectMatcher(fallBackMatcher, idFunction);
- 
-IComparisonFactory comparisonFactory = new DefaultComparisonFactory(new DefaultEqualityHelperFactory());
- 
-IMatchEngine.Factory.Registry registry = MatchEngineFactoryRegistryImpl.createStandaloneInstance();
-// for OSGi (IDE, RCP) usage
-// IMatchEngine.Factory.Registry registry = EMFCompareRCPPlugin.getDefault().getMatchEngineFactoryRegistry();
-final MatchEngineFactoryImpl matchEngineFactory = new MatchEngineFactoryImpl(customIDMatcher, comparisonFactory);
-matchEngineFactory.setRanking(20); // default engine ranking is 10, must be higher to override.
-registry.add(matchEngineFactory);
-Comparison result = EMFCompare.builder().setMatchEngineFactoryRegistry(registry).build().compare(scope);
-
-</pre>
-		<h4 id="Ignoring_identifiers">Ignoring identifiers</h4>
-		<p>There are some cases where you do not want the identifiers of your elements to be taken into account when matching the objects. This can easily be done when computing comparisons programmatically:</p>
+		<h4 id="Defining_custom_identifiers">定义自定义标识符</h4>
+		<p>在某些情况下，可能存在通过“标识符”识别对象的方法，默认机制无法识别这些标识符。例如，您可能希望每个对象仅通过其名称或通过其名称和类型的组合进行匹配......这可以通过代码重新定义EMF Compare使用的函数来查找对象的ID来实现。以下代码将告诉EMF Compare所有“MyEObject”元素的标识符是它们的名称，并且任何其他元素都应该通过默认行为。</p>
+		<pre class="source-java">Function &lt;EObject，String&gt; idFunction = new Function &lt;EObject，String&gt;（）{public String apply（EObject input）{if（输入instanceof MyEObject）{return（（MyEObject）input）.getName（）; } //这里的null返回告诉匹配引擎回退到其他匹配器返回null; }}; //使用此匹配器作为后退，EMF Compare仍将在EObjects上搜索XMI ID //我们没有自定义ID函数。IEObjectMatcher fallBackMatcher = DefaultMatchEngine.createDefaultEObjectMatcher（UseIdentifiers。有空的时候）; IEObjectMatcher customIDMatcher = new IdentifierEObjectMatcher（fallBackMatcher，idFunction）; IComparisonFactory comparisonFactory = new DefaultComparisonFactory（new DefaultEqualityHelperFactory（））; IMatchEngine。厂。Registry registry = MatchEngineFactoryRegistryImpl.createStandaloneInstance（）; //用于OSGi（IDE，RCP）用法// IMatchEngine。厂。Registry registry = EMFCompareRCPPlugin.getDefault（）。getMatchEngineFactoryRegistry（）; final MatchEngineFactoryImpl matchEngineFactory = new MatchEngineFactoryImpl（customIDMatcher，comparisonFactory）; matchEngineFactory.setRanking（20）; //默认引擎排名为10，必须更高才能覆盖。registry.add（matchEngineFactory）;比较结果= EMFCompare.builder（）。setMatchEngineFactoryRegistry（registry）.build（）。compare（scope）;</pre>
+		<h4 id="Ignoring_identifiers">忽略标识符</h4>
+		<p>在某些情况下，您不希望在匹配对象时考虑元素的标识符。在以编程方式计算比较时，可以轻松完成此操作：</p>
 		<p>
-			<b>Through code</b>
+			<b>通过代码</b>
 		</p>
-		<pre class="source-java">IMatchEngine.Factory.Registry registry === MatchEngineFactoryRegistryImpl.createStandaloneInstance();
-// for OSGi (IDE, RCP) usage
-// IMatchEngine.Factory.Registry registry === EMFCompareRCPPlugin.getDefault().getMatchEngineFactoryRegistry();
-final MatchEngineFactoryImpl matchEngineFactory = new MatchEngineFactoryImpl(UseIdentifiers.NEVER);
-matchEngineFactory.setRanking(20); // default engine ranking is 10, must be higher to override.
-registry.add(matchEngineFactory);
-
-Comparison result = EMFCompare.builder().setMatchEngineFactoryRegistry(registry).build().compare(scope);
-
-</pre>
+		<pre class="source-java">IMatchEngine。厂。注册表注册表=== MatchEngineFactoryRegistryImpl.createStandaloneInstance（）; //用于OSGi（IDE，RCP）用法// IMatchEngine。厂。注册表注册表=== EMFCompareRCPPlugin.getDefault（）。getMatchEngineFactoryRegistry（）; final MatchEngineFactoryImpl matchEngineFactory = new MatchEngineFactoryImpl（UseIdentifiers。决不）; matchEngineFactory.setRanking（20）; //默认引擎排名为10，必须更高才能覆盖。registry.add（matchEngineFactory）;比较结果= EMFCompare.builder（）。setMatchEngineFactoryRegistry（registry）.build（）。compare（scope）;</pre>
 		<p>
-			<b>From the user interface</b>
+			<b>从用户界面</b>
 		</p>
-		<p>PENDING: preference page</p>
-		<h4 id="Refine_the_default_Match_result">Refine the default Match result</h4>
-		<p>If you are happy with most of what the default behavior does, but would like to refine some of it, you can do so by post-processing the result of the match phase. The original models are only used when matching, and will never be queried again afterwards. All the remaining phases are incremental refinements of the "Comparison" model that's been created by the matching phase.</p>
-		<p>As such, you can impact all of the differencing process through this. Within this post-processing implementation, you can:</p>
+		<p>PENDING：首选项页面</p>
+		<h4 id="Refine_the_default_Match_result">优化默认匹配结果</h4>
+		<p>如果您对默认行为的大部分内容感到满意，但想要优化其中的一些，则可以通过对匹配阶段的结果进行后处理来实现。原始模型仅在匹配时使用，之后永远不会再次查询。所有剩余阶段都是由匹配阶段创建的“比较”模型的渐进式细化。</p>
+		<p>因此，您可以通过此方式影响所有差异过程。在此后处理实现中，您可以：</p>
 		<dl>
-			<dt>Remove 
-				<i>Match</i> elements
-			</dt>
-			<dd>no difference will be detected on those: neither additions, nor deletions, nor conflicts... They'll simply be entirely ignored by the remaining process. Do note that elements for which we have no match will be considered "distinct" by the innards of EMF Compare: if a couple "B&lt;-&gt;B'" references a couple "C&lt;-&gt;C'" through one of their references, but you have removed the 
-				<i>Match</i> "C&lt;-&gt;C'", we will consider that this reference has been "changed" from C to C' and this difference within the references of B will be shown as such.
+			<dt>删除<i>Match</i>元素</dt>
+			<dd>在这些方面没有发现任何差异：既不是补充，也不是删除，也不是冲突......剩下的过程将完全忽略它们。请注意，我们没有匹配的元素将被EMF的内部视为“不同”比较：如果一对“B &lt; - &gt; B'”通过其中一个参考引用了一对“C &lt; - &gt; C'” ，但是你已经删除了<i>匹配</i> “C &lt; - &gt; C'”，我们将认为这个参考已经从C改为C'，并且B的参考中的这种差异将如此显示。
 			</dd>
-			<dt>Add new 
-				<i>Match</i> element
-			</dt>
-			<dd>the new couples of elements will be considered by the remaining comparison process and difference may be detected on them.</dd>
-			<dt>Change existing 
-				<i>Match</i> elements
-			</dt>
-			<dd>unmatched elements have two or three associated 
-				<i>Match</i> objects. For example if you are comparing three version of a model which all contain a different version of a given package, and all three version change the name of this package: version 1 has package "P1", version 2 has package "P2" and version three has package "P3". This package is actually the same, but EMF Compare did not manage to match it. We will thus have three 
-				<i>Match</i> objects: one that references "P1" as 
-				<i>left</i>, one that references "P2" as 
-				<i>right</i> and one that references "P3" as 
-				<i>origin</i>.
+			<dt>添加新的<i>Match</i>元素</dt>
+			<dd>剩余的比较过程将考虑新的元素对，并且可以在它们上检测差异。</dd>
+			<dt>更改现有的<i>Match</i>元素</dt>
+			<dd>不匹配的元素有两个或三个关联的<i>Match</i>对象。例如，如果您要比较一个模型的三个版本，它们都包含给定包的不同版本，并且所有三个版本都更改了此包的名称：版本1具有包“P1”，版本2具有包“P2”和版本三个包“P3”。这个包实际上是相同的，但是EMF Compare没有设法匹配它。因此，我们将有三个<i>Match</i>对象：一个引用“P1”作为<i>左</i> ，一个引用“P2”作为<i>右</i> ，一个引用“P3”作为<i>原点</i> 。
 			</dd>
-			<dd>You may remove two of those three elements and change the third one so that it references P1 as 
-				<i>left</i>, P2 as 
-				<i>right</i> and P3 as 
-				<i>origin</i>. In such a case, those three will be considered to Match for the remainder of the comparison process. Make sure that there are not two different 
-				<i>Match</i> referencing the same object though, as this would yield unspecified results.
+			<dd>您可以删除这三个元素中的两个并更改第三个元素，使其将P1引用为<i>左</i> ，P2引用为<i>右</i> ，P3引用为<i>原点</i> 。在这种情况下，对于剩余的比较过程，这三个将被视为匹配。确保没有两个不同的<i>Match</i>引用相同的对象，因为这会产生未指定的结果。
 			</dd>
 		</dl>
-		<p>Defining a custom post-processor requires you to implement 
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/postprocessor/IPostProcessor.java">IPostProcessor</a> and registering this sub-class against EMF Compare. The latter can be done via either an extension point, in which case it will be considered for 
-			<b>all</b> comparisons on models that match its enablement, or programmatically if you only want it active for your own actions:
-		</p>
+		<p>定义自定义后处理器需要您实现<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/postprocessor/IPostProcessor.java">IPostProcessor</a>并针对EMF Compare注册此子类。后者可以通过扩展点完成，在这种情况下，它将被考虑用于与其启用匹配的模型上的<b>所有</b>比较，或者如果您只希望它对您自己的操作有效，则可以编程：</p>
 		<p>
-			<b>Through code</b>
+			<b>通过代码</b>
 		</p>
-		<p>The following registers a post-processor for all UML models. This post-processor will not be triggered if there are no UML models (matching the given namespace URI) within the compared scope.</p>
-		<pre class="source-java">IPostProcessor customPostProcessor = new CustomPostProcessor();
-IPostProcessor.Descriptor descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile("http://www.eclipse.org/uml2/\\d\\.0\\.0/UML"), null);
-
-PostProcessor.Registry registry = new PostProcessorDescriptorRegistryImpl();
-registry.put(CustomPostProcessor.class.getName(), descriptor);
-Comparison comparison = EMFCompare.builder().setPostProcessorRegistry(registry).build().compare(scope);
-
-</pre>
+		<p>以下注册所有UML模型的后处理器。如果在比较范围内没有UML模型（匹配给定的命名空间URI），则不会触发此后处理器。</p>
+		<pre class="source-java">IPostProcessor customPostProcessor = new CustomPostProcessor（）; IPostProcessor。描述符描述符= new BasicPostProcessorDescriptorImpl（customPostProcessor，Pattern.compile（“http://www.eclipse.org/uml2/\\d\\.0\\\/UML”），null）; PostProcessor中。Registry registry = new PostProcessorDescriptorRegistryImpl（）; registry.put（CustomPostProcessor.class.getName（），descriptor）;比较比较= EMFCompare.builder（）。setPostProcessorRegistry（registry）.build（）。compare（scope）;</pre>
 		<p>
-			<b>Through extension point</b>
+			<b>通过延伸点</b>
 		</p>
-		<p>This accomplishes the exact same task, but it registers the post-processor globally. Any comparison through EMF Compare on a scope that contains models matching the given namespace URI will trigger that post-processor.</p>
-		<pre class="source-xml">&lt;extension point="org.eclipse.emf.compare.rcp.postProcessor"&gt;
-      &lt;postProcessor class="my.package.CustomPostProcessor"&gt;
-         &lt;nsURI value="http://www.eclipse.org/uml2/\\d\\.0\\.0/UML"&gt;
-         &lt;/nsURI&gt;
-      &lt;/postProcessor&gt;
-
-</pre>
-		<h3 id="Diff_2">Diff</h3>
-		<p>Now that the Matching phase has completed and that we know how our objects are coupled together, EMF Compare no longer requires the two (or three) input models. It will no longer iterate over them or the comparison's input scope. From this point onward, only the result of our comparison, the 
-			<i>Comparison</i> object, will be refined through the successive remaining phases, starting with the 
-			<b>Diff</b>.
+		<p>这完成了完全相同的任务，但它在全局注册后处理器。通过EMF比较包含与给定命名空间URI匹配的模型的范围将触发该后处理器。</p>
+		<pre class="source-xml">&lt;extension point =“org.eclipse.emf.compare.rcp.postProcessor”&gt; &lt;postProcessor class =“my.package。CustomPostProcessor“&gt; &lt;nsURI value =”http://www.eclipse.org/uml2/\\d\\.0\\.0/UML“&gt; &lt;/ nsURI&gt; &lt;/ postProcessor&gt;</pre>
+		<h3 id="Diff_2">DIFF</h3>
+		<p>现在匹配阶段已经完成并且我们知道对象如何耦合在一起，EMF Compare不再需要两个（或三个）输入模型。它将不再迭代它们或比较的输入范围。从这一点开始，只有我们比较的结果，即<i>Comparison</i>对象，将通过从<b>Diff</b>开始的连续剩余阶段进行细化。
 		</p>
-		<p>The goal of this phase is to iterate over all of our 
-			<i>Match</i> elements, be they unmatched (only one side has this object), couples (two of the three sides contain this object) or trios (all three sides have this object) and compute any difference that may appear between the sides. For example, an object that is only on one side of the comparison is an object that has been added, or deleted. But a couple might also represent a deletion: during three way comparisons, if we have an object in the common ancestor (origin) and in the left side, but not in the right side, then it has been deleted from the right version. However, this latter example might also be a conflict: we have determined that the object has been removed from the right side... but there might also be differences between the original version and the "left" version.
+		<p>这个阶段的目标是迭代我们所有的<i>Match</i>元素，它们是不匹配的（只有一面有这个对象），couple（三面中的两面包含这个对象）或trios（三面都有这个对象）和计算双方之间可能出现的任何差异。例如，仅在比较的一侧的对象是已添加或删除的对象。但是一对夫妇也可能代表一种删除：在三种方式比较中，如果我们在共同的祖先（起源）和左侧但不在右侧有一个对象，那么它已从正确的版本中删除。但是，后一个示例也可能是冲突：我们已确定该对象已从右侧删除...但原始版本和“左”版本之间可能也存在差异。
 		</p>
-		<p>The differencing phase does not care about conflicts though: all it does is refine the comparison to tell that this particular 
-			<i>Match</i> has 
-			<i>n</i> diffs: one 
-			<i>DELETE</i> difference on the right side, and 
-			<i>n</i> differences on the left. Detecting conflicts between these differences will come at a later time, during the conflict resolution phase.
+		<p>差异阶段并不关心冲突：它所做的只是改进比较以告诉这个特定的<i>匹配</i>有<i>n个</i>差异：右侧有一个<i>DELETE</i>差异，左边有<i>n个</i>差异。在冲突解决阶段，稍后将检测这些差异之间的冲突。
 		</p>
-		<p>Customizations of this phase usually aim at ignoring specific differences.</p>
-		<h4 id="Overriding_the_Diff_engine">Overriding the Diff engine</h4>
-		<p>As is the case for the Match phase, the most powerful customization you can implement for the differencing process is to override the diff engine EMF Compare uses. To this end you can either implement the whole contract, [
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/IDiffEngine.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/IDiffEngine.java</a> 
-			<i>IDiffEngine</i>], in which case you will have to carefully follow the javadoc's recommendations, or extend the default implementation, [
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/DefaultDiffEngine.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/DefaultDiffEngine.java</a> 
-			<i>DefaultDiffEngine</i>].
+		<p>此阶段的定制通常旨在忽略具体差异。</p>
+		<h4 id="Overriding_the_Diff_engine">覆盖Diff引擎</h4>
+		<p>与Match阶段的情况一样，您可以为差分处理实现的最强大的自定义是覆盖diff引擎EMF Compare使用。为此，您可以实施整个合同，[ <a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/IDiffEngine.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/ org / eclipse / emf / compare / diff / IDiffEngine.java</a> <i>IDiffEngine</i> ]，在这种情况下你必须仔细遵循javadoc的建议，或者扩展默认实现，[ <a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/DefaultDiffEngine.java">http://git.eclipse.org/c/emfcompare/ org.eclipse.emf.compare.git / tree / plugins / org.eclipse.emf.compare / src / org / eclipse / emf / compare / diff / DefaultDiffEngine.java</a> <i>DefaultDiffEngine</i> ]。
 		</p>
-		<p>A custom diff engine can then be used for your comparisons:</p>
-		<pre class="source-java">IDiffEngine customDiffEngine = new MyDiffEngine(...);
-EMFCompare.builder().setDiffEngine(customDiffEngine).build().compare(scope);
-
-</pre>
-		<h4 id="Changing_the_FeatureFilter">Changing the FeatureFilter</h4>
-		<p>One of the differencing engine's responsibilities is to iterate over all features of a given object in order to check for potential differences on its value(s). However, there are some features that we decide to ignore by default: derived features, transient features... or some features on which we would like to check for ordering changes even though they are marked as non-ordered.</p>
-		<p>The logic to determine whether a feature should be checked for differences has been extracted into its own class, and is quite easy to alter. For example, if you would like to ignore the 
-			<i>name</i> feature of your elements or never detect any ordering change:
+		<p>然后可以使用自定义差异引擎进行比较：</p>
+		<pre class="source-java">IDiffEngine customDiffEngine = new MyDiffEngine（...）; 。EMFCompare.builder（）setDiffEngine（customDiffEngine）.build（）比较（范围）;</pre>
+		<h4 id="Changing_the_FeatureFilter">更改FeatureFilter</h4>
+		<p>差异引擎的职责之一是迭代给定对象的所有特征，以检查其值的潜在差异。但是，默认情况下我们决定忽略一些功能：派生功能，瞬态功能......或者我们要检查订购更改的某些功能，即使它们被标记为无序。</p>
+		<p>确定是否应检查功能差异的逻辑已被提取到其自己的类中，并且很容易更改。例如，如果您想忽略元素的<i>名称</i>功能或从不检测任何订单更改：</p>
+		<pre class="source-java">IDiffProcessor diffProcessor = new DiffBuilder（）; IDiffEngine diffEngine = new DefaultDiffEngine（diffProcessor）{@ Override protected FeatureFilter createFeatureFilter（）{return new FeatureFilter（）{@ Override protected boolean isIgnoredReference（Match match，EReference reference）{return reference ==== EcorePackage。文字。ENAMED_ELEMENT__NAME || super.isIgnoredReference（匹配，引用）; } @Override public boolean checkForOrderingChanges（EStructuralFeature feature）{return false; }}; }}; 。EMFCompare.builder（）setDiffEngine（diffEngine）.build（）比较（范围）;</pre>
+		<p>您还可以<a href="#Changing_the_Diff_Processor">更改diff处理器</a>以实现类似的目标。两种方法之间的区别在于更改<i>FeatureFilter</i>将完全忽略结构特征，而替换diff处理器会让EMF Compare检查特征并检测该差异，但忽略有变化的通知。
 		</p>
-		<pre class="source-java">IDiffProcessor diffProcessor = new DiffBuilder();
-IDiffEngine diffEngine = new DefaultDiffEngine(diffProcessor) {
-	@Override
-	protected FeatureFilter createFeatureFilter() {
-		return new FeatureFilter() {
-			@Override
-			protected boolean isIgnoredReference(Match match, EReference reference) {
-				return reference ==== EcorePackage.Literals.ENAMED_ELEMENT__NAME ||
-						super.isIgnoredReference(match, reference);
-			}
-
-			@Override
-			public boolean checkForOrderingChanges(EStructuralFeature feature) {
-				return false;
-			}
-		};
-	}
-};
-EMFCompare.builder().setDiffEngine(diffEngine).build().compare(scope);
-
-</pre>
-		<p>You could also 
-			<a href="#Changing_the_Diff_Processor">change the diff processor</a> to achieve a similar goal. The difference between the two approaches is that changing the 
-			<i>FeatureFilter</i> will ignore the structural feature altogether, whereas replacing the diff processor would let EMF Compare check the feature and detect that diff, but ignore the notification that there is a change.
+		<h4 id="Changing_the_Diff_Processor">更改Diff处理器</h4>
+		<p>diff引擎浏览已匹配的所有对象，并检查其所有功能，以检查两个（或三个）版本的功能值之间的变化。当它检测到更改时，它会将所有相应的信息委托给其关联的<i>Diff Processor</i> ，后者负责实际创建<i>Diff</i>对象并将其附加到生成的<i>Comparison</i> 。
 		</p>
-		<h4 id="Changing_the_Diff_Processor">Changing the Diff Processor</h4>
-		<p>The diff engine browses over all of the objects that have been matched, and checks all of their features in order to check for changes between the two (or three) versions' feature values. When it detects a change, it delegates all of the corresponding information to its associated 
-			<i>Diff Processor</i>, which is in charge of actually creating the 
-			<i>Diff</i> object and appending it to the resulting 
-			<i>Comparison</i>.
-		</p>
-		<p>Replacing the 
-			<i>Diff Processor</i> gives you a simple entry point to ignore some of the differences the default engine detects, or to slightly alter the 
-			<i>Diff</i> information. You might want to ignore the differences detected on some references for example. Or you might want to react to the detected diff without actually creating the 
-			<i>Comparison</i> model... The implementation is up to you. You can either re-implement the 
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/IDiffProcessor.java">whole contract</a> or extend the default implementation, [
-			<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/DiffBuilder.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/DiffBuilder.java</a> 
-			<i>DiffBuilder</i>]
-		</p>
-		<p>Here is a simple example that provides EMF Compare with a diff processor that will ignore all differences detected on the "name" attribute of our objects, yet keep the default behavior for all other differences.</p>
-		<pre class="source-java">IDiffProcessor customDiffProcessor = new DiffBuilder() {
-	@Override
-	public void attributeChange(Match match, EAttribute attribute, Object value, DifferenceKind kind, DifferenceSource source) {
-		if (attribute !== EcorePackage.Literals.ENAMED_ELEMENT__NAME) {
-			super.attributeChange(match, attribute, value, kind, source);
-		}
-	}
-};
-
-IDiffEngine diffEngine = new DefaultDiffEngine(customDiffProcessor);
-EMFCompare.builder().setDiffEngine(diffEngine).build().compare(scope);
-
-</pre>
-		<h4 id="Refine_the_default_Diff_result">Refine the default Diff result</h4>
-		<p>The last possibility offered by EMF Compare to alter the result of the differencing phase is to post-process it. The remaining comparison phases -equivalence detection, detection of dependencies between diffs and conflict detection- all use the result of the Diff engine and refine it even further. As such, all of these phases can be impacted through the refining of the Diff result.</p>
-		<p>Example uses of the post-processing would include:</p>
+		<p>更换<i>Diff Processor</i>为您提供了一个简单的入口点，可以忽略默认引擎检测到的一些差异，或略微改变<i>Diff</i>信息。例如，您可能希望忽略在某些引用上检测到的差异。或者您可能想要对检测到的差异作出反应而不实际创建<i>比较</i>模型...实施取决于您。您可以重新实现<a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/IDiffProcessor.java">整个合同</a>或扩展默认实现，[ <a href="http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf.compare/src/org/eclipse/emf/compare/diff/DiffBuilder.java">http://git.eclipse.org/c/emfcompare/org.eclipse.emf.compare.git/tree/plugins/org.eclipse.emf。比较/ src / org / eclipse / emf / compare / diff / DiffBuilder.java</a> <i>DiffBuilder</i> ]</p>
+		<p>下面是一个简单的示例，它提供EMF Compare和diff处理器，它将忽略在对象的“name”属性上检测到的所有差异，但保留所有其他差异的默认行为。</p>
+		<pre class="source-java">IDiffProcessor customDiffProcessor = new DiffBuilder（）{@ Override public void attributeChange（Match match，EAttribute attribute，Object value，DifferenceKind kind，DifferenceSource source）{if（attribute！）== EcorePackage。文字。ENAMED_ELEMENT__NAME）{super.attributeChange（匹配，属性，值，种类，来源）; }}; IDiffEngine diffEngine = new DefaultDiffEngine（customDiffProcessor）; 。EMFCompare.builder（）setDiffEngine（diffEngine）.build（）比较（范围）;</pre>
+		<h4 id="Refine_the_default_Diff_result">优化默认的Diff结果</h4>
+		<p>EMF Compare提供的最后一种可能性来改变差分阶段的结果是对其进行后处理。其余的比较阶段 - 等效性检测，检测差异之间的依赖关系和冲突检测 - 都使用Diff引擎的结果并进一步细化它。因此，通过细化Diff结果可以影响所有这些阶段。</p>
+		<p>后处理的示例用法包括：</p>
 		<dl>
-			<dt>Remove 
-				<i>Diff</i> elements
-			</dt>
-			<dd>If you'd rather code your logic to ignore differences here as a post-process instead of changing the 
-				<i>FeatureFilter</i> or 
-				<i>IDiffProcessor</i>. Though that is not the best way to ignore differences, it can still be done here.
+			<dt>删除<i>Diff</i>元素</dt>
+			<dd>如果您更愿意将逻辑编码为忽略差异，而不是更改<i>FeatureFilter</i>或<i>IDiffProcessor</i> 。虽然这不是忽视差异的最佳方式，但仍可在此处完成。
 			</dd>
 		</dl>
 		<dl>
-			<dt>Add new 
-				<i>Diff</i> elements
-			</dt>
-			<dd>If you want to create new differences without implementing a whole differencing engine, new differences can still be created here as a post-process. You will need to implement the iteration over model elements and specific checks yourself though. This workaround can also be used to create new differences that the default differencing engine does not know.</dd>
+			<dt>添加新的<i>Diff</i>元素</dt>
+			<dd>如果要在不实现整个差异引擎的情况下创建新差异，则仍可以在此处创建新差异作为后处理。您需要自己实现模型元素的迭代和自己的特定检查。此解决方法还可用于创建默认差异引擎不知道的新差异。</dd>
 		</dl>
 		<dl>
-			<dt>Alter the detected differences</dt>
-			<dd>If some of the differences have been detected in a way you do not like, and you did not use a custom 
-				<i>IDiffProcessor</i> to change the 
-				<i>Diff</i> information, you can do so here.
+			<dt>改变检测到的差异</dt>
+			<dd>如果以您不喜欢的方式检测到某些差异，并且您没有使用自定义<i>IDiffProcessor</i>来更改<i>Diff</i>信息，则可以在此处执行此操作。
 			</dd>
 		</dl>
-		<p>The post-processor for the diff engine is implemented exactly in the same way as for the match engine post-processors (the interface and extension point are the same). Please refer to 
-			<a href="#Refine_the_default_Match_result">Refining the Match result</a>.
+		<p>diff引擎的后处理器完全以与匹配引擎后处理器相同的方式实现（接口和扩展点相同）。请参阅<a href="#Refine_the_default_Match_result">优化匹配结果</a> 。
 		</p>
-		<h3 id="Equivalences_2">Equivalences</h3>
-		<p>Now that the Differencing phase has ended, we've computed all of the individual differences within the compared models. However, all of these differences are still isolated, we now need to determine if there are any connections between them.</p>
-		<p>An 
-			<i>equivalence</i> is one kind of potential connections between differences. For example, Ecore has a concept of 
-			<i>eOpposite</i> references, which are maintained in sync with one another. Modifying one of the two references will automatically update the other side of the opposition accordingly. Both the manual modification and the automatic update are considered as distinct modifications of the model when looking at it after the fact, resulting in two differences detected. However, merging any of these two differences will automatically merge the other one. Therefore, both are marked as being 
-			<i>equivalent</i> to each other.
+		<h3 id="Equivalences_2">等价</h3>
+		<p>现在差分阶段已经结束，我们已经计算了比较模型中的所有个体差异。但是，所有这些差异仍然是孤立的，我们现在需要确定它们之间是否存在任何联系。</p>
+		<p><i>等价</i>是差异之间的一种潜在联系。例如，Ecore有一个<i>eOpposite</i>引用的概念，它们保持彼此同步。修改两个引用中的一个将相应地自动更新反对的另一方。在事后查看时，手动修改和自动更新都被视为模型的不同修改，导致检测到两个差异。但是，合并这两个差异中的任何一个都会自动合并另一个差异。因此，两者都被标记为彼此<i>相同</i> 。
 		</p>
-		<p>Though that is an example with two, more than two differences can be considered equivalent with each other. When we merge one difference, all of the other diffs that have been marked as being equivalent to it will be marked as 
-			<i>MERGED</i>, though no actual work needs to be done to merge them : EMF will have automatically updated them when merging the first.
+		<p>虽然这是两个例子，但可以认为两个以上的差异彼此相等。当我们合并一个差异时，所有其他已被标记为等同的差异将被标记为<i>MERGED</i> ，但是不需要进行实际工作来合并它们：EMF将在合并第一个时自动更新它们。
 		</p>
-		<p>Do note that EMF Compare detects and understand two different kind of relations that could be considered "equivalences". Described above are plain equivalences, when merging one of the differences will automatically update the model in such a way that all other sides of the equivalence are redundant and automatically merged. However, equivalences might not always be that easy. Let's take for example the case of UML : UML has concepts of 
-			<i>subset</i> and 
-			<i>superset</i> references. Adding an object into a subset will automatically update the related superset so that it also contains the added element. However, adding that same element to the superset will _not_ automatically update the related subset.
+		<p>请注意，EMF Compare会检测并理解可被视为“等价”的两种不同类型的关系。上面描述的是简单的等价，当合并其中一个差异时，将自动更新模型，使得等价的所有其他边都是冗余的并自动合并。但是，等价可能并不总是那么容易。让我们以UML为例：UML具有<i>子集</i>和<i>超集</i>引用的概念。将对象添加到子集中将自动更新相关超集，以便它还包含添加的元素。但是，将相同元素添加到超集将_not_自动更新相关子集。
 		</p>
-		<p>This can be seen as a "directional" equivalence, where one difference D1 
-			<i>implies</i> another D2, but is not 
-			<i>implied by</i> D2. Implications will be detected at the same time as the equivalences, but they do not use an 
-			<i>Equivalence</i> element, they are filled under the 
-			<i>Diff#implies</i> reference instead.
+		<p>这可以被视为“定向”等价，其中一个差异D1 <i>意味着</i>另一个D2，但D2不<i>暗示</i> 。将在等价的同时检测到含义，但它们不使用<i>等价</i>元素，而是在<i>Diff＃的含义</i>下填充它们。
 		</p>
-		<h4 id="Refine_the_default_equivalences">Refine the default equivalences</h4>
-		<p>This phase does not offer as many customization options as the previous ones; though post-processing should be enough for most needs. All of the phases that come after the differencing are further refinements of the comparison model, totally independent from one another. From here, any client of the API can refine the comparison model any way he'd like to, even by removing all of the default results.</p>
-		<p>A few examples of customizations that could be made from here :</p>
+		<h4 id="Refine_the_default_equivalences">优化默认等价</h4>
+		<p>此阶段不提供与以前相同的自定义选项;虽然后期处理应该足以满足大多数需求。差分后的所有阶段都是比较模型的进一步细化，完全彼此独立。从这里开始，API的任何客户端都可以按照自己喜欢的方式优化比较模型，即使删除了所有默认结果。</p>
+		<p>可以从这里进行的一些自定义示例：</p>
 		<dl>
-			<dt>Partly break existing equivalences</dt>
-			<dd>You can modify the equivalences we've detected by default by removing elements from individual differences' equivalences (Diff#getEquivalence()) or by changing the 
-				<i>Equivalence</i> elements directly.
+			<dt>部分打破现有的等价</dt>
+			<dd>您可以通过从个别差异的等价（Diff＃getEquivalence（））中删除元素或直接更改<i>等价</i>元素来修改我们默认检测到的<i>等价</i> 。
 			</dd>
-			<dt>Remove existing 
-				<i>Equivalence</i> elements
-			</dt>
-			<dd>If you'd rather remove the 
-				<i>Equivalence</i> elements altogether, it can also be done from here without impact down the line. The individual differences will be merged individually (potentially twice if EMF automatically updates the references) if the mergers do not have this to tell them what's equivalent to what.
+			<dt>删除现有的<i>等效</i>元素</dt>
+			<dd>如果你想完全删除<i>等价</i>元素，也可以从这里完成，而不会影响线。个别差异将单独合并（如果EMF自动更新参考，可能两次合并），如果合并没有这个，告诉他们什么等同于什么。
 			</dd>
-			<dt>Detect your own equivalences</dt>
-			<dd>If you have specific rules on your metamodel or implementation that make some differences redundant or otherwise fully equivalent to one another, you can add your own equivalences from here.</dd>
+			<dt>检测自己的等价物</dt>
+			<dd>如果您对元模型或实现有特定的规则，使某些差异多余或彼此完全等同，您可以从此处添加自己的等价。</dd>
 		</dl>
-		<p>The post-processor for the equivalence detection engine is implemented exactly in the same way as for the match engine post-processors (the interface and extension point are the same). Please refer to 
-			<a href="#Refine_the_default_Match_result">Refining the Match result</a>.
+		<p>等价检测引擎的后处理器完全以与匹配引擎后处理器相同的方式实现（接口和扩展点相同）。请参阅<a href="#Refine_the_default_Match_result">优化匹配结果</a> 。
 		</p>
-		<h3 id="Requirements_2">Requirements</h3>
-		<p>A requirement will be used to deal with structural constraints (to prevent dangling references or objects without parent) and to insure the model integrity.
-			A difference requires other ones if the merge of this one needs the other ones not to "break" the model.
-			The merge of a difference involves the merge of the required differences. All these differences will be merged by EMF Compare.
-			For example, the add of a reference requires the add of the referenced object and the add of the object containing this reference.</p>
+		<h3 id="Requirements_2">要求</h3>
+		<p>需求将用于处理结构约束（以防止悬挂引用或没有父项的对象）并确保模型完整性。如果这个合并需要其他合并而不是“破坏”模型，则需要其他差异。差异的合并涉及所需差异的合并。所有这些差异将由EMF Compare合并。例如，添加引用需要添加引用的对象和添加包含此引用的对象。</p>
 		<table border="1" cellpadding="1" cellspacing="1">
 			<tr>
-				<th align="center">Change kind</th>
-				<th align="center">Reference kind to a graphical object</th>
-				<th align="left">&nbsp; Requires:</th>
+				<th align="center">改变种类</th>
+				<th align="center">对图形对象的引用类型</th>
+				<th align="left">要求：</th>
 			</tr>
 			<tr>
-				<td align="center" rowspan="2">ADD</td>
-				<td align="center">content</td>
-				<td>&nbsp; ADD of its container
-					<br/>&nbsp; DELETE of the origin value on the same containment mono-valued reference
+				<td align="center" rowspan="2">加</td>
+				<td align="center">内容</td>
+				<td>添加其容器<br>在相同的包含单值引用上删除原始值</td>
+			</tr>
+			<tr>
+				<td align="center">参考</td>
+				<td>添加目标对象<br>源对象的ADD例如对目标或边缘源的引用的ADD需要边缘本身的ADD以及目标和源对象的ADD，从图形对象的语义对象的引用的ADD需要图形和语义对象的ADD。
 				</td>
 			</tr>
 			<tr>
-				<td align="center">reference</td>
-				<td>&nbsp; ADD of the target object
-					<br/>&nbsp; ADD of the source object e.g. The ADD of a reference to the target or source of an edge requires the ADD of the edge itself and the ADD of the target and source objects, the ADD of a reference to the semantic object from a graphical one requires the ADD of the graphical and semantic object.
-				</td>
+				<td align="center">删除</td>
+				<td align="center">内容</td>
+				<td>删除传出引用和包含的对象<br>DELETE / CHANGE传入的引用<br>MOVE包含的对象</td>
 			</tr>
 			<tr>
-				<td align="center">DELETE</td>
-				<td align="center">content</td>
-				<td>&nbsp; DELETE of the outgoing references and contained objects
-					<br/>&nbsp; DELETE/CHANGE of the incoming references
-					<br/>&nbsp; MOVE of the contained objects
-				</td>
+				<td align="center">移动</td>
+				<td align="center">内容</td>
+				<td>添加对象的新容器<br>移动对象的新容器</td>
 			</tr>
 			<tr>
-				<td align="center">MOVE</td>
-				<td align="center">content</td>
-				<td>&nbsp; ADD of the new container of the object
-					<br/>&nbsp; MOVE of the new container of the object
-				</td>
-			</tr>
-			<tr>
-				<td align="center">CHANGE</td>
-				<td align="center">reference permutation</td>
-				<td>&nbsp; ADD of the target object</td>
+				<td align="center">更改</td>
+				<td align="center">参考排列</td>
+				<td>添加目标对象</td>
 			</tr>
 		</table>
-		<p>Requirements can be added during a post-process.</p>
-		<h3 id="Refinement">Refinement</h3>
-		<p>A refinement enables to group a set of unit differences into a macroscopic change.
+		<p>可以在后处理期间添加要求。</p>
+		<h3 id="Refinement">精致</h3>
+		<p>细化使得能够将一组单位差异分组为宏观变化。
 
-			<br/>A unit difference refines a macroscopic one if it belongs to this macroscopic change. In other words, a macroscopic change is refined by a set of unit differences.
+			<br>如果它属于这种宏观变化，则单位差异会改善宏观单位差异。换句话说，通过一组单位差异来细化宏观变化。
 
-			<br/>The merge of a macroscopic change involves the merge of the refining differences. All these differences will be merged by EMF Compare.
+			<br>宏观变化的合并涉及精炼差异的合并。所有这些差异将由EMF Compare合并。
 
-			<br/>The use of the refinement allows to improve (simplify) the reading of the comparison from a business viewpoint, to accelerate the manual merging for the end-user and to insure some consistency.
+			<br>精简的使用允许从业务角度改进（简化）比较的读取，加速最终用户的手动合并并确保一定的一致性。
 
-			<br/>For example, the add of an association, in UML, is refined by the add of the UML Association itself but also the add of the UML properties with the update of references...
+			<br>例如，在UML中添加关联通过添加UML关联本身来改进，但也通过添加引用更新来添加UML属性...
 		</p>
-		<p>Refinement can be added during a post-process.</p>
-		<h3 id="Conflicts_2">Conflicts</h3>
-		<p>PENDING description of the phase, extensibility options (post-process)</p>
-		<h3 id="Merging">Merging</h3>
-		<h4 id="Which_references_are_followed_during_merging">Which references are followed during merging</h4>
+		<p>可以在后处理期间添加细化。</p>
+		<h3 id="Conflicts_2">冲突</h3>
+		<p>PENDING阶段描述，可扩展性选项（后处理）</p>
+		<h3 id="Merging">合并</h3>
+		<h4 id="Which_references_are_followed_during_merging">在合并期间遵循哪些参考</h4>
 		<table border="1">
 			<tr>
-				<th>&nbsp; </th>
-				<th>Merge from Left to Right</th>
-				<th>Merge from Right to Left</th>
+				<th>  </th>
+				<th>从左到右合并</th>
+				<th>从右到左合并</th>
 			</tr>
 			<tr>
-				<th>Source = Left</th>
-				<td align="center">requires  </td>
-				<td align="center">requiredBy  </td>
+				<th>来源=左</th>
+				<td align="center">要求</td>
+				<td align="center">requiredBy</td>
 			</tr>
 			<tr>
-				<th>Source = Right</th>
-				<td align="center">requiredBy  </td>
-				<td align="center">requires  </td>
+				<th>来源=对</th>
+				<td align="center">requiredBy</td>
+				<td align="center">要求</td>
 			</tr>
 		</table>
-		<p>PENDING how to provide custom mergers, override existing ones?</p>
-		<h3 id="User_Interface">User Interface</h3>
-		<h4 id="Add_your_own_filter">Add your own filter</h4>
-		<p>You can provide your own filters by adding an extension of type 
-			<i>org.eclipse.emf.compare.rcp.ui.filters</i> to your plugin.
+		<p>PENDING如何提供自定义合并，覆盖现有合并？</p>
+		<h3 id="User_Interface">用户界面</h3>
+		<h4 id="Add_your_own_filter">添加自己的过滤器</h4>
+		<p>您可以通过向插件添加<i>org.eclipse.emf.compare.rcp.ui.filters</i>类型的扩展名来提供自己的过滤器。
 		</p>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_Filter.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_Filter.png">
 		</p>
-		<p>This extension has the following fields:</p>
+		<p>此扩展程序包含以下字段：</p>
 		<ul>
-			<li>class: a class that implements 
-				<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.filters.IDifferenceFilter</i>
+			<li>class：实现<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.filters的类<i>。IDifferenceFilter</i>
 			</li>
-			<li>label: the label that will be displayed in the UI.</li>
-			<li>activeByDefault: true if you want your filter be active by default, false otherwise.</li>
-			<li>description: A human-readable description for this filter. It will be displayed in the EMF Compare UI.</li>
+			<li>label：将在UI中显示的标签。</li>
+			<li>activeByDefault：如果您希望默认情况下您的过滤器处于活动状态，则为true，否则为false。</li>
+			<li>description：此过滤器的可读描述。它将显示在EMF比较UI中。</li>
 		</ul>
-		<p>The 
-			<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.filters.IDifferenceFilter</i>'s contract is:
+		<p><i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.filters。IDifferenceFilter</i>的合同是：</p>
+		<pre class="source-java">/ ** * EMF Compare将使用此类的实例，以便为*结构差异视图提供差异过滤设施。* @since 4.0 * / public interface IDifferenceFilter {/ ** *返回将在选择此过滤器*时过滤掉结构差异视图中的对象的谓词。* * @return将在选择此过滤器*时过滤掉结构差异视图中的对象的谓词。* /谓词&lt;？super EObject&gt; getPredicateWhenSelected（）; / ** *当取消选择此过滤器*时，返回将过滤掉结构差异视图中对象的谓词。* * @return将在未选择此过滤器*时过滤掉结构差异视图中的对象的谓词。* /谓词&lt;？super EObject&gt; getPredicateWhenUnselected（）; / ** *此过滤器的人类可读标签。这将显示在EMF比较UI中。 * * @return此过滤器的标签。* / String getLabel（）; / ** *设置此过滤器的标签。这将显示在EMF比较UI中。 * * @param label *此过滤器的人类可读标签。* / void setLabel（String label）; / ** *返回过滤器应具有的初始激活状态。* * @return过滤器应具有的初始激活状态。* / boolean defaultSelected（）; / ** *设置过滤器应具有的初始激活状态。* * @param defaultSelected *过滤器应具有的初始激活状态（如果过滤器默认为*处于活动状态，则为true）。* / void setDefaultSelected（boolean defaultSelected）; / ** *根据范围和比较对象返回激活条件。* * @param scope *应用过滤器的范围。* @param comparison *要在结构视图中显示的比较。* @return基于范围和比较对象的激活条件。* / boolean isEnabled（IComparisonScope范围，比较对比）; }</pre>
+		<p>一个名为<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.filters.impl的默认抽象实现<i>。AbstractDifferenceFilter</i>在<i>org.eclipse.emf.compare.rcp.ui</i>插件中可用。使用这个抽象实现，您所要做的就是将其子类化并实现<i>getPredicateWhenSelected（）</i>方法。
 		</p>
-		<pre class="source-java">/**
- * Instances of this class will be used by EMF Compare in order to provide difference filter facilities to the
- * structural differences view.
- * @since 4.0
- */
-public interface IDifferenceFilter {
-
-	/**
-	 * Returns the predicate that will filter out objects in the structural differences view when this filter
-	 * will be selected.
-	 * 
-	 * @return the predicate that will filter out objects in the structural differences view when this filter
-	 *         will be selected.
-	 */
-	Predicate&lt;? super EObject&gt; getPredicateWhenSelected();
-
-	/**
-	 * Returns the predicate that will filter out objects in the structural differences view when this filter
-	 * will be unselected.
-	 * 
-	 * @return the predicate that will filter out objects in the structural differences view when this filter
-	 *         will be unselected.
-	 */
-	Predicate&lt;? super EObject&gt; getPredicateWhenUnselected();
-
-	/**
-	 * A human-readable label for this filter. This will be displayed in the EMF Compare UI.
-	 * 
-	 * @return The label for this filter.
-	 */
-	String getLabel();
-
-	/**
-	 * Set the label for this filter. This will be displayed in the EMF Compare UI.
-	 * 
-	 * @param label
-	 *            A human-readable label for this filter.
-	 */
-	void setLabel(String label);
-
-	/**
-	 * Returns the initial activation state that the filter should have.
-	 * 
-	 * @return The initial activation state that the filter should have.
-	 */
-	boolean defaultSelected();
-
-	/**
-	 * Set the initial activation state that the filter should have.
-	 * 
-	 * @param defaultSelected
-	 *            The initial activation state that the filter should have (true if the filter should be
-	 *            active by default).
-	 */
-	void setDefaultSelected(boolean defaultSelected);
-
-	/**
-	 * Returns the activation condition based on the scope and comparison objects.
-	 * 
-	 * @param scope
-	 *            The scope on which the filter will be applied.
-	 * @param comparison
-	 *            The comparison which is to be displayed in the structural view.
-	 * @return The activation condition based on the scope and comparison objects.
-	 */
-	boolean isEnabled(IComparisonScope scope, Comparison comparison);
-}
-
-</pre>
-		<p>A default abstract implementation named 
-			<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.filters.impl.AbstractDifferenceFilter</i> is available in the 
-			<i>org.eclipse.emf.compare.rcp.ui</i> plugin. With this abstract implementation, all you have to do is to subclass it and implements the 
-			<i>getPredicateWhenSelected()</i> method.
-		</p>
-		<h4 id="Add_your_own_group">Add your own group</h4>
-		<p>You can provide your own groups by adding an extension of type 
-			<i>org.eclipse.emf.compare.rcp.ui.groups</i> to your plugin.
+		<h4 id="Add_your_own_group">添加您自己的组</h4>
+		<p>您可以通过向插件添加<i>org.eclipse.emf.compare.rcp.ui.groups</i>类型的扩展名来提供自己的组。
 		</p>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_Group.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_Group.png">
 		</p>
-		<p>This extension has three fields:</p>
+		<p>此扩展程序有三个字段：</p>
 		<ul>
-			<li>class: a class that implements 
-				<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.IDifferenceGroupProvider</i>
+			<li>class：实现<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups的类<i>。IDifferenceGroupProvider</i>
 			</li>
-			<li>label: the label that will be displayed in the UI.</li>
-			<li>description: A description of the group. (Used in interface)</li>
-			<li>rank: The rank of the group. The highest rank enabled for a comparison is used. ( Default value : 0)</li>
-			<li>type: Type of comparison this group can handle (Default value: BOTH).
+			<li>label：将在UI中显示的标签。</li>
+			<li>description：组的描述。（用于界面）</li>
+			<li>排名：该组的排名。使用了用于比较的最高等级。（默认值：0）</li>
+			<li>type：此组可以处理的比较类型（默认值：BOTH）。
 				<ul>
-					<li>THREE_WAY: This group can only handle three way comparison.</li>
-					<li>TWO_WAY: This group can handle two way comparison.</li>
-					<li>BOTH: This group can handle two and three way comparisons.</li>
+					<li>THREE_WAY：这个组只能处理三路比较。</li>
+					<li>TWO_WAY：这个组可以处理双向比较。</li>
+					<li>BOTH：这个小组可以处理两种和三种方式的比较。</li>
 				</ul>
 			</li>
 		</ul>
-		<p>The 
-			<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.IDifferenceGroupProvider</i>'s contract is:
+		<p><i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups。IDifferenceGroupProvider</i>的合同是：</p>
+		<pre class="source-java">/ ** * EMF Compare将使用此类的实例，以便为结构差异视图提供不同的分组设施。* @since 4.0 * / public interface IDifferenceGroupProvider extends Adapter {/ ** *这将由分组操作在内部调用，以确定如何在结构视图中对差异进行分组。* * @param comparison *要在结构视图中显示的比较。默认情况下，将显示其包含*树。* @return要在结构查看器中显示的差异组的集合。根本不会显示空*组。如果{@code null}，我们将回退到默认行为。* /收藏&lt;？扩展IDifferenceGroup&gt; getGroups（比较比较）; / ** *此组的人类可读标签。这将显示在EMF比较UI中。 * * @return该组的标签。* / String getLabel（）; / ** *设置该组的标签。这将显示在EMF比较UI中。 * * @param label *此组的人类可读标签。* / void setLabel（String label）; / ** *返回组应具有的初始激活状态。* * @return组应具有的初始激活状态。* / boolean defaultSelected（）; / ** *设置组应具有的初始激活状态。* * @param defaultSelected *组应具有的初始激活状态（如果组默认情况下该组应处于活动状态，则为true）。* / void setDefaultSelected（boolean defaultSelected）; / ** *根据范围和比较对象返回激活条件。* * @param范围*应用组提供商的范围。* @param comparison *要在结构视图中显示的比较。* @return基于范围和比较对象的激活条件。* / boolean isEnabled（IComparisonScope范围，比较对比）; / ** *处理此差异组提供者。* / void dispose（）; / ** *返回包装给定{@code eObject}的所有{@link TreeNode}。它在内部使用交叉*引用适配器。* * @param eObject *我们想要反向引用的对象。* @return所有{@link TreeNode}以{@code eObject}为目标，通过* {@link TreePackage。字面＃TREE_NODE__DATA}。* / List &lt;TreeNode&gt; getTreeNodes（EObject eObject）; }</pre>
+		<p><i>IDifferenceGroupProvider</i>提供一组<i>IDifferenceGroup</i> 。组提供程序的默认抽象实现，名为<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.impl。AbstractDifferenceGroupProvider</i>在<i>org.eclipse.emf.compare.rcp.ui</i>插件中可用。使用这个抽象实现，您所要做的就是将其子类化并实现<i>getGroups（）</i>方法。
 		</p>
-		<pre class="source-java">/**
- * Instances of this class will be used by EMF Compare in order to provide difference grouping facilities to
- * the structural differences view.
- * @since 4.0
- */
-public interface IDifferenceGroupProvider extends Adapter {
-
-	/**
-	 * This will be called internally by the grouping actions in order to determine how the differences should
-	 * be grouped in the structural view.
-	 * 
-	 * @param comparison
-	 *            The comparison which is to be displayed in the structural view. By default, its containment
-	 *            tree will be displayed.
-	 * @return The collection of difference groups that are to be displayed in the structural viewer. An empty
-	 *         group will not be displayed at all. If {@code null}, we'll fall back to the default behavior.
-	 */
-	Collection&lt;? extends IDifferenceGroup&gt; getGroups(Comparison comparison);
-
-	/**
-	 * A human-readable label for this group. This will be displayed in the EMF Compare UI.
-	 * 
-	 * @return The label for this group.
-	 */
-	String getLabel();
-
-	/**
-	 * Set the label for this group. This will be displayed in the EMF Compare UI.
-	 * 
-	 * @param label
-	 *            A human-readable label for this group.
-	 */
-	void setLabel(String label);
-
-	/**
-	 * Returns the initial activation state that the group should have.
-	 * 
-	 * @return The initial activation state that the group should have.
-	 */
-	boolean defaultSelected();
-
-	/**
-	 * Set the initial activation state that the group should have.
-	 * 
-	 * @param defaultSelected
-	 *            The initial activation state that the group should have (true if the group should be active
-	 *            by default).
-	 */
-	void setDefaultSelected(boolean defaultSelected);
-
-	/**
-	 * Returns the activation condition based on the scope and comparison objects.
-	 * 
-	 * @param scope
-	 *            The scope on which the group provider will be applied.
-	 * @param comparison
-	 *            The comparison which is to be displayed in the structural view.
-	 * @return The activation condition based on the scope and comparison objects.
-	 */
-	boolean isEnabled(IComparisonScope scope, Comparison comparison);
-
-	/**
-	 * Dispose this difference group provider.
-	 */
-	void dispose();
-	
-	/**
-	 * Returns all {@link TreeNode}s that are wrapping the given {@code eObject}. It internally use a cross
-	 * reference adapter.
-	 * 
-	 * @param eObject
-	 *            the object from which we want inverse reference.
-	 * @return all {@link TreeNode}s targeting the given {@code eObject} through
-	 *         {@link TreePackage.Literals#TREE_NODE__DATA}.
-	 */
-	List&lt;TreeNode&gt; getTreeNodes(EObject eObject);
-}
-
-</pre>
-		<p>An 
-			<i>IDifferenceGroupProvider</i> provides a set of 
-			<i>IDifferenceGroup</i>.
-			A group provider's default abstract implementation named 
-			<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.impl.AbstractDifferenceGroupProvider</i> is available in the 
-			<i>org.eclipse.emf.compare.rcp.ui</i> plugin. With this abstract implementation, all you have to do is to subclass it and implements the 
-			<i>getGroups()</i> method.
+		<p>例如， <i>按</i>类别组提供商有4个组：添加，删除，更改和移动。
 		</p>
-		<p>For example, the 
-			<i>By Kind</i> group provider has 4 groups: Additions, Deletions, Changes and Moves.
+		<p>组的默认实现名为<i>org.eclipse.emf.compare.rcp.ui.internal.structuremergeviewer.groups。BasicDifferenceGroupImpl</i>在<i>org.eclipse.emf.compare.rcp.ui</i>插件中可用。使用此默认实现，您所要做的就是将其子类化并覆盖<i>getChildren（）</i>方法。请注意，默认实现是<i>内部的</i> ，可以进行修改。
 		</p>
-		<p>A group's default implementation named 
-			<i>org.eclipse.emf.compare.rcp.ui.internal.structuremergeviewer.groups.BasicDifferenceGroupImpl</i> is available in the 
-			<i>org.eclipse.emf.compare.rcp.ui</i> plugin. With this default implementation, all you have to do is to subclass it and overrides the 
-			<i>getChildren()</i> method.
-			Note that default implementation is 
-			<i>internal</i> and subject to modifications.
-		</p>
-		<h4 id="Customize_display_of_differences_inside_an_existing_group">Customize display of differences inside an existing group</h4>
-		<p>You can customize display of differences inside an existing group by adding an extension of type 
-			<i>org.eclipse.emf.compare.rcp.ui.differenceGroupExtender</i> to your plugin.
+		<h4 id="Customize_display_of_differences_inside_an_existing_group">自定义现有组内的差异显示</h4>
+		<p>您可以通过向插件添加<i>org.eclipse.emf.compare.rcp.ui.differenceGroupExtender</i>类型的扩展来自定义现有组内差异的显示。
 		</p>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_Extender.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_Extender.png">
 		</p>
-		<p>This extension has one field:</p>
+		<p>此扩展名有一个字段：</p>
 		<ul>
-			<li>class: a class that implements 
-				<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.extender.IDifferenceGroupExtender</i>
+			<li>class：实现<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.extender的类<i>。IDifferenceGroupExtender</i>
 			</li>
 		</ul>
-		<p>The 
-			<i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.extender.IDifferenceGroupExtender</i>'s contract is:
+		<p><i>org.eclipse.emf.compare.rcp.ui.structuremergeviewer.groups.extender。IDifferenceGroupExtender</i>的合同是：</p>
+		<pre class="source-java">/ ** * EMF Compare将使用此类的实例，以便在结构合并查看器中扩展包含*的TreeNodes的子节点。* * @since 4.0 * / public interface IDifferenceGroupExtender {/ ** *检查扩展器是否必须处理给定的TreeNode。* * @param treeNode *给定的TreeNode。* @return如果必须处理TreeNode，则为true，否则为false。* / boolean handle（TreeNode treeNode）; / ** *将子项添加到给定的TreeNode。* * @param treeNode *给定的TreeNode。* / void addChildren（TreeNode treeNode）; }</pre>
+		<p>扩展程序没有默认实现。<i>org.eclipse.emf.compare.diagram.ide.ui</i>插件中提供了扩展器实现的示例。
 		</p>
-		<pre class="source-java">/**
- * Instances of this class will be used by EMF Compare in order to extend the children of TreeNodes containing
- * in the structure merge viewer.
- * 
- * @since 4.0
- */
-public interface IDifferenceGroupExtender {
-
-	/**
-	 * Checks if the given TreeNode have to be handled by the extender.
-	 * 
-	 * @param treeNode
-	 *            the given TreeNode.
-	 * @return true if the TreeNode have to be handled, false otherwise.
-	 */
-	boolean handle(TreeNode treeNode);
-
-	/**
-	 * Add children to the given TreeNode.
-	 * 
-	 * @param treeNode
-	 *            the given TreeNode.
-	 */
-	void addChildren(TreeNode treeNode);
-}
-
-</pre>
-		<p>There is no default implementation of extender. Examples of extender implementations are available in the 
-			<i>org.eclipse.emf.compare.diagram.ide.ui</i> plugin.
-		</p>
-		<h4 id="Add_your_own_accessor_factory">Add your own accessor factory</h4>
-		<p>You can add your own accessor factory by adding an extension of type 
-			<i>org.eclipse.emf.compare.rcp.ui.accessorFactory</i> to your plugin.
+		<h4 id="Add_your_own_accessor_factory">添加自己的访问工厂</h4>
+		<p>您可以通过向插件添加<i>org.eclipse.emf.compare.rcp.ui.accessorFactory</i>类型的扩展名来添加自己的访问者工厂。
 		</p>
 		<p>
-			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_AccessorFactory.png"/>
+			<img align="middle" border="0" src="./../images/EMF_Compare_Developer_New_Extension_AccessorFactory.png">
 		</p>
-		<p>This extension has one field:</p>
+		<p>此扩展名有一个字段：</p>
 		<ul>
-			<li>class: a class that implements 
-				<i>org.eclipse.emf.compare.rcp.ui.contentmergeviewer.accessor.factory.IAccessorFactory</i>
+			<li>class：实现<i>org.eclipse.emf.compare.rcp.ui.contentmergeviewer.accessor.factory的类<i>。IAccessorFactory</i>
 			</li>
-			<li>ranking : the ranking of this accessor factory.</li>
+			<li>排名：这个访问工厂的排名。</li>
 		</ul>
-		<p>The 
-			<i>org.eclipse.emf.compare.rcp.ui.contentmergeviewer.accessor.factory.IAccessorFactory</i>'s contract is:
+		<p><i>org.eclipse.emf.compare.rcp.ui.contentmergeviewer.accessor.factory。IAccessorFactory</i>的合同是：</p>
+		<pre class="source-java">/ ** * {@link ITypedElement}的工厂。* * @since 4.0 * / public interface IAccessorFactory {/ ** *检查目标对象是否适用于工厂。* * @param target *我们想知道的对象是否适用于工厂。* @return如果对象适用于工厂，则为true，否则为false。* / boolean isFactoryFor（Object target）; / ** *工厂的排名。* * @return工厂的排名。* / int getRanking（）; / ** *设置工厂的排名。* * @param value *排名值。* / void setRanking（int value）; / ** *从{@link AdapterFactory}和给定对象创建{@link ITypedElement}。此访问器*特定于比较的左侧。* * @param adapterFactory *给定的适配器工厂。* @param target *给定的对象。* @return一个ITypedElement。* / ITypedElement createLeft（AdapterFactory adapterFactory，Object target）; / ** *从{@link AdapterFactory}和给定对象创建{@link ITypedElement}。此访问器*特定于比较的右侧。* * @param adapterFactory *给定的适配器工厂。* @param target *给定的对象。* @return一个ITypedElement。* / ITypedElement createRight（AdapterFactory adapterFactory，Object target）; / ** *从{@link AdapterFactory}和给定对象创建{@link ITypedElement}。该访问器*特定于比较的祖先方。* * @param adapterFactory *给定的适配器工厂。* @param target *给定的对象。* @return一个ITypedElement。* / ITypedElement createAncestor（AdapterFactory adapterFactory，Object target）; }</pre>
+		<p>ITypedElement是用于获取对象的名称，图像和类型的接口。ITypedElement用于在比较UI（getName和getImage）中呈现输入对象，以及用于查找给定输入类型（getType）的查看器。</p>
+		<p>访问工厂没有默认实现。<i>org.eclipse.emf.compare.rcp.ui</i>插件中提供了访问器工厂实现的示例。EMF中有几个现有的存取工厂比较：for Matches，ReferenceChanges，AttibuteChanges，ResourceAttachmentChanges ......
 		</p>
-		<pre class="source-java">/**
- * A factory of {@link ITypedElement}s.
- * 
- * @since 4.0
- */
-public interface IAccessorFactory {
-
-	/**
-	 * Checks if the target object is applicable to the factory.
-	 * 
-	 * @param target
-	 *            the object for which we want to know if it is applicable to the factory.
-	 * @return true if the object is applicable to the factory, false otherwise.
-	 */
-	boolean isFactoryFor(Object target);
-
-	/**
-	 * The ranking of the factory.
-	 * 
-	 * @return the ranking of the factory.
-	 */
-	int getRanking();
-
-	/**
-	 * Set the ranking of the factory.
-	 * 
-	 * @param value
-	 *            the ranking value.
-	 */
-	void setRanking(int value);
-
-	/**
-	 * Creates an {@link ITypedElement} from an {@link AdapterFactory} and a given object. This accessor is
-	 * specific for the left side of the comparison.
-	 * 
-	 * @param adapterFactory
-	 *            the given adapter factory.
-	 * @param target
-	 *            the given object.
-	 * @return an ITypedElement.
-	 */
-	ITypedElement createLeft(AdapterFactory adapterFactory, Object target);
-
-	/**
-	 * Creates an {@link ITypedElement} from an {@link AdapterFactory} and a given object. This accessor is
-	 * specific for the right side of the comparison.
-	 * 
-	 * @param adapterFactory
-	 *            the given adapter factory.
-	 * @param target
-	 *            the given object.
-	 * @return an ITypedElement.
-	 */
-	ITypedElement createRight(AdapterFactory adapterFactory, Object target);
-
-	/**
-	 * Creates an {@link ITypedElement} from an {@link AdapterFactory} and a given object. This accessor is
-	 * specific for the ancestor side of the comparison.
-	 * 
-	 * @param adapterFactory
-	 *            the given adapter factory.
-	 * @param target
-	 *            the given object.
-	 * @return an ITypedElement.
-	 */
-	ITypedElement createAncestor(AdapterFactory adapterFactory, Object target);
-}
-
-</pre>
-		<p>An ITypedElement is an interface for getting the name, image, and type for an object. An ITypedElement is used to present an input object in the compare UI (getName and getImage) and for finding a viewer for a given input type (getType).</p>
-		<p>There is no default implementation of accessor factory. Examples of accessor factories implementations are available in the 
-			<i>org.eclipse.emf.compare.rcp.ui</i> plugin. There is several existing accessor factories in EMF Compare: for Matches, ReferenceChanges, AttibuteChanges, ResourceAttachmentChanges...
+		<p>PENDING自定义显示自定义差异，添加自定义菜单条目，添加导出选项，提供自定义内容查看器</p>
+		<h2 id="Using_The_Compare_APIs">使用比较API</h2>
+		<p>EMF Compare的主要入口点是<i>org.eclipse.emf.compare。EMFCompare</i>类。它应该用于配置和启动比较。但事实并非如此。一旦你比较了两个模型，你想查询差异，也许合并其中一些，在比较编辑器中显示比较结果...以下部分将列出每个操作的主要入口点，以及可以执行的操作和应避免的操作的简要说明。
 		</p>
-		<p>PENDING customize display of custom differences, add custom menu entries, add export options, provide custom content viewer</p>
-		<h2 id="Using_The_Compare_APIs">Using The Compare APIs</h2>
-		<p>The main entry point of EMF Compare is the 
-			<i>org.eclipse.emf.compare.EMFCompare</i> class. It is what should be used in order to configure and launch a comparison. That is not all though. Once you have compared two models, you want to query the differences, maybe merge some of them, display the comparison result in the comparison editor... The following section will list the main entry points for each of these actions, along with a brief description of what can be done and what should be avoided.
+		<p>这些示例中的大多数都设置为“独立”示例，并将包含IDE使用的额外说明：注意您使用EMF Compare的环境。您是否在Eclipse插件中使用它，在这种情况下，您是否希望通过扩展点和贡献提供的所有额外功能可供您使用？或者您是在独立环境中使用它，在这种情况下，您需要将依赖性降低到最低限度并避免与OSGi相关的代码和扩展？</p>
+		<h3 id="Compare_two_models">比较两个型号</h3>
+		<h4 id="Loading_your_models">加载模型</h4>
+		<p>无论您想比较两个还是三个型号，首先需要加载它们。我们不会详细介绍如何做到这一点，因为这是标准的EMF实践，您可能需要查看EMF教程以获取有关此点的详细说明。在这里，我们将使用一个简单的方法将给定URL的xmi文件加载到resourceSet中，期望给定的URL是绝对文件URL：</p>
+		<pre class="source-java">public void load（String absolutePath，ResourceSet resourceSet）{URI uri = URI.createFileURI（absolutePath）; resourceSet.getResourceFactoryRegistry（）。getExtensionToFactoryMap（）。put（“xmi”，new XMIResourceFactoryImpl（））; //资源将在资源集resourceSet.getResource（uri，true）中加载; }</pre>
+		<h4 id="Creating_the_comparison_scope">创建比较范围</h4>
+		<p>EMF Compare使用作用域机制来确定应比较哪些元素，以及应忽略哪些元素。任何超出比较范围的元素都将被比较引擎忽略并单独保留（如果它是代理，则甚至不会加载它）。因此，应特别注意确定比较的适当范围，或者自定义IEqualityHelper以处理从范围中删除的特定元素。有关范围机制的更多信息，请参阅上面的<a href="#Comparison_Scope">相应部分</a> 。
 		</p>
-		<p>Most of these examples are set-up as "standalone" examples, and will include extra instructions for IDE use: pay attention to the environment in which you are using EMF Compare. Are you using it from an Eclipse plugin, in which case you'd like all of the extra features provided through extension points and contribution to be available to you? Or are you using it from a standalone environment, in which case you'd need to reduce the dependencies to the bare minimum and avoid OSGi-related code and extensions?</p>
-		<h3 id="Compare_two_models">Compare two models</h3>
-		<h4 id="Loading_your_models">Loading your models</h4>
-		<p>Whether you wish to compare two or three models, the first thing you need is to load them. We won't detail in-depth how to do that as this is standard EMF practice, you might want to look at EMF tutorial for detailed instructions on this point. Here, we'll use a simple method that loads an xmi file at a given URL into a resourceSet, expecting the given URL to be an absolute file URL:</p>
-		<pre class="source-java">public void load(String absolutePath, ResourceSet resourceSet) {
-  URI uri = URI.createFileURI(absolutePath);
-
-  resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-
-  // Resource will be loaded within the resource set
-  resourceSet.getResource(uri, true);
-}
-
-</pre>
-		<h4 id="Creating_the_comparison_scope">Creating the comparison scope</h4>
-		<p>EMF Compare uses a scoping mechanism to determine which elements should be compared, and which others should be ignored. Any element that is outside of the comparison scope will be ignored by the comparison engine and left alone (if it is a proxy, it won't even be loaded). As such, extra care should be taken to determine the proper scope of the comparison or customize the IEqualityHelper to handle the specific elements you remove from the scope. Refer to the 
-			<a href="#Comparison_Scope">appropriate section</a> above for more on the scoping mechanism.
+		<p>默认情况下，EMF Compare认为“超出范围”的唯一内容是Ecore的“EGenericType”元素。就比较而言，这些通常是毫无意义的（因为它们位于派生的参考文献中，并且将与它们的“真实”差异一起合并）。除此之外，请注意EMF Compare将仅保留未解析的代理：有关详细信息，请参阅<a href="#Proxy_Resolution">相关章节</a> 。
 		</p>
-		<p>By default, the only thing that EMF Compare considers "out of scope" are Ecore's "EGenericType" elements. These are usually meaningless as far as comparison is concerned (as they are located in derived references and will be merged along with their "true" difference anyway). Other than that, Please note that EMF Compare will leave unresolved proxies alone: more on this can be found in the 
-			<a href="#Proxy_Resolution">related section</a>.
+		<p>可以通过以下方式轻松创建默认范围：</p>
+		<pre class="source-java">IComparisonScope scope = EMFCompare.createDefaultScope（resourceSet1，resourceSet2）;</pre>
+		<h4 id="Configuring_the_comparison">配置比较</h4>
+		<p>EMF比较可以通过多种方式进行定制，其中最重要的方法<a href="#Default_Behavior_and_Extensibility">如上所述</a> 。他们中的大多数重用了相同的入口点<i>org.eclipse.emf.compare。EMFCompare</i>类。我们在这里不会定制太多，请参阅上述部分的可扩展性方法。
 		</p>
-		<p>The default scope can be easily created through:</p>
-		<pre class="source-java">IComparisonScope scope = EMFCompare.createDefaultScope(resourceSet1, resourceSet2);
-
-</pre>
-		<h4 id="Configuring_the_comparison">Configuring the comparison</h4>
-		<p>EMF Compare can be customized in a number of ways, the most important of which were described 
-			<a href="#Default_Behavior_and_Extensibility">above</a>. Most of them re-use the same entry point, the 
-			<i>org.eclipse.emf.compare.EMFCompare</i> class. We won't customize much here, please see the aforementioned section for extensibility means.
+		<p>我们将告诉EMF比较不是使用标识符，而是依赖于它的邻近算法（毕竟，我们正在比较普通的XMI文件）：</p>
+		<pre class="source-java">IEObjectMatcher matcher = DefaultMatchEngine.createDefaultEObjectMatcher（UseIdentifiers。决不）; IComparisonFactory comparisonFactory = new DefaultComparisonFactory（new DefaultEqualityHelperFactory（））; IMatchEngine。Factory matchEngineFactory = new MatchEngineFactoryImpl（matcher，comparisonFactory）; matchEngineFactory.setRanking（20）; IMatchEngine。厂。Registry matchEngineRegistry = new MatchEngineFactoryRegistryImpl（）; matchEngineRegistry.add（matchEngineFactory）; EMFCompare comparator = EMFCompare.builder（）。setMatchEngineFactoryRegistry（matchEngineRegistry）.build（）;</pre>
+		<h4 id="Putting_it_all_together">把它们放在一起</h4>
+		<p>以下是两个输入xmi文件，将它们加载到自己的资源集中，然后在不使用标识符的情况下调用比较：</p>
+		<pre class="source-java">public Comparison compare（File model1，File model2）{//加载两个输入模型ResourceSet resourceSet1 = new ResourceSetImpl（）; ResourceSet resourceSet2 = new ResourceSetImpl（）; String xmi1 =“path / to / first / model.xmi”; String xmi2 =“path / to / second / model.xmi”; load（xmi1，resourceSet1）; load（xmi2，resourceSet2）; //配置EMF比较IEObjectMatcher matcher = DefaultMatchEngine.createDefaultEObjectMatcher（UseIdentifiers。决不）; IComparisonFactory comparisonFactory = new DefaultComparisonFactory（new DefaultEqualityHelperFactory（））; IMatchEngine。Factory matchEngineFactory = new MatchEngineFactoryImpl（matcher，comparisonFactory）; matchEngineFactory.setRanking（20）; IMatchEngine。厂。Registry matchEngineRegistry = new MatchEngineFactoryRegistryImpl（）; matchEngineRegistry.add（matchEngineFactory）; EMFCompare comparator = EMFCompare.builder（）。setMatchEngineFactoryRegistry（matchEngineRegistry）.build（）; //比较两个模型IComparisonScope scope = EMFCompare.createDefaultScope（resourceSet1，resourceSet2）; return comparator.compare（scope）; private void load（String absolutePath，ResourceSet resourceSet）{URI uri = URI.createFileURI（absolutePath）; resourceSet.getResourceFactoryRegistry（）。getExtensionToFactoryMap（）。put（“xmi”，new XMIResourceFactoryImpl（））; //资源将在资源集resourceSet.getResource（uri，true）中加载; }</pre>
+		<h4 id="Comparing_from_an_Eclipse_plugin">与Eclipse插件比较</h4>
+		<p>以上示例仅供独立使用，如果您希望比较UML模型，从EMF比较扩展中受益，提供您自己的合并，则需要额外的工作......以下代表相同的示例，但使用特定于IDE的实用程序（您能发现两个不同之处吗？）：</p>
+		<pre class="source-java">public Comparison compare（File model1，File model2）{//加载两个输入模型ResourceSet resourceSet1 = new ResourceSetImpl（）; ResourceSet resourceSet2 = new ResourceSetImpl（）; String xmi1 =“path / to / first / model.xmi”; String xmi2 =“path / to / second / model.xmi”; load（xmi1，resourceSet1）; load（xmi2，resourceSet2）; //配置EMF比较IEObjectMatcher matcher = DefaultMatchEngine.createDefaultEObjectMatcher（UseIdentifiers。决不）; IComparisonFactory comparisonFactory = new DefaultComparisonFactory（new DefaultEqualityHelperFactory（））; IMatchEngine matchEngine = new DefaultMatchEngine（matcher，comparisonFactory）; IMatchEngine。厂。Registry matchEngineRegistry = EMFCompareRCPPlugin.getDefault（）。getMatchEngineFactoryRegistry（）; IPostProcessor。描述。Registry &lt;String&gt; postProcessorRegistry = EMFCompareRCPPlugin.getDefault（）。getPostProcessorRegistry（）; EMFCompare comparator = EMFCompare.builder（）。setMatchEngineFactoryRegistry（matchEngineRegistry）.setPostProcessorRegistry（postProcessorRegistry）.build（）; //比较两个模型IComparisonScope scope = EMFCompare.createDefaultScope（resourceSet1，resourceSet2）; return comparator.compare（scope）; private void load（String absolutePath，ResourceSet resourceSet）{URI uri = URI.createFileURI（absolutePath）; //资源将在资源集resourceSet.getResource（uri，true）中加载; }</pre>
+		<h3 id="Query_the_differences">查询差异</h3>
+		<p>一旦得到比较结果（以<i>比较</i>对象的形式），您感兴趣的内容很可能是模型之间的差异。我们将在稍后的部分详细介绍合并过程，但在此之前我们需要检索感兴趣的差异列表。在比较模型中，差异在被检测到的元素下传播，更确切地说，在检测到它们的元素的<i>匹配</i>下。
 		</p>
-		<p>All we will tell EMF Compare is not to use identifiers, and rely on its proximity algorithms instead (after all, we're comparing plain XMI files):</p>
-		<pre class="source-java">IEObjectMatcher matcher = DefaultMatchEngine.createDefaultEObjectMatcher(UseIdentifiers.NEVER);
-IComparisonFactory comparisonFactory = new DefaultComparisonFactory(new DefaultEqualityHelperFactory());
- 
-IMatchEngine.Factory matchEngineFactory = new MatchEngineFactoryImpl(matcher, comparisonFactory);
-matchEngineFactory.setRanking(20);
-IMatchEngine.Factory.Registry matchEngineRegistry = new MatchEngineFactoryRegistryImpl();
-matchEngineRegistry.add(matchEngineFactory);
-
-EMFCompare comparator = EMFCompare.builder().setMatchEngineFactoryRegistry(matchEngineRegistry).build();
-
-
-</pre>
-		<h4 id="Putting_it_all_together">Putting it all together</h4>
-		<p>The following takes two input xmi files, loads them in their own resource sets, then calls the comparison without using identifiers:</p>
-		<pre class="source-java">public Comparison compare(File model1, File model2) {
-	// Load the two input models
-	ResourceSet resourceSet1 = new ResourceSetImpl();
-	ResourceSet resourceSet2 = new ResourceSetImpl();
-	String xmi1 = "path/to/first/model.xmi";
-	String xmi2 = "path/to/second/model.xmi";
-	load(xmi1, resourceSet1);
-	load(xmi2, resourceSet2);
-
-	// Configure EMF Compare
-	IEObjectMatcher matcher = DefaultMatchEngine.createDefaultEObjectMatcher(UseIdentifiers.NEVER);
-	IComparisonFactory comparisonFactory = new DefaultComparisonFactory(new DefaultEqualityHelperFactory());
-	IMatchEngine.Factory matchEngineFactory = new MatchEngineFactoryImpl(matcher, comparisonFactory);
-        matchEngineFactory.setRanking(20);
-        IMatchEngine.Factory.Registry matchEngineRegistry = new MatchEngineFactoryRegistryImpl();
-        matchEngineRegistry.add(matchEngineFactory);
-	EMFCompare comparator = EMFCompare.builder().setMatchEngineFactoryRegistry(matchEngineRegistry).build();
-
-	// Compare the two models
-	IComparisonScope scope = EMFCompare.createDefaultScope(resourceSet1, resourceSet2);
-	return comparator.compare(scope);
-}
-
-private void load(String absolutePath, ResourceSet resourceSet) {
-  URI uri = URI.createFileURI(absolutePath);
-
-  resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-
-  // Resource will be loaded within the resource set
-  resourceSet.getResource(uri, true);
-}
-
-</pre>
-		<h4 id="Comparing_from_an_Eclipse_plugin">Comparing from an Eclipse plugin</h4>
-		<p>The above example is for standalone usage, and as such will require extra work if you wish to compare UML models, benefit from EMF Compare extensions, provide your own mergers... The following represents the same example, but uses IDE-specific utilities (can you spot the two differences?):</p>
-		<pre class="source-java">public Comparison compare(File model1, File model2) {
-	// Load the two input models
-	ResourceSet resourceSet1 = new ResourceSetImpl();
-	ResourceSet resourceSet2 = new ResourceSetImpl();
-	String xmi1 = "path/to/first/model.xmi";
-	String xmi2 = "path/to/second/model.xmi";
-	load(xmi1, resourceSet1);
-	load(xmi2, resourceSet2);
-
-	// Configure EMF Compare
-	IEObjectMatcher matcher = DefaultMatchEngine.createDefaultEObjectMatcher(UseIdentifiers.NEVER);
-	IComparisonFactory comparisonFactory = new DefaultComparisonFactory(new DefaultEqualityHelperFactory());
-	IMatchEngine matchEngine = new DefaultMatchEngine(matcher, comparisonFactory);
-        IMatchEngine.Factory.Registry matchEngineRegistry = EMFCompareRCPPlugin.getDefault().getMatchEngineFactoryRegistry();
-        IPostProcessor.Descriptor.Registry&lt;String&gt; postProcessorRegistry = EMFCompareRCPPlugin.getDefault().getPostProcessorRegistry();
-	EMFCompare comparator = EMFCompare.builder()
-                                           .setMatchEngineFactoryRegistry(matchEngineRegistry)
-                                           .setPostProcessorRegistry(postProcessorRegistry)
-                                           .build();
-
-	// Compare the two models
-	IComparisonScope scope = EMFCompare.createDefaultScope(resourceSet1, resourceSet2);
-	return comparator.compare(scope);
-}
-
-private void load(String absolutePath, ResourceSet resourceSet) {
-  URI uri = URI.createFileURI(absolutePath);
-
-  // Resource will be loaded within the resource set
-  resourceSet.getResource(uri, true);
-}
-
-</pre>
-		<h3 id="Query_the_differences">Query the differences</h3>
-		<p>Once you have the result of a comparison (in the form of a 
-			<i>Comparison</i> object), what you are interested in are most likely the differences between your models. We will detail the merging process later on it its own section, but before anything we need to retrieve the list of differences of interest. Within the Comparison model, differences are spread under the elements on which they've been detected, more precisely, under the 
-			<i>Match</i> of the element on which they were detected.
-		</p>
-		<p>Let's use a complex example as reference. Consider the three following models:</p>
+		<p>让我们使用一个复杂的例子作为参考。考虑以下三个模型：</p>
 		<table border="1" cellpadding="5" cellspacing="0">
 			<tr>
-				<th align="center" colspan="2">Origin</th>
+				<th align="center" colspan="2">起源</th>
 			</tr>
 			<tr>
 				<td align="center" colspan="2">
-					<img align="middle" border="0" src="./../images/EMF_Compare_Origin_Model.png"/>
+					<img align="middle" border="0" src="./../images/EMF_Compare_Origin_Model.png">
 				</td>
 			</tr>
 			<tr>
-				<th align="center">Left</th>
-				<th align="center">Right</th>
+				<th align="center">剩下</th>
+				<th align="center">对</th>
 			</tr>
 			<tr>
 				<td>
-					<img align="middle" border="0" src="./../images/EMF_Compare_Use_Compare_Master.png"/>
+					<img align="middle" border="0" src="./../images/EMF_Compare_Use_Compare_Master.png">
 				</td>
 				<td>
-					<img align="middle" border="0" src="./../images/EMF_Compare_Use_Compare_5.png"/>
+					<img align="middle" border="0" src="./../images/EMF_Compare_Use_Compare_5.png">
 				</td>
 			</tr>
 		</table>
-		<h4 id="All_differences">All differences</h4>
-		<p>What we need is usually to retrieve the list of 
-			<i>all</i> differences, wherever they were detected, or whatever their source (the left model, or the right model). Instead of iterating all over the Comparison model to collect them, you can use:
-		</p>
-		<pre class="source-java">List&lt;Diff&gt; differences = comparison.getDifferences();
-
-</pre>
-		<h4 id="Differences_related_to_element_X">Differences related to element X</h4>
-		<p>Sometimes, we need to retrieve all of the differences that were detected on (or that are related to) a given model element. For example, with the above example, we might want to retrieve the list of all differences that relate to 
-			<i>Borrowable</i>. Well, there are a number of them, which can all be collected through:
-		</p>
-		<pre class="source-java">// borrowable is a reference on the like-named EObject
-List&lt;Diff&gt; differencesOnBorrowable = comparison.getDifferences(borrowable);
-
-</pre>
-		<p>This will return a list containing a number of differences:</p>
+		<h4 id="All_differences">所有差异</h4>
+		<p>我们需要的通常是检索<i>所有</i>差异的列表，无论它们在何处被检测到，或者无论其来源（左侧模型或右侧模型）。您可以使用：而不是遍历比较模型以收集它们，而不是：</p>
+		<pre class="source-java">List &lt;Diff&gt;差异= comparison.getDifferences（）;</pre>
+		<h4 id="Differences_related_to_element_X">与元素X相关的差异</h4>
+		<p>有时，我们需要检索在给定模型元素上检测到的（或与之相关的）所有差异。例如，通过上面的示例，我们可能希望检索与<i>Borrowable</i>相关的所有差异的列表。嗯，有很多，可以通过以下方式收集：</p>
+		<pre class="source-java">// borrowable是类似命名的EObject List &lt;Diff&gt; differencesOnBorrowable = comparison.getDifferences（borrowable）的引用;</pre>
+		<p>这将返回包含许多差异的列表：</p>
 		<ul>
 			<li>
-				<i>Borrowable</i> has been added in the right model
+				在合适的模型中添加了<i>Borrowable</i></li>
+			<li>
+				已将<i>副本</i>添加到<i>Borrowable</i>的引用<i>ownedProperties</i>中</li>
+			<li>
+				<i>可借用</i>已被添加到<i>Book</i>的泛化参考中
 			</li>
 			<li>
-				<i>copies</i> has been added to reference 
-				<i>ownedProperties</i> of Borrowable
-			</li>
-			<li>
-				<i>Borrowable</i> has been added to the generalization reference of 
-				<i>Book</i>
-			</li>
-			<li>
-				<i>Borrowable</i> has been added as the 
-				<i>borrowed</i> target of an association with 
-				<i>Person</i>
+				<i>Borrowable</i>已被添加为与<i>Person</i>关联的<i>借用</i>目标
 			</li>
 		</ul>
-		<p>In other words, this method will return differences 
-			<b>under</b> the target (here, 
-			<i>copies</i> has been added), as well as differences which 
-			<b>changed value</b> is the target.
+		<p>换句话说，此方法将返回目标<b>下</b>的差异（此处，已添加<i>副本</i> ），以及<b>更改值为</b>目标的差异。
 		</p>
-		<h4 id="Filtering_differences">Filtering differences</h4>
-		<p>EMF Compare depends on guava for many of its internals. A number of "common" difference filtering predicates have been extracted to the 
-			<i>org.eclipse.emf.compare.utils.EMFComparePredicates</i> utility class. Using this class, it is trivial to filter the list of differences so as to keep only those we are interested in. For example, what if we wish to retrieve the list of all 
-			<b>non-conflicting</b> differences that originate from the 
-			<b>left</b> side? (This is the case when you use the "copy all non-conflicting from left to right" action from the comparison editor for example.)
+		<h4 id="Filtering_differences">过滤差异</h4>
+		<p>EMF比较依靠番石榴的许多内部结构。已经将许多“常见”差异过滤谓词提取到<i>org.eclipse.emf.compare.utils。EMFCompare预测</i>实用程序类。使用这个类，过滤差异列表是非常简单的，只留下我们感兴趣的那些。例如，如果我们希望检索源自<b>左侧</b>的所有<b>非冲突</b>差异的列表，该怎么办？（例如，当您使用比较编辑器中的“从左到右复制所有非冲突”操作时就是这种情况。）
 		</p>
-		<pre class="source-java">// Construct the predicate
-Predicate&lt;? super Diff&gt; predicate = and(fromSide(DifferenceSource.LEFT), not(hasConflict(ConflictKind.REAL, ConflictKind.PSEUDO));
-// Filter out the differences that do not satisfy the predicate
-Iterable&lt;Diff&gt; nonConflictingDifferencesFromLeft = filter(comparison.getDifferences(), predicate);
-
-</pre>
-		<p>Note that for clarity, we've made static references to a number of methods here. This particular snippet requires the following imports:</p>
-		<pre class="source-java">import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
-import static org.eclipse.emf.compare.utils.EMFComparePredicates.fromSide;
-import static org.eclipse.emf.compare.utils.EMFComparePredicates.hasConflict;
-
-</pre>
-		<p>We strongly encourage you to look around more in these classes: 
-			<i>Predicates</i> provides a number of basic, general-purpose predicates while 
-			<i>EMFComparePredicates</i> provides EMF Compare specific predicates used throughout both core and user-interface of EMF Compare.
+		<pre class="source-java">//构造谓词谓词&lt;？super Diff&gt; predicate = and（fromSide（DifferenceSource。左），而不是（hasConflict（ConflictKind。REAL，ConflictKind。伪））; //过滤掉不满足谓词的差异Iterable &lt;Diff&gt; nonConflictingDifferencesFromLeft = filter（comparison.getDifferences（），predicate）;</pre>
+		<p>请注意，为清楚起见，我们在此处对许多方法进行了静态引用。此特定代码段需要以下导入：</p>
+		<pre class="source-java">import static com.google.common.base。Predicates.and; import static com.google.common.base。Predicates.not;导入静态com.google.common.collect。Iterables.filter; import static org.eclipse.emf.compare.utils。EMFComparePredicates.fromSide; import static org.eclipse.emf.compare.utils。EMFComparePredicates.hasConflict;</pre>
+		<p>我们强烈建议您在这些类中查看更多内容： <i>Predicates</i>提供了许多基本的通用谓词，而<i>EMFComparePredicates</i>提供EMF比较EMF Compare的核心和用户界面中使用的特定谓词。
 		</p>
-		<h3 id="Merge_differences">Merge differences</h3>
-		<p>PENDING how to re-implement 
-			<i>copyDiff</i> and 
-			<i>copyAllNonConflicting</i>
+		<h3 id="Merge_differences">合并差异</h3>
+		<p>PENDING如何重新实现<i>copyDiff</i>和<i>copyAllNonConflicting</i>
 		</p>
-		<p>entry points: org.eclipse.emf.compare.merge.IMerger and org.eclipse.emf.compare.merge.IBatchMerger</p>
-		<h3 id="Open_a_compare_editor">Open a compare editor</h3>
-		<p>PENDING description of the need (dialog and editor), link to 
-			<a href="./how-to-open-compare-dialog.html" title="./how-to-open-compare-dialog.html">appropriate page</a>
+		<p>入口点：org.eclipse.emf.compare.merge。IMerger和org.eclipse.emf.compare.merge。IBatchMerger</p>
+		<h3 id="Open_a_compare_editor">打开比较编辑器</h3>
+		<p>PENDING描述需要（对话框和编辑器），链接到<a href="./how-to-open-compare-dialog.html" title="./how-to-open-compare-dialog.html">适当的页面</a>
 		</p>
 	</body>
 </html>

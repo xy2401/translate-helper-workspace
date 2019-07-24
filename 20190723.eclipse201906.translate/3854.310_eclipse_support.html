@@ -1,763 +1,408 @@
-<html>
+﻿<html dir="ltr">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
-	<title>Eclipse Support</title>
-	<link href="book.css" rel="stylesheet" type="text/css">
-	<link href="code.css" rel="stylesheet" type="text/css">
-	<link rel="home" href="index.html" title="">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<title>Eclipse支持</title>
+	<link href="book.css" rel="stylesheet" type="text/css"></link>
+	<link href="code.css" rel="stylesheet" type="text/css"></link>
+	<link rel="home" href="index.html" title=""></link>
 </head>
-<body>
+<body dir="ltr">
 
-<h1 id="ide-concepts">Eclipse Support</h1>
+<h1 id="ide-concepts">Eclipse支持</h1>
 
-<p>For the following part we will refer to the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.xtext.ui.examples/projects/fowlerdsl/org.eclipse.xtext.example.fowlerdsl/src/org/eclipse/xtext/example/fowlerdsl/Statemachine.xtext">state machine example</a> to describe the different aspects of Xtext’s UI features.</p>
+<p>对于以下部分，我们将参考<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.xtext.ui.examples/projects/fowlerdsl/org.eclipse.xtext.example.fowlerdsl/src/org/eclipse/xtext/example/fowlerdsl/Statemachine.xtext">状态机示例</a>来描述Xtext的UI功能的不同方面。</p>
 
-<h2 id="label-provider">Label Provider</h2>
+<h2 id="label-provider">标签提供商</h2>
 
-<p>There are various places in the UI in which model elements have to be presented to the user: In the <a href="#outline">outline view</a>, in <a href="#hyperlinking">hyperlinks</a>, in <a href="#content-assist">content proposals</a>, find dialogs etc. Xtext allows to customize each of these appearances by individual implementation of the <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a> interface.</p>
+<p>UI中有许多地方必须向用户呈现模型元素：在<a href="#outline">大纲视图中</a> ，在<a href="#hyperlinking">超链接中</a> ，在<a href="#content-assist">内容提案中</a> ，查找对话框等.Xtext允许通过<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a>接口的单独实现来自定义每个外观。</p>
 
-<p>An <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a> has two methods: <code>getText(Object)</code> returns the text in an object’s label, while <code>getImage(Object)</code> returns the icon. In addition, the Eclipse UI framework offers the <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/DelegatingStyledCellLabelProvider.IStyledLabelProvider.html">IStyledLabelProvider</a>, which returns a <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/StyledString.html">StyledString</a> (i.e. with custom fonts, colors etc.) in the <code>getStyledText(Object)</code> method.</p>
+<p><a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a>有两个方法： <code>getText(Object)</code>返回对象标签中的文本，而<code>getImage(Object)</code>返回图标。此外，Eclipse UI框架提供了<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/DelegatingStyledCellLabelProvider.IStyledLabelProvider.html">IStyledLabelProvider</a> ，它在<code>getStyledText(Object)</code>方法中返回<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/StyledString.html">StyledString</a> （即使用自定义字体，颜色等）。</p>
 
-<p>Almost all label providers in the Xtext framework inherit from the base class <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/AbstractLabelProvider.java">AbstractLabelProvider</a> which unifies both approaches. Subclasses can either return a styled string or a string in the <code>doGetText(Object)</code> method. The framework will automatically convert it to a styled text (with default styles) or to a plain text in the respective methods.</p>
+<p>Xtext框架中的几乎所有标签提供程序都继承自基类<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/AbstractLabelProvider.java">AbstractLabelProvider</a> ，它统一了这两种方法。子类可以在<code>doGetText(Object)</code>方法中返回样式字符串或字符串。框架将自动将其转换为样式文本（具有默认样式）或相应方法中的纯文本。</p>
 
-<p>Dealing with images can be cumbersome, too, as image handles tend to be scarce system resources. The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/AbstractLabelProvider.java">AbstractLabelProvider</a> helps you managing the images: In your implementation of <code>doGetImage(Object)</code> you can as well return an <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/swt/graphics/Image.html">Image</a>, an <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/resource/ImageDescriptor.html">ImageDescriptor</a> or a string, representing a path in the <em>icons/</em> folder of the containing plug-in. This path is actually configurable by Google Guice. Have a look at the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/PluginImageHelper.java">PluginImageHelper</a> to learn about the customizing possibilities.</p>
+<p>处理图像也很麻烦，因为图像处理往往是稀缺的系统资源。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/AbstractLabelProvider.java">AbstractLabelProvider</a>可以帮助您管理图像：在<code>doGetImage(Object)</code>实现中，您还可以返回<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/swt/graphics/Image.html">Image</a> ， <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/resource/ImageDescriptor.html">ImageDescriptor</a>或字符串，表示包含插件的<em>icons /</em>文件夹中的路径。此路径实际上可由Google Guice配置。看看<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/PluginImageHelper.java">PluginImageHelper</a> ，了解自定义的可能性。</p>
 
-<p>If you have the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/labeling/LabelProviderFragment2.xtend">LabelProviderFragment2</a> in the list of generator fragments in the MWE2 workflow for your language, it will automatically create stubs and bindings for an <a href="#eobject-label-provider"><code>{MyLang}EObjectLabelProvider</code></a> and an <a href="#description-label-provider"><code>{MyLang}DescriptionLabelProvider</code></a> which you can implement manually.</p>
+<p>如果您的语言的MWE2工作流中的生成器片段列表中有<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/labeling/LabelProviderFragment2.xtend">LabelProviderFragment2</a> ，它将自动为<a href="#eobject-label-provider"><code>{MyLang}EObjectLabelProvider</code></a>和<a href="#description-label-provider"><code>{MyLang}DescriptionLabelProvider</code></a>创建存根和绑定，您可以手动实现它们。</p>
 
-<h3 id="eobject-label-provider">Label Providers For EObjects</h3>
+<h3 id="eobject-label-provider">EObjects的标签提供者</h3>
 
-<p>The EObject label provider refers to actually loaded and thereby available model elements. By default, Xtext binds the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/DefaultEObjectLabelProvider.java">DefaultEObjectLabelProvider</a> to all use cases, but you can change the binding individually for the Outline, Content Assist or other places. For that purpose, there is a so called <em>binding annotation</em> for each use case. For example, to use a custom <em>MyContentAssistLabelProvider</em> to display elements in the content assist, you have to override <code>configureContentProposalLabelProvider(..)</code> in your language’s UI module:</p>
+<p>EObject标签提供程序引用实际加载的，从而可用的模型元素。默认情况下，Xtext将<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/DefaultEObjectLabelProvider.java">DefaultEObjectLabelProvider</a>绑定到所有用例，但您可以单独更改Outline，Content Assist或其他位置的绑定。为此，每个用例都有一个所谓的<em>绑定注释</em> 。例如，要使用自定义<em>MyContentAssistLabelProvider</em>在内容辅助中显示元素，您必须在语言的UI模块中覆盖<code>configureContentProposalLabelProvider(..)</code> ：</p>
 
-<pre><code class="language-java">@Override
-public void configureContentProposalLabelProvider(Binder binder) {
-  binder.bind(ILabelProvider.class)
-    .annotatedWith(ContentProposalLabelProvider.class)
-    .to(MyContentAssistLabelProvider.class);
-}
-</code></pre>
+<pre><code class="language-java">@Override public void configureContentProposalLabelProvider（Binder binder）{binder.bind（ILabelProvider.class）.annotatedWith（ContentProposalLabelProvider.class）.to（MyContentAssistLabelProvider.class）; }</code></pre>
 
-<p>If your grammar uses an imported <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EPackage.java">EPackage</a>, there may be an existing <em>edit</em>-plug-in generated by EMF that also provides label providers for model elements. To use this as a fallback, your label provider should call the constructor with the delegate parameter and use dependency injection for its initialization, e.g.</p>
+<p>如果您的语法使用导入的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EPackage.java">EPackage</a> ，则可能存在EMF生成的现有<em>编辑</em>插件，该插件还为模型元素提供标签提供程序。要将此作为回退使用，标签提供程序应使用delegate参数调用构造函数，并使用依赖注入进行初始化，例如</p>
 
-<pre><code class="language-java">public class MyLabelProvider {
-  @Inject  
-  public MyLabelProvider(AdapterFactoryLabelProvider delegate) {
-    super(delegate);
-  }
-}
-</code></pre>
+<pre><code class="language-java">public class MyLabelProvider {@Inject public MyLabelProvider（AdapterFactoryLabelProvider delegate）{super（delegate）; }}</code></pre>
 
 <h4 id="default-eobject-label-provider">DefaultEObjectLabelProvider</h4>
 
-<p>The default implementation of the <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a> interface utilizes the polymorphic dispatcher idiom to implement an external visitor as the requirements of the label provider are kind of a best match for this pattern. It boils down to the fact that the only thing you need to do is to implement a method that matches a specific signature. It either provides an image filename or the text to be used to represent your model element. Have a look at the following example to get a more detailed idea about the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/DefaultEObjectLabelProvider.java">DefaultEObjectLabelProvider</a>.</p>
+<p><a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a>接口的默认实现利用多态调度程序惯用法来实现外部访问者，因为标签提供者的要求是这种模式的最佳匹配。归结为这样一个事实，你唯一需要做的就是实现一个匹配特定签名的方法。它提供图像文件名或用于表示模型元素的文本。请查看以下示例以获取有关<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/DefaultEObjectLabelProvider.java">DefaultEObjectLabelProvider</a>的更详细信息。</p>
 
-<pre><code class="language-java">public class SecretCompartmentsLabelProvider 
-    extends DefaultLabelProvider {
+<pre><code class="language-java">public class SecretCompartmentsLabelProvider扩展DefaultLabelProvider {public String text（Event event）{return event.getName（）+“（”+ event.getCode（）+“）”; public字符串图像（事件事件）{return“event.gif”; public String image（State state）{return“state.gif”; }}</code></pre>
 
-  public String text(Event event) {
-    return event.getName() + " (" + event.getCode() + ")";
-  }
-  
-  public String image(Event event) {
-    return "event.gif";
-  }
-  
-  public String image(State state) {
-    return "state.gif";
-  }
-}
-</code></pre>
+<p>默认实现的特别之处在于其类名的实际原因：它提供了非常合理的默认值。要计算某个模型元素的标签，它将首先查找<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EAttribute.java">EAttribute</a> <em>名称</em>并尝试使用此<em>名称</em> 。如果找不到这样的功能，它将尝试使用可以最好地用作标签的第一个功能。在最坏的情况下，它将返回模型元素的类名，这是不太可能发生的。</p>
 
-<p>What is especially nice about the default implementation is the actual reason for its class name: It provides very reasonable defaults. To compute the label for a certain model element, it will first look for an <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EAttribute.java">EAttribute</a> <em>name</em> and try to use this one. If it cannot find such a feature, it will try to use the first feature that can be used best as a label. At worst it will return the class name of the model element, which is kind of unlikely to happen.</p>
+<p>您也可以通过重写方法自定义错误处理<code>handleTextError()</code>或<code>handleImageError()</code></p>
 
-<p>You can also customize error handling by overriding the methods <code>handleTextError()</code> or <code>handleImageError()</code>.</p>
+<h3 id="description-label-provider">索引条目的标签提供程序</h3>
 
-<h3 id="description-label-provider">Label Providers For Index Entries</h3>
+<p>Xtext维护所有模型元素的索引，以允许快速搜索和链接，而无需加载引用的资源（有关详细信息，请参阅有关基于<a href="303_runtime_concepts.html#index-based">索引的范围</a>的章节）。此索引中的元素也出现在某些UI上下文中，例如，在“ <em>查找模型元素”</em>对话框或“ <em>查找引用”</em>视图中。出于可伸缩性的原因，UI不应自动加载资源，因此我们需要另一个标签提供程序实现，该标签提供程序使用索引中的元素，即<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription</a> ， <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IEObjectDescription.java">IEObjectDescription</a>和<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IReferenceDescription.java">IReferenceDescription</a> 。</p>
 
-<p>Xtext maintains an index of all model elements to allow quick searching and linking without loading the referenced resource (see the chapter on <a href="303_runtime_concepts.html#index-based">index-based scopes</a> for details). The elements from this index also appear in some UI contexts, e.g. in the <em>Find model elements</em> dialog or in the <em>Find references</em> view. For reasons of scalability, the UI should not automatically load resources, so we need another implementation of a label provider that works with the elements from the index, i.e. <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription</a>, <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IEObjectDescription.java">IEObjectDescription</a>, and <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IReferenceDescription.java">IReferenceDescription</a>.</p>
+<p>此服务的默认实现是<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/DefaultDescriptionLabelProvider.java">DefaultDescriptionLabelProvider</a> 。它使用与<a href="#default-eobject-label-provider">DefaultEObjectLabelProvider</a>相同的多态分派机制。<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IEObjectDescription.java">IEObjectDescription</a>的默认文本是其索引名称。通过使用所描述对象的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClass.java">EClass</a>分派到<code>image(EClass)</code>来解析<code>image(EClass)</code> 。这可能是您要覆盖的唯一方法。<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription的</a>实例将以其路径和为您的语言编辑器注册的图标来表示。</p>
 
-<p>The default implementation of this service is the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/DefaultDescriptionLabelProvider.java">DefaultDescriptionLabelProvider</a>. It employs the same polymorphic dispatch mechanism as the <a href="#default-eobject-label-provider">DefaultEObjectLabelProvider</a>. The default text of an <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IEObjectDescription.java">IEObjectDescription</a> is its indexed name. The image is resolved by dispatching to <code>image(EClass)</code> with the <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClass.java">EClass</a> of the described object. This is likely the only method you want to override. Instances of <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription</a> will be represented with their path and the icon registered for your language’s editor.</p>
+<p>要拥有自定义描述标签提供程序，请确保它绑定在UI模块中：</p>
 
-<p>To have a custom description label provider, make sure it is bound in your UI module:</p>
+<pre><code class="language-java">public void configureResourceUIServiceLabelProvider（Binder binder）{binder.bind（ILabelProvider.class）.annotatedWith（ResourceServiceDescriptionLabelProvider.class）.to（MyCustomDefaultDescriptionLabelProvider.class）; }</code></pre>
 
-<pre><code class="language-java">public void configureResourceUIServiceLabelProvider(Binder binder) {
-  binder.bind(ILabelProvider.class)
-    .annotatedWith(ResourceServiceDescriptionLabelProvider.class)
-    .to(MyCustomDefaultDescriptionLabelProvider.class);
-}
-</code></pre>
+<h2 id="content-assist">内容辅助</h2>
 
-<h2 id="content-assist">Content Assist</h2>
-
-<p>The Xtext generator, amongst other things, generates the following two content assist related artifacts:</p>
+<p>除其他外，Xtext生成器生成以下两个与内容辅助相关的工件：</p>
 
 <ul>
-  <li>An abstract proposal provider class named <code>Abstract{MyLang}ProposalProvider</code> generated into the <em>src-gen</em> folder within the <em>ui</em> project, and</li>
-  <li>a concrete subclass in the <em>src</em>-folder of the <em>ui</em> project called <code>{MyLang}ProposalProvider</code></li>
+  <li>名为<code>Abstract{MyLang}ProposalProvider</code>的抽象提议提供程序类生成到<em>ui</em>项目中的<em>src-gen</em>文件夹中，并且</li>
+  <li><em>ui</em>项目的<em>src</em> -folder中的一个具体子类，名为<code>{MyLang}ProposalProvider</code></li>
 </ul>
 
-<p>First we will investigate the generated <code>Abstract{MyLang}ProposalProvider</code> with methods that look like this:</p>
+<p>首先，我们将使用如下所示的方法调查生成的<code>Abstract{MyLang}ProposalProvider</code> ：</p>
 
-<pre><code class="language-java">public void complete{TypeName}_{FeatureName}(
-  EObject model, Assignment assignment, 
-  ContentAssistContext context, ICompletionProposalAcceptor acceptor) {
-  // clients may override
-}
+<pre><code class="language-java">public void complete {TypeName} _ {FeatureName}（EObject模型，赋值赋值，ContentAssistContext上下文，ICompletionProposalAcceptor接受者）{//客户端可以覆盖} public void complete_ {RuleName}（EObject model，RuleCall ruleCall，ContentAssistContext context，ICompletionProposalAcceptor acceptor）{ //客户可能会覆盖}</code></pre>
 
-public void complete_{RuleName}(
-  EObject model, RuleCall ruleCall, 
-  ContentAssistContext context, ICompletionProposalAcceptor acceptor) {
-  // clients may override
-}
-</code></pre>
+<p>上面的代码段表明生成的类包含语法和每个规则中每个指定功能的<em>完整*</em>方法。片段中的大括号是占位符，应该提供有关用于为实现者创建各种入口点的命名方案的线索。生成的提案提供程序会回退到交叉引用和关键字的某些默认行为。此外，它继承了混合到当前语言中的语法中引入的逻辑。</p>
 
-<p>The snippet above indicates that the generated class contains a <em>complete*</em>-method for each assigned feature in the grammar and for each rule. The braces in the snippet are place-holders that should give a clue about the naming scheme used to create the various entry points for implementors. The generated proposal provider falls back to some default behavior for cross-references and keywords. Furthermore it inherits the logic that was introduced in grammars that were mixed into the current language.</p>
+<p>想要自定义行为的客户端可以覆盖<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/contentassist/AbstractJavaBasedContentProposalProvider.java">AbstractJavaBasedContentProposalProvider中</a>的方法，或者使用专门的第一个参数引入新方法。框架检查模型对象的类型，并将方法调用分派给可以找到的最具体的实现。</p>
 
-<p>Clients who want to customize the behavior may override the methods from the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/contentassist/AbstractJavaBasedContentProposalProvider.java">AbstractJavaBasedContentProposalProvider</a> or introduce new methods with a specialized first parameter. The framework inspects the type of the model object and dispatches method calls to the most concrete implementation that can be found.</p>
+<p>重要的是要知道，对于模型文件中的给定偏移，存在许多可能的语法元素。框架将调度任何有效元素的方法声明。这意味着可以调用一堆<em>完整的*</em>方法。</p>
 
-<p>It is important to know that, for a given offset in a model file, many possible grammar elements exist. The framework dispatches to the method declarations for any valid element. This means that a bunch of <em>complete*</em> methods may be called.</p>
+<p>要为<code>event</code>实例的代码提供虚拟提议，可以引入生成方法的特化并按如下方式实现。这将提出<code>ZonkID</code>与名称的事件<code>Zonk</code> 。</p>
 
-<p>To provide a dummy proposal for the code of an <code>event</code> instance, you may introduce a specialization of the generated method and implement it as follows. This will propose <code>ZonkID</code> for an event with the name <code>Zonk</code>.</p>
+<pre><code class="language-xtend">override void completeEvent_Code（Event event，Assignment assignment，ContentAssistContext context，ICompletionProposalAcceptor acceptor）{//超类super.completeEvent_Code的调用实现（模型，赋值，上下文，接受器）//计算普通提议val String proposal = event.getName（） +“ID”//创建并注册完成建议：//建议可能为null，因为createCompletionProposal（..）//方法检查有效前缀和终端令牌冲突。// acceptor正常处理null值。acceptor.accept（createCompletionProposal（proposal，context））}</code></pre>
 
-<pre><code class="language-xtend">override void completeEvent_Code(
-  Event event, Assignment assignment, 
-  ContentAssistContext context, ICompletionProposalAcceptor acceptor) {
-  // call implementation of superclass
-  super.completeEvent_Code(model, assignment, context, acceptor)
+<h2 id="quick-fixes">快速修复</h2>
 
-  // compute the plain proposal
-  val String proposal = event.getName() + "ID"
+<p>对于使用<a href="303_runtime_concepts.html#custom-validation">AbstractDeclarativeValidator</a>编写的验证，可以在编辑器中提供相应的快速修复。为了能够对给定诊断（警告或错误）实施快速修复，必须知道诊断的根本<em>原因</em> （即诊断代表什么实际问题），否则修复不知道需要做什么。由于我们不想从诊断的错误消息中推断出这一点，因此我们将特定于问题的<em>代码</em>与诊断相关联。</p>
 
-  // Create and register the completion proposal:
-  // The proposal may be null as the createCompletionProposal(..) 
-  // methods check for valid prefixes and terminal token conflicts.
-  // The acceptor handles null-values gracefully.
-  acceptor.accept(createCompletionProposal(proposal, context))
-}
-</code></pre>
+<p>在以下来自<em>DomainmodelJavaValidator</em>的示例中，诊断的<em>代码</em>由<code>warning()</code>方法的第三个参数给出，它是对validator类中的静态<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>字段<code>INVALID_TYPE_NAME</code>的引用。</p>
 
-<h2 id="quick-fixes">Quick Fixes</h2>
+<pre><code class="language-java">警告（“名称应以大写字母开头”，DomainmodelPackage。TYPE__NAME，INVALID_TYPE_NAME，type.getName（））;</code></pre>
 
-<p>For validations written using the <a href="303_runtime_concepts.html#custom-validation">AbstractDeclarativeValidator</a> it is possible to provide corresponding quick fixes in the editor. To be able to implement a quick fix for a given diagnostic (a warning or error) the underlying <em>cause</em> of the diagnostic must be known (i.e. what actual problem does the diagnostic represent), otherwise the fix doesn’t know what needs to be done. As we don’t want to deduce this from the diagnostic’s error message we associate a problem specific <em>code</em> with the diagnostic.</p>
+<p>现在验证具有识别问题的唯一代码，我们可以为其注册快速修复。我们首先将<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/quickfix/QuickfixProviderFragment2.xtend">QuickfixProviderFragment2</a>添加到我们的工作流程中，在重新生成代码后，我们应该在DSL的UI项目中找到一个空类<em>MyDslQuickfixProvider</em> ，并在<em>plugin.xml_gen</em>文件中找到新条目。</p>
 
-<p>In the following example taken from the <em>DomainmodelJavaValidator</em> the diagnostic’s <em>code</em> is given by the third argument to the <code>warning()</code> method and it is a reference to the static <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a> field <code>INVALID_TYPE_NAME</code> in the validator class.</p>
+<p>继续来自域模型示例的<code>INVALID_TYPE_NAME</code>问题，我们添加了一个可以解决问题的方法（有关详细信息，请查看<em>DomainmodelQuickfixProvider</em> ）：</p>
 
-<pre><code class="language-java">warning("Name should start with a capital", 
-    DomainmodelPackage.TYPE__NAME, INVALID_TYPE_NAME, type.getName());
-</code></pre>
+<pre><code class="language-java">@Fix（DomainmodelJavaValidator。INVALID_TYPE_NAME）public void fixName（final Issue issue，IssueResolutionAcceptor acceptor）{acceptor.accept（issue，“Capitalize name”，// quick fix label“Capitalize name of'”+ issue.getData（）[0] +“'”， // description“upcase.png”，//快速修复图标new IModification（）{public void apply（IModificationContext context）throws BadLocationException {IXtextDocument xtextDocument = context.getXtextDocument（）; String firstLetter = xtextDocument.get（issue.getOffset（） ，1）; xtextDocument.replace（issue.getOffset（），1，Strings.toFirstUpper（firstLetter））;}}）; }</code></pre>
 
-<p>Now that the validation has a unique code identifying the problem we can register quick fixes for it. We start by adding the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/quickfix/QuickfixProviderFragment2.xtend">QuickfixProviderFragment2</a> to our workflow and after regenerating the code we should find an empty class <em>MyDslQuickfixProvider</em> in our DSL’s UI project and new entries in the <em>plugin.xml_gen</em> file.</p>
+<p>通过使用正确的签名（见下文）并使用@ <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/quickfix/Fix.java">Fix</a>注释引用该方法来引用验证器中先前指定的问题代码，Xtext知道此方法实现了对问题的修复。这也允许我们注释多个方法作为同一问题的修复。</p>
 
-<p>Continuing with the <code>INVALID_TYPE_NAME</code> problem from the domain model example we add a method with which the problem can be fixed (have a look at the <em>DomainmodelQuickfixProvider</em> for details):</p>
+<p><a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/quickfix/IssueResolutionAcceptor.java">IssueResolutionAcceptor</a>的前三个参数定义了快速修复的UI表示。由于在提供快速修复时未必加载文档，因此我们需要在上面的验证器中创建问题时从UI中提供我们想要引用的模型中的任何其他数据。在这种情况下，我们提供了现有的类型名称。附加数据以<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/Issue.java">Issue.getData（）的形式提供</a> 。由于它保留在标记中，因此只允许使用字符串。</p>
 
-<pre><code class="language-java">@Fix(DomainmodelJavaValidator.INVALID_TYPE_NAME)
-public void fixName(final Issue issue, 
-  IssueResolutionAcceptor acceptor) {
-  acceptor.accept(issue, 
-    "Capitalize name", // quick fix label
-    "Capitalize name  of '" + issue.getData()[0] + "'", 
-                       // description
-    "upcase.png",      // quick fix icon
-    new IModification() {
-      public void apply(IModificationContext context) 
-    throws BadLocationException {
-        IXtextDocument xtextDocument = context.getXtextDocument();
-        String firstLetter = xtextDocument.get(issue.getOffset(), 1);
-        xtextDocument.replace(issue.getOffset(), 1, 
-                              Strings.toFirstUpper(firstLetter));
-      }
-    }
-  );
-}
-</code></pre>
+<p>实际模型修改在<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/model/edit/IModification.java">IModification中</a>实现。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/model/edit/IModificationContext.java">IModificationContext</a>提供对错误文档的访问。在这种情况下，我们使用Eclipse的<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/IDocument.html">IDocument</a> API来替换文本区域。</p>
 
-<p>By using the correct signature (see below) and annotating the method with the @<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/quickfix/Fix.java">Fix</a> annotation referencing the previously specified issue code from the validator, Xtext knows that this method implements a fix for the problem. This also allows us to annotate multiple methods as fixes for the same problem.</p>
+<p>如果您希望在语义模型方面实现快速修复，请使用<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/model/edit/ISemanticModification.java">ISemanticModification</a> 。它的<code>apply(EObject, IModificationContext)</code>方法将在modify-transaction中调用，第一个参数将是错误的语义元素。这使得fix方法很容易根据需要修改模型。方法返回后，模型以及Xtext编辑器的内容将相应更新。如果方法失败（抛出异常），则不会提交更改。以下代码段显示了针对类似问题的语义快速修复。</p>
 
-<p>The first three parameters given to the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/quickfix/IssueResolutionAcceptor.java">IssueResolutionAcceptor</a> define the UI representation of the quick fix. As the document is not necessarily loaded when the quick fix is offered, we need to provide any additional data from the model that we want to refer to in the UI when creating the issue in the validator above. In this case, we provided the existing type name. The additional data is available as <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/Issue.java">Issue.getData()</a>. As it is persisted in markers, only strings are allowed.</p>
+<pre><code class="language-java">@Fix（DomainmodelJavaValidator。INVALID_FEATURE_NAME）public void fixFeatureName（final Issue issue，IssueResolutionAcceptor acceptor）{acceptor.accept（issue，“Uncapitalize name”，// label“Uncapitalize name of”“+ issue.getData（）[0] +”'“，// description“upcase.png”，// icon new ISemanticModification（）{public void apply（EObject element，IModificationContext context）{（（Feature）element）.setName（Strings.toFirstLower（issue.getData（）[0]））; }}; }</code></pre>
 
-<p>The actual model modification is implemented in the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/model/edit/IModification.java">IModification</a>. The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/model/edit/IModificationContext.java">IModificationContext</a> provides access to the erroneous document. In this case, we’re using Eclipse’s <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/IDocument.html">IDocument</a> API to replace a text region.</p>
+<p><code>@Fix</code>注释是可重复的，因此如果方法为多个问题代码提供<code>@Fix</code>则可以多次指定它。</p>
 
-<p>If you prefer to implement the quick fix in terms of the semantic model use a <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/model/edit/ISemanticModification.java">ISemanticModification</a> instead. Its <code>apply(EObject, IModificationContext)</code> method will be invoked inside a modify-transaction and the first argument will be the erroneous semantic element. This makes it very easy for the fix method to modify the model as necessary. After the method returns the model as well as the Xtext editor’s content will be updated accordingly. If the method fails (throws an exception) the change will not be committed. The following snippet shows a semantic quick fix for a similar problem.</p>
+<pre><code class="language-java">@Fix（DomainmodelJavaValidator。INVALID_TYPE_NAME）@Fix（DomainmodelJavaValidator。OTHER_ISSUE）public void fixName（最终问题，IssueResolutionAcceptor acceptor）{...}</code></pre>
 
-<pre><code class="language-java">@Fix(DomainmodelJavaValidator.INVALID_FEATURE_NAME)
-public void fixFeatureName(final Issue issue, 
-                           IssueResolutionAcceptor acceptor) {
-  acceptor.accept(issue, 
-    "Uncapitalize name",    // label
-    "Uncapitalize name of '" + issue.getData()[0] + "'", // description
-    "upcase.png",           // icon 
-    new ISemanticModification() {
-      public void apply(EObject element, IModificationContext context) {
-        ((Feature) element).setName(
-            Strings.toFirstLower(issue.getData()[0]));
-      }
-    }
-  );
-}
-</code></pre>
+<p>或者，您可以将其包装在<code>@Fixes</code>容器中。</p>
 
-<p>The <code>@Fix</code> annotation is repeatable so you can specify it multiple times if a method offers a quickfix for multiple issue codes.</p>
+<pre><code class="language-java">@Fixes（@Fix（DomainmodelJavaValidator。INVALID_TYPE_NAME），@修复（DomainmodelJavaValidator。OTHER_ISSUE））public void fixName（final Issue issue，IssueResolutionAcceptor acceptor）{...}</code></pre>
 
-<pre><code class="language-java">@Fix(DomainmodelJavaValidator.INVALID_TYPE_NAME)
-@Fix(DomainmodelJavaValidator.OTHER_ISSUE)
-public void fixName(final Issue issue, 
-  IssueResolutionAcceptor acceptor) {
-    ...
-}
-</code></pre>
+<h3 id="quick-fixes-for-linking-errors-and-syntax-errors">快速修复链接错误和语法错误</h3>
 
-<p>Alternatively you can wrap it in a <code>@Fixes</code> container.</p>
+<p>您甚至可以定义快速修复链接错误。问题代码由<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/linking/ILinkingDiagnosticMessageProvider.java">ILinkingDiagnosticMessageProvider</a>分配。看看域模型示例如何为这些错误添加快速修复。</p>
 
-<pre><code class="language-java">@Fixes(@Fix(DomainmodelJavaValidator.INVALID_TYPE_NAME),@Fix(DomainmodelJavaValidator.OTHER_ISSUE))
-public void fixName(final Issue issue, 
-  IssueResolutionAcceptor acceptor) {
-    ...
-}
-</code></pre>
+<p>因此，有<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parser/antlr/ISyntaxErrorMessageProvider.java">ISyntaxErrorMessageProvider</a>将问题代码分配给语法错误。</p>
 
-<h3 id="quick-fixes-for-linking-errors-and-syntax-errors">Quick Fixes for Linking Errors and Syntax Errors</h3>
+<h2 id="templates">模板建议</h2>
 
-<p>You can even define quick fixes for linking errors. The issue codes are assigned by the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/linking/ILinkingDiagnosticMessageProvider.java">ILinkingDiagnosticMessageProvider</a>. Have a look at the domain model example how to add quick fixes for these errors.</p>
+<p>基于Xtext的编辑器自动支持代码模板。这意味着您将获得相应的首选项页面，用户可以在其中添加和更改模板提议。如果要发送几个默认模板，则必须将名为<em>templates.xml</em>的文件放在生成的UI插件的<em>templates</em>目录中。此文件包含<a href="http://help.eclipse.org/luna/topic/org.eclipse.cdt.doc.user/tasks/cdt_t_imp_code_temp.htm">Eclipse联机帮助</a>中所述格式的模板。</p>
 
-<p>Hence, there is the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parser/antlr/ISyntaxErrorMessageProvider.java">ISyntaxErrorMessageProvider</a> to assign issue codes to syntactical errors.</p>
+<p><img src="images/preferences_templates.png" alt=""></p>
 
-<h2 id="templates">Template Proposals</h2>
-
-<p>Xtext-based editors automatically support code templates. That means that you get the corresponding preference page where users can add and change template proposals. If you want to ship a couple of default templates, you have to put a file named <em>templates.xml</em> inside the <em>templates</em> directory of the generated UI-plug-in. This file contains templates in a format as described in the <a href="http://help.eclipse.org/luna/topic/org.eclipse.cdt.doc.user/tasks/cdt_t_imp_code_temp.htm">Eclipse online help</a> .</p>
-
-<p><img src="images/preferences_templates.png" alt="" /></p>
-
-<p>By default Xtext registers <em>context types</em> that follow certain patterns. A context type will be created</p>
+<p>默认情况下，Xtext会注册遵循某些模式的<em>上下文类型</em> 。将创建上下文类型</p>
 
 <ol>
-  <li>for each rule (<code>{languageName}.{RuleName}</code>) and</li>
-  <li>for each keyword (<code>{languageName}.kw_{keyword}</code>).</li>
+  <li>对于每个规则（ <code>{languageName}.{RuleName}</code> ）和</li>
+  <li>对于每个关键字（ <code>{languageName}.kw_{keyword}</code> ）。</li>
 </ol>
 
-<p>If you don’t like these defaults you’ll have to subclass <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/templates/XtextTemplateContextTypeRegistry.java">XtextTemplateContextTypeRegistry</a> and configure it via <a href="302_configuration.html#guicemodules">Guice</a>.</p>
+<p>如果你不喜欢这些默认值，你必须<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/templates/XtextTemplateContextTypeRegistry.java">继承XtextTemplateContextTypeRegistry</a>并通过<a href="302_configuration.html#guicemodules">Guice</a>配置它。</p>
 
-<p>In addition to the standard template proposal extension mechanism, Xtext ships with a predefined set of <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/TemplateVariableResolver.html">TemplateVariableResolvers</a> to resolve special variable types in templates. Besides the standard template variables available in <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/GlobalTemplateVariables.html">GlobalTemplateVariables</a> like <code>${user}</code>, <code>${date}</code>, <code>${time}</code>, <code>${cursor}</code>, etc., these <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/TemplateVariableResolver.html">TemplateVariableResolvers</a> support the automatic resolution of cross references enumeration values. Both resolvers are explained in the following sections.</p>
+<p>除了标准模板提议扩展机制之外，Xtext还附带一组预定义的<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/TemplateVariableResolver.html">TemplateVariableResolvers</a>来解析<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/TemplateVariableResolver.html">模板</a>中的特殊变量类型。除了<code>${user}</code> ， <code>${date}</code> ， <code>${time}</code> ， <code>${cursor}</code>等<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/GlobalTemplateVariables.html">GlobalTemplateVariables中</a>提供的标准模板变量外，这些<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/templates/TemplateVariableResolver.html">TemplateVariableResolvers还</a>支持交叉引用枚举值的自动解析。两个解析器将在以下部分中解释。</p>
 
-<p>It is best practice to edit the templates in the preferences page, export them into the <em>templates.xml</em>-file and put this one into the <em>templates</em> folder of your UI-plug-in. However, these templates will not be visible by default. To fix it, you have to manually edit the xml-file and insert an <code>id</code> attribute for each template element. Note that the attribute name is case sensitive. As always in eclipse plug-in development, if the folder <em>templates</em> did not exist before, you have to add it to the <em>bin.includes</em> in your <em>build.properties</em>.</p>
+<p>最佳做法是在首选项页面中编辑模板，将它们导出到<em>templates.xml</em> -file中，然后将其放入UI-plug-in的<em>templates</em>文件夹中。但是，默认情况下，这些模板不可见。要修复它，您必须手动编辑xml文件并为每个模板元素插入一个<code>id</code>属性。请注意，属性名称区分大小写。与eclipse插件开发一样，如果之前不存在文件夹<em>模板</em> ，则必须将其添加到<em>build.properties中</em>的<em>bin.includes</em> 。</p>
 
-<h3 id="cross-reference-template-variable-resolver">Cross Reference Template Variable Resolver</h3>
+<h3 id="cross-reference-template-variable-resolver">交叉参考模板可变解析器</h3>
 
-<p>Xtext comes with a specific template variable resolver called <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/templates/CrossReferenceTemplateVariableResolver.java">CrossReferenceTemplateVariableResolver</a>, which can be used to pre-populate placeholders for cross-references within a template. The respective template variable is called <em>CrossReference</em> and its syntax is as follows:</p>
+<p>Xtext附带一个名为<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/templates/CrossReferenceTemplateVariableResolver.java">CrossReferenceTemplateVariableResolver</a>的特定模板变量解析器，可用于预先填充占位符以便在模板中进行交叉引用。相应的模板变量称为<em>CrossReference</em> ，其语法如下：</p>
 
-<p><code>${&lt;displayText&gt;:CrossReference([&lt;MyPackageName&gt;.]&lt;MyType&gt;.&lt;myRef&gt;)}</code></p>
+<p><code>$ {&lt;displayText&gt;：交叉引用（[。&lt;MyPackageName&gt;] &lt;的MyType&gt; &lt;myRef&gt;）}</code></p>
 
-<p>Where “displayText” is the initial value that is shown in the editor. It is also the identifier for a place holder so that multiple place holders with the same name will be updated at once by the user using linked editing.</p>
+<p>其中“displayText”是编辑器中显示的初始值。它也是占位符的标识符，以便用户使用链接编辑一次更新具有相同名称的多个占位符。</p>
 
-<p>This small example yields the text <em>event =&gt; state</em> and allows selecting any events and states using a drop down:</p>
+<p>这个小例子产生了text <em>event =&gt; state，</em>并允许使用下拉列表选择任何事件和状态：</p>
 
-<pre><code class="language-xml">&lt;template 
-  name="transition" 
-  description="event transition" 
-  id="transition"
-    context="org.xtext.example.SecretCompartments.Transition" 
-    enabled="true"&gt;
-${event:CrossReference('Transition.event')} =&gt;
-  ${state:CrossReference('Transition.state')}
-&lt;/template&gt;
-</code></pre>
+<pre><code class="language-xml">&lt;template name =“transition”description =“event transition”id =“transition”context =“org.xtext.example。SecretCompartments。转换“enabled =”true“&gt; $ {event：CrossReference（'Transition.event'）} =&gt; $ {state：CrossReference（'Transition.state'）} &lt;/ template&gt;</code></pre>
 
-<p><img src="images/templates_crossref.png" alt="" /></p>
+<p><img src="images/templates_crossref.png" alt=""></p>
 
-<h3 id="enumeration-template-variable-resolver">Enumeration Template Variable Resolver</h3>
+<h3 id="enumeration-template-variable-resolver">枚举模板变量解析器</h3>
 
-<p>The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/templates/EnumTemplateVariableResolver.java">EnumTemplateVariableResolver</a> resolves a template variable to <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EEnumLiteral.java">EEnumLiterals</a> which are assignment-compatible to the enumeration type declared as the first parameter of the <em>Enum</em> template variable.</p>
+<p><a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/templates/EnumTemplateVariableResolver.java">EnumTemplateVariableResolver</a>将模板变量解析为<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EEnumLiteral.java">EEnumLiterals</a> ，它与枚举类型赋值兼容，枚举类型声明为<em>Enum</em>模板变量的第一个参数。</p>
 
-<p>The syntax is as follows:</p>
+<p>语法如下：</p>
 
-<p><code>${&lt;displayText&gt;:Enum([&lt;MyPackage&gt;.]&lt;EnumType&gt;)}</code></p>
+<p><code>$ {&lt;displayText&gt;：枚举（[。&lt;MyPackage的&gt;] &lt;EnumType&gt;）}</code></p>
 
-<p>For example the following template (taken from another example):</p>
+<p>例如，以下模板（取自另一个示例）：</p>
 
-<pre><code class="language-domainexample">&lt;template 
-  name="Entity" 
-  description="template for an Entity"
-  id="entity"
-  context="org.eclipse.xtext.example.Domainmodel.Entity"
-  enabled="true"&gt;
-${public:Enum('Visibility')} entity ${Name} {
-  ${cursor}
-}
-&lt;/template&gt;
-</code></pre>
+<pre><code class="language-domainexample">&lt;template name =“Entity”description =“Entity的模板”id =“entity”context =“org.eclipse.xtext.example。的DomainModel。实体“enabled =”true“&gt; $ {public：Enum（'Visibility'）} entity $ {Name} {$ {cursor}} &lt;/ template&gt;</code></pre>
 
-<p>yields the text <code>public entity Name {}</code> where the text <code>public</code> is the default value of the <code>Visibility</code>. The editor provides a drop down that is populated with the other literal values as defined in the <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EEnum.java">EEnum</a>.</p>
+<p>产生文本<code>public entity Name {}</code> ，其中text <code>public</code>是<code>Visibility</code>的默认值。编辑器提供一个下拉列表，其中填充了<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EEnum.java">EEnum中</a>定义的其他文字值。</p>
 
-<h2 id="outline">Outline View</h2>
+<h2 id="outline">大纲视图</h2>
 
-<p>Xtext provides an outline view to help you navigate your models. By default, it provides a hierarchical view on your model and allows you to sort tree elements alphabetically. Selecting an element in the outline will highlight the corresponding element in the text editor. Users can choose to synchronize the outline with the editor selection by clicking the <em>Link with Editor</em> button.</p>
+<p>Xtext提供大纲视图以帮助您导航模型。默认情况下，它为模型提供分层视图，并允许您按字母顺序对树元素进行排序。选择轮廓中的元素将突出显示文本编辑器中的相应元素。用户可以通过单击“ <em>使用编辑器链接”</em>按钮选择将轮廓与编辑器选择同步。</p>
 
-<p><img src="images/sample_outline.png" alt="" /></p>
+<p><img src="images/sample_outline.png" alt=""></p>
 
-<p>In its default implementation, the outline view shows the containment hierarchy of your model. This should be sufficient in most cases. If you want to adjust the structure of the outline, i.e. by omitting a certain kind of node or by introducing additional nodes, you can customize the outline by implementing your own <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/IOutlineTreeProvider.java">IOutlineTreeProvider</a>.</p>
+<p>在其默认实现中，大纲视图显示模型的包含层次结构。在大多数情况下，这应该足够了。如果要调整轮廓的结构，即省略某种节点或引入其他节点，可以通过实现自己的<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/IOutlineTreeProvider.java">IOutlineTreeProvider</a>来自定义轮廓。</p>
 
-<p>If your workflow defines the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/outline/OutlineTreeProviderFragment2.xtend">OutlineTreeProviderFragment2</a>, Xtext generates a stub for your own <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/IOutlineTreeProvider.java">IOutlineTreeProvider</a> that allows you to customize every aspect of the outline by inheriting the powerful customization methods of <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/DefaultOutlineTreeProvider.java">DefaultOutlineTreeProvider</a>. The following sections show how to fill this stub with life.</p>
+<p>如果您的工作流定义了<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/outline/OutlineTreeProviderFragment2.xtend">OutlineTreeProviderFragment2</a> ，则Xtext会为您自己的<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/IOutlineTreeProvider.java">IOutlineTreeProvider</a>生成存根，该存根允许您通过继承<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/DefaultOutlineTreeProvider.java">DefaultOutlineTreeProvider</a>的强大自定义方法来自定义大纲的每个方面。以下部分显示如何使用生命填充此存根。</p>
 
-<h3 id="influencing-the-outline-structure">Influencing the outline structure</h3>
+<h3 id="influencing-the-outline-structure">影响轮廓结构</h3>
 
-<p>Each node in the outline tree is an instance of <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/IOutlineNode.java">IOutlineNode</a>. The outline tree is always rooted in a <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/DocumentRootNode.java">DocumentRootNode</a>. This node is automatically created for you. Its children are the root nodes in the displayed view.</p>
+<p>大纲树中的每个节点都是<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/IOutlineNode.java">IOutlineNode的</a>一个实例。大纲树始终以<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/DocumentRootNode.java">DocumentRootNode</a>为根。将自动为您创建此节点。它的子节点是显示视图中的根节点。</p>
 
-<p>An <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/EObjectNode.java">EObjectNode</a> represents a model element. By default, Xtext creates an <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/EObjectNode.java">EObjectNode</a> for each model element in the node of its container. Nodes are created by calling the method <code>createNode(parentNode, modelElement)</code> which delegates to <code>createEObjectNode(..)</code> if not specified differently.</p>
+<p><a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/EObjectNode.java">EObjectNode</a>表示模型元素。默认情况下，Xtext为其容器的节点中的每个模型元素创建一个<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/EObjectNode.java">EObjectNode</a> 。节点是通过调用<code>createNode(parentNode, modelElement)</code>方法创建的，如果没有区别指定<code>createNode(parentNode, modelElement)</code>该方法将委托给<code>createEObjectNode(..)</code> 。</p>
 
-<p>To change the children of specific nodes, you have to implement the method</p>
+<p>要更改特定节点的子节点，您必须实现该方法</p>
 
-<pre><code class="language-java">_createChildren(parentNode,
-parentModelElement)
-</code></pre>
+<pre><code class="language-java">_createChildren（parentNode，parentModelElement）</code></pre>
 
-<p>with the appropriate types. The following snippet shows you how to skip the root model element of type <code>Domainmodel</code> in the outline of our domain model example:</p>
+<p>适当的类型。以下代码段显示了如何在域模型示例的大纲中跳过<code>Domainmodel</code>类型的根模型元素：</p>
 
-<pre><code class="language-java">protected void _createChildren(DocumentRootNode parentNode, 
-                               Domainmodel domainModel) {
-  for (AbstractElement element : domainModel.getElements()) {
-    createNode(parentNode, element);
-  }
-}
-</code></pre>
+<pre><code class="language-java">protected void _createChildren（DocumentRootNode parentNode，Domainmodel domainModel）{for（AbstractElement element：domainModel.getElements（））{createNode（parentNode，element）; }}</code></pre>
 
-<p>You can choose not to create any node in the <code>_createChildren()</code> method. Because the outline nodes are calculated on demand, the UI will show you an expandable node that doesn’t reveal any children even if it is expanded. This might be confuse your users a bit. To overcome this shortcoming, you have to implement the method <code>_isLeaf(modelElement)</code> with the appropriate argument type, e.g.</p>
+<p>您可以选择不在<code>_createChildren()</code>方法中创建任何节点。由于大纲节点是按需计算的，因此UI将显示一个可展开的节点，即使它已展开，也不会显示任何子节点。这可能会让您的用户感到困惑。要克服这个缺点，您必须使用适当的参数类型实现方法<code>_isLeaf(modelElement)</code> ，例如</p>
 
-<pre><code class="language-java">// feature nodes are leafs and not expandable
-protected boolean _isLeaf(Feature feature) {
-  return true;
-}
-</code></pre>
+<pre><code class="language-java">//特征节点是叶子而不是可扩展的受保护的布尔_isLeaf（特征）{返回true; }</code></pre>
 
-<p>Xtext provides a third type of node: <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/EStructuralFeatureNode.java">EStructuralFeatureNode</a>. It is used to represent a feature of a model element rather than the element itself. The following simplified snippet from Xtend2 illustrates how to use it:</p>
+<p>Xtext提供第三种类型的节点： <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/EStructuralFeatureNode.java">EStructuralFeatureNode</a> 。它用于表示模型元素的特征而不是元素本身。Xtend2的以下简化代码段说明了如何使用它：</p>
 
-<pre><code class="language-java">protected void _createChildren(DocumentRootNode parentNode, 
-                               XtendFile xtendFile) {
-  // show a node for the attribute XtendFile.package
-  createEStructuralFeatureNode(parentNode, 
-    xtendFile, 
-    Xtend2Package.Literals.XTEND_FILE__PACKAGE,
-    getImageForPackage(), 
-    xtendFile.getPackage(), 
-    true);
-  // show a container node for the list reference XtendFile.imports
-  // the imports will be shown as individual child nodes automatically 
-  createEStructuralFeatureNode(parentNode, 
-    xtendFile, 
-    Xtend2Package.Literals.XTEND_FILE__IMPORTS,
-    getImageForImportContainer(), 
-    "import declarations", 
-    false);
-  createEObjectNode(parentNode, xtendFile.getXtendClass());
-}
-</code></pre>
+<pre><code class="language-java">protected void _createChildren（DocumentRootNode parentNode，XtendFile xtendFile）{//显示属性XtendFile.package的节点createEStructuralFeatureNode（parentNode，xtendFile，Xtend2Package。文字。XTEND_FILE__PACKAGE，getImageForPackage（），xtendFile.getPackage（），true）; //显示列表引用的容器节点XtendFile.imports //导入将显示为单个子节点自动createEStructuralFeatureNode（parentNode，xtendFile，Xtend2Package。文字。XTEND_FILE__IMPORTS，getImageForImportContainer（），“import declarations”，false）; createEObjectNode（parentNode，xtendFile.getXtendClass（））; }</code></pre>
 
-<p>Of course you can add further custom types of nodes. For consistency, make sure to inherit from <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/AbstractOutlineNode.java">AbstractOutlineNode</a>. To instantiate these, you have to implement <code>_createNode(parentNode, semanticElement)</code> with the appropriate parameter types.</p>
+<p>当然，您可以添加更多自定义类型的节点。为保持一致性，请确保从<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/AbstractOutlineNode.java">AbstractOutlineNode</a>继承。要实例化这些，必须使用适当的参数类型实现<code>_createNode(parentNode, semanticElement)</code> 。</p>
 
-<h3 id="styling-the-outline">Styling the outline</h3>
+<h3 id="styling-the-outline">造型大纲</h3>
 
-<p>You can also customize the icons and texts for an outline node. By default, Xtext uses the <a href="#label-provider">label provider</a> of your language. If you want the labels to be specific to the outline, you can override the methods <code>_text(modelElement)</code> and <code>_image(modelElement)</code> in your <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/DefaultOutlineTreeProvider.java">DefaultOutlineTreeProvider</a>.</p>
+<p>您还可以自定义大纲节点的图标和文本。默认情况下，Xtext使用您的语言的<a href="#label-provider">标签提供程序</a> 。如果你想在标签具体到轮廓，可以覆盖的方法<code>_text(modelElement)</code>和<code>_image(modelElement)</code>在<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/DefaultOutlineTreeProvider.java">DefaultOutlineTreeProvider</a> 。</p>
 
-<p>Note that the method <code>_text(modelElement)</code> can return a <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a> or a <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/StyledString.html">StyledString</a>. The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/StylerFactory.java">StylerFactory</a> can be used to create <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/StyledString.html">StyledStrings</a>, like in the following example:</p>
+<p>请注意，方法<code>_text(modelElement)</code>可以返回<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>或<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/StyledString.html">StyledString</a> 。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/label/StylerFactory.java">StylerFactory</a>可用于创建<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/viewers/StyledString.html">StyledStrings</a> ，如下例所示：</p>
 
-<pre><code class="language-java">@Inject 
-private StylerFactory stylerFactory;
+<pre><code class="language-java">@Inject私有StylerFactory stylerFactory; public Object _text（Entity entity）{if（entity.isAbstract（））{return new StyledString（entity.getName（），stylerFactory .createXtextStyleAdapterStyler（getTypeTextStyle（））））; else返回entity.getName（）; protected TextStyle getTypeTextStyle（）{TextStyle textStyle = new TextStyle（）; textStyle.setColor（new RGB（149,125,71））; textStyle.setStyle（SWT.ITALIC）; return textStyle; }</code></pre>
 
-public Object _text(Entity entity) {
-  if(entity.isAbstract()) {
-    return new StyledString(entity.getName(), 
-      stylerFactory
-        .createXtextStyleAdapterStyler(getTypeTextStyle())));
-  else
-    return entity.getName();
-}
+<p>要访问图像，我们建议使用<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/PluginImageHelper.java">PluginImageHelper</a> 。</p>
 
-protected TextStyle getTypeTextStyle() {
-  TextStyle textStyle = new TextStyle();
-  textStyle.setColor(new RGB(149, 125, 71));
-  textStyle.setStyle(SWT.ITALIC);
-  return textStyle;
-}
-</code></pre>
+<h3 id="filtering-actions">过滤操作</h3>
 
-<p>To access images we recommend to use the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/PluginImageHelper.java">PluginImageHelper</a>.</p>
+<p>通常，您希望允许用户过滤大纲的内容，以便更容易专注于模型的相关方面。要为大纲添加过滤功能，您需要在大纲中添加过滤器操作。筛选器操作必须扩展<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/actions/AbstractFilterOutlineContribution.java">AbstractFilterOutlineContribution</a>以确保正确处理操作切换状态。以下是我们的域模型示例中的示例：</p>
 
-<h3 id="filtering-actions">Filtering actions</h3>
+<pre><code class="language-java">public class FilterOperationsContribution extends AbstractFilterOutlineContribution {public static final String PREFERENCE_KEY =“ui.outline.filterOperations”; @Inject private PluginImageHelper imageHelper; @Override protected boolean apply（IOutlineNode node）{return！（节点实例EObjectNode）|| ！（（EObjectNode）node）.getEClass（）。equals（DomainmodelPackage。文字。操作）; } @Override public String getPreferenceKey（）{return PREFERENCE_KEY; } @Override protected void configureAction（Action action）{action.setText（“Hide operations”）; action.setDescription（“隐藏操作”）; action.setToolTipText（“隐藏操作”）; action.setImageDescriptor（getImageDescriptor（ “Operation.gif”））; protected ImageDescriptor getImageDescriptor（String imagePath）{return ImageDescriptor.createFromImage（imageHelper.getImage（imagePath））; }}</code></pre>
 
-<p>Often, you want to allow users to filter the contents of the outline to make it easier to concentrate on the relevant aspects of the model. To add filtering capabilities to your outline, you need to add a filter action to your outline. Filter actions must extend <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/actions/AbstractFilterOutlineContribution.java">AbstractFilterOutlineContribution</a> to ensure that the action toggle state is handled correctly. Here is an example from our domain model example:</p>
+<p>贡献必须像这样绑定在<em>MyDslUiModule中</em></p>
 
-<pre><code class="language-java">public class FilterOperationsContribution 
-    extends AbstractFilterOutlineContribution {
+<pre><code class="language-java">public void configureFilterOperationsContribution（Binder binder）{binder .bind（IOutlineContribution.class）.annotatedWith（Names.named（“FilterOperationsContribution”））。to（FilterOperationsContribution.class）; }</code></pre>
 
-  public static final String PREFERENCE_KEY = 
-    "ui.outline.filterOperations";
+<h3 id="sorting-actions">排序操作</h3>
 
-  @Inject
-  private PluginImageHelper imageHelper;
-  
-  @Override
-  protected boolean apply(IOutlineNode node) {
-    return !(node instanceof EObjectNode)
-        || !((EObjectNode) node).getEClass()
-          .equals(DomainmodelPackage.Literals.OPERATION);
-  }
+<p>Xtext已经为您的大纲添加了一个排序操作。默认情况下，节点按其文本排序。您可以通过绑定自己的<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/OutlineFilterAndSorter.java">IComparator</a>来更改此行为。</p>
 
-  @Override
-  public String getPreferenceKey() {
-    return PREFERENCE_KEY;
-  }
+<p>一个非常常见的用例是首先按类别对子项进行分组，例如在包声明中显示类型之前的导入，并分别对类别进行排序。这就是为什么<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/actions/SortOutlineContribution.java">DefaultComparator</a>有一个方法<code>getCategory(IOutlineNode)</code>允许指定这样的类别。该示例显示了如何使用此类别：</p>
 
-  @Override
-  protected void configureAction(Action action) {
-    action.setText("Hide operations");
-    action.setDescription("Hide operations");
-    action.setToolTipText("Hide operations");
-    action.setImageDescriptor(getImageDescriptor("Operation.gif"));
-  }
+<pre><code class="language-java">公共类MydslOutlineNodeComparator扩展DefaultComparator {@Override public int getCategory（IOutlineNode node）{if（node instanceof EObjectNode）switch（（EObjectNode）node）.getEClass（）。getClassifierID（）））{case MydslPackage。TYPE0：返回-10;案例MydslPackage。TYPE1：返回-20; }返回整数。MIN_VALUE; }}</code></pre>
 
-  protected ImageDescriptor getImageDescriptor(String imagePath) {
-    return ImageDescriptor.createFromImage(
-      imageHelper.getImage(imagePath));
-  }
+<p>与往常一样，您必须在<em>MyDslUiModule中</em>为自定义实现声明绑定：</p>
 
-  
-}
-</code></pre>
+<pre><code class="language-java">@Override public Class &lt;？扩展IComparator&gt; bindOutlineFilterAndSorter $ IComparator（）{return MydslOutlineNodeComparator.class; }</code></pre>
 
-<p>The contribution must be bound in the <em>MyDslUiModule</em> like this</p>
+<h3 id="quick-outline">快速大纲</h3>
 
-<pre><code class="language-java">public void configureFilterOperationsContribution(Binder binder) {
-  binder
-    .bind(IOutlineContribution.class).annotatedWith(
-      Names.named("FilterOperationsContribution"))
-    .to(FilterOperationsContribution.class);
-}
-</code></pre>
+<p>Xtext还提供了一个快速概述：如果在Xtext编辑器中按CTRL-O，模型的轮廓将显示在弹出窗口中。快速大纲还支持使用通配符进行深入搜索。要启用快速大纲，您必须将<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/outline/QuickOutlineFragment2.xtend">QuickOutlineFragment2</a>放入工作流程中。</p>
 
-<h3 id="sorting-actions">Sorting actions</h3>
+<h2 id="hyperlinking">超链接</h2>
 
-<p>Xtext already adds a sorting action to your outline. By default, nodes are sorted lexically by their text. You can change this behavior by binding your own <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/impl/OutlineFilterAndSorter.java">IComparator</a>.</p>
+<p>Xtext编辑器为与语法定义中的交叉引用相对应的任何标记提供超链接支持。您可以<em>按住CTRL键单击</em>这些标记中的任何一个，或者在光标位置位于相关标记处时点击<em>F3</em> ，这将带您进入引用的模型元素。正如您所期望的那样，它适用于对同一资源中的元素的引用以及对其他资源中元素的引用。在后一种情况下，首先使用相应的编辑器打开引用的资源。</p>
 
-<p>A very common use case is to group the children by categories first, e.g. show the imports before the types in a package declaration, and sort the categories separately. That is why the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/outline/actions/SortOutlineContribution.java">DefaultComparator</a> has a method <code>getCategory(IOutlineNode)</code> that allows to specify such categories. The example shows how to use such categories:</p>
+<h3 id="location-provider">位置提供者</h3>
 
-<pre><code class="language-java">public class MydslOutlineNodeComparator extends DefaultComparator {
-  @Override
-  public int getCategory(IOutlineNode node) {
-    if (node instanceof EObjectNode) 
-      switch((EObjectNode) node).getEClass().getClassifierID())) {
-      case MydslPackage.TYPE0:  
-        return -10;
-      case MydslPackage.TYPE1:  
-        return -20;
-      }
-    return Integer.MIN_VALUE;
-  }
-}
-</code></pre>
-
-<p>As always, you have to declare a binding for your custom implementation in your <em>MyDslUiModule</em>:</p>
-
-<pre><code class="language-java">@Override
-public Class&lt;? extends IComparator&gt; 
-  bindOutlineFilterAndSorter$IComparator() {
-    return MydslOutlineNodeComparator.class;
-}
-</code></pre>
-
-<h3 id="quick-outline">Quick Outline</h3>
-
-<p>Xtext also provides a quick outline: If you press CTRL-O in an Xtext editor, the outline of the model is shown in a popup window. The quick outline also supports drill-down search with wildcards. To enable the quick outline, you have to put the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/outline/QuickOutlineFragment2.xtend">QuickOutlineFragment2</a> into your workflow.</p>
-
-<h2 id="hyperlinking">Hyperlinking</h2>
-
-<p>The Xtext editor provides hyperlinking support for any tokens corresponding to cross-references in your grammar definition. You can either <em>CTRL-click</em> on any of these tokens or hit <em>F3</em> while the cursor position is at the token in question and this will take you to the referenced model element. As you’d expect this works for references to elements in the same resource as well as for references to elements in other resources. In the latter case the referenced resource will first be opened using the corresponding editor.</p>
-
-<h3 id="location-provider">Location Provider</h3>
-
-<p>When navigating a hyperlink, Xtext will also select the text region corresponding to the referenced model element. Determining this text region is the responsibility of the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/ILocationInFileProvider.java">ILocationInFileProvider</a>. The <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/DefaultLocationInFileProvider.java">default implementation</a> implements a best effort strategy which can be summarized as:</p>
+<p>在导航超链接时，Xtext还将选择与引用的模型元素对应的文本区域。确定此文本区域是<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/ILocationInFileProvider.java">ILocationInFileProvider</a>的责任。<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/DefaultLocationInFileProvider.java">默认实现</a>实现尽力而为策略，可以概括为：</p>
 
 <ol>
-  <li>If the model element’s <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClass.java">type</a> declares a feature <em>name</em> then return the region of the corresponding token(s). As a fallback also check for a feature <em>id</em>.</li>
-  <li>If the model element’s node model contains any top-level tokens corresponding to invocations of the rule <em>ID</em> in the grammar then return a region spanning all those tokens.</li>
-  <li>As a last resort return the region corresponding to the first keyword token of the referenced model element.</li>
+  <li>如果model元素的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClass.java">类型</a>声明了一个特征<em>名称，</em>则返回相应标记的区域。作为后备还检查功能<em>ID</em> 。</li>
+  <li>如果模型元素的节点模型包含与语法中规则<em>ID的</em>调用相对应的任何顶级标记，则返回跨越所有这些标记的区域。</li>
+  <li>作为最后的手段，返回与引用的模型元素的第一个关键字标记相对应的区域。</li>
 </ol>
 
-<p>The location service offers different methods to obtain the region of interest for special use cases. You can either obtain the complete region for an object or only the identifying string which is usually the name of the instance (see <code>getSignificantTextRegion(EObject)</code>). You can also query for the text region of a specific <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EStructuralFeature.java">EStructuralFeature</a> by means of <code>getFullTextRegion(EObject, EStructuralFeature, int)</code>.</p>
+<p>位置服务提供了不同的方法来获取特殊用例的感兴趣区域。您可以获取对象的完整区域，也可以只获取通常是实例名称的标识字符串（请参阅<code>getSignificantTextRegion(EObject)</code> ）。您还可以通过<code>getFullTextRegion(EObject, EStructuralFeature, int)</code>查询特定<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EStructuralFeature.java">EStructuralFeature</a>的文本区域。</p>
 
-<p>As the default strategy is a best effort it may not always result in the selection you want. If that’s the case you can <a href="302_configuration.html#guicemodules">override</a> the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/ILocationInFileProvider.java">ILocationInFileProvider</a> binding in the UI module as in the following example:</p>
+<p>由于默认策略是尽力而为，因此可能并不总是会产生您想要的选择。如果是这种情况，您可以在UI模块中<a href="302_configuration.html#guicemodules">覆盖</a> <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/ILocationInFileProvider.java">ILocationInFileProvider</a>绑定，如以下示例所示：</p>
 
-<pre><code class="language-java">public class MyDslUiModule extends AbstractMyDslUiModule {
-  @Override
-  public Class&lt;? extends ILocationInFileProvider&gt; 
-      bindILocationInFileProvider() {
-    return MyDslLocationInFileProvider.class;
-  }
-}
-</code></pre>
+<pre><code class="language-java">公共类MyDslUiModule扩展AbstractMyDslUiModule {@Override public Class &lt;？扩展ILocationInFileProvider&gt; bindILocationInFileProvider（）{return MyDslLocationInFileProvider.class; }}</code></pre>
 
-<p>Often the default strategy only needs some guidance (e.g. selecting the text corresponding to another feature than <em>name</em>). In that case you can simply subclass the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/DefaultLocationInFileProvider.java">DefaultLocationInFileProvider</a> and override the methods <code>getIdentifierFeature()</code> or <code>useKeyword()</code> to guide the first and last steps of the strategy as described above (see <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/xtext/XtextLocationInFileProvider.java">XtextLocationInFileProvider</a> for an example).</p>
+<p>通常，默认策略仅需要一些指导（例如，选择与<em>名称</em>相对应的另一个特征的文本）。在这种情况下，您可以简单地<code>useKeyword()</code> <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/DefaultLocationInFileProvider.java">DefaultLocationInFileProvider</a>并覆盖方法<code>getIdentifierFeature()</code>或<code>useKeyword()</code>来指导策略的第一步和最后一步，如上所述（有关<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/xtext/XtextLocationInFileProvider.java">示例</a> ，请参阅<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/xtext/XtextLocationInFileProvider.java">XtextLocationInFileProvider</a> ）。</p>
 
-<h3 id="customizing-available-hyperlinks">Customizing Available Hyperlinks</h3>
+<h3 id="customizing-available-hyperlinks">自定义可用的超链接</h3>
 
-<p>The hyperlinks are provided by the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/hyperlinking/HyperlinkHelper.java">HyperlinkHelper</a> which will create links for cross-referenced objects by default. Clients may want to override <code>createHyperlinksByOffset(XtextResource, int, IHyperlinkAcceptor)</code> to provide additional links or supersede the default implementation.</p>
+<p>超链接由<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/hyperlinking/HyperlinkHelper.java">HyperlinkHelper</a>提供，默认情况下将为交叉引用的对象创建链接。客户端可能希望覆盖<code>createHyperlinksByOffset(XtextResource, int, IHyperlinkAcceptor)</code>以提供其他链接或取代默认实现。</p>
 
-<h2 id="highlighting">Syntax Coloring</h2>
+<h2 id="highlighting">语法着色</h2>
 
-<p>Besides the already mentioned advanced features like <a href="#content-assist">content assist</a> and <a href="303_runtime_concepts.html#formatting">code formatting</a> the powerful editor for your DSL is capable to mark up your model-code to improve the overall readability. It is possible to use different colors and fonts according to the meaning of the different parts of your input file. One may want to use some unintrusive colors for large blocks of comments while identifiers, keywords and strings should be colored differently to make it easier to distinguish between them. This kind of text decorating markup does not influence the semantics of the various sections but helps to understand the meaning and to find errors in the source code.</p>
+<p>除了已经提到的<a href="#content-assist">内容辅助</a>和<a href="303_runtime_concepts.html#formatting">代码格式化</a>等高级功能外，DSL的强大编辑器还能够标记您的模型代码，以提高整体可读性。根据输入文件不同部分的含义，可以使用不同的颜色和字体。人们可能希望对大块注释使用一些不引人注意的颜色，而标识符，关键字和字符串应该以不同的颜色着色，以便更容易区分它们。这种文本装饰标记不会影响各个部分的语义，但有助于理解其含义并在源代码中查找错误。</p>
 
-<p><img src="images/highlighting.png" alt="" /></p>
+<p><img src="images/highlighting.png" alt=""></p>
 
-<p>The highlighting is done in two stages. This allows for sophisticated algorithms that are executed asynchronously to provide advanced coloring while simple pattern matching may be used to highlight parts of the text instantaneously. The latter is called lexical highlighting while the first is based on the meaning of your different model elements and therefore called semantic highlighting.</p>
+<p>突出显示分两个阶段完成。这允许以异步方式执行的复杂算法以提供高级着色，而可以使用简单的模式匹配来即时突出显示文本的部分。后者称为词汇突出显示，而第一个则基于不同模型元素的含义，因此称为语义突出显示。</p>
 
-<p>When you introduce new highlighting styles, the preference page for your DSL is automatically configured and allows the customization of any registered highlighting setting. They are automatically persisted and reloaded on startup.</p>
+<p>引入新的突出显示样式时，会自动配置DSL的首选项页面，并允许自定义任何已注册的突出显示设置。它们会在启动时自动保留并重新加载。</p>
 
-<p><img src="images/preferences_syntax.png" alt="" /></p>
+<p><img src="images/preferences_syntax.png" alt=""></p>
 
-<h3 id="lexical-highlighting">Lexical Highlighting</h3>
+<h3 id="lexical-highlighting">词汇突出显示</h3>
 
-<p>The lexical highlighting can be customized by providing implementations of the interface <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a> and the abstract class <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/AbstractTokenScanner.java">AbstractTokenScanner</a>. The latter fulfills the interface <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/rules/ITokenScanner.html">ITokenScanner</a> from the underlying JFace Framework, which may be implemented by clients directly.</p>
+<p>可以通过提供<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a>接口和抽象类<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/AbstractTokenScanner.java">AbstractTokenScanner的</a>实现来定制词法突出显示。后者通过底层JFace框架实现了<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/rules/ITokenScanner.html">ITokenScanner</a>接口，可以由客户直接实现。</p>
 
-<p>The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a> is used to register any default style without a specific binding to a pattern in the model file. It is used to populate the preferences page and to initialize the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/ITextAttributeProvider.java">ITextAttributeProvider</a>, which in turn is the component that is used to obtain the actual settings for a style’s id. An implementation will usually be very similar to the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/DefaultHighlightingConfiguration.java">DefaultHighlightingConfiguration</a> and read like this:</p>
+<p><a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a>用于注册任何默认样式，而不对模型文件中的模式进行特定绑定。它用于填充首选项页面并初始化<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/ITextAttributeProvider.java">ITextAttributeProvider</a> ，后者又是用于获取样式id的实际设置的组件。实现通常与<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/DefaultHighlightingConfiguration.java">DefaultHighlightingConfiguration</a>非常相似，并且如下所示：</p>
 
-<pre><code class="language-java">public class DefaultHighlightingConfiguration 
-    implements IHighlightingConfiguration {
+<pre><code class="language-java">公共类DefaultHighlightingConfiguration实现IHighlightingConfiguration {public static final String KEYWORD_ID =“keyword”; public static final String COMMENT_ID =“comment”; public void configure（IHighlightingConfigurationAcceptor acceptor）{acceptor.acceptDefaultHighlighting（KEYWORD_ID，“Keyword”，keywordTextStyle（））; acceptor.acceptDefaultHighlighting（COMMENT_ID，“评论”，// ...public TextStyle keywordTextStyle（）{TextStyle textStyle = new TextStyle（）; textStyle.setColor（new RGB（127,0,85））; textStyle.setStyle（SWT.BOLD）; return textStyle; }}</code></pre>
 
-  public static final String KEYWORD_ID = "keyword";
-  public static final String COMMENT_ID = "comment";
+<p><a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/rules/ITokenScanner.html">ITokenScanner的</a>实现负责将文档的内容分成各个部分，即所谓的标记，并返回每个标识范围的突出显示信息。至关重要的是，这一过程非常快，因为每个按键都会使用此组件。Xtext附带了一个默认实现，该实现基于ANTLR生成的词法分析器，它非常轻量且快速。客户可以轻松地自定义此默认实现。它们只需要绑定<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/AbstractAntlrTokenToAttributeIdMapper.java">AbstractAntlrTokenToAttributeIdMapper的</a>另一个实现。要了解它，请查看<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/DefaultAntlrTokenToAttributeIdMapper.java">DefaultAntlrTokenToAttributeIdMapper</a> 。</p>
 
-  public void configure(IHighlightingConfigurationAcceptor acceptor) {
-    acceptor.acceptDefaultHighlighting(
-      KEYWORD_ID, "Keyword", keywordTextStyle());
-    acceptor.acceptDefaultHighlighting(COMMENT_ID, "Comment", // ...
-  }
-  
-  public TextStyle keywordTextStyle() {
-    TextStyle textStyle = new TextStyle();
-    textStyle.setColor(new RGB(127, 0, 85));
-    textStyle.setStyle(SWT.BOLD);
-    return textStyle;
-  }
-}
-</code></pre>
+<h3 id="semantic-highlighting">语义突出显示</h3>
 
-<p>Implementations of the <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/jface/text/rules/ITokenScanner.html">ITokenScanner</a> are responsible for splitting the content of a document into various parts, the so called tokens, and return the highlighting information for each identified range. It is critical that this is done very fast because this component is used on each keystroke. Xtext ships with a default implementation that is based on the lexer that is generated by ANTLR which is very lightweight and fast. This default implementation can be customized by clients easily. They simply have to bind another implementation of the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/AbstractAntlrTokenToAttributeIdMapper.java">AbstractAntlrTokenToAttributeIdMapper</a>. To get an idea about it, have a look at the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/DefaultAntlrTokenToAttributeIdMapper.java">DefaultAntlrTokenToAttributeIdMapper</a>.</p>
+<p>语义突出显示阶段在后台异步执行，并可用于根据不同模型元素的含义计算突出显示状态。编辑器的用户在编辑文本之后会注意到很短的延迟，直到样式实际应用于文档。这样可以在编写模型时提供帮助，同时保持编辑器的响应性。</p>
 
-<h3 id="semantic-highlighting">Semantic Highlighting</h3>
+<p>至于词汇突出显示注册可用样式的界面是<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a> 。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/ISemanticHighlightingCalculator.java">ISemanticHighlightingCalculator</a>是实现逻辑的主要钩子，该逻辑将基于模型元素计算要突出显示的范围。</p>
 
-<p>The semantic highlighting stage is executed asynchronously in the background and can be used to calculate highlighting states based on the meaning of the different model elements. Users of the editor will notice a very short delay after they have edited the text until the styles are actually applied to the document. This keeps the editor responsive while providing aid when reading and writing your model.</p>
+<p>框架将当前的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/XtextResource.java">XtextResource</a>和<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightedPositionAcceptor.java">IHighlightedPositionAcceptor</a>传递给计算器。确保在被调用方法提供<code>provideHighlightingFor()</code>返回之前不会在外部更改资源。但是，如果模型中存在错误，则资源可能为<code>null</code> 。实现者的任务是导航语义模型并基于附加的节点信息计算各种范围并将样式与它们相关联。这可能类似于以下代码段：</p>
 
-<p>As for the lexical highlighting the interface to register the available styles is the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a>. The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/ISemanticHighlightingCalculator.java">ISemanticHighlightingCalculator</a> is the primary hook to implement the logic that will compute the to-be-highlighted ranges based on the model elements.</p>
+<pre><code class="language-java">public void provideHighlightingFor（XtextResource resource，IHighlightedPositionAcceptor acceptor）{if（resource == null || resource.getParseResult（）== null）return; INode root = resource.getParseResult（）。getRootNode（）; for（INode node：root.getAsTreeIterable（））{if（node.getGrammarElement（）instanceof CrossReference）{acceptor.addPosition（node.getOffset（），node.getLength（），MyHighlightingConfiguration。CROSS_REF）; }}}</code></pre>
 
-<p>The framework will pass the current <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/XtextResource.java">XtextResource</a> and an <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightedPositionAcceptor.java">IHighlightedPositionAcceptor</a> to the calculator. It is ensured that the resource will not be altered externally until the called method <code>provideHighlightingFor()</code> returns. However, the resource may be <code>null</code> in case of errors in the model. The implementor’s task is to navigate the semantic model and compute various ranges based on the attached node information and associate styles with them. This may read similar to the following snippet:</p>
+<p>此示例引用<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a>的实现，该实现为每个交叉引用注册自己的样式。它与前面提到的词法<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a>样本几乎相同。</p>
 
-<pre><code class="language-java">public void provideHighlightingFor(XtextResource resource, 
-    IHighlightedPositionAcceptor acceptor) {
-  if (resource == null || resource.getParseResult() == null)
-    return;
-    
-  INode root = resource.getParseResult().getRootNode();
-  for (INode node : root.getAsTreeIterable()) {
-    if (node.getGrammarElement() instanceof CrossReference) {
-      acceptor.addPosition(node.getOffset(), node.getLength(), 
-        MyHighlightingConfiguration.CROSS_REF);
-    }
-  }
-}
-</code></pre>
+<pre><code class="language-java">公共类HighlightingConfiguration实现了IHighlightingConfiguration {// lexical stuff到这里// ..public final static String CROSS_REF =“CrossReference”; public void configure（IHighlightingConfigurationAcceptor acceptor）{// lexical stuff到这里// ..acceptor.acceptDefaultHighlighting（CROSS_REF，“交叉引用”，crossReferenceTextStyle（））; public TextStyle crossReferenceTextStyle（）{TextStyle textStyle = new TextStyle（）; textStyle.setStyle（SWT.ITALIC）; return textStyle; }}</code></pre>
 
-<p>This example refers to an implementation of the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a> that registers an own style for each cross-reference. It is pretty much the same implementation as for the previously mentioned sample of a lexical <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/IHighlightingConfiguration.java">IHighlightingConfiguration</a>.</p>
+<p><a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/ISemanticHighlightingCalculator.java">ISemanticHighlightingCalculator</a>的实现者应该了解性能以确保良好的用户体验。当您只注册一些突出显示的范围时，通过某些类型化的方法调用可以更容易地找到模型的所有内容，这可能不是一个好主意。强烈建议使用有目的的方法来导航模型。在这方面，负责语义突出显示的Xtext核心部分也得到了很好的优化。例如，框架将仅更新实际已更改的范围。这加快了重绘过程。在用户更改文档之后触发下一个语义突出显示通道之前，它甚至会根据最佳猜测移动，缩小或放大先前公布的区域。</p>
 
-<pre><code class="language-java">public class HighlightingConfiguration 
-    implements IHighlightingConfiguration {
-  
-  // lexical stuff goes here 
-  // ..
-  public final static String CROSS_REF = "CrossReference"; 
+<h2 id="refactoring">重命名重构</h2>
 
-  public void configure(IHighlightingConfigurationAcceptor acceptor) {
-    // lexical stuff goes here 
-    // ..
-    acceptor.acceptDefaultHighlighting(CROSS_REF, 
-      "Cross-References", crossReferenceTextStyle());
-  }
-  
-  public TextStyle crossReferenceTextStyle() {
-    TextStyle textStyle = new TextStyle();
-    textStyle.setStyle(SWT.ITALIC);
-    return textStyle;
-  }
-}
-</code></pre>
-
-<p>The implementor of an <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/editor/syntaxcoloring/ISemanticHighlightingCalculator.java">ISemanticHighlightingCalculator</a> should be aware of performance to ensure a good user experience. It is probably not a good idea to traverse everything of your model when you will only register a few highlighted ranges that can be found easier with some typed method calls. It is strongly advised to use purposeful ways to navigate your model. The parts of Xtext’s core that are responsible for the semantic highlighting are pretty optimized in this regard as well. The framework will only update the ranges that actually have been altered, for example. This speeds up the redraw process. It will even move, shrink or enlarge previously announced regions based on a best guess before the next semantic highlighting pass has been triggered after the user has changed the document.</p>
-
-<h2 id="refactoring">Rename Refactoring</h2>
-
-<p>Xtext provides rename refactoring of the elements in your language. That includes</p>
+<p>Xtext提供了对您语言中元素的重命名重构。那包括</p>
 
 <ul>
-  <li>a command, handlers and keybindings on both declarations and references,</li>
-  <li>in-place linked editing for the new name,</li>
-  <li>validation and preview,</li>
-  <li>renaming of declaration and all references even across language boundaries.</li>
+  <li>声明和引用上的命令，处理程序和键绑定，</li>
+  <li>新名称的就地链接编辑，</li>
+  <li>验证和预览，</li>
+  <li>即使跨越语言边界，也要重命名声明和所有引用。</li>
 </ul>
 
-<p>To enable refactoring support make sure the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/refactoring/RefactorElementNameFragment2.xtend">RefactorElementNameFragment2</a> is enabled in the fragment section of the MWE workflow of your language, e.g.</p>
+<p>要启用重构支持，请确保在您的语言的MWE工作流的片段部分中启用了<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/ui/refactoring/RefactorElementNameFragment2.xtend">RefactorElementNameFragment2</a> ，例如</p>
 
-<pre><code class="language-mwe2">// rename refactoring
-fragment = refactoring.RefactorElementNameFragment {}
-</code></pre>
+<pre><code class="language-mwe2">//重命名重构片段=重构。RefactorElementNameFragment {}</code></pre>
 
-<p>The fragment has an additional flag <code>useJdtRefactoring</code> which can be used to delegate to JDT’s refactoring infrastructure for languages using <a href="305_xbase.html">Xbase</a> and an <a href="305_xbase.html#xbase-inferred-type">inferred JVM model</a> (i.e. the domain model example or Xtend).</p>
+<p>该片段有一个额外的标志<code>useJdtRefactoring</code> ，可用于委托JDT的重构基础结构，用于使用<a href="305_xbase.html">Xbase</a>和<a href="305_xbase.html#xbase-inferred-type">推断的JVM模型</a> （即域模型示例或Xtend）的语言。</p>
 
-<p>If you have stuck to the defaults with regard to naming, cross-referencing, and indexing rename refactoring should not need any customization. Give it a try.</p>
+<p>如果您坚持使用关于命名，交叉引用和索引的默认值，则重命名重构不应该需要任何自定义。试试看。</p>
 
-<h3 id="customizing">Customizing</h3>
+<h3 id="customizing">定制</h3>
 
-<p>The most likely component you want to customize is the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IRenameStrategy.java">IRenameStrategy</a>. This component defines how the declaration of the target element is performed. It has two major responsibilities:</p>
+<p>您想要自定义的最可能的组件是<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IRenameStrategy.java">IRenameStrategy</a> 。该组件定义了如何执行目标元素的声明。它有两个主要职责：</p>
 
 <ul>
-  <li>Apply and revert the declaration change on the semantic model (methods <code>applyDeclarationChange</code> and <code>revertDeclarationChange</code>). The default is to look for an <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EAttribute.java">EAttribute</a> <code>name</code> on the target object and set its value using EMFs reflective API.</li>
-  <li>Create the LTK <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/ltk/core/refactoring/Change.html">Change</a> objects of the declaration change. These changes will be aggregated, checked for overlaps, presented to you in the preview and finally executed if you apply the refactoring. The default is to use the <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/ILocationInFileProvider.java">ILocationInFileProvider</a> to locate the text range representing the name and create a <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/text/edits/ReplaceEdit.html">ReplaceEdit</a> for it.</li>
+  <li>应用并恢复语义模型上的声明更改（方法<code>applyDeclarationChange</code>和<code>revertDeclarationChange</code> ）。默认设置是在目标对象上查找<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EAttribute.java">EAttribute</a> <code>name</code> ，并使用EMFs反射API设置其值。</li>
+  <li>创建声明更改的LTK <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/ltk/core/refactoring/Change.html">Change</a>对象。这些更改将被聚合，检查重叠，在预览中呈现给您，并在您应用重构时最终执行。默认设置是使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/ILocationInFileProvider.java">ILocationInFileProvider</a>来查找表示名称的文本范围，并为其创建<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/text/edits/ReplaceEdit.html">ReplaceEdit</a> 。</li>
 </ul>
 
-<p>As the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IRenameStrategy.java">IRenameStrategy</a> is a stateful object, you have to bind a custom <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IRenameStrategy.java">Provider</a> to create it.</p>
+<p>由于<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IRenameStrategy.java">IRenameStrategy</a>是有状态对象，因此必须绑定自定义<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IRenameStrategy.java">Provider</a>才能创建它。</p>
 
-<p>The second component you might want to customize is the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IDependentElementsCalculator.java">IDependentElementsCalculator</a>. Dependent elements are those elements whose name change when the target element is renamed. For example, when you rename a Java class the qualified names of its inner classes change, too, thus references to these have to be updated as well. This calculation is performed by the <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IDependentElementsCalculator.java">IDependentElementsCalculator</a>. By default, all elements contained in the target element are added. This matches Xtext’s default strategy of qualified name computation.</p>
+<p>您可能想要自定义的第二个组件是<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IDependentElementsCalculator.java">IDependentElementsCalculator</a> 。从属元素是重命名目标元素时名称更改的元素。例如，当您重命名Java类时，其内部类的限定名称也会更改，因此也必须更新对这些类的引用。该计算由<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/IDependentElementsCalculator.java">IDependentElementsCalculator</a>执行。默认情况下，会添加目标元素中包含的所有元素。这与Xtext的限定名称计算的默认策略相匹配。</p>
 
-<h3 id="rename-participants">Rename Participants</h3>
+<h3 id="rename-participants">重命名参与者</h3>
 
-<p>One refactoring can trigger another: When renaming a rule in an Xtext grammar, the returned <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClass.java">EClass</a> should be renamed, too. For these cases, you can register a <a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/ltk/core/refactoring/participants/RenameParticipant.html">RenameParticipant</a> by the common means of LTK. If the target of the participant is Xtext based, you can use a <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/impl/AbstractProcessorBasedRenameParticipant.java">AbstractProcessorBasedRenameParticipant</a>.</p>
+<p>一次重构可以触发另一种重构：在Xtext语法中重命名规则时，也应该重命名返回的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClass.java">EClass</a> 。对于这些情况，您可以通过LTK的常用方法注册<a href="http://help.eclipse.org/luna/topic/org.eclipse.platform.doc.isv/reference/api/org/eclipse/ltk/core/refactoring/participants/RenameParticipant.html">RenameParticipant</a> 。如果参与者的目标是基于Xtext的，则可以使用<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/refactoring/impl/AbstractProcessorBasedRenameParticipant.java">AbstractProcessorBasedRenameParticipant</a> 。</p>
 
-<h2 id="projectwizard">Project Wizard</h2>
+<h2 id="projectwizard">项目向导</h2>
 
-<p>The MWE2 workflow can generate a wizard that clients of your language can use to create model projects. This will be generated in the <code>.ui</code> project. If the language was generated before the <code>plugin.xml</code> will have to be manually merged with the <code>plugin.xml_gen</code>.</p>
+<p>MWE2工作流可以生成一个向导，您的语言的客户可以使用该向导来创建模型项目。这将在<code>.ui</code>项目中生成。如果在<code>plugin.xml</code>必须与<code>plugin.xml_gen</code>手动合并之前生成语言。</p>
 
-<p>This must be explicitly specified in the MWE2 file in the <code>language</code> section as follows</p>
+<p>必须在<code>language</code>部分的MWE2文件中明确指定，如下所示</p>
 
-<pre><code class="language-mwe2">projectWizard = {
-	generate = true
-}
-</code></pre>
+<pre><code class="language-mwe2">projectWizard = {generate = true}</code></pre>
 
-<p>By default, the generated wizard will create a Plug-in project. If you want a General project you need to set the following property to false: <code>pluginProject=false</code>, for example</p>
+<p>默认情况下，生成的向导将创建插件项目。如果需要General项目，则需要将以下属性设置为false：例如， <code>pluginProject=false</code></p>
 
-<pre><code class="language-mwe2">projectWizard = {
-	generate = true
-	pluginProject = false
-}
-</code></pre>
+<pre><code class="language-mwe2">projectWizard = {generate = true pluginProject = false}</code></pre>
 
-<p>In the <code>src</code> folder of the <code>ui</code> project a <code>MyDslProjectTemplateProvider</code> Xtend file will be generated, where you can specify the templates the user can select from to generate new projects.</p>
+<p>在<code>ui</code>项目的<code>src</code>文件夹中，将生成<code>MyDslProjectTemplateProvider</code> Xtend文件，您可以在其中指定用户可以从中选择的模板以生成新项目。</p>
 
-<p>The templates define two things. On the one hand they define how the template is presented to the user. A name, a description and the layout of the widgets the user gets presented to select values for the parameters of the template. On the other hand the content of the projects that the template generates is defined. The wizard is able to generate any number and kind of projects with any number and kind of files as content.</p>
+<p>模板定义了两件事。一方面，他们定义了如何向用户呈现模板。用户获取的小部件的名称，描述和布局，以选择模板参数的值。另一方面，定义了模板生成的项目的内容。该向导能够生成任意数量和类型的项目，其中包含任意数量和类型的文件作为内容。</p>
 
-<p>The templates are contributed to the wizard by the extension point <code>org.eclipse.xtext.ui.projectTemplate</code>. An implementor of <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/IProjectTemplateProvider.java">IProjectTemplateProvider</a> is registered for the language it provides templates to. The method of this interface returns instances of <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/AbstractProjectTemplate.java">AbstractProjectTemplate</a>. Each of these instances defines one template.</p>
+<p>扩展点<code>org.eclipse.xtext.ui.projectTemplate</code>将模板提供给向导。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/IProjectTemplateProvider.java">IProjectTemplateProvider</a>的实现者已注册其提供模板的语言。此接口的方法返回<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/AbstractProjectTemplate.java">AbstractProjectTemplate的</a>实例。每个实例都定义一个模板。</p>
 
-<p>To create a subclass of <code>AbstractProjectTemplate</code> it is advisable to annotate a class with the active annotation <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/ProjectTemplate.xtend">ProjectTemplate</a>. With this annotation the name and description can be defined and will be made available to the user interface. Also the extension of <code>AbstractProjectTemplate</code> will be done for you.</p>
+<p>要创建<code>AbstractProjectTemplate</code>的子类，建议使用活动注释<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/ProjectTemplate.xtend">ProjectTemplate</a>注释类。通过此注释，可以定义名称和描述，并使其可用于用户界面。此外， <code>AbstractProjectTemplate</code>的扩展将为您完成。</p>
 
-<p>In a project template the method <code>generateProjects(IProjectGenerator)</code> needs to be overridden. The parameter instance offers a single <code>generate</code> method that takes an instance of <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/util/ProjectFactory.java">ProjectFactory</a>. Using this class, or available subclasses, all kind of projects can be generated by the template. The following illustrates a simple example to generate a plugin project with a template:</p>
+<p>在项目模板中，需要重写方法<code>generateProjects(IProjectGenerator)</code> 。参数实例提供了一个<code>generate</code>方法，该方法接受<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/util/ProjectFactory.java">ProjectFactory</a>的实例。使用此类或可用的子类，模板可以生成所有类型的项目。以下说明了使用模板生成插件项目的简单示例：</p>
 
-<pre><code class="language-xtend">generator.generate(new PluginProjectFactory =&gt; [
-    projectName = projectInfo.projectName
-    location = projectInfo.locationPath
-    projectNatures += #[JavaCore.NATURE_ID, "org.eclipse.pde.PluginNature", XtextProjectHelper.NATURE_ID]
-    builderIds += JavaCore.BUILDER_ID
-    folders += "src"
-    addFile('''src/Model.mydsl''', '''
-        Hello World!
-    ''')
-])
-</code></pre>
+<pre><code class="language-xtend">generator.generate（new PluginProjectFactory =&gt; [projectName = projectInfo.projectName location = projectInfo.locationPath projectNatures + =＃[JavaCore。NATURE_ID，“org.eclipse.pde。PluginNature“，XtextProjectHelper。NATURE_ID] builderIds + = JavaCore。BUILDER_ID文件夹+ =“src”addFile（'''src / Model.mydsl'''，'''Hello World！'''）]）</code></pre>
 
-<p>The <code>AbstractProjectTemplate</code> offers methods to create check boxes, text fields and combo boxes. These will be made available to the user in the wizard to configure the selected template. The values inserted by the user can then be used to configure the templates. In the following example a check box is used to control if a file is generated or not.</p>
+<p><code>AbstractProjectTemplate</code>提供了创建复选框，文本字段和组合框的方法。这些将在向导中提供给用户以配置所选模板。然后，可以使用用户插入的值来配置模板。在以下示例中，复选框用于控制是否生成文件。</p>
 
-<pre><code class="language-xtend">@ProjectTemplate(label="Test", icon="project_template.png", description="&lt;p&gt;&lt;b&gt;Test&lt;/b&gt;&lt;/p&gt;&lt;p&gt;This is a test project.&lt;/p&gt;")
-final class TestProject {
-    val generateHello = check("Generate Hello", true)
+<pre><code class="language-xtend">@ProjectTemplate（label =“Test”，icon =“project_template.png”，description =“&lt;p&gt; &lt;b&gt;测试&lt;/ b&gt; &lt;/ p&gt; &lt;p&gt;这是一个测试项目。&lt;/ p&gt;”） final类TestProject {val generateHello = check（“Generate Hello”，true）覆盖generateProjects（IProjectGenerator生成器）{if（generateHello.value）{generator.generate（new PluginProjectFactory =&gt; [projectName = projectInfo.projectName location = projectInfo.locationPath projectNatures + =＃[JavaCore。NATURE_ID，“org.eclipse.pde。PluginNature“，XtextProjectHelper。NATURE_ID] builderIds + = JavaCore。BUILDER_ID文件夹+ =“src”addFile（'''src / Model.mydsl'''，'''Hello World！'''）））}}}</code></pre>
 
-    override generateProjects(IProjectGenerator generator) {
-        if (generateHello.value) {
-            generator.generate(new PluginProjectFactory =&gt; [
-                projectName = projectInfo.projectName
-                location = projectInfo.locationPath
-                projectNatures += #[JavaCore.NATURE_ID, "org.eclipse.pde.PluginNature", XtextProjectHelper.NATURE_ID]
-                builderIds += JavaCore.BUILDER_ID
-                folders += "src"
-                addFile('''src/Model.mydsl''', '''
-                    Hello World!
-                ''')
-            ])
-        }
-    }
-}
-</code></pre>
+<p>对于更复杂的模板，还可以将参数组合在一起，启用/禁用参数，响应不同参数的更改而更改参数值，并在所选参数正确时向向导添加验证。这可以通过实现提供的方法<code>updateVariables</code>和<code>validate</code>来完成。</p>
 
-<p>For more elaborate templates it is also possible to group parameters together, enable/disable parameters, have parameter values be changed in response of the change of a different parameter and add validations to the wizard if the selected parameters are correct. This can be done by implementing the provided methods <code>updateVariables</code> and <code>validate</code>.</p>
+<h2 id="file-wizard">文件向导</h2>
 
-<h2 id="file-wizard">File Wizard</h2>
+<p>与<a href="#projectwizard">Project Wizard</a>类似，可以使用MWE2工作流生成文件generaten的向导。该向导将在<code>.ui</code>项目中生成。如果在<code>plugin.xml</code>必须与<code>plugin.xml_gen</code>手动合并之前生成语言。</p>
 
-<p>Similar to the <a href="#projectwizard">Project Wizard</a>  it is possible to generate a wizard for file generaten with the MWE2 workflow. The wizard will be generated in the <code>.ui</code> project. If the language was generated before the <code>plugin.xml</code> will have to be manually merged with the <code>plugin.xml_gen</code>.</p>
+<p>必须在<code>language</code>部分的MWE2文件中明确指定，如下所示</p>
 
-<p>This must be explicitly specified in the MWE2 file in the <code>language</code> section as follows</p>
+<pre><code class="language-mwe2">fileWizard = {generate = true}</code></pre>
 
-<pre><code class="language-mwe2">fileWizard = {
-	generate = true
-}
-</code></pre>
+<p>文件向导的API与项目向导的API非常相似。使用相同的小部件/参数定义模板，但不生成整个项目，而是生成一个或多个文件。要添加新的模板提供程序，可以使用扩展点<code>org.eclipse.xtext.ui.projectTemplate</code>来注册<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/IFileTemplateProvider.java">IFileTemplateProvider</a> 。要创建<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/AbstractFileTemplate.xtend">AbstractFileTemplate的</a>实例，应使用活动注释<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/FileTemplate.xtend">FileTemplate</a> 。</p>
 
-<p>The API for the file wizard is very similar to the one of the project wizard. The templates are defined with the same widgets/parameters but instead of generating whole projects one or many files are generated. To add new template providers there is the extension point <code>org.eclipse.xtext.ui.projectTemplate</code> to register a <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/IFileTemplateProvider.java">IFileTemplateProvider</a>. To create instances of <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/AbstractFileTemplate.xtend">AbstractFileTemplate</a> one should use the active annotation <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/wizard/template/FileTemplate.xtend">FileTemplate</a>.</p>
+<p>一个简单的示例模板可能如下所示：</p>
 
-<p>An simple example template might look like this:</p>
+<pre><code>@FileTemplate（label =“Hello World”，icon =“file_template.png”，description =“为MyDsl创建一个hello world。”）final class HelloWorldFile {val helloName = combo（“Hello Name：”，＃[“Xtext” ，“World”，“Foo”，“Bar”]，“名称'Hello'to”）覆盖generateFiles（IFileGenerator generator）{generator.generate（'''«folder»/«name».mydsl'' '，'''你好«helloName»！'''）}}</code></pre>
 
-<pre><code>@FileTemplate(label="Hello World", icon="file_template.png", description="Create a hello world for MyDsl.")
-final class HelloWorldFile {
-    val helloName = combo("Hello Name:", #["Xtext", "World", "Foo", "Bar"], "The name to say 'Hello' to")
+<h2 id="code-mining">代码挖掘</h2>
 
-    override generateFiles(IFileGenerator generator) {
-        generator.generate('''«folder»/«name».mydsl''', '''
-            Hello «helloName»!
-        ''')
-    }
-}
-</code></pre>
+<p>代码挖掘在文本编辑器中显示内联注释，这些注释不是文本本身的一部分，而是从其内容派生而来。利用代码挖掘来显示推断类型，文字的参数名称和其他类型的元信息可能非常有用。</p>
 
-<h2 id="code-mining">Code Mining</h2>
+<p>代码挖掘有两种形式：“标题注释”打印在挖掘文本上方的单独行中，“内联注释”以串联方式显示。以下屏幕截图显示了两种风格：</p>
 
-<p>Code Mining shows inline annotations in the text editor that are not part of the text itself, but derived from its contents. It can be very helpful to leverage code minings for example to show inferred types, parameter names for literals and other kind of meta information.</p>
+<p><img src="images/code_mining.png" alt=""></p>
 
-<p>Code minings come in two flavors: “header annotations” are printed in a separate line above the mined text, “inline annotations” are shown in-line. The following screenshot shows both flavors:</p>
+<p>要启用代码挖掘，请使用<code>org.eclipse.xtext.xtext.generator.ui.codemining.CodeMiningFragment</code>必须集成在MWE2文件的<code>language</code>部分中，如下所示：</p>
 
-<p><img src="images/code_mining.png" alt="" /></p>
+<pre><code class="language-mwe2">fragment = org.eclipse.xtext.xtext.generator.ui.codemining。CodeMiningFragment {}</code></pre>
 
-<p>To enable code mining, the <code>org.eclipse.xtext.xtext.generator.ui.codemining.CodeMiningFragment</code> has to be integrated in the <code>language</code> section of the MWE2 file as follows:</p>
+<p>执行生成器后，将在UI插件的<code>.codemining</code>子包中创建存根类<code>&lt;LanguageName&gt;CodeMiningProvider</code> 。此外，提供程序已注册到<code>plugin.xml</code>的<code>org.eclipse.ui.workbench.texteditor.codeMiningProviders</code>扩展点。</p>
 
-<pre><code class="language-mwe2">fragment = org.eclipse.xtext.xtext.generator.ui.codemining.CodeMiningFragment {}
-</code></pre>
+<p>以下类<code>MyDslCodeMiningProvider</code>显示了一个简单示例：</p>
 
-<p>With execution of the generator a stub class <code>&lt;LanguageName&gt;CodeMiningProvider</code> is created in the <code>.codemining</code> sub-package of the UI plugin. Furthermore the provider is registered to the <code>org.eclipse.ui.workbench.texteditor.codeMiningProviders</code> extension point in <code>plugin.xml</code>.</p>
+<pre><code class="language-java">公共类MyDslCodeMiningProvider扩展AbstractXtextCodeMiningProvider {@Override protected void createCodeMinings（IDocument文档，XtextResource资源，CancelIndicator指示符，IAcceptor &lt;ICodeMining&gt; acceptor）抛出BadLocationException {acceptor.accept（createNewLineHeaderCodeMining（1，document，“header annotation”））; acceptor.accept（createNewLineContentCodeMining（5，“inline annotation”））; }}</code></pre>
 
-<p>The following class <code>MyDslCodeMiningProvider</code> shows a simple example:</p>
+<p>客户端必须实现<code>createCodeMinings()</code>方法，计算应在文本编辑器中显示的元信息的文本和位置。最后，使用该信息创建<code>ICodeMining</code>实例并将其传递给<code>acceptor</code> 。</p>
 
-<pre><code class="language-java">public class MyDslCodeMiningProvider extends AbstractXtextCodeMiningProvider {
-	@Override
-	protected void createCodeMinings(IDocument document, XtextResource resource, CancelIndicator indicator,
-		IAcceptor&lt;ICodeMining&gt; acceptor) throws BadLocationException {
+<p>基类<code>AbstractXtextCodeMiningProvider</code>提供了一些工厂方法，以便于创建<code>ICodeMining</code>实例。为此目的使用<code>createNewLineHeaderCodeMining()</code>和<code>createNewLineContentCodeMining()</code> 。</p>
 
-		acceptor.accept(createNewLineHeaderCodeMining(1, document, "header annotation"));
+<p>有关实现参考，请查看Domainmodel示例。</p>
 
-		acceptor.accept(createNewLineContentCodeMining(5, " inline annotation "));
-	}
+<hr>
 
-}
-</code></pre>
-
-<p>Clients have to implement the <code>createCodeMinings()</code> method, compute text and position of meta information that should be presented in the text editor. Finally instances of <code>ICodeMining</code> are created with that information and passed to the <code>acceptor</code>.</p>
-
-<p>The base class <code>AbstractXtextCodeMiningProvider</code> provides some factory methods for creating <code>ICodeMining</code> instances for convenience. Use <code>createNewLineHeaderCodeMining()</code> and <code>createNewLineContentCodeMining()</code> for that purpose.</p>
-
-<p>For an implementation reference, have a look at the Domainmodel Example.</p>
-
-<hr />
-
-<p><strong><a href="330_web_support.html">Next Chapter: Web Editor Support</a></strong></p>
+<p><strong><a href="330_web_support.html">下一章：Web编辑器支持</a></strong></p>
 
 
 </body>

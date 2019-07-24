@@ -1,605 +1,425 @@
-<html>
+﻿<html dir="ltr">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
-	<title>Integration with Java</title>
-	<link href="book.css" rel="stylesheet" type="text/css">
-	<link href="code.css" rel="stylesheet" type="text/css">
-	<link rel="home" href="index.html" title="">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<title>与Java集成</title>
+	<link href="book.css" rel="stylesheet" type="text/css"></link>
+	<link href="code.css" rel="stylesheet" type="text/css"></link>
+	<link rel="home" href="index.html" title=""></link>
 </head>
-<body>
+<body dir="ltr">
 
-<h1 id="xbase">Integration with Java</h1>
+<h1 id="xbase">与Java集成</h1>
 
-<p>The following chapter demonstrates how to integrate your own DSL with Java. We will do this in four stages: First, you will learn how to refer to existing Java elements from within your language. Then you will use Xbase to refer to generic types. In the third step, you will map your own DSL’s concepts to Java concepts. Last but not least, you will use both Java types and your concepts within Xbase expressions and execute it.</p>
+<p>以下章节演示了如何将自己的DSL与Java集成。我们将分四个阶段完成：首先，您将学习如何从您的语言中引用现有的Java元素。然后，您将使用Xbase来引用泛型类型。在第三步中，您将自己的DSL概念映射到Java概念。最后但并非最不重要的是，您将在Xbase表达式中使用Java类型和您的概念并执行它。</p>
 
-<p>Throughout this chapter, we will step by step improve the <a href="103_domainmodelnextsteps.html">domain model example from the tutorial</a>.</p>
+<p>在本章中，我们将逐步改进<a href="103_domainmodelnextsteps.html">教程中</a>的<a href="103_domainmodelnextsteps.html">域模型示例</a> 。</p>
 
-<h2 id="jvmtypes">Referring to Java Elements using JVM Types</h2>
+<h2 id="jvmtypes">使用JVM类型引用Java元素</h2>
 
-<p>A common case when developing languages is the requirement to refer to existing concepts of other languages. Xtext makes this very easy for other self defined DSLs. However, it is often very useful to have access to the available types of the Java Virtual Machine as well. The JVM types Ecore model enables clients to do exactly this. It is possible to create cross-references to classes, interfaces, and their fields and methods. Basically every information about the structural concepts of the Java type system is available via the JVM types. This includes annotations and their specific values and enumeration literals, too.</p>
+<p>开发语言的一个常见情况是要求参考其他语言的现有概念。Xtext使其他自定义DSL变得非常容易。但是，访问Java虚拟机的可用类型通常也非常有用。JVM类型Ecore模型使客户能够做到这一点。可以创建对类，接口及其字段和方法的交叉引用。基本上，有关Java类型系统结构概念的所有信息都可以通过JVM类型获得。这包括注释及其特定值和枚举文字。</p>
 
-<p>The implementation will be selected transparently depending on how the client code is executed. If the environment is a plain stand-alone Java or OSGi environment, the <em>java.lang.reflect</em> API will be used to deduce the necessary data. On the contrary, the type-model will be created from the live data of the JDT in an interactive Eclipse environment. All this happens transparently for the clients behind the scenes via different implementations that are bound to specific interfaces by means of Google Guice.</p>
+<p>将根据客户端代码的执行方式透明地选择实现。如果环境是普通的独立Java或OSGi环境，则<em>java.lang.reflect</em> API将用于推断必要的数据。相反，类型模型将在交互式Eclipse环境中从JDT的实时数据创建。所有这些都是通过Google Guice绑定到特定接口的不同实现为幕后客户透明地实现的。</p>
 
-<p>Using the JVM types model is very simple. First of all, the grammar has to import the <em>JavaVMTypes</em> Ecore model. Thanks to content assist this is easy to spot in the list of proposals.</p>
+<p>使用JVM类型模型非常简单。首先，语法必须导入<em>JavaVMTypes</em> Ecore模型。由于内容辅助，很容易在提案列表中找到。</p>
 
-<pre><code class="language-xtext">grammar org.xtext.example.mydsl.MyDsl with org.eclipse.xtext.xbase.Xtype
-...
-import "http://www.eclipse.org/xtext/common/JavaVMTypes" as jvmTypes
+<pre><code class="language-xtext">语法org.xtext.example.mydsl。带有org.eclipse.xtext.xbase的MyDsl。Xtype ......将“http://www.eclipse.org/xtext/common/JavaVMTypes”导入为jvmTypes</code></pre>
+
+<p>下一步是实际引用导入的概念。让我们为域模型语言中的简单数据类型定义可用Java类型的映射。这可以通过简单的交叉引用来完成：</p>
+
+<pre><code class="language-xtext">//对Java类型的简单交叉引用DataType：'datatype'name = ID'stapated-to'javaType = [jvmTypes :: JvmType | QualifiedName];</code></pre>
+
+<p>重新生成语言后，将允许定义映射到<a href="http://docs.oracle.com/javase/8/docs/api/java/util/Date.html">Date</a>的类型<code>Date</code> ，如下所示：</p>
+
+<pre><code class="language-javatypesexample">datatype Date mapped-to java.util。日期</code></pre>
+
+<p>这两个步骤将提供与Eclipse JDT的良好集成。有关Java方法，字段和类型的<em>查找引用</em>将显示语言文件中的结果。<em>Go To Declaration</em>按预期工作，内容协助将提出可用类型列表。甚至<em>import</em>语句也适用于Java类型。</p>
+
+<h3 id="customization-points">定制点</h3>
+
+<p>JVM类型的运行时层和编辑器端也有几个自定义挂钩：</p>
+
+<p><a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/src/org/eclipse/xtext/common/types/xtext/AbstractTypeScopeProvider.java">AbstractTypeScopeProvider</a>可用于为成员创建与Java语言的覆盖语义相关的范围。当然，也可以使用此实现来为类型创建范围。</p>
+
+<p>由于Java VM类型公开了大量有关可见性，参数类型和返回类型，泛型，可用注释或枚举文字的信息，因此很容易为引用类型定义约束。</p>
+
+<p><a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.common.types.ui/src/org/eclipse/xtext/common/types/xtext/ui/ITypesProposalProvider.java">ITypesProposalProvider</a>可用于根据各种过滤条件提供优化建议。最常见的选择器可以通过<code>createSubTypeProposals(..)</code>直接使用。优化实现并直接使用JDT索引来最小化对象实例化的工作量。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.common.types.ui/src/org/eclipse/xtext/common/types/xtext/ui/TypeMatchFilters.java">TypeMatchFilters</a>类提供了一组全面的可重用过滤器，可以轻松组合以将提议列表减少到较少数量的有效条目。</p>
+
+<h2 id="xbase-java-references">参考使用Xbase的Java类型</h2>
+
+<p>虽然前一章中的JVM类型方法允许引用任何Java元素，但在泛型方面它是非常有限的。通常，Java中的类型引用可以具有类型参数，其也可以包括通配符，上限和下限等。使用限定名称的简单交叉引用不足以表示这种类型引用的语法和结构。</p>
+
+<p>Xbase提供了一个解析器规则<em>JvmTypeReference</em> ，它支持Java类型引用的完整语法，并实例化<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmTypeReference.java">JvmTypeReference</a>类型的JVM元素。那么让我们从继承Xbase开始：</p>
+
+<pre><code class="language-xtext">语法org.eclipse.xtext.example。带有org.eclipse.xtext.xbase的Domainmodel。XBASE</code></pre>
+
+<p>因为我们现在可以直接表达各种Java类型引用，所以不再需要像上一节那样的<em>DataTypes</em>间接。如果我们再次<a href="103_domainmodelnextsteps.html">从教程中</a>的<a href="103_domainmodelnextsteps.html">域模型示例</a>开始，我们必须通过调用生产规则<em>JvmTypeReference</em>来替换对<em>Types</em>的所有交叉引用。规则<em>DataType</em> ， <em>Type</em>和<em>QualifiedName</em>已过时（后者已在Xbase中定义），而<em>AbstractEntity中</em>的<em>Type</em>必须更改为<em>Entity</em> 。由于我们现在拥有各种通用Java集合，因此<em>Feature.many</em>也已过时。整个语法现在简明扼要地阅读：</p>
+
+<pre><code class="language-xtext">语法org.eclipse.xtext.example。带有org.eclipse.xtext.xbase的Domainmodel。Xbase生成domainmodel“http://www.eclipse.org/xtext/example/Domainmodel”Domainmodel：importSection = XImportSection？（elements + = AbstractElement）*; PackageDeclaration：'package'name = QualifiedName'{'（elements + = AbstractElement）*'}'; AbstractElement：PackageDeclaration |实体 ;实体：'entity'name = ID（'extends'superType = JvmTypeReference）？'{'（功能+ =功能）*'}';功能：name = ID'：'type = JvmTypeReference;</code></pre>
+
+<p>当我们改变语法时，我们现在必须重新生成语言。</p>
+
+<p>能够解析Java类型引用已经很好了，但是当我们生成Java代码时，我们还必须将它们写回到它们的字符串表示中。不幸的是，具有完全限定类名的泛型类型引用可能会变得有点笨重。因此， <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/ImportManager.java">ImportManager</a>缩短了完全限定名称，跟踪导入的名称空间，避免名称冲突，并通过<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmTypeReference.java">TypeReferenceSerializer</a>帮助序列化<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/TypeReferenceSerializer.java">JvmTypeReferences</a> 。此实用程序封装了如何根据输出中的具体上下文序列化类型引用。</p>
+
+<p>以下代码段使用<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/ImportManager.java">ImportManager</a>和<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/TypeReferenceSerializer.java">TypeReferenceSerializer</a>显示我们的代码生成器。我们创建一个新实例并将其传递给生成函数，在途中收集类型。由于Java文件中的导入部分位于类主体之前，因此我们将主体创建为String变量并在第二步中组装整个文件的内容。</p>
+
+<pre><code class="language-xtend">class DomainmodelGenerator实现IGenerator {@Inject扩展名IQualifiedNameProvider @Inject扩展TypeReferenceSerializer覆盖void doGenerate（资源资源，IFileSystemAccess fsa）{for（e：resource.allContents.toIterable.filter（typeof（Entity）））{fsa.generateFile（e.fullyQualifiedName） .toString（“/”）+“。java”，e.compile）}} def compile（Entity it）'''«val importManager = new ImportManager（true）»«val body = body（importManager）»«IF eContainer ！= null»package«eContainer.fullyQualifiedName»; «ENDIF»«FOR i：importManager.imports»import«i»; «ENDFOR»«body»'''def body（实体吧，ImportManager importManager）'''公共类«名称»«IF superType！= null»extends«superType.shortName（importManager）»«ENDIF»{«FOR f：features»«f.compile（importManager）»«ENDFOR»}'''def compile（Feature it，ImportManager importManager）'''private «type.shortName（importManager）»«名称»; public«type.shortName（importManager）»get«name.toFirstUpper»（）{return«name»; public void set«name.toFirstUpper»（«type.shortName（importManager）»«name»）{this。«name»=«name»; }'''def shortName（JvmTypeReference ref，ImportManager importManager）{val result = new StringBuilderBasedAppendable（importManager）ref.serialize（ref.eContainer，result）; result.toString}}</code></pre>
+
+<p>请注意，当<em>org.eclipse.xtext.xbase。Xbase</em>使用接口的默认绑定<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/generator/IGenerator.java">IGenerator</a>是<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/JvmModelGenerator.xtend">JvmModelGenerator</a> 。要使用自定义的，我们必须在<em>org.example.domainmodel中绑定我们自己的实现<em>。DomainmodelRuntimeModule</em>是这样的：</p>
+
+<pre><code class="language-java">公共类DomainmodelRuntimeModule扩展了org.example.domainmodel。AbstractDomainmodelRuntimeModule {public Class &lt;？扩展org.eclipse.xtext.generator。IGenerator&gt; bindIGenerator（）{return org.example.domainmodel.generator。DomainmodelGenerator.class; }}</code></pre>
+
+<h2 id="xbase-inferred-type">推断JVM模型</h2>
+
+<p>在许多情况下，您将希望您的DSL概念可用作Java元素，例如， <em>实体</em>将成为Java类并且应该可以这样使用。在域模型示例中，您可以编写</p>
+
+<pre><code class="language-domainexample">实体员工扩展人{老板：人......实体人{朋友：列表&lt;人&gt; ...
 </code></pre>
 
-<p>The next step is to actually refer to an imported concept. Let’s define a mapping to available Java types for the simple data types in the domain model language. This can be done with a simple cross-reference:</p>
-
-<pre><code class="language-xtext">// simple cross reference to a Java type
-DataType:
-  'datatype' name=ID 
-  'mapped-to' javaType=[jvmTypes::JvmType|QualifiedName];
-</code></pre>
-
-<p>After regenerating your language, it will be allowed to define a type <code>Date</code> that maps to the <a href="http://docs.oracle.com/javase/8/docs/api/java/util/Date.html">Date</a> like this:</p>
-
-<pre><code class="language-javatypesexample">  datatype Date mapped-to java.util.Date
-</code></pre>
-
-<p>These two steps will provide a nice integration into the Eclipse JDT. There is <em>Find References</em> on Java methods, fields and types that will reveal results in your language files. <em>Go To Declaration</em> works as expected and content assist will propose the list of available types. Even the <em>import</em> statements will also apply for Java types.</p>
-
-<h3 id="customization-points">Customization Points</h3>
-
-<p>There are several customization hooks in the runtime layer of the JVM types and on the editor side as well:</p>
-
-<p>The <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/src/org/eclipse/xtext/common/types/xtext/AbstractTypeScopeProvider.java">AbstractTypeScopeProvider</a> can be used to create scopes for members with respect to the override semantics of the Java language. Of course it is possible to use this implementation to create scopes for types as well.</p>
-
-<p>As the Java VM types expose a lot of information about visibility, parameter types and return types, generics, available annotations or enumeration literals, it is very easy to define constraints for the referred types.</p>
-
-<p>The <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.common.types.ui/src/org/eclipse/xtext/common/types/xtext/ui/ITypesProposalProvider.java">ITypesProposalProvider</a> can be used to provide optimized proposals based on various filter criteria. The most common selector can be used directly via <code>createSubTypeProposals(..)</code>. The implementation is optimized and uses the JDT Index directly to minimize the effort for object instantiation. The class <a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.common.types.ui/src/org/eclipse/xtext/common/types/xtext/ui/TypeMatchFilters.java">TypeMatchFilters</a> provides a comprehensive set of reusable filters that can be easily combined to reduce the list of proposals to a smaller number of valid entries.</p>
-
-<h2 id="xbase-java-references">Referring to Java Types Using Xbase</h2>
-
-<p>While the JVM types approach from the previous chapter allows to refer to any Java element, it is quite limited when it comes to generics. Usually, a type reference in Java can have type arguments which can also include wildcards, upper and lower bounds etc. A simple cross-reference using a qualified name is not enough to express neither the syntax nor the structure of such a type reference.</p>
-
-<p>Xbase offers a parser rule <em>JvmTypeReference</em> which supports the full syntax of a Java type reference and instantiates a JVM element of type <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmTypeReference.java">JvmTypeReference</a>. So let us start by inheriting from Xbase:</p>
-
-<pre><code class="language-xtext">grammar org.eclipse.xtext.example.Domainmodel 
-   with org.eclipse.xtext.xbase.Xbase
-</code></pre>
-
-<p>Because we can express all kinds of Java type references directly now, an indirection for <em>DataTypes</em> as in the previous section is no longer necessary. If we start from the <a href="103_domainmodelnextsteps.html">domain model example in the tutorial</a> again, we have to replace all cross-references to <em>Types</em> by calls to the production rule <em>JvmTypeReference</em>. The rules <em>DataType</em>, <em>Type</em>, and <em>QualifiedName</em> become obsolete (the latter is already defined in Xbase), and the <em>Type</em> in <em>AbstractEntity</em> must be changed to <em>Entity</em>. As we now have all kinds of generic Java collections at hand, <em>Feature.many</em> is obsolete, too. The whole grammar now reads concisely:</p>
-
-<pre><code class="language-xtext">grammar org.eclipse.xtext.example.Domainmodel with
-                                      org.eclipse.xtext.xbase.Xbase
-
-generate domainmodel "http://www.eclipse.org/xtext/example/Domainmodel"
-
-Domainmodel:
-  importSection=XImportSection?
-  (elements += AbstractElement)*
-;
-
-PackageDeclaration:
-  'package' name = QualifiedName '{'
-    (elements += AbstractElement)*
-  '}'
-;
-
-AbstractElement:
-  PackageDeclaration | Entity
-;
-
-Entity:
-  'entity' name = ID 
-              ('extends' superType = JvmTypeReference)?
-  '{'
-    (features += Feature)*
-  '}'
-;
- 
-Feature:
-  name = ID ':' type = JvmTypeReference
-; 
-</code></pre>
-
-<p>As we changed the grammar, we have to regenerate the language now.</p>
-
-<p>Being able to parse a Java type reference is already nice, but we also have to write them back to their string representation when we generate Java code. Unfortunately, a generic type reference with fully qualified class names can become a bit bulky. Therefore, the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/ImportManager.java">ImportManager</a> shortens fully qualified names, keeps track of imported namespaces, avoids name collisions, and helps to serialize <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmTypeReference.java">JvmTypeReferences</a> by means of the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/TypeReferenceSerializer.java">TypeReferenceSerializer</a>. This utility encapsulates how type references may be serialized depending on the concrete context in the output.</p>
-
-<p>The following snippet shows our code generator using an <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/ImportManager.java">ImportManager</a> in conjunction with as <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/TypeReferenceSerializer.java">TypeReferenceSerializer</a>. We create a new instance and pass it through the generation functions, collecting types on the way. As the import section in a Java file precedes the class body, we create the body into a String variable and assemble the whole file’s content in a second step.</p>
-
-<pre><code class="language-xtend">class DomainmodelGenerator implements IGenerator {
-  
-  @Inject extension IQualifiedNameProvider
-  @Inject extension TypeReferenceSerializer 
-
-  override void doGenerate(Resource resource, IFileSystemAccess fsa) {
-    for(e: resource.allContents.toIterable.filter(typeof(Entity))) {
-      fsa.generateFile(
-        e.fullyQualifiedName.toString("/") + ".java",
-        e.compile)
-    }
-  }
-  
-  def compile(Entity it) '''
-    «val importManager = new ImportManager(true)» 
-    «val body = body(importManager)»
-    «IF eContainer != null»
-      package «eContainer.fullyQualifiedName»;
-    «ENDIF»
-    
-    «FOR i:importManager.imports»
-      import «i»;
-    «ENDFOR»
-    
-    «body»
-  '''
-  
-  def body(Entity it, ImportManager importManager) '''
-    public class «name» «IF superType != null»
-      extends «superType.shortName(importManager)» «ENDIF»{
-      «FOR f : features»
-        «f.compile(importManager)»
-      «ENDFOR»
-    }
-  '''
-    
-  def compile(Feature it, ImportManager importManager) '''
-    private «type.shortName(importManager)» «name»;
-    
-    public «type.shortName(importManager)» 
-      get«name.toFirstUpper»() {
-      return «name»;
-    }
-    
-    public void set«name.toFirstUpper»(
-      «type.shortName(importManager)» «name») {
-      this.«name» = «name»;
-    }
-  '''
-  
-  def shortName(JvmTypeReference ref, 
-          ImportManager importManager) {
-    val result = new StringBuilderBasedAppendable(importManager)
-    ref.serialize(ref.eContainer, result);
-    result.toString
-  }
-}
-</code></pre>
-
-<p>Please note that when <em>org.eclipse.xtext.xbase.Xbase</em> is used the default binding for the interface <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/generator/IGenerator.java">IGenerator</a> is <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/JvmModelGenerator.xtend">JvmModelGenerator</a>. To use a custom one we have to bind our own implementation in <em>org.example.domainmodel.DomainmodelRuntimeModule</em> like this:</p>
-
-<pre><code class="language-java">public class DomainmodelRuntimeModule extends org.example.domainmodel.AbstractDomainmodelRuntimeModule {
-	public Class&lt;? extends org.eclipse.xtext.generator.IGenerator&gt; bindIGenerator() {
-		return org.example.domainmodel.generator.DomainmodelGenerator.class;
-	}
-}
-</code></pre>
-
-<h2 id="xbase-inferred-type">Inferring a JVM Model</h2>
-
-<p>In many cases, you will want your DSLs concepts to be usable as Java elements, e.g. an <em>Entity</em> will become a Java class and should be usable as such. In the domain model example, you can write</p>
-
-<pre><code class="language-domainexample">entity Employee extends Person {
-  boss: Person
-...
-
-entity Person {
-  friends: List&lt;Person&gt;
-...
-</code></pre>
+<p>您可以使用实体而不是Java类型，甚至可以将Java类型作为<a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html">List</a>与<em>Person</em>等实体混合使用。实现此目的的一种方法是让您的概念继承自相应的JVM类型，例如让<em>Entity</em>继承自<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmGenericType.java">JvmGenericType</a> 。但这会导致域模型中出现大量意外继承的属性。在Xbase中有另一种选择：您可以简单地定义如何从模型中派生JVM模型。这个<em>推断的JVM模型</em>是Xbase类型系统中概念的表示。</p>
 
-<p>You can use entities instead of Java types or even mix Java types as <a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html">List</a> with entities such as <em>Person</em>. One way to achieve this is to let your concepts inherit from a corresponding JVM type, e.g. let <em>Entity</em> inherit from <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmGenericType.java">JvmGenericType</a>. But this would result in a lot of accidentally inherited properties in your domain model. In Xbase there is an alternative: You can simply define how to derive a JVM model from your model. This <em>inferred JVM model</em> is the representation of your concepts in the type system of Xbase.</p>
+<p>推断的JVM模型的主要组件是<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a> 。它有一个方法，它将根模型元素作为参数并生成许多<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmDeclaredType.java">JvmDeclaredTypes</a> 。由于Xbase无法猜测您希望如何将概念映射到JVM元素，因此您必须自己实现此组件。这通常归结为使用注入的<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a>来创建JVM元素的层次结构。<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">构建器</a>有助于使用合理的默认值初始化生成的类型，并封装将源元素与派生的JVM概念相关联的逻辑。由于可以使用多态调度函数和扩展方法优雅地实现这种转换，因此在Xtend中编写<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a>是一个不错的选择。如果从<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/AbstractModelInferrer.java">AbstractModelInferrer</a>继承，它会遍历输入模型并调度到其内容，直到您决定要处理哪些元素，这变得更加简单。</p>
 
-<p>The main component for the inferred JVM model is the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a>. It has a single method that takes the root model element as an argument and produces a number of <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmDeclaredType.java">JvmDeclaredTypes</a>. As Xbase cannot guess how you would like to map your concepts to JVM elements, you have to implement this component yourself. This usually boils down to using an injected <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a> to create a hierarchy of JVM elements. The <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">builder</a> helps to initialize the produced types with sensible defaults and encapsulates the logic that associates the source elements with the derived JVM concepts. As this kind of transformation can be elegantly implemented using polymorphic dispatch functions and extension methods, it is a good choice to write the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a> in Xtend. It becomes even simpler if you inherit from the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/AbstractModelInferrer.java">AbstractModelInferrer</a> which traverses the input model and dispatches to its contents until you decide which elements to handle.</p>
+<p>推理分两个阶段进行：在第一阶段，所有类型都是用空体创建的。这样，当您在第二阶段初始化成员期间查找类型时，可以确保存在所有类型。使用<code>acceptor.accept(JvmDeclaredType, Procedure1&lt;JvmDeclaredType&gt;)</code>并将创建的Java类型作为第一个参数传递，将初始化块作为第二个参数传递。对于我们的域模型示例，我们实现了一个多态调度函数<em>推断</em> <em>实体</em> ， <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmGenericType.java">以便</a>在第一阶段将它们转换为<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmGenericType.java">JvmGenericType</a> 。在第二阶段，我们为每个<em>Property</em>添加一个<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmField.java">JvmField</a>和相应的访问器。最终的<em>DomainmodelJvmModelInferrer</em>如下所示：</p>
 
-<p>The inference runs in two phases: In the first phase all the types are created with empty bodies. This way you make sure all types exist when you might lookup types during initializing the members in the second phase. Use <code>acceptor.accept(JvmDeclaredType, Procedure1&lt;JvmDeclaredType&gt;)</code> and pass in the created Java type as the first argument and the initialization block as the second. For our domain model example, we implement a polymorphic dispatch function <em>infer</em> for <em>Entities</em> to transform them into a <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmGenericType.java">JvmGenericType</a> in the first phase. In the second phase, we add a <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmField.java">JvmField</a> and corresponding accessors for each <em>Property</em>. The final <em>DomainmodelJvmModelInferrer</em> looks like this:</p>
-
-<pre><code class="language-xtend">class DomainmodelJvmModelInferrer extends AbstractModelInferrer {
-
-  @Inject extension JvmTypesBuilder
-  
-  @Inject extension IQualifiedNameProvider
-  
-  def dispatch void infer(Entity element, 
-                IJvmDeclaredTypeAcceptor acceptor, 
-                boolean isPrelinkingPhase) {
-    
-    acceptor.accept(element.toClass(element.fullyQualifiedName)) [
-      documentation = element.documentation
-      for (feature : element.features) {
-        members += feature.toField(feature.name, feature.type)
-        members += feature.toSetter(feature.name, feature.type)
-        members += feature.toGetter(feature.name, feature.type)
-      }
-    ]
-  }
-}
-</code></pre>
+<pre><code class="language-xtend">class DomainmodelJvmModelInferrer扩展AbstractModelInferrer {@Inject扩展名JvmTypesBuilder @Inject扩展名IQualifiedNameProvider def dispatch void infer（实体元素，IJvmDeclaredTypeAcceptor acceptor，boolean isPrelinkingPhase）{acceptor.accept（element.toClass（element.fullyQualifiedName））[documentation = element.documentation for（feature ：element.features）{members + = feature.toField（feature.name，feature.type）members + = feature.toSetter（feature.name，feature.type）members + = feature.toGetter（feature.name，feature.type ）}]}}</code></pre>
 
-<p>Out of the inferred model the corresponding Java class gets generated. To ensure that this will work make sure that the binding in the rumtime module for <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/generator/IGenerator.java">IGenerator</a> is pointing to <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/JvmModelGenerator.xtend">JvmModelGenerator</a>. This is the default case, but as we dealt with a custom implementation in the last section this may lead to problems.</p>
+<p>在推断的模型中，生成相应的Java类。为确保这一点有效，请确保<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/generator/IGenerator.java">IGenerator</a>的rumtime模块中的绑定指向<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/JvmModelGenerator.xtend">JvmModelGenerator</a> 。这是默认情况，但是当我们在上一节中处理自定义实现时，这可能会导致问题。</p>
 
-<h3 id="linking-and-indexing">Linking and Indexing</h3>
+<h3 id="linking-and-indexing">链接和索引</h3>
 
-<p>As Java elements and your concepts are now represented as JVM model elements, other models can now transparently link to Java or your DSL. In other words, you can use a mapped element of your DSL in the same places as the corresponding Java type.</p>
+<p>由于Java元素和您的概念现在表示为JVM模型元素，因此其他模型现在可以透明地链接到Java或您的DSL。换句话说，您可以在与相应Java类型相同的位置使用DSL的映射元素。</p>
 
-<p>The Xbase framework will automatically switch between the JVM element or the DSL element when needed, e.g. when following hyperlinks. The component allowing to navigate between the source model and the JVM model is called <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelAssociations.java">IJvmModelAssociations</a>, the read-only antagonist of the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelAssociator.java">IJvmModelAssociator</a> that is used by the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a>.</p>
+<p>Xbase框架将在需要时自动在JVM元素或DSL元素之间切换，例如在遵循超链接时。允许在源模型和JVM模型之间导航的组件称为<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelAssociations.java">IJvmModelAssociations</a> ，它是<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelAssociator.java">JvmTypesBuilder</a>使用的<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">IJvmModelAssociator的只读对象</a> 。</p>
 
-<p>By default, the inferred model is <a href="303_runtime_concepts.html#global-scopes">indexed</a>, so it can be cross referenced from other models.</p>
+<p>默认情况下，推断的模型是<a href="303_runtime_concepts.html#global-scopes">索引的</a> ，因此可以从其他模型交叉引用。</p>
 
-<h2 id="xbase-expressions">Using Xbase Expressions</h2>
+<h2 id="xbase-expressions">使用Xbase表达式</h2>
 
-<p>Xbase is an expression language that can be embedded into Xtext languages. Its syntax is close to Java, but it additionally offers type inference, lambda expressions, a powerful switch expression and a lot more. For details on this expression language, please consult the <a href="#xbase-language-ref-introduction">reference documentation</a> and the Xbase tutorial <em>(File → New → Example → Xtext Examples → Xbase Tutorial)</em>.</p>
+<p>Xbase是一种可以嵌入到Xtext语言中的表达式语言。它的语法接近于Java，但它还提供了类型推断，lambda表达式，强大的switch表达式等等。有关此表达式语言的详细信息，请参阅<a href="#xbase-language-ref-introduction">参考文档</a>和Xbase教程<em>（文件→新建→示例→Xtext示例→Xbase教程）</em> 。</p>
 
-<p>Xbase ships with an interpreter and a compiler that produces Java code. Thus, it is easy to add behavior to your DSLs and make them executable. As Xbase integrates tightly with Java, there is usually no additional code needed to run your DSL as part of a Java application.</p>
+<p>Xbase附带一个解释器和一个生成Java代码的编译器。因此，很容易向DSL添加行为并使其可执行。由于Xbase与Java紧密集成，因此通常不需要额外的代码来运行您的DSL作为Java应用程序的一部分。</p>
 
-<h3 id="making-your-grammar-refer-to-xbase">Making Your Grammar Refer To Xbase</h3>
+<h3 id="making-your-grammar-refer-to-xbase">制作你的语法参考Xbase</h3>
 
-<p>To use Xbase expressions let your Grammar extend the Xbase grammar.</p>
+<p>要使用Xbase表达式，请让您的语法扩展Xbase语法。</p>
 
-<pre><code class="language-xtext">grammar org.xtext.example.mydsl.MyDsl with org.eclipse.xtext.xbase.Xbase
-</code></pre>
+<pre><code class="language-xtext">语法org.xtext.example.mydsl。带有org.eclipse.xtext.xbase的MyDsl。XBASE</code></pre>
 
-<p>If you want to refer to <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClassifier.java">EClassifiers</a> from the Xbase model, you need to import Xbase first:</p>
+<p>如果要从Xbase模型引用<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClassifier.java">EClassifiers</a> ，则需要先导入Xbase：</p>
 
-<pre><code class="language-xtext">import "http://www.eclipse.org/xtext/xbase/Xbase" as xbase
-</code></pre>
+<pre><code class="language-xtext">将“http://www.eclipse.org/xtext/xbase/Xbase”导入为xbase</code></pre>
 
-<p>Now identify the location in your grammar where you want references to Java types and Xbase expressions to appear and call the appropriate rules of the super grammar. Adding Xbase expression to the domainmodel example leads to the additional concept <em>Operation</em>: An <em>Operation</em>’s parameters are <em>FullJvmFormalParameters</em>. The production rule for <em>FullJvmFormalParameters</em> expects both the name and the type here. That is reasonable since the type of parameters should not be inferred. The operation’s return type is a <em>JvmTypeReference</em> and its <em>body</em> is an <em>XBlockExpression</em>. The final parser rule reads as:</p>
+<p>现在确定语法中您希望引用Java类型和Xbase表达式的位置，并调用超语法的相应规则。将Xbase表达式添加到domainmodel示例会导致附加概念<em>操作</em> ： <em>操作</em>的参数是<em>FullJvmFormalParameters</em> 。<em>FullJvmFormalParameters</em>的生产规则在<em>此处</em>需要名称和类型。这是合理的，因为不应推断出参数的类型。操作的返回类型是<em>JvmTypeReference</em> ，其<em>主体</em>是<em>XBlockExpression</em> 。最终的解析器规则如下：</p>
 
-<pre><code class="language-xtext">Operation:
-  'op' name=ValidID '(' 
-  (params+=FullJvmFormalParameter (',' params+=FullJvmFormalParameter)*)? ')' 
-  ':' type=JvmTypeReference 
-    body=XBlockExpression;
-</code></pre>
+<pre><code class="language-xtext">操作：'op'name = ValidID'（'（params + = FullJvmFormalParameter（'，'params + = FullJvmFormalParameter）*）？'）''：'type = JvmTypeReference body = XBlockExpression;</code></pre>
 
-<p>If you are unsure which entry point to choose for your expressions, consider the <em>XBlockExpression</em>.</p>
+<p>如果您不确定要为表达式选择哪个入口点，请考虑<em>XBlockExpression</em> 。</p>
 
-<p>To integrate <em>Operations</em> in our models, we have to call this rule. We copy the previous <em>Feature</em> to a new rule <em>Property</em> and let <em>Feature</em> become the super type of <em>Property</em> and <em>Operation</em>:</p>
+<p>要在我们的模型中集成<em>操作</em> ，我们必须调用此规则。我们将之前的<em>功能</em>复制到新的规则<em>属性，</em>并让<em>功能</em>成为<em>属性</em>和<em>操作</em>的超级类型：</p>
 
-<pre><code class="language-xtext">Feature:
-  Property | Operation
-;
- 
-Property:
-  name = ID ':' type = JvmTypeReference
-;
-</code></pre>
+<pre><code class="language-xtext">特征：财产|运作;属性：name = ID'：'type = JvmTypeReference;</code></pre>
 
-<p>Note: You will have to adapt the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a> to these changes, i.e. rename <em>Feature</em> to <em>Property</em> and create a <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmOperation.java">JvmOperation</a> for each <em>Operation</em>. We leave that as an exercise :-)</p>
+<p>注意：您必须使<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a>适应这些更改， <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">即将</a> <em>Feature</em>重命名为<em>Property</em>并为每个<em>Operation</em>创建一个<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmOperation.java">JvmOperation</a> 。我们把它留作练习:-)</p>
 
-<p>If you are done with that, everything will work out of the box. Since each expression is now logically contained in an <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmOperation.java">operation</a>, all the scoping rules and visibility constraints are implied from that context. The framework will take care that the operation’s parameters are visible inside the operation’s body and that the declared return types are validated against the actual expression types.</p>
+<p>如果你已经完成了，一切都将开箱即用。由于每个表达式现在逻辑上包含在一个<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmOperation.java">操作中</a> ，因此该上下文隐含了所有作用域规则和可见性约束。该框架将注意操作的参数在操作体内是可见的，并且声明的返回类型是根据实际的表达式类型进行验证的。</p>
 
-<p>There is yet another aspect of the JVM model that can be explored. Since all the coarse grained concepts such as <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmType.java">types</a> and <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmOperation.java">operations</a> were already derived from the model, a generator can be used to serialize that information to Java code. There is no need to write a code generator on top of that. The <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/JvmModelGenerator.xtend">JvmModelGenerator</a> knows how to generate operation bodies properly.</p>
+<p>还可以探索JVM模型的另一个方面。由于所有粗粒度概念（如<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmType.java">类型</a>和<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmOperation.java">操作）</a>都已从模型派生，因此可以使用生成器将该信息序列化为Java代码。没有必要在其上编写代码生成器。<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/compiler/JvmModelGenerator.xtend">JvmModelGenerator</a>知道如何正确生成操作体。</p>
 
-<h3 id="using-the-xbase-interpreter">Using the Xbase Interpreter</h3>
+<h3 id="using-the-xbase-interpreter">使用Xbase解释器</h3>
 
-<p>Sometimes it is more convenient to interpret a model that uses Xbase than to generate code from it. Xbase ships with the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/impl/XbaseInterpreter.java">XbaseInterpreter</a> which makes this rather easy.</p>
+<p>有时，解释使用Xbase的模型比从中生成代码更方便。Xbase附带了<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/impl/XbaseInterpreter.java">XbaseInterpreter</a> ，这使得这很容易。</p>
 
-<p>An interpreter is essentially an external visitor, that recursively processes a model based on the model element’s types. In the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/impl/XbaseInterpreter.java">XbaseInterpreter</a>, the method <em>doEvaluate(XExpression, IEvaluationContext, CancelIndicator)</em> delegates to more specialised implementations e.g.</p>
+<p>解释器本质上是一个外部访问者，它基于模型元素的类型递归地处理模型。在<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/impl/XbaseInterpreter.java">XbaseInterpreter中</a> ，方法<em>doEvaluate（XExpression，IEvaluationContext，CancelIndicator）</em>委托更专业的实现，例如</p>
 
-<pre><code class="language-java">protected Object _doEvaluate(XBlockExpression literal,
-							IEvaluationContext context,
-							CancelIndicator indicator)
-</code></pre>
+<pre><code class="language-java">protected Object _doEvaluate（XBlockExpression文字，IEvaluationContext上下文，CancelIndicator指标）</code></pre>
 
-<p>The <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/IEvaluationContext.java">IEvaluationContext</a> keeps the state of the running application, i.e. the local variables and their values. Additionally, it can be <em>fork</em>ed, thus allowing to shadow the elements of the original context. Here is an example code snippet how to call the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/impl/XbaseInterpreter.java">XbaseInterpreter</a>:</p>
+<p><a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/IEvaluationContext.java">IEvaluationContext</a>保持正在运行的应用程序的状态，即局部变量及其值。另外，它可以是<em>分叉的</em> ，因此允许遮蔽原始上下文的元素。以下是如何调用<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/interpreter/impl/XbaseInterpreter.java">XbaseInterpreter</a>的示例代码段：</p>
 
-<pre><code class="language-java">@Inject private XbaseInterpreter xbaseInterpreter;
+<pre><code class="language-java">@Inject private XbaseInterpreter xbaseInterpreter; @Inject private Provider &lt;IEvaluationContext&gt; contextProvider; ...public Object evaluate（XExpression表达式，Object thisElement）{IEvaluationContext evaluationContext = contextProvider.get（）; //提供初始上下文和隐式变量evaluationContext.newValue（XbaseScopeProvider。这个，这个元素）; IEvaluationResult result = xbaseInterpreter.evaluate（expression，evaluationContext，CancelIndicator。NullImpl）; if（result.getException（）！= null）{// handle exception} return result.getResult（）; }</code></pre>
 
-@Inject private Provider&lt;IEvaluationContext&gt; contextProvider;
+<h2 id="xbase-language-ref-introduction">Xbase语言参考</h2>
 
-...
-public Object evaluate(XExpression expression, Object thisElement) {
-  IEvaluationContext evaluationContext = contextProvider.get();
-  // provide initial context and implicit variables
-  evaluationContext.newValue(XbaseScopeProvider.THIS, thisElement);
-  
-  IEvaluationResult result = xbaseInterpreter.evaluate(expression,   
-    evaluationContext, CancelIndicator.NullImpl);
-  if (result.getException() != null) {
-    // handle exception
-  } 
-  return result.getResult();
-}
-</code></pre>
+<p>本文档描述了表达式语言库Xbase。Xbase是一种在Xtext中实现的部分编程语言，旨在嵌入和扩展在其他编程语言和用Xtext编写的特定于域的语言（DSL）中。Xtext是一个高度可扩展的语言开发框架，涵盖语言基础结构的所有方面，如解析器，链接器，编译器，解释器，甚至基于Eclipse的全面IDE支持。</p>
 
-<h2 id="xbase-language-ref-introduction">Xbase Language Reference</h2>
+<p>使用Xtext开发DSL变得异常简单。可以在几分钟内开发出引入新的粗粒度概念的结构语言，例如服务，实体，价值对象或状态机。但是，软件系统不仅仅由结构组成。在某些时候，系统需要有一些行为，通常使用所谓的<em>表达式</em>来指定。表达式是每种编程语言的核心，并不容易理解。另一方面，表达式被很好地理解，并且许多编程语言共享表达式的共同集合和理解。</p>
 
-<p>This document describes the expression language library Xbase. Xbase is a partial programming language implemented in Xtext and is meant to be embedded and extended within other programming languages and domain-specific languages (DSL) written in Xtext. Xtext is a highly extendible language development framework covering all aspects of language infrastructure such as parsers, linkers, compilers, interpreters and even full-blown IDE support based on Eclipse.</p>
+<p>这就是为什么大多数人不会在他们的DSL中添加对表达式的支持，但尝试以不同方式解决这个问题最常用的解决方法是仅定义DSL中的结构信息，并通过修改或扩展生成的代码来添加行为。在两个不同的地方，抽象层次和语言中编写，阅读和维护紧密相关的信息不仅令人不愉快。此外，修改生成的源代码还会带来许多其他问题。这长期以来一直是首选解决方案，因为为您的语言添加表达式（和相应的执行环境）的支持很难 - 即使使用Xtext也是如此。</p>
 
-<p>Developing DSLs has become incredibly easy with Xtext. Structural languages which introduce new coarse-grained concepts, such as services, entities, value objects or state-machines can be developed in minutes. However, software systems do not consist of structures solely. At some point a system needs to have some behavior, which is usually specified using so called <em>expressions</em>. Expressions are the heart of every programming language and are not easy to get right. On the other hand, expressions are well understood and many programming languages share a common set and understanding of expressions.</p>
+<p>Xbase用作语言库，提供绑定到Java平台（即Java虚拟机）的通用表达式语言。它由Xtext语法以及语言基础结构的不同方面（如AST结构，编译器，解释器，链接器和静态分析器）的可重用和可适应的实现组成。此外，它还带有在基于Xtext的Eclipse IDE中集成表达式语言的实现。内容辅助，语法着色，悬停，折叠和导航等方面的默认实现可以在任何基于Xtext的语言中轻松集成和重用。</p>
 
-<p>That is why most people do not add support for expressions in their DSL but try to solve this differently. The most often used workaround is to define only the structural information in the DSL and add behavior by modifying or extending the generated code. It is not only unpleasant to write, read and maintain information which closely belongs together in two different places, abstraction levels and languages. Also, modifying the generated source code comes with a lot of additional problems. This has long time been the preferred solution since adding support for expressions (and a corresponding execution environment) for your language has been hard - even with Xtext.</p>
-
-<p>Xbase serves as a language library providing a common expression language bound to the Java platform (i.e. Java Virtual Machine). It consists of an Xtext grammar, as well as reusable and adaptable implementations for the different aspects of a language infrastructure such as an AST structure, a compiler, an interpreter, a linker, and a static analyzer. In addition it comes with implementations to integrate the expression language within an Xtext-based Eclipse IDE. Default implementations for aspects like content assistance, syntax coloring, hovering, folding and navigation can be easily integrated and reused within any Xtext based language.</p>
-
-<p>Conceptually and syntactically, Xbase is very close to Java statements and expressions, but with a few differences:</p>
+<p>从概念上和语法上来说，Xbase非常接近Java语句和表达式，但有一些区别：</p>
 
 <ul>
-  <li>No checked exceptions</li>
-  <li>Everything is an expression, there are no statements</li>
-  <li>Lambda expressions</li>
-  <li>Type inference</li>
-  <li>Properties</li>
-  <li>Simple operator overloading</li>
-  <li>Powerful switch expressions</li>
+  <li>没有检查过的例外</li>
+  <li>一切都是表达，没有任何陈述</li>
+  <li>Lambda表达式</li>
+  <li>类型推断</li>
+  <li>属性</li>
+  <li>简单的运算符重载</li>
+  <li>强大的切换表达式</li>
 </ul>
 
-<hr />
+<hr>
 
-<h3 id="xbase-language-ref-syntax">Lexical Syntax</h3>
+<h3 id="xbase-language-ref-syntax">词法语法</h3>
 
-<p>Xbase comes with a small set of terminal rules, which can be overridden and hence changed by users. However the default implementation is carefully chosen and it is recommended to stick with the lexical syntax described in the following.</p>
+<p>Xbase附带了一小组终端规则，这些规则可以被覆盖，因此可以被用户更改。但是，默认实现是经过精心选择的，建议坚持使用下面描述的词法语法。</p>
 
-<h4 id="xbase-syntax-identifiers">Identifiers</h4>
+<h4 id="xbase-syntax-identifiers">身份标识</h4>
 
-<p>Identifiers are used to name all constructs, such as types, methods and variables. Xbase uses the default identifier-syntax from Xtext - compared to Java, they are slightly simplified to match the common cases while having less ambiguities. They start with a letter <em>a</em>-<em>z</em>, <em>A</em>-<em>Z</em> or an underscore followed by more of these characters or any digit <em>0</em>-<em>9</em>.</p>
+<p>标识符用于命名所有构造，例如类型，方法和变量。Xbase使用Xtext中的默认标识符语法 - 与Java相比，它们略微简化以匹配常见情况，同时具有较少的歧义。它们以字母<em>a</em> - <em>z</em> ， <em>A</em> - <em>Z</em>或下划线开头，后跟更多这些字符或任何数字<em>0</em> - <em>9</em> 。</p>
 
-<h5 id="xbase-syntax-escaped-identifiers">Escaped Identifiers</h5>
+<h5 id="xbase-syntax-escaped-identifiers">转义标识符</h5>
 
-<p>Identifiers must not have the same spelling as any reserved keyword. However, this limitation can be avoided by escaping identifiers with the prefix <code>^</code>. Escaped identifiers are used in cases when there is a conflict with a reserved keyword. Imagine you have introduced a keyword <code>service</code> in your language but want to call a Java property <em>service</em>. In such cases you can use the escaped identifier <code>^service</code> to reference the Java property.</p>
+<p>标识符的拼写不得与任何保留关键字相同。但是，可以通过使用前缀<code>^</code>转义标识符来避免此限制。转义标识符用于与保留关键字冲突的情况。想象一下，您已经用您的语言引入了关键字<code>service</code> ，但想要调用Java属性<em>服务</em> 。在这种情况下，您可以使用转义标识符<code>^service</code>来引用Java属性。</p>
 
-<h5 id="syntax">Syntax</h5>
+<h5 id="syntax">句法</h5>
 
-<pre><code class="language-xtext">terminal ID: 
-  '^'? ('a'..'z'|'A'..'Z'|'_'|'$') ('a'..'z'|'A'..'Z'|'_'|'$'|'0'..'9')*
-;
-</code></pre>
+<pre><code class="language-xtext">终端ID：'^'？（ 'A' .. 'Z' | 'A' ..'Z'|'_'|'$'）（'a'..'z'|'A'..'Z' | '_' | '$' | '0' ..'9'）*;</code></pre>
 
-<h5 id="examples">Examples</h5>
+<h5 id="examples">例子</h5>
 
 <ul>
-  <li><code>Foo</code></li>
+  <li><code>富</code></li>
   <li><code>Foo42</code></li>
   <li><code>FOO</code></li>
   <li><code>_42</code></li>
   <li><code>_foo</code></li>
-  <li><code>$$foo$$</code></li>
-  <li><code>^extends</code></li>
+  <li><code>$$ FOO $$</code></li>
+  <li><code>^延伸</code></li>
 </ul>
 
-<h4 id="xbase-syntax-comments">Comments</h4>
+<h4 id="xbase-syntax-comments">评论</h4>
 
-<p>Xbase comes with two different kinds of comments: Single-line comments and multi-line comments. The syntax is the same as the one known from Java (see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-3.html#jls-3.7">§ 3.7 Comments</a>).</p>
+<p>Xbase提供了两种不同的注释：单行注释和多行注释。语法与Java中已知的语法相同（参见<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-3.html#jls-3.7">§3.7注释</a> ）。</p>
 
-<h4 id="xbase-syntax-whitespace">White Space</h4>
+<h4 id="xbase-syntax-whitespace">白色空间</h4>
 
-<p>The white space characters <code>' '</code>, <code>'\t'</code>, <code>'\n'</code>, and <code>'\r'</code> are allowed to occur anywhere between the other syntactic elements.</p>
+<p>空格字符<code>' '</code> ， <code>'\t'</code> ， <code>'\n'</code>和<code>'\r'</code>允许出现在其他句法元素之间的任何位置。</p>
 
-<h4 id="xbase-syntax-keywords">Reserved Keywords</h4>
+<h4 id="xbase-syntax-keywords">保留关键字</h4>
 
-<p>The following list of words are reserved keywords, thus reducing the set of possible identifiers:</p>
+<p>以下单词列表是保留关键字，从而减少了可能的标识符集：</p>
 
 <ol>
-  <li><code>as</code></li>
-  <li><code>case</code></li>
-  <li><code>catch</code></li>
-  <li><code>default</code></li>
-  <li><code>do</code></li>
-  <li><code>else</code></li>
-  <li><code>extends</code></li>
-  <li><code>extension</code></li>
-  <li><code>false</code></li>
-  <li><code>finally</code></li>
-  <li><code>for</code></li>
-  <li><code>if</code></li>
-  <li><code>import</code></li>
-  <li><code>instanceof</code></li>
-  <li><code>new</code></li>
-  <li><code>null</code></li>
-  <li><code>return</code></li>
-  <li><code>static</code></li>
-  <li><code>super</code></li>
-  <li><code>switch</code></li>
-  <li><code>throw</code></li>
-  <li><code>true</code></li>
-  <li><code>try</code></li>
-  <li><code>typeof</code></li>
-  <li><code>val</code></li>
-  <li><code>var</code></li>
-  <li><code>while</code></li>
+  <li><code>如</code></li>
+  <li><code>案件</code></li>
+  <li><code>抓住</code></li>
+  <li><code>默认</code></li>
+  <li><code>做</code></li>
+  <li><code>其他</code></li>
+  <li><code>扩展</code></li>
+  <li><code>延期</code></li>
+  <li><code>假</code></li>
+  <li><code>最后</code></li>
+  <li><code>对于</code></li>
+  <li><code>如果</code></li>
+  <li><code>进口</code></li>
+  <li><code>的instanceof</code></li>
+  <li><code>新</code></li>
+  <li><code>空值</code></li>
+  <li><code>返回</code></li>
+  <li><code>静态的</code></li>
+  <li><code>超</code></li>
+  <li><code>开关</code></li>
+  <li><code>扔</code></li>
+  <li><code>真正</code></li>
+  <li><code>尝试</code></li>
+  <li><code>类型</code></li>
+  <li><code>VAL</code></li>
+  <li><code>VAR</code></li>
+  <li><code>而</code></li>
 </ol>
 
-<p>The four keywords <code>extends, static, import, extension</code> can be used when invoking operations. In case some of the other keywords have to be used as identifiers, the escape character for <a href="#xbase-syntax-escaped-identifiers">identifiers</a> comes in handy.</p>
+<p>调用操作时可以使用四个关键字<code>extends, static, import, extension</code> 。在此情况下一些其他关键字，必须作为标识符，转义字符<a href="#xbase-syntax-escaped-identifiers">的标识符</a>就派上用场了。</p>
 
-<hr />
+<hr>
 
-<h3 id="xbase-language-ref-types">Types</h3>
+<h3 id="xbase-language-ref-types">类型</h3>
 
-<p>Basically all kinds of JVM types are available and referable.</p>
+<p>基本上所有类型的JVM类型都是可用且可参考的。</p>
 
-<h4 id="xbase-types-type-references">Simple Type References</h4>
+<h4 id="xbase-types-type-references">简单类型引用</h4>
 
-<p>A simple type reference only consists of a <em>qualified name</em>. A qualified name is a name made up of identifiers which are separated by a dot (like in Java).</p>
+<p>简单类型引用仅包含<em>限定名称</em> 。限定名称是由用点分隔的标识符组成的名称（如Java中所示）。</p>
 
-<p>There is no parser rule for a simple type reference, as it is expressed as a parameterized type references without parameters.</p>
+<p>对于简单类型引用，没有解析器规则，因为它表示为不带参数的参数化类型引用。</p>
 
-<h5 id="examples-1">Examples</h5>
-
-<ul>
-  <li><code>java.lang.String</code></li>
-  <li><code>String</code></li>
-</ul>
-
-<h4 id="xbase-types-parameterized-type-reference">Parameterized Type References</h4>
-
-<p>The general syntax for type references allows to take any number of type arguments. The semantics as well as the syntax is almost the same as in Java, so please refer to the third edition of the <a href="http://docs.oracle.com/javase/specs/jls/se7/html/index.html">Java Language Specification</a>.</p>
-
-<p>The only difference is that in Xbase a type reference can also be a function type. In the following the full syntax of type references is shown, including function types and type arguments.</p>
-
-<h5 id="examples-2">Examples</h5>
+<h5 id="examples-1">例子</h5>
 
 <ul>
-  <li><code>String</code></li>
-  <li><code>java.lang.String</code></li>
-  <li><code>List&lt;?&gt;</code></li>
-  <li><code>List&lt;? extends Comparable&lt;? extends FooBar&gt;</code></li>
-  <li><code>List&lt;? super MyLowerBound&gt;</code></li>
-  <li><code>List&lt;? extends =&gt;Boolean&gt;</code></li>
+  <li><code>java.lang中。串</code></li>
+  <li><code>串</code></li>
 </ul>
 
-<h4 id="xbase-types-primitives">Primitives</h4>
+<h4 id="xbase-types-parameterized-type-reference">参数化类型引用</h4>
 
-<p>Xbase supports all Java primitives. The conformance rules (e.g. boxing and unboxing) are also exactly like defined in the Java Language Specification.</p>
+<p>类型引用的一般语法允许使用任意数量的类型参数。语义和语法几乎与Java相同，因此请参阅<a href="http://docs.oracle.com/javase/specs/jls/se7/html/index.html">Java语言规范的</a>第三版。</p>
 
-<h4 id="xbase-types-arrays">Arrays</h4>
+<p>唯一的区别是在Xbase中，类型引用也可以是函数类型。在下文中，显示了类型引用的完整语法，包括函数类型和类型参数。</p>
 
-<p>Arrays cannot be instantiated arbitrarily, but there are a couple of useful library functions that allow to create arrays with a fixed length or an initial value set. Besides this restriction, they can be passed around and they are transparently converted to a List of the component type on demand.</p>
-
-<p>In other words, the return type of a Java method that returns an array of ints (<code>int[]</code>) can be directly assigned to a variable of type <a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html">List&lt;Integer&gt;</a>. Due to type inference this conversion happens implicitly. The conversion is bi-directional: Any method that takes an array as argument can be invoked with an argument that has the type <code>List&lt;ComponentType&gt;</code> instead.</p>
-
-<h4 id="xbase-types-function-types">Function Types</h4>
-
-<p>Xbase introduces <em>lambda expressions</em>, and therefore an additional function type signature. On the JVM-Level a lambda expression (or more generally any function object) is just an instance of one of the types in <a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">Functions</a>, depending on the number of arguments. However, as lambda expressions are a very important language feature, a special sugared syntax for function types has been introduced. So instead of writing <code>Function1&lt;String, Boolean&gt;</code> one can write <code>(String)=&gt;boolean</code>.</p>
-
-<p>For more information on lambda expressions see <a href="#xbase-expressions-lambda">the corresponding section</a>.</p>
-
-<h5 id="examples-3">Examples</h5>
+<h5 id="examples-2">例子</h5>
 
 <ul>
-  <li><code>=&gt;Boolean // predicate without parameters</code></li>
-  <li><code>()=&gt;String // provider of string</code></li>
-  <li><code>(String)=&gt;boolean // One argument predicate</code></li>
-  <li><code>(Mutable)=&gt;void // A procedure doing side effects only</code></li>
-  <li><code>(List&lt;String&gt;, Integer)=&gt;String</code></li>
+  <li><code>串</code></li>
+  <li><code>java.lang中。串</code></li>
+  <li><code>名单&lt;？&gt;</code></li>
+  <li><code>名单&lt;？扩展可比较&lt;？扩展FooBar&gt;</code></li>
+  <li><code>名单&lt;？超级MyLowerBound&gt;</code></li>
+  <li><code>名单&lt;？extends =&gt; Boolean&gt;</code></li>
 </ul>
 
-<h4 id="xbase-types-conformance-rules">Conformance and Conversion</h4>
+<h4 id="xbase-types-primitives">基元</h4>
 
-<p>Type conformance rules are used in order to find out whether some expression can be used in a certain situation. For instance when assigning a value to a variable, the type of the right hand expression needs to conform to the type of the variable.</p>
+<p>Xbase支持所有Java原语。一致性规则（例如装箱和拆箱）也与Java语言规范中的定义完全相同。</p>
 
-<p>As Xbase implements the type system of Java it also fully supports the conformance rules defined in the <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html">Java Language Specification</a>.</p>
+<h4 id="xbase-types-arrays">数组</h4>
 
-<p>Some types in Xbase can be used synonymously even if they do not conform to each other in Java. An example for this are arrays and lists or function types with compatible function parameters. Objects of these types are implicitly converted by Xbase on demand.</p>
+<p>数组不能任意实例化，但有一些有用的库函数允许创建具有固定长度或初始值集的数组。除了这个限制之外，它们可以被传递，并且它们可以根据需要透明地转换为组件类型的List。</p>
 
-<h4 id="xbase-types-common-super-type">Common Super Type</h4>
+<p>换句话说，返回int（ <code>int[]</code> ）数组的Java方法的返回类型可以直接分配给<a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html">List &lt;Integer&gt;</a>类型的变量。由于类型推断，这种转换是隐式发生的。转换是双向的：任何以数组作为参数的方法都可以使用类型为<code>List&lt;ComponentType&gt;</code>的参数来调用。</p>
 
-<p>Because of type inference Xbase sometimes needs to compute the most common super type of a given set of types.</p>
+<h4 id="xbase-types-function-types">功能类型</h4>
 
-<p>For a set <em>[T1,T2,…Tn]</em> of types the common super type is computed by using the linear type inheritance sequence of <em>T1</em> and is iterated until one type conforms to each <em>T2,..,Tn</em>. The linear type inheritance sequence of <em>T1</em> is computed by ordering all types which are part in the type hierarchy of <em>T1</em> by their specificity. A type <em>T1</em> is considered more specific than <em>T2</em> if <em>T1</em> is a subtype of <em>T2</em>. Any types with equal specificity will be sorted by the maximal distance to the originating subtype. <em>CharSequence</em> has distance 2 to <em>StringBuilder</em> because the super type <em>AbstractStringBuilder</em> implements the interface, too. Even if <em>StringBuilder</em> implements <em>CharSequence</em> directly, the interface gets distance 2 in the ordering because it is not the most general class in the type hierarchy that implements the interface. If the distances for two classes are the same in the hierarchy, their qualified name is used as the compare-key to ensure deterministic results.</p>
+<p>Xbase引入了<em>lambda表达式</em> ，因此引入了一个额外的函数类型签名。在JVM级别lambda表达式（或更一般地任何功能对象）只是在类型中的一种的一个实例<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">函数</a> ，这取决于参数的数量。但是，由于lambda表达式是一种非常重要的语言特性，因此引入了函数类型的特殊加糖语法。因此，不是编写<code>Function1&lt;String, Boolean&gt;</code>而是编写<code>(String)=&gt;boolean</code> 。</p>
 
-<hr />
+<p>有关lambda表达式的更多信息，请参阅<a href="#xbase-expressions-lambda">相应的部分</a> 。</p>
 
-<h3 id="xbase-language-ref-expressions">Expressions</h3>
+<h5 id="examples-3">例子</h5>
 
-<p>Expressions are the main language constructs which are used to express behavior and compute values. The concept of statements is not supported, but instead powerful expressions are used to handle situations in which the imperative nature of statements would be helpful. An expression always results in a value (it might be the value <code>null</code> or of type <code>void</code> though). In addition, every resolved expression is of a static type.</p>
+<ul>
+  <li><code>=&gt;布尔值//没有参数的谓词</code></li>
+  <li><code>（）=&gt;字符串//字符串的提供者</code></li>
+  <li><code>（String）=&gt; boolean //一个参数谓词</code></li>
+  <li><code>（Mutable）=&gt; void //仅执行副作用的程序</code></li>
+  <li><code>（List &lt;String&gt;，Integer）=&gt; String</code></li>
+</ul>
 
-<h4 id="xbase-expressions-literals">Literals</h4>
+<h4 id="xbase-types-conformance-rules">一致性和转换</h4>
 
-<p>A literal denotes a fixed unchangeable value. Literals for strings, numbers, booleans, <code>null</code> and Java types are supported. Additionally, there exists a literal syntax for collections and arrays.</p>
+<p>使用类型一致性规则以便找出某些表达式是否可以在某种情况下使用。例如，在为变量赋值时，右手表达式的类型需要符合变量的类型。</p>
 
-<h5 id="xbase-expressions-string-literal">String Literals</h5>
+<p>由于Xbase实现了Java的类型系统，它还完全支持<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html">Java语言规范中</a>定义的一致性规则。</p>
 
-<p>String literals can either use <code>'single quotes'</code> or <code>"double quotes"</code> as their terminating characters. When using double quotes all literals allowed by Java string literals are supported. In addition new line characters are allowed, i.e. in Xbase string literals can span multiple lines. When using single quotes the only difference is that single quotes within the literal have to be escaped and double quotes do not.</p>
+<p>Xbase中的某些类型可以同义使用，即使它们在Java中不相互匹配。一个例子是具有兼容函数参数的数组和列表或函数类型。Xbase根据需要隐式转换这些类型的对象。</p>
 
-<p>See <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-3.html#jls-3.10.5">§ 3.10.5 String Literals</a></p>
+<h4 id="xbase-types-common-super-type">普通超级型</h4>
 
-<p>In contrast to Java, equal string literals within the same class do not necessarily refer to the same instance at runtime, especially in the interpreted mode.</p>
+<p>由于类型推断，Xbase有时需要计算给定类型集合中最常见的超类型。</p>
 
-<h5 id="examples-4">Examples</h5>
+<p>对于类型的集合<em>[T1，T2，... Tn]</em> ，通过使用<em>T1</em>的线性类型继承序列来计算公共超类型，并且迭代直到一种类型符合每个<em>T2，...，Tn</em> 。<em>T1</em>的线性类型继承序列是通过按特定性排序<em>T1</em>类型层次结构中的所有类型来计算的。如果<em>T1</em>是<em>T2</em>的子类型，则认为类型<em>T1</em>比<em>T2</em>更具特异性。具有相同特异性的任何类型将按与原始子类型的最大距离进行排序。<em>CharSequence</em>与<em>StringBuilder的</em>距离为2，因为超类型<em>AbstractStringBuilder也</em>实现了接口。即使<em>StringBuilder</em>直接实现<em>CharSequence</em> ，接口也会在排序中获得距离2，因为它不是实现接口的类型层次结构中最通用的类。如果层次结构中两个类的距离相同，则将其限定名称用作比较键，以确保确定性结果。</p>
+
+<hr>
+
+<h3 id="xbase-language-ref-expressions">表达式</h3>
+
+<p>表达式是用于表达行为和计算值的主要语言结构。不支持语句的概念，而是使用强大的表达式来处理语句的命令性有用的情况。表达式总是会产生一个值（它可能是值<code>null</code>或类型为<code>void</code> ）。此外，每个已解析的表达式都是静态类型。</p>
+
+<h4 id="xbase-expressions-literals">字面</h4>
+
+<p>文字表示固定不变的值。支持字符串，数字，布尔值， <code>null</code>和Java类型的文字。此外，还存在集合和数组的文字语法。</p>
+
+<h5 id="xbase-expressions-string-literal">字符串文字</h5>
+
+<p>字符串文字可以使用<code>'single quotes'</code>或<code>"double quotes"</code>作为终止字符。使用双引号时，支持Java字符串文字允许的所有文字。此外，允许使用换行符，即在Xbase中，字符串文字可以跨越多行。使用单引号时，唯一的区别是文字中的单引号必须转义，双引号则不转义。</p>
+
+<p>参见<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-3.html#jls-3.10.5">§3.10.5字符串文字</a></p>
+
+<p>与Java相比，同一类中的相等字符串文字不一定在运行时引用同一实例，尤其是在解释模式下。</p>
+
+<h5 id="examples-4">例子</h5>
 
 <ul>
   <li><code>'Foo Bar Baz'</code></li>
-  <li><code>"Foo Bar Baz"</code></li>
+  <li><code>“Foo Bar Baz”</code></li>
   <li>
 
-    <pre><code class="language-xbase">"the quick brown fox
-jumps over the lazy dog."
-</code></pre>
+    <pre><code class="language-xbase">“敏捷的棕色狐狸跳过了懒狗。”</code></pre>
   </li>
-  <li><code>'Escapes : \' '</code></li>
-  <li><code>"Escapes : \" "</code></li>
+  <li><code>'逃脱：'''</code></li>
+  <li><code>“逃脱：\”“</code></li>
 </ul>
 
-<h5 id="xbase-expressions-number-literal">Number Literals</h5>
+<h5 id="xbase-expressions-number-literal">数字文字</h5>
 
-<p>Xbase supports roughly the same number literals as Java with a few notable differences. As in Java 7, you can separate digits using <code>_</code> for better readability of large numbers. An integer literal represents an <code>int</code>, a <code>long</code> (suffix <code>L</code>) or even a <a href="http://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html">BigInteger</a> (suffix <code>BI</code>). There are no octal number literals.</p>
+<p>Xbase支持与Java大致相同的数字文字，但有一些显着的差异。与在Java 7中一样，您可以使用<code>_</code>分隔数字，以便更好地读取大数字。整数文字表示<code>int</code> ， <code>long</code> （后缀<code>L</code> ）或甚至<a href="http://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html">BigInteger</a> （后缀<code>BI</code> ）。没有八进制数字文字。</p>
 
-<pre><code class="language-xbase">  42
-  1_234_567_890 
-  0xbeef    // hexadecimal
-  077       // decimal 77 (*NOT* octal)
-  42L
-  0xbeef#L // hexadecimal, mind the '#'
-  0xbeef_beef_beef_beef_beef#BI // BigInteger
-</code></pre>
+<pre><code class="language-xbase">42 1_234_567_890 0xbeef //十六进制077 //十进制77（* NOT *八进制）42L 0xbeef #L //十六进制，记住'＃'0xbeef_beef_beef_beef_beef #BI // BigInteger</code></pre>
 
-<p>A floating-point literal creates a <code>double</code> (suffix <code>D</code> or omitted), a <code>float</code> (suffix <code>F</code>) or a <a href="http://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html">BigDecimal</a> (suffix <code>BD</code>). If you use a <code>.</code> sign you have to specify both, the integer and the fractional part of the mantissa. There are only decimal floating-point literals.</p>
+<p>浮点文字创建一个<code>double</code> （后缀<code>D</code>或省略）， <code>float</code> （后缀<code>F</code> ）或<a href="http://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html">BigDecimal</a> （后缀<code>BD</code> ）。如果你使用<code>.</code>标志你必须指定尾数的整数和小数部分。只有十进制浮点文字。</p>
 
-<pre><code class="language-xbase">  42d     // double
-  0.42e2  // implicit double
-  0.42e2f // float
-  4.2f    // float
-  0.123_456_789_123_456_789_123_456_789e2000bd // BigDecimal
-</code></pre>
+<pre><code class="language-xbase">42d // double 0.42e2 //隐式双0.42e2f //浮动4.2f //浮点数0.123_456_789_123_456_789_123_456_789e2000bd // BigDecimal</code></pre>
 
-<h5 id="xbase-expressions-boolean-literal">Boolean Literals</h5>
+<h5 id="xbase-expressions-boolean-literal">布尔文字</h5>
 
-<p>There are two boolean literals, <code>true</code> and <code>false</code> which correspond to their Java counterpart of type <em>boolean</em>.</p>
+<p>有两个布尔文字， <code>true</code>和<code>false</code> ，对应于<em>boolean</em>类型的Java对应文件。</p>
 
 <ul>
-  <li><code>true</code></li>
-  <li><code>false</code></li>
+  <li><code>真正</code></li>
+  <li><code>假</code></li>
 </ul>
 
 <h5 id="xbase-expressions-null-literal">Null Literal</h5>
 
-<p>The null literal is, as in Java, <code>null</code>. It is compatible to any reference type and therefore always of the null type.</p>
+<p>与Java一样， <code>null</code>文字是<code>null</code> 。它与任何引用类型兼容，因此始终为null类型。</p>
 
 <ul>
-  <li><code>null</code></li>
+  <li><code>空值</code></li>
 </ul>
 
-<h5 id="xbase-expressions-type-literal">Type Literals</h5>
+<h5 id="xbase-expressions-type-literal">输入文字</h5>
 
-<p>The syntax for type literals is generally the plain name of the type, e.g. the Xbase snippet <code>String</code> is equivalent to the Java code <code>String.class</code>. Nested types use the delimiter <code>'.'</code>.</p>
+<p>类型文字的语法通常是类型的普通名称，例如Xbase片段<code>String</code>等同于Java代码<code>String.class</code> 。嵌套类型使用分隔符<code>'.'</code> 。</p>
 
-<p>To disambiguate the expression, type literals may also be specified using the keyword <code>typeof</code>.</p>
+<p>要消除表达式的歧义，还可以使用关键字<code>typeof</code>指定类型文字。</p>
 
 <ul>
-  <li><code>Map.Entry</code> is equivalent to <code>Map.Entry.class</code></li>
-  <li><code>typeof(StringBuilder)</code> yields <code>StringBuilder.class</code></li>
+  <li><code>地图。Entry</code>相当于<code>Map.Entry.class</code></li>
+  <li><code>typeof(StringBuilder)</code>产生<code>StringBuilder.class</code></li>
 </ul>
 
-<p>Consequently it is possible to access the members of a type reflectively by using its plain name <code>String.getDeclaredFields</code>.</p>
+<p>因此，可以通过使用其普通名称<code>String.getDeclaredFields</code>来反射地访问类型的成员。</p>
 
-<p>Previous versions of Xbase used the dollar as the delimiter character for nested types:</p>
+<p>以前版本的Xbase使用美元作为嵌套类型的分隔符：</p>
 
 <ul>
-  <li><code>typeof(Map$Entry)</code> yields <code>Map.Entry.class</code></li>
+  <li><code>typeof(Map$Entry)</code>产生<code>Map.Entry.class</code></li>
 </ul>
 
-<h4 id="xbase-expressions-type-casts">Type Casts</h4>
+<h4 id="xbase-expressions-type-casts">输入演员表</h4>
 
-<p>Type cast behave the same as in Java, but have a more readable syntax. Type casts bind stronger than any other operator but weaker than feature calls.</p>
+<p>类型转换的行为与Java中的相同，但具有更易读的语法。类型转换绑定比任何其他运算符更强，但弱于功能调用。</p>
 
-<p>The conformance rules for casts are defined in the <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.5">Java Language Specification</a>.</p>
+<p>强制转换的一致性规则在<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.5">Java语言规范</a>中定义。</p>
 
-<h5 id="examples-5">Examples</h5>
+<h5 id="examples-5">例子</h5>
 
 <ul>
-  <li><code>my.foo as MyType</code></li>
-  <li><code>(1 + 3 * 5 * (- 23)) as BigInteger</code></li>
+  <li><code>my.foo为MyType</code></li>
+  <li><code>（1 + 3 * 5 *（ -  23））作为BigInteger</code></li>
 </ul>
 
-<h4 id="xbase-expressions-operators">Infix Operators / Operator Overloading</h4>
+<h4 id="xbase-expressions-operators">中缀运算符/运算符重载</h4>
 
-<p>There are a couple of common predefined infix operators. In contrast to Java, the operators are not limited to operations on certain types. Instead an operator-to-method mapping allows users to redefine the operators for any type just by implementing the corresponding method signature. The following defines the operators and the corresponding Java method signatures / expressions.</p>
+<p>有几个常见的预定义中缀运算符。与Java相比，运算符不限于某些类型的操作。相反，操作员到方法的映射允许用户仅通过实现相应的方法签名来重新定义任何类型的运算符。以下定义了运算符和相应的Java方法签名/表达式。</p>
 
 <table>
   <tbody>
     <tr>
-      <td><code>e1 += e2</code></td>
-      <td><code>e1.operator_add(e2)</code></td>
+      <td><code>e1 + = e2</code></td>
+      <td><code>e1.operator_add（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 -= e2</code></td>
-      <td><code>e1.operator_remove(e2)</code></td>
+      <td><code>e1  -  = e2</code></td>
+      <td><code>e1.operator_remove（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
       <td> </td>
     </tr>
     <tr>
-      <td><code>e1 || e2</code></td>
-      <td><code>e1.operator_or(e2)</code></td>
+      <td><code>e1 || E2</code></td>
+      <td><code>e1.operator_or（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
@@ -607,7 +427,7 @@ jumps over the lazy dog."
     </tr>
     <tr>
       <td><code>e1 &amp;&amp; e2</code></td>
-      <td><code>e1.operator_and(e2)</code></td>
+      <td><code>e1.operator_and（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
@@ -615,91 +435,91 @@ jumps over the lazy dog."
     </tr>
     <tr>
       <td><code>e1 == e2</code></td>
-      <td><code>e1.operator_equals(e2)</code></td>
+      <td><code>e1.operator_equals（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 != e2</code></td>
-      <td><code>e1.operator_notEquals(e2)</code></td>
+      <td><code>e1！= e2</code></td>
+      <td><code>e1.operator_notEquals（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 === e2</code></td>
-      <td><code>e1.operator_tripleEquals(e2)</code></td>
+      <td><code>e1.operator_tripleEquals（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 !== e2</code></td>
-      <td><code>e1.operator_tripleNotEquals(e2)</code></td>
+      <td><code>e1！== e2</code></td>
+      <td><code>e1.operator_tripleNotEquals（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
       <td> </td>
     </tr>
     <tr>
-      <td><code>e1 &lt; e2</code></td>
-      <td><code>e1.operator_lessThan(e2)</code></td>
+      <td><code>e1 &lt;e2</code></td>
+      <td><code>e1.operator_lessThan（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 &gt; e2</code></td>
-      <td><code>e1.operator_greaterThan(e2)</code></td>
+      <td><code>e1&gt; e2</code></td>
+      <td><code>e1.operator_greaterThan（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &lt;= e2</code></td>
-      <td><code>e1.operator_lessEqualsThan(e2)</code></td>
+      <td><code>e1.operator_lessEqualsThan（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 &gt;= e2</code></td>
-      <td><code>e1.operator_greaterEqualsThan(e2)</code></td>
+      <td><code>e1&gt; = e2</code></td>
+      <td><code>e1.operator_greaterEqualsThan（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
       <td> </td>
     </tr>
     <tr>
-      <td><code>e1 -&gt; e2</code></td>
-      <td><code>e1.operator_mappedTo(e2)</code></td>
+      <td><code>e1  - &gt; e2</code></td>
+      <td><code>e1.operator_mappedTo（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 .. e2</code></td>
-      <td><code>e1.operator_upTo(e2)</code></td>
+      <td><code>e1.operator_upTo（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 &gt;.. e2</code></td>
-      <td><code>e1.operator_greaterThanDoubleDot(e2)</code></td>
+      <td><code>e1&gt; .. e2</code></td>
+      <td><code>e1.operator_greaterThanDoubleDot（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 ..&lt; e2</code></td>
-      <td><code>e1.operator_doubleDotLessThan(e2)</code></td>
+      <td><code>e1 .. &lt;e2</code></td>
+      <td><code>e1.operator_doubleDotLessThan（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 =&gt; e2</code></td>
-      <td><code>e1.operator_doubleArrow(e2)</code></td>
+      <td><code>e1.operator_doubleArrow（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &lt;&lt; e2</code></td>
-      <td><code>e1.operator_doubleLessThan(e2)</code></td>
+      <td><code>e1.operator_doubleLessThan（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &gt;&gt; e2</code></td>
-      <td><code>e1.operator_doubleGreaterThan(e2)</code></td>
+      <td><code>e1.operator_doubleGreaterThan（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &lt;&lt;&lt; e2</code></td>
-      <td><code>e1.operator_tripleLessThan(e2)</code></td>
+      <td><code>e1.operator_tripleLessThan（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &gt;&gt;&gt; e2</code></td>
-      <td><code>e1.operator_tripleGreaterThan(e2)</code></td>
+      <td><code>e1.operator_tripleGreaterThan（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &lt;&gt; e2</code></td>
-      <td><code>e1.operator_diamond(e2)</code></td>
+      <td><code>e1.operator_diamond（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 ?: e2</code></td>
-      <td><code>e1.operator_elvis(e2)</code></td>
+      <td><code>e1？：e2</code></td>
+      <td><code>e1.operator_elvis（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 &lt;=&gt; e2</code></td>
-      <td><code>e1.operator_spaceship(e2)</code></td>
+      <td><code>e1.operator_spaceship（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
@@ -707,11 +527,11 @@ jumps over the lazy dog."
     </tr>
     <tr>
       <td><code>e1 + e2</code></td>
-      <td><code>e1.operator_plus(e2)</code></td>
+      <td><code>e1.operator_plus（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 - e2</code></td>
-      <td><code>e1.operator_minus(e2)</code></td>
+      <td><code>e1  -  e2</code></td>
+      <td><code>e1.operator_minus（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
@@ -719,717 +539,547 @@ jumps over the lazy dog."
     </tr>
     <tr>
       <td><code>e1 * e2</code></td>
-      <td><code>e1.operator_multiply(e2)</code></td>
+      <td><code>e1.operator_multiply（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 / e2</code></td>
-      <td><code>e1.operator_divide(e2)</code></td>
+      <td><code>e1.operator_divide（E2）</code></td>
     </tr>
     <tr>
-      <td><code>e1 % e2</code></td>
-      <td><code>e1.operator_modulo(e2)</code></td>
+      <td><code>e1％e2</code></td>
+      <td><code>e1.operator_modulo（E2）</code></td>
     </tr>
     <tr>
       <td><code>e1 ** e2</code></td>
-      <td><code>e1.operator_power(e2)</code></td>
+      <td><code>e1.operator_power（E2）</code></td>
     </tr>
     <tr>
       <td> </td>
       <td> </td>
     </tr>
     <tr>
-      <td><code>! e1</code></td>
-      <td><code>e1.operator_not()</code></td>
+      <td><code>！E1</code></td>
+      <td><code>e1.operator_not（）</code></td>
     </tr>
     <tr>
-      <td><code>- e1</code></td>
-      <td><code>e1.operator_minus()</code></td>
+      <td><code>-  e1</code></td>
+      <td><code>e1.operator_minus（）</code></td>
     </tr>
     <tr>
       <td><code>+ e1</code></td>
-      <td><code>e1.operator_plus()</code></td>
+      <td><code>e1.operator_plus（）</code></td>
     </tr>
   </tbody>
 </table>
 
-<p>The table above also defines the operator precedence in ascending order. The blank lines separate precedence levels. The assignment operator <code>+=</code> is right-to-left associative in the same way as the plain assignment operator <code>=</code> is. Consequently, <code>a = b = c</code> is executed as <code>a = (b = c)</code>. All other operators are left-to-right associative. Parentheses can be used to adjust the default precedence and associativity.</p>
+<p>上表还以升序定义运算符优先级。空行分隔优先级。赋值运算符<code>+=</code>是从右到左的关联，其方式与plain assignment operator <code>=</code> is相同。因此， <code>a = b = c</code>被执行为<code>a = (b = c)</code> 。所有其他运算符都是从左到右关联的。括号可用于调整默认优先级和关联性。</p>
 
-<h5 id="short-circuit-boolean-operators">Short-Circuit Boolean Operators</h5>
+<h5 id="short-circuit-boolean-operators">短路布尔运算符</h5>
 
-<p>If the operators <code>||</code> and <code>&amp;&amp;</code> are used in a context where the left hand operand is of type boolean, the operation is evaluated in short circuit mode, which means that the right hand operand is not evaluated at all in the following cases:</p>
+<p>如果是运营商<code>||</code>和<code>&amp;&amp;</code>用在左手操作数的类型为boolean的上下文中，操作在短路模式下进行评估，这意味着在以下情况下根本不评估右手操作数：</p>
 
 <ol>
-  <li>in the case of <code>||</code> the operand on the right hand side is not evaluated if the left operand evaluates to <code>true</code>.</li>
-  <li>in the case of <code>&amp;&amp;</code> the operand on the right hand side is not evaluated if the left operand evaluates to <code>false</code>.</li>
+  <li>在<code>||</code>的情况下如果左操作数的计算结果为<code>true</code>则不评估右侧的操作数。</li>
+  <li>在<code>&amp;&amp;</code>的情况下，如果左操作数的计算结果为<code>false</code>则不评估右侧的操作数。</li>
 </ol>
 
-<h5 id="examples-6">Examples</h5>
+<h5 id="examples-6">例子</h5>
 
 <ul>
   <li><code>my.foo = 23</code></li>
-  <li><code>myList += 23</code></li>
-  <li><code>x &gt; 23 &amp;&amp; y &lt; 23</code></li>
-  <li><code>x &amp;&amp; y || z</code></li>
-  <li><code>1 + 3 * 5 * (- 23)</code></li>
-  <li><code>!(x)</code></li>
+  <li><code>myList + = 23</code></li>
+  <li><code>x&gt; 23 &amp;&amp; y &lt;23</code></li>
+  <li><code>x &amp;&amp; y || ž</code></li>
+  <li><code>1 + 3 * 5 *（ -  23）</code></li>
+  <li><code>！（X）</code></li>
   <li><code>my.foo = 23</code></li>
   <li><code>my.foo = 23</code></li>
 </ul>
 
-<h5 id="assignment-operators">Assignment Operators</h5>
+<h5 id="assignment-operators">分配运营商</h5>
 
-<p>Compound assignment operators can be used as a shorthand for the assignment of a binary expression.</p>
+<p>复合赋值运算符可用作分配二进制表达式的简写。</p>
 
-<pre><code class="language-xtend">var BigDecimal bd = 45bd
-bd += 12bd // equivalent to bd = bd + 12bd
-bd -= 12bd // equivalent to bd = bd - 12bd
-bd /= 12bd // equivalent to bd = bd / 12bd
-bd *= 12bd // equivalent to bd = bd * 12bd
-</code></pre>
+<pre><code class="language-xtend">var BigDecimal bd = 45bd bd + = 12bd //等价于bd = bd + 12bd bd  -  = 12bd //等价于bd = bd  -  12bd bd / = 12bd //等价于bd = bd / 12bd bd * = 12bd //相当于bd = bd * 12bd</code></pre>
 
-<p>Compound assignments work automatically if the binary operator is declared. The following compound assignment operators are supported:</p>
+<p>如果声明了二元运算符，则复合赋值会自动运行。支持以下复合赋值运算符：</p>
 
 <table>
   <tbody>
     <tr>
-      <td><code>e1 += e2</code></td>
+      <td><code>e1 + = e2</code></td>
       <td><code>+</code></td>
     </tr>
     <tr>
-      <td><code>e1 -= e2</code></td>
+      <td><code>e1  -  = e2</code></td>
       <td><code>-</code></td>
     </tr>
     <tr>
-      <td><code>e1 *= e2</code></td>
+      <td><code>e1 * = e2</code></td>
       <td><code>*</code></td>
     </tr>
     <tr>
-      <td><code>e1 /= e2</code></td>
+      <td><code>e1 / = e2</code></td>
       <td><code>/</code></td>
     </tr>
     <tr>
-      <td><code>e1 %= e2</code></td>
-      <td><code>%</code></td>
+      <td><code>e1％= e2</code></td>
+      <td><code>％</code></td>
     </tr>
   </tbody>
 </table>
 
-<h5 id="postfix-operators">Postfix Operators</h5>
+<h5 id="postfix-operators">后缀运算符</h5>
 
-<p>The two postfix operators <code>++</code> and <code>--</code> use the following method mapping:</p>
+<p>两个后缀运算符<code>++</code>和<code>--</code>使用以下方法映射：</p>
 
 <table>
   <tbody>
     <tr>
-      <td><code>e1++</code></td>
-      <td><code>e1.operator_plusPlus()</code></td>
+      <td><code>E1 ++</code></td>
+      <td><code>e1.operator_plusPlus（）</code></td>
     </tr>
     <tr>
       <td><code>e1--</code></td>
-      <td><code>e1.operator_minusMinus()</code></td>
+      <td><code>e1.operator_minusMinus（）</code></td>
     </tr>
   </tbody>
 </table>
 
-<h5 id="with-operator">With Operator</h5>
+<h5 id="with-operator">与运营商</h5>
 
-<p>The <em>with</em> operator <code>=&gt;</code> executes the <a href="#xbase-expressions-lambda">lambda expression</a> with a single parameter on the right-hand side with a given argument on its left-hand side. The result is the left operand after applying the lambda expression. In combination with the <a href="#xbase-expressions-implicit-parameter">implicit parameter</a><code>it</code> this allows very convenient initialization of newly created objects. Example:</p>
+<p><em>with</em>运算符<code>=&gt;</code>执行<a href="#xbase-expressions-lambda">lambda表达式</a> ，右侧有一个参数，左侧有一个给定的参数。结果是应用lambda表达式后的左操作数。结合<a href="#xbase-expressions-implicit-parameter">隐式参数，</a> <code>it</code>可以非常方便地初始化新创建的对象。例：</p>
 
-<pre><code class="language-xbase">  val person = new Person =&gt; [
-    firstName = 'John'
-    lastName = 'Coltrane'
-  ]
-  // equivalent to
-  val person = new Person
-  person.firstName = 'John'
-  person.lastName = 'Coltrane'
-</code></pre>
+<pre><code class="language-xbase">val person = new Person =&gt; [firstName ='John'lastName ='Coltrane'] //相当于val person = new Person person.firstName ='John'person.lastName ='Coltrane'</code></pre>
 
-<h4 id="xbase-expressions-property-assignment">Assignments</h4>
+<h4 id="xbase-expressions-property-assignment">分配</h4>
 
-<p><a href="#xbase-expressions-variable-declaration">Local variables</a> can be reassigned using the <code>=</code> operator. Also properties can be set using that operator: Given the expression</p>
+<p>可以使用<code>=</code>运算符重新分配<a href="#xbase-expressions-variable-declaration">局部变量</a> 。也可以使用该运算符设置属性：给定表达式</p>
 
-<pre><code class="language-xbase">  myObj.myProperty = "foo"
-</code></pre>
+<pre><code class="language-xbase">myObj.myProperty =“foo”</code></pre>
 
-<p>The compiler first looks for an accessible Java Field called <code>myProperty</code> on the declared or inferred type of <code>myObj</code>. If such a field can be found, the expressions translates to the following Java code:</p>
+<p>编译器首先在声明或推断的<code>myObj</code>类型中查找名为<code>myProperty</code>的可访问Java字段。如果可以找到这样的字段，则表达式转换为以下Java代码：</p>
 
-<pre><code class="language-java">  myObj.myProperty = "foo";
-</code></pre>
+<pre><code class="language-java">myObj.myProperty =“foo”;</code></pre>
 
-<p>Remember, in Xbase everything is an expression and has to return something. In the case of simple assignments the return value is the value returned from the corresponding Java expression, which is the assigned value.</p>
+<p>请记住，在Xbase中，一切都是表达式，必须返回一些东西。在简单赋值的情况下，返回值是从相应的Java表达式返回的值，该值是指定的值。</p>
 
-<p>If there is no accessible field on the left operand’s type, a method called <code>setMyProperty(OneArg)</code> (JavaBeans setter method) is looked up. It has to take one argument of the type (or a super type) of the right hand operand. The return value of the assignment will be the return value of the setter method (which is usually of type <code>void</code> and therefore the value <code>null</code>). As a result the compiler translates to :</p>
+<p>如果左操作数的类型上没有可访问的字段， <code>setMyProperty(OneArg)</code>名为<code>setMyProperty(OneArg)</code> （JavaBeans setter方法）的方法。它必须采用右手操作数的类型（或超类型）的一个参数。赋值的返回值将是setter方法的返回值（通常为<code>void</code>类型，因此值为<code>null</code> ）。因此，编译器转换为：</p>
 
-<pre><code class="language-java">  myObj.setMyProperty("foo")
-</code></pre>
+<pre><code class="language-java">myObj.setMyProperty（ “foo” 的）</code></pre>
 
-<h4 id="xbase-expressions-feature-calls">Feature Calls</h4>
+<h4 id="xbase-expressions-feature-calls">功能调用</h4>
 
-<p>A feature call is used to access members of objects, such as fields and methods, but it can also refer to local variables and parameters, which are made available by the current expression’s scope.</p>
+<p>函数调用用于访问对象的成员，例如字段和方法，但它也可以引用局部变量和参数，这些变量和参数由当前表达式的范围提供。</p>
 
-<h5 id="xbase-expressions-property-access">Property Access</h5>
+<h5 id="xbase-expressions-property-access">物业访问</h5>
 
-<p>Feature calls are directly translated to their Java equivalent with the exception, that access to properties follows similar rules as described in <a href="#xbase-expressions-property-assignment">the previous section</a>. That is, for the expression</p>
+<p>功能调用直接转换为其Java等效项，但有一个例外，即对属性的访问遵循<a href="#xbase-expressions-property-assignment">上一节中</a>描述的类似规则。也就是说，表达</p>
 
-<pre><code class="language-xbase">  myObj.myProperty
-</code></pre>
+<pre><code class="language-xbase">myObj.myProperty</code></pre>
 
-<p>the compiler first looks for an accessible field <code>myProperty</code> in the type of <code>myObj</code>. If no such field exists it tries to find a method called <code>myProperty()</code> before it looks for the getter methods <code>getMyProperty()</code>. If none of these members can be found, the expression is unbound and a compilation error is indicated.</p>
+<p>编译器首先在<code>myObj</code>的类型中查找可访问的字段<code>myProperty</code> 。如果不存在这样的字段，它会在查找getter方法<code>getMyProperty()</code>之前尝试查找名为<code>myProperty()</code>的方法。如果找不到这些成员，则表达式未绑定，并指示编译错误。</p>
 
-<h5 id="xbase-expressions-null-safe-feature-calls">Null-Safe Feature Call</h5>
+<h5 id="xbase-expressions-null-safe-feature-calls">空安全功能调用</h5>
 
-<p>Checking for null references can make code very unreadable. In many situations it is ok for an expression to return <code>null</code> if a receiver was <code>null</code>. Xbase supports the safe navigation operator <code>?.</code> to make such code more readable.</p>
+<p>检查空引用会使代码非常难以理解。在许多情况下，它是确定一个表达式返回<code>null</code> ，如果接收器为<code>null</code> 。Xbase支持安全导航操作员<code>?.</code>使这些代码更具可读性。</p>
 
-<p>Instead of writing</p>
+<p>而不是写作</p>
 
-<pre><code class="language-java">  if ( myRef != null ) myRef.doStuff()
-</code></pre>
+<pre><code class="language-java">如果（myRef！= null）myRef.doStuff（）</code></pre>
 
-<p>one can write</p>
+<p>一个人可以写</p>
 
-<pre><code class="language-xbase">  myRef?.doStuff()
-</code></pre>
+<pre><code class="language-xbase">myRef？.doStuff（）</code></pre>
 
-<h5 id="xbase-expressions-static-feature-calls">Static Feature Calls</h5>
+<h5 id="xbase-expressions-static-feature-calls">静态功能调用</h5>
 
-<p>Static feature calls use the same notation as in Java, e.g. it is possible to write <code>Collections.emptyList()</code> in Xbase. To make the static invocation more explicit, the double colon can be used as the delimiter. The following snippets are fully equivalent:</p>
+<p>静态特征调用使用与Java中相同的表示法，例如，可以在Xbase中编写<code>Collections.emptyList()</code> 。为了使静态调用更加明确，可以将双冒号用作分隔符。以下代码段完全等效：</p>
 
-<pre><code class="language-xbase">   java.util.Collections::emptyList
-</code></pre>
+<pre><code class="language-xbase">java.util中。收藏::的emptyList</code></pre>
 
-<pre><code class="language-xbase">   java.util.Collections.emptyList
-</code></pre>
+<pre><code class="language-xbase">java.util中。Collections.emptyList</code></pre>
 
-<p>Prior to Xbase 2.4.2, this more verbose variant was the only supported syntax to invoke static methods:</p>
+<p>在Xbase 2.4.2之前，这个更详细的变体是唯一支持的调用静态方法的语法：</p>
 
-<pre><code class="language-xbase">   java::util::Collections::emptyList
-</code></pre>
+<pre><code class="language-xbase">java的:: UTIL ::收藏集::的emptyList</code></pre>
 
-<h4 id="xbase-expressions-implicit-this">Implicit variables ‘this’ and ‘it’</h4>
+<h4 id="xbase-expressions-implicit-this">隐含变量'this'和'it'</h4>
 
-<p>If the current scope contains a variable named <code>this</code> or <code>it</code>, the compiler will make all its members available implicitly. That is if one of</p>
+<p>如果当前作用域包含名为<code>this</code>或<code>it</code>的变量，则编译器将隐式使其所有成员可用。那就是其中之一</p>
 
-<pre><code class="language-xbase">  it.myProperty
-  this.myProperty
-</code></pre>
+<pre><code class="language-xbase">it.myProperty this.myProperty</code></pre>
 
-<p>is a valid expression</p>
+<p>是一个有效的表达</p>
 
-<pre><code class="language-xbase">  myProperty
-</code></pre>
+<pre><code class="language-xbase">我的财产</code></pre>
 
-<p>is valid as well. It resolves to the same feature as long as there is no local variable <code>myProperty</code> declared, which would have higher precedence.</p>
+<p>也有效。只要没有声明的局部变量<code>myProperty</code> ，它就会解析为相同的功能，它具有更高的优先级。</p>
 
-<p>As <code>this</code> is bound to the surrounding object in Java, <code>it</code> can be used in finer-grained constructs such as function parameters. That is why <code>it.myProperty</code> has higher precedence than <code>this.myProperty</code>. <code>it</code> is also the <a href="#xbase-expressions-implicit-parameter">default parameter name in lambda expressions</a>.</p>
+<p>由于<code>this</code>与Java中的周围对象绑定， <code>it</code>可以用于更精细的构造，例如函数参数。这就是为什么<code>it.myProperty</code>优先级高于<code>this.myProperty</code> 。 <code>it</code>也是<a href="#xbase-expressions-implicit-parameter">lambda表达式中</a>的<a href="#xbase-expressions-implicit-parameter">默认参数名称</a> 。</p>
 
-<h4 id="xbase-expressions-constructor-call">Constructor Call</h4>
+<h4 id="xbase-expressions-constructor-call">构造函数调用</h4>
 
-<p>Construction of objects is done by invoking Java constructors. The syntax is exactly as in Java.</p>
+<p>通过调用Java构造函数来构造对象。语法与Java完全相同。</p>
 
-<h5 id="examples-7">Examples</h5>
+<h5 id="examples-7">例子</h5>
 
 <ul>
   <li>
 
-    <pre><code class="language-xbase">  new String()
-</code></pre>
+    <pre><code class="language-xbase">new String（）</code></pre>
   </li>
   <li>
 
-    <pre><code class="language-xbase">  new java.util.ArrayList&lt;java.math.BigDecimal&gt;()
-</code></pre>
+    <pre><code class="language-xbase">新的java.util。的ArrayList &lt;java.math中。的BigDecimal&gt;（）</code></pre>
   </li>
 </ul>
 
-<h4 id="xbase-expressions-lambda">Lambda Expressions</h4>
+<h4 id="xbase-expressions-lambda">Lambda表达式</h4>
 
-<p>A lambda expression is a literal that defines an anonymous function. Xbase’ lambda expressions are allowed to access variables of the declarator. Any final variables and parameters visible at construction time can be referred to in the lambda expression’s body. These expressions are also known as closures.</p>
+<p>lambda表达式是定义匿名函数的文字。允许Xbase的lambda表达式访问声明符的变量。在构造时可见的任何最终变量和参数都可以在lambda表达式的主体中引用。这些表达式也称为闭包。</p>
 
-<p>Lambda expressions are surrounded by square brackets (`[]`):</p>
+<p>Lambda表达式用方括号（`[]`）包围：</p>
 
-<pre><code class="language-xbase">  myList.findFirst([ e | e.name==null ])
-</code></pre>
+<pre><code class="language-xbase">myList.findFirst（[e | e.name == null]）</code></pre>
 
-<p>When a function object is expected to be the last parameter of a feature call, you may declare the lambda expression after the parentheses:</p>
+<p>当函数对象应该是函数调用的最后一个参数时，您可以在括号后面声明lambda表达式：</p>
 
-<pre><code class="language-xbase">  myList.findFirst() [ e | e.name==null ]
-</code></pre>
+<pre><code class="language-xbase">myList.findFirst（）[e | e.name == null]</code></pre>
 
-<p>Since in Xbase parentheses are optional for method calls, the same can be written as:</p>
+<p>由于在Xbase中，括号对于方法调用是可选的，因此可以将其写为：</p>
 
-<pre><code class="language-xbase">  myList.findFirst[ e | e.name==null ]
-</code></pre>
+<pre><code class="language-xbase">myList.findFirst [e | e.name == null]</code></pre>
 
-<p>This example can be further simplified since the lambda’s parameter is available as the implicit variable <code>it</code>, if the parameter is not declared explicitly:</p>
+<p>这个例子可以进一步简化，因为拉姆达的参数可作为隐变量<code>it</code> ，如果该参数不显式声明：</p>
 
-<pre><code class="language-xbase">  myList.findFirst[ it.name==null ]
-</code></pre>
+<pre><code class="language-xbase">myList.findFirst [it.name == null]</code></pre>
 
-<p>Since <code>it</code> is implicit, this is the same as:</p>
+<p>因为<code>it</code>是隐含的，所以它与：</p>
 
-<pre><code class="language-xbase">  myList.findFirst[ name==null ]
-</code></pre>
+<pre><code class="language-xbase">myList.findFirst [name == null]</code></pre>
 
-<p>Another use case for lambda expressions is to store function objects in variables:</p>
+<p>lambda表达式的另一个用例是将函数对象存储在变量中：</p>
 
-<pre><code class="language-xbase">  val func = [ String s | s.length&gt;3 ]
-</code></pre>
+<pre><code class="language-xbase">val func = [String s | s.length&gt; 3]</code></pre>
 
-<h5 id="xbase-expressions-lambda-type-inference">Typing</h5>
+<h5 id="xbase-expressions-lambda-type-inference">打字</h5>
 
-<p>Lambda expressions produce function objects. The type is a <a href="#xbase-types-function-types">function type</a>, parameterized with the types of the lambda’s parameters as well as the return type. The return type is never specified explicitly but is always inferred from the expression. The parameter types can be inferred if the lambda expression is used in a context where this is possible.</p>
+<p>Lambda表达式生成函数对象。类型是一个<a href="#xbase-types-function-types">函数类型</a> ，使用lambda参数的类型以及返回类型进行参数化。永远不会显式指定返回类型，但始终从表达式中推断出返回类型。如果lambda表达式在可能的上下文中使用，则可以推断出参数类型。</p>
 
-<p>For instance, given the following Java method signature:</p>
+<p>例如，给定以下Java方法签名：</p>
 
-<pre><code class="language-java">  public T &lt;T&gt;getFirst(List&lt;T&gt; list, Function0&lt;T,Boolean&gt; predicate) 
-</code></pre>
+<pre><code class="language-java">public T &lt;T&gt; getFirst（List &lt;T&gt; list，Function0 &lt;T，Boolean&gt; predicate）</code></pre>
 
-<p>the type of the parameter can be inferred. Which allows users to write:</p>
+<p>可以推断出参数的类型。这允许用户写：</p>
 
-<pre><code class="language-xbase">  newArrayList( "Foo", "Bar" ).findFirst[ e | e == "Bar" ]
-</code></pre>
+<pre><code class="language-xbase">newArrayList（“Foo”，“Bar”）。findFirst [e | e ==“Bar”]</code></pre>
 
-<p>instead of</p>
+<p>代替</p>
 
-<pre><code class="language-xbase">  newArrayList( "Foo", "Bar" ).findFirst[ String e | e == "Bar" ]
-</code></pre>
+<pre><code class="language-xbase">newArrayList（“Foo”，“Bar”）。findFirst [String e | e ==“Bar”]</code></pre>
 
-<h5 id="xbase-expressions-function-mapping">Function Mapping</h5>
+<h5 id="xbase-expressions-function-mapping">功能映射</h5>
 
-<p>An Xbase lambda expression is a Java object of one of the <em>Function</em> interfaces that are part of the runtime library of Xbase. There is an interface for each number of parameters (up to six parameters). The names of the interfaces are</p>
+<p>Xbase lambda表达式是其中一个<em>Function</em>接口的Java对象，它是Xbase运行时库的一部分。每个参数都有一个接口（最多六个参数）。接口的名称是</p>
 
 <ul>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">Function0&lt;ReturnType&gt;</a> for zero parameters,</li>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">Function1&lt;Param1Type, ReturnType&gt;</a> for one parameters,</li>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">Function2&lt;Param1Type, Param2Type, ReturnType&gt;</a> for two parameters,</li>
-  <li>…</li>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">Function6&lt;Param1Type, Param2Type, Param3Type, Param4Type, Param5Type, Param6Type, ReturnType&gt;</a> for six parameters,</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">函数0 &lt;ReturnType&gt;</a>表示零参数，</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">函数1 &lt;Param1Type，ReturnType&gt;</a>用于一个参数，</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">函数2 &lt;Param1Type，Param2Type，ReturnType&gt;</a>用于两个参数，</li>
+  <li>...</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Functions.java">函数6 &lt;Param1Type，Param2Type，Param3Type，Param4Type，Param5Type，Param6Type，ReturnType&gt;，</a>用于六个参数，</li>
 </ul>
 
-<p>or</p>
+<p>要么</p>
 
 <ul>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">Procedure0</a> for zero parameters,</li>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">Procedure1&lt;Param1Type&gt;</a> for one parameters,</li>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">Procedure2&lt;Param1Type, Param2Type&gt;</a> for two parameters,</li>
-  <li>…</li>
-  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">Procedure6&lt;Param1Type, Param2Type, Param3Type, Param4Type, Param5Type, Param6Type&gt;</a> for six parameters,</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">程序</a> 0为零参数，</li>
+  <li>一个参数的<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">Procedure1 &lt;Param1Type&gt;</a> ，</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">程序2 &lt;Param1Type，Param2Type&gt;</a>用于两个参数，</li>
+  <li>...</li>
+  <li><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/Procedures.java">程序6 &lt;Param1Type，Param2Type，Param3Type，Param4Type，Param5Type，Param6Type&gt;</a>六个参数，</li>
 </ul>
 
-<p>if the return type is <code>void</code>.</p>
+<p>如果返回类型为<code>void</code> 。</p>
 
-<p>In order to allow seamless integration with existing Java libraries such as the JDK or Google Guava (formerly known as Google Collect) lambda expressions are auto coerced to expected types if those types declare only one abstract method (methods from <code>java.lang.Object</code> don’t count).</p>
+<p>为了与现有的Java库（如JDK或Google Guava（以前称为Google Collect））无缝集成，如果这些类型只声明一个抽象方法（来自<code>java.lang.方法），则lambda表达式会自动强制转换为期望的类型<code>java.lang.Object</code>不计数）。</p>
 
-<p>As a result given the method <a href="http://docs.oracle.com/javase/8/docs/api/java/util/Collections.html">Collections.sort(List&lt;T&gt;, Comparator&lt;? super T&gt;)</a> is available as an extension method, it can be invoked like this</p>
+<p>给定方法<a href="http://docs.oracle.com/javase/8/docs/api/java/util/Collections.html">Collections.sort（List &lt;T&gt;，Comparator &lt;？super T&gt;）</a>作为扩展方法可用，可以这样调用</p>
 
-<pre><code class="language-xbase">newArrayList( 'aaa', 'bb', 'c' ).sort [
-  e1, e2 | if ( e1.length &gt; e2.length ) {
-        -1 
-       } else if ( e1.length &lt; e2.length ) { 
-        1
-       } else { 
-        0
-       }
-]
-</code></pre>
+<pre><code class="language-xbase">newArrayList（'aaa'，'bb'，'c'）.sort [e1，e2 | if（e1.length&gt; e2.length）{-1} else if（e1.length &lt;e2.length）{1} else {0}]</code></pre>
 
-<h5 id="xbase-expressions-implicit-parameter">Implicit Parameter <em>it</em></h5>
+<h5 id="xbase-expressions-implicit-parameter">隐含参数<em>吧</em></h5>
 
-<p>If a lambda expression has a single parameter whose type can be inferred, the declaration of the parameter can be omitted. Use <code>it</code> to refer to the parameter inside the lambda expression’s body.</p>
+<p>如果lambda表达式具有可以推断其类型的单个参数，则可以省略该参数的声明。用<code>it</code>来引用lambda表达式体内的参数。</p>
 
-<pre><code class="language-xbase">val (String s)=&gt;String function = [ toUpperCase ] 
-  // equivalent to [it | it.toUpperCase]
-</code></pre>
+<pre><code class="language-xbase">val（String s）=&gt; String function = [toUpperCase] //相当于[it | it.toUpperCase]</code></pre>
 
-<h5 id="examples-8">Examples</h5>
+<h5 id="examples-8">例子</h5>
 
 <ul>
-  <li><code>[ | "foo" ]   // lambda expression without parameters</code></li>
-  <li><code>[ String s | s.toUpperCase() ] // explicit argument type</code></li>
-  <li><code>[ a, b, c | a+b+c ] // inferred argument types</code></li>
+  <li><code>[| “foo”] //没有参数的lambda表达式</code></li>
+  <li><code>[String s | s.toUpperCase（）] //显式参数类型</code></li>
+  <li><code>[a，b，c | a + b + c] //推断出的参数类型</code></li>
 </ul>
 
-<h5 id="xbase-lambda-self">Refering the current function</h5>
+<h5 id="xbase-lambda-self">参考当前功能</h5>
 
-<p>If a lambda expression implements an abstract SAM type that offers additional methods, those can be accessed on the receiver <code>self</code>:</p>
+<p>如果lambda表达式实现了提供其他方法的抽象SAM类型，那么可以在接收器<code>self</code>上访问它们：</p>
 
-<pre><code class="language-xbase">val AbstractIterator&lt;String&gt; emptyIterator = [
-	return self.endOfData
-] 
-</code></pre>
+<pre><code class="language-xbase">val AbstractIterator &lt;String&gt; emptyIterator = [return self.endOfData]</code></pre>
 
-<h4 id="xbase-expressions-if-expression">If Expression</h4>
+<h4 id="xbase-expressions-if-expression">如果表达</h4>
 
-<p>An if expression is used to choose two different values based on a predicate. While it has the syntax of Java’s if statement it behaves like Java’s ternary operator (<code>predicate ? thenPart : elsePart</code>), i.e. it is an expression that returns a value. Consequently, you can use if expressions deeply nested within other expressions.</p>
+<p>if表达式用于根据谓词选择两个不同的值。虽然它具有Java的if语句的语法，但它的行为类似于Java的三元运算符（ <code>predicate ?thenPart : elsePart</code> ），即它是一个返回值的表达式。因此，您可以使用if表达式深层嵌套在其他表达式中。</p>
 
-<p>An expression <code>if (p) e1 else e2</code> results in either the value <code>e1</code> or <code>e2</code> depending on whether the predicate <code>p</code> evaluates to <code>true</code> or <code>false</code>. The else part is optional which is a shorthand for a default value, e.g <code>else null</code> if the type of the <code>if</code> expression is a reference type. If the type is a primitive type, its default value is assumed accordingly, e.g. <code>else false</code> for <code>boolean</code> or <code>else 1</code> for numbers.</p>
+<p>表达式<code>if (p) e1 else e2</code>导致值<code>e1</code>或<code>e2</code>取决于谓词<code>p</code>是否计算为<code>true</code>或<code>false</code> 。else部分是可选的，它是默认值的简写，例如， <code>if</code>表达式的类型是引用类型， <code>if</code> <code>else null</code> 。如果类型是基本类型，则相应地假设其默认值，例如，对于<code>boolean</code>值，则为<code>else false</code> ; <code>else 1</code>对于数字，则为<code>else 1</code> 。</p>
 
-<p>That means</p>
+<p>这意味着</p>
 
-<pre><code class="language-xbase">  if (foo) x 
-</code></pre>
+<pre><code class="language-xbase">if（foo）x</code></pre>
 
-<p>is the a short hand for</p>
+<p>是一个简短的手</p>
 
-<pre><code class="language-xbase">  if (foo) x else null
-</code></pre>
+<pre><code class="language-xbase">if（foo）x else null</code></pre>
 
-<h5 id="xbase-expressions-if-type-inference">Typing</h5>
+<h5 id="xbase-expressions-if-type-inference">打字</h5>
 
-<p>The type of an <code>if</code> expression is calculated from the types <code>T1</code> and <code>T2</code> of the two expressions <code>e1</code> and <code>e2</code>. It uses the rules defined in the <a href="#xbase-types-common-super-type">common super types</a> section, if an explicit <code>else</code> branch is given. If it is ommitted, the type of the <code>if</code> expression is the type <code>T</code> of the expression <code>e</code> of the form <code>if (b) e</code>.</p>
+<p><code>if</code>表达式的类型是根据两个表达式<code>e1</code>和<code>e2</code>的类型<code>T1</code>和<code>T2</code>计算的。如果给出了显式的<code>else</code>分支，它使用<a href="#xbase-types-common-super-type">公共超类型</a>部分中定义的规则。如果省略，则<code>if</code>表达式的类型是表格<code>if (b) e</code>的表达式<code>e</code>的类型<code>T</code></p>
 
-<h5 id="examples-9">Examples</h5>
+<h5 id="examples-9">例子</h5>
 
 <ul>
-  <li><code>if (isFoo) this else that</code></li>
-  <li><code>if (isFoo) { this } else if (thatFoo) { that } else { other }</code></li>
-  <li><code>if (isFoo) this</code></li>
+  <li><code>if（isFoo）这个别的那个</code></li>
+  <li><code>if（isFoo）{this} else if（thatFoo）{that} else {other}</code></li>
+  <li><code>if（isFoo）这个</code></li>
 </ul>
 
-<h4 id="xbase-expressions-switch-expression">Switch Expression</h4>
+<h4 id="xbase-expressions-switch-expression">切换表达式</h4>
 
-<p>The switch expression is a bit different from Java’s, as the use of switch is not limited to certain values but can be used for any object reference instead. For a switch expression</p>
+<p>switch表达式与Java略有不同，因为switch的使用不限于某些值，而是可以用于任何对象引用。对于切换表达式</p>
 
-<pre><code class="language-xbase">switch e {
-  case e1 : er1
-  case e2 : er2
-  ...
-  case en : ern
-  default : er
-}
-</code></pre>
+<pre><code class="language-xbase">切换e {case e1：er1 case e2：er2 ...case en：ern default：er}</code></pre>
 
-<p>the main expression <code>e</code> is evaluated first and then each case sequentially. If the switch expression contains a variable declaration using the syntax known from <a href="#xbase-expressions-for-loop">for loops</a>, the value is bound to the given name. Expressions of type <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html">Boolean</a> or <code>boolean</code> are not allowed in a switch expression.</p>
+<p>首先评估主表达式<code>e</code> ，然后依次评估每个情况。如果switch表达式包含使用<a href="#xbase-expressions-for-loop">for循环中</a>已知语法的变量声明，则该值将绑定到给定名称。切换表达式中不允许使用类型为<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html">Boolean</a>或<code>boolean</code>的表达式。</p>
 
-<p>The guard of each case clause is evaluated until the switch value equals the result of the case’s guard expression or if the case’s guard expression evaluates to <code>true</code>. Then the right hand expression of the case evaluated and the result is returned.</p>
+<p>将评估每个case子句的保护，直到switch值等于case的保护表达式的结果或者case的guard表达式的计算结果为<code>true</code> 。然后评估案例的右手表达并返回结果。</p>
 
-<p>If none of the guards matches the default expression is evaluated and returned. If no default expression is specified the expression evaluates to the default value of the common type of all available case expressions.</p>
+<p>如果没有一个警卫匹配，则评估并返回默认表达式。如果未指定缺省表达式，则表达式求值为所有可用case表达式的公共类型的缺省值。</p>
 
-<p>Example:</p>
+<p>例：</p>
 
-<pre><code class="language-xbase">switch myString {
-  case myString.length&gt;5 : 'a long string.'
-  case 'foo' : "It's a foo."
-  default : "It's a short non-foo string."
-}
-</code></pre>
+<pre><code class="language-xbase">切换myString {case myString.length&gt; 5：'一个长字符串。'case'foo'：“这是一个foo。”默认：“这是一个很短的非foo字符串。” }</code></pre>
 
-<h5 id="type-guards">Type guards</h5>
+<h5 id="type-guards">打字卫士</h5>
 
-<p>In addition to the case guards one can add a so called <em>Type Guard</em> which is syntactically just a <a href="#xbase-types-type-references">type reference</a> preceding the optional case keyword. The compiler will use that type for the switch expression in subsequent expressions. Example:</p>
+<p>除了案例保护之外，还可以添加一个所谓的<em>Type Guard</em> ，它在语法上只是可选case关键字之前的<a href="#xbase-types-type-references">类型引用</a> 。编译器将在后续表达式中将该类型用于switch表达式。例：</p>
 
-<pre><code class="language-xbase">var Object x = ...;
-switch x {
-  String case x.length()&gt;0 : x.length()
-  List&lt;?&gt; : x.size()
-  default : -1
-}
-</code></pre>
+<pre><code class="language-xbase">var Object x = ...; switch x {String case x.length（）&gt; 0：x.length（）List &lt;？&gt;：x.size（）默认值：-1}</code></pre>
 
-<p>Only if the switch value passes a type guard, i.e. an <code>instanceof</code> test succeeds, the case’s guard expression is executed using the same semantics as explained above. If the switch expression contains an explicit declaration of a local variable or the expression references a local variable, the type guard works like an automated cast. All subsequent references to the switch value will be of the type specified in the type guard, unless it is reassigned to a new value.</p>
+<p>仅当开关值通过类型保护，即测试的<code>instanceof</code>成功时，才使用与上述相同的语义执行大小写的保护表达式。如果switch表达式包含局部变量的显式声明或表达式引用局部变量，则类型保护就像自动转换一样工作。除非将其重新分配给新值，否则对开关值的所有后续引用都将是类型保护中指定的类型。</p>
 
-<h5 id="fall-through">Fall Through</h5>
+<h5 id="fall-through">堕落</h5>
 
-<p>One can have multiple <em>type guards</em> and <em>cases</em> separated with a comma, to have all of them share the same <em>then-expression</em>.</p>
+<p>可以使用逗号分隔多个<em>类型保护</em>和<em>案例</em> ，以使它们共享相同的<em>then-expression</em> 。</p>
 
-<pre><code class="language-xtend">  def isMale(String salutation) {
-    switch salutation {
-      case "Mr.", 
-      case "Sir" : true
-      default : false
-    }
-  }
-</code></pre>
+<pre><code class="language-xtend">def isMale（String salutation）{switch salutation {case“Mr.”，case“Sir”：true default：false}}</code></pre>
 
-<h5 id="typing">Typing</h5>
+<h5 id="typing">打字</h5>
 
-<p>The type of a switch expression is computed using the rules defined in the section on <a href="#xbase-types-common-super-type">common super types</a>. The set of types from which the common super type is computed corresponds to the types of each case expression.</p>
+<p>switch表达式的类型使用<a href="#xbase-types-common-super-type">常见超类型</a>部分中定义的规则计算。计算公共超类型的类型集对应于每个案例表达式的类型。</p>
 
-<h5 id="examples-10">Examples</h5>
+<h5 id="examples-10">例子</h5>
 
 <ul>
   <li>
 
-    <pre><code class="language-xbase">  switch foo {
-    Entity : foo.superType.name
-    Datatype : foo.name
-    default : throw new IllegalStateException
-  }
-</code></pre>
+    <pre><code class="language-xbase">switch foo {Entity：foo.superType.name数据类型：foo.name默认值：throw new IllegalStateException}</code></pre>
   </li>
   <li>
 
-    <pre><code class="language-xbase">  switch x : foo.bar.complicated('hello', 42) {
-    case "hello42" : ...
-    case x.length&lt;2 : ...
-    default : ...
-  }
-</code></pre>
+    <pre><code class="language-xbase">switch x：foo.bar.complicated（'hello'，42）{case“hello42”：...case x.length &lt;2：...默认值：...}</code></pre>
   </li>
 </ul>
 
-<h4 id="xbase-expressions-variable-declaration">Variable Declarations</h4>
+<h4 id="xbase-expressions-variable-declaration">变量声明</h4>
 
-<p>Variable declarations are only allowed within <a href="#xbase-expressions-blocks">blocks</a>. They are visible in any subsequent expressions in the block. Generally, overriding or shadowing variables from outer scopes is not allowed. However, it can be used to overload the <a href="#xbase-expressions-implicit-this">implicit variable</a> <code>it</code>, in order to subsequently access an object’s features in an unqualified manner.</p>
+<p>变量声明仅允许在<a href="#xbase-expressions-blocks">块</a>内。它们在块中的任何后续表达式中都可见。通常，不允许覆盖外部作用域的变量或遮蔽变量。但是，它可以用于重载<a href="#xbase-expressions-implicit-this">隐式变量</a> <code>it</code> ，以便随后以不合格的方式访问对象的功能。</p>
 
-<p>A variable declaration starting with the keyword <code>val</code> denotes an unchangeable value, which is essentially a final variable. In rare cases, one needs to update the value of a reference. In such situations the variable needs to be declared with the keyword <code>var</code>, which stands for variable.</p>
+<p>以关键字<code>val</code>开头的变量声明表示不可更改的值，该值实际上是最终变量。在极少数情况下，需要更新引用的值。在这种情况下，变量需要用关键字<code>var</code>声明，它代表变量。</p>
 
-<p>A typical example for using <code>var</code> is a counter in a loop.</p>
+<p>使用<code>var</code>典型示例是循环中的计数器。</p>
 
-<pre><code class="language-xbase">{
-  val max = 100
-  var i = 0
-  while (i &gt; max) {
-    println("Hi there!")
-    i = i +1
-  }
-}
-</code></pre>
+<pre><code class="language-xbase">{val max = 100 var i = 0而（i&gt; max）{println（“你好！“）i = i +1}}}</code></pre>
 
-<p>Variables declared outside a lambda expression using the <code>var</code> keyword are not accessible from the lambda expression.</p>
+<p>使用<code>var</code>关键字在lambda表达式外声明的变量不能从lambda表达式访问。</p>
 
-<h5 id="typing-1">Typing</h5>
+<h5 id="typing-1">打字</h5>
 
-<p>The type of a variable declaration expression is always <code>void</code>. The type of the variable itself can either be explicitly declared or be inferred from the right hand side expression. Here is an example for an explicitly declared type:</p>
+<p>变量声明表达式的类型始终为<code>void</code> 。变量本身的类型可以显式声明，也可以从右侧表达式推断出来。以下是显式声明类型的示例：</p>
 
-<pre><code class="language-xbase">  var List&lt;String&gt; strings = new ArrayList&lt;String&gt;(); 
-</code></pre>
+<pre><code class="language-xbase">var List &lt;String&gt; strings = new ArrayList &lt;String&gt;（）;</code></pre>
 
-<p>In such cases, the right hand expression’s type must <a href="#xbase-types-conformance-rules">conform</a> to the type on the left hand side.</p>
+<p>在这种情况下，右手表达式的类型必须<a href="#xbase-types-conformance-rules">符合</a>左侧的类型。</p>
 
-<p>Alternatively the type can be left out and will be inferred from the initialization expression:</p>
+<p>或者，可以省略类型，并从初始化表达式推断出：</p>
 
-<pre><code class="language-xbase">  var strings = new ArrayList&lt;String&gt; // -&gt; strings is of type ArrayList&lt;String&gt;  
-</code></pre>
+<pre><code class="language-xbase">var strings = new ArrayList &lt;String&gt; //  - &gt;字符串的类型为ArrayList &lt;String&gt;</code></pre>
 
-<h4 id="xbase-expressions-blocks">Blocks</h4>
+<h4 id="xbase-expressions-blocks">块</h4>
 
-<p>The block expression allows to have imperative code sequences. It consists of a sequence of expressions, and returns the value of the last expression. The type of a block is also the type of the last expression. Empty blocks return <code>null</code>. <a href="#xbase-expressions-variable-declaration">Variable declarations</a> are only allowed within blocks and cannot be used as a block’s last expression.</p>
+<p>块表达式允许具有命令性的代码序列。它由一系列表达式组成，并返回最后一个表达式的值。块的类型也是最后一个表达式的类型。空块返回<code>null</code> 。<a href="#xbase-expressions-variable-declaration">变量声明</a>仅在块内允许，不能用作块的最后一个表达式。</p>
 
-<p>A block expression is surrounded by curly braces and contains at least one expression. It can optionally be terminated by a semicolon.</p>
+<p>块表达式由大括号括起，并包含至少一个表达式。它可以选择以分号结束。</p>
 
-<h5 id="examples-11">Examples</h5>
+<h5 id="examples-11">例子</h5>
 
-<pre><code class="language-xbase">{
-  doSideEffect("foo")
-  result
-}
-</code></pre>
+<pre><code class="language-xbase">{doSideEffect（“foo”）结果}</code></pre>
 
-<pre><code class="language-xbase">{
-  var x = greeting();
-  if (x.equals("Hello ")) {
-    x+"World!"; 
-  } else {
-    x;
-  }
-}
-</code></pre>
+<pre><code class="language-xbase">{var x = greeting（）; if（x.equals（“Hello”））{x +“World！“;} else {x;}}</code></pre>
 
-<h4 id="xbase-expressions-for-loop">For Loop</h4>
+<h4 id="xbase-expressions-for-loop">对于循环</h4>
 
-<p>The for loop <code>for (T1 variable : iterableOfT1) expression</code> is used to execute a certain expression for each element of an array of an instance of <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html">Iterable</a>. The local <code>variable</code> is final, hence cannot be updated.</p>
+<p><code>for (T1 variable : iterableOfT1) expression</code>的for循环<code>for (T1 variable : iterableOfT1) expression</code>为<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html">Iterable</a>实例的数组的每个元素执行某个表达式。局部<code>variable</code>是final，因此无法更新。</p>
 
-<p>The type of a for loop is <code>void</code>. The type of the local variable can optionally be inferred from the type of the array or the element type of the <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html">Iterable</a> returned by the iterable expression.</p>
+<p>for循环的类型是<code>void</code> 。可以根据数组的类型或可迭代表达式返回的<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html">Iterable</a>的元素类型推断局部变量的类型。</p>
 
 <ul>
   <li>
 
-    <pre><code class="language-xbase">  for (String s : myStrings) {
-    doSideEffect(s);
-  }
-</code></pre>
+    <pre><code class="language-xbase">for（String s：myStrings）{doSideEffect（s）; }</code></pre>
   </li>
   <li>
 
-    <pre><code class="language-xbase">  for (s : myStrings)
-    doSideEffect(s)
-</code></pre>
+    <pre><code class="language-xbase">for（s：myStrings）doSideEffect（s）</code></pre>
   </li>
 </ul>
 
-<h4 id="xbase-expressions-basic-for-loop">Basic For Loop</h4>
+<h4 id="xbase-expressions-basic-for-loop">基本的循环</h4>
 
-<p>The traditional for loop is very similar to the one known from Java, or even C.</p>
+<p>传统的for循环非常类似于Java中已知的循环，甚至是C.</p>
 
-<pre><code class="language-xtend">  for (&lt;init-expression&gt; ;  &lt;predicate&gt; ; &lt;update-expression&gt;) body-expression
-</code></pre>
+<pre><code class="language-xtend">for（&lt;init-expression&gt;; &lt;predicate&gt;; &lt;update-expression&gt;）body-expression</code></pre>
 
-<p>When executed, it first executes the <code>init-expression</code>, where local variables can be declared. Next the <code>predicate</code> is executed and if it evaluates to <code>true</code>, the <code>body-expression</code> is executed. On any subsequent iterations the <code>update-expression</code> is executed instead of the init-expression. This happens until the <code>predicate</code> returns <code>false</code>.</p>
+<p>执行时，它首先执行<code>init-expression</code> ，其中可以声明局部变量。接下来执行<code>predicate</code> ，如果计算结果为<code>true</code> ，则执行<code>body-expression</code> 。在任何后续迭代中，执行<code>update-expression</code>而不是init-expression。这种情况发生，直到<code>predicate</code>返回<code>false</code> 。</p>
 
-<p>The type of a for loop is <code>void</code>.</p>
+<p>for循环的类型是<code>void</code> 。</p>
 
-<pre><code class="language-xtend">  for (val i = 0 ; i &lt; s.length ; i++) {
-    println(s.subString(0,i)
-  }
-</code></pre>
+<pre><code class="language-xtend">for（val i = 0; i &lt;s.length; i ++）{println（s.subString（0，i）}</code></pre>
 
-<h4 id="xbase-expressions-while-expression">While Loop</h4>
+<h4 id="xbase-expressions-while-expression">而Loop</h4>
 
-<p>A while loop <code>while (predicate) expression</code> is used to execute a certain expression unless the predicate is evaluated to <code>false</code>. The type of a while loop is <code>void</code>.</p>
+<p>while循环<code>while (predicate) expression</code>用于执行某个表达式，除非谓词被评估为<code>false</code> 。while循环的类型<code>void</code> 。</p>
 
-<h5 id="examples-12">Examples</h5>
+<h5 id="examples-12">例子</h5>
 
 <ul>
   <li>
 
-    <pre><code class="language-xbase">  while (true) {
-    doSideEffect("foo");
-  }
-</code></pre>
+    <pre><code class="language-xbase">while（true）{doSideEffect（“foo”）; }</code></pre>
   </li>
   <li>
 
-    <pre><code class="language-xbase">  while ( ( i = i + 1 ) &lt; max ) 
-    doSideEffect( "foo" )
-</code></pre>
+    <pre><code class="language-xbase">while（（i = i + 1）&lt;max）doSideEffect（“foo”）</code></pre>
   </li>
 </ul>
 
-<h4 id="xbase-expressions-do-while-expression">Do-While Loop</h4>
+<h4 id="xbase-expressions-do-while-expression">Do-While循环</h4>
 
-<p>A do-while loop <code>do expression while (predicate)</code> is used to execute a certain expression until the predicate is evaluated to <code>false</code>. The difference to the <a href="#xbase-expressions-while-expression">while loop</a> is that the execution starts by executing the block once before evaluating the predicate for the first time. The type of a do-while loop is <code>void</code>.</p>
+<p>do-while循环<code>do expression while (predicate)</code>用于执行某个表达式，直到谓词被计算为<code>false</code> 。与<a href="#xbase-expressions-while-expression">while循环</a>的不同之处在于，在第一次评估谓词之前执行块一次就开始执行。do-while循环的类型是<code>void</code> 。</p>
 
-<h5 id="examples-13">Examples</h5>
+<h5 id="examples-13">例子</h5>
 
 <ul>
   <li>
 
-    <pre><code class="language-xbase">  do {
-    doSideEffect("foo");
-  } while (true)
-</code></pre>
+    <pre><code class="language-xbase">do {doSideEffect（“foo”）; } while（true）</code></pre>
   </li>
   <li>
 
-    <pre><code class="language-xbase">  do doSideEffect("foo") while ((i=i+1)&lt;max)
-</code></pre>
+    <pre><code class="language-xbase">在（（i = i + 1）&lt;max）时做doSideEffect（“foo”）</code></pre>
   </li>
 </ul>
 
-<h4 id="xbase-expressions-return">Return Expression</h4>
+<h4 id="xbase-expressions-return">返回表达式</h4>
 
-<p>Although an explicit return is often not necessary, it is supported. In a lambda expression for instance a return expression is always implied if the expression itself is not of type <code>void</code>. Anyway you can make it explicit:</p>
+<p>虽然通常不需要显式返回，但它是受支持的。例如，在lambda表达式中，如果表达式本身不是<code>void</code>类型，则始终隐含返回表达式。无论如何，你可以明确表达：</p>
 
-<pre><code class="language-xbase">  listOfStrings.map [ e |
-    if (e==null) 
-      return "NULL"
-    e.toUpperCase
-  ]
-</code></pre>
+<pre><code class="language-xbase">listOfStrings.map [e | if（e == null）返回“NULL”e.toUpperCase]</code></pre>
 
-<h4 id="xbase-expressions-throw">Throwing Exceptions</h4>
+<h4 id="xbase-expressions-throw">抛出例外</h4>
 
-<p>It is possible to throw <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html">Throwable</a>. The syntax is exactly the same as in Java.</p>
+<p>扔掉<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Throwable.html">Throwable</a>是可能的。语法与Java完全相同。</p>
 
-<pre><code class="language-xbase">{
-  ...
-  if (myList.isEmpty)
-    throw new IllegalArgumentException("the list must not be empty")
-  ...
-}   
-</code></pre>
+<pre><code class="language-xbase">{...if（myList.isEmpty）抛出新的IllegalArgumentException（“列表不能为空”）...}</code></pre>
 
-<h4 id="xbase-expressions-try-catch">Try, Catch, Finally</h4>
+<h4 id="xbase-expressions-try-catch">尝试，抓住，最后</h4>
 
-<p>The try-catch-finally expression is used to handle exceptional situations. You are not forced to declare checked exceptions. If you don’t catch checked exceptions, they are thrown in a way the compiler does not complain about a missing throws clause, using the sneaky-throw technique introduced by <a href="http://projectlombok.org/features/SneakyThrows.html">Lombok</a>.</p>
+<p>try-catch-finally表达式用于处理异常情况。您不必被迫声明已检查的例外情况。如果你没有捕获已检查的异常，它们会以编译器不会抱怨丢失throws子句的方式抛出，使用<a href="http://projectlombok.org/features/SneakyThrows.html">Lombok</a>引入的偷偷摸摸技术。</p>
 
-<pre><code class="language-xbase">  try {
-    throw new RuntimeException()
-  } catch (NullPointerException e) {
-    // handle e
-  } finally {
-    // do stuff
-  }
-</code></pre>
+<pre><code class="language-xbase">try {throw new RuntimeException（）} catch（NullPointerException e）{// handle e} finally {// do stuff}</code></pre>
 
-<h4 id="xbase-expressions-synchronized">Synchronized</h4>
+<h4 id="xbase-expressions-synchronized">同步</h4>
 
-<p>The synchonized expression does the same as it does in Java (see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-14.html#jls-14.19">Java Language Specification</a>). The only difference is that in Xbase it is an expression and can therefore be used at more places.</p>
+<p>同步表达式与Java中的相同（请参阅<a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-14.html#jls-14.19">Java语言规范</a> ）。唯一的区别是在Xbase中它是一个表达式，因此可以在更多地方使用。</p>
 
-<pre><code class="language-xtend">  synchronized(lock) {
-    println("Hello")
-  }
-</code></pre>
+<pre><code class="language-xtend">synchronized（lock）{println（“Hello”）}</code></pre>
 
-<pre><code class="language-xtend">  val name = synchronized(lock) { 
-    doStuff() 
-  }
-</code></pre>
+<pre><code class="language-xtend">val name = synchronized（lock）{doStuff（）}</code></pre>
 
-<hr />
+<hr>
 
-<h3 id="xbase-language-ref-library-extension">Extension Methods</h3>
+<h3 id="xbase-language-ref-library-extension">扩展方法</h3>
 
-<p>Languages extending Xbase might want to contribute to the feature scope. Besides that, one can of course change the whole implementation as it seems fit. There is a special hook, which can be used to add so-called extension methods to existing types.</p>
+<p>扩展Xbase的语言可能希望为功能范围做出贡献。除此之外，当然可以改变整个实现，因为它看起来合适。有一个特殊的钩子，可用于向现有类型添加所谓的扩展方法。</p>
 
-<p>Xbase itself comes with a standard library of such extension methods adding support for various operators for the common types, such as <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>, <a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html">List</a>, etc.</p>
+<p>Xbase本身带有这种扩展方法的标准库，增加了对常见类型的各种运算符的支持，例如<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a> ， <a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html">List</a>等。</p>
 
-<p>These extension methods are declared in separate Java classes. There are various ways how extension methods can be added. In the simplest case the language designer predefines which extension methods are available. Language users cannot add additional library functions using this mechanism.</p>
+<p>这些扩展方法在单独的Java类中声明。有多种方法可以添加扩展方法。在最简单的情况下，语言设计者预定义了哪些扩展方法可用。语言用户无法使用此机制添加其他库函数。</p>
 
-<p>Another alternative is to have them looked up by a certain naming convention. Also for more general languages it is possible to let users add extension methods using imports or similar mechanisms. This approach can be seen in the language <a href="http://www.xtend-lang.org">Xtend</a>, where extension methods are lexically imported through static imports and/or dependency injection.</p>
+<p>另一种方法是通过某种命名约定来查找它们。此外，对于更通用的语言，可以让用户使用导入或类似机制添加扩展方法。这种方法可以在<a href="http://www.xtend-lang.org">Xtend</a>语言中看到，其中扩展方法通过静态导入和/或依赖注入进行词法输入。</p>
 
-<p>The precedence of extension methods is always lower than real member methods, i.e. you cannot override member features. Also the extension methods are not invoked polymorphic. If you have two extension methods on the scope (<code>foo(Object)</code> and <code>foo(String)</code>) the expression <code>(foo as Object).foo</code> would bind and invoke <code>foo(Object)</code>.</p>
+<p>扩展方法的优先级始终低于实际成员方法，即您不能覆盖成员要素。此外，扩展方法不会被调用多态。如果在作用域上有两个扩展方法（ <code>foo(Object)</code>和<code>foo(String)</code> ），则表达式<code>(foo as Object).foo</code>将绑定并调用<code>foo(Object)</code> 。</p>
 
-<h4 id="examples-14">Examples</h4>
+<h4 id="examples-14">例子</h4>
 
 <ul>
-  <li><code>foo</code></li>
+  <li><code>FOO</code></li>
   <li><code>my.foo</code></li>
-  <li><code>my.foo(x)</code></li>
-  <li><code>oh.my.foo(bar)</code></li>
+  <li><code>my.foo（x）的</code></li>
+  <li><code>oh.my.foo（条）</code></li>
 </ul>
 
-<h4 id="xbase-language-ref-builder-syntax">Builder Syntax</h4>
+<h4 id="xbase-language-ref-builder-syntax">构建器语法</h4>
 
-<p>If the last argument of a method call is a lambda expression, it can be appended to the method call. Thus,</p>
+<p>如果方法调用的最后一个参数是lambda表达式，则可以将其附加到方法调用。从而，</p>
 
-<pre><code class="language-xbase">foo(42) [ String s | s.toUpperCase ]   
+<pre><code class="language-xbase">foo（42）[String s | s.toUpperCase]</code></pre>
+
+<p>将使用签名调用Java方法</p>
+
+<pre><code class="language-java">void foo（int，Function1 &lt;String，String&gt;）</code></pre>
+
+<p>与<a href="#xbase-expressions-implicit-parameter">lambda表达式中</a>的<a href="#xbase-expressions-implicit-parameter">隐式参数名称</a>结合使用，您可以编写<a href="#xbase-language-ref-library-extension">扩展库</a> ，以简洁的构建器语法（如Groovy）创建和初始化对象的图形。考虑一下你有一套库方法</p>
+
+<pre><code class="language-java">HtmlNode html（Function1 &lt;HtmlNode，Void&gt; initializer）HeadNode head（HtmlNode parent，Function1 &lt;HeadNode，Void&gt; initializer）...
 </code></pre>
 
-<p>will call a Java method with the signature</p>
+<p>在各自的父元素中为HTML页面创建DOM元素。然后，您可以使用以下Xbase代码创建DOM：</p>
 
-<pre><code class="language-java">void foo(int, Function1&lt;String, String&gt;)
-</code></pre>
+<pre><code class="language-xbase">html（[html | head（html，[// initialize head]）]）</code></pre>
 
-<p>Used in combination with the <a href="#xbase-expressions-implicit-parameter">implicit parameter name in lambda expressions</a> you can write <a href="#xbase-language-ref-library-extension">extension libraries</a> to create and initialize graphs of objects in a concise builder syntax like in Groovy. Consider you have a set of library methods</p>
+<p>附加lambda表达式参数并使用扩展语法前置父参数</p>
 
-<pre><code class="language-java">HtmlNode html(Function1&lt;HtmlNode, Void&gt; initializer)
-HeadNode head(HtmlNode parent, Function1&lt;HeadNode, Void&gt; initializer)
-...
-</code></pre>
+<pre><code class="language-xbase">html（）[html | html.head（）[//初始化头]]</code></pre>
 
-<p>that create DOM elements for HTML pages inside their respective parent elements. You can then create a DOM using the following Xbase code:</p>
+<p>使用隐含参数<code>it</code>并跳过空括号可以简化这</p>
 
-<pre><code class="language-xbase">html([ html |
-  head(html, [ 
-    // initialize head
-  ]) 
-] )
-</code></pre>
+<pre><code class="language-xbase">html [head [// initialize head]]</code></pre>
 
-<p>Appending the lambda expression parameters and prepending the parent parameters using extension syntax yields</p>
+<hr>
 
-<pre><code class="language-xbase">html() [ html |
-  html.head() [ 
-    // initialize head
-  ]  
-] 
-</code></pre>
-
-<p>Using implicit parameter <code>it</code> and skipping empty parentheses you can simplify this to</p>
-
-<pre><code class="language-xbase">html [ 
-  head [ 
-    // initialize head
-  ]  
-] 
-</code></pre>
-
-<hr />
-
-<p><strong><a href="307_special_languages.html">Next Chapter: Typical Language Configurations</a></strong></p>
+<p><strong><a href="307_special_languages.html">下一章：典型语言配置</a></strong></p>
 
 
 </body>

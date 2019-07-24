@@ -1,411 +1,168 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+﻿<html lang="zh-Hans" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>JET Tutorial Part 2 (Write Code that Writes Code)</title>
-<link rel="stylesheet" href="images/../../../css/book.css" type="text/css" />
-<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<title>JET教程第2部分（编写代码编写代码）</title>
+<link rel="stylesheet" href="images/../../../css/book.css" type="text/css"></link>
+<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css"></link>
 </head>
 
-<body lang="EN-US" xml:lang="EN-US">
+<body lang="EN-US" dir="ltr" xml:lang="EN-US">
 
-<div align="right">&nbsp; &copy; 
-  Copyright <a href="http://www.azzurri.co.jp">Azzurri Ltd.</a> 2003, 2004. All rights 
-  reserved
-  <table border="0" cellspacing="0" cellpadding="2" width="100%">
+<div align="right">©版权所有<a href="http://www.azzurri.co.jp">Azzurri Ltd.</a> 2003,2004。版权所有<table border="0" cellspacing="0" cellpadding="2" width="100%">
 
     <tr> 
-      <td align="left" valign="top" colspan="2" bgcolor="#0080C0"><strong><font face="Arial,Helvetica"><font color="#FFFFFF">&nbsp;Eclipse 
-        Corner Article</font></font></strong></td>
+      <td align="left" valign="top" colspan="2" bgcolor="#0080C0"><strong><font face="Arial,Helvetica"><font color="#FFFFFF">Eclipse Corner文章</font></font></strong></td>
     </tr>
   </table>
 </div>
 <div align="left"> 
-  <h1><img src="http://www.eclipse.org/images/Idea.jpg" align="middle" width="120" height="86" alt=""/></h1>
+  <h1><img src="http://www.eclipse.org/images/Idea.jpg" align="middle" width="120" height="86" alt=""></h1>
 </div>
 
-<h1 align="center">JET Tutorial Part 2 (Write Code that Writes Code)</h1>
+<h1 align="center">JET教程第2部分（编写代码编写代码）</h1>
 
 <blockquote>
-<strong>Summary</strong>
+<strong>摘要</strong>
 
-<br/>
-<p>In Part 2 of this JET (Java Emitter Templates) tutorial, we will take a look 
-  at the JET engine API. You will learn how to write plug-ins that use the classes 
-  in the JET package to generate Java source code.</p>
-  <p>As a real-world example, we will create a plug-in that takes user input and 
-    generates a Typesafe Enumeration class. The generated source code is based 
-    on a JET template that can be distributed with the plug-in, allowing users 
-    of the plug-in to customize the generated code by editing the template.</p>
-<p>This article also provides a short reference to the JET API.</p>
-  <p>Contributed by Remko Popma, Azzurri Ltd., remko.popma at azzurri dot jp, August 26, 2003. Used with permission. Last update: January 3rd, 2007.</p>
+<br>
+<p>在本JET（Java Emitter模板）教程的第2部分中，我们将介绍JET引擎API。您将学习如何编写使用JET包中的类来生成Java源代码的插件。</p>
+  <p>作为一个真实的例子，我们将创建一个插件，它接受用户输入并生成Typesafe Enumeration类。生成的源代码基于可与插件一起分发的JET模板，允许插件的用户通过编辑模板来自定义生成的代码。</p>
+<p>本文还提供了对JET API的简短参考。</p>
+  <p>供稿人：Remko Popma，Azzurri Ltd.，remko.popma，azzurri dot jp，2003年8月26日。经许可使用。最后更新：2007年1月3日。</p>
 
 </blockquote>
 
-<hr width="100%"/>
+<hr width="100%">
 
-<h2>Contents</h2>
-<p><a href="#introduction">Introduction</a><br/>
-<a href="#classes">Some JET Classes</a><br/>
-<a href="#example">A Plug-in that Generates Source Code</a><br/>
-<a href="#conclusion">Conclusion</a><br/>
-<a href="#appendix">Appendix</a><br/>
-<a href="#resources">Resources</a></p>
+<h2>内容</h2>
+<p><a href="#introduction">介绍</a><br>
+<a href="#classes">一些JET类</a><br>
+<a href="#example">一个生成源代码的插件</a><br>
+<a href="#conclusion">结论</a><br>
+<a href="#appendix">附录</a><br>
+<a href="#resources">资源</a></p>
 
 
-<h2><a name="introduction">Introduction</a></h2>
+<h2><a name="introduction">介绍</a></h2>
 <center>
   <table border="1" cellspacing="0" width="80%" cellpadding="3">
     <tbody> 
     <tr> 
     <td> 
-      <p><strong>Translation vs. Generation</strong></p>
-        <p>An aspect of JET templates that is at first confusing is that generating 
-          text takes two steps: translation and generation. The first step is 
-          translating the template to a template implementation class. The second 
-          step is using this template implementation class to generate the text. 
+      <p><strong>翻译与生成</strong></p>
+        <p>JET模板的一个方面起初令人困惑，因为生成文本需要两个步骤：翻译和生成。第一步是将模板转换为模板实现类。第二步是使用此模板实现类来生成文本。
         </p>
-      <p>If your goal with JET is to generate Java source code, it can be confusing 
-        that the template translation step also results in Java source code. Remember 
-        that this source code is <em>not</em> the generated text. The source code 
-        that is the result of the translation step is simply another form of the 
-        template. </p>
+      <p>如果您使用JET的目标是生成Java源代码，那么模板转换步骤也会导致Java源代码变得令人困惑。请记住，此源代码<em>不是</em>生成的文本。作为转换步骤结果的源代码只是模板的另一种形式。</p>
 
-        <p>If you have used JSP and servlets before, you can think of a JET template 
-          as being equivalent to a JSP page. A JET template is translated to a 
-          template implementation class, just like a JSP page is translated to 
-          a servlet. The second step, where the template implementation class 
-          generates text, is equivalent to the servlet creating and returning 
-          HTML.</p>
+        <p>如果您之前使用过JSP和servlet，则可以将JET模板视为与JSP页面等效。JET模板被转换为模板实现类，就像JSP页面被转换为servlet一样。第二步，模板实现类生成文本，等同于创建和返回HTML的servlet。</p>
     </td>
   </tr>
   </tbody> 
 </table>
 </center>
   
-<p><a href="../../tutorials/jet1/jet_tutorial1.html">Part 
-  1</a> of this tutorial introduced JET templates and explained how you can convert 
-  a project to a JET project to have the JET Builder automatically 
-  translate templates in your project to template implementation classes. </p>
-<p>In part 2 of this tutorial, we will focus on writing a plug-in that uses the 
-  classes in the JET package to generate Java source code. A plug-in that generates 
-  text from a JET template can no longer rely on the JET Nature and JET Builder 
-  to automatically translate templates. This is because JET Nature and JET Builder 
-  operate only on workspace projects, not on plug-ins. Plug-ins need to use the 
-  classes in the JET package to translate their templates. </p>
+<p>本教程的<a href="../../tutorials/jet1/jet_tutorial1.html">第1部分</a>介绍了JET模板，并解释了如何将项目转换为JET项目，以使JET Builder自动将项目中的模板转换为模板实现类。</p>
+<p>在本教程的第2部分中，我们将专注于编写一个插件，该插件使用JET包中的类来生成Java源代码。从JET模板生成文本的插件不再依赖于JET Nature和JET Builder来自动翻译模板。这是因为JET Nature和JET Builder仅在工作区项目上运行，而不是在插件上运行。插件需要使用JET包中的类来翻译他们的模板。</p>
 
-<p>To run the example or view the source for code for this article you can unzip 
-  <a href="images/../org.eclipse.emf.examples.jet.article2_2.3.0.zip">org.eclipse.emf.examples.jet.article2_2.3.0.zip</a> 
-  into your <i>plugins</i> subdirectory. To use the example plug-in, you must 
-  have <a href="http://www.eclipse.org/emf/" target="_blank">EMF</a> installed. 
-  I am using version 2.3.0 M4.</p>
+<p>要运行该示例或查看本文代码的源代码，您可以将<a href="images/../org.eclipse.emf.examples.jet.article2_2.3.0.zip">org.eclipse.emf.examples.jet.article2_2.3.0.zip</a>解压缩到您的<i>plugins</i>子目录中。要使用示例插件，必须安装<a href="http://www.eclipse.org/emf/" target="_blank">EMF</a> 。我使用的是2.3.0 M4版本。</p>
 
-<p>The next section will discuss some of the classes in the <tt class="code">org.eclipse.emf.codegen</tt> 
-  package. We will see what the steps are to generate source code with JET, and 
-  how the JET engine classes fit in. If you are anxious to see some code that 
-  shows how to use these classes in practice, you can go straight to <a href="#example">A 
-  Plug-in that Generates Source Code</a>. </p>
+<p>下一节将讨论<tt class="code">org.eclipse.emf.codegen</tt>包中的一些类。我们将看到使用JET生成源代码的步骤，以及JET引擎类如何适应。如果您急于查看一些显示如何在实践中使用这些类的代码，您可以直接进入<a href="#example">生成源代码的插件</a> 。</p>
 
-<h2><a name="classes">Some JET Classes</a></h2>
-<p>In this section, we will take a closer look at some of the classes in the JET 
-  package. They can roughly be divided into two groups: </p>
+<h2><a name="classes">一些JET类</a></h2>
+<p>在本节中，我们将仔细研究JET包中的一些类。它们大致可分为两组：</p>
 <ul>
-  <li>Lower-level classes dealing with the nuts and bolts of translating a template 
-    to a template implementation class. The <tt class="code">JETCompiler</tt> class brings 
-    all these lower-level classes together to provide a single API for template 
-    translation. </li>
+  <li>低级类，处理将模板转换为模板实现类的细节。<tt class="code">JETCompiler</tt>类将所有这些较低级别的类组合在一起，为模板转换提供单个API。</li>
 
-  <li>Higher-level classes that build on top of <tt class="code">JETCompiler</tt> to accomplish 
-    user tasks. In Part 1 of this tutorial, we have already seen <tt class="code">JETNature</tt> 
-    and <tt class="code">JETBuilder</tt> at work. Other high-level classes are <tt class="code">CodeGen</tt> 
-    and <tt class="code">JETEmitter</tt>. </li>
+  <li>构建在<tt class="code">JETCompiler</tt>之上的高级类，用于完成用户任务。在本教程的第1部分中，我们已经看到<tt class="code">JETNature</tt>和<tt class="code">JETBuilder</tt>在工作。其他高级类是<tt class="code">CodeGen</tt>和<tt class="code">JETEmitter</tt> 。</li>
 
 </ul>
-<p>The lower-level classes are not discussed in-depth in this article. For a description 
-  of all classes in the <tt class="code">org.eclipse.emf.codegen</tt> plug-in, see the <a href="#jet_api_overview">JET 
-  API Overview</a> section below. In the rest of this section, we will focus on 
-  a few of the higher-level classes.</p>
-<h4><tt class="code">org.eclipse.emf.codegen.jet.JETCompiler</tt></h4>
-<p><tt class="code">JETCompiler</tt> is the core class for template translation. This class 
-  is responsible for translating templates to the Java source code of a template 
-  implementation class. The actual translation is delegated to other classes in 
-  the same package. Clients create a JETCompiler object for a particular template 
-  and then call the <tt class="code">parse</tt> method followed by the <tt class="code">generate</tt> 
-  method to write the Java source code for the resulting template implementation 
-  class to a specified stream.</p>
+<p>本文不会深入讨论较低级别的类。有关<tt class="code">org.eclipse.emf.codegen</tt>插件中所有类的说明，请参阅下面的<a href="#jet_api_overview">JET API概述</a>部分。在本节的其余部分，我们将重点介绍一些高级课程。</p>
+<h4><tt class="code">org.eclipse.emf.codegen.jet。JETCompiler</tt></h4>
+<p><tt class="code">JETCompiler</tt>是模板转换的核心类。该类负责将模板转换为模板实现类的Java源代码。实际的转换被委托给同一个包中的其他类。客户端为特定模板创建JETCompiler对象，然后调用<tt class="code">parse</tt>方法，然后调用<tt class="code">generate</tt>方法，将生成的模板实现类的Java源代码写入指定的流。</p>
 
-<h4><tt class="code">org.eclipse.emf.codegen.jet.JETEmitter</tt></h4>
-<p><tt class="code">JETEmitter</tt> provides a convenient high-level API for users of the 
-  JET package. The <tt class="code">generate</tt> method of this class combines template 
-  translation and text generation into a single step. By taking care of the gory 
-  details of translating templates and compiling the Java source code of the translated 
-  template implementation class, <tt class="code">JETEmitter</tt> lets you focus on the final generator 
-  output.</p>
-<p>Another way of looking at <tt class="code">JETEmitter</tt> is that it abstracts away the translation 
-  step and lets you pretend that you can directly generate text with a template. 
-  Following the <a href="http://www.joelonsoftware.com/articles/LeakyAbstractions.html" target="_blank">Law 
-  of Leaky Abstractions</a>, we cannot always get away with this, and the <a href="#jetemitter_gotchas"><tt class="code">JETEmitter</tt> 
-  Gotchas</a> section below points to a few places where you have to be careful.</p>
-<p><tt class="code">JETEmitter</tt> is the class we will be using in our plug-in, so we will go into 
-  a little more detail here.</p>
+<h4><tt class="code">org.eclipse.emf.codegen.jet。那么JETEmitter</tt></h4>
+<p><tt class="code">JETEmitter</tt>为JET包的用户提供了方便的高级API。此类的<tt class="code">generate</tt>方法将模板转换和文本生成组合到一个步骤中。通过处理翻译模板和编译翻译模板实现类的Java源代码的血腥细节， <tt class="code">JETEmitter</tt>使您可以专注于最终的生成器输出。</p>
+<p>另一种查看<tt class="code">JETEmitter的方法</tt>是它抽象出翻译步骤，并假装您可以直接使用模板生成文本。根据<a href="http://www.joelonsoftware.com/articles/LeakyAbstractions.html" target="_blank">Leaky Abstractions法则</a> ，我们不能总是逃避这一点，下面的<a href="#jetemitter_gotchas"><tt class="code">JETEmitter Gotchas</tt></a>部分指出了一些你必须要小心的地方。</p>
+<p><tt class="code">JETEmitter</tt>是我们将在插件中使用的类，因此我们将在此处详细介绍。</p>
 
-<p>A <tt class="code">JETEmitter</tt> object is constructed with the uri of the template used to generate 
-  text. Any type of uri is acceptable as long as a protocol handler is available. 
-  This means that <tt class="code">file:/</tt> uris, <tt class="code">ftp:/</tt> uris and <tt class="code">http:/</tt> 
-  uris can all be used. Eclipse adds special protocol handlers for <tt class="code">platform:/base</tt>/, 
-  <tt class="code">platform:/plugin/</tt>, <tt class="code">platform:/fragment/</tt> and <tt class="code">platform:/resource/</tt> 
-  uris, so plug-ins can use a uri like <tt class="code">platform:/resource/myproject/myfolder/mytemplate.jet</tt> 
-  to specify a template file.  Note: Eclipse 3.0 has introduced <tt class="code">bundleentry</tt> to its list
-  of special protocols.  It should be used in references to Eclipse elements such as plug-ins and features.</p>
+<p>使用用于生成文本的模板的uri构造<tt class="code">JETEmitter</tt>对象。只要协议处理程序可用，任何类型的uri都是可接受的。这意味着<tt class="code">文件：/</tt> uris， <tt class="code">ftp：/</tt> uris和<tt class="code">http：/</tt> uris都可以使用。Eclipse为<tt class="code">平台</tt>添加了特殊的协议处理程序<tt class="code">：/ base</tt> /， <tt class="code">platform：/ plugin /</tt> ， <tt class="code">platform：/ fragment /</tt>和<tt class="code">platform：/ resource /</tt> uris，所以插件可以使用类似uri的<tt class="code">平台：/ resource / myproject / myfolder / mytemplate .jet</tt>指定模板文件。注意：Eclipse 3.0已将<tt class="code">bundleentry</tt>引入其特殊协议列表。它应该用于引用Eclipse元素，例如插件和功能。</p>
 
-<p>In our example plug-in, we will distribute our template file together with our 
-  plug-in, so the template file will be located in a <i>myplugin/templates</i> 
-  folder under the Eclipse <i>plugins</i> folder. The following code can then 
-  be used to locate and generate a template from this folder:</p>
-<pre> String pluginId = "myplugin.id";
- String base = Platform.getBundle(pluginId).getEntry("/").toString();
- String uri = base + "templates/myTemplate.javajet";
- <tt class="code">JETEmitter</tt> emitter = new JETEmitter(uri);
- String generatedText = emitter.generate(new Object[] {parameter});</pre>
-<p>After constructing a <tt class="code">JETEmitter</tt> object, clients then call <tt class="code">generate</tt> 
-  on it to generate text. The <tt class="code">generate</tt> method will perform the following 
-  steps:</p>
+<p>在我们的示例插件中，我们将模板文件与我们的插件一起分发，因此模板文件将位于Eclipse <i>插件</i>文件夹下的<i>myplugin / templates</i>文件夹中。然后，可以使用以下代码从此文件夹中查找并生成模板：</p>
+<pre>String pluginId =“myplugin.id”; String base = Platform.getBundle（pluginId）.getEntry（“/”）。toString（）; String uri = base +“templates / myTemplate.javajet”; <tt class="code">JETEmitter</tt> emitter = new JETEmitter（uri）; String generatedText = emitter.generate（new Object [] {parameter}）;</pre>
+<p>在构造<tt class="code">JETEmitter</tt>对象之后，客户端然后在其上调用<tt class="code">generate</tt>来生成文本。<tt class="code">generate</tt>方法将执行以下步骤：</p>
 
 <ol>
-  <li>Create a project called <i>.JETEmitters</i> in the workspace </li>
-  <li>Prepare this project by giving it the Java Nature and adding class path variables 
-    to its class path </li>
-  <li>Translate the template to a template implementation Java source file in 
-    the <i>.JETEmitters</i> project </li>
-  <li>Build the project to compile the template implementation source code to 
-    a Java <i>.class</i> file </li>
-  <li>Call the <tt class="code">generate</tt> method on the translated Java template implementation 
-    class and return the generated text as a String</li>
+  <li>创建一个名为的项目<i>。JETEmitters</i>在工作区中</li>
+  <li>通过为Java Nature提供Java Nature并将类路径变量添加到其类路径来准备此项目</li>
+  <li>将模板转换为模板实现Java源文件<i>。JETEmitters</i>项目</li>
+  <li>构建项目以将模板实现源代码编译为Java <i>.class</i>文件</li>
+  <li>在已翻译的Java模板实现类上调用<tt class="code">generate</tt>方法，并将生成的文本作为String返回</li>
 </ol>
-<p>* <i>.JETEmitters</i> is the default name for the project that is created during the template
-translation.  This value can be changed by the <tt class="code">setProjectName</tt> method.</p>
+<p>* <i>。JETEmitters</i>是在模板转换期间创建的项目的默认名称。可以通过<tt class="code">setProjectName</tt>方法更改此值。</p>
 
 
-<p>Our example plug-in will use <tt class="code">JETEmitter</tt> and save the generated text to a Java 
-  source file in the workspace. The figure below shows the steps for generating 
-  source code using <tt class="code">JETEmitter</tt>. </p>
-<p><img alt="Using JETEmitter to generate text from a plug-in" src="images/jetemitter.gif"/> </p>
-<h3><a name="jetemitter_gotchas"></a><tt>JETEmitter</tt> Gotchas</h3>
-<p>The <tt class="code">JETEmitter</tt> class combines template translation and text generation into 
-  a single step, which makes it a very convenient tool. However, it is important 
-  that you know what takes place under the hood, otherwise you might be in for 
-  some nasty surprises. This section highlights some &quot;gotchas&quot; that 
-  I ran into, so that you don't make the same mistakes.</p>
+<p>我们的示例插件将使用<tt class="code">JETEmitter</tt>并将生成的文本保存到工作空间中的Java源文件中。下图显示了使用<tt class="code">JETEmitter</tt>生成源代码的步骤。</p>
+<p><img alt="使用JETEmitter从插件生成文本" src="images/jetemitter.gif"> </p>
+<h3><a name="jetemitter_gotchas"></a> <tt>JETEmitter Gotchas</tt></h3>
+<p><tt class="code">JETEmitter</tt>类将模板转换和文本生成组合到一个步骤中，这使它成为一个非常方便的工具。然而，重要的是你要知道幕后发生了什么，否则你可能会遇到一些令人讨厌的惊喜。本节重点介绍了我遇到的一些“陷阱”，以免你犯同样的错误。</p>
 
-<h4>1. Plug-in Initialization Required </h4>
-<p>It is not easy to use JET outside of Eclipse. JET is designed to run only as 
-  a workspace application. Any application using JET must minimally run as an 
-  Eclipse &quot;headless&quot; application so that plug-in initialization takes 
-  place. (The term headless refers to running Eclipse without the user interface.)</p>
-<p>This means that using <tt class="code">JETEmitter</tt> from a simple standalone application (a standard 
-  Java class with a <tt class="code">main</tt> method) <em>will not work</em>:</p>
-<pre> // This fails: cannot use <tt class="code">JETEmitter</tt> from a standalone application
- public static void main(String[] args) {
-     <tt class="code">JETEmitter</tt> emitter = new JETEmitter("/myproject/templates/HelloWorld.txtjet");
- 
-     // this will throw a NullPointerException
-     String result = emitter.generate(new NullProgressMonitor(), {"hi" });
- 
-     System.out.println(result);
-</pre>
+<h4>1。需要插件初始化</h4>
+<p>在Eclipse之外使用JET并不容易。JET旨在仅作为工作区应用程序运行。使用JET的任何应用程序必须最低限度地作为Eclipse“无头”应用程序运行，以便进行插件初始化。（headless一词指的是在没有用户界面的情况下运行Eclipse。）</p>
+<p>这意味着从简单的独立应用程序（带有<tt class="code">main</tt>方法的标准Java类）使用<tt class="code">JETEmitter</tt> <em>将不起作用</em> ：</p>
+<pre>//这失败了：无法从独立应用程序中使用<tt class="code">JETEmitter</tt> public static void main（String [] args）{ <tt class="code">JETEmitter</tt> emitter = new JETEmitter（“/ myproject / templates / HelloWorld.txtjet”）; //这将抛出NullPointerException String result = emitter.generate（new NullProgressMonitor（），{“hi”}）;的System.out.println（结果）;</pre>
 
-<p>Note that this is not a restriction of just the <tt class="code">JETEmitter</tt> class, many of the 
-  classes in the <tt class="code">org.eclipse.emf.codegen</tt> plug-in have dependencies 
-  on other plug-ins. The <a href="#appendix">Appendix</a> section below has more 
-  details on using JET from standalone applications.</p>
-<p>In the rest of this article we will assume that our code is running from inside 
-  a plug-in.</p>
-<h4>2. Class Loader Issues </h4>
-<p>You may get a NoClassDefFoundError when you pass a custom object as the argument 
-  to the <tt class="code">JETEmitter.generate</tt> method. This can happen if the object 
-  you pass as the argument is not one of the java "bootstrap" classes (the bootstrap 
-  classes are the runtime classes in rt.jar and internationalization classes in 
-  i18n.jar).</p>
+<p>请注意，这不仅仅是对<tt class="code">JETEmitter</tt>类的限制， <tt class="code">org.eclipse.emf.codegen</tt>插件中的许多类都依赖于其他插件。下面的<a href="#appendix">附录</a>部分详细介绍了如何从独立应用程序中使用JET。</p>
+<p>在本文的其余部分，我们将假设我们的代码是从插件内部运行的。</p>
+<h4>2。类加载器问题</h4>
+<p>将自定义对象作为参数传递给<tt class="code">JETEmitter.generate</tt>方法时，可能会得到NoClassDefFoundError。如果作为参数传递的对象不是java“bootstrap”类之一（引导类是rt.jar中的运行时类和i18n.jar中的国际化类），则会发生这种情况。</p>
 
-<p>To prevent this error you must specify the class loader of your plug-in when 
-  using <tt class="code">JETEmitter</tt>. If no class loader is specified, <tt class="code">JETEmitter</tt> uses the class loader 
-  of its own class, which is usually the class loader for the <tt class="code">org.eclipse.emf.codegen</tt> 
-  plug-in, and this class loader can't see much. In recent versions of EMF (since 
-  version 1.1.0 build 20030527_0913VL), <tt class="code">JETEmitter</tt> has a constructor that takes 
-  a class loader argument.</p>
-<p>Note that another way to specify a class loader is to subclass <tt class="code">JETEmitter</tt> in 
-  your own project; if no class loader is specified, <tt class="code">JETEmitter</tt> will use the class loader 
-  of this subclass. (If you are using an older version of EMF, there are no constructors 
-  that take a class loader argument and you will have no choice but to subclass 
-  <tt class="code">JETEmitter</tt> in your own project.)</p>
-<p>The example below shows an action class that translates and invokes a selected 
-  template using <tt class="code">JETEmitter</tt>. The example shows how a <tt class="code">JETEmitter</tt> can be constructed 
-  <img src="images/tag_1.gif" width="24" height="13" alt=""/>with a class loader parameter or by <img src="images/tag_2.gif" width="24" height="13" alt=""/>constructing 
-  an anonymous subclass.</p>
-<pre>package org.eclipse.emf.examples.jet.article2.actionexample;
-// imports omitted
-public class EmitAction implements IActionDelegate {
-    protected ISelection selection;
- 
-    public void selectionChanged(IAction action, ISelection selection) {
-        this.selection = selection;
-        action.setEnabled(true);
-    }
- 
-    public void run(IAction action) {
-        List&lt;?&gt; files = (selection instanceof IStructuredSelection)
-                ? ((IStructuredSelection) selection).toList()
-                : Collections.EMPTY_LIST;
-                
-        for (Iterator&lt;?&gt; i = files.iterator(); i.hasNext();) {
-            IFile file = (IFile) i.next();
-            IPath fullPath = file.getFullPath();
- 
-            String templateURI = "platform:/resource" + fullPath;
-            <strong>ClassLoader classloader = getClass().getClassLoader();</strong>
-<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>         <tt class="code">JETEmitter</tt> emitter = new JETEmitter(templateURI, <strong>classloader</strong>);
- 
-            // <strong>or: use an anonymous subclass</strong>
-
-<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>         // emitter = <strong>new JETEmitter(templateURI) {}</strong>; // notice the brackets
-            
-            try {
-                IProgressMonitor monitor = new NullProgressMonitor();
-                String[] arguments = new String[] { "hi" };
- 
-                String result = emitter.generate(monitor, arguments);
-                
-                saveGenerated(result, file);
- 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
- 
-    // saveGenerated method omitted
-}
-</pre>
-<h4>3. Classpath Issues </h4>
-<p>JETEmitter translates your templates to Java source files in the <i>.JETEmitters</i> 
-  project, and invokes the JavaBuilder to compile these source files. If your 
-  templates use classes that are not standard Java classes, or not in the EMF 
-  plug-in, you will need to add these classes to the class path of the <i>.JETEmitters</i> 
-  project, or the JavaBuilder cannot compile the template implementation source 
-  files.  Fortunately, <tt class="code">JETEmitter</tt> provides a simple way to do this through the method 
-  <tt class="code">addVariable</tt> which adds a classpath variable to the <i>.JETEmitter</i> project.</p>
-<p>A <dfn>Classpath Variable</dfn> is a workspace-wide name that is used in Eclipse to refer to a JAR file or
-directory.  The list of all such variables can be seen using the Window &gt; Preferences &gt; Java &gt; 
-Classpath Variables menua action.. Your program will need to add a class path variable for each
-  JAR file or directory that is needed on the class path of the <i>.JETEmitter</i> project.</p>
+<p>要防止出现此错误，必须在使用<tt class="code">JETEmitter</tt>时指定插件的类加载器。如果没有指定类加载器， <tt class="code">JETEmitter</tt>使用它自己的类的类加载器，它通常是<tt class="code">org.eclipse.emf.codegen</tt>插件的类加载器，并且这个类加载器看不到多少。在最新版本的EMF中（从版本1.1.0构建20030527_0913VL）， <tt class="code">JETEmitter</tt>有一个构造函数，它接受类加载器参数。</p>
+<p>请注意，指定类加载器的另一种方法是在您自己的项目中<tt class="code">继承JETEmitter</tt> ;如果没有指定类加载器， <tt class="code">JETEmitter</tt>将使用此子类的类加载器。（如果您使用的是较旧版本的EMF，则没有构造函数接受类加载器参数，您将别无选择， <tt class="code">只能</tt>在自己的项目中<tt class="code">继承JETEmitter</tt> 。）</p>
+<p>下面的示例显示了一个使用<tt class="code">JETEmitter</tt>转换和调用所选模板的操作类。该示例显示了如何构造<tt class="code">JETEmitter</tt> <img src="images/tag_1.gif" width="24" height="13" alt="">使用类加载器参数或<img src="images/tag_2.gif" width="24" height="13" alt="">构造一个匿名子类。</p>
+<pre>package org.eclipse.emf.examples.jet.article2.actionexample; //导入省略的公共类EmitAction实现IActionDelegate {protected ISelection selection; public void selectionChanged（IAction action，ISelection selection）{this.selection = selection; action.setEnabled（真）; } public void run（IAction action）{List &lt;？&gt; files =（IStructuredSelection的选择实例）？（（IStructuredSelection）选择）.toList（）：集合。EMPTY_LIST; for（Iterator &lt;？&gt; i = files.iterator（）; i.hasNext（）;）{IFile file =（IFile）i.next（）; IPath fullPath = file.getFullPath（）; String templateURI =“platform：/ resource”+ fullPath; <strong>ClassLoader classloader = getClass（）。getClassLoader（）;</strong> <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> <tt class="code">JETEmitter</tt> emitter = new JETEmitter（templateURI， <strong>classloader</strong> ）; // <strong>或：使用匿名子类</strong> <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span> // emitter = <strong>new JETEmitter（templateURI）{}</strong> ; //注意括号try {IProgressMonitor monitor = new NullProgressMonitor（）; String [] arguments = new String [] {“hi”}; String result = emitter.generate（monitor，arguments）; saveGenerated（result，file）; } catch（异常e）{throw new RuntimeException（e）;省略了saveGenerated方法}</pre>
+<h4>3。类路径问题</h4>
+<p>JETEmitter将模板转换为Java中的Java源文件<i>。JETEmitters</i>项目，并调用JavaBuilder来编译这些源文件。如果模板使用的类不是标准Java类，或者不是EMF插件中的类，则需要将这些类添加到类的路径中<i>。JETEmitters</i>项目，或JavaBuilder无法编译模板实现源文件。幸运的是， <tt class="code">JETEmitter</tt>通过<tt class="code">addVariable</tt>方法提供了一种简单的方法来实现这一点，该方法将一个类路径变量添加到<i>。JETEmitter</i>项目。</p>
+<p><dfn>类路径变量</dfn>是工作区范围的名称，在Eclipse中用于引用JAR文件或目录。使用Window&gt; Preferences&gt; Java&gt; Classpath Variables menua动作可以看到所有这些变量的列表。您的程序需要为每个JAR文件或目录添加一个类路径变量<i>。JETEmitter</i>项目。</p>
   
   
-<h2><a name="example">A Plug-in that Generates Source Code</a></h2>
-<p>In this part of the JET Tutorial, we will write an Eclipse plug-in that uses 
-  a JET template to generate Java source code for typesafe enumerations, which were quite popular 
-  before Java 5.0, when enums were introduced to the language.</p>
-<p>Our plug-in has to perform the following tasks:</p>
+<h2><a name="example">一个生成源代码的插件</a></h2>
+<p>在JET Tutorial的这一部分中，我们将编写一个Eclipse插件，该插件使用JET模板为类型安全枚举生成Java源代码，这些代码在Java 5.0之前非常流行，当时枚举被引入该语言。</p>
+<p>我们的插件必须执行以下任务：</p>
 <ol>
-  <li>Collect user input values for the variables in our template: the class name, 
-    the type and name of the attributes of the typesafe enumeration class, and 
-    the values of these attributes for each instance. We will write a simple GUI 
-    to collect these values.</li>
-  <li>Translate the JET template file to a Java template implementation class</li>
+  <li>收集模板中变量的用户输入值：类名，类型安全枚举类的属性的类型和名称，以及每个实例的这些属性的值。我们将编写一个简单的GUI来收集这些值。</li>
+  <li>将JET模板文件转换为Java模板实现类</li>
 
-  <li>Invoke the template implementation class with an object that contains the 
-    user input values collected by the GUI</li>
-  <li>Save the resulting generated source code to a location obtained from the 
-    GUI</li>
+  <li>使用包含GUI收集的用户输入值的对象调用模板实现类</li>
+  <li>将生成的生成源代码保存到从GUI获取的位置</li>
 </ol>
-<p>In the following sections we will go through the steps above one by one.</p>
-<h3><a name="typesafe_enum_example"></a>Typesafe Enumerations</h3>
-<p>Let's have a look at a typesafe enumeration class to see what kind of source 
-  code we want to generate. The Digit class below is an example typesafe enum.</p>
-<pre> // an example typesafe enum
- package x.y.z;
- public class Digit { 
-<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>  public static final Digit ZERO = new Digit(0, "zero");
-     public static final Digit ONE = new Digit(1, "one");
-     public static final Digit TWO = new Digit(2, "two");
-     public static final Digit THREE = new Digit(3, "three");
-     // ...
-     public static final Digit NINE = new Digit(9, "nine");
- 
-     private static final Digit[] ALL = 
-         {ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE};
- 
+<p>在以下部分中，我们将逐一完成上述步骤。</p>
+<h3><a name="typesafe_enum_example"></a> Typesafe枚举</h3>
+<p>让我们看一下类型安全的枚举类，看看我们想要生成什么样的源代码。下面的Digit类是一个示例类型安全枚举。</p>
+<pre>//示例typesafe enum package xyz;公共类Digit { <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> public static final Digit ZERO = new Digit（0，“0”）; public static final Digit ONE = new Digit（1，“one”）; public static final Digit TWO = new Digit（2，“two”）; public static final Digit THREE = new Digit（3，“three”）; // ...public static final Digit NINE = new Digit（9，“nine”）; private static final Digit [] ALL = {ZERO，ONE，TWO，THREE，FOUR，FIVE，SIX，SEVEN，EIGHT，NINE}; <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span>私有最终int值; private final String name; private Digit（int value，String name）{this.value = value; this.name = name; } <span><img src="images/tag_3.gif" width="24" height="13" alt=""></span> public static Digit lookup（int key）{for（int i = 0; i &lt;ALL.length; i ++）{if（key == ALL [i] .getValue（））{return ALL [i]; }} //查找失败：//我们没有默认的数字，所以我们抛出异常<span><img src="images/tag_4.gif" width="24" height="13" alt=""></span>抛出新的IllegalArgumentException（“+键不存在数字”; public int getValue（）{返回值; public int getName（）{return name; public String toString（）{return getName（）; }}</pre>
+<p>让我们仔细看看这堂课。首先，Digit类有几个<strong><img src="images/tag_1.gif" width="24" height="13" alt="">实例</strong> - 常量ZERO，ONE，TWO等。每个实例都由其Java变量名称“ZERO”，“ONE”，“TWO”......以及每个实例的值定义。 <strong><img src="images/tag_2.gif" width="24" height="13" alt=""></strong>枚举类的<strong>属性</strong> 。大多数类型安全的枚举都有一个或多个属性。Digit类有两个属性： <tt class="code">值</tt>整数和<tt class="code">名称</tt> String。</p>
 
-<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>  private final int value;
-     private final String name;
- 
-     private Digit(int value, String name) { 
-         this.value = value; 
-         this.name = name; 
-     }
- 
-<span><img src="images/tag_3.gif" width="24" height="13" alt=""/></span>  public static Digit lookup(int key) {
-         for (int i = 0; i &lt; ALL.length; i++) {
-             if (key == ALL[i].getValue()) { return ALL[i]; }
-         }
-         // lookup failed:
-         // we have no default Digit, so we throw an exception
-<span><img src="images/tag_4.gif" width="24" height="13" alt=""/></span>      throw new IllegalArgumentException("No digit exists for " + key);
-     }
- 
-     public int getValue() { return value; }
-     public int getName() { return name; }
-     public String toString() { return getName(); }
- }</pre>
-<p>Let's take a closer look at this class. First of all, the Digit class has several 
-  <strong><img src="images/tag_1.gif" width="24" height="13" alt=""/>instances</strong> - the constants 
-  ZERO, ONE, TWO, etc. Each instance is defined by its Java variable name, "ZERO", 
-  "ONE", "TWO"..., and the values for each <strong><img src="images/tag_2.gif" width="24" height="13" alt=""/>attribute</strong> 
-  of the enumeration class. Most typesafe enums have one or more attributes. The 
-  Digit class has two attributes: a <tt class="code">value</tt> integer and a <tt class="code">name</tt> 
-  String.</p>
+<p>我们的示例Digit类也有一个<strong><img src="images/tag_3.gif" width="24" height="13" alt=""> <tt class="code">lookup</tt></strong>方法，返回<tt class="code">value</tt>属性等于指定int参数的实例。查找方法引入了<dfn>关键属性</dfn>的概念。许多类型安全的枚举具有一个或多个属性，可以唯一地区分一个实例与另一个实例</p>
+<p><em>请注意，不需要关键属性：Java VM保证每个新构造的对象都是唯一的，因此可以使用根本没有属性的类型安全枚举，并简单地将它们的实例与==实例标识运算符区分开来。这样可以正常工作，但通常可以方便地拥有唯一标识实例的键属性，以及<tt class="code">查找</tt>指定键值实例的<tt class="code">查找</tt>方法。</em></p>
 
-<p>Our example Digit class also has a <strong><img src="images/tag_3.gif" width="24" height="13" alt=""/><tt class="code">lookup</tt></strong> 
-  method, which returns the instance whose <tt class="code">value</tt> attribute equals 
-  the specified int parameter. A lookup method introduces the concept of <dfn>key 
-  attributes</dfn>. Many typesafe enums have one or more attributes that uniquely 
-  distinguish one instance from another.</p>
-<p><em>Note that key attributes are not required: the Java VM guarantees that every 
-  newly constructed object is unique, so it is possible to have typesafe enumerations 
-  that have no attributes at all, and simply distinguish their instances with 
-  the == instance identity operator. This works fine, but often it is convenient 
-  to have a key attribute that uniquely identifies an instance, and a <tt class="code">lookup</tt> 
-  method that finds an instance for a specified key value.</em></p>
-
-<p>Our template does have a <tt class="code">lookup</tt> method, so we need to decide what 
-  to do if <img src="images/tag_4.gif" width="24" height="13" alt=""/>no instance is found 
-  for the specified key value. Basically there are three options: throwing an 
-  Exception, returning a designated &quot;default&quot; instance, or returning 
-  <tt class="code">null</tt>. Which option is best depends on the application in which 
-  the class is used, so we should probably let the user decide.</p>
-<p>Now that we've studied typesafe enums in more detail, let's summarize what 
-  is customizable in a typesafe enumeration:</p>
+<p>我们的模板确实有<tt class="code">查找</tt>方法，因此我们需要决定如果要做什么<img src="images/tag_4.gif" width="24" height="13" alt="">找不到指定键值的实例。基本上有三个选项：抛出异常，返回指定的“默认”实例或返回<tt class="code">null</tt> 。哪个选项最好取决于使用该类的应用程序，因此我们应该让用户决定。</p>
+<p>现在我们已经更详细地研究了类型安全枚举，让我们总结一下在类型安全枚举中可自定义的内容：</p>
 <ul>
-  <li>package name </li>
-  <li>class name </li>
+  <li>包裹名字</li>
+  <li>班级名称</li>
 
-  <li>attributes, where each attribute
-  <ul>
-    <li>has a type </li>
-    <li>has a name </li>
-    <li>may be a key attribute </li>
+  <li>属性，每个属性的位置<ul>
+    <li>有一种类型</li>
+    <li>有一个名字</li>
+    <li>可能是一个关键属性</li>
   </ul></li>
-  <li>instances, where each instance
-
-  <ul>
-    <li>has a name </li>
-    <li>has a value for every attribute </li>
-    <li>may be the default instance to return for failed lookups</li>
+  <li>实例，每个实例<ul>
+    <li>有一个名字</li>
+    <li>每个属性都有一个值</li>
+    <li>可能是失败查找返回的默认实例</li>
   </ul></li>
 </ul>
-<h3><a name="typesafe_enum_model"></a>A Simple Typesafe Enumeration Model </h3>
-<p>A simple model for the customizable parts of a typesafe enum could look something 
-  like this:</p>
+<h3><a name="typesafe_enum_model"></a>一种简单的Typesafe枚举模型</h3>
+<p>类型安全枚举的可自定义部分的简单模型可能如下所示：</p>
 <p></p>
 
 <table border="1" cellspacing="0">
@@ -414,13 +171,7 @@ Classpath Variables menua action.. Your program will need to add a class path va
     <td><tt class="code">TypesafeEnum</tt></td>
   </tr>
   <tr> 
-    <td><tt class="code">getInstances() : Instance[]<br/>
-      getAttributes() : Attribute[]<br/>
-      getKeyAttributes() : Attribute[]<br/>
-
-      getDefaultInstance() : Instance<br/>
-      getPackageName() : String<br/>
-      getClassName() : String</tt></td>
+    <td><tt class="code">getInstances（）：实例[]<br>getAttributes（）：Attribute []<br>getKeyAttributes（）：Attribute []<br>getDefaultInstance（）：实例<br>getPackageName（）：String<br>getClassName（）：String</tt></td>
   </tr>
   </tbody> 
 </table>
@@ -428,14 +179,11 @@ Classpath Variables menua action.. Your program will need to add a class path va
 <table border="1" cellspacing="0">
   <tbody> 
   <tr> 
-    <td><tt class="code">Instance</tt></td>
+    <td><tt class="code">例</tt></td>
 
   </tr>
   <tr> 
-    <td><tt class="code"> getName() : String<br/>
-      getAttributeValues() : Properties<br/>
-      getAttributeValue(Attribute) : String<br/>
-      isDefault() : boolean</tt></td>
+    <td><tt class="code">getName（）：String<br>getAttributeValues（）：属性<br>getAttributeValue（Attribute）：String<br>isDefault（）：boolean</tt></td>
   </tr>
 
   </tbody> 
@@ -444,605 +192,279 @@ Classpath Variables menua action.. Your program will need to add a class path va
 <table border="1" cellspacing="0">
   <tbody> 
   <tr> 
-    <td><tt class="code">Attribute</tt></td>
+    <td><tt class="code">属性</tt></td>
   </tr>
   <tr> 
-    <td><tt class="code"> getName() : String<br/>
-
-      getType() : String<br/>
-      isKey() : boolean</tt></td>
+    <td><tt class="code">getName（）：String<br>getType（）：String<br>isKey（）：布尔值</tt></td>
   </tr>
   </tbody> 
 </table>
 <p></p>
-<p>In the next section we will use these classes to convert our Digit class to 
-  a JET template for typesafe enumerations.</p>
-<h3><a name="typesafe_enum_template"></a>A Typesafe Enumeration Template </h3>
-<p>Now that we have a model, we can take our Digit class and replace all Digit-specific 
-  code with JET scriptlets and expressions that call our model classes. The resulting 
-  template could look something like this:</p>
+<p>在下一节中，我们将使用这些类将我们的Digit类转换为类型安全枚举的JET模板。</p>
+<h3><a name="typesafe_enum_template"></a> Typesafe枚举模板</h3>
+<p>现在我们有了一个模型，我们可以使用我们的Digit类，并用调用我们的模型类的JET scriptlet和表达式替换所有特定于Digit的代码。生成的模板可能如下所示：</p>
 
-<pre> <span class="highlight"><span class="highlight">&lt;%@ jet package="translated" imports="java.util.* org.eclipse.emf.examples.jet.article2.model.*" class="TypeSafeEnumeration" %&gt;</span></span>
- <span class="highlight"><span class="highlight">&lt;% TypesafeEnum typesafeEnum = (TypesafeEnum) argument; %&gt;</span></span>
- package <span class="highlight">&lt;%=typesafeEnum.getPackageName()%&gt;</span>;
- 
- /**
-  * This final class implements a type-safe enumeration
-  * over the valid instances of a <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span>.
-  * Instances of this class are immutable.
-  */
- public final class <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span> {
- 
- <span class="highlight">&lt;% for (Iterator&lt;Instance&gt; i = typesafeEnum.instances(); i.hasNext(); ) { %&gt;</span>
+<pre> <span class="highlight"><span class="highlight">&lt;％@ jet package =“translated”imports =“java.util。* org.eclipse.emf.examples.jet.article2.model。*”class =“TypeSafeEnumeration”％&gt;</span></span> <span class="highlight"><span class="highlight">&lt;％TypesafeEnum typesafeEnum =（TypesafeEnum）参数; ％&gt;</span></span> package <span class="highlight">&lt;％= typesafeEnum.getPackageName（）％&gt;</span> ; / ** *这个最后一个类在<span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span>的有效实例上实现了一个类型安全的枚举*。*此类的实例是不可变的。* / public final class <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> { <span class="highlight">&lt;％for（Iterator &lt;Instance&gt; i = typesafeEnum.instances（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Instance instance = i.next （）; ％&gt;</span> // <strong>实例定义</strong> public static final <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> <span class="highlight">&lt;％= instance.getName（）％&gt;</span> = <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> new <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> （ <span class="highlight">&lt;％= instance.constructorValues（）％&gt;</span> ）; <span class="highlight">&lt;％}％&gt;</span> <span class="highlight">&lt;％for（Iterator &lt;Attribute&gt; i = typesafeEnum.attributes（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Attribute attribute = i.next（）; ％&gt;</span> // <strong>属性声明</strong> <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span> private final <span class="highlight">&lt;％= attribute.getType（）％&gt;</span> m <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> ; <span class="highlight">&lt;％}％&gt;</span> / ** *私有<strong>构造函数</strong> 。* / <span><img src="images/tag_3.gif" width="24" height="13" alt=""></span> private <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> （ <span class="highlight">&lt;％= typesafeEnum.constructorParameterDescription（）％&gt;</span> ）{ <span class="highlight">&lt;％for（Iterator &lt;Attribute&gt; i = typesafeEnum.attributes（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Attribute attribute = i.next（）; ％&gt;</span> <span><img src="images/tag_4.gif" width="24" height="13" alt=""></span> m <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> = <span class="highlight">&lt;％= attribute.getUncappedName（）％&gt;</span> ; <span class="highlight">&lt;％}％&gt;</span> } // <strong>getter访问器方法</strong> <span class="highlight">&lt;％for（Iterator &lt;Attribute&gt; i = typesafeEnum.attributes（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Attribute attribute = i.next（）; ％&gt;</span> / ** *返回<span class="highlight">&lt;％= attribute.getName（）％&gt;</span> 。* * @return <span class="highlight">&lt;％= attribute.getName（）％&gt;</span> 。* / public <span class="highlight">&lt;％= attribute.getType（）％&gt;</span> get <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> （）{return m <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> ; } <span class="highlight">&lt;％}％&gt;</span> //省略查找方法...}</pre>
 
- <span class="highlight">&lt;%     Instance instance = i.next(); %&gt;</span>
- 
-     // <strong>instance definition</strong>
-     public static final <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span> <span class="highlight">&lt;%=instance.getName()%&gt;</span> = 
-<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>      new <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span>(<span class="highlight">&lt;%=instance.constructorValues()%&gt;</span>);
- <span class="highlight">&lt;% } %&gt;</span>
+<p>如您所见，模板调用了一些不在我们之前介绍的简单模型中的方法。我们添加了一些方便的方法，比如<tt class="code"><img src="images/tag_2.gif" width="24" height="13" alt=""> Attribute.getCappedName（）</tt>和<tt class="code"><img src="images/tag_4.gif" width="24" height="13" alt=""> getUncappedName（）</tt>方法。这些方法有助于保持模板简单。</p>
+<p>我们添加到模型中的另一个方法示例是<tt class="code"><img src="images/tag_3.gif" width="24" height="13" alt=""> TypesafeEnum.constructorParameterDescription（）</tt>方法和<tt class="code"><img src="images/tag_1.gif" width="24" height="13" alt=""> Instance.constructorValues（）</tt>方法。<tt class="code">constructorValues</tt>方法的实现如下所示。</p>
 
- 
- <span class="highlight">&lt;% for (Iterator&lt;Attribute&gt; i = typesafeEnum.attributes(); i.hasNext(); ) { %&gt;</span>
- <span class="highlight">&lt;%     Attribute attribute = i.next(); %&gt;</span>
- 
-     // <strong>attribute declaration</strong>
-<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>  private final <span class="highlight">&lt;%=attribute.getType()%&gt;</span> m<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span>;
- <span class="highlight">&lt;% } %&gt;</span>
+<pre>// class Instance / ** *以此实例的构造函数所期望的顺序返回此实例的属性值的便捷方法。* * @return以逗号分隔的此实例的所有属性值列表，*格式为<tt class="code">attrib1-value，attrib2-value（，...）</tt>* / public String constructorValues（）{StringBuffer result = new StringBuffer（）; for（Iterator &lt;Attribute&gt; i = getType（）。attributes（）; i.hasNext（）;）{Attribute attribute = i.next（）; result.append（getAttributeValue（属性））; if（i.hasNext（））{result.append（“，”）;返回result.toString（）; }</pre>
+<p><tt class="code">constructorValues</tt>方法遍历typesafe枚举的属性，查找实例中每个属性的值，并将这些值连接成一个以逗号分隔的字符串。例如，在我们上面的<tt>Digit</tt> typesafe枚举类中，此方法将为“ZERO”实例返回<tt>“0，\”零\“”</tt> 。</p>
 
- 
-     /**
-      * Private <strong>constructor</strong>.
-      */
-<span><img src="images/tag_3.gif" width="24" height="13" alt=""/></span>  private <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span>(<span class="highlight">&lt;%=typesafeEnum.constructorParameterDescription()%&gt;</span>) {
- <span class="highlight">&lt;% for (Iterator&lt;Attribute&gt; i = typesafeEnum.attributes(); i.hasNext(); ) { %&gt;</span>
- <span class="highlight">&lt;%     Attribute attribute = i.next(); %&gt;</span>
-<span><img src="images/tag_4.gif" width="24" height="13" alt=""/></span>      m<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span> = <span class="highlight">&lt;%=attribute.getUncappedName()%&gt;</span>;
- <span class="highlight">&lt;% } %&gt;</span>
-
-     }
-               
- // <strong>getter accessor methods</strong>
- <span class="highlight">&lt;% for (Iterator&lt;Attribute&gt; i = typesafeEnum.attributes(); i.hasNext(); ) { %&gt;</span>
- <span class="highlight">&lt;%     Attribute attribute = i.next(); %&gt;</span>
-     /**
-      * Returns the <span class="highlight">&lt;%=attribute.getName()%&gt;</span>.
-      *
-      * @return the <span class="highlight">&lt;%=attribute.getName()%&gt;</span>. 
-      */
-     public <span class="highlight">&lt;%=attribute.getType()%&gt;</span> get<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span>() {
-         return m<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span>;
-     }
- 
- <span class="highlight">&lt;% } %&gt;</span>     
- 
-     // lookup method omitted...
- }</pre>
-
-<p>As you can see, the template calls some methods that were not in the simple 
-  model we introduced earlier. We have added a few convenience methods, like the 
-  <tt class="code"><img src="images/tag_2.gif" width="24" height="13" alt=""/>Attribute.getCappedName()</tt> 
-  and <tt class="code"><img src="images/tag_4.gif" width="24" height="13" alt=""/>getUncappedName()</tt> 
-  methods. Such methods help to keep the template simple.</p>
-<p>Another example of methods we added to the model are the <tt class="code"><img src="images/tag_3.gif" width="24" height="13" alt=""/>TypesafeEnum.constructorParameterDescription()</tt> 
-  method and the <tt class="code"><img src="images/tag_1.gif" width="24" height="13" alt=""/>Instance.constructorValues()</tt> 
-  method. The implementation of the <tt class="code">constructorValues</tt> method is shown 
-  below. </p>
-
-<pre>// class Instance
-/**
- * Convenience method that returns the attribute values of this instance,
- * in the order expected by the constructor of this instance.
- * 
- * @return a comma-separated list of all attribute values of this instance,
- *         formatted like <tt class="code">attrib1-value, attrib2-value (, ...)</tt>
- */
-public String constructorValues() {
-    StringBuffer result = new StringBuffer();
-    for (Iterator&lt;Attribute&gt; i = getType().attributes(); i.hasNext(); ) {
-        Attribute attribute = i.next();
-        result.append(getAttributeValue(attribute));
-        if (i.hasNext()) {
-            result.append(", ");
-        }
-    }
-    return result.toString();
-}
-</pre>
-<p>The <tt class="code">constructorValues</tt> method loops through the attributes of the 
-  typesafe enum, looks up the value for each attribute in the instance, and concatenates 
-  these values into a string, separated by commas. For example, in our <tt>Digit</tt> 
-  typesafe enum class above, this method would return <tt>&quot;0, \&quot;zero\&quot;&quot;</tt> 
-  for the &quot;ZERO&quot; instance. </p>
-
-<p>We could have looped through the attribute values in the template, but that 
-  would have made the template much more difficult to read. Pushing this logic 
-  into the model made the template more readable and easier to maintain. On the 
-  other hand, we lost some flexibility because users cannot customize that logic 
-  anymore by editing the template. This is a trade-off you have to make. Which 
-  is better depends on your template and your application.</p>
-<h3><a name="gui"></a>A GUI to Collect User Input </h3>
-<p>Now that we have a model and a template, we still need two more pieces to finish 
-  our plug-in: we need a GUI to collect values from the user to populate our model 
-  with, and we need to invoke our template with the populated model to generate 
-  source code and save this source code to a location in the workspace.</p>
-<p>Let's start with the GUI. The workbench provides a few wizards that do something 
-  similar to what we have in mind, for example the New Class, New Interface and 
-  New JUnit TestCase wizards. It probably makes sense to have our GUI look similar 
-  to these wizards and make it accessible from the standard menu and toolbar locations.</p>
-<p>Our wizard has three pages. The first page, shown below, looks like a simplified 
-  version of the New Class wizard. In fact, we are using the same framework that 
-  the New Class wizard uses, the <tt class="code">org.eclipse.jdt.ui.wizards</tt> package. 
-  In the first page, we collect the package name and the class name of the typesafe 
-  enum, and the location where the result should be saved.</p>
-<p><img alt="GUI wizard page one: class, package and location of the typesafe enum" src="images/enum_gui_page1.gif"/> 
+<p>我们可以遍历模板中的属性值，但这会使模板更难以阅读。将此逻辑推入模型使模板更易读，更易于维护。另一方面，我们失去了一些灵活性，因为用户无法通过编辑模板来自定义该逻辑。这是你必须做出的权衡。哪个更好取决于您的模板和您的应用程序。</p>
+<h3><a name="gui"></a>用于收集用户输入的GUI</h3>
+<p>现在我们有了一个模型和一个模板，我们还需要两个部分来完成我们的插件：我们需要一个GUI来收集用户的值以填充我们的模型，我们需要使用填充的模型调用我们的模板生成源代码并将此源代码保存到工作区中的某个位置。</p>
+<p>让我们从GUI开始。工作台提供了一些向导类似于我们想到的东西，例如New Class，New Interface和New JUnit TestCase向导。让我们的GUI看起来与这些向导类似，并使其可以从标准菜单和工具栏位置访问，这可能是有意义的。</p>
+<p>我们的向导有三页。第一页（如下所示）看起来像New Class向导的简化版本。实际上，我们使用的是New Class向导使用的相同框架，即<tt class="code">org.eclipse.jdt.ui.wizards</tt>包。在第一页中，我们收集了包类型名称和类型安全枚举的类名，以及应保存结果的位置。</p>
+<p><img alt="GUI向导页面一：类型安全枚举的类，包和位置" src="images/enum_gui_page1.gif"> 
 </p>
 <p></p>
-<p>Our second page collects information on the attributes of the typesafe enum 
-  class. Every attribute has a name and a type, and may be one of the key attributes. 
-  Our second wizard page is shown below:</p>
+<p>我们的第二页收集有关类型安全枚举类的属性的信息。每个属性都有一个名称和一个类型，可能是一个关键属性。我们的第二个向导页面如下所示：</p>
 
-<p><img alt="GUI wizard page two: attributes of the typesafe enum" src="images/enum_gui_page2.gif"/></p>
+<p><img alt="GUI向导第二页：类型安全枚举的属性" src="images/enum_gui_page2.gif"></p>
 <p></p>
-<p>Our third and last wizard page, shown below, collects information on the instances 
-  of the typesafe enum. The user inputs the instance name, and for each instance 
-  provides values for all attributes.</p>
-<p>Finally, one of the instances may be the &quot;default&quot; instance, which 
-  is the instance returned by the <tt class="code">lookup</tt> method if no instance was 
-  found for the specified key attribute values.</p>
-<p><img alt="GUI wizard page three: instances of the typesafe enum" src="images/enum_gui_page3.gif"/></p>
-<h3><a name="invoke_plugin_template"></a>Invoking the Template </h3>
-<p>Now that we have a GUI to populate our model, we can finally use what we learned 
-  in the first part of this article, and generate source code with our template.</p>
+<p>我们的第三个也是最后一个向导页面（如下所示）收集有关typesafe枚举实例的信息。用户输入实例名称，并为每个实例提供所有属性的值。</p>
+<p>最后，其中一个实例可能是“默认”实例，如果没有找到指定键属性值的实例，则该实例是<tt class="code">查找</tt>方法返回的实例。</p>
+<p><img alt="GUI向导页面三：typesafe枚举的实例" src="images/enum_gui_page3.gif"></p>
+<h3><a name="invoke_plugin_template"></a>调用模板</h3>
+<p>现在我们已经有了一个GUI来填充我们的模型，我们最终可以使用我们在本文第一部分中学到的知识，并使用我们的模板生成源代码。</p>
 
-<p>When a user presses Finish on the wizard, the <tt class="code">performFinish</tt> method 
-  in our wizard is called. The code below shows how we <img src="images/tag_1.gif" width="24" height="13" alt=""/>use 
-  a custom subclass of <tt class="code">JETEmitter</tt> to <img src="images/tag_2.gif" width="24" height="13" alt=""/>add 
-  the JAR file of our plug-in to the class path of the <i>.JETEmitters</i> project 
-  before we <img src="images/tag_3.gif" width="24" height="13" alt=""/>call generate on 
-  the <tt class="code">JETEmitter</tt>. The generated typesafe enum source code is <img src="images/tag_4.gif" width="24" height="13" alt=""/>saved 
-  to the location in the workspace that the user specified.</p>
-<pre> // class NewTypesafeEnumCreationWizard
- protected void finishPage(IProgressMonitor monitor) 
- throws InterruptedException, CoreException {
- 
-     String pluginId = "org.eclipse.emf.examples.jet.article2";
-     String base = Platform.getBundle(pluginId).getEntry("/").toString();
-     String relativeUri = "templates/TypeSafeEnumeration.javajet";
-<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>  <tt class="code">JETEmitter</tt> emitter = new JETEmitter(base + relativeUri, getClass().getClassLoader());
-<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>  emitter.addClasspathVariable("JET_TUTORIAL", pluginId);
- 
-     TypesafeEnum model = mPage1.getTypesafeEnumModel();
-     IProgressMonitor sub = BasicMonitor.subProgress(monitor, 1);
-
-<span><img src="images/tag_3.gif" width="24" height="13" alt=""/></span>  String result = emitter.generate(sub, new Object[] { model });
-     monitor.worked(1);
- 
-<span><img src="images/tag_4.gif" width="24" height="13" alt=""/></span>  IFile file = save(monitor, result.getBytes());
- 
-     selectAndReveal(file);
-     openResource(file);
- }</pre>
-<h3><a name="pluginxml"></a>Registering our Wizard </h3>
-<p>Our final code snippet below shows the part of our <tt class="code">plugin.xml</tt> configuration 
-  file where we register our wizard as a contribution to the workbench.</p>
-<pre>   &lt;extension point="org.eclipse.ui.newWizards"&gt;
-      &lt;wizard 
-            name="Typesafe Enum"
-            icon="icons/newenum_wiz.gif"
-            category="org.eclipse.jdt.ui.java"
-            id="org.eclipse.emf.examples.jet.article2.ui.NewTypesafeEnumCreationWizard"&gt;
-         &lt;description&gt;
-            Create a Typesafe Enumeration
-         &lt;/description&gt;
-         &lt;class class="org.eclipse.emf.examples.jet.article2.ui.NewTypesafeEnumCreationWizard"&gt;
-<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>         &lt;parameter name="javatype" value="true"/&gt;
-         &lt;/class&gt;
-      &lt;/wizard&gt;
-   &lt;/extension&gt;
-</pre>
-<p>Now our wizard is activated when users select File &gt; New &gt; Other &gt; 
-  Java &gt; Typesafe Enum from the workbench, as shown in the image below. </p>
-<p><img alt="Typesafe Enum wizard shows up in the New creation wizard" src="images/new_creation_wizard.gif"/> 
+<p>当用户在向导上按Finish时，将调用向导中的<tt class="code">performFinish</tt>方法。下面的代码显示了我们的方式<img src="images/tag_1.gif" width="24" height="13" alt="">使用<tt class="code">JETEmitter</tt>的自定义子类<img src="images/tag_2.gif" width="24" height="13" alt="">将我们的插件的JAR文件添加到的类路径中<i>。JETEmitters</i>项目在我们之前<img src="images/tag_3.gif" width="24" height="13" alt="">在<tt class="code">JETEmitter</tt>上调用generate。生成的类型安全枚举源代码是<img src="images/tag_4.gif" width="24" height="13" alt="">保存到用户指定的工作空间中的位置。</p>
+<pre>//类NewTypesafeEnumCreationWizard protected void finishPage（IProgressMonitor monitor）抛出InterruptedException，CoreException {String pluginId =“org.eclipse.emf.examples.jet.article2”; String base = Platform.getBundle（pluginId）.getEntry（“/”）。toString（）; String relativeUri =“templates / TypeSafeEnumeration.javajet”; <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> <tt class="code">JETEmitter</tt> emitter = new JETEmitter（base + relativeUri，getClass（）。getClassLoader（））; <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span> emitter.addClasspathVariable（“JET_TUTORIAL”，pluginId）; TypesafeEnum model = mPage1.getTypesafeEnumModel（）; IProgressMonitor sub = BasicMonitor.subProgress（monitor，1）; <span><img src="images/tag_3.gif" width="24" height="13" alt=""></span> String result = emitter.generate（sub，new Object [] {model}）; monitor.worked（1）; <span><img src="images/tag_4.gif" width="24" height="13" alt=""></span> IFile file = save（monitor，result.getBytes（））; selectAndReveal（文件）; openResource（文件）; }</pre>
+<h3><a name="pluginxml"></a>注册我们的向导</h3>
+<p>我们下面的最终代码片段显示了<tt class="code">plugin.xml</tt>配置文件的一部分，我们将向导注册为工作台的贡献。</p>
+<pre>&lt;extension point =“org.eclipse.ui.newWizards”&gt; &lt;wizard name =“Typesafe Enum”icon =“icons / newenum_wiz.gif”category =“org.eclipse.jdt.ui.java”id =“org.eclipse .emf.examples.jet.article2.ui。NewTypesafeEnumCreationWizard“&gt; &lt;description&gt;创建Typesafe枚举&lt;/ description&gt; &lt;class class =”org.eclipse.emf.examples.jet.article2.ui。NewTypesafeEnumCreationWizard“&gt; <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> &lt;parameter name =“javatype”value =“true”/&gt; &lt;/ class&gt; &lt;/ wizard&gt; &lt;/ extension&gt;</pre>
+<p>现在，当用户从工作台中选择File&gt; New&gt; Other&gt; Java&gt; Typesafe Enum时，我们的向导就会被激活，如下图所示。</p>
+<p><img alt="Typesafe Enum向导显示在“新建”向导中" src="images/new_creation_wizard.gif"> 
 </p>
-<p>Note that we set the <tt class="code"><img src="images/tag_1.gif" width="24" height="13" alt=""/>javatype</tt> 
-  attribute to true in the wizard extension element in the <tt class="code">plugin.xml</tt> 
-  file. This will cause our wizard to show up as an action on the toolbar in the 
-  Java Perspective, as shown in the image below.</p>
+<p>请注意，我们设置了<tt class="code"><img src="images/tag_1.gif" width="24" height="13" alt=""></tt> <tt class="code">plugin.xml</tt>文件中向导扩展元素中的<tt class="code">javatype</tt>属性为true。这将导致我们的向导在Java Perspective中显示为工具栏上的操作，如下图所示。</p>
 
-<p><img alt="Typesafe Enum wizard shows up as an action on the toolbar in the Java Perspective" src="images/new_toolbar.gif"/> 
+<p><img alt="Typesafe Enum向导在Java Perspective中显示为工具栏上的操作" src="images/new_toolbar.gif"> 
 </p>
 <p></p>
-<h2><a name="conclusion">Conclusion</a></h2>
-JET can be a great help for applications that need to generate text. Templates 
-are as much of an improvement to code generation as JSP pages were to old style 
-servlets. 
-<p>When using JET, you need to decide whether you want to distribute your templates 
-  with your application, or distribute only the template implementation classes.</p>
-<p>If your goal is to simplify the text generation capabilities of your application, 
-  then using JET Nature and JET Builder to automatically translate your templates 
-  is a good choice. See <a href="../../tutorials/jet1/jet_tutorial1.html">JET Tutorial 
-  Part 1</a> for details. In that case you only need to distribute the translated 
-  template implementation classes with your application, not the templates themselves.</p>
-<p>On the other hand, if it is important for your application that users have 
-  ultimate control over the generated text, you may want to distribute the template 
-  files themselves with your application. In that case, you will need to translate 
-  these templates every time you generate text. The plug-in we wrote in this article 
-  is an example of this type of application.</p>
-<p>This article explained what classes are available in the JET package to achieve 
-  this and showed how to use these classes with an Eclipse plug-in. The appendix 
-  below provides an overview of the JET API and shows how it can be used in headless 
-  or standalone applications.</p>
+<h2><a name="conclusion">结论</a></h2>对于需要生成文本的应用程序，JET可以提供很大的帮助。模板对代码生成起了很大的改进，因为JSP页面是旧式servlet。
+<p>使用JET时，您需要决定是要将模板与应用程序一起分发，还是仅分发模板实现类。</p>
+<p>如果您的目标是简化应用程序的文本生成功能，那么使用JET Nature和JET Builder自动翻译模板是一个不错的选择。有关详细信息，请参阅<a href="../../tutorials/jet1/jet_tutorial1.html">JET教程第1部分</a> 。在这种情况下，您只需要将已翻译的模板实现类与您的应用程序一起分发，而不是模板本身。</p>
+<p>另一方面，如果您的应用程序对用户最终控制生成的文本很重要，您可能希望将模板文件本身与您的应用程序一起分发。在这种情况下，每次生成文本时都需要翻译这些模板。我们在本文中编写的插件就是这种类型的应用程序的一个示例。</p>
+<p>本文解释了JET包中可用的类以实现此目的，并展示了如何将这些类与Eclipse插件一起使用。下面的附录提供了JET API的概述，并展示了如何在无头或独立应用程序中使用它。</p>
 
-<h2><a name="appendix">Appendix</a></h2>
-<h3><a name="jet_api_overview"></a>JET API Overview </h3>
-<strong>Package org.eclipse.emf.codegen</strong> 
+<h2><a name="appendix">附录</a></h2>
+<h3><a name="jet_api_overview"></a> JET API概述</h3>
+<strong>包org.eclipse.emf.codegen</strong> 
 <p></p>
 <table border="1" cellspacing="0">
   <tbody> 
   <tr> 
-    <th>Class</th>
-    <th>Description</th>
+    <th>类</th>
+    <th>描述</th>
   </tr>
 
   <tr> 
-    <td valign="top"><tt class="code">CodeGen</tt></td>
+    <td valign="top"><tt class="code">的CodeGen</tt></td>
     <td> 
-      <p>The <tt class="code">CodeGen</tt> class can translate a JET template to Java source 
-        code and optionally merge the template implementation Java source code 
-        with an existing Java class. <tt class="code">CodeGen</tt> can be used as an Eclipse 
-        headless application. The <tt class="code">run</tt> method expects a String array parameter 
-        of two or three elements: </p>
+      <p><tt class="code">CodeGen</tt>类可以将JET模板转换为Java源代码，并可选择将模板实现Java源代码与现有Java类合并。<tt class="code">CodeGen</tt>可以用作Eclipse无头应用程序。<tt class="code">run</tt>方法需要一个包含两个或三个元素的String数组参数：</p>
 
       <ul>
-        <li> the uri of the template to translate </li>
-        <li>the target path where the translation result should be saved </li>
-        <li>an optional <tt class="code">JMerge</tt> control model file specifying how to merge 
-          the new translation result with the source code of an existing Java 
-          class</li>
+        <li>要转换的模板的uri</li>
+        <li>应保存翻译结果的目标路径</li>
+        <li>一个可选的<tt class="code">JMerge</tt>控件模型文件，指定如何将新的转换结果与现有Java类的源代码合并</li>
       </ul>
 
     </td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">CodeGenPlugin</tt></td>
-    <td>The plug-in class for the JET package.</td>
+    <td>JET包的插件类。</td>
   </tr>
   </tbody>
 </table>
 <p></p>
 
-<strong>Package org.eclipse.emf.codegen.jet</strong> 
+<strong>包org.eclipse.emf.codegen.jet</strong> 
 <p></p>
 <table border="1" cellspacing="0">
   <tbody> 
   <tr> 
-    <th>Class</th>
-    <th>Description</th>
+    <th>类</th>
+    <th>描述</th>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">IJETNature</tt></td>
 
-    <td>Interface extending <tt class="code">org.eclipse.core.resources.IProjectNature</tt>. 
-      Defines some of the properties that a JET nature has. Implemented by <tt class="code">JETNature</tt>. 
-      Used as a filter for project property pages by the <tt class="code">org.eclipse.emf.codegen.ui</tt> 
-      plug-in.</td>
+    <td>接口扩展<tt class="code">org.eclipse.core.resources。IProjectNature</tt> 。定义JET特性具有的一些属性。由<tt class="code">JETNature</tt>实现。用作<tt class="code">org.eclipse.emf.codegen.ui</tt>插件的项目属性页面的过滤器。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETAddNatureOperation</tt></td>
-    <td>A <tt class="code">org.eclipse.core.resources.IWorkspaceRunnable</tt> for adding the 
-      JET nature to a project in the workspace. Used by the <tt class="code">AddJETNatureAction</tt> 
-      in the <tt class="code">org.eclipse.emf.codegen.ui</tt> plug-in.</td>
+    <td>一个<tt class="code">org.eclipse.core.resources。IWorkspaceRunnable</tt>用于将JET特性添加到工作空间中的项目。由<tt class="code">org.eclipse.emf.codegen.ui</tt>插件中的<tt class="code">AddJETNatureAction</tt>使用。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETBuilder</tt></td>
-    <td>This class extends <tt class="code">org.eclipse.core.resources.IncrementalProjectBuilder</tt>. 
-      When its <tt class="code">build</tt> method is invoked, it delegates to <tt class="code">JETCompileTemplateOperation</tt> 
-      to translate all templates in the workspace project that have been changed 
-      since the previous build. Templates must be located in one of the folders 
-      specified as Template Containers in the JET Nature of the project.</td>
+    <td>这个类扩展了<tt class="code">org.eclipse.core.resources。IncrementalProjectBuilder</tt> 。调用其<tt class="code">构建</tt>方法时，它会委托<tt class="code">JETCompileTemplateOperation</tt>转换工作区项目中自上次构建以来已更改的所有模板。模板必须位于项目的JET性质中指定为模板容器的其中一个文件夹中。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETCharDataGenerator</tt></td>
-    <td>Responsible for a part of the template translation process. Generates 
-      strings for the character data present in the template file. Used by <tt class="code">JETCompiler</tt>.</td>
+    <td>负责模板翻译过程的一部分。为模板文件中存在的字符数据生成字符串。由<tt class="code">JETCompiler使用</tt> 。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETCompiler</tt></td>
 
-    <td>This is the core class for template translation. This class is responsible 
-      for translating templates to the Java source code of a template implementation 
-      class. The actual translation is delegated to other classes in this package. 
-      A <tt class="code">JETParser</tt> is used to parse the template into template elements. 
-      <tt class="code">JETCompiler</tt> implements the <tt class="code">JETParseEventListener</tt> interface 
-      and registers itself with the parser to be notified when the parser recognizes 
-      a template element. For every recognized template element, <tt class="code">JETCompiler</tt> 
-      uses a <tt class="code">JETGenerator</tt> to translate the template element to Java source 
-      code. When the template parsing is complete, <tt class="code">JETCompiler</tt> uses a 
-      <tt class="code">JETSkeleton</tt> to assemble the Java source code elements to a single 
-      compilation unit (a Java class).</td>
+    <td>这是模板转换的核心类。该类负责将模板转换为模板实现类的Java源代码。实际的转换被委托给此包中的其他类。<tt class="code">JETParser</tt>用于将模板解析为模板元素。
+      <tt class="code">JETCompiler</tt>实现<tt class="code">JETParseEventListener</tt>接口，并在解析器识别模板元素时通知解析器。对于每个可识别的模板元素， <tt class="code">JETCompiler</tt>使用<tt class="code">JETGenerator</tt>将模板元素转换为Java源代码。模板解析完成后， <tt class="code">JETCompiler</tt>使用<tt class="code">JETSkeleton</tt>将Java源代码元素组装到单个编译单元（Java类）。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETCompileTemplateOperation</tt></td>
-    <td>This class implements <tt class="code">org.eclipse.core.resources.IWorkspaceRunnable</tt> 
-      so it can execute as a batch operation within the workspace. This operation 
-      takes a workspace project, one or more Template Containers and optionally 
-      a list of specific template files as constructor parameters. When its <tt class="code">run</tt> 
-      method is invoked, it uses a <tt class="code">JETCompiler</tt> to translate the template 
-      files in the specified workspace project folders to Java source files for 
-      template implementation classes. This operation can optionally be configured 
-      to trigger a complete build of the project when it is finished to compile 
-      the Java source files to <i>.class</i> files.</td>
+    <td>该类实现了<tt class="code">org.eclipse.core.resources。IWorkspaceRunnable，</tt>因此它可以作为工作区内的批处理操作执行。此操作将工作空间项目，一个或多个模板容器以及可选的特定模板文件列表作为构造函数参数。调用其<tt class="code">run</tt>方法时，它使用<tt class="code">JETCompiler</tt>将指定工作区项目文件夹中的模板文件转换为模板实现类的Java源文件。可以选择将此操作配置为在项目完成时触发项目的完整构建，以将Java源文件编译为<i>.class</i>文件。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETConstantDataGenerator</tt></td>
-    <td>Responsible for a part of the template translation process. Extends <tt class="code">JETCharDataGenerator</tt> 
-      to generate constant declarations for the strings with character data present 
-      in the template file.</td>
+    <td>负责模板翻译过程的一部分。扩展<tt class="code">JETCharDataGenerator</tt>以生成包含模板文件中存在的字符数据的字符串的常量声明。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETCoreElement</tt></td>
 
-    <td>Interface for core JET syntax elements (directive, expression, scriptlet 
-      and quote-escape). Used by <tt class="code">JETParser</tt>.</td>
+    <td>核心JET语法元素的接口（指令，表达式，scriptlet和quote-escape）。由<tt class="code">JETParser使用</tt> 。</td>
   </tr>
   <tr> 
-    <td valign="top"><tt class="code">JETEmitter</tt></td>
-    <td>This class provides a convenient high-level API for users of this package. 
-      The <tt class="code">generate</tt> method of this class translates a template to Java 
-      source code, compiles this source code to a template implementation class, 
-      asks the template class to generate text and finally returns the generated 
-      result. This class creates a Java project called <i>.JETEmitters</i> in 
-      the workspace, translates the template into this project, and simply calls 
-      <tt class="code">build</tt> on the <i>.JETEmitters</i> project to compile the source 
-      code. If translation or compilation fails, a <tt class="code">JETException</tt> is thrown. 
-      A template implementation Java class is "executed" by calling its <tt class="code">generate</tt> 
-      method.</td>
+    <td valign="top"><tt class="code">那么JETEmitter</tt></td>
+    <td>此类为此程序包的用户提供方便的高级API。此类的<tt class="code">generate</tt>方法将模板转换为Java源代码，将此源代码编译为模板实现类，要求模板类生成文本，最后返回生成的结果。该类创建一个名为的Java项目<i>。工作空间中的JETEmitters</i>将模板转换为此项目，并简单地调用<tt class="code">build</tt> <i>。JETEmitters</i>项目编译源代码。如果转换或编译失败，则抛出<tt class="code">JETException</tt> 。通过调用其<tt class="code">generate</tt>方法“执行”模板实现Java类。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETException</tt></td>
-    <td>Extends <tt class="code">org.eclipse.core.runtime.CoreException</tt>, but provides 
-      more convenient constructors.</td>
+    <td>扩展<tt class="code">org.eclipse.core.runtime。CoreException</tt> ，但提供了更方便的构造函数。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETExpressionGenerator</tt></td>
 
-    <td>Responsible for a part of the template translation process. Extends <tt class="code">JETScriptletGenerator</tt> 
-      to translate JET expressions (<tt class="code">&lt;%= ... %&gt;</tt> stuff) to Java source 
-      code.</td>
+    <td>负责模板翻译过程的一部分。扩展<tt class="code">JETScriptletGenerator</tt>以将JET表达式（ <tt class="code">&lt;％= ...％&gt;</tt> stuff）转换为Java源代码。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETGenerator</tt></td>
-    <td>Interface for generators: classes that know how to translate part of a 
-      JET template to a Java source code element.</td>
+    <td>生成器接口：知道如何将JET模板的一部分转换为Java源代码元素的类。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETMark</tt></td>
-    <td>A state object used by the <tt class="code">JETParser</tt> to mark points in the JET 
-      character input stream, and delegate the processing of parts of the stream 
-      to other objects.</td>
+    <td><tt class="code">JETParser</tt>用于标记JET字符输入流中的点的状态对象，并将流的各个部分的处理委托给其他对象。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETNature</tt></td>
 
     <td> 
-      <p>This class implements <tt class="code">IJETNature</tt> so that it can configure 
-        a workspace project with the JET Nature. When this nature is added to 
-        a project, it adds a JET Builder to the front of the build spec of the 
-        project. This nature defines two properties: </p>
+      <p>此类实现<tt class="code">IJETNature，</tt>以便它可以使用JET Nature配置工作区项目。当这种性质被添加到项目中时，它会将JET Builder添加到项目的构建规范的前面。这种性质定义了两个属性：</p>
       <ul>
-        <li> Template Containers - a list of folders in the project that contain 
-          the JET templates to translate. </li>
-        <li>Source Container - the target folder in which to save translated template 
-          implementation Java classes. </li>
+        <li>模板容器 - 项目中包含要翻译的JET模板的文件夹列表。</li>
+        <li>源容器 - 用于保存已翻译模板实现Java类的目标文件夹。</li>
       </ul>
 
-      <p>These properties are used by the JET Builder when performing a build.</p>
+      <p>执行构建时，JET Builder将使用这些属性。</p>
     </td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETParseEventListener</tt></td>
-    <td>Interface for objects that know how to process parts of a JET character 
-      input stream.</td>
+    <td>知道如何处理JET字符输入流的部分的对象的接口。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETParser</tt></td>
 
-    <td>The main parser class. Has several inner classes for recognizing core 
-      JET syntax elements (directive, expression, scriptlet and quote-escape). 
-      When a core JET syntax element is recognized, the actual processing of the 
-      element is delegated to a <tt class="code">JETParseEventListener</tt>.</td>
+    <td>主解析器类。有几个内部类用于识别核心JET语法元素（指令，表达式，scriptlet和quote-escape）。当识别核心JET语法元素时，该元素的实际处理被委托给<tt class="code">JETParseEventListener</tt> 。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETReader</tt></td>
-    <td>An input buffer for the JET parser. Provides a <tt class="code">stackStream</tt> method 
-      that others can call with the character stream to an include file. Also 
-      provides many other convenience methods for the parser.</td>
+    <td>JET解析器的输入缓冲区。提供<tt class="code">stackStream</tt>方法，其他人可以使用字符流调用包含文件。还为解析器提供了许多其他便利方法。</td>
 
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETScriptletGenerator</tt></td>
-    <td>Responsible for a part of the template translation process. Translates 
-      JET scriptlets (<tt class="code">&lt;% ... %&gt;</tt> stuff) to Java source code.</td>
+    <td>负责模板翻译过程的一部分。将JET scriptlet（ <tt class="code">&lt;％...％&gt;</tt> stuff）转换为Java源代码。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JETSkeleton</tt></td>
 
-    <td>This class provides an interface for assembling Java source code elements 
-      into a single Java compilation unit (a Java class). Java source code elements 
-      are assembled according to a class skeleton definition. A skeleton can be 
-      used to add boilerplate code to a translated template implementation class. 
-      This class provides a default custom template implementation class skeleton 
-      definition, but can also assemble Java elements using a custom skeleton. 
-      The actual parsing and generation of Java source code is delegated to classes 
-      in the <tt class="code">org.eclipse.jdt.core.jdom</tt> package.</td>
+    <td>该类提供了一个接口，用于将Java源代码元素组装到单个Java编译单元（Java类）中。Java源代码元素根据类框架定义进行组装。骨架可用于将样板代码添加到已翻译的模板实现类。此类提供默认的自定义模板实现类框架定义，但也可以使用自定义框架组合Java元素。Java源代码的实际解析和生成委托给<tt class="code">org.eclipse.jdt.core.jdom</tt>包中的类。</td>
   </tr>
   </tbody>
 </table>
 <p></p>
-<strong>Package org.eclipse.emf.codegen.merge.java</strong> 
+<strong>包org.eclipse.emf.codegen.merge.java</strong> 
 <p></p>
 <table border="1" cellspacing="0">
   <tbody> 
   <tr> 
-    <th>Class</th>
-    <th>Description</th>
+    <th>类</th>
+    <th>描述</th>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JControlModel</tt></td>
-    <td>A control model that provides dictionaries and rules to drive a merge 
-      process.</td>
+    <td>一种控件模型，提供用于驱动合并过程的字典和规则。</td>
   </tr>
   <tr> 
-    <td valign="top"><tt class="code">JMerger</tt></td>
+    <td valign="top"><tt class="code">的JMerger</tt></td>
 
-    <td>A class for merging Java source files. Uses implementation of the interfaces in the <tt class="code">org.eclipse.emf.codegen.merge.java.facade</tt> 
-      package to parse the source code. This class can be used by application 
-      code.</td>
+    <td>用于合并Java源文件的类。使用<tt class="code">org.eclipse.emf.codegen.merge.java.facade</tt>包中的接口实现来解析源代码。该类可以由应用程序代码使用。</td>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">JPatternDictionary</tt></td>
-    <td>A dictionary of signatures and java nodes.</td>
+    <td>签名和Java节点的字典。</td>
   </tr>
   </tbody>
 </table>
 
 <p></p>
-<strong>Package org.eclipse.emf.codegen.merge.properties</strong> 
+<strong>包org.eclipse.emf.codegen.merge.properties</strong> 
 <p></p>
 <table border="1" cellspacing="0">
   <tbody> 
   <tr> 
-    <th>Class</th>
-    <th>Description</th>
+    <th>类</th>
+    <th>描述</th>
   </tr>
   <tr> 
     <td valign="top"><tt class="code">PropertyMerger</tt></td>
-    <td>A class for merging property files. This class can be used by application 
-      code.</td>
+    <td>用于合并属性文件的类。该类可以由应用程序代码使用。</td>
   </tr>
   </tbody>
 </table>
 <p></p>
-<h3><a name="codegen_headless_application"></a>Running CodeGen as an Eclipse Headless 
-  Application </h3>
-<p>The <tt class="code">org.eclipse.emf.codegen.CodeGen</tt> class can translate a JET template to Java source code 
-  and optionally merge the template implementation Java source code with an existing 
-  Java class. CodeGen can be used as an Eclipse headless application ("headless" 
-  means that the Eclipse GUI does not start). The <tt class="code">plugins/org.eclipse.emf.codegen/test</tt> 
-  folder in your Eclipse installation contains some scripts for launching the 
-  CodeGen class as an Eclipse headless application. These scripts are in Unix 
-  format.</p>
+<h3><a name="codegen_headless_application"></a>将CodeGen作为Eclipse无头应用程序运行</h3>
+<p><tt class="code">org.eclipse.emf.codegen。CodeGen</tt>类可以将JET模板转换为Java源代码，并可选择将模板实现Java源代码与现有Java类合并。CodeGen可以用作Eclipse无头应用程序（“无头”意味着Eclipse GUI无法启动）。Eclipse安装中的<tt class="code">plugins / org.eclipse.emf.codegen / test</tt>文件夹包含一些脚本，用于将CodeGen类作为Eclipse无头应用程序启动。这些脚本是Unix格式的。</p>
 
-<p><img src="images/win_only.gif" width="49" height="13" alt=""/> Below is an example 
-  script for Windows. Note that we pass two arguments to the CodeGen class:</p>
+<p><img src="images/win_only.gif" width="49" height="13" alt="">下面是Windows的示例脚本。请注意，我们将两个参数传递给CodeGen类：</p>
 <ul>
-  <li>the <img src="images/tag_1.gif" width="24" height="13" alt=""/>uri of the template 
-    to translate </li>
-  <li>the <img src="images/tag_2.gif" width="24" height="13" alt=""/>target path where 
-    the translation result should be saved </li>
+  <li>该<img src="images/tag_1.gif" width="24" height="13" alt=""> uri要翻译的模板</li>
+  <li>该<img src="images/tag_2.gif" width="24" height="13" alt="">应保存翻译结果的目标路径</li>
 </ul>
-<p>If the target path already contains a previous translation result, and you 
-  want to merge the new translation result with the existing one, you can specify 
-  a <tt class="code">JMerge</tt> control model file as the third argument. The <tt class="code">plugins/org.eclipse.emf.codegen/test</tt> 
-  folder in your Eclipse installation contains an example <tt class="code">merge.xml</tt> file.</p>
+<p>如果目标路径已包含先前的转换结果，并且您希望将新转换结果与现有转换结果合并，则可以将<tt class="code">JMerge</tt>控件模型文件指定为第三个参数。Eclipse安装中的<tt class="code">plugins / org.eclipse.emf.codegen / test</tt>文件夹包含一个示例<tt class="code">merge.xml</tt>文件。</p>
 
-<pre>   @echo off
-   set ECLIPSE_HOME=C:\eclipse-2.1\eclipse
-   set WORKSPACE=%ECLIPSE_HOME%\workspace
-   set OPTS=-Xmx900M -Djava.compiler=NONE -verify -cp %ECLIPSE_HOME%\startup.jar
-   set MAIN=org.eclipse.core.launcher.Main -noupdate -data %WORKSPACE% 
- 
-<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>set TEMPLATE_URI=test.javajet
-<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>set TARGET_FOLDER=C:\temp\jetstandalone\MyProject
-   set ARGUMENTS=%TEMPLATE_URI% %TARGET_FOLDER%
-   
-   echo Shut down Eclipse before running this script.
-   java %OPTS% %MAIN% -application org.eclipse.emf.codegen.CodeGen %ARGUMENTS%
-</pre>
-<h3><a name="jetc"></a>jetc: An ANT Task for Translating JET Templates Outside 
-  of Eclipse </h3>
-<p>Author: Knut Wannheden (knut.wannheden at paranor.ch) </p>
-<p>Binary: <a href="images/../jetc-task.jar">jetc-task.jar</a>. </p>
-<p>The source: <a href="images/../JETCTask.java" target="_blank">JETCTask.java</a>. </p>
+<pre>@echo off set ECLIPSE_HOME = C：\ eclipse-2.1 \ eclipse set WORKSPACE =％ECLIPSE_HOME％\ workspace set OPTS = -Xmx900M -Djava.compiler = NONE -verify -cp％ECLIPSE_HOME％\ startup.jar set MAIN = org.eclipse .core.launcher。Main -noupdate -data％WORKSPACE％ <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span>设置TEMPLATE_URI = test.javajet <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span>设置TARGET_FOLDER = C：\ temp \ jetstandalone \ MyProject set ARGUMENTS =％TEMPLATE_URI %% TARGET_FOLDER％echo在运行此脚本之前关闭Eclipse。java％OPTS %% MAIN％-application org.eclipse.emf.codegen。CodeGen％ARGUMENTS％</pre>
+<h3><a name="jetc"></a> jetc：在Eclipse之外翻译JET模板的ANT任务</h3>
+<p>作者：Knut Wannheden（paranor.ch的knut.wannheden）</p>
+<p>二进制： <a href="images/../jetc-task.jar">jetc-task.jar</a> 。</p>
+<p>来源： <a href="images/../JETCTask.java" target="_blank">JETCTask.java</a> 。</p>
 
-<p>Some notes: </p>
+<p>一些说明：</p>
 <ul>
-  <li>In the <tt class="code">&lt;taskdef/&gt;</tt> you have to specify the class path to include 
-    both this task as well as the jars of a number of Eclipse plug-ins (see the 
-    example buildfile). </li>
-  <li>There are two ways to tell the jetc task which template(s) it should translate: 
-  <ul>
-    <li>Use a nested fileset to specify the directory containing the template 
-      files. </li>
+  <li>在<tt class="code">&lt;taskdef /&gt;中，</tt>您必须指定类路径以包含此任务以及许多Eclipse插件的jar（请参阅示例构建文件）。</li>
+  <li>有两种方法可以告诉jetc任务应该翻译哪个模板：<ul>
+    <li>使用嵌套文件集指定包含模板文件的目录。</li>
 
-    <li>Specify the template uri in the "template" attribute of the task. When 
-      used this way, the task supports the "class" and "package" attributes which 
-      overload the JET directives "class" and "package" in the template. It can 
-      also be used if the JET directive is missing altogether. Use this attribute 
-      when you want to specify the class to generate outside the template. </li>
+    <li>在任务的“template”属性中指定模板uri。当以这种方式使用时，该任务支持“class”和“package”属性，这些属性使模板中的JET指令“class”和“package”重载。如果完全缺少JET指令，也可以使用它。如果要指定要在模板外部生成的类，请使用此属性。</li>
   </ul></li>
 </ul>
-<p>Here's a simple Ant buildfile (the taskdef class path assumes you have Eclipse 
-  3.3 and EMF 2.3.0): </p>
-<pre>&lt;project default=&quot;jetc_multiple_templates&quot;&gt;
-  &lt;property name=&quot;eclipse.plugins.dir&quot; location=&quot;C:\eclipse-SDK-3.3M4-win32\eclipse\plugins&quot; /&gt;
-    
-  &lt;taskdef name=&quot;jetc&quot; classname=&quot;ch.paranor.epla.structure.JETCTask&quot;&gt;
-    &lt;classpath&gt;
-      &lt;pathelement location=&quot;jetc-task.jar&quot; /&gt;
-      &lt;fileset dir=&quot;${eclipse.plugins.dir}&quot;&gt;
-        &lt;include name=&quot;org.eclipse.core.boot_*.jar&quot; /&gt;
-        &lt;include name=&quot;org.eclipse.core.resources_*.jar&quot; /&gt;
-        &lt;include name=&quot;org.eclipse.core.runtime_*.jar&quot; /&gt;
-        &lt;include name=&quot;org.eclipse.jdt.core_*.jar&quot; /&gt;
+<p>这是一个简单的Ant构建文件（taskdef类路径假设你有Eclipse 3.3和EMF 2.3.0）：</p>
+<pre>&lt;project default =“jetc_multiple_templates”&gt; &lt;property name =“eclipse.plugins.dir”location =“C：\ eclipse-SDK-3.3M4-win32 \ eclipse \ plugins”/&gt; &lt;taskdef name =“jetc”classname =“ ch.paranor.epla.structure。JETCTask“&gt; &lt;classpath&gt; &lt;pathelement location =”jetc-task.jar“/&gt; &lt;fileset dir =”$ {eclipse.plugins.dir}“&gt; &lt;include name =”org.eclipse.core.boot _ * .jar“ /&gt; &lt;include name =“org.eclipse.core.resources _ * .jar”/&gt; &lt;include name =“org.eclipse.core.runtime _ * .jar”/&gt; &lt;include name =“org.eclipse.jdt.core_ * .jar“/&gt; &lt;include name =”org.eclipse.emf.codegen _ * .jar“/&gt; &lt;/ fileset&gt; &lt;/ classpath&gt; &lt;/ taskdef&gt; &lt;！ - 用法示例1： - &gt; &lt;！ -  - 在“template”属性中指定模板文件。 - &gt; &lt;！ - 您可以使用“class”和“package”属性覆盖 - &gt; &lt;！ - “class”和“package”属性模板文件。 - &gt; &lt;target name =“jetc_single_template”&gt; &lt;mkdir dir =“jet-output”/&gt; &lt;jetc template =“test.xmljet”package =“com.foo”class =“Test”destdir =“ jet-output“/&gt; &lt;javac srcdir =”jet-output“destdir =”classes“/&gt; &lt;/ target&gt; &lt;！ - 用法示例2： - &gt; &lt;！ - 一次翻译一堆模板文件。 - &gt; &lt;！ - 使用文件集时不能使用“class”和“package”属性。 - &gt; &lt;target name =“jetc_mu ltiple_templates“&gt; &lt;mkdir dir =”jet-output“/&gt; &lt;jetc destdir =”jet-output“&gt; &lt;fileset dir =”jet-templates“includes =”*。* jet“/&gt; &lt;/ jetc&gt; &lt;javac srcdir =“jet-output”destdir =“classes”/&gt; &lt;/ target&gt; &lt;/ project&gt;</pre>
+<h2><a name="resources">资源</a></h2>
+<p><a href="http://developer.java.sun.com/developer/Books/shiftintojava/page1.html#replaceenums" target="_blank">缺失C构造的替代品</a> （作者Joshua Bloch）</p>
+<a href="http://www.javaworld.com/javaworld/javatips/jw-javatip122.html" target="_blank">Java技巧122：谨防Java类型安全枚举</a> （作者：Vladimir Roubtsov）<br>
+<p><a href="http://www.javaworld.com/javaworld/javatips/jw-javatip133.html" target="_blank">Java技巧133：有关类型安全枚举的更多信息</a> （作者：Philip Bishop）</p>
 
-        &lt;include name=&quot;org.eclipse.emf.codegen_*.jar&quot; /&gt;
-      &lt;/fileset&gt;
-    &lt;/classpath&gt;
-  &lt;/taskdef&gt;
-
-  &lt;!-- Usage example 1: --&gt;
-  &lt;!-- Specify the template file in the &quot;template&quot; attribute. --&gt;
-  &lt;!-- You can use the &quot;class&quot; and &quot;package&quot; attributes to override the --&gt;
-  &lt;!-- &quot;class&quot; and &quot;package&quot; attributes in the template file. --&gt;
-  &lt;target name=&quot;jetc_single_template&quot;&gt;
-    &lt;mkdir dir=&quot;jet-output&quot; /&gt;
-    &lt;jetc template=&quot;test.xmljet&quot;
-          package=&quot;com.foo&quot;
-          class=&quot;Test&quot;
-          destdir=&quot;jet-output&quot; /&gt;
-    &lt;javac srcdir=&quot;jet-output&quot; destdir=&quot;classes&quot; /&gt;
-  &lt;/target&gt;
-
-  &lt;!-- Usage example 2: --&gt;
-  &lt;!-- Translate a bunch of template files at once. --&gt;
-  &lt;!-- You cannot use the &quot;class&quot; and &quot;package&quot; attributes when using a fileset. --&gt;
-  &lt;target name=&quot;jetc_multiple_templates&quot;&gt;
-    &lt;mkdir dir=&quot;jet-output&quot; /&gt;
-    &lt;jetc destdir=&quot;jet-output&quot;&gt;
-      &lt;fileset dir=&quot;jet-templates&quot; includes=&quot;*.*jet&quot; /&gt;
-    &lt;/jetc&gt;
-    &lt;javac srcdir=&quot;jet-output&quot; destdir=&quot;classes&quot; /&gt;
-  &lt;/target&gt;
-&lt;/project&gt;</pre>
-<h2><a name="resources">Resources</a></h2>
-<p><a href="http://developer.java.sun.com/developer/Books/shiftintojava/page1.html#replaceenums" target="_blank">Substitutes 
-  for Missing C Constructs</a> (By Joshua Bloch)</p>
-<a href="http://www.javaworld.com/javaworld/javatips/jw-javatip122.html" target="_blank"> 
-Java Tip 122: Beware of Java typesafe enumerations</a> (By Vladimir Roubtsov)<br/>
-<p><a href="http://www.javaworld.com/javaworld/javatips/jw-javatip133.html" target="_blank">Java 
-  Tip 133: More on typesafe enums</a> (By Philip Bishop)</p>
-
-<p><a href="http://www.eclipse.org/emf/">http://www.eclipse.org/emf/ </a></p>
-<p><small>Java and all Java-based trademarks and logos are trademarks or registered trademarks of Sun 
-Microsystems, Inc. in the United States, other countries, or both.</small></p>
-<br/>
+<p><a href="http://www.eclipse.org/emf/">http://www.eclipse.org/emf/</a></p>
+<p><small>Java和所有基于Java的商标和徽标是Sun Microsystems，Inc。在美国和/或其他国家/地区的商标或注册商标。</small></p>
+<br>
 </body>
 </html>
