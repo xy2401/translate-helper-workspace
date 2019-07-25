@@ -1,14 +1,14 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" gtc:encodedoriginal="PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwvL0VOIj4=">
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta name="copyright" content="Copyright (c) 2015, 2016 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
-<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1"></link>
+<meta name="copyright" content="Copyright (c) 2015, 2016 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
 <title>采用Neon（4.6）机制和API</title>
 </head>
 
-<body dir="ltr">
+<body >
 
 <h1>采用Neon（4.6）机制和API</h1>
 
@@ -33,9 +33,25 @@
 <p><strong>描述：</strong>
 </p><p>为了减少样板，Eclipse 4.7将为接收IProgressMonitor作为参数的方法引入新的调用约定。在Eclipse 4.7中，调用者有责任在IProgressMonitor而不是接收者上调用<code>done()</code> 。调用者可以选择使用SubMonitor，它不需要使用<code>done()</code> 。这意味着 - 在实践中 - 大多数<code>done()</code>调用将与其周围的try / catch块一起被删除。
 </p><p>客户不应该删除样板。现在，以前收到IProgressMonitor并在其上调用done（）的任何方法都应该继续这样做。
-</p><p>获取自己的顶级进度监视器而不是接收一个作为参数的方法现在负责在这些监视器上调用done（）。从技术上讲，他们总是负责这样做，但有些人并没有这样做，因为他们传递给它的任何方法都会代表他们调用done（）。现在这很重要，需要改变方法。例如：</p><pre>//之前：public void doSaveAs（）{IProgressMonitor monitor = getProgressMonitor（）; performSaveAs（监视器）; }</pre>
+</p><p>获取自己的顶级进度监视器而不是接收一个作为参数的方法现在负责在这些监视器上调用done（）。从技术上讲，他们总是负责这样做，但有些人并没有这样做，因为他们传递给它的任何方法都会代表他们调用done（）。现在这很重要，需要改变方法。例如：</p><pre>
+// Before:
+public void doSaveAs() {
+  IProgressMonitor monitor= getProgressMonitor();
+  performSaveAs(monitor);
+}
+</pre>
 
-<pre>// After：public void doSaveAs（）{IProgressMonitor monitor = getProgressMonitor（）;尝试{performSaveAs（monitor）; } finally {monitor.done（）; }}</pre>
+<pre>
+// After:
+public void doSaveAs() {
+  IProgressMonitor monitor= getProgressMonitor();
+    try {
+      performSaveAs(monitor);
+    } finally {
+      monitor.done();
+    }
+}
+</pre>
 
 <p>幸运的是，这些方法很少，很容易找到。
 </p><p>
@@ -52,8 +68,8 @@
 
 <!-- ############################################## -->
 </p><h2>2。<a name="SubProgressMonitor">SubProgressMonitor已被弃用</a></h2>
-<p><strong>受影响的内容：</strong>引用<code>org.eclipse.core.runtime.客户端<code>org.eclipse.core.runtime.SubProgressMonitor</code> 。</p>
-<p><strong>描述：</strong> <code>org.eclipse.core.runtime.SubProgressMonitor</code>已被弃用，并由<code>org.eclipse.core.runtime.取代<code>org.eclipse.core.runtime.SubMonitor</code> 。</p>
+<p><strong>受影响的内容：</strong>引用<code>org.eclipse.core.runtime.SubProgressMonitor</code> 。</p>
+<p><strong>描述：</strong> <code>org.eclipse.core.runtime.SubProgressMonitor</code>已被弃用，并由<code>org.eclipse.core.runtime.SubMonitor</code> 。</p>
 <p><strong>需要采取的行动：</strong></p>
 <ul>
 <li>应该通过调用SubMonitor.convert来替换对根监视器上的IProgressMonitor.beginTask的调用。</li>
@@ -65,11 +81,33 @@
 
 <p><strong>例：</strong>
 
-</p>请考虑以下示例：<pre>void someMethod（IProgressMonitor pm）{pm.beginTask（“Main Task”，100）; SubProgressMonitor subMonitor1 = new SubProgressMonitor（pm，60）;尝试{doSomeWork（subMonitor1）; } finally {subMonitor1.done（）; SubProgressMonitor subMonitor2 = new SubProgressMonitor（pm，40）;尝试{doSomeMoreWork（subMonitor2）; } finally {subMonitor2.done（）; }}</pre>上面的代码应该重构为：<pre>void someMethod（IProgressMonitor pm）{SubMonitor subMonitor = SubMonitor.convert（pm，“Main Task”，100）; doSomeWork（subMonitor.split（60））; doSomeMoreWork（subMonitor.split（40））; }</pre>
+</p>请考虑以下示例：<pre>
+     void someMethod(IProgressMonitor pm) {
+        pm.beginTask("Main Task", 100);
+        SubProgressMonitor subMonitor1= new SubProgressMonitor(pm, 60);
+        try {
+           doSomeWork(subMonitor1);
+        } finally {
+           subMonitor1.done();
+        }
+        SubProgressMonitor subMonitor2= new SubProgressMonitor(pm, 40);
+        try {
+           doSomeMoreWork(subMonitor2);
+        } finally {
+           subMonitor2.done();
+        }
+     }
+</pre>上面的代码应该重构为：<pre>
+     void someMethod(IProgressMonitor pm) {
+        SubMonitor subMonitor = SubMonitor.convert(pm, "Main Task", 100);
+        doSomeWork(subMonitor.split(60));
+        doSomeMoreWork(subMonitor.split(40));
+     }
+</pre>
 
 <!-- ############################################## -->
 <h2>3。<a name="ListenerList">ListenerList已被广泛化</a></h2>
-<p><strong>受影响的内容：</strong>引用<code>org.eclipse.core.runtime.客户端<code>org.eclipse.core.runtime.ListenerList</code> 。
+<p><strong>受影响的内容：</strong>引用<code>org.eclipse.core.runtime.ListenerList</code> 。
 </p>
 <p><strong>描述：</strong> <code>org.eclipse.core.runtime.ListenerList</code>已经过一般化，可以提供编译时类型安全性，简化客户端代码，并避免让客户端访问内部数组。
 <code>ListenerList&lt;E&gt;</code>现在实现了<code>Iterable&lt;E&gt;</code> 。
@@ -93,11 +131,11 @@
 <h2>5。<a name="HighDPI">高DPI图标</a></h2>
 <p><strong>受影响的内容：</strong>使用位图图像的产品。
 
-</p><p><strong>描述：</strong>在高DPI屏幕上，SWT现在自动缩放由<code>org.eclipse.swt.graphics.的传统构造函数之一创建的图像<code>org.eclipse.swt.graphics.Image</code>为避免模糊图像，客户端可以使用以下构造函数之一：</p><ul><li><code>图像（Device，ImageFileNameProvider）</code></li>
-    <li><code>图像（Device，ImageDataProvider）</code></li>
+</p><p><strong>描述：</strong>在高DPI屏幕上，SWT现在自动缩放由<code>org.eclipse.swt.graphics.Image</code>为避免模糊图像，客户端可以使用以下构造函数之一：</p><ul><li><code>Image(Device, ImageFileNameProvider)</code></li>
+    <li><code>Image(Device, ImageDataProvider)</code></li>
 </ul>
 <p>使用该标准的基于JFace的应用程序<br>
-<code>org.eclipse.jface.resource。ImageDescriptor＃createFromURL（URL）</code><br>用于创建图标图像的API已经支持开箱即用的高DPI图标：</p><p>只需将“@ 2x”附加到文件名，然后将高DPI图标放在与原始图标相同的文件夹中。如果使用OSGi包，则还可以将图标放入包含相同文件夹结构的片段中。
+<code>org.eclipse.jface.resource.ImageDescriptor#createFromURL(URL)</code><br>用于创建图标图像的API已经支持开箱即用的高DPI图标：</p><p>只需将“@ 2x”附加到文件名，然后将高DPI图标放在与原始图标相同的文件夹中。如果使用OSGi包，则还可以将图标放入包含相同文件夹结构的片段中。
 </p><p>例：<br>100％：newclass_wiz.png<br>200％：newclass_wiz@2x.png</p><p><strong>需要采取的措施：</strong>在JFace应用程序中，添加“@ 2x”图标。在SWT应用程序中，使用新的Image构造函数。</p>
 
 </body>

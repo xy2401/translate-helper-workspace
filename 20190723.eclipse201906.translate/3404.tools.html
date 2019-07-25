@@ -1,14 +1,14 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta charset="UTF-8"></meta>
+<meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
 <title>VIATRA中的查询开发工具</title>
-<link rel="stylesheet" href="asset?aid=0"></link>
-<link rel="stylesheet" href="./asciidoctor.css"></link>
+<link rel="stylesheet" href="asset?aid=0">
+<link rel="stylesheet" href="./asciidoctor.css">
 </head>
-<body class="article" dir="ltr">
+<body class="article" >
 <div id="header">
 <h1>VIATRA中的查询开发工具</h1>
 </div>
@@ -123,7 +123,14 @@
 <div class="listingblock">
 <div class="title">例</div>
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">ViatraQueryTest。 //入口点测试（SomeQuerySpecification :: instance）。和（AnotherQuerySpecification）。//在（modelURI）上测试的模式。//实例模型（可选;快照模型引用输入模型）和（快照）。//将快照模型存储的准备结果与（新的ReteBackendFactory）进行比较。//比较Rete引擎assumeInputs产生的结果。 //检查给定的快照和后端工厂是否对被测模式有效。引发JUnit假设错误，否则assertEquals //计算每个给定快照和模式执行的差异。如果出现差异，则抛出JUnit断言失败</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">ViatraQueryTest. //Entry point
+  test(SomeQuerySpecification::instance).
+  and(AnotherQuerySpecification). // Patterns under test
+  on(modelURI). // Instance models (optional; snapshot model references the input model)
+  with(snapshot). // Compare prepared results stored by a snapshot model
+  with(new ReteBackendFactory). // Compare results produced by the Rete engine
+  assumeInputs. // checks whether the given snapshots and backend factories are valid for the patterns under test. Throws JUnit assumption error otherwise
+  assertEquals // compute difference of each given snapshot and pattern executions. Throws JUnit assertion failure if differences occur</code></pre>
 </div>
 </div>
 </div>
@@ -135,7 +142,16 @@
 <div class="listingblock">
 <div class="title">在模型操作后重新检查</div>
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">ViatraQueryTest。 //入口点测试（SomeQuerySpecification :: instance）。和（AnotherQuerySpecification）。//在（modelURI）上测试的模式。//实例模型（可选;快照模型引用输入模型）和（快照）。//将快照模型存储的准备结果与（新的ReteBackendFactory）进行比较。//比较Rete引擎assertEqualsThen产生的结果。 // assertEqualsThen不返回void modify（Type，[name ==“John”]，[age = 35]）。//给定操作在给定条件的每个实例上执行，给定条件的计算结果为true。与（snapshotAfterModification）。//任何修改操作都会导致以前加载的所有快照失效。的assertEquals</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">ViatraQueryTest. //Entry point
+  test(SomeQuerySpecification::instance).
+  and(AnotherQuerySpecification). // Patterns under test
+  on(modelURI). // Instance models (optional; snapshot model references the input model)
+  with(snapshot). // Compare prepared results stored by a snapshot model
+  with(new ReteBackendFactory). // Compare results produced by the Rete engine
+  assertEqualsThen. // assertEqualsThen does not return void
+  modify(Type, [name=="John"], [age=35]). // The given operation is executed on each instance of the given type on which the given condition evaluates to true.
+  with(snapshotAfterModification). // Any modify operation causes all previously loaded snapshots to be invalidated.
+  assertEquals</code></pre>
 </div>
 </div>
 </div>
@@ -150,13 +166,51 @@
 <div class="listingblock">
 <div class="title">访问自定义属性</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类CustomIntegerAccess扩展JavaObjectAccess {public CustomIntegerAccess（）{super（CustomInteger.class）; } //基于CustomInteger对象创建Substitution对象@Override public SerializedJavaObjectSubstitution toSubstitution（Object value）{SerializedJavaObjectSubstitution sub = SnapshotFactory.eINSTANCE.createSerializedJavaObjectSubstitution（）; if（valueofof CustomInteger）{sub.setType（getType（）。getName（））; sub.setValue（（（CustomInteger）value）.integerValue（）+“”）; } return sub; //计算哈希码（等式检查所需）@Override public int calculateHash（SerializedJavaObjectSubstitution substitution）{return Objects.hashCode（Integer.parseInt（substitution.getValue（）））; } //检查两个替换是否相等（假设它们各自定义'CustomInteger'）@Override public boolean equals（SerializedJavaObjectSubstitution a，SerializedJavaObjectSubstitution b）{if（a.getType（）。equals（getType（）。getName（）） &amp;&amp; b.getType（）。equals（getType（）。getName（）））{int aVal = Integer.parseInt（a.getValue（））; int bVal = Integer.parseInt（b.getValue（））;返回aVal == bVal; } return false; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class CustomIntegerAccess extends JavaObjectAccess{
+
+	public CustomIntegerAccess() {
+		super(CustomInteger.class);
+	}
+
+        //Create Substitution object based on the CustomInteger object
+	@Override
+	public SerializedJavaObjectSubstitution toSubstitution(Object value) {
+		SerializedJavaObjectSubstitution sub = SnapshotFactory.eINSTANCE.createSerializedJavaObjectSubstitution();
+		if(value instanceof CustomInteger){
+			sub.setType(getType().getName());
+			sub.setValue(((CustomInteger) value).integerValue()+"");
+		}
+		return sub;
+	}
+
+        //Calculate hash code (needed for equality checking)
+	@Override
+	public int calculateHash(SerializedJavaObjectSubstitution substitution) {
+		return Objects.hashCode(Integer.parseInt(substitution.getValue()));
+	}
+
+        //Check if two substitutions are equal (assuming they each define a 'CustomInteger')
+	@Override
+	public boolean equals(SerializedJavaObjectSubstitution a, SerializedJavaObjectSubstitution b) {
+		if(a.getType().equals(getType().getName()) &amp;&amp; b.getType().equals(getType().getName())){
+			int aVal = Integer.parseInt(a.getValue());
+			int bVal = Integer.parseInt(b.getValue());
+			return aVal == bVal;
+		}
+		return false;
+	}
+
+}</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">使用CustomIntegerAccess</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">...Map &lt;String，JavaObjectAccess&gt; objectAccess = Maps.newHashMap（）; map.put（CustomInteger.class.getName（），new CustomIntegerAccess（））; ViatraQueryTest.test（specs，new SnapshotHelper（objectAccess））。on（new EMFScope（[MODEL]））。with（[SNAPSHOT]）。assertEquals（）; ...</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">    ...
+    Map&lt;String, JavaObjectAccess&gt; objectAccess = Maps.newHashMap();
+    map.put(CustomInteger.class.getName(),new CustomIntegerAccess());
+    ViatraQueryTest.test(specs, new SnapshotHelper(objectAccess)).on(new EMFScope([MODEL])).with([SNAPSHOT]).assertEquals();
+    ...</code></pre>
 </div>
 </div>
 </div>
@@ -173,7 +227,12 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">customMap.put（CyberPhysicalSystemPackage。文字。APPLICATION_TYPE，[at | （作为ApplicationType）.identifier]）ViatraQueryTest.test（ApplicationTypesQuerySpecification.instance，snapshotHelper（customMap））。on（new EMFScope（[MODEL]））。with（[SNAPSHOT]）。somesertEquals</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">customMap.put(CyberPhysicalSystemPackage.Literals.APPLICATION_TYPE, [at | (at as ApplicationType).identifier])
+
+ViatraQueryTest.test(ApplicationTypesQuerySpecification.instance, snapshotHelper(customMap))
+          .on(new EMFScope([MODEL]))
+          .with([SNAPSHOT])
+          .assertEquals</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -183,7 +242,21 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">static var CoverageAnalyzer coverage; @BeforeClass static def void before（）{coverage = new CoverageAnalyzer（）; } @Test def void testApplicationTypes（）{ViatraQueryTest.test（ApplicationTypesQuerySpecification.instance）.analyzeWith（coverage）//分析coverage .with（new ReteBackendFactory）//第一组匹配应来自使用Rete后端的查询评估.with（快照）//第二组匹配应来自快照.assertEquals //断言匹配集相等}</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">static var CoverageAnalyzer coverage;
+
+@BeforeClass
+static def void before(){
+    coverage = new CoverageAnalyzer();
+}
+
+@Test
+def void testApplicationTypes() {
+    ViatraQueryTest.test(ApplicationTypesQuerySpecification.instance)
+        .analyzeWith(coverage) // Analyze coverage
+        .with(new ReteBackendFactory) // First set of matches should come from query evaluation with Rete backend
+        .with(snapshot) // Second set of matches should come from a snapshot
+        .assertEquals // Assert that the match sets are equal
+    }</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -191,7 +264,10 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">@AfterClass static def void after（）{CoverageReporter.reportHtml（coverage，new File（“coverage.html”））}</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">@AfterClass
+static def void after(){
+    CoverageReporter.reportHtml(coverage, new File("coverage.html"))
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -424,7 +500,34 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;！ - 在项目的pom.xml文件中使用它 - &gt; &lt;properties&gt; &lt;！ - 最好将VIATRA框架版本指定为属性（例如在父pom中）并在整个构建过程中使用它 - &gt; &lt;viatra.version&gt; 1.2.1 &lt;/viatra.version&gt; &lt;/ properties&gt; &lt;dependencies&gt; &lt;dependency&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt;artifactId&gt; viatra-query-runtime &lt;/ artifactId &gt; &lt;version&gt; $ {viatra.version} &lt;/ version&gt; &lt;/ dependency&gt; &lt;！ - 需要更多依赖项 - 仅在需要时使用 - &gt; &lt;dependency&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt; artifactId&gt; viatra-query-language &lt;/ artifactId&gt; &lt;version&gt; $ {viatra.version} &lt;/ version&gt; &lt;/ dependency&gt; &lt;/ dependencies&gt; &lt;repositories&gt; &lt;repository&gt; &lt;id&gt; viatra &lt;/ id&gt; &lt;url&gt; https ：//repo.eclipse.org/content/groups/viatra2/ &lt;/ url&gt; &lt;/ repository&gt; &lt;/ repositories&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;!-- use this in your project's pom.xml file --&gt;
+&lt;properties&gt;
+    &lt;!-- It is a good idea to specify VIATRA framework version once as
+    a property (e.g. in the parent pom) and use that throughout the build --&gt;
+	&lt;viatra.version&gt;1.2.1&lt;/viatra.version&gt;
+&lt;/properties&gt;
+
+&lt;dependencies&gt;
+	&lt;dependency&gt;
+		&lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+		&lt;artifactId&gt;viatra-query-runtime&lt;/artifactId&gt;
+		&lt;version&gt;${viatra.version}&lt;/version&gt;
+	&lt;/dependency&gt;
+
+	&lt;!-- requires many more dependencies - only use if required --&gt;
+	&lt;dependency&gt;
+		&lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+		&lt;artifactId&gt;viatra-query-language&lt;/artifactId&gt;
+		&lt;version&gt;${viatra.version}&lt;/version&gt;
+	&lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+&lt;repositories&gt;
+	&lt;repository&gt;
+		&lt;id&gt;viatra&lt;/id&gt;
+		&lt;url&gt;https://repo.eclipse.org/content/groups/viatra2/&lt;/url&gt;
+	&lt;/repository&gt;
+&lt;/repositories&gt;</code></pre>
 </div>
 </div>
 </div>
@@ -456,7 +559,79 @@
 <div class="listingblock">
 <div class="title">示例POM.XML（基于<a href="http://git.eclipse.org/c/viatra/org.eclipse.viatra.git/tree/query/tests/org.eclipse.viatra.query.runtime.cps.tests/pom.xml">CPS示例</a> ）</div>
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;pluginRepositories&gt; &lt;pluginRepository&gt; &lt;id&gt; viatra &lt;/ id&gt; &lt;url&gt; https://repo.eclipse.org/content/groups/viatra/ &lt;/ url&gt; &lt;/ pluginRepository&gt; &lt;/ pluginRepositories&gt; &lt;build&gt; &lt;plugins &gt; &lt;！ - 使用maven-clean-plugin删除以前生成的代码 - &gt; &lt;plugin&gt; &lt;groupId&gt; org.apache.maven.plugins &lt;/ groupId&gt; &lt;artifactId&gt; maven-clean-plugin &lt;/ artifactId&gt; &lt;version &gt; 2.5 &lt;/ version&gt; &lt;executions&gt; &lt;execution&gt; &lt;phase&gt; clean &lt;/ phase&gt; &lt;goals&gt; &lt;goal&gt; clean &lt;/ goal&gt; &lt;/ goals&gt; &lt;configuration&gt; &lt;filesets&gt; &lt;fileset&gt; &lt;！ - 生成的代码文件夹 - &gt; &lt;directory&gt; src-gen &lt;/ directory&gt; &lt;includes&gt; &lt;include&gt; ** / * &lt;/ include&gt; &lt;/ includes&gt; &lt;/ fileset&gt; &lt;/ filesets&gt; &lt;/ configuration&gt; &lt;/ execution&gt; &lt;/执行&gt; &lt;/ plugin&gt; &lt;！ - 设置生成器 - &gt; &lt;插件&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt;artifactId&gt; viatra-maven-plugin &lt;/ artifactId&gt; &lt;version&gt; $ {viatra。 version} &lt;/ version&gt; &lt;！ - 将执行绑定到代码生成生命周期阶段 - &gt; &lt;执行&gt; &lt;执行&gt; &lt;目标&gt; &lt;目标&gt;生成&lt;/ goal&gt; &lt;/ goals&gt; &lt;/ execution&gt; &lt;/ executions&gt; &lt;结构&gt; &lt;！ - 输出目录 - 必需 - &gt; &lt;outputDirectory&gt; src-gen &lt;/ outputDirectory&gt; &lt;metamodels&gt; &lt;metamodel&gt; &lt;！ - 根据元模型定义的位置选择以下选项之一 - &gt; &lt;！ -  - （a）EMF EPackage的Java类 - 如果生成的EMF代码在类路径中，则使用此类 - &gt; &lt;packageClass&gt; org.eclipse.viatra.examples.cps.cyberPhysicalSystem。CyberPhysicalSystemPackage &lt;/ packageClass&gt; &lt;！ - （b）用于生成EMF模型类的genmodel文件 - 如果EMF模型位于同一项目中，请使用此文件 - &gt; &lt;！ -  &lt;genmodelUri&gt; model / model.genmodel &lt;/ genmodelUri &gt;  - &gt; &lt;/ metamodel&gt; &lt;/ metamodels&gt; &lt;！ - 从1.5开始，您可以使用项目依赖项而不是特定的Maven依赖项 - 可选 - &gt; &lt;useProjectDependencies&gt; true &lt;/ useProjectDependencies&gt; &lt;/ configuration&gt; &lt;dependencies&gt; &lt;！ -  cps域项目（包含生成的EPackage）所需的依赖关系，除非您设置useProjectDependencies  - &gt; &lt;dependency&gt; &lt;groupId&gt; org.eclipse.viatra.examples.cps &lt;/ groupId&gt; &lt;artifactId&gt; org。 eclipse.viatra.examples.cps.model &lt;/ artifactId&gt; &lt;version&gt; 1.2.0 &lt;/ version&gt; &lt;/ dependency&gt; &lt;/ dependencies&gt; &lt;/ plugin&gt; &lt;/ plugins&gt; &lt;/ build&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;pluginRepositories&gt;
+  &lt;pluginRepository&gt;
+    &lt;id&gt;viatra&lt;/id&gt;
+    &lt;url&gt;https://repo.eclipse.org/content/groups/viatra/&lt;/url&gt;
+  &lt;/pluginRepository&gt;
+&lt;/pluginRepositories&gt;
+&lt;build&gt;
+&lt;plugins&gt;
+&lt;!-- Using maven-clean-plugin to remove previously generated code --&gt;
+&lt;plugin&gt;
+  &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+  &lt;artifactId&gt;maven-clean-plugin&lt;/artifactId&gt;
+  &lt;version&gt;2.5&lt;/version&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;phase&gt;clean&lt;/phase&gt;
+      &lt;goals&gt;
+        &lt;goal&gt;clean&lt;/goal&gt;
+      &lt;/goals&gt;
+      &lt;configuration&gt;
+        &lt;filesets&gt;
+          &lt;fileset&gt;
+            &lt;!-- Generated code folder --&gt;
+            &lt;directory&gt;src-gen&lt;/directory&gt;
+            &lt;includes&gt;
+              &lt;include&gt;**/*&lt;/include&gt;
+            &lt;/includes&gt;
+          &lt;/fileset&gt;
+        &lt;/filesets&gt;
+      &lt;/configuration&gt;
+    &lt;/execution&gt;
+  &lt;/executions&gt;
+&lt;/plugin&gt;
+&lt;!-- Setting up generator --&gt;
+&lt;plugin&gt;
+  &lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+  &lt;artifactId&gt;viatra-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;${viatra.version}&lt;/version&gt;
+  &lt;!-- Binding execution to the code generation lifecycle phase --&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;goals&gt;
+        &lt;goal&gt;generate&lt;/goal&gt;
+      &lt;/goals&gt;
+    &lt;/execution&gt;
+  &lt;/executions&gt;
+  &lt;configuration&gt;
+    &lt;!-- Output directory - required --&gt;
+    &lt;outputDirectory&gt;src-gen&lt;/outputDirectory&gt;
+    &lt;metamodels&gt;
+      &lt;metamodel&gt;
+        &lt;!-- Select one of the following depending on where is your metamodel defined --&gt;
+
+        &lt;!-- (a) Java class for the EMF EPackage - use this if generated EMF code is in the classpath --&gt;
+        &lt;packageClass&gt;org.eclipse.viatra.examples.cps.cyberPhysicalSystem.CyberPhysicalSystemPackage&lt;/packageClass&gt;
+        &lt;!-- (b) genmodel file used for generating the EMF model classes - use this if EMF model is in the same project --&gt;
+        &lt;!-- &lt;genmodelUri&gt;model/model.genmodel&lt;/genmodelUri&gt; --&gt;
+      &lt;/metamodel&gt;
+    &lt;/metamodels&gt;
+    &lt;!-- Since 1.5, you can use the project dependencies instead of specific Maven dependencies - optional --&gt;
+    &lt;useProjectDependencies&gt;true&lt;/useProjectDependencies&gt;
+  &lt;/configuration&gt;
+  &lt;dependencies&gt;
+    &lt;!-- Dependency required for the cps domain project (that contains the generated EPackage), unless you set useProjectDependencies --&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.eclipse.viatra.examples.cps&lt;/groupId&gt;
+      &lt;artifactId&gt;org.eclipse.viatra.examples.cps.model&lt;/artifactId&gt;
+      &lt;version&gt;1.2.0&lt;/version&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;/plugin&gt;
+&lt;/plugins&gt;
+&lt;/build&gt;</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -467,7 +642,26 @@
 <div class="listingblock">
 <div class="title">自定义注释支持</div>
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;plugins&gt; &lt;！ - 使用maven-clean-plugin删除以前生成的代码 - &gt; &lt;！ - 设置生成器 - &gt; &lt;plugin&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt;artifactId&gt; viatra -maven-plugin &lt;/ artifactId&gt; &lt;version&gt; $ {viatra.version} &lt;/ version&gt; &lt;configuration&gt; ...&lt;/ configuration&gt; &lt;dependencies&gt; &lt;dependency&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt;artifactId&gt; viatra-query-language-extensions &lt;/ artifactId&gt; &lt;version&gt; $ {viatra.version} &lt;/ version&gt; &lt; / dependency&gt; &lt;/ dependencies&gt; &lt;/ plugin&gt; &lt;/ plugins&gt; &lt;/ build&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;plugins&gt;
+&lt;!-- Using maven-clean-plugin to remove previously generated code --&gt;
+&lt;!-- Setting up generator --&gt;
+&lt;plugin&gt;
+  &lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+  &lt;artifactId&gt;viatra-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;${viatra.version}&lt;/version&gt;
+  &lt;configuration&gt;
+    ...
+  &lt;/configuration&gt;
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+      &lt;artifactId&gt;viatra-query-language-extensions&lt;/artifactId&gt;
+      &lt;version&gt;${viatra.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;/plugin&gt;
+&lt;/plugins&gt;
+&lt;/build&gt;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -502,7 +696,15 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">// util.vql模式utilityPattern（...）{find anotherUtilityPattern（...）;模式anotherUtilityPattern（...）{...}</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">// util.vql
+
+pattern utilityPattern(...) {
+  find anotherUtilityPattern(...);
+}
+
+pattern anotherUtilityPattern(...) {
+  ...
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -510,7 +712,11 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">// logic.vql模式myPattern（...）{find utilityPattern（...）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">// logic.vql
+
+pattern myPattern(...) {
+  find utilityPattern(...);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -522,7 +728,23 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">&lt;plugin&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt;artifactId&gt; viatra-maven-plugin &lt;/ artifactId&gt; &lt;configuration&gt; ...&lt;uriMappings&gt; &lt;uriMapping&gt; &lt;sourceUri&gt; platform：/resource/school/model/school.ecore &lt;/ sourceUri&gt; &lt;targetUri&gt; file：/ $ {project.basedir} /school/model/school.ecore &lt;/ targetUri&gt; &lt; / uriMapping&gt; &lt;uriMapping&gt; &lt;sourceUri&gt; platform：/resource/school/model/school.genmodel &lt;/ sourceUri&gt; &lt;targetUri&gt; file：/ $ {project.basedir} /school/model/school.genmodel &lt;/ targetUri&gt; &lt; / uriMapping&gt; &lt;/ uriMappings&gt; &lt;/ configuration&gt; &lt;/ plugin&gt;</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">&lt;plugin&gt;
+	&lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+	&lt;artifactId&gt;viatra-maven-plugin&lt;/artifactId&gt;
+	&lt;configuration&gt;
+...
+		&lt;uriMappings&gt;
+			&lt;uriMapping&gt;
+				&lt;sourceUri&gt;platform:/resource/school/model/school.ecore&lt;/sourceUri&gt;
+				&lt;targetUri&gt;file:/${project.basedir}/school/model/school.ecore&lt;/targetUri&gt;
+			&lt;/uriMapping&gt;
+			&lt;uriMapping&gt;
+				&lt;sourceUri&gt;platform:/resource/school/model/school.genmodel&lt;/sourceUri&gt;
+				&lt;targetUri&gt;file:/${project.basedir}/school/model/school.genmodel&lt;/targetUri&gt;
+			&lt;/uriMapping&gt;
+		&lt;/uriMappings&gt;
+	&lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -531,7 +753,17 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;plugin&gt; &lt;groupId&gt; org.eclipse.viatra &lt;/ groupId&gt; &lt;artifactId&gt; viatra-maven-plugin &lt;/ artifactId&gt; &lt;configuration&gt; &lt;metamodels&gt; &lt;metamodel&gt; &lt;genmodelUri&gt; model / ../../ anotherProject / model / usedMetamodel.genmodel &lt;/ genmodelUri&gt; &lt;/ metamodel&gt; &lt;/ metamodels&gt; &lt;/ configuration&gt; &lt;/ plugin&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;plugin&gt;
+	&lt;groupId&gt;org.eclipse.viatra&lt;/groupId&gt;
+	&lt;artifactId&gt;viatra-maven-plugin&lt;/artifactId&gt;
+	&lt;configuration&gt;
+		&lt;metamodels&gt;
+			&lt;metamodel&gt;
+				&lt;genmodelUri&gt;model/../../anotherProject/model/usedMetamodel.genmodel&lt;/genmodelUri&gt;
+			&lt;/metamodel&gt;
+		&lt;/metamodels&gt;
+	&lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">

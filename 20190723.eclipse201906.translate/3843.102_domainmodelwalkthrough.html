@@ -1,18 +1,38 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>15分钟教程</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="domain-model-walkthrough">15分钟教程</h1>
 
 <p>在本教程中，我们将实现一个特定于域的特定语言来模拟实体和属性，类似于您可能从Rails，Grails或Spring Roo中获知的内容。语法很有启发性：</p>
 
-<pre><code class="language-domainexample">datatype字符串实体Blog {title：String many posts：Post} entity HasAuthor {author：String} entity post extends HasAuthor {title：String content：String many comments：Comment} entity Comment extends HasAuthor {content：String}</code></pre>
+<pre><code class="language-domainexample">datatype String
+
+entity Blog {
+    title: String
+    many posts: Post
+}
+
+entity HasAuthor {
+    author: String
+}
+
+entity Post extends HasAuthor {
+    title: String
+    content: String
+    many comments: Comment
+}
+
+entity Comment extends HasAuthor {
+    content: String
+}
+</code></pre>
 
 <p>在计算机上安装Xtext后，启动Eclipse并设置一个新的工作区。</p>
 
@@ -78,11 +98,42 @@
 
 <p>该向导将在编辑器中自动打开语法文件<em>Domainmodel.xtext</em> 。如您所见，它已经包含一个简单的<em>Hello World</em>语法：</p>
 
-<pre><code class="language-xtext">语法org.example.domainmodel。带有org.eclipse.xtext.common的Domainmodel。终端生成域模型“http://www.example.org/domainmodel/Domainmodel”模型：问候+ =问候*;问候：'你好'名字=身份证'！“;</code></pre>
+<pre><code class="language-xtext">grammar org.example.domainmodel.Domainmodel with
+                                      org.eclipse.xtext.common.Terminals
+
+generate domainmodel "http://www.example.org/domainmodel/Domainmodel"
+
+Model:
+    greetings+=Greeting*;
+  
+Greeting:
+    'Hello' name=ID '!';
+</code></pre>
 
 <p>现在让我们用我们的实体语言替换那个语法定义：</p>
 
-<pre><code class="language-xtext">语法org.example.domainmodel。带有org.eclipse.xtext.common的Domainmodel。终端生成域模型“http://www.example.org/domainmodel/Domainmodel”Domainmodel :( elements + = Type）*;类型：DataType |实体; DataType：'datatype'name = ID;实体：'entity'name = ID（'extends'superType = [Entity]）？'{'（功能+ =功能）*'}';特点:(很多？= '多'）？name = ID'：'type = [Type];</code></pre>
+<pre><code class="language-xtext">grammar org.example.domainmodel.Domainmodel with
+                                      org.eclipse.xtext.common.Terminals
+
+generate domainmodel "http://www.example.org/domainmodel/Domainmodel"
+
+Domainmodel :
+    (elements+=Type)*;
+  
+Type:
+    DataType | Entity;
+  
+DataType:
+    'datatype' name=ID;
+ 
+Entity:
+    'entity' name=ID ('extends' superType=[Entity])? '{'
+        (features+=Feature)*
+    '}';
+ 
+Feature:
+    (many?='many')? name=ID ':' type=[Type];
+</code></pre>
 
 <p>让我们更详细地了解不同语法规则的含义：</p>
 
@@ -90,31 +141,43 @@
   <li>
     <p>语法中的第一个规则始终用作起始规则。</p>
 
-    <pre><code class="language-xtext">Domainmodel :(元素+ =类型）*;</code></pre>
+    <pre><code class="language-xtext">Domainmodel :
+    (elements+=Type)*;
+</code></pre>
 
     <p>它表示<em>Domainmodel</em>包含<em>Type</em> s的任意数字（ <code>*</code> ），它被添加（ <code>+=</code> ）到一个名为<code>elements</code>的特征。</p>
   </li>
   <li>
     <p>规则<em>类型</em>委托给规则<em>DataType</em>或（ <code>|</code> ）规则<em>实体</em> 。</p>
 
-    <pre><code class="language-xtext">类型：DataType |实体;</code></pre>
+    <pre><code class="language-xtext">Type:
+    DataType | Entity;
+</code></pre>
   </li>
   <li>
     <p>规则<em>DataType</em>以关键字<code>'datatype'</code>开头，后跟标识符，该标识符由名为<em>ID</em>的规则解析。规则<em>ID</em>在超语法<em>org.eclipse.xtext.common中定义<em>。终端</em>并解析一个单词，即标识符。您可以在规则调用上使用<em>F3</em>导航到声明。调用<em>ID</em>返回的值被指定（ <code>=</code> ）到功能<code>name</code> 。</p>
 
-    <pre><code class="language-xtext">DataType：'datatype'name = ID;</code></pre>
+    <pre><code class="language-xtext">DataType:
+    'datatype' name=ID;
+</code></pre>
   </li>
   <li>
     <p>规则<em>实体</em>再次以关键字的定义开头，后跟名称。</p>
 
-    <pre><code class="language-xtext">实体：'entity'name = ID（'extends'superType = [Entity]）？'{'（功能+ =功能）*'}';</code></pre>
+    <pre><code class="language-xtext">Entity :
+    'entity' name=ID ('extends' superType=[Entity])? '{'
+        (features+=Feature)*
+    '}';
+</code></pre>
 
     <p>接下来是<code>extends</code>子句，它是括号和可选的（ <code>?</code> ）。由于名为<code>superType</code>的特征是交叉引用（注意方括号），因此不会在此处调用解析器规则<em>实体</em> ，而是仅解析单个标识符（ <em>ID</em> -rule）。在链接阶段解析分配给<code>superType</code>引用的实际<em>实体</em> 。最后在花括号之间可以有任意数量的<em>功能</em> ，它们会调用下一个规则。</p>
   </li>
   <li>
     <p>最后但并非最不重要的是，规则<em>功能</em>定义如下：</p>
 
-    <pre><code class="language-xtext">特点:(很多？= '多'）？name = ID'：'type = [Type];</code></pre>
+    <pre><code class="language-xtext">Feature:
+    (many?='many')? name=ID ':' type=[Type];
+</code></pre>
 
     <p>关键字<code>many</code>应用于模拟此DSL中的多值特征。赋值运算符（ <code>?=</code> ）暗示<code>many</code>特征是<em>boolean</em>类型。您已熟悉此解析器规则中的其他语法元素。</p>
   </li>
@@ -144,11 +207,43 @@
 
 <p>最后，我们希望能够将以前使用的模型拆分为不同的文件：</p>
 
-<pre><code class="language-domainexample">// datatypes.dmodel数据类型字符串</code></pre>
+<pre><code class="language-domainexample">// datatypes.dmodel
 
-<pre><code class="language-domainexample">// commons.dmodel package my.company.common {entity HasAuthor {author：String}}</code></pre>
+datatype String
+</code></pre>
 
-<pre><code class="language-domainexample">// blogs.dmodel package my.company.blog {import my.company.common。* entity Blog {title：String many posts：Post} entity post extends my.company.common。HasAuthor {title：String content：String many comments：Comment} entity Comment extends HasAuthor {content：String}}</code></pre>
+<pre><code class="language-domainexample">// commons.dmodel
+
+package my.company.common {
+  
+    entity HasAuthor {
+        author: String
+    }
+}
+</code></pre>
+
+<pre><code class="language-domainexample">// blogs.dmodel
+
+package my.company.blog {
+  
+    import my.company.common.*
+    
+    entity Blog {
+        title: String
+        many posts: Post
+    }
+    
+    entity Post extends my.company.common.HasAuthor {
+        title: String
+        content: String
+        many comments: Comment
+    }
+    
+    entity Comment extends HasAuthor {
+        content: String
+    }
+}
+</code></pre>
 
 <p>让我们开始增强语法。</p>
 
@@ -156,26 +251,53 @@
   <li>
     <p>由于<em>Domainmodel</em>不再包含类型而且包含包，因此必须修改条目规则。此外，应引入<em>包</em>和<em>类型</em>的通用超类型： <em>AbstractElement</em> 。</p>
 
-    <pre><code class="language-xtext">Domainmodel :( elements + = AbstractElement）*; AbstractElement：PackageDeclaration |类型;</code></pre>
+    <pre><code class="language-xtext">Domainmodel:
+    (elements+=AbstractElement)*;
+    
+AbstractElement:
+    PackageDeclaration | Type;
+</code></pre>
   </li>
   <li>
     <p><code>PackageDeclaration</code>反过来看起来非常符合预期。它包含许多<em>Imports</em>和<em>AbstractElements</em> 。由于Root-Domainmodel也应允许<em>Imports</em> ，因此我们将它们添加为规则<code>AbstractElement</code>的替代方法。</p>
 
-    <pre><code class="language-xtext">PackageDeclaration：'package'name = QualifiedName'{'（elements + = AbstractElement）*'}'; AbstractElement：PackageDeclaration |输入|进口; QualifiedName：ID（'。' ID）*;</code></pre>
+    <pre><code class="language-xtext">PackageDeclaration:
+    'package' name=QualifiedName '{'
+        (elements+=AbstractElement)*
+    '}';
+    
+AbstractElement:
+    PackageDeclaration | Type | Import;
+    
+QualifiedName:
+    ID ('.' ID)*;
+</code></pre>
 
     <p><code>QualifiedName</code>有点特别。它不包含任何分配。因此，它用作返回String的数据类型规则。因此， <em>Package</em>的功能<code>name</code>仍然是<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a>类型。</p>
   </li>
   <li>
     <p>可以使用Xtext以非常方便的方式定义导入。如果在解析器规则中使用名称<code>importedNamespace</code> ，则框架会将该值视为导入。它甚至支持通配符并按预期处理它们：</p>
 
-    <pre><code class="language-xtext">导入：'import'importNameName = QualifiedNameWithWildcard; QualifiedNameWithWildcard：QualifiedName'。*“？;</code></pre>
+    <pre><code class="language-xtext">Import:
+    'import' importedNamespace=QualifiedNameWithWildcard;
+    
+QualifiedNameWithWildcard:
+    QualifiedName '.*'?;
+</code></pre>
 
     <p>与规则<code>QualifiedName</code>类似， <code>QualifiedNameWithWildcard</code>返回纯字符串。</p>
   </li>
   <li>
     <p>最后一步是允许交叉引用中的完全限定名称。否则，如果不添加import语句，则无法引用实体。</p>
 
-    <pre><code class="language-xtext">实体：'entity'name = ID（'extends'superType = [Entity | QualifiedName]）？'{'（功能+ =功能）*'}';特点:(很多？= '多'）？name = ID'：'type = [Type | QualifiedName];</code></pre>
+    <pre><code class="language-xtext">Entity:
+    'entity' name=ID ('extends' superType=[Entity|QualifiedName])? '{'
+        (features+=Feature)*
+    '}';
+     
+Feature:
+    (many?='many')? name=ID ':' type=[Type|QualifiedName];
+</code></pre>
 
     <p>请注意，bar（ <code>|</code> ）不是交叉引用上下文中的替代选项，但用于指定已解析字符串的语法。</p>
   </li>
@@ -183,7 +305,45 @@
 
 <p>这就是语法的全部。它现在应该读作</p>
 
-<pre><code class="language-xtext">语法org.example.domainmodel。带有org.eclipse.xtext.common的Domainmodel。终端生成域模型“http://www.example.org/domainmodel/Domainmodel”Domainmodel :( elements + = AbstractElement）*; PackageDeclaration：'package'name = QualifiedName'{'（elements + = AbstractElement）*'}'; AbstractElement：PackageDeclaration |输入|进口; QualifiedName：ID（'。' ID）*;导入：'import'importNameName = QualifiedNameWithWildcard; QualifiedNameWithWildcard：QualifiedName'。*“？;类型：DataType |实体; DataType：'datatype'name = ID;实体：'entity'name = ID（'extends'superType = [Entity | QualifiedName]）？'{'（功能+ =功能）*'}';特点:(很多？= '多'）？name = ID'：'type = [Type | QualifiedName];</code></pre>
+<pre><code class="language-xtext">grammar org.example.domainmodel.Domainmodel with
+                                      org.eclipse.xtext.common.Terminals
+
+generate domainmodel "http://www.example.org/domainmodel/Domainmodel"
+
+Domainmodel:
+    (elements+=AbstractElement)*;
+
+PackageDeclaration:
+    'package' name=QualifiedName '{'
+        (elements+=AbstractElement)*
+    '}';
+
+AbstractElement:
+    PackageDeclaration | Type | Import;
+
+QualifiedName:
+    ID ('.' ID)*;
+
+Import:
+    'import' importedNamespace=QualifiedNameWithWildcard;
+  
+QualifiedNameWithWildcard:
+    QualifiedName '.*'?;
+  
+Type:
+    DataType | Entity;
+  
+DataType:
+    'datatype' name=ID;
+ 
+Entity:
+    'entity' name=ID ('extends' superType=[Entity|QualifiedName])? '{'
+        (features+=Feature)*
+    '}';
+ 
+Feature:
+    (many?='many')? name=ID ':' type=[Type|QualifiedName];
+</code></pre>
 
 <p>您应该按照上一节中的描述重新生成语言基础结构，并再次尝试编辑器。您甚至可以将模型拆分为较小的部分，并跨文件边界进行交叉引用。</p>
 

@@ -1,16 +1,16 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
-<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1"></link>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
 <title>Eclipse JDT 3.3插件迁移常见问题解答</title>
 </head>
 
-<body dir="ltr">
+<body >
 
 <h1>Eclipse JDT 3.3插件迁移常见问题解答</h1>
 <ol>
@@ -19,25 +19,94 @@
 <h2><a name="deprecatedWorkingCopyMethods">我怎样才能删除弃用警告<code>*WorkingCopy(...IProblemRequestor...)</code>方法并保持相同的行为？</a></h2>
 <p>在实现错误<a href="http://bugs.eclipse.org/bugs/show_bug.cgi?id=175243" target="_blank">175243时</a> ，不推荐使用以下方法：</p>
 <ol>
-<li><code>ICompilationUnit＃becomeWorkingCopy（IProblemRequestor，IProgressMonitor）</code></li>
-<li><code>ICompilationUnit #getWorkingCopy（WorkingCopyOwner，IProblemRequestor，IProgressMonitor）</code></li>
-<li><code>IClassFile＃becomeWorkingCopy（IProblemRequestor，WorkingCopyOwner，IProgressMonitor）</code></li>
-<li><code>WorkingCopyOwner #newWorkingCopy（String，IClasspathEntry []，IProblemRequestor，IProgressMonitor）</code></li>
+<li><code>ICompilationUnit#becomeWorkingCopy(IProblemRequestor, IProgressMonitor)</code></li>
+<li><code>ICompilationUnit#getWorkingCopy(WorkingCopyOwner, IProblemRequestor, IProgressMonitor)</code></li>
+<li><code>IClassFile#becomeWorkingCopy(IProblemRequestor, WorkingCopyOwner, IProgressMonitor)</code></li>
+<li><code>WorkingCopyOwner#newWorkingCopy(String, IClasspathEntry[], IProblemRequestor, IProgressMonitor)</code></li>
 </ol>这个答案提供了一些使用新API相应方法的建议，而不改变现有代码的行为。如何重写代码取决于给定的问题请求者是否为空（即，如果客户端代码有兴趣报告工作副本的问题）：<ol>
 	<li><strong>问题请求者为空</strong>
 	<p>当给定的请求者为空时，没有特定的迁移问题。
 	</p><p>因此，以下代码段警告调用已弃用的方法......：</p>
-	<pre>IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / pack / X.java”））; ICompilationUnit compilationUnit =（ICompilationUnit）JavaCore.create（file）; IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / bin / pack / Y.class”））; IClassFile classFile = JavaCore.createClassFileFrom（file）; WorkingCopyOwner owner = new WorkingCopyOwner（）{}; IClasspathEntry [] entries = classFile.getJavaProject（）。getResolvedClasspath（true）; <b>ICompilationUnit workingCopy = compilationUnit.getWorkingCopy（new WorkingCopyOwner（）{}，null，null）; ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy（null，null）; ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy（new Path（“FAQ / test / Z.java”），entries，null，null）; ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy（null，owner，null）;</b>
+	<pre>
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
+	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/bin/pack/Y.class"));
+	IClassFile classFile = JavaCore.createClassFileFrom(file);
+	WorkingCopyOwner owner = new WorkingCopyOwner() {};
+	IClasspathEntry[] entries = classFile.getJavaProject().getResolvedClasspath(true);
+	<b>
+	ICompilationUnit workingCopy = compilationUnit.getWorkingCopy(new WorkingCopyOwner() {}, null, null);
+	ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy(null, null);
+	ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy(new Path("FAQ/test/Z.java"), entries, null, null);
+	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(null, owner, null);</b>
 	</pre><p>...由于默认所有者的问题请求者为空，现在可以轻松地重写如下：</p>
-	<pre>IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / pack / X.java”））; ICompilationUnit compilationUnit =（ICompilationUnit）JavaCore.create（file）; IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / bin / pack / Y.class”））; IClassFile classFile = JavaCore.createClassFileFrom（file）; WorkingCopyOwner owner = new WorkingCopyOwner（）{}; IClasspathEntry [] entries = classFile.getJavaProject（）。getResolvedClasspath（true）; <b>//只需删除IProblemRequestor参数ICompilationUnit workingCopy = compilationUnit.getWorkingCopy（new WorkingCopyOwner（）{}，null）; ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy（null）; ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy（new Path（“FAQ / test / Z.java”），entries，null）; ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy（null，owner，null）;</b>
+	<pre>
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
+	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/bin/pack/Y.class"));
+	IClassFile classFile = JavaCore.createClassFileFrom(file);
+	WorkingCopyOwner owner = new WorkingCopyOwner() {};
+	IClasspathEntry[] entries = classFile.getJavaProject().getResolvedClasspath(true);
+	<b>
+	// just remove the IProblemRequestor parameter
+	ICompilationUnit workingCopy = compilationUnit.getWorkingCopy(new WorkingCopyOwner() {}, null); 
+	ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy(null);
+	ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy(new Path("FAQ/test/Z.java"), entries, null);
+	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(null, owner, null);</b>
 	</pre>
 	</li>
 	<li><strong>问题请求者不是null</strong>
 	<p>在这种情况下，客户端必须确保工作副本所有者请求者与作为已弃用方法的参数给出的请求者相同。最简单的方法是让工作副本所有者返回此请求者。
 	</p><p>因此，以下代码段警告调用已弃用的方法......：</p>
-	<pre>IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / pack / X.java”））; ICompilationUnit compilationUnit =（ICompilationUnit）JavaCore.create（file）; IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / bin / pack / Y.class”））; IClassFile classFile = JavaCore.createClassFileFrom（file）; WorkingCopyOwner owner = new WorkingCopyOwner（）{}; IClasspathEntry [] entries = classFile.getJavaProject（）。getResolvedClasspath（true）; <b>IProblemRequestor requestor = new IProblemRequestor {public void acceptProblem（IProblem problem）{} public void beginReporting（）{} public void endReporting（）{} public boolean isActive（）{return true; }}; ICompilationUnit workingCopy = compilationUnit.getWorkingCopy（new WorkingCopyOwner（）{}，requestor，null）; ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy（requestor，null）; ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy（new Path（“FAQ / test / Z.java”），entries，requestor，null）; ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy（requestor，owner，null）;</b>
+	<pre>
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
+	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/bin/pack/Y.class"));
+	IClassFile classFile = JavaCore.createClassFileFrom(file);
+	WorkingCopyOwner owner = new WorkingCopyOwner() {};
+	IClasspathEntry[] entries = classFile.getJavaProject().getResolvedClasspath(true);
+	<b>
+	IProblemRequestor requestor = new IProblemRequestor {
+		public void acceptProblem(IProblem problem) {}
+		public void beginReporting() {}
+		public void endReporting() {}
+		public boolean isActive() {
+			return true;
+		}
+	};
+	ICompilationUnit workingCopy = compilationUnit.getWorkingCopy(new WorkingCopyOwner() {}, requestor, null);
+	ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy(requestor, null);
+	ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy(new Path("FAQ/test/Z.java"), entries, requestor, null);
+	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(requestor, owner, null);</b>
 	</pre><p>...需要重写如下以保持相同的行为：</p>
-	<pre>IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / pack / X.java”））; ICompilationUnit compilationUnit =（ICompilationUnit）JavaCore.create（file）; IFile file = getWorkspaceRoot（）。getFile（new Path（“FAQ / bin / pack / Y.class”））; IClassFile classFile = JavaCore.createClassFileFrom（file）; IClasspathEntry [] entries = classFile.getJavaProject（）。getResolvedClasspath（true）; <b>//让请求者最终......final IProblemRequestor requestor = new IProblemRequestor {public void acceptProblem（IProblem problem）{} public void beginReporting（）{} public void endReporting（）{} public boolean isActive（）{return true; }}; // ...让创建的工作副本所有者返回它WorkingCopyOwner owner = new WorkingCopyOwner（）{public IProblemRequestor getProblemRequestor（ICompilationUnit unit）{return requestor; }}; //现在可以使用此工作副本所有者ICompilationUnit workingCopy = compilationUnit.getWorkingCopy（owner，null）对新API方法进行调用; ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy（null）; ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy（new Path（“FAQ / test / Z.java”），entries，null）; ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy（owner，null）;</b>
+	<pre>
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
+	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
+	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/bin/pack/Y.class"));
+	IClassFile classFile = JavaCore.createClassFileFrom(file);
+	IClasspathEntry[] entries = classFile.getJavaProject().getResolvedClasspath(true);
+	<b>
+	// Make the requestor final...
+	final IProblemRequestor requestor = new IProblemRequestor {
+		public void acceptProblem(IProblem problem) {}
+		public void beginReporting() {}
+		public void endReporting() {}
+		public boolean isActive() {
+			return true;
+		}
+	};
+	// ...and let the created working copy owner returning it
+	WorkingCopyOwner owner = new WorkingCopyOwner() {
+		public IProblemRequestor getProblemRequestor(ICompilationUnit unit) {
+			return requestor;
+		}
+	};
+	// Calls can now be done to the new API methods using this working copy owner
+	ICompilationUnit workingCopy = compilationUnit.getWorkingCopy(owner, null); 
+	ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy(null);
+	ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy(new Path("FAQ/test/Z.java"), entries, null);
+	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(owner, null);
+	</b>
 	</pre>
 	</li>
 </ol>

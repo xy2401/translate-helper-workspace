@@ -1,14 +1,14 @@
-<html dir="ltr">
+<html >
 <head>
 <title>使用增量生成</title>
-<link href="book.css" rel="stylesheet" type="text/css"></link>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.1"></meta>
-<link rel="home" href="index.html" title="Xpand Documentation"></link>
-<link rel="up" href="incrementalGeneration.html" title="Incremental Generation"></link>
-<link rel="prev" href="incrementalGeneration.html" title="Incremental Generation"></link>
-<link rel="next" href="incrementalGeneration_notes.html" title="Additional Notes"></link>
+<link href="book.css" rel="stylesheet" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.1">
+<link rel="home" href="index.html" title="Xpand Documentation">
+<link rel="up" href="incrementalGeneration.html" title="Incremental Generation">
+<link rel="prev" href="incrementalGeneration.html" title="Incremental Generation">
+<link rel="next" href="incrementalGeneration_notes.html" title="Additional Notes">
 </head>
-<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<body bgcolor="white"  text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">使用增量生成</h1>
 <div class="section" title="使用增量生成">
 <div class="titlepage">
@@ -29,7 +29,24 @@
 </div>
 </div>
 <p>从增量生成中受益的最简单方法是使用<span class="emphasis"><em>IncrementalGenerationFacade</em></span>工作流组件：</p>
-<pre class="programlisting">&lt;workflow&gt; &lt;component id =“incremental”class =“org.eclipse.xpand2.incremental。IncrementalGenerationFacade“&gt; &lt;newModelFile value =”path / to / your / model.file“/&gt; &lt;oldModelFile value =”path / to / backup / model.file“/&gt; &lt;traceModelFile value =”path / to / store / trace / model.trace“/&gt; &lt;outlet path =”path / to / your / outlet /“overwrite =”true“/&gt; &lt;/ component&gt; &lt;component id =”generator“class =”org.eclipse.xpand2。生成器“&gt; &lt;expand value =”your :: template :: Root FOR model“/&gt; &lt;outlet path =”temp /“overwrite =”true“/&gt; &lt;metaModel class =”org.eclipse.xtend.typesystem.emf。EmfRegistryMetaModel“/&gt; &lt;vetoableCallback idRef =”incremental“/&gt; &lt;/ component&gt; &lt;/ workflow&gt;</pre>
+<pre class="programlisting">
+&lt;workflow&gt;
+  &lt;component id="incremental"
+      class="org.eclipse.xpand2.incremental.IncrementalGenerationFacade"&gt;
+    &lt;newModelFile value="path/to/your/model.file" /&gt;
+    &lt;oldModelFile value="path/to/backup/model.file" /&gt;
+    &lt;traceModelFile value="path/to/store/trace/model.trace" /&gt; 
+    &lt;outlet path="path/to/your/outlet/" overwrite="true"/&gt;
+  &lt;/component&gt;
+
+  &lt;component id="generator" class="org.eclipse.xpand2.Generator"&gt;
+    &lt;expand value="your::template::Root FOR model" /&gt;
+    &lt;outlet path="temp/" overwrite="true"/&gt;
+    &lt;metaModel class="org.eclipse.xtend.typesystem.emf.EmfRegistryMetaModel" /&gt;
+    &lt;vetoableCallback idRef="incremental" /&gt;
+  &lt;/component&gt;
+&lt;/workflow&gt;
+</pre>
 <p><span class="emphasis"><em>IncrementalGenerationFacade</em></span>有四个参数：</p>
 <div class="itemizedlist">
 <ul class="itemizedlist" type="disc">
@@ -111,7 +128,73 @@
 <p>
       </p>
 <p>这是执行所有这些步骤的示例工作流：</p>
-<pre class="programlisting">&lt;workflow&gt; &lt;！ - 读取新模型 - &gt; &lt;component id =“modelreader”class =“org.eclipse.emf.mwe.utils。Reader“uri =”model / my.model“firstElementOnly =”true“modelSlot =”model“/&gt; &lt;！ - 读取旧模型，从上次运行中复制。可能不存在，因此忽略缺少的模型 - &gt; &lt;component id =“oldmodelreader”class =“org.eclipse.emf.mwe.utils。Reader“uri =”temp / old.model“firstElementOnly =”true“ignoreMissingModel =”true“modelSlot =”oldmodel“/&gt; &lt;！ -  compute diff。 - &gt; &lt;component id =”compare“class =”org。 eclipse.xpand2.incremental.compare。EmfCompare“oldModelSlot =”oldmodel“newModelSlot =”model“diffModelSlot =”diff“/&gt; &lt;！ - 读取跟踪模型，由上次运行生成。可能不存在，因此忽略缺少的模型 - &gt; &lt;component id =”tracemodelreader“类=“org.eclipse.emf.mwe.utils。Reader“uri =”temp / trace.trace“firstElementOnly =”true“ignoreMissingModel =”true“modelSlot =”oldtrace“/&gt; &lt;！ - 这是实际的增量生成回调 - &gt; &lt;component id =”incremental“类=“org.eclipse.xpand2.incremental。IncrementalGenerationCallback“diffModelSlot =”diff“oldTraceModelSlot =”oldtrace“newTraceModelSlot =”trace“/&gt; &lt;！ -  generate code  - &gt; &lt;component id =”generator“class =”org.eclipse.xpand2。生成器“&gt; &lt;expand value =”resources :: templates :: Test :: Test FOR model“/&gt; &lt;outlet path =”somewhere /“overwrite =”true“/&gt; &lt;metaModel class =”org.eclipse.xtend.typesystem .EMF。EmfRegistryMetaModel“/&gt; &lt;vetoableCallback idRef =”incremental“/&gt; &lt;/ component&gt; &lt;！ -  clean assolete files  - &gt; &lt;component id =”cleaner“class =”org.eclipse.xpand2.incremental。FileCleaner“&gt; &lt;oldTraceModelSlot value =”oldtrace“/&gt; &lt;newTraceModelSlot value =”trace“/&gt; &lt;outlet path =”somewhere /“overwrite =”true“/&gt; &lt;/ component&gt; &lt;！ - 写跟踪模型 - &gt; &lt;component id =“tracemodelwriter”class =“org.eclipse.emf.mwe.utils。Writer“modelSlot =”trace“uri =”temp / trace.trace“/&gt; &lt;！ - 制作模型的备份副本 - &gt; &lt;component id =”copier“class =”org.eclipse.emf.mwe.utils。FileCopy“sourceFile =”model / my.model“targetFile =”temp / old.model“/&gt; &lt;/ workflow&gt;</pre>
+<pre class="programlisting">
+&lt;workflow&gt;
+  &lt;!-- read new model --&gt;
+  &lt;component id="modelreader" class="org.eclipse.emf.mwe.utils.Reader"
+    uri="model/my.model"
+    firstElementOnly="true"
+    modelSlot="model"               
+  /&gt;
+  &lt;!-- read old model, copied from previous run. may not exist, so ignore missing model --&gt;
+  &lt;component id="oldmodelreader" class="org.eclipse.emf.mwe.utils.Reader"
+    uri="temp/old.model"
+    firstElementOnly="true"
+    ignoreMissingModel="true"
+    modelSlot="oldmodel"            
+  /&gt;
+  
+  &lt;!-- compute diff. --&gt;
+  &lt;component id="compare" class="org.eclipse.xpand2.incremental.compare.EmfCompare"
+    oldModelSlot="oldmodel"
+    newModelSlot="model"
+    diffModelSlot="diff"
+  /&gt;
+
+  &lt;!-- read trace model, produced by previous run. may not exist, so ignore missing model --&gt;
+  &lt;component id="tracemodelreader" class="org.eclipse.emf.mwe.utils.Reader"
+    uri="temp/trace.trace"
+    firstElementOnly="true"
+    ignoreMissingModel="true"
+    modelSlot="oldtrace"            
+  /&gt;
+
+  &lt;!-- this is the actual incremental generation callback --&gt;
+  &lt;component id="incremental"
+      class="org.eclipse.xpand2.incremental.IncrementalGenerationCallback"
+    diffModelSlot="diff"
+    oldTraceModelSlot="oldtrace"
+    newTraceModelSlot="trace"
+  /&gt;
+  
+  &lt;!-- generate code --&gt;
+  &lt;component id="generator" class="org.eclipse.xpand2.Generator"&gt;
+    &lt;expand value="resources::templates::Test::Test FOR model" /&gt;
+    &lt;outlet path="somewhere/" overwrite="true"/&gt;
+    &lt;metaModel class="org.eclipse.xtend.typesystem.emf.EmfRegistryMetaModel" /&gt;
+    &lt;vetoableCallback idRef="incremental" /&gt;
+  &lt;/component&gt;
+  
+  &lt;!-- clean obsolete files --&gt;
+  &lt;component id="cleaner" class="org.eclipse.xpand2.incremental.FileCleaner"&gt;
+    &lt;oldTraceModelSlot value="oldtrace" /&gt;
+    &lt;newTraceModelSlot value="trace" /&gt;
+    &lt;outlet path="somewhere/" overwrite="true"/&gt;
+  &lt;/component&gt;
+  
+  &lt;!-- write trace model --&gt;
+  &lt;component id="tracemodelwriter" class="org.eclipse.emf.mwe.utils.Writer"
+    modelSlot="trace"
+    uri="temp/trace.trace"
+  /&gt;      
+  
+  &lt;!-- make backup copy of model --&gt;
+  &lt;component id="copier" class="org.eclipse.emf.mwe.utils.FileCopy"
+    sourceFile="model/my.model"
+    targetFile="temp/old.model"
+  /&gt;
+&lt;/workflow&gt;
+</pre>
 </div>
 </div>
 </body>

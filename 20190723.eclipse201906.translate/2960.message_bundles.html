@@ -1,47 +1,91 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"></meta>
-<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1"></link>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
 <title>消息包</title>
 </head>
 
-<body dir="ltr">
+<body >
 <h1>消息包</h1>
 <h2>描述</h2>
 <p>标准Java ResourceBundle具有非常低效的空间特性。由于正在运行的Eclipse往往有许多外化消息，因此我们实现了一个新的消息包系统，以便在Eclipse中使用。该机制非常简单，完全通用 - 可以在任何地方使用。</p>
 <h3>新方法摘要：</h3>
 <ul>
-  <li><code>messages.properties</code> - 此文件与之前的文件相同，但所有密钥都必须是有效的Java标识符。</li>
+  <li><code> messages.properties </code> - 此文件与之前的文件相同，但所有密钥都必须是有效的Java标识符。</li>
   <li>每个消息文件都有一个相应的Java类。</li>
   <li>文件中的每个键/值对都有一个<code>public static String</code>字段，其名称与消息键相同。</li>
-  <li>加载消息包时，字段的值将设置为<code>messages.properties</code>文件中的值。</li>
+  <li>加载消息包时，字段的值将设置为<code>messages.properties </code>文件中的值。</li>
   <li>消息属性文件将从内存中清除。</li>
 </ul>
 <h3>创建新消息时：</h3>
 <ul>
-  <li>在<code>Messages.java</code>文件中创建一个字段。</li>
-  <li>在<code>messages.properties</code>文件中创建一个键/值对，其中键名与字段名称匹配，</li>
+  <li>在<code>Messages.java </code>文件中创建一个字段。</li>
+  <li>在<code>messages.properties </code>文件中创建一个键/值对，其中键名与字段名称匹配，</li>
   <li>要引用该消息，只需引用该字段（例如<code>Messages.my_key</code> ）而不是标准查找。</li>
 </ul>
 <h2>示例文件：</h2>
 <h3>客户代码</h3>
 <h4>旧代码：</h4>
-<pre><code>public class MyClass {public void myMethod（）{String message; ...// no args message = Messages.getString（“key.one”）; // $ NON-NLS-1 $ ...//绑定一个arg message = MessageFormat.format（Messages.getString（“key.two”），new Object [] {“example usage”}）; // $ NON-NLS-1 $ // $ NON-NLS-2 $ ...}}</code></pre>
+<pre><code>public class MyClass {
+  public void myMethod() {
+    String message;
+    ...
+    // no args
+    message = Messages.getString(&quot;key.one&quot;); //$NON-NLS-1$
+    ...
+    // bind one arg
+    message = MessageFormat.format(Messages.getString(&quot;key.two&quot;), new Object[] {&quot;example usage&quot;}); //$NON-NLS-1$ //$NON-NLS-2$
+    ...
+  }
+}</code></pre>
 <h4>新守则：</h4>
-<pre><code>public class MyClass {public void myMethod（）{String message; ...//没有args message = Messages.key_one; ...//绑定一个arg消息= NLS.bind（Messages.key_two，“example usage”）; // $ NON-NLS-1 $ ...}}</code></pre>
+<pre><code>public class MyClass {
+  public void myMethod() {
+    String message;
+    ...
+    // no args
+    message = Messages.key_one;
+    ...
+    // bind one arg
+    message = NLS.bind(Messages.key_two, &quot;example usage&quot;); //$NON-NLS-1$
+    ...
+  }
+}</code></pre>
 <h3>Messages.java</h3>
 <h4>旧代码：</h4>
-<pre><code>public class Messages {private static final String BUNDLE_NAME =“org.eclipse.core.utils.messages”; // $ NON-NLS-1 $ private static final ResourceBundle bundle = ResourceBundle.getBundle（BUNDLE_NAME）; public static String getString（String key）{try {return bundle.getString（key）; } catch（MissingResourceException e）{return key; }}}</code></pre>
+<pre><code>public class Messages {
+  private static final String BUNDLE_NAME = &quot;org.eclipse.core.utils.messages&quot;; //$NON-NLS-1$
+  private static final ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME);
+   
+  public static String getString(String key) {
+    try {
+      return bundle.getString(key);
+    } catch (MissingResourceException e) {
+      return key;
+    }
+  }
+}</code></pre>
 <h4>新守则：</h4>
-<pre><code>import org.eclipse.osgi.util。NLS;</code></pre>
-<pre><code>公共类消息扩展NLS {private static final String BUNDLE_NAME =“org.eclipse.core.utils.messages”; // $ NON-NLS-1 $ public static String key_one; public static String key_two; ...static {NLS.initializeMessages（BUNDLE_NAME，Messages.class）; }}</code></pre>
+<pre><code>import org.eclipse.osgi.util.NLS;</code></pre>
+<pre><code>public class Messages extends NLS {
+  private static final String BUNDLE_NAME = &quot;org.eclipse.core.utils.messages&quot;; //$NON-NLS-1$
+   
+  public static String key_one;
+  public static String key_two;
+  ...
+  static {
+    NLS.initializeMessages(BUNDLE_NAME, Messages.class);
+  }
+}</code></pre>
 <h3>messages.properties</h3>
 <h4>旧代码：</h4>
-<pre>key.one = Hello world。key.two =这是一个带有一个参数的绑定{0}。</pre>
+<pre>key.one = Hello world.
+key.two = This is an {0} of binding with one argument.</pre>
 <h4>新守则：</h4>
-<pre>key_one = Hello world。key_two =这是一个带有一个参数的绑定{0}。</pre>
+<pre>key_one = Hello world.
+key_two = This is an {0} of binding with one argument.</pre>
 </body>
 </html>

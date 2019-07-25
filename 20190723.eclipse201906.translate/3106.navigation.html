@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?="">
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" gtc:encodedoriginal="PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBYSFRNTCAxLjAgVHJhbnNpdGlvbmFsLy9FTiIKICAgICJodHRwOi8vd3d3LnczLm9yZy9UUi94aHRtbDEvRFREL3hodG1sMS10cmFuc2l0aW9uYWwuZHRkIj4=">
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2013, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <meta name="copyright" content="Copyright (c) 2013, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>浏览器导航和历史</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css">
 </head>
-<body dir="ltr">
+<body >
   <h1>浏览器导航和历史</h1>
     <p>由于RAP应用程序通常在浏览器中运行，因此用户可以期望它在某种程度上像传统网站一样行为和导航。使用RAP小部件（如<em><a href="../reference/api/org/eclipse/swt/widgets/TabFolder.html">TabFolder</a></em> ， <em><a href="../reference/api/org/eclipse/swt/widgets/List.html">List</a></em> ， <em><a href="../reference/api/org/eclipse/swt/widgets/Menu.html">Menu</a></em>等）可以轻松实现典型网站和Web应用程序的布局。但是，某些概念（如历史记录支持）需要特殊的API。</p>
     <h2 id="links">链接</h2>
@@ -17,16 +17,37 @@
     </p>
     <p>其次，可以使用<a href="markup.html#markup">标记功能</a>在应用程序中集成<a href="markup.html#link"><q>实际</q>链接</a> 。单击此类链接将（默认情况下）不会触发任何事件，但会在同一窗口中打开给定的URL。用户还可以在新的浏览器选项卡或窗口中打开URL（例如，使用链接本机上下文菜单），或者应用程序可以通过将target属性设置为<code>"_blank"</code>来强制在新选项卡/窗口中打开URL。
     </p>
-    <pre class="lang-java">列表清单=新列表（父级，样式）; list.setData（RWT.MARKUP_ENABLED，Boolean。是的;）; list.add（“此链接打开&lt;a href='http://eclipse.org/rap' target='_blank'&gt;新标签&lt;/a&gt;”）;</pre>
+    <pre class="lang-java">
+List list = new List( parent, style );
+list.setData( RWT.MARKUP_ENABLED, Boolean.TRUE );
+list.add( "This link opens &lt;a href='http://eclipse.org/rap' target='_blank'&gt;a new tab&lt;/a&gt;" );</pre>
     <p id="selection-link">在<em>List</em> ， <em>Tree</em> ， <em>Table</em>或<em>Grid</em>小部件中嵌入链接时，它也可用于发出选择事件而不是导航到URL。为此，必须将target属性设置为<code>"_rwt"</code> 。如果现在单击链接，将触发<em>Selection</em>事件。此事件与普通<em>Selection</em>事件的不同之处在于<em>detail</em>字段等于<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#HYPERLINK">RWT.HYPERLINK</a></em> ， <em>文本</em>字段包含链接“href”属性的值。如果未设置“href”属性，则值为“ <code>&lt;a&gt;</code> ”和“ <code>&lt;/a&gt;</code> ”之间的文本。请注意，如果没有给出协议，某些浏览器（特别是Internet Explorer）可能会将“href”值重写为绝对URL。一种可能的解决方法是使用“＃”启动“href”值并在此之前剪切任何内容：</p>
-    <pre class="lang-java">列表清单=新列表（父级，样式）; list.setData（RWT.MARKUP_ENABLED，Boolean。是的;）; list.add（“点击&lt;a href='#myvalue' target='_rwt'&gt;这里&lt;/a&gt;”）; list.addListener（SWT.Selection，new Listener（）{public void handleEvent（Event event）{if（event.detail == RWT.HYPERLINK &amp;&amp; event.text.contains（“＃”））{log（“Clicked link \” “”+ event.text.split（“＃”）[1] +“\”“）;}}}）;</pre>
+    <pre class="lang-java">
+List list = new List( parent, style );
+list.setData( RWT.MARKUP_ENABLED, Boolean.TRUE );
+list.add( "Click &lt;a href='#myvalue' target='_rwt'&gt;here&lt;/a&gt;" );
+list.addListener( SWT.Selection, new Listener() {
+  public void handleEvent( Event event ) {
+    if( event.detail == RWT.HYPERLINK &amp;&amp; event.text.contains( "#" ) ) {
+      log( "Clicked link \"" + event.text.split( "#" )[ 1 ] + "\"" );
+    }
+  }
+} );</pre>
     <h2 id="launcher">在外部浏览器/应用程序中打开URL</h2>
     <p>在RAP中可以以编程方式打开任何URL而无需离开当前页面/会话。这是使用<em><a href="../reference/api/org/eclipse/rap/rwt/client/service/UrlLauncher.html">UrlLauncher</a></em> <a href="client.html#service">客户端服务完成的</a> 。任何以<q><code>http</code></q> （或<q><code>https</code></q> ）开头的URL都将在新的浏览器选项卡，窗口或弹出窗口中打开，除非它被弹出窗口阻止程序阻止。（浏览器通常会询问用户是否允许网站一般打开新窗口，只是在这种情况下，或者永远不会。）其他协议（如<q><code>mailto</code></q>或<q><code>tel</code></q> <i>不会</i>创建浏览器窗口，但可能会触发另一个应用程序打开（如果已安装）。例子：</p>
-    <pre class="lang-java">UrlLauncher launcher = RWT.getClient（）。getService（UrlLauncher.class）; launcher.openURL（“http://www.eclipse.org/”）; launcher.openURL（RWT.getResourceManager（）。getLocation（“my-doc.pdf”））; launcher.openURL（“mailto：someone@nowhere.org?cc=other@nowhere.org”+“＆subject = Hello％3F＆body = RAP％20is％20awesome！“）; launcher.openURL（”tel：555-123456“）;</pre>
+    <pre class="lang-java">
+UrlLauncher launcher = RWT.getClient().getService( UrlLauncher.class );
+launcher.openURL( "http://www.eclipse.org/" );
+launcher.openURL( RWT.getResourceManager().getLocation( "my-doc.pdf" ) );
+launcher.openURL(   "mailto:someone@nowhere.org?cc=other@nowhere.org"
+                  + "&amp;subject=Hello%3F&amp;body=RAP%20is%20awesome!" );
+launcher.openURL( "tel:555-123456" );</pre>
 
     <h2 id="exitconfirmation">退出确认</h2>
     <p><em><a href="../reference/api/org/eclipse/rap/rwt/client/service/ExitConfirmation.html">ExitConfirmation</a></em>服务可以配置一条消息，只要用户尝试关闭浏览器窗口/选项卡或导航到另一个URL，就可以显示该消息。例：</p>
-    <pre class="lang-java">ExitConfirmation service = RWT.getClient（）。getService（ExitConfirmation.class）; service.setMessage（“你真的想离开派对吗？“）;</pre>
+    <pre class="lang-java">
+ExitConfirmation service = RWT.getClient().getService( ExitConfirmation.class );
+service.setMessage( "Do you really wanna leave the party?" );</pre>
     <p><b>结果：</b></p>
     <p><img src="../images/exitConfirmation.png" alt="退出确认对话框" style="padding-top:5px"></p>
     <p>
@@ -36,9 +57,28 @@
     <h2 id="deeplinks">深层链接</h2>
     <p>传统网站中的深层链接是不仅指向文档而且指向文档中特定位置的链接。这是通过向URL添加<q>片段ID</q>来实现的，该路径通过<q>＃</q>与路径分开。例如“ <code>http://eclipse.org/#midcolumn</code> ”。</p>
     <p>RAP提供<em><a href="../reference/api/org/eclipse/rap/rwt/client/service/BrowserNavigation.html">BrowserNavigation</a></em>服务，允许应用程序访问此片段。输入URL（或更改后 - 参见<a id="listener" href="#history">历史记录支持</a> ）后，将<em><a href="../reference/api/org/eclipse/rap/rwt/client/service/BrowserNavigationListener.html">调用BrowserNavigationListener</a></em> ，并通过<em><a href="../reference/api/org/eclipse/rap/rwt/client/service/BrowserNavigationEvent.html#getState--">getState（）</a></em>在<em><a href="../reference/api/org/eclipse/rap/rwt/client/service/BrowserNavigationEvent.html">BrowserNavigationEvent</a></em>上提供该片段。然后可以使用该字符串来确定应用程序中的导航位置。例如，如果您使用TabFolder作为主要导航元素，那么简单但完整的实现可能如下所示：</p>
-    <pre class="lang-java">final Map &lt;String，TabItem&gt; navigation = new HashMap &lt;String，TabItem&gt;（）; navigation.put（“employees”，employeeTab）; navigation.put（“公司”，companiesTab）; //等...BrowserNavigation service = RWT.getClient（）。getService（BrowserNavigation.class）; service.addBrowserNavigationListener（new BrowserNavigationListener（）{@Override public void navigated（BrowserNavigationEvent event）{TabItem item = navigation.get（event.getState（））; if（item！= null）{item.getParent（）。setSelection（item）; }}};</pre>
+    <pre class="lang-java">
+final Map&lt;String, TabItem&gt; navigation = new HashMap&lt;String, TabItem&gt;();
+navigation.put( "employees", employeeTab );
+navigation.put( "companies", companiesTab ); // etc...
+BrowserNavigation service = RWT.getClient().getService( BrowserNavigation.class );
+service.addBrowserNavigationListener( new BrowserNavigationListener() {
+  @Override
+  public void navigated( BrowserNavigationEvent event ) {
+    TabItem item = navigation.get( event.getState() );
+    if( item != null ) {
+      item.getParent().setSelection( item );
+    }
+  }
+} );</pre>
   <p>然后可以使用URL <q><code>http://myRapApp/#companies</code></q>直接在特定选项卡上打开该应用程序。<br>您还可以编码片段中的路径，指向特定的数据单元：</p>
-  <pre class="lang-java">public void navigated（BrowserNavigationEvent event）{String state = event.getState（）; if（state.startsWith（“employees /”））{showEmpoyee（state.substring（10））; }}</pre>
+  <pre class="lang-java">
+public void navigated( BrowserNavigationEvent event ) {
+  String state = event.getState();
+  if( state.startsWith( "employees/" ) ) {
+    showEmpoyee( state.substring( 10 ) );
+  }
+}</pre>
   <p>打开<q><code>http://myRapApp/#employees/john.doe</code></q>然后可以打开已经显示条目或搜索<q>John Doe</q>的应用程序。
   </p><p>结合<a href="#links">“真实”链接</a>或<em><a href="#launcher">URLLauncher</a></em> ，深层链接提供了在会话中导航的其他方式，或在其他浏览器选项卡中打开新的（并行）UI会话。
   </p>

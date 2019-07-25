@@ -1,11 +1,11 @@
-﻿<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+﻿<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>扩展 -  provide_custom安排，所有</title>
-		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css"></link>
-		<link type="text/css" rel="stylesheet" href="../resources/custom.css"></link>
+		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css">
+		<link type="text/css" rel="stylesheet" href="../resources/custom.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<h1 id="ProvidingacustomdiagramlayoutalgorithmArrangeAll">提供自定义图表布局算法（“全部安排”）</h1>
 		<ol class="toc" style="list-style:disc">
 			<li>
@@ -162,7 +162,23 @@
 			<br>Sirius抽象类默认只在Node视图上提供排序。
 		</p>
 		<p>例如，词典视图排序组件如下：</p>
-		<pre><code>公共类LexicographicViewOrdering扩展AbstractViewOrdering {@Override protected List &lt;View&gt; sortViews（List &lt;View&gt; views）{Comparator &lt;View&gt; comparison = Comparator.comparing（new Function &lt;View，String&gt;（）{@ Override public String apply（View t ）{DDiagramElement element =（DDiagramElement）t.getElement（）; return element.getName（）;}}）; Collections.sort（观看，比较）;返回视图; }}</code></pre>
+		<pre><code>public class LexicographicViewOrdering extends AbstractViewOrdering {
+
+        @Override
+        protected List&lt;View&gt; sortViews(List&lt;View&gt; views) {
+            Comparator&lt;View&gt; comparing = Comparator.comparing(new Function&lt;View, String&gt;() {
+                @Override
+                public String apply(View t) {
+                    DDiagramElement element = (DDiagramElement) t.getElement();
+                    return element.getName();
+                }
+            });
+            Collections.sort(views, comparing);
+            return views;
+        }
+    }
+
+</code></pre>
 		<h4 id="ContributingyourViewOrderingwithextensionpoint">使用扩展点贡献ViewOrdering</h4>
 		<p>一旦编写了视图排序组件，就必须让Sirius知道它，以便可以使用它。
 			<br>要做到这一点，Sirius提供了一个扩展点<code>org.eclipse.sirius.diagram.viewOrderingProvider</code> 。
@@ -173,15 +189,58 @@
 		</p>
 		<p>例如，使用词典，您将拥有：</p> 
 		<img border="0" src="images/arrange-all/arrange-all-viewOrderingExtensionPoint.png">
-		<pre><code>&lt;extension point =“org.eclipse.sirius.diagram.viewOrderingProvider”&gt; &lt;viewOrderingProvider providerClass =“org.eclipse.sirius.diagram.ui.tools.internal.providers。LexicographicViewOrderingProvider“/&gt; &lt;/ extension&gt;</code></pre>
+		<pre><code>&lt;extension point="org.eclipse.sirius.diagram.viewOrderingProvider"&gt;
+   &lt;viewOrderingProvider providerClass="org.eclipse.sirius.diagram.ui.tools.internal.providers.LexicographicViewOrderingProvider" /&gt;
+&lt;/extension&gt;
+
+
+</code></pre>
 		<p><code>LexicographicViewOrderingProvider</code>代码将是：</p>
-		<pre><code>公共类LexicographicViewOrderingProvider实现ViewOrderingProvider {public LexicographicViewOrderingProvider（）{} @Override public boolean provide（DiagramElementMapping mapping）{return true; } @Override public ViewOrdering getViewOrdering（DiagramElementMapping mapping）{return new LexicographicViewOrdering（）; }}</code></pre>
+		<pre><code>public class LexicographicViewOrderingProvider implements ViewOrderingProvider {
+
+    public LexicographicViewOrderingProvider() {
+    }
+
+    @Override
+    public boolean provides(DiagramElementMapping mapping) {
+        return true;
+    }
+
+    @Override
+    public ViewOrdering getViewOrdering(DiagramElementMapping mapping) {
+        return new LexicographicViewOrdering();
+    }
+}
+
+
+</code></pre>
 		<h3 id="Writeyourcustomlayoutalgorithm">编写自定义布局算法</h3>
 		<p>要使用Sirius API创建自己的布局算法，您必须根据需要使用的内容将一个Sirius抽象类子类化：</p>
 		<h5 id="DefaultLayoutProvider2">DefaultLayoutProvider</h5>
 		<p>如果您不需要以下其他人的组合自由，则建议使用此提供者。如果您希望说明符能够直接在VSM中配置布局算法，则必须使用此提供程序。</p>
 		<p>例如，安装的ELK布局算法正在使用它：</p>
-		<pre><code>/ ** *布局节点提供程序允许在*排列图元素时应用ELK布局算法。* * @author &lt;a href=mailto:pierre.guilet@obeo.fr&gt; Pierre Guilet &lt;/a&gt; * * / public class ELKLayoutNodeProvider extends DefaultLayoutProvider {@Override public Command layoutEditParts（final List selectedObjects，final IAdaptable layoutHint）{Injector injector = LayoutConnectorsService.getInstance（）。getInjector（null，selectedObjects）; ElkDiagramLayoutConnector connector = injector.getInstance（ElkDiagramLayoutConnector.class）; LayoutMapping layoutMapping = connector.buildLayoutGraph（null，selectedObjects）; connector.layout（layoutMapping）; connector.transferLayout（layoutMapping）; return connector.getApplyCommand（layoutMapping）; }}</code></pre>
+		<pre><code>/**
+ * Layout node provider allowing to apply an ELK layout algorithm while
+ * arranging diagram elements.
+ * 
+ * @author &lt;a href=mailto:pierre.guilet@obeo.fr&gt;Pierre Guilet&lt;/a&gt;
+ *
+ */
+public class ELKLayoutNodeProvider extends DefaultLayoutProvider {
+
+    @Override
+    public Command layoutEditParts(final List selectedObjects, final IAdaptable layoutHint) {
+        Injector injector = LayoutConnectorsService.getInstance().getInjector(null, selectedObjects);
+        ElkDiagramLayoutConnector connector = injector.getInstance(ElkDiagramLayoutConnector.class);
+        LayoutMapping layoutMapping = connector.buildLayoutGraph(null, selectedObjects);
+        connector.layout(layoutMapping);
+        connector.transferLayout(layoutMapping);
+        return connector.getApplyCommand(layoutMapping);
+    }
+
+}
+
+</code></pre>
 		<h5 id="AbstractLayoutEditPartProvider">AbstractLayoutEditPartProvider</h5>
 		<p>如果您不需要AbstractLayoutProvider提供的内容，则应该扩展此类。
 			<br>它的API是：</p>
@@ -195,12 +254,263 @@
 		<p>在对此类进行子类化时，您只需实现<code>layoutEditParts(List, IAdaptable)</code>并覆盖<code>provides(IOperation)</code>方法。
 		</p>
 		<p>例如， <code>LineLayoutProvider</code>具有以下代码：</p>
-		<pre><code>公共类LineLayoutProvider扩展AbstractLayoutProvider {/ **默认填充。* / private static final Insets DEFAULT_PADDING = new Insets（30,30,30,30）; / ** * &lt;code&gt; true &lt;/ code&gt;如果该行是水平的，&lt;code&gt; false &lt;/ code&gt;如果该行是垂直的。* / private boolean horizontal = true; / ** * &lt;code&gt; true &lt;/ code&gt;如果该行是水平的，&lt;code&gt; false &lt;/ code&gt;如果该行是垂直的。* * @param horizontal * &lt;code&gt; true &lt;/ code&gt;如果该行是水平的，&lt;code&gt; false &lt;/ code&gt;如果该行是垂直的。* / public void setHorizontal（final boolean horizontal）{this.horizontal = horizontal; } @Override public命令layoutEditParts（final List selectedObjects，final IAdaptable layoutHint）{final Iterator &lt;？&gt; iterEditParts = selectedObjects.iterator（）; final List &lt;View&gt; views = new ArrayList &lt;View&gt;（selectedObjects.size（））; final Map &lt;View，ShapeEditPart&gt; viewsToEditPartMap = new HashMap &lt;View，ShapeEditPart&gt;（）; while（iterEditParts.hasNext（））{final Object next = iterEditParts.next（）; if（下一个实例ShapeEditPart &amp;&amp;！（下一个IBorderItemEditPart实例））{final ShapeEditPart shapeEditPart =（ShapeEditPart）next; final view view = shapeEditPart.getNotationView（）; viewsToEditPartMap.put（view，shapeEditPart）; views.add（视图）; } else {iterEditParts.remove（）; ViewOrdering viewOrdering = ViewOrderingHint.getInstance（）。consumeseViewOrdering（getContainerEditPart（selectedObjects）.getNotationView（））; if（viewOrdering == null）{//使用简单的视图排序......太糟糕了。viewOrdering = new SimpleViewOrdering（）; } viewOrdering.setViews（views）; final List &lt;View&gt; sortedViews = viewOrdering.getSortedViews（）; final List &lt;ShapeEditPart&gt; sortedEditParts = new ArrayList &lt;ShapeEditPart&gt;（sortedViews.size（））; final Iterator &lt;View&gt; iterSortedViews = sortedViews.listIterator（）; while（iterSortedViews.hasNext（））{final查看currentView = iterSortedViews.next（）; final ShapeEditPart currentEditPart = viewsToEditPartMap.get（currentView）; sortedEditParts.add（currentEditPart）; } return createNodeChangeBoundCommands（sortedEditParts）; } / ** *创建更改边界命令。* * @param sortedNodes *要移动的节点。* @return更改边界命令。* / protected命令createNodeChangeBoundCommands（final List &lt;ShapeEditPart&gt; sortedNodes）{final CompoundCommand result = new CompoundCommand（）; final Iterator &lt;ShapeEditPart&gt; iterEditParts = sortedNodes.iterator（）; int currentX = 0; while（iterEditParts.hasNext（））{final ShapeEditPart shapeEditPart = iterEditParts.next（）;如果（！（shapeEditPart instanceof IBorderItemEditPart））{final View view = shapeEditPart.getNotationView（）; //缩放双刻度= 1.0; if（shapeEditPart.getRoot（）instanceof DiagramRootEditPart）{final ZoomManager zoomManager =（（DiagramRootEditPart）shapeEditPart.getRoot（））。getZoomManager（）; scale = zoomManager.getZoom（）; } // //计算请求数据。final point ptOldLocation = shapeEditPart.getFigure（）。getBounds（）。getLocation（）; // shapeEditPart.getFigure（）。translateToAbsolute（ptOldLocation）; final int locationX = horizontal？currentX + this.getPadding（）。left：this.getPadding（）。left; final int locationY =水平？this.getPadding（）。top：currentX + this.getPadding（）。top; final point ptLocation = new Point（locationX，locationY）; final Dimension delta = ptLocation.getDifference（ptOldLocation）; final Object existingRequest = this.findRequest（view，org.eclipse.gef。RequestConstants。REQ_MOVE）; int step = 0; if（existingRequest == null）{final ChangeBoundsRequest request = new ChangeBoundsRequest（org.eclipse.gef。RequestConstants。REQ_MOVE）; request.setEditParts（shapeEditPart）; request.setMoveDelta（new PrecisionPoint（delta.width * scale，delta.height * scale））; request.setLocation（new PrecisionPoint（ptLocation.x * scale，ptLocation.y * scale））; step = this.horizontal？getBounds（shapeEditPart）.width：getBounds（shapeEditPart）.height; final命令cmd = this.buildCommandWrapper（request，shapeEditPart）;如果（cmd！= null &amp;&amp; cmd.canExecute（））{result.add（cmd）; // this.getViewsToChangeBoundsRequest（）。put（view，// request）; else if（existingRequest instanceof ChangeBoundsRequest）{final ChangeBoundsRequest changeBoundsRequest =（ChangeBoundsRequest）existingRequest; changeBoundsRequest.setMoveDelta（new PrecisionPoint（delta.width * scale，delta.height * scale））; changeBoundsRequest.setLocation（new PrecisionPoint（ptLocation.x * scale，ptLocation.y * scale））; step = this.horizontal？getBounds（shapeEditPart）.width：getBounds（shapeEditPart）.height; } currentX + =水平？step + getPadding（）。right + getPadding（）。left：step + this.getPadding（）。bottom + this.getPadding（）。top; //检查容器的大小。EditPart container = shapeEditPart.getParent（）; while（container instanceof CompartmentEditPart）{container = container.getParent（）; if（container instanceof ShapeEditPart）{final ShapeEditPart containerEditPart =（ShapeEditPart）container; //最小的witdh最终int minWidth = this.horizontal？（（getPadding（）。left + getPadding（）。right）* sortedNodes.size（））+（getNodeMaxWidth（sortedNodes）* sortedNodes.size（））：getPadding（）。left + getNodeMaxWidth（sortedNodes）+ getPadding（）。对; //最小高度final int minHeight = this.horizontal？getPadding（）。top + this.getNodeMaxHeight（sortedNodes）+ this.getPadding（）。bottom：（（getPadding（）。top + getPadding（）。bottom）* sortedNodes.size（））+（this.getNodeMaxHeight（sortedNodes） * sortedNodes.size（））; final Dimension minDimension = new Dimension（minWidth，minHeight）; final Dimension difference = minDimension.getShrinked（containerEditPart.getFigure（）。getBounds（）。getSize（））; if（difference.width&gt; 0 || difference.height&gt; 0）{final Object existingContainerRequest = this.findRequest（containerEditPart，org.eclipse.gef。RequestConstants。REQ_RESIZE）; //; this.getViewsToChangeBoundsRequest（）。get（containerEditPart.getNotationView（））; createChangeBoundsCommand（result，existingContainerRequest，containerEditPart，difference，scale）;返回结果; private void createChangeBoundsCommand（final CompoundCommand compoundCommand，final Object existingContainerRequest，final ShapeEditPart containerEditPart，final Dimension difference，final double scale）{if（existingContainerRequest == null）{final ChangeBoundsRequest changeBoundsRequest = new ChangeBoundsRequest（）; changeBoundsRequest.setEditParts（containerEditPart）; changeBoundsRequest.setResizeDirection（PositionConstants。东南）; changeBoundsRequest.setSizeDelta（new Dimension（（int）（difference.width * scale），（int）（difference.height * scale）））; changeBoundsRequest.setLocation（new Point（0,0））; changeBoundsRequest.setType（org.eclipse.gef。RequestConstants。REQ_RESIZE）; final命令cmd = this.buildCommandWrapper（changeBoundsRequest，containerEditPart）; if（cmd.canExecute（））{compoundCommand.add（cmd）; // this.getViewsToChangeBoundsRequest（）。put（containerEditPart.getNotationView（），// changeBoundsRequest）; } else if（existingContainerRequest instanceof ChangeBoundsRequest）{final ChangeBoundsRequest changeBoundsRequest =（ChangeBoundsRequest）existingContainerRequest; changeBoundsRequest.setResizeDirection（PositionConstants。东南）; changeBoundsRequest.setSizeDelta（new Dimension（（int）（difference.width * scale），（int）（difference.height * scale）））; } / ** *返回指定列表中所有节点（{@link ShapeEditPart}的实例）的最大宽度。* * @param节点*节点。* @return指定列表中所有节点的最大宽度。* / protected int getNodeMaxWidth（final List &lt;ShapeEditPart&gt; nodes）{int max = -1; for（final ShapeEditPart shapeEditPart：nodes）{final Object existingRequest = this.getViewsToChangeBoundsRequest（）。get（shapeEditPart.getNotationView（））; int width = shapeEditPart.getFigure（）。getBounds（）。width; if（existingRequest instanceof ChangeBoundsRequest）{width = width +（（ChangeBoundsRequest）existingRequest）.getSizeDelta（）。width; } if（width&gt; max）{max = width;返回最大值; } / ** *返回指定列表中所有节点（{@link ShapeEditPart}的实例）的最大高度。* * @param节点*节点。* @return指定列表中所有节点的最大宽度。* / protected int getNodeMaxHeight（final List &lt;ShapeEditPart&gt; nodes）{int max = -1; for（final ShapeEditPart shapeEditPart：nodes）{final int height = this.getBounds（shapeEditPart）.height; if（height&gt; max）{max = height;返回最大值; } @Override public boolean提供（final IOperation operation）{final View cview = getContainer（operation）; if（cview == null）{return false; } final IAdaptable layoutHint =（（ILayoutNodeOperation）operation）.getLayoutHint（）; final String layoutType = layoutHint.getAdapter（String.class）;返回LayoutType。DEFAULT.equals（layoutType）; } / ** *返回要使用的填充。* * @return使用填充。* / public Insets getPadding（）{return DEFAULT_PADDING; } / ** *获取对象列表的容器编辑部分。目前该函数只接受列表的第一个对象* * @param selectedObjects *所选对象* @return容器编辑部分* / protected IGraphicalEditPart getContainerEditPart（final List &lt;EditPart&gt; selectedObjects）{if（selectedObjects！= null &amp;&amp;！selectedObjects.isEmpty（））{return（IGraphicalEditPart）（selectedObjects.iterator（）。next（））。getParent（）; } return null; }}</code></pre>
+		<pre><code>public class LineLayoutProvider extends AbstractLayoutProvider {
+
+    /** The default padding. */
+    private static final Insets DEFAULT_PADDING = new Insets(30, 30, 30, 30);
+
+    /**
+     * &lt;code&gt;true&lt;/code&gt; if the line is horizontal, &lt;code&gt;false&lt;/code&gt; if the line is vertical.
+     */
+    private boolean horizontal = true;
+
+    /**
+     * &lt;code&gt;true&lt;/code&gt; if the line is horizontal, &lt;code&gt;false&lt;/code&gt; if the line is vertical.
+     * 
+     * @param horizontal
+     *            &lt;code&gt;true&lt;/code&gt; if the line is horizontal, &lt;code&gt;false&lt;/code&gt; if the line is vertical.
+     */
+    public void setHorizontal(final boolean horizontal) {
+        this.horizontal = horizontal;
+    }
+
+    @Override
+    public Command layoutEditParts(final List selectedObjects, final IAdaptable layoutHint) {
+        final Iterator&lt;?&gt; iterEditParts = selectedObjects.iterator();
+        final List&lt;View&gt; views = new ArrayList&lt;View&gt;(selectedObjects.size());
+        final Map&lt;View, ShapeEditPart&gt; viewsToEditPartMap = new HashMap&lt;View, ShapeEditPart&gt;();
+        while (iterEditParts.hasNext()) {
+            final Object next = iterEditParts.next();
+            if (next instanceof ShapeEditPart &amp;&amp; !(next instanceof IBorderItemEditPart)) {
+                final ShapeEditPart shapeEditPart = (ShapeEditPart) next;
+                final View view = shapeEditPart.getNotationView();
+                viewsToEditPartMap.put(view, shapeEditPart);
+                views.add(view);
+            } else {
+                iterEditParts.remove();
+            }
+        }
+        ViewOrdering viewOrdering = ViewOrderingHint.getInstance().consumeViewOrdering(getContainerEditPart(selectedObjects).getNotationView());
+        if (viewOrdering == null) {
+            // use a simple view ordering ... too bad.
+            viewOrdering = new SimpleViewOrdering();
+        }
+
+        viewOrdering.setViews(views);
+        final List&lt;View&gt; sortedViews = viewOrdering.getSortedViews();
+        final List&lt;ShapeEditPart&gt; sortedEditParts = new ArrayList&lt;ShapeEditPart&gt;(sortedViews.size());
+        final Iterator&lt;View&gt; iterSortedViews = sortedViews.listIterator();
+        while (iterSortedViews.hasNext()) {
+            final View currentView = iterSortedViews.next();
+            final ShapeEditPart currentEditPart = viewsToEditPartMap.get(currentView);
+            sortedEditParts.add(currentEditPart);
+        }
+        return createNodeChangeBoundCommands(sortedEditParts);
+    }
+
+    /**
+     * Create the change bounds commands.
+     * 
+     * @param sortedNodes
+     *            the nodes to move.
+     * @return the change bounds command.
+     */
+    protected Command createNodeChangeBoundCommands(final List&lt;ShapeEditPart&gt; sortedNodes) {
+        final CompoundCommand result = new CompoundCommand();
+        final Iterator&lt;ShapeEditPart&gt; iterEditParts = sortedNodes.iterator();
+        int currentX = 0;
+        while (iterEditParts.hasNext()) {
+            final ShapeEditPart shapeEditPart = iterEditParts.next();
+            if (!(shapeEditPart instanceof IBorderItemEditPart)) {
+
+                final View view = shapeEditPart.getNotationView();
+                // the zoom.
+                double scale = 1.0;
+                if (shapeEditPart.getRoot() instanceof DiagramRootEditPart) {
+                    final ZoomManager zoomManager = ((DiagramRootEditPart) shapeEditPart.getRoot()).getZoomManager();
+                    scale = zoomManager.getZoom();
+                }
+                //
+                // Compute request data.
+                final Point ptOldLocation = shapeEditPart.getFigure().getBounds().getLocation();
+                // shapeEditPart.getFigure().translateToAbsolute(ptOldLocation);
+                final int locationX = horizontal ? currentX + this.getPadding().left : this.getPadding().left;
+                final int locationY = horizontal ? this.getPadding().top : currentX + this.getPadding().top;
+                final Point ptLocation = new Point(locationX, locationY);
+                final Dimension delta = ptLocation.getDifference(ptOldLocation);
+
+                final Object existingRequest = this.findRequest(view, org.eclipse.gef.RequestConstants.REQ_MOVE);
+                int step = 0;
+                if (existingRequest == null) {
+                    final ChangeBoundsRequest request = new ChangeBoundsRequest(org.eclipse.gef.RequestConstants.REQ_MOVE);
+                    request.setEditParts(shapeEditPart);
+                    request.setMoveDelta(new PrecisionPoint(delta.width * scale, delta.height * scale));
+                    request.setLocation(new PrecisionPoint(ptLocation.x * scale, ptLocation.y * scale));
+                    step = this.horizontal ? getBounds(shapeEditPart).width : getBounds(shapeEditPart).height;
+
+                    final Command cmd = this.buildCommandWrapper(request, shapeEditPart);
+                    if (cmd != null &amp;&amp; cmd.canExecute()) {
+                        result.add(cmd);
+                        // this.getViewsToChangeBoundsRequest().put(view,
+                        // request);
+                    }
+                } else if (existingRequest instanceof ChangeBoundsRequest) {
+                    final ChangeBoundsRequest changeBoundsRequest = (ChangeBoundsRequest) existingRequest;
+                    changeBoundsRequest.setMoveDelta(new PrecisionPoint(delta.width * scale, delta.height * scale));
+                    changeBoundsRequest.setLocation(new PrecisionPoint(ptLocation.x * scale, ptLocation.y * scale));
+
+                    step = this.horizontal ? getBounds(shapeEditPart).width : getBounds(shapeEditPart).height;
+                }
+                currentX += horizontal ? step + getPadding().right + getPadding().left : step + this.getPadding().bottom + this.getPadding().top;
+
+                // check the size of the container.
+                EditPart container = shapeEditPart.getParent();
+                while (container instanceof CompartmentEditPart) {
+                    container = container.getParent();
+                }
+                if (container instanceof ShapeEditPart) {
+                    final ShapeEditPart containerEditPart = (ShapeEditPart) container;
+
+                    // The minimum witdh
+                    final int minWidth = this.horizontal ? ((getPadding().left + getPadding().right) * sortedNodes.size()) + (getNodeMaxWidth(sortedNodes) * sortedNodes.size())
+                            : getPadding().left + getNodeMaxWidth(sortedNodes) + getPadding().right;
+                    // The minimum height
+                    final int minHeight = this.horizontal ? getPadding().top + this.getNodeMaxHeight(sortedNodes) + this.getPadding().bottom
+                            : ((getPadding().top + getPadding().bottom) * sortedNodes.size()) + (this.getNodeMaxHeight(sortedNodes) * sortedNodes.size());
+
+                    final Dimension minDimension = new Dimension(minWidth, minHeight);
+
+                    final Dimension difference = minDimension.getShrinked(containerEditPart.getFigure().getBounds().getSize());
+                    if (difference.width &gt; 0 || difference.height &gt; 0) {
+                        final Object existingContainerRequest = this.findRequest(containerEditPart, org.eclipse.gef.RequestConstants.REQ_RESIZE); // ;this.getViewsToChangeBoundsRequest().get(containerEditPart.getNotationView());
+                        createChangeBoundsCommand(result, existingContainerRequest, containerEditPart, difference, scale);
+                    }
+
+                }
+
+            }
+        }
+        return result;
+    }
+
+    private void createChangeBoundsCommand(final CompoundCommand compoundCommand, final Object existingContainerRequest, final ShapeEditPart containerEditPart, final Dimension difference,
+            final double scale) {
+
+        if (existingContainerRequest == null) {
+            final ChangeBoundsRequest changeBoundsRequest = new ChangeBoundsRequest();
+            changeBoundsRequest.setEditParts(containerEditPart);
+            changeBoundsRequest.setResizeDirection(PositionConstants.SOUTH_EAST);
+            changeBoundsRequest.setSizeDelta(new Dimension((int) (difference.width * scale), (int) (difference.height * scale)));
+            changeBoundsRequest.setLocation(new Point(0, 0));
+            changeBoundsRequest.setType(org.eclipse.gef.RequestConstants.REQ_RESIZE);
+            final Command cmd = this.buildCommandWrapper(changeBoundsRequest, containerEditPart);
+            if (cmd.canExecute()) {
+                compoundCommand.add(cmd);
+                // this.getViewsToChangeBoundsRequest().put(containerEditPart.getNotationView(),
+                // changeBoundsRequest);
+            }
+        } else if (existingContainerRequest instanceof ChangeBoundsRequest) {
+            final ChangeBoundsRequest changeBoundsRequest = (ChangeBoundsRequest) existingContainerRequest;
+            changeBoundsRequest.setResizeDirection(PositionConstants.SOUTH_EAST);
+            changeBoundsRequest.setSizeDelta(new Dimension((int) (difference.width * scale), (int) (difference.height * scale)));
+        }
+    }
+
+    /**
+     * Return the maximum width of all nodes (instances of {@link ShapeEditPart} ) that are in the specified list.
+     * 
+     * @param nodes
+     *            the nodes.
+     * @return the maximum width of all nodes that are in the specified list.
+     */
+    protected int getNodeMaxWidth(final List&lt;ShapeEditPart&gt; nodes) {
+        int max = -1;
+        for (final ShapeEditPart shapeEditPart : nodes) {
+            final Object existingRequest = this.getViewsToChangeBoundsRequest().get(shapeEditPart.getNotationView());
+            int width = shapeEditPart.getFigure().getBounds().width;
+            if (existingRequest instanceof ChangeBoundsRequest) {
+                width = width + ((ChangeBoundsRequest) existingRequest).getSizeDelta().width;
+            }
+            if (width &gt; max) {
+                max = width;
+            }
+        }
+        return max;
+    }
+
+    /**
+     * Return the maximum height of all nodes (instances of {@link ShapeEditPart}) that are in the specified list.
+     * 
+     * @param nodes
+     *            the nodes.
+     * @return the maximum width of all nodes that are in the specified list.
+     */
+    protected int getNodeMaxHeight(final List&lt;ShapeEditPart&gt; nodes) {
+        int max = -1;
+        for (final ShapeEditPart shapeEditPart : nodes) {
+            final int height = this.getBounds(shapeEditPart).height;
+            if (height &gt; max) {
+                max = height;
+            }
+        }
+        return max;
+    }
+
+    @Override
+    public boolean provides(final IOperation operation) {
+        final View cview = getContainer(operation);
+        if (cview == null) {
+            return false;
+        }
+        final IAdaptable layoutHint = ((ILayoutNodeOperation) operation).getLayoutHint();
+        final String layoutType = layoutHint.getAdapter(String.class);
+        return LayoutType.DEFAULT.equals(layoutType);
+    }
+
+    /**
+     * Return the padding to use.
+     * 
+     * @return the padding to use.
+     */
+    public Insets getPadding() {
+        return DEFAULT_PADDING;
+    }
+
+    /**
+     * Get the container edit part of an object list. Currently the function takes only the first object of the list
+     * 
+     * @param selectedObjects
+     *            the selected object
+     * @return the container edit part
+     */
+    protected IGraphicalEditPart getContainerEditPart(final List&lt;EditPart&gt; selectedObjects) {
+        if (selectedObjects != null &amp;&amp; !selectedObjects.isEmpty()) {
+            return (IGraphicalEditPart) (selectedObjects.iterator().next()).getParent();
+        }
+        return null;
+    }
+
+}
+</code></pre>
 		<h4 id="Allowvieworderingcustomization">允许查看订单自定义</h4>
 		<p>如果要为其他开发人员添加功能以自定义视图在布局算法中布置的顺序，则必须使用Sirius视图排序API。例如，您将拥有<code>org.eclipse.sirius.diagram.ui.tools.api.layout.provider.您的布局提供程序的LineLayoutProvider.layoutEditParts(List, IAdaptable)</code>方法的代码如下：</p>
-		<pre><code>ViewOrdering viewOrdering = ViewOrderingHint.getInstance（）。consumeseViewOrdering（getContainerEditPart（selectedObjects）.getNotationView（））; if（viewOrdering == null）{//使用返回相同顺序的默认值。viewOrdering = new SimpleViewOrdering（）; } viewOrdering.setViews（views）; final List &lt;View&gt; sortedViews = viewOrdering.getSortedViews（）;</code></pre>
+		<pre><code>ViewOrdering viewOrdering = ViewOrderingHint.getInstance().consumeViewOrdering(getContainerEditPart(selectedObjects).getNotationView());
+        if (viewOrdering == null) {
+            //Use the default one that return the same order.
+            viewOrdering = new SimpleViewOrdering();
+        }
+
+        viewOrdering.setViews(views);
+        final List&lt;View&gt; sortedViews = viewOrdering.getSortedViews();
+</code></pre>
 		<p>使用方法<code>getContainerEditPart</code> ，它将是：</p>
-		<pre><code>protected IGraphicalEditPart getContainerEditPart（final List &lt;EditPart&gt; selectedObjects）{if（selectedObjects！= null &amp;&amp;！selectedObjects.isEmpty（））{return（IGraphicalEditPart）（selectedObjects.iterator（）。next（））。getParent（）; } return null; }</code></pre>
+		<pre><code>protected IGraphicalEditPart getContainerEditPart(final List&lt;EditPart&gt; selectedObjects) {
+        if (selectedObjects != null &amp;&amp; !selectedObjects.isEmpty()) {
+            return (IGraphicalEditPart) (selectedObjects.iterator().next()).getParent();
+        }
+        return null;
+    }
+</code></pre>
 		<p>然后，您将在这些有序视图上应用布局算法。</p>
 		<h3 id="IntegrateyourcustomlayoutalgorithmtoSirius">将自定义布局算法集成到Sirius中</h3>
 		<p>有三个扩展点可用于提供您的自定义算法。</p>
@@ -261,7 +571,9 @@
 		<h5 id="LayoutOptionFactory">LayoutOptionFactory</h5>
 		<p>该<code>LayoutOptionFactory</code>必须用于创建一个选项，给一个<code>CustomLayoutAlgorithm</code> 。此选项将由Sirius读取并提供给VSM说明符。
 		</p>
-		<pre><code>LayoutOptionFactory layoutOptionFactory = new LayoutOptionFactory（）;</code></pre>
+		<pre><code>LayoutOptionFactory layoutOptionFactory = new LayoutOptionFactory();
+
+</code></pre>
 		<p>此工厂包含处理每个选项类型的方法。创建的选项将具有：</p>
 		<ul>
 			<li>用于识别它的<strong>ID</strong> 。应该是独特的。
@@ -274,11 +586,93 @@
 			</li>
 		</ul>
 		<p>例如，ELK集成如下：</p>
-		<pre><code>公共类ELKAlgorithmProvider实现CustomLayoutAlgorithmProvider {@Override public List &lt;CustomLayoutAlgorithm&gt; getCustomLayoutAlgorithms（）{List &lt;CustomLayoutAlgorithm&gt; layoutAlgorithms = new ArrayList &lt;&gt;（）; //我们用所有ELK算法填充Sirius布局算法注册表。集合&lt;LayoutAlgorithmData&gt; algorithmData = LayoutMetaDataService.getInstance（）。getAlgorithmData（）; for（LayoutAlgorithmData layoutAlgorithmData：algorithmData）{List &lt;LayoutOptionData&gt; optionDatas = LayoutMetaDataService.getInstance（）。getOptionData（layoutAlgorithmData，Target。父母）; Map &lt;String，LayoutOption&gt; layoutOptions = new HashMap &lt;&gt;（）; LayoutOptionFactory layoutOptionFactory = new LayoutOptionFactory（）; for（LayoutOptionData layoutOptionData：optionDatas）{if（！CoreOptions。ALGORITHM.getId（）。equals（layoutOptionData.getId（））&amp;&amp;！layoutOptionData.getVisibility（）。等于（能见度。HIDDEN））{switch（layoutOptionData.getType（））{case STRING：layoutOptions.put（layoutOptionData.getId（），layoutOptionFactory.createStringOption（（String）layoutOptionData.getDefault（），layoutOptionData.getId（），layoutOptionData.getDescription（） ，layoutOptionData.getName（）））;打破; case BOOLEAN：layoutOptions.put（layoutOptionData.getId（），layoutOptionFactory.createBooleanOption（（Boolean）layoutOptionData.getDefault（），layoutOptionData.getId（），layoutOptionData.getDescription（），layoutOptionData.getName（）））;打破; case INT：layoutOptions.put（layoutOptionData.getId（），layoutOptionFactory.createIntegerOption（（Integer）layoutOptionData.getDefault（），layoutOptionData.getId（），layoutOptionData.getDescription（），layoutOptionData.getName（）））;打破; case DOUBLE：layoutOptions.put（layoutOptionData.getId（），layoutOptionFactory.createDoubleOption（（Double）layoutOptionData.getDefault（），layoutOptionData.getId（），layoutOptionData.getDescription（），layoutOptionData.getName（）））;打破; case ENUMSET：case ENUM：String [] choices = layoutOptionData.getChoices（）; List &lt;EnumChoice&gt; choicesList = new ArrayList &lt;&gt;（）; for（int i = 0; i &lt;choices.length; i ++）{String choiceId = choices [i]; choicesList.add（new EnumChoice（choiceId，“”））; } string defaultValue = null; Object defaultObject = layoutOptionData.getDefaultDefault（）; if（defaultObject instanceof Enum）{defaultValue =（（Enum &lt;？&gt;）defaultObject）.name（）; if（layoutOptionData.getType（）== Type。ENUM）{layoutOptions.put（layoutOptionData.getId（），layoutOptionFactory.createEnumOption（choicesList，layoutOptionData.getId（），layoutOptionData.getDescription（），layoutOptionData.getName（），defaultValue））; } else {layoutOptions.put（layoutOptionData.getId（），layoutOptionFactory.createEnumSetOption（choicesList，layoutOptionData.getId（），layoutOptionData.getDescription（），layoutOptionData.getName（）））;打破默认值：break; layoutAlgorithms.add（new CustomLayoutAlgorithm（layoutAlgorithmData.getId（），layoutAlgorithmData.getName（），（） - &gt; new ELKLayoutNodeProvider（），layoutOptions））; } return layoutAlgorithms; }}</code></pre>
+		<pre><code>public class ELKAlgorithmProvider implements CustomLayoutAlgorithmProvider {
+
+    @Override
+    public List&lt;CustomLayoutAlgorithm&gt; getCustomLayoutAlgorithms() {
+        List&lt;CustomLayoutAlgorithm&gt; layoutAlgorithms = new ArrayList&lt;&gt;();
+        // we fill the Sirius layout algorithm registry with all ELK algorithms.
+        Collection&lt;LayoutAlgorithmData&gt; algorithmData = LayoutMetaDataService.getInstance().getAlgorithmData();
+        for (LayoutAlgorithmData layoutAlgorithmData : algorithmData) {
+
+            List&lt;LayoutOptionData&gt; optionDatas = LayoutMetaDataService.getInstance().getOptionData(layoutAlgorithmData, Target.PARENTS);
+            Map&lt;String, LayoutOption&gt; layoutOptions = new HashMap&lt;&gt;();
+            LayoutOptionFactory layoutOptionFactory = new LayoutOptionFactory();
+            for (LayoutOptionData layoutOptionData : optionDatas) {
+                if (!CoreOptions.ALGORITHM.getId().equals(layoutOptionData.getId()) &amp;&amp; !layoutOptionData.getVisibility().equals(Visibility.HIDDEN)) {
+                    switch (layoutOptionData.getType()) {
+                    case STRING:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createStringOption((String) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case BOOLEAN:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createBooleanOption((Boolean) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case INT:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createIntegerOption((Integer) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case DOUBLE:
+                        layoutOptions.put(layoutOptionData.getId(), layoutOptionFactory.createDoubleOption((Double) layoutOptionData.getDefault(), layoutOptionData.getId(),
+                                layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        break;
+                    case ENUMSET:
+                    case ENUM:
+
+                        String[] choices = layoutOptionData.getChoices();
+                        List&lt;EnumChoice&gt; choicesList = new ArrayList&lt;&gt;();
+                        for (int i = 0; i &lt; choices.length; i++) {
+                            String choiceId = choices[i];
+                            choicesList.add(new EnumChoice(choiceId, ""));
+
+                        }
+                        String defaultValue = null;
+                        Object defaultObject = layoutOptionData.getDefaultDefault();
+                        if (defaultObject instanceof Enum) {
+                            defaultValue = ((Enum&lt;?&gt;) defaultObject).name();
+                        }
+                        if (layoutOptionData.getType() == Type.ENUM) {
+                            layoutOptions.put(layoutOptionData.getId(),
+                                    layoutOptionFactory.createEnumOption(choicesList, layoutOptionData.getId(), layoutOptionData.getDescription(), layoutOptionData.getName(), defaultValue));
+                        } else {
+                            layoutOptions.put(layoutOptionData.getId(),
+                                    layoutOptionFactory.createEnumSetOption(choicesList, layoutOptionData.getId(), layoutOptionData.getDescription(), layoutOptionData.getName()));
+                        }
+
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            layoutAlgorithms.add(new CustomLayoutAlgorithm(layoutAlgorithmData.getId(), layoutAlgorithmData.getName(), () -&gt; new ELKLayoutNodeProvider(), layoutOptions));
+        }
+        return layoutAlgorithms;
+    }
+
+}
+
+</code></pre>
 		<h5 id="DefaultLayoutProvider3">DefaultLayoutProvider</h5>
 		<p>该类包含核心布局算法。当用户在将配置为使用布局算法的图上调用arrange-all时，将创建此类的实例。您将获得布局的部件。然后根据需要布置它是你的工作。</p>
 		<p>例如，ELK集成具有以下内容：</p>
-		<pre><code>公共类ELKLayoutNodeProvider扩展DefaultLayoutProvider {@Override public Command layoutEditParts（final List selectedObjects，final IAdaptable layoutHint）{Injector injector = LayoutConnectorsService.getInstance（）。getInjector（null，selectedObjects）; ElkDiagramLayoutConnector connector = injector.getInstance（ElkDiagramLayoutConnector.class）; LayoutMapping layoutMapping = connector.buildLayoutGraph（null，selectedObjects）; connector.layout（layoutMapping）; connector.transferLayout（layoutMapping）; return connector.getApplyCommand（layoutMapping）; }}</code></pre>
+		<pre><code>public class ELKLayoutNodeProvider extends DefaultLayoutProvider {
+
+    @Override
+    public Command layoutEditParts(final List selectedObjects, final IAdaptable layoutHint) {
+        Injector injector = LayoutConnectorsService.getInstance().getInjector(null, selectedObjects);
+        ElkDiagramLayoutConnector connector = injector.getInstance(ElkDiagramLayoutConnector.class);
+        LayoutMapping layoutMapping = connector.buildLayoutGraph(null, selectedObjects);
+        connector.layout(layoutMapping);
+        connector.transferLayout(layoutMapping);
+        return connector.getApplyCommand(layoutMapping);
+    }
+
+}
+
+
+</code></pre>
 		<h4 id="org.eclipse.sirius.diagram.ui.layoutProvider">org.eclipse.sirius.diagram.ui.layoutProvider</h4>
 		<p>要使用，您的自定义算法应使用提供的扩展点<code>org.eclipse.sirius.diagram.ui.layoutProvider</code>向Sirius声明。此扩展点需要一个<code>LayoutProvider</code>子类，它将提供您的布局算法。其API如下：</p>
 		<img border="0" src="images/arrange-all/arrange-all-layoutProvider.png">
@@ -295,7 +689,45 @@
 			</li>
 		</ul>
 		<p>例如，左右复合提供程序声明如下：</p>
-		<pre><code>公共类CompositeLeftRightProvider实现LayoutProvider {/ **委托的GMF提供程序。* / private AbstractLayoutEditPartProvider layoutNodeProvider; public AbstractLayoutEditPartProvider getLayoutNodeProvider（final IGraphicalEditPart container）{if（this.layoutNodeProvider == null）{final CompoundLayoutProvider clp = new CompoundLayoutProvider（）; final CompositeLeftRightLayoutProvider cdtp = new CompositeLeftRightLayoutProvider（）; clp.addProvider（CDTP）; clp.addProvider（new PinnedElementsLayoutProvider（cdtp））; if（ENABLE_BORDERED_NODES_ARRANGE_ALL）{// ArrangeSelectionLayoutProvider包装所有提供者以管理//图表上的选定图元素“全部排列”AbstractLayoutProvider abstractLayoutProvider = BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider（clp）; this.layoutNodeProvider = new ArrangeSelectionLayoutProvider（abstractLayoutProvider）; } else {this.layoutNodeProvider = new ArrangeSelectionLayoutProvider（clp）;返回this.layoutNodeProvider; public boolean提供（final IGraphicalEditPart容器）{return isInDDiagramWithConfiguredLeftRightLayout（container.getNotationView（））; private boolean isInDDiagramWithConfiguredLeftRightLayout（final View view）{final Layout foundLayout = DiagramLayoutCustomization.findLayoutSettings（view）; if（foundLayout instanceof CompositeLayout）{return（（CompositeLayout）foundLayout）.getDirection（）== LayoutDirection。左到右; } return false; public boolean isDiagramLayoutProvider（）{return true; }}</code></pre>
+		<pre><code>public class CompositeLeftRightProvider implements LayoutProvider {
+	 /** The delegated GMF provider. */
+	 private AbstractLayoutEditPartProvider layoutNodeProvider;
+	 public AbstractLayoutEditPartProvider getLayoutNodeProvider(final IGraphicalEditPart container) {
+        if (this.layoutNodeProvider == null) {
+            final CompoundLayoutProvider clp = new CompoundLayoutProvider();
+            final CompositeLeftRightLayoutProvider cdtp = new CompositeLeftRightLayoutProvider();
+            clp.addProvider(cdtp);
+            clp.addProvider(new PinnedElementsLayoutProvider(cdtp));
+            if (ENABLE_BORDERED_NODES_ARRANGE_ALL) {
+                // ArrangeSelectionLayoutProvider wrap all providers to manage
+                // the selected diagram element on diagram "Arrange all"
+                AbstractLayoutProvider abstractLayoutProvider = BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider(clp);
+                this.layoutNodeProvider = new ArrangeSelectionLayoutProvider(abstractLayoutProvider);
+            } else {
+                this.layoutNodeProvider = new ArrangeSelectionLayoutProvider(clp);
+            }
+        }
+        return this.layoutNodeProvider;
+    }
+
+    public boolean provides(final IGraphicalEditPart container) {
+        return isInDDiagramWithConfiguredLeftRightLayout(container.getNotationView());
+    }
+
+    private boolean isInDDiagramWithConfiguredLeftRightLayout(final View view) {
+        final Layout foundLayout = DiagramLayoutCustomization.findLayoutSettings(view);
+        if (foundLayout instanceof CompositeLayout) {
+            return ((CompositeLayout) foundLayout).getDirection() == LayoutDirection.LEFT_TO_RIGHT;
+        }
+        return false;
+    }
+
+    public boolean isDiagramLayoutProvider() {
+        return true;
+    }
+}
+
+</code></pre>
 		<p>如果布局视图与图表映射中包含的Sirius映射相关联，则将使用此<code>LayoutProvider</code>提供的布局算法，该映射声明VSM中的左侧复合提供程序。</p>
 		<p>创建此提供程序后，您必须使用扩展点注册它：<br> 
 			<img border="0" src="images/arrange-all/arrange-all-layoutprovider-extension.png">
@@ -315,7 +747,8 @@
 			<li>在包装的提供程序之前调用ArrangeAllOnlyLayoutProvider</li>
 			<li>BorderItemAwareLayoutProvider在包装提供程序之后调用。它的初始化是用代码完成的</li>
 		</ul>
-		<pre><code>BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider（CLP）;</code></pre>
+		<pre><code>BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider(clp);
+</code></pre>
 		<p>
 			<code>PinnedElementsLayoutProvider</code>应始终在BorderItemAwareLayoutProvider之前进行布局，但在任何其他布局之后。
 			<br>
@@ -329,7 +762,18 @@
 		</p>
 		<h6 id="Example">例</h6>
 		<p>复合和包装提供程序例如由可以从VSM声明使用的复合提供程序使用：</p>
-		<pre><code>public AbstractLayoutEditPartProvider getLayoutNodeProvider（final IGraphicalEditPart container）{if（this.layoutNodeProvider == null）{final CompoundLayoutProvider clp = new CompoundLayoutProvider（）; final CompositeDownTopLayoutProvider cdtp = new CompositeDownTopLayoutProvider（）; clp.addProvider（CDTP）; clp.addProvider（new PinnedElementsLayoutProvider（cdtp））; AbstractLayoutProvider abstractLayoutProvider = BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider（clp）; this.layoutNodeProvider = new ArrangeSelectionLayoutProvider（abstractLayoutProvider）; } return this.layoutNodeProvider; }</code></pre>
+		<pre><code>public AbstractLayoutEditPartProvider getLayoutNodeProvider(final IGraphicalEditPart container) {
+        if (this.layoutNodeProvider == null) {
+            final CompoundLayoutProvider clp = new CompoundLayoutProvider();
+            final CompositeDownTopLayoutProvider cdtp = new CompositeDownTopLayoutProvider();
+            clp.addProvider(cdtp);
+            clp.addProvider(new PinnedElementsLayoutProvider(cdtp));
+            AbstractLayoutProvider abstractLayoutProvider = BorderItemAwareLayoutProviderHelper.createBorderItemAwareLayoutProvider(clp);
+            this.layoutNodeProvider = new ArrangeSelectionLayoutProvider(abstractLayoutProvider);
+        }
+        return this.layoutNodeProvider;
+    }
+</code></pre>
 		<p>我们看到这个复合提供程序由复合提供程序中的<code>PinnedElementsLayoutProvider</code>组成。复合提供程序首先进行布局，但不处理固定元素。固定的一个将固定元件固定到其原始位置并固定潜在的重叠。
 			<br>然后复合提供程序包装在<code>BorderItemAwareLayoutProvider</code> ，该程序也包含在<code>ArrangeSelectionLayoutProvider</code> 。
 			<br>布局执行流程如下：<br>

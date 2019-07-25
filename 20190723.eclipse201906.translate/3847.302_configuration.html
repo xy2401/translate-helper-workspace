@@ -1,12 +1,12 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>组态</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="configuration">组态</h1>
 
@@ -18,15 +18,56 @@
 
 <p>给出以下简单的Java类（POJO）：</p>
 
-<pre><code class="language-java">包com.mycompany; public class Person {private String name; public void setName（String name）{this.name = name; private final List &lt;Person&gt; children = new ArrayList &lt;Person&gt;（）; public void addChild（Person child）{this.children.add（child）; }}</code></pre>
+<pre><code class="language-java">package com.mycompany;
+
+public class Person {
+
+  private String name;
+
+  public void setName(String name) { 
+    this.name = name;
+  }
+
+  private final List&lt;Person&gt; children = new ArrayList&lt;Person&gt;();
+
+  public void addChild(Person child) {
+    this.children.add(child);
+  }
+}
+</code></pre>
 
 <p>通过以声明方式描述MWE2，可以轻松创建具有MWE2的族树，而无需编写单行Java代码，也无需编译类：</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。CreatePersons Person {name =“Grandpa”child = Person {name =“Father”child = {name =“Son”}}}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.CreatePersons
+
+Person {
+  name = "Grandpa"
+  child = Person {
+    name = "Father"
+    child = {
+      name = "Son"
+    }
+  }
+}
+</code></pre>
 
 <p>当由MWE2解释时，这几行将导致由三个<em>com.mycompany实例组成的对象树<em>。人</em>解释器基本上与以下<em>主要</em>方法相同：</p>
 
-<pre><code class="language-java">包com.mycompany; public class CreatePersons {public static void main（String [] args）{Person grandpa = new Person（）; grandpa.setName（ “爷爷”）;人父亲=新人（）; father.setName（ “父亲”）; grandpa.addChild（父亲）;人儿=新人（）; son.setName（ “儿子”）; father.addChild（子）; }}</code></pre>
+<pre><code class="language-java">package com.mycompany;
+
+public class CreatePersons {
+    public static void main(String[] args) {
+        Person grandpa = new Person();
+        grandpa.setName("Grandpa");
+        Person father = new Person();
+        father.setName("Father");
+        grandpa.addChild(father);
+        Person son = new Person();
+        son.setName("Son");
+        father.addChild(son);
+    }
+}
+</code></pre>
 
 <p>这就是它的工作原理：根元素是一个普通的Java类名。因为这个MWE2模块是<em>com.mycompany类的兄弟<em>。人</em>没有必要使用完全合格的名称。此外，根据模块中的声明来配置所构造的对象，即创建Person的第二个实例并将其添加到“Grandpa”的孩子列表中，而第三个人成为“父亲”的孩子。所有三个实例都将通过<em>setName</em>方法的反射调用分配其各自的<em>名称</em> 。请注意，在此示例中，“父”的<em>Person</em>类型是明确给出的，而对于“Son”，它是从指定的特征<em>子</em>元素推断出来的。</p>
 
@@ -34,7 +75,20 @@
 
 <p>MWE2的另一个常用功能是<em>变量</em> ，可以使用<code>var</code>声明，如下所示。在调用模块时，可以从外部重置这样的变量，例如，当从Maven构建中调用它时允许使用不同的设置。您可以使用<code>${variable-name}</code>表示法在字符串中引用变量。</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。CreatePersons var surname =“Johnson”Person {name =“John $ {surname}”child = {name =“Jim $ {surname}”} child = {name =“Jane $ {surname}”}}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.CreatePersons
+
+var surname = "Johnson"
+
+Person {
+  name = "John ${surname}"
+  child = {
+    name = "Jim ${surname}"
+  }
+  child = {
+    name = "Jane ${surname}"
+  }
+}
+</code></pre>
 
 <p>尽管可以使用任意Java类，但MWE2文件的标准根元素是<a href="https://github.com/eclipse/mwe/blob/v2.7.1/plugins/org.eclipse.emf.mwe2.runtime/src/org/eclipse/emf/mwe2/runtime/workflow/Workflow.java">Workflow</a> ，它是MWE2附带的非常纤薄的运行时模型的一部分。它接受<em>bean</em>和<em>组件</em> 。</p>
 
@@ -59,7 +113,39 @@
 
 <p>在下文中，我们看到用MWE2编写的示例语言生成器配置：</p>
 
-<pre><code class="language-mwe2">模块org.example.domainmodel。GenerateDomainmodel import org.eclipse.xtext.xtext.generator。* import org.eclipse.xtext.xtext.generator.model.project。* var rootPath =“..”工作流{component = XtextGenerator {configuration = {project = StandardProjectConfig {baseName =“org.example.domainmodel”rootPath = rootPath eclipsePlugin = {enabled = true} createEclipseMetaData = true} code = {encoding =“ UTF-8“}} language = StandardLanguage {name =”org.example.domainmodel。Domainmodel“fileExtensions =”dmodel“serializer = {generateStub = false}}}}</code></pre>
+<pre><code class="language-mwe2">module org.example.domainmodel.GenerateDomainmodel
+
+import org.eclipse.xtext.xtext.generator.*
+import org.eclipse.xtext.xtext.generator.model.project.*
+
+var rootPath = ".."
+
+Workflow {
+    component = XtextGenerator {
+        configuration = {
+            project = StandardProjectConfig {
+                baseName = "org.example.domainmodel"
+                rootPath = rootPath
+                eclipsePlugin = {
+                    enabled = true
+                }
+                createEclipseMetaData = true
+            }
+            code = {
+                encoding = "UTF-8"
+            }
+        }
+        language = StandardLanguage {
+            name = "org.example.domainmodel.Domainmodel"
+            fileExtensions = "dmodel"
+
+            serializer = {
+                generateStub = false
+            }
+        }
+    }
+}
+</code></pre>
 
 <p>此示例类似于创建新项目时Xtext项目向导生成的工作流。它使用两个便利类<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/model/project/StandardProjectConfig.xtend">StandardProjectConfig</a>和<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/StandardLanguage.xtend">StandardLanguage</a> ，它们都设计用于应用适用于大多数语言项目的默认配置。</p>
 
@@ -91,11 +177,30 @@
 
 <p>由于手动设置所有这些参数将非常繁琐，并且大多数Xtext项目的结构非常相似，因此建议使用上面示例中所示的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/model/project/StandardProjectConfig.xtend">StandardProjectConfig</a> 。此专用项目配置将默认值应用于所有参数，因此您只需指定要覆盖默认值的那些参数。例如，给定配置</p>
 
-<pre><code class="language-mwe2">project = StandardProjectConfig {baseName =“org.example.domainmodel”rootPath = rootPath eclipsePlugin = {enabled = true} createEclipseMetaData = true}</code></pre>
+<pre><code class="language-mwe2">project = StandardProjectConfig {
+    baseName = "org.example.domainmodel"
+    rootPath = rootPath
+    eclipsePlugin = {
+        enabled = true
+    }
+    createEclipseMetaData = true
+}
+</code></pre>
 
 <p>我们获得与名称的运行系统项目<code>org.example.domainmodel</code> ，名为Eclipse的集成项目<code>org.example.domainmodel.ui</code> ，并与名称的通用IDE项目<code>org.example.domainmodel.ide</code> （通用IDE项目如果启用了任何集成项目，则自动启用）。源文件夹，MANIFEST.MF和plugin.xml路径设置为Eclipse插件项目的默认值。如果您不想要单独的IDE项目，可以通过为其分配相同的名称将其内容合并到另一个子项目中：</p>
 
-<pre><code class="language-mwe2">project = StandardProjectConfig {baseName =“org.example.domainmodel”rootPath = rootPath genericIde = {name =“org.example.domainmodel.ui”} eclipsePlugin = {enabled = true} createEclipseMetaData = true}</code></pre>
+<pre><code class="language-mwe2">project = StandardProjectConfig {
+    baseName = "org.example.domainmodel"
+    rootPath = rootPath
+    genericIde = {
+        name = "org.example.domainmodel.ui"
+    }
+    eclipsePlugin = {
+        enabled = true
+    }
+    createEclipseMetaData = true
+}
+</code></pre>
 
 <p>这导致将通用IDE代码生成到Eclipse集成插件中。</p>
 
@@ -124,12 +229,56 @@
 
 <p>实际的代码生成由<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/IXtextGeneratorFragment.xtend">生成器片段</a>执行，可以使用<code>fragment</code>属性将其添加到语言配置中。Xtext项目向导创建一个使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/StandardLanguage.xtend">StandardLanguage</a>的工作流，该工作流以与<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/StandardLanguage.xtend">StandardProjectConfig</a>专用XtextProjectConfig类似的方式专门化XtextGeneratorLanguage（请参阅<a href="#project-configuration">项目配置</a> ）。StandardLanguage的主要贡献是生成器片段的默认列表，其中包含Xtext的所有功能。这些片段会自动调整其生成的代码以适应您的语言和项目配置。一些片段提供自己的配置参数，因此可以通过StandardLanguage中的专用属性访问每个片段。例如，在语言配置中</p>
 
-<pre><code class="language-mwe2">language = StandardLanguage {name =“org.example.domainmodel。Domainmodel“fileExtensions =”dmodel“serializer = {generateStub = false}}</code></pre>
+<pre><code class="language-mwe2">language = StandardLanguage {
+    name = "org.example.domainmodel.Domainmodel"
+    fileExtensions = "dmodel"
+
+    serializer = {
+        generateStub = false
+    }
+}
+</code></pre>
 <p>我们看到对<code>serializer</code>片段禁用了<code>generateStub</code>参数，这意味着该片段不应该创建任何存根文件来自定义序列化。</p>
 
 <p>无法从<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/StandardLanguage.xtend">StandardLanguage中</a>删除片段。如果需要省略一个或多个默认片段的语言配置，则可以使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.xtext.generator/src/org/eclipse/xtext/xtext/generator/XtextGeneratorLanguage.xtend">XtextGeneratorLanguage</a>代替并明确列出所需片段。您可以将以下配置作为模板：</p>
 
-<pre><code class="language-mwe2">language = XtextGeneratorLanguage {name =“org.example.domainmodel。Domainmodel“fileExtensions =”dmodel“referencedResource =”platform：/resource/org.eclipse.xtext.xbase/model/Xbase.genmodel“fragment = grammarAccess。GrammarAccessFragment2 {} fragment = ecore。EMFGeneratorFragment2 {} fragment = serializer。SerializerFragment2 {} fragment = resourceFactory。ResourceFactoryFragment2 {} fragment = parser.antlr。XtextAntlrGeneratorFragment2 {} fragment = validation。ValidatorFragment2 {} fragment =作用域。ImportNamespacesScopingFragment2 {} fragment = exports。QualifiedNamesFragment2 {} fragment = builder。BuilderIntegrationFragment2 {} fragment = generator。GeneratorFragment2 {} fragment =格式化。Formatter2Fragment2 {} fragment = ui.labeling。LabelProviderFragment2 {} fragment = ui.outline。QuickOutlineFragment2 {} fragment = ui.outline。OutlineTreeProviderFragment2 {} fragment = ui.quickfix。QuickfixProviderFragment2 {} fragment = ui.contentAssist。ContentAssistFragment2 {} fragment = junit。Junit4Fragment2 {} fragment = ui.refactoring。RefactorElementNameFragment2 {} fragment = types。TypesGeneratorFragment2 {} fragment = xbase。XtypeGeneratorFragment2 {} fragment = xbase。XbaseGeneratorFragment2 {} fragment = ui.templates。CodetemplatesGeneratorFragment2 {} fragment = ui.compare。CompareFragment2 {} fragment = idea.parser.antlr。XtextAntlrIDEAGeneratorFragment {} fragment = idea。IdeaPluginGenerator {} fragment = web。WebIntegrationFragment {framework =“Ace”} fragment = ui.projectWizard。TemplateProjectWizardFragment {} fragment = ui.fileWizard。TemplateFileWizardFragment {}}</code></pre>
+<pre><code class="language-mwe2">language = XtextGeneratorLanguage {
+    name = "org.example.domainmodel.Domainmodel"
+    fileExtensions = "dmodel"
+    referencedResource = "platform:/resource/org.eclipse.xtext.xbase/model/Xbase.genmodel"
+
+    fragment = grammarAccess.GrammarAccessFragment2 {}
+    fragment = ecore.EMFGeneratorFragment2 {}
+    fragment = serializer.SerializerFragment2 {}
+    fragment = resourceFactory.ResourceFactoryFragment2 {}
+    fragment = parser.antlr.XtextAntlrGeneratorFragment2 {}
+    fragment = validation.ValidatorFragment2 {}
+    fragment = scoping.ImportNamespacesScopingFragment2 {}
+    fragment = exporting.QualifiedNamesFragment2 {}
+    fragment = builder.BuilderIntegrationFragment2 {}
+    fragment = generator.GeneratorFragment2 {}
+    fragment = formatting.Formatter2Fragment2 {}
+    fragment = ui.labeling.LabelProviderFragment2 {}
+    fragment = ui.outline.QuickOutlineFragment2 {}
+    fragment = ui.outline.OutlineTreeProviderFragment2 {}
+    fragment = ui.quickfix.QuickfixProviderFragment2 {}
+    fragment = ui.contentAssist.ContentAssistFragment2 {}
+    fragment = junit.Junit4Fragment2 {}
+    fragment = ui.refactoring.RefactorElementNameFragment2 {}
+    fragment = types.TypesGeneratorFragment2 {}
+    fragment = xbase.XtypeGeneratorFragment2 {}
+    fragment = xbase.XbaseGeneratorFragment2 {}
+    fragment = ui.templates.CodetemplatesGeneratorFragment2 {}
+    fragment = ui.compare.CompareFragment2 {}
+    fragment = idea.parser.antlr.XtextAntlrIDEAGeneratorFragment {}
+    fragment = idea.IdeaPluginGenerator {}
+    fragment = web.WebIntegrationFragment {
+        framework = "Ace"
+    }
+    fragment = ui.projectWizard.TemplateProjectWizardFragment {}
+    fragment = ui.fileWizard.TemplateFileWizardFragment {}
+}
+</code></pre>
 
 <h3 id="importing-metamodels">导入现有的元模型</h3>
 
@@ -139,13 +288,25 @@
 
 <p>为了能够在语言生成器中找到引用的包，必须在语言配置中提及其Ecore生成器模型：</p>
 
-<pre><code class="language-mwe2">language = StandardLanguage {name =“org.example.domainmodel。Domainmodel“fileExtensions =”dmodel“referencedResource =”platform：/resource/org.example.domainmodel/model/Domainmodel.genmodel“}</code></pre>
+<pre><code class="language-mwe2">language = StandardLanguage {
+    name = "org.example.domainmodel.Domainmodel"
+    fileExtensions = "dmodel"
+    referencedResource =
+        "platform:/resource/org.example.domainmodel/model/Domainmodel.genmodel"
+}
+</code></pre>
 
 <p>如果要导入多个元模型，则可以根据需要添加更多<code>referencedResource</code>声明。</p>
 
 <p>在某些情况下，这种引用元模型的简单方法是不够的;然后，您可以使用<a href="https://github.com/eclipse/mwe/blob/v2.7.1/plugins/org.eclipse.emf.mwe.utils/src/org/eclipse/emf/mwe/utils/StandaloneSetup.java">StandaloneSetup</a>作为工作流bean来微调EMF设置。例：</p>
 
-<pre><code class="language-mwe2">bean = StandaloneSetup {platformUri =“$ {rootPath}”scanClassPath = true registerGeneratedEPackage =“my.project。DomainmodelPackage“registerGenModelFile =”platform：/resource/my.project/model/Domainmodel.genmodel“}</code></pre>
+<pre><code class="language-mwe2">bean = StandaloneSetup {
+    platformUri = "${rootPath}"
+    scanClassPath = true
+    registerGeneratedEPackage = "my.project.DomainmodelPackage"
+    registerGenModelFile = "platform:/resource/my.project/model/Domainmodel.genmodel"
+}
+</code></pre>
 
 <hr>
 
@@ -155,13 +316,28 @@
 
 <p>例如，当某些代码想要使用范围提供程序时，它只声明一个字段（或方法或构造函数）并添加<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Inject.html">Inject</a>批注：</p>
 
-<pre><code class="language-java">公共类MyLanguageLinker扩展了Linker {@Inject private IScopeProvider scopeProvider; }</code></pre>
+<pre><code class="language-java">public class MyLanguageLinker extends Linker {
+
+    @Inject
+    private IScopeProvider scopeProvider;
+
+}
+</code></pre>
 
 <p>客户端代码的职责不是关心<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScopeProvider.java">IScopeProvider</a>实现的来源或创建方式。当实例化上述类时，Guice发现它需要一个IScopeProvider实例并将其分配给指定的字段或方法参数。这当然只有在Guice创建对象本身时才有效。在Xtext中，几乎每个实例都是以这种方式创建的，因此整个依赖网络都是通过Guice的方式控制和配置的。</p>
 
 <p>Guice当然需要知道如何为声明的依赖项实例化真实对象。这是在所谓的<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Module.html">模块中完成的</a> 。<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Module.html">模块</a>定义了一组从类型到现有实例，实例提供者或具体类的映射。模块以Java实现。这是一个例子：</p>
 
-<pre><code class="language-java">公共类MyDslRuntimeModule实现模块{@Override public void configure（Binder binder）{binder .bind（IScopeProvider.class）.to（MyConcreteScopeProvider.class）; }}</code></pre>
+<pre><code class="language-java">public class MyDslRuntimeModule implements Module {
+  
+    @Override
+    public void configure(Binder binder) {
+        binder
+            .bind(IScopeProvider.class)
+            .to(MyConcreteScopeProvider.class);
+    }
+}
+</code></pre>
 
 <p>使用普通的Guice模块，可以实现一个名为configure的方法，并获取一个<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Binder.html">Binder</a>传入。该绑定器提供了一个流畅的API来定义提到的映射。</p>
 
@@ -171,7 +347,10 @@
 
 <p>Xtext附带了一个稍微增强的模块API。抽象基类<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/service/AbstractGenericModule.java">AbstractGenericModule</a>反映某些方法，以便查找声明的绑定。最常见的方法是</p>
 
-<pre><code class="language-java">公共班&lt;？扩展IScopeProvider&gt; bindIScopeProvider（）{return MyConcreteScopeProvider.class; }</code></pre>
+<pre><code class="language-java">public Class&lt;? extends IScopeProvider&gt; bindIScopeProvider() {
+    return MyConcreteScopeProvider.class;
+}
+</code></pre>
 
 <p>这与上面的代码片段相同。它只是声明从<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScopeProvider.java">IScopeProvider</a>到<em>MyConcreteScopeProvider</em>的绑定。只要声明了对<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScopeProvider.java">IScopeProvider</a>的依赖，该绑定将使Guice实例化并注入<em>MyConcreteScopeProvider</em>的新实例。</p>
 
@@ -179,21 +358,33 @@
 
 <p>支持另外两种绑定方法。第一个允许配置<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Provider.html">Provider</a> ，它就像一个特定类型的工厂。如果在创建特定类型的实例时需要挂钩，则可以使用此方法。例如，如果您想提供对单例的延迟访问，或者每次创建实例（即工厂）时都需要进行一些计算。如果要指向提供程序而不是具体类，可以使用以下绑定方法。</p>
 
-<pre><code class="language-java">公共班&lt;？extends Provider &lt;IScopeProvider &gt;&gt; provideIScopeProvider（）{return MyConcreteScopeProviderFactory.class; }</code></pre>
+<pre><code class="language-java">public Class&lt;? extends Provider&lt;IScopeProvider&gt;&gt; provideIScopeProvider() {
+    return MyConcreteScopeProviderFactory.class;
+}
+</code></pre>
 
 <p>注意：请原谅我们过度使用术语<em>提供者</em> 。<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScopeProvider.java">IScopeProvider</a>不是Guice <a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Provider.html">提供者</a> 。</p>
 
 <p>该绑定告诉Guice实例化<em>MyConcreteScopeProviderFactory</em>并调用get（）以获取已声明对该类型的依赖关系的客户端的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScopeProvider.java">IScopeProvider</a>实例。提到的两种绑定方法都允许返回实例而不是类型。如果应在应用程序中共享某个全局状态，这可能很有用。对于一个简单的例子，这将是</p>
 
-<pre><code class="language-java">public IScopeProvider bindIScopeProvider（）{return new MyConcreteScopeProvider（）; }</code></pre>
+<pre><code class="language-java">public IScopeProvider bindIScopeProvider() {
+    return new MyConcreteScopeProvider();
+}
+</code></pre>
 
 <p>以及提供者绑定</p>
 
-<pre><code class="language-java">public Provider &lt;IScopeProvider&gt; provideIScopeProvider（）{return new MyConcreteScopeProviderFactory（）; }</code></pre>
+<pre><code class="language-java">public Provider&lt;IScopeProvider&gt; provideIScopeProvider() {
+    return new MyConcreteScopeProviderFactory();
+}
+</code></pre>
 
 <p>Xtext提供的第三种绑定方法允许您使用Guice的绑定API执行任何操作，因为它允许您直接使用<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Binder.html">Binder</a> 。方法的名称必须以'configure'开头，返回类型必须为<code>void</code> ，并且它必须接受<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Binder.html">Binder</a>类型的一个参数：</p>
 
-<pre><code class="language-java">public void configureIScopeProvider（Binder binder）{binder.bind（IScopeProvider.class）.to（MyConcreteScopeProvider.class）; }</code></pre>
+<pre><code class="language-java">public void configureIScopeProvider(Binder binder) {
+    binder.bind(IScopeProvider.class).to(MyConcreteScopeProvider.class);
+} 
+</code></pre>
 
 <p>这些是围绕Guice的基本思想，以及Xtext提供的小扩展。有关更多信息，我们强烈建议您阅读<a href="https://github.com/google/guice">Google Guice网站</a>上<a href="https://github.com/google/guice">的</a>文档。</p>
 
@@ -207,7 +398,12 @@
 
 <p>对于每种语言， <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/ISetup.java">都会</a>生成<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/ISetup.java">ISetup的</a>实现。它实现了一个名为<code>createInjectorAndDoEMFRegistration()</code>的方法，可以调用该方法来进行语言基础结构的初始化。</p>
 
-<pre><code class="language-java">public static void main（String [] args）{Injector injector = new MyDslStandaloneSetup（）。createInjectorAndDoEMFRegistration（）; MyApplication application = injector.getInstance（MyApplication.class）; application.run（）; }</code></pre>
+<pre><code class="language-java">public static void main(String[] args) {
+    Injector injector = new MyDslStandaloneSetup().createInjectorAndDoEMFRegistration();
+    MyApplication application = injector.getInstance(MyApplication.class);
+    application.run();
+}
+</code></pre>
 
 <p>setup方法返回一个<a href="https://google.github.io/guice/api-docs/latest/javadoc/com/google/inject/Injector.html">Injector</a> ，它可以进一步用于获取解析器等。它还注册了<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/resource/Resource.java">Resource。工厂</a>和生成的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EPackage.java">EPackages</a>由EMF提供给各自的全球注册机构。因此，基本上在运行设置之后，您可以开始使用EMF API来加载和存储您的语言模型。</p>
 
@@ -219,7 +415,19 @@
 
 <p>要使用此工厂，您唯一需要做的就是在类<em>前面添加</em>生成的<em>ExecutableExtensionFactory</em>名称，后跟冒号。</p>
 
-<pre><code class="language-xml">&lt;extension point =“org.eclipse.ui.editors”&gt; &lt;editor class =“example。MyDslExecutableExtensionFactory：org.eclipse.xtext.ui.editor。XtextEditor“contributorClass =”org.eclipse.ui.editors.text。TextEditorActionContributor“default =”true“extensions =”mydsl“id =”org.eclipse.xtext.example。MyDsl“name =”MyDsl Editor“&gt; &lt;/ editor&gt; &lt;/ extension&gt;</code></pre>
+<pre><code class="language-xml">&lt;extension point="org.eclipse.ui.editors"&gt;
+  &lt;editor
+    class=
+      "example.MyDslExecutableExtensionFactory:org.eclipse.xtext.ui.editor.XtextEditor"
+    contributorClass=
+      "org.eclipse.ui.editors.text.TextEditorActionContributor"
+    default="true"
+    extensions="mydsl"
+    id="org.eclipse.xtext.example.MyDsl"
+    name="MyDsl Editor"&gt;
+  &lt;/editor&gt;
+&lt;/extension&gt;
+</code></pre>
 
 <hr>
 

@@ -1,12 +1,12 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>MWE 2</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="mwe2">MWE 2</h1>
 
@@ -20,15 +20,47 @@
 
 <p>可以说是最短的MWE2模块可能看起来像下面的代码片段：</p>
 
-<pre><code class="language-mwe2">模块HelloWorld SayHello {message =“Hello World！“}</code></pre>
+<pre><code class="language-mwe2">module HelloWorld 
+
+SayHello {
+  message = "Hello World!"
+}
+</code></pre>
 
 <p>它配置了一个非常简单的工作流组件，其中包含应在执行工作流时打印到<code>System.out</code>的消息。该模块以声明其名称开头。它必须满足完全限定类名的Java约定。这就是为什么必须将模块<code>HelloWorld</code>放入Java源文件夹的默认包中。模块中的第二个元素是类名<code>SayHello</code> ，它引入了模块的根元素。解释器将创建给定类型的实例，并将其配置为花括号之间声明的。例如，赋值<code>message = "Hello World!"</code>在模块中将被解释为对实例化对象的<code>setMessage(String)</code>的调用。正如人们可以想象的那样， <code>SayHello</code>类的实现看起来很直接：</p>
 
-<pre><code class="language-java">import org.eclipse.emf.mwe2.runtime.workflow。IWorkflowComponent; import org.eclipse.emf.mwe2.runtime.workflow。IWorkflowContext;公共类SayHello实现IWorkflowComponent {private String message =“Hello World！“; public void setMessage（String message）{this.message = message;} public String getMessage（）{return message;} public void invoke（IWorkflowContext ctx）{System.out.println（getMessage（））;} public void postInvoke （）{} public void preInvoke（）{}}</code></pre>
+<pre><code class="language-java">import org.eclipse.emf.mwe2.runtime.workflow.IWorkflowComponent;
+import org.eclipse.emf.mwe2.runtime.workflow.IWorkflowContext;
+
+public class SayHello implements IWorkflowComponent {
+
+  private String message = "Hello World!";
+  public void setMessage(String message) {
+    this.message = message;
+  }
+  public String getMessage() {
+    return message;
+  }
+
+  public void invoke(IWorkflowContext ctx) {
+    System.out.println(getMessage());
+  }
+
+  public void postInvoke() {}
+  public void preInvoke() {}
+}
+</code></pre>
 
 <p>它看起来像一个简单的POJO，这是MWE2背后的哲学。很容易以声明的方式组装完全独立的对象。要使工作流可以使用<a href="https://github.com/eclipse/mwe/blob/v2.7.1/plugins/org.eclipse.emf.mwe2.launch/src/org/eclipse/emf/mwe2/launch/runtime/Mwe2Runner.java">Mwe2Runner执行</a> ，组件<code>SayHello</code>必须嵌套在根工作流中：</p>
 
-<pre><code class="language-mwe2">模块HelloWorld Workflow {component = SayHello {message =“Hello World！“}}</code></pre>
+<pre><code class="language-mwe2">module HelloWorld 
+
+Workflow {
+  component = SayHello {
+    message = "Hello World!"
+  }
+}
+</code></pre>
 
 <p><a href="https://github.com/eclipse/mwe/blob/v2.7.1/plugins/org.eclipse.emf.mwe2.runtime/src/org/eclipse/emf/mwe2/runtime/workflow/Workflow.java">工作流</a>类的<code>org.eclipse.emf.mwe2.runtime.workflow</code>包隐式导入MWE2模块，使模块更简洁。快速<em>运行后，将显示此工作流程的执行结果<em>。→MWE2</em>控制台中的工作流程</em>为</p>
 
@@ -38,25 +70,108 @@
 
 <p>以下工作流程解决了重命名<em>* .ecore</em>文件中的每个<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClassifier.java">EClassifier</a>的示例性任务。它由三个读取，修改和写入模型文件的组件组成：</p>
 
-<pre><code class="language-mwe2">module Renamer Workflow {component = ResourceReader {uri =“model.ecore”} component = RenamingTransformer {} component = ResourceWriter {uri =“uppercaseModel.ecore”}}</code></pre>
+<pre><code class="language-mwe2">module Renamer
+Workflow {
+  component = ResourceReader {
+        uri = "model.ecore"
+  }
+  component = RenamingTransformer {}
+  component = ResourceWriter {
+        uri = "uppercaseModel.ecore"
+  }
+}
+</code></pre>
 
 <p>这些组件的实现非常简单。即使是用于自动化过程的次要操作，也可以轻松创建自己的组件。</p>
 
 <p><code>ResourceReader</code>只是读取具有给定<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.common/src/org/eclipse/emf/common/util/URI.java">URI</a>的文件，并将其存储在工作流上下文的所谓<em>插槽</em>中。插槽可以理解为字典或地图条目。</p>
 
-<pre><code class="language-java">公共类ResourceReader扩展WorkflowComponentWithSlot {private String uri; public void invoke（IWorkflowContext ctx）{ResourceSet resourceSet = new ResourceSetImpl（）; URI fileURI = URI.createFileURI（uri）;资源资源= resourceSet.getResource（fileURI，true）; ctx.put（getSlot（），resource）; public void setUri（String uri）{this.uri = uri; public String getUri（）{return uri; }}</code></pre>
+<pre><code class="language-java">public class ResourceReader extends WorkflowComponentWithSlot {
+  private String uri;
+  public void invoke(IWorkflowContext ctx) {
+    ResourceSet resourceSet = new ResourceSetImpl();
+    URI fileURI = URI.createFileURI(uri); 
+    Resource resource = resourceSet.getResource(fileURI, true);
+    ctx.put(getSlot(), resource);
+  }
+  
+  public void setUri(String uri) {
+    this.uri = uri;
+  }
+  public String getUri() {
+    return uri;
+  }
+}
+</code></pre>
 
 <p>实际的变压器从槽中取出模型并对其进行修改。它只是迭代资源的内容，识别每个<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EClassifier.java">EClassifier</a>并设置其名称。</p>
 
-<pre><code class="language-java">public class RenamingTransformer扩展WorkflowComponentWithSlot {private boolean toLowerCase = false; public void invoke（IWorkflowContext ctx）{Resource resource =（Resource）ctx.get（getSlot（））; EcoreUtil.resolveAll（资源）; Iterator &lt;Object&gt; contents = EcoreUtil.getAllContents（resource，true）; Iterator &lt;EClassifier&gt; iter = Iterators.filter（contents，EClassifier.class）; while（iter.hasNext（））{EClassifier classifier =（EClassifier）iter.next（）; classifier.setName（isToLowerCase（）？classifier.getName（）。toLowerCase（）：classifier.getName（）。toUpperCase（））; public void setToLowerCase（boolean toLowerCase）{this.toLowerCase = toLowerCase; public boolean isToLowerCase（）{return toLowerCase; }}</code></pre>
+<pre><code class="language-java">public class RenamingTransformer extends WorkflowComponentWithSlot {
+  private boolean toLowerCase = false;
+  public void invoke(IWorkflowContext ctx) {
+    Resource resource = (Resource) ctx.get(getSlot());
+    EcoreUtil.resolveAll(resource);
+    Iterator&lt;Object&gt; contents = EcoreUtil.getAllContents(resource, true);
+    Iterator&lt;EClassifier&gt; iter = 
+        Iterators.filter(contents, EClassifier.class);
+    while(iter.hasNext()) {
+      EClassifier classifier = (EClassifier) iter.next();
+      classifier.setName(isToLowerCase() 
+          ? classifier.getName().toLowerCase()
+          : classifier.getName().toUpperCase());
+    }
+  }
+
+  public void setToLowerCase(boolean toLowerCase) {
+    this.toLowerCase = toLowerCase;
+  }
+  public boolean isToLowerCase() {
+    return toLowerCase;
+  }
+}
+</code></pre>
 
 <p>修改模型后，应将其写入新文件。这就是<code>ResourceWriter</code>所做的。它实际上从给定的<em>插槽</em>获取资源并使用配置的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.common/src/org/eclipse/emf/common/util/URI.java">URI</a>保存它：</p>
 
-<pre><code class="language-java">公共类ResourceWriter扩展WorkflowComponentWithSlot {private String uri; public void invoke（IWorkflowContext ctx）{Resource resource =（Resource）ctx.get（getSlot（））; URI uri = URI.createFileURI（getUri（））; uri = resource.getResourceSet（）。getURIConverter（）。normalize（uri）; resource.setURI（URI）; try {resource.save（null）; } catch（IOException e）{throw new WrappedException（e）; public void setUri（String uri）{this.uri = uri; public String getUri（）{return uri; }}</code></pre>
+<pre><code class="language-java">public class ResourceWriter extends WorkflowComponentWithSlot {
+  private String uri;
+  public void invoke(IWorkflowContext ctx) {
+    Resource resource = (Resource) ctx.get(getSlot());
+    URI uri = URI.createFileURI(getUri());
+    uri = resource.getResourceSet().getURIConverter().normalize(uri);
+    resource.setURI(uri);
+    try {
+      resource.save(null);
+    } catch (IOException e) {
+      throw new WrappedException(e);
+    }
+  }
+
+  public void setUri(String uri) {
+    this.uri = uri;
+  }
+  public String getUri() {
+    return uri;
+  }
+}
+</code></pre>
 
 <p>最后但并非最不重要的是，这些组件的常见超类型如下所示：</p>
 
-<pre><code class="language-java">公共抽象类WorkflowComponentWithSlot实现IWorkflowComponent {private String slot =“model”; public void setSlot（String slot）{this.slot = slot; public String getSlot（）{return slot; } public void postInvoke（）{} public void preInvoke（）{}}</code></pre>
+<pre><code class="language-java">public abstract class WorkflowComponentWithSlot 
+      implements IWorkflowComponent {
+  private String slot = "model";
+  public void setSlot(String slot) {
+    this.slot = slot;
+  }
+  public String getSlot() {
+    return slot;
+  }
+  
+  public void postInvoke() {}
+  public void preInvoke() {}
+}
+</code></pre>
 
 <p>每个提到的实现都相当简单，可以在几分钟内完成。开发人员在日常工作中面临的许多乏味任务可以通过一系列相当简单的组件来解决。MWE2可用于以最小的努力自动执行这些任务。</p>
 
@@ -64,11 +179,35 @@
 
 <p>最后一个示例演示了如何组合MWE2概念以创建一个简单的秒表，以便测量一组组件的执行时间。我们的想法是将两个相同的秒表作为组件添加到工作流程中。它将测量从第一次预调用到最后一次调用后事件的时间，并将经过的毫秒数打印到控制台。</p>
 
-<pre><code class="language-java">公共类StopWatch实现IWorkflowComponent {private long start; private boolean shouldStop = false; public void invoke（IWorkflowContext ctx）{} public void postInvoke（）{if（shouldStop）{long elapsed = System.currentTimeMillis（） -  start; System.out.println（“已过去的时间：”+已过去+“ms”）; } shouldStop = true; public void preInvoke（）{start = System.currentTimeMillis（）; }}</code></pre>
+<pre><code class="language-java">public class StopWatch implements IWorkflowComponent {
+  private long start;
+  private boolean shouldStop = false;
+  public void invoke(IWorkflowContext ctx) {}
+
+  public void postInvoke() {
+    if (shouldStop) {
+      long elapsed = System.currentTimeMillis() - start;
+      System.out.println("Time elapsed: " + elapsed + " ms");
+    }
+    shouldStop = true;
+  }
+
+  public void preInvoke() {
+    start = System.currentTimeMillis();
+  }
+}
+</code></pre>
 
 <p>想要利用这种秒表的客户可以使用以下模式。必须将类<code>StopWatch</code>的实例添加为工作流的第一个组件和最后一个组件。中间的每个组件都将被测量。在这种情况下，它是另一个不需要了解这种装饰的工作流程。我们的想法是为实例化的<code>StopWatch</code>使用本地标识符，并在最后重用这个标识符以接收两次调用后生命周期事件。</p>
 
-<pre><code class="language-mwe2">模块MeasuredWorkflow工作流程{component = StopWatch：stopWatch {} component = @OtherWorkflow {} component = stopWatch}</code></pre>
+<pre><code class="language-mwe2">module MeasuredWorkflow
+
+Workflow {
+  component = StopWatch: stopWatch {}
+  component = @OtherWorkflow {}
+  component = stopWatch
+}
+</code></pre>
 
 <h2 id="mwe2-language-reference">语言参考</h2>
 
@@ -82,9 +221,27 @@
 
 <p>让我们考虑以下简短示例模块和<code>SampleClass</code>来解释这些概念。</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。示例import java.util。* SampleClass {singleValue ='a string'ultiValue = ArrayList {} child = {}}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Example
 
-<pre><code class="language-java">包com.mycompany; import java.util。清单; public class SampleClass {public void setSingleValue（String value）{..}public void addMultiValue（List &lt;？&gt;价值）{..}public void addChild（SampleClass value）{..}}</code></pre>
+import java.util.*
+
+SampleClass {
+  singleValue = 'a string'
+  multiValue = ArrayList {}
+  child = {}
+} 
+</code></pre>
+
+<pre><code class="language-java">package com.mycompany;
+
+import java.util.List;
+
+public class SampleClass {
+  public void setSingleValue(String value) {..}
+  public void addMultiValue(List&lt;?&gt; value) {..}
+  public void addChild(SampleClass value) {..}
+}
+</code></pre>
 
 <h3 id="mwe2-java-references">映射到Java类</h3>
 
@@ -102,7 +259,14 @@
 
 <p>让我们创建第二个模块<code>com.mycompany.Second</code>是这样的：</p>
 
-<pre><code class="language-mwe2">module com.mycompany.sub。第二次导入com.mycompany。* SampleClass {child = @Example {}}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.sub.Second
+
+import com.mycompany.*
+
+SampleClass {
+  child = @Example {}
+} 
+</code></pre>
 
 <p><code>child</code>值将分配给在第一个示例工作流中配置的<code>SampleClass</code>实例。这样可以实现精美的构图和非常集中，可重复使用的组件设计。</p>
 
@@ -112,15 +276,33 @@
 
 <p>MWE2允许将任意信息提取到属性中，以确保这些碎片不会在工作流周围混乱，并允许更容易的外部定制。仅通过引入属性<code>value</code>略微改变示例性组件定义。</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。示例var value ='a string'SampleClass {singleValue = value}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Example
+
+var value = 'a string'
+
+SampleClass {
+  singleValue = value
+}
+</code></pre>
 
 <p>属性的类型将从默认值派生，类似于<code>set</code> - 和<code>add</code> -methods中已知的机制。如果没有给出默认值，则假定为<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String</a> 。但是，属性不限于字符串。第二个内置类型是boolean，通过熟悉的文字<code>true</code>和<code>false</code> 。通过实际的组件文字可以获得更大的灵活性。</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。示例var childInstance = SampleClass {singleValue =“child”} SampleClass {child = childInstance}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Example
+
+var childInstance = SampleClass {
+                      singleValue = "child"
+                    }
+
+SampleClass {
+  child = childInstance
+}
+</code></pre>
 
 <p>如果想要定义作为其他属性的实际可重用部分的字符串属性，她可以在其他文字中使用定义的变量，如下所示：</p>
 
-<pre><code class="language-mwe2">var aString =“part”var anotherString =“在这里重用$ {part}”</code></pre>
+<pre><code class="language-mwe2">var aString = "part"
+var anotherString = "reuse the ${part} here"
+</code></pre>
 
 <p>这对于工作流中的文件路径特别有用，因为人们通常只想在工作流中定义一些公共根目录，并在某些其他文件位置重用此片段。</p>
 
@@ -128,11 +310,30 @@
 
 <p>定义属性的默认值并不总是可行的。这就是强制性财产发挥作用的地方。模块不仅通过其完全限定名称和根组件的类型定义其接口，还通过定义的属性定义它们的接口。</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。示例var optional ='a string'var mandatory SampleClass {singleValue = optional child = {singleValue = mandatory}}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Example
+
+var optional = 'a string'
+var mandatory
+
+SampleClass {
+  singleValue = optional
+  child = {
+    singleValue = mandatory
+  }
+}
+</code></pre>
 
 <p>此版本的示例模块公开了两个外部可分配的属性。第二个没有分配默认值，因此被认为是强制性的。如果我们重用<code>org.mycompany.则必须分配强制值<code>org.mycompany.像这样的另一个模块中的Example</code> ：</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。第二个var newMandatory @Example {mandatory =“mandatoryValue”optional = newMandatory}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Second
+
+var newMandatory
+
+@Example {
+  mandatory = "mandatoryValue"
+  optional = newMandatory
+} 
+</code></pre>
 
 <p>请注意，甚至可以重用另一个模块作为新模块的根组件。在这种情况下，我们将<code>Example</code>的强制属性设置为特定的常量值，而先前的可选值现在通过没有默认值的新属性重新定义为必需。</p>
 
@@ -144,7 +345,12 @@
 
 <p>如果我们想将创建的实例分配给自己的属性，我们可以使用以下语法：</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。示例SampleClass：self {child = self}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Example
+
+SampleClass : self {
+  child = self
+}
+</code></pre>
 
 <p>命名组件可在创建后立即引用，但无法在MWE2文件中使用前向引用。</p>
 
@@ -152,7 +358,13 @@
 
 <p>现有模块或类通常会公开一组属性，这些属性将分别分配给其根组件或set-和add-方法的功能。在许多情况下，很难为同一个概念提出另一个名称，导致属性本身与组件功能名称完全相同的情况。为了避免重复分配，MWE2提供了在组件文字上使用<code>auto-inject</code>修改器的可能性：</p>
 
-<pre><code class="language-mwe2">模块com.mycompany。示例var child = SampleClass {} SampleClass auto-inject {}</code></pre>
+<pre><code class="language-mwe2">module com.mycompany.Example
+
+var child = SampleClass {}
+
+SampleClass auto-inject {
+}
+</code></pre>
 
 <p>此示例将隐式地将属性<code>child</code>的值分配给根组件的feature <code>child</code>项。这对于高度可配置的工作流程尤其有用，这些工作流程可以显示许多可选参数，每个可选参数都可以分配给一个或多个组件。</p>
 
@@ -164,11 +376,17 @@
 
 <p>MWE2对空白区域不敏感，允许在任何地方定义行注释和块注释。语法与Java语言中使用的语法相同：</p>
 
-<pre><code class="language-mwe2">//这是评论/ *这是另一个评论。* /</code></pre>
+<pre><code class="language-mwe2">// This is a comment
+/* 
+  This is another one.
+*/
+</code></pre>
 
 <p>MWE2中的每个名称都可以是完全限定的标识符，并且必须遵循Java约定。但是，与Java标识符相反，不允许在标识符中使用德语变音符号或Unicode转义序列。MWE2中的有效ID段以字母或下划线开头，后跟任意数量的字母，数字或下划线。标识符由一个或多个由“。”分隔的段组成。点。</p>
 
-<pre><code class="language-xtext">姓名：ID（'。' ID）*; ID：（'a'..'z'|'A'..'Z'|'_'）（'a'..'z'|'A'..'Z' | '_' | '0' ..'9'）*;</code></pre>
+<pre><code class="language-xtext">Name: ID ('.' ID)*;
+ID: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*; 
+</code></pre>
 
 <p>MWE2在任何地方都不使用分号作为语句分隔符。</p>
 
@@ -180,7 +398,7 @@
 
 <p>允许在模块中定义任意数量的import语句。导入以通配符为后缀，或者导入具体的类或模块。如果使用通配符表示法，MWE2可以处理相对导入：</p>
 
-<pre><code class="language-xtext">'import'name'。*“？
+<pre><code class="language-xtext">'import' name '.*'?   
 </code></pre>
 
 <h3 id="mwe2-property-syntax">属性</h3>
@@ -215,7 +433,10 @@
 
 <p>字符串值可能是MWE2中使用最多的文字。由于描述性对象组合和配置语言的高度相关性，因此可以使用方便的字符串连接语法。MWE2字符串是多行字符串，可以由多个部分组成。</p>
 
-<pre><code class="language-mwe2">var aString ='a value'var anotherString ='可以将$ {aString}嵌入到多行字符串中'</code></pre>
+<pre><code class="language-mwe2">var aString = 'a value'
+var anotherString = 'It is possible to embed ${aString} into
+ a multi-line string'
+</code></pre>
 
 <p>如果定义例如公共根目录并且想要指定相对于基础的其他路径，则这对于路径替换特别方便。</p>
 

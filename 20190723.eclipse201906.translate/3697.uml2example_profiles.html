@@ -1,14 +1,14 @@
-<html dir="ltr">
+<html >
 <head>
 <title>档案支持</title>
-<link href="book.css" rel="stylesheet" type="text/css"></link>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.1"></meta>
-<link rel="home" href="index.html" title="Xpand Documentation"></link>
-<link rel="up" href="uml2example.html" title="UML2 Example"></link>
-<link rel="prev" href="uml2example_codegen.html" title="Code generation"></link>
-<link rel="next" href="xsd_tutorial.html" title="XSD Tutorial"></link>
+<link href="book.css" rel="stylesheet" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.1">
+<link rel="home" href="index.html" title="Xpand Documentation">
+<link rel="up" href="uml2example.html" title="UML2 Example">
+<link rel="prev" href="uml2example_codegen.html" title="Code generation">
+<link rel="next" href="xsd_tutorial.html" title="XSD Tutorial">
 </head>
-<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<body bgcolor="white"  text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">档案支持</h1>
 <div class="section" title="档案支持">
 <div class="titlepage">
@@ -96,12 +96,55 @@
 </div>
 <p>请注意，上面的所有内容都与Xpand没有任何关系，它只是创建和应用配置文件到UML2模型的“裸骨”手段。拥有一个能够将模型存储为EMF UML2 XMI的UML2工具<a name="N13055" class="indexterm"></a>会使模型的创建更容易。由于我们无法假设您正在使用哪个UML2工具，因此本教程将以这种方式向您展示，如果不安装其他工具，它将始终有效。</p>
 <p>我们必须改变两件事：工作流（特别是生成器组件的配置）需要知道配置文件，如果类应用了测试构造型，模板需要生成不同的代码。让我们先来看第二个方面。这是修改后的模板（在<code class="filename">RootWithProfile.xpt</code> ）：</p>
-<pre class="programlisting">«DEFINE Root for uml :: Model»«EXPAND PackageRoot FOREACH allOwnedElements（）。typeSelect（uml :: Package）»«ENDDEFINE»«DEFINE PackageRoot FOR uml :: Package»«EXPAND ClassRoot FOREACH ownedType.typeSelect（uml :: Class） »«ENDDEFINE»«DEFINE ClassRoot for uml :: Class»«FILE name +“。java”»public class«name»{}«ENDFILE»«ENDDEFINE»«DEFINE ClassRoot FOR test :: test»«FILE name +“。java” »公共类«名称»{} //刻板«ENDFILE»«ENDDEFINE»</pre>
+<pre class="programlisting">«DEFINE Root FOR uml::Model»
+  «EXPAND PackageRoot FOREACH allOwnedElements().typeSelect(uml::Package)»
+«ENDDEFINE»
+ 
+«DEFINE PackageRoot FOR uml::Package»
+  «EXPAND ClassRoot FOREACH ownedType.typeSelect(uml::Class)»
+«ENDDEFINE»  
+    
+«DEFINE ClassRoot FOR uml::Class»
+  «FILE name+".java"»  
+    public class «name» {}
+  «ENDFILE»
+«ENDDEFINE» 
+
+«DEFINE ClassRoot FOR test::test»
+  «FILE name+".java"»  
+    public class «name» {} // stereotyped
+  «ENDFILE»
+«ENDDEFINE»  </pre>
 <p>正如您所看到的， <span class="bold"><strong>构造型就像一个类型</strong></span> ，甚至基类型（ <code class="classname">uml::Class</code> ）和<code class="classname">uml::Class</code>型之间的多态分派也起作用！</p>
 <p>调整工作流文件也很简单（ <code class="filename">workflowWithProfile.mwe</code> ）。以下是使用新模型<code class="filename">example-profiled.uml</code>和扩展设置的修改后的模型组件：</p>
-<pre class="programlisting">&lt;？xml版本=“1.0”？&gt; &lt;workflow&gt; &lt;！ - 为独立执行设置EMF  - &gt; &lt;bean class =“org.eclipse.emf.mwe.utils。StandaloneSetup“platformUri =”..“/&gt; &lt;！ - 准备执行uml  - &gt; &lt;bean class =”org.eclipse.xtend.typesystem.uml2。设置“standardUML2Setup =”true“/&gt; &lt;！ -  UML2配置文件 -  Metamodell  - &gt; &lt;bean id =”mm_profile“class =”org.eclipse.xtend.typesystem.uml2.profile。ProfileMetaModel“&gt; &lt;profile value =”platform：/resource/xpand.uml2.generator/src/test.profile.uml“/&gt; &lt;/ bean&gt; &lt;！ - 加载模型并将其存储在插槽'模型'中 - &gt; &lt;component class =“org.eclipse.emf.mwe.utils。Reader“&gt; &lt;uri value =”platform：/resource/xpand.uml2.generator/src/example-profiled.uml“/&gt; &lt;modelSlot value =”model“/&gt; &lt;/ component&gt;</pre>
+<pre class="programlisting">&lt;?xml version="1.0"?&gt;
+&lt;workflow&gt;
+ &lt;!-- set up EMF for standalone execution --&gt;
+ &lt;bean class="org.eclipse.emf.mwe.utils.StandaloneSetup" platformUri=".." /&gt;
+
+ &lt;!-- prepare for performing uml --&gt;
+ &lt;bean class="org.eclipse.xtend.typesystem.uml2.Setup" standardUML2Setup="true" /&gt;
+    
+ &lt;!--UML2 Profile - Metamodell--&gt;
+ &lt;bean id="mm_profile" class="org.eclipse.xtend.typesystem.uml2.profile.ProfileMetaModel"&gt;
+  &lt;profile value="platform:/resource/xpand.uml2.generator/src/test.profile.uml"/&gt;
+ &lt;/bean&gt;
+
+&lt;!-- load model and store it in slot 'model' --&gt;
+&lt;component class="org.eclipse.emf.mwe.utils.Reader"&gt;
+  &lt;uri value="platform:/resource/xpand.uml2.generator/src/example-profiled.uml" /&gt;
+  &lt;modelSlot value="model" /&gt;
+&lt;/component&gt;</pre>
 <p>这是修改后的生成器组件：</p>
-<pre class="programlisting">&lt;component id =“generator”class =“org.eclipse.xpand2。生成器“skipOnErrors =”true“&gt; &lt;metaModel idRef =”mm_profile“/&gt; &lt;expand value =”templates :: Root :: Root FOR model“/&gt; &lt;fileEncoding value =”ISO-8859-1“/&gt; &lt;outlet path =“src-gen”&gt; &lt;postprocessor class =“org.eclipse.xpand2.output。JavaBeautifier“/&gt; &lt;/ outlet&gt; &lt;/ component&gt; &lt;/ workflow&gt;</pre>
+<pre class="programlisting">&lt;component id="generator" class="org.eclipse.xpand2.Generator" skipOnErrors="true"&gt;
+  &lt;metaModel idRef="mm_profile"/&gt;
+  &lt;expand value="templates::Root::Root FOR model"/&gt;
+  &lt;fileEncoding value="ISO-8859-1"/&gt;
+  &lt;outlet path="src-gen"&gt;
+   &lt;postprocessor class="org.eclipse.xpand2.output.JavaBeautifier"/&gt;
+  &lt;/outlet&gt;
+&lt;/component&gt;
+&lt;/workflow&gt;</pre>
 <p>我们唯一要做的就是添加一个引用我们刚创建的配置文件的新元模型。</p>
 </div>
 </div>

@@ -1,11 +1,11 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>RAP中的线程</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css">
 </head>
-<body dir="ltr">
+<body >
 
   <h1>RAP中的线程</h1>
 
@@ -27,12 +27,43 @@
   <h2 id="uisession">来自后台线程的会话访问</h2>
 
   <p>RWT根据当前线程确定<a href="scopes.html#uisession">UI会话</a> 。当<i>后台线程</i>尝试这样做时，代码将失败并带有<em>java.lang。IllegalStateException</em> ，表示此线程无权访问。使用<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT</a></em>或<em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil的</a></em>任何方法时可能会发生这种情况。例：</p>
-<pre class="lang-java">// INCORRECT //将抛出IllegalStateException：没有可用的上下文...Runnable runnable = new Runnable（）{public void run（）{UISession session = RWT.getUISession（）; // ... 要么 ...客户端客户端= RWT.getClient（）; // ... 要么 ...MySessionSingleton sessionSingleton = MySessionSingleton.getInstance（）; // ...}}; new Thread（runnable）.start（）;</pre>
+<pre class="lang-java">
+// INCORRECT
+// will throw IllegalStateException: No context available ...
+Runnable runnable = new Runnable() {
+  public void run() {
+    UISession session = RWT.getUISession();
+    // ... or ...
+    Client client = RWT.getClient();
+    // ... or ...
+    MySessionSingleton sessionSingleton = MySessionSingleton.getInstance();
+    // ...
+  }
+};
+new Thread( runnable ).start();
+</pre>
   <p>解决方案是在UI会话的上下文中运行有问题的代码。为此，它必须包装在runnable中并使用<em style="white-space:nowrap"><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#exec-java.lang.Runnable-">UISession #exec（Runnable runnable）</a></em>方法<em style="white-space:nowrap"><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#exec-java.lang.Runnable-">执行</a></em> 。这将在UI会话的上下文中执行runnable，在其<em>run（）</em>方法中授予对所有会话范围数据的访问权限的代码。但是，代码无法访问任何窗口小部件，因为它不在UI线程中执行（见<a href="#asyncexec">下文</a> ）。
   </p>
   <p>如果没有可用的当前UISession的引用，也可以从<em style="white-space:nowrap"><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession（显示器显示）</a></em>获得它。
   </p>
-<pre class="lang-java">// CORRECT final Display display = Display.getCurrent（）; final Runnable runnable = new Runnable（）{public void run（）{UISession uiSession = RWT.getUISession（display）; uiSession.exec（new Runnable（）{public void run（）{Client client = RWT.getClient（）; // ...或...MySessionSingleton sessionSingleton = MySessionSingleton.getInstance（）; // ...}}; }}; new Thread（runnable）.start（）;</pre>
+<pre class="lang-java">
+// CORRECT
+final Display display = Display.getCurrent();
+final Runnable runnable = new Runnable() {
+  public void run() {
+    UISession uiSession = RWT.getUISession( display );
+    uiSession.exec( new Runnable() {
+      public void run() {
+        Client client = RWT.getClient();
+        // ... or ...
+        MySessionSingleton sessionSingleton = MySessionSingleton.getInstance();
+        // ...
+      }
+    } );
+  }
+};
+new Thread( runnable ).start();
+</pre>
 
   <h2 id="asyncexec">会话访问与UI访问</h2>
   <p>
@@ -44,9 +75,39 @@
   <h2>使用助手</h2>
 
   <p>创建一个这样的帮助器类会很有帮助：</p>
-<pre class="lang-java">抽象类SessionRunnable实现Runnable {final private UISession session; public SessionRunnable（）{session = RWT.getUISession（）; } @Override public void run（）{session.exec（new Runnable（）{@Override public void run（）{SessionRunnable.this.runInSession（）;}}）; } abstract void runInSession（）; }</pre>
+<pre class="lang-java">
+abstract class SessionRunnable implements Runnable {
+
+  final private UISession session;
+
+  public SessionRunnable() {
+    session = RWT.getUISession();
+  }
+
+  @Override
+  public void run() {
+    session.exec( new Runnable() {
+      @Override
+      public void run() {
+        SessionRunnable.this.runInSession();
+      }
+    } );
+  }
+
+  abstract void runInSession();
+}
+</pre>
   <p>以上示例可以缩短为：</p>
-<pre class="lang-java">final Runnable runnable = new SessionRunnable（）{@ Overver public void runInSession（）{Client client = RWT.getClient（）; // ......等......}}; new Thread（runnable）.start（）;</pre>
+<pre class="lang-java">
+final Runnable runnable = new SessionRunnable() {
+  @Override
+  public void runInSession() {
+    Client client = RWT.getClient();
+    // ... etc ...
+  }
+};
+new Thread( runnable ).start();
+</pre>
 
 </body>
 </html>

@@ -1,14 +1,14 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta charset="UTF-8"></meta>
+<meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
 <title>VIATRA转换语言</title>
-<link rel="stylesheet" href="asset?aid=0"></link>
-<link rel="stylesheet" href="./asciidoctor.css"></link>
+<link rel="stylesheet" href="asset?aid=0">
+<link rel="stylesheet" href="./asciidoctor.css">
 </head>
-<body class="article" dir="ltr">
+<body class="article" >
 <div id="header">
 <h1>VIATRA转换语言</h1>
 </div>
@@ -198,7 +198,11 @@
 <div class="listingblock">
 <div class="title">定义事件驱动的转换规则</div>
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">val createEnabledTransitionRule = ruleFactory.createRule。前提（EnabledTransitionMatcher.querySpecification）。action [eventModelManager.strategy.fireTransition（t，et）]。build</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">val createEnabledTransitionRule = ruleFactory.createRule.
+  precondition(EnabledTransitionMatcher.querySpecification).
+  action[
+   eventModelManager.strategy.fireTransition(t, et)
+  ].build</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -207,7 +211,13 @@
 <div class="listingblock">
 <div class="title">（可选）将规则分组为规则组</div>
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">def getRules（）{new EventDrivenTransformationRuleGroup（createEnabledTransitionRule，createFinishedStateMachineRule，createTokenInTrapStateRule）}</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def getRules() {
+  new EventDrivenTransformationRuleGroup(
+    createEnabledTransitionRule,
+    createFinishedStateMachineRule,
+    createTokenInTrapStateRule
+  )
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -216,7 +226,12 @@
 <div class="listingblock">
 <div class="title">注册转换规则</div>
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRules（）{EventDrivenTransformation。forSource（eventModelManager.resourceSet）。的addRules（规则）。build（）}</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRules() {
+  EventDrivenTransformation.
+    forSource(eventModelManager.resourceSet).
+    addRules(rules).
+    build()
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -244,7 +259,18 @@
 <div class="listingblock">
 <div class="title">使用冲突解决程序</div>
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRulesWithCustomPriorities（）{val resolver = ConflictResolvers.createFixedPriorityResolver（）; resolver.setPriority（createEnabledTransitionRule.ruleSpecification，100）resolver.setPriority（createFinishedStateMachineRule.ruleSpecification，50）resolver.setPriority（createTokenInTrapStateRule.ruleSpecification，0）EventDrivenTransformation。forSource（eventModelManager.resourceSet）。的addRules（规则）。setConflictResolver（分解）。build（）}</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRulesWithCustomPriorities() {
+  val resolver = ConflictResolvers.createFixedPriorityResolver();
+  resolver.setPriority(createEnabledTransitionRule.ruleSpecification, 100)
+  resolver.setPriority(createFinishedStateMachineRule.ruleSpecification, 50)
+  resolver.setPriority(createTokenInTrapStateRule.ruleSpecification, 0)
+
+  EventDrivenTransformation.
+    forSource(eventModelManager.resourceSet).
+    addRules(rules).
+    setConflictResolver(resolver).
+    build()
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -252,7 +278,16 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRulesWithAutomatedPriorities（）{val resolver = new RuleOrderBasedFixedPriorityResolver（）resolver.setPrioritiesFromScratch（new ArrayList（rules.ruleSpecifications））EventDrivenTransformation。forSource（eventModelManager.resourceSet）。的addRules（规则）。setConflictResolver（分解）。创建（） }</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">def registerRulesWithAutomatedPriorities() {
+  val resolver = new RuleOrderBasedFixedPriorityResolver()
+  resolver.setPrioritiesFromScratch(new ArrayList(rules.ruleSpecifications))
+
+  EventDrivenTransformation.
+    forSource(eventModelManager.resourceSet).
+    addRules(rules).
+    setConflictResolver(resolver).
+    create()
+  }</code></pre>
 </div>
 </div>
 </div>
@@ -510,13 +545,37 @@
 <div class="listingblock">
 <div class="title">将适配器添加到批转换</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">transformation = BatchTransformation.forEngine（engine）//创建跟踪编码器监听器//该监听器负责存储转换执行序列（即：转换规则激活启动的顺序）//此转换跟踪可以在以后进行分析或使用执行//转换跟踪 - &gt;分层对象结构 - &gt;旨在存储转换执行序列。//由激活和规则参数跟踪组成 - &gt;激活跟踪标识已触发的规则，并指定哪些元素已触发执行给定规则。.addListener（new TraceCoder（URI.createURI（“transformationtrace / batchtrace.transformationtrace”）））//创建跟踪执行器适配器//此适配器负责重新执行跟踪编码器适配器记录的转换序列。//在调试期间特别有用，因为它允许确定VIATRA事件驱动转换的其他随机执行序列。//请注意，此适配器的使用对转换性能有很大影响，建议仅在小规模测试模型上使用它。//还要记住，跟踪执行程序需要一个已经存在的转换跟踪，因此它不应与跟踪编码器同时使用。.addAdapter（new TraceExecutor（URI.createURI（“transformationtrace / trace.transformationtrace”）））//此侦听器实现基本的日志记录功能.addListener（new LoggingEVMListener（logger））。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">transformation = BatchTransformation.forEngine(engine)
+    //Create trace coder listener
+    //This listener is responsible for storing the transformation execution sequence (i.e.: order of transformation rule activation firings)
+    //This transformation trace can later be analyzed or used during re-execution
+    //Transformation trace --&gt; hierarchical object structure --&gt; aiming at storing a transformation execution sequence.
+    //Consists of Activation and rule parameter traces --&gt; activation traces identify the fired rule, and specify which elements have triggered the execution of the given rule.
+    .addListener( new TraceCoder(URI.createURI("transformationtrace/batchtrace.transformationtrace")))
+
+    //Create trace executor adapter
+    //This adapter is responsible for re-executing a transformation sequence recorded by the trace coder adapter.
+    //Particularly useful during debugging, as it allows the determinization of the otherwise random execution sequence of VIATRA event-driven transformations.
+    //Note, that the usage of this adapter has a heavy effect on transformation performance, it is only advised to use it on small scale test models.
+    //Also keep in mind that the trace executor needs an already existing transformation trace, hence it should not be used simultaneously with the trace coder.
+    .addAdapter(new TraceExecutor(URI.createURI("transformationtrace/trace.transformationtrace")))
+
+    //This listener implements a basic logging functionality
+    .addListener(new LoggingEVMListener(logger))
+    .build</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">将适配器添加到事件驱动的转换中</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">transformation = EventDrivenTransformation.forEngine（engine）.setConflictResolver（createConflictResolver）.addRule（hostRule）.addRule（applicationRule）.addListener（new TraceCoder（URI.createURI（“transformationtrace / trace.transformationtrace”）））。addAdapter（new TraceExecutor（URI） .createURI（“transformationtrace / edtrace.transformationtrace”）））。addListener（new LoggingEVMListener（logger））。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">transformation = EventDrivenTransformation.forEngine(engine)
+    .setConflictResolver(createConflictResolver)
+    .addRule(hostRule)
+    .addRule(applicationRule)
+    .addListener( new TraceCoder(URI.createURI("transformationtrace/trace.transformationtrace")))
+    .addAdapter(new TraceExecutor(URI.createURI("transformationtrace/edtrace.transformationtrace")))
+    .addListener(new LoggingEVMListener(logger))
+    .build</code></pre>
 </div>
 </div>
 </div>

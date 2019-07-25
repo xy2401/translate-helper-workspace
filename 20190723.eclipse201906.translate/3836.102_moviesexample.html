@@ -1,12 +1,12 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>电影示例</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="movies-example">电影示例</h1>
 
@@ -16,7 +16,8 @@
 
 <p>电影数据库是一个纯文本文件（data.csv），其中包含描述电影的数据集。这是一个示例数据集：</p>
 
-<pre><code>1991年Naked Lunch 6.9 16578传记Comedy Drama Fantasy</code></pre>
+<pre><code>Naked Lunch  1991  6.9  16578  Biography  Comedy  Drama  Fantasy
+</code></pre>
 
 <p>值由两个空格分隔。列是：</p>
 
@@ -30,7 +31,14 @@
 
 <p>让我们定义一个表示数据集的数据类型<code>Movie</code> ：</p>
 
-<pre><code class="language-xtend">@Data class Movie {String title int year double rating long numberOfVotes Set &lt;String&gt; categories}</code></pre>
+<pre><code class="language-xtend">@Data class Movie {
+  String title
+  int year
+  double rating
+  long numberOfVotes
+  Set&lt;String&gt; categories 
+}
+</code></pre>
 
 <p>电影是POJO，数据集中的每列都有一个强类型字段。<a href="204_activeannotations.html#data-annotation">@Data</a>注释会将类转换为不可变的值类，即它将获得</p>
 
@@ -45,23 +53,49 @@
 
 <p>现在让我们将另一个类添加到同一个文件中，并使用一系列电影初始化一个名为movies的字段。对于初始化，我们解析文本文件并将数据记录转换为<code>Movie</code> s：</p>
 
-<pre><code class="language-xtend">import java.io.FileReader导入java.util。设置导入静态扩展com.google.common.io。CharStreams。* class Movies {val movies = new FileReader（'data.csv'）。readLines.map [line | val segments = line.split（''）.iterator返回新的Movie（segments.next，Integer.parseInt（segments.next），Double.parseDouble（segments.next），Long.parseLong（segments.next），segments.toSet ）]}</code></pre>
+<pre><code class="language-xtend">import java.io.FileReader
+import java.util.Set
+import static extension com.google.common.io.CharStreams.*
+
+class Movies {
+  
+  val movies = new FileReader('data.csv').readLines.map [ line |
+    val segments = line.split('  ').iterator
+    return new Movie(
+      segments.next, 
+      Integer.parseInt(segments.next), 
+      Double.parseDouble(segments.next), 
+      Long.parseLong(segments.next), 
+      segments.toSet
+    )
+  ]
+}
+</code></pre>
 
 <p><a href="202_xtend_classes_members.html#fields">字段的类型</a>可以从右侧的表达式推断出来。这称为本地类型推断，在Xtend中随处可见。我们希望该字段为final，因此我们使用关键字<code>val</code>将其声明为值。</p>
 
 <p>右侧的初始化首先创建一个新的<a href="http://docs.oracle.com/javase/8/docs/api/java/io/FileReader.html">FileReader</a> 。然后在该实例上调用<code>readLines()</code>方法。但是如果你看一下<code>FileReader</code>你就找不到这样的方法。实际上， <code>readLines()</code>是来自Google Guava的<a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/io/CharStreams.html">CharStreams</a>的静态方法，它是作为<a href="202_xtend_classes_members.html#extension-imports">扩展名</a>导入的。扩展允许我们使用这种可读的语法。</p>
 
-<pre><code class="language-xtend">导入静态扩展com.google.common.io。CharStreams。*</code></pre>
+<pre><code class="language-xtend">import static extension com.google.common.io.CharStreams.*
+</code></pre>
 
 <p><a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/io/CharStreams.html"><code>CharStreams.readLines(Reader)</code></a>返回一个<a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html"><code>List&lt;String&gt;</code></a> ，我们在其上调用另一个扩展方法<code>map</code> 。这个在运行时库（ <a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/ListExtensions.java">ListExtensions.map（...）</a> ）中定义，并自动导入，因此可在所有列表中使用。<code>map</code>扩展需要一个函数作为参数。它基本上为列表中的每个值调用该函数，并返回包含函数调用结果的另一个列表。实际上这种映射是懒惰地执行的，所以如果你从不访问结果列表的值，则永远不会执行映射功能。</p>
 
 <p>使用<a href="203_xtend_expressions.html#lambdas">lambda表达式</a> （方括号中的代码）创建函数对象。在lambda中，我们处理文本文件中的一行，并通过使用两个空格字符作为分隔符将字符串拆分为一个电影。在拆分操作的结果上，调用方法<code>iterator()</code> 。您可能知道<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String.split（String）</a>返回一个字符串数组（ <code>String[]</code> ），当我们在其上调用<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html"><code>Iterable.iterator()</code></a>时，Xtend会<a href="201_types.html#conversion-rules">自动转换为列表</a> 。</p>
 
-<pre><code class="language-xtend">val segments = line.split（''）.iterator</code></pre>
+<pre><code class="language-xtend">val segments = line.split('  ').iterator
+</code></pre>
 
 <p>现在我们使用迭代器为它产生的每个String创建一个<code>Movie</code>实例。数据类型转换（例如<code>String</code> to <code>int</code> ）是通过从包装器类型调用<a href="203_xtend_expressions.html#static-access">静态方法</a>完成的。<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Iterable.html">Iterable</a>的其余部分变成了一组类别。因此，在<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/IteratorExtensions.java"><code>IteratorExtensions.toSet(Iterator&lt;T&gt;)</code></a>上调用扩展方法<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/IteratorExtensions.java"><code>IteratorExtensions.toSet(Iterator&lt;T&gt;)</code></a>以使用其余值。</p>
 
-<pre><code class="language-xtend">返回新的Movie（segments.next，Integer.parseInt（segments.next），Double.parseDouble（segments.next），Long.parseLong（segments.next），segments.toSet）</code></pre>
+<pre><code class="language-xtend">return new Movie (
+  segments.next, 
+  Integer.parseInt(segments.next), 
+  Double.parseDouble(segments.next), 
+  Long.parseLong(segments.next), 
+  segments.toSet
+)
+</code></pre>
 
 <h2 id="answering-some-questions">回答一些问题</h2>
 
@@ -69,25 +103,36 @@
 
 <h3 id="question1">问题1：动作片的数量是多少？</h3>
 
-<pre><code class="language-xtend">@Test def numberOfActionMovies（）{assertEquals（828，movies.filter [categories.contains（'Action'）] .size）}</code></pre>
+<pre><code class="language-xtend">@Test def numberOfActionMovies() {
+  assertEquals(828, 
+    movies.filter[ categories.contains('Action') ].size)
+}
+</code></pre>
 
 <p>首先，电影被<code>filter</code> 。lambda表达式检查当前电影的类别是否包含条目<code>'Action'</code> 。请注意，与用于将文件中的行转换为电影的lambda不同，这次我们还没有声明参数名称。我们本来可以写的</p>
 
-<pre><code class="language-xtend">movies.filter [电影| movie.categories.contains（'Action'）] .size</code></pre>
+<pre><code class="language-xtend">movies.filter[ movie | movie.categories.contains('Action') ].size
+</code></pre>
 
 <p>但由于我们留下了姓名和竖线的变量自动命名<code>it</code> 。 <code>it</code>是一个<a href="203_xtend_expressions.html#implicit-variables">隐含变量</a> 。它的用法类似于隐含变量<code>this</code> 。我们也可以写</p>
 
-<pre><code class="language-xtend">movies.filter [it.categories.contains（'Action'）] .size</code></pre>
+<pre><code class="language-xtend">movies.filter[ it.categories.contains('Action') ].size
+</code></pre>
 
 <p>甚至更紧凑</p>
 
-<pre><code class="language-xtend">movies.filter [categories.contains（'Action'）]。size</code></pre>
+<pre><code class="language-xtend">movies.filter[ categories.contains('Action') ].size
+</code></pre>
 
 <p>最终我们在生成的iterable上调用<code>size</code> ，这也是一个扩展方法。它在实用程序类<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/IterableExtensions.java">IterableExtensions中</a>定义。</p>
 
 <h3 id="question2">问题2：什么是年度80年代最佳电影被发布？</h3>
 
-<pre><code class="language-xtend">@Test def void yearOfBestMovieFrom80s（）{assertEquals（1989，movies.filter [（1980..1989）.contains（year）] .sortBy [rating] .last.year）}</code></pre>
+<pre><code class="language-xtend">@Test def void yearOfBestMovieFrom80s() {
+  assertEquals(1989, 
+    movies.filter[ (1980..1989).contains(year) ].sortBy[ rating ].last.year)
+}
+</code></pre>
 
 <p>在这里，我们<code>filter</code>所有电影，其年份包括在1980年至1989年（80年代）的范围内。<code>..</code>运算符也是<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/IntegerExtensions.java">IntegerExtensions中</a>定义的扩展，并返回<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtext.xbase.lib/src/org/eclipse/xtext/xbase/lib/IntegerRange.java">IntegerRange</a>的实例。运算符重载在<a href="203_xtend_expressions.html#operators">章节中</a>解释。</p>
 
@@ -95,11 +140,13 @@
 
 <p>我们可以对降序进行排序，并将列表的头部列为：</p>
 
-<pre><code class="language-xtend">movies.filter [（1980..1989）.contains（year）] .sortBy [-rating] .head.year</code></pre>
+<pre><code class="language-xtend">movies.filter[ (1980..1989).contains(year) ].sortBy[ -rating ].head.year
+</code></pre>
 
 <p>另一种可能的解决方案是颠倒排序列表的顺序：</p>
 
-<pre><code class="language-xtend">movies.filter [（1980..1989）.contains（year）] .sortBy [rating] .reverseView.head.year</code></pre>
+<pre><code class="language-xtend">movies.filter[ (1980..1989).contains(year) ].sortBy[ rating ].reverseView.head.year
+</code></pre>
 
 <p>请注意，首先排序然后取最后一个或第一个比需要的要贵一些。我们可以使用方法<code>reduce</code>来代替找到效率更高的最佳电影。也许你想自己尝试一下？</p>
 
@@ -107,7 +154,11 @@
 
 <h3 id="question3">问题3：前两部电影的所有投票总和是多少？</h3>
 
-<pre><code class="language-xtend">@Test def void sumOfVotesOfTop2（）{val long sum = movies.sortBy [-rating] .take（2）.map [numberOfVotes] .reduce [a，b | a + b] assertEquals（47_229L，sum）}</code></pre>
+<pre><code class="language-xtend">@Test def void sumOfVotesOfTop2() {
+  val long sum = movies.sortBy[ -rating ].take(2).map[ numberOfVotes ].reduce[ a, b | a + b ]
+  assertEquals(47_229L, sum)
+}
+</code></pre>
 
 <p>首先，电影按评级排序，然后我们采取最好的两个。接下来，使用<code>map</code>功能将电影列表转换为其<code>numberOfVotes</code>列表。现在我们有一个<a href="http://docs.oracle.com/javase/8/docs/api/java/util/List.html"><code>List&lt;Long&gt;</code></a> ，它可以通过添加值减少到一个<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Long.html">Long</a> 。</p>
 

@@ -1,12 +1,12 @@
-﻿<html lang="zh-Hans" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+﻿<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>JET教程第2部分（编写代码编写代码）</title>
-<link rel="stylesheet" href="images/../../../css/book.css" type="text/css"></link>
-<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css"></link>
+<link rel="stylesheet" href="images/../../../css/book.css" type="text/css">
+<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css">
 </head>
 
-<body lang="EN-US" dir="ltr" xml:lang="EN-US">
+<body lang="EN-US"  xml:lang="EN-US">
 
 <div align="right">©版权所有<a href="http://www.azzurri.co.jp">Azzurri Ltd.</a> 2003,2004。版权所有<table border="0" cellspacing="0" cellpadding="2" width="100%">
 
@@ -88,7 +88,11 @@
 <p>使用用于生成文本的模板的uri构造<tt class="code">JETEmitter</tt>对象。只要协议处理程序可用，任何类型的uri都是可接受的。这意味着<tt class="code">文件：/</tt> uris， <tt class="code">ftp：/</tt> uris和<tt class="code">http：/</tt> uris都可以使用。Eclipse为<tt class="code">平台</tt>添加了特殊的协议处理程序<tt class="code">：/ base</tt> /， <tt class="code">platform：/ plugin /</tt> ， <tt class="code">platform：/ fragment /</tt>和<tt class="code">platform：/ resource /</tt> uris，所以插件可以使用类似uri的<tt class="code">平台：/ resource / myproject / myfolder / mytemplate .jet</tt>指定模板文件。注意：Eclipse 3.0已将<tt class="code">bundleentry</tt>引入其特殊协议列表。它应该用于引用Eclipse元素，例如插件和功能。</p>
 
 <p>在我们的示例插件中，我们将模板文件与我们的插件一起分发，因此模板文件将位于Eclipse <i>插件</i>文件夹下的<i>myplugin / templates</i>文件夹中。然后，可以使用以下代码从此文件夹中查找并生成模板：</p>
-<pre>String pluginId =“myplugin.id”; String base = Platform.getBundle（pluginId）.getEntry（“/”）。toString（）; String uri = base +“templates / myTemplate.javajet”; <tt class="code">JETEmitter</tt> emitter = new JETEmitter（uri）; String generatedText = emitter.generate（new Object [] {parameter}）;</pre>
+<pre> String pluginId = "myplugin.id";
+ String base = Platform.getBundle(pluginId).getEntry("/").toString();
+ String uri = base + "templates/myTemplate.javajet";
+ <tt class="code">JETEmitter</tt> emitter = new JETEmitter(uri);
+ String generatedText = emitter.generate(new Object[] {parameter});</pre>
 <p>在构造<tt class="code">JETEmitter</tt>对象之后，客户端然后在其上调用<tt class="code">generate</tt>来生成文本。<tt class="code">generate</tt>方法将执行以下步骤：</p>
 
 <ol>
@@ -109,7 +113,15 @@
 <h4>1。需要插件初始化</h4>
 <p>在Eclipse之外使用JET并不容易。JET旨在仅作为工作区应用程序运行。使用JET的任何应用程序必须最低限度地作为Eclipse“无头”应用程序运行，以便进行插件初始化。（headless一词指的是在没有用户界面的情况下运行Eclipse。）</p>
 <p>这意味着从简单的独立应用程序（带有<tt class="code">main</tt>方法的标准Java类）使用<tt class="code">JETEmitter</tt> <em>将不起作用</em> ：</p>
-<pre>//这失败了：无法从独立应用程序中使用<tt class="code">JETEmitter</tt> public static void main（String [] args）{ <tt class="code">JETEmitter</tt> emitter = new JETEmitter（“/ myproject / templates / HelloWorld.txtjet”）; //这将抛出NullPointerException String result = emitter.generate（new NullProgressMonitor（），{“hi”}）;的System.out.println（结果）;</pre>
+<pre> // This fails: cannot use <tt class="code">JETEmitter</tt> from a standalone application
+ public static void main(String[] args) {
+     <tt class="code">JETEmitter</tt> emitter = new JETEmitter("/myproject/templates/HelloWorld.txtjet");
+ 
+     // this will throw a NullPointerException
+     String result = emitter.generate(new NullProgressMonitor(), {"hi" });
+ 
+     System.out.println(result);
+</pre>
 
 <p>请注意，这不仅仅是对<tt class="code">JETEmitter</tt>类的限制， <tt class="code">org.eclipse.emf.codegen</tt>插件中的许多类都依赖于其他插件。下面的<a href="#appendix">附录</a>部分详细介绍了如何从独立应用程序中使用JET。</p>
 <p>在本文的其余部分，我们将假设我们的代码是从插件内部运行的。</p>
@@ -119,7 +131,50 @@
 <p>要防止出现此错误，必须在使用<tt class="code">JETEmitter</tt>时指定插件的类加载器。如果没有指定类加载器， <tt class="code">JETEmitter</tt>使用它自己的类的类加载器，它通常是<tt class="code">org.eclipse.emf.codegen</tt>插件的类加载器，并且这个类加载器看不到多少。在最新版本的EMF中（从版本1.1.0构建20030527_0913VL）， <tt class="code">JETEmitter</tt>有一个构造函数，它接受类加载器参数。</p>
 <p>请注意，指定类加载器的另一种方法是在您自己的项目中<tt class="code">继承JETEmitter</tt> ;如果没有指定类加载器， <tt class="code">JETEmitter</tt>将使用此子类的类加载器。（如果您使用的是较旧版本的EMF，则没有构造函数接受类加载器参数，您将别无选择， <tt class="code">只能</tt>在自己的项目中<tt class="code">继承JETEmitter</tt> 。）</p>
 <p>下面的示例显示了一个使用<tt class="code">JETEmitter</tt>转换和调用所选模板的操作类。该示例显示了如何构造<tt class="code">JETEmitter</tt> <img src="images/tag_1.gif" width="24" height="13" alt="">使用类加载器参数或<img src="images/tag_2.gif" width="24" height="13" alt="">构造一个匿名子类。</p>
-<pre>package org.eclipse.emf.examples.jet.article2.actionexample; //导入省略的公共类EmitAction实现IActionDelegate {protected ISelection selection; public void selectionChanged（IAction action，ISelection selection）{this.selection = selection; action.setEnabled（真）; } public void run（IAction action）{List &lt;？&gt; files =（IStructuredSelection的选择实例）？（（IStructuredSelection）选择）.toList（）：集合。EMPTY_LIST; for（Iterator &lt;？&gt; i = files.iterator（）; i.hasNext（）;）{IFile file =（IFile）i.next（）; IPath fullPath = file.getFullPath（）; String templateURI =“platform：/ resource”+ fullPath; <strong>ClassLoader classloader = getClass（）。getClassLoader（）;</strong> <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> <tt class="code">JETEmitter</tt> emitter = new JETEmitter（templateURI， <strong>classloader</strong> ）; // <strong>或：使用匿名子类</strong> <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span> // emitter = <strong>new JETEmitter（templateURI）{}</strong> ; //注意括号try {IProgressMonitor monitor = new NullProgressMonitor（）; String [] arguments = new String [] {“hi”}; String result = emitter.generate（monitor，arguments）; saveGenerated（result，file）; } catch（异常e）{throw new RuntimeException（e）;省略了saveGenerated方法}</pre>
+<pre>package org.eclipse.emf.examples.jet.article2.actionexample;
+// imports omitted
+public class EmitAction implements IActionDelegate {
+    protected ISelection selection;
+ 
+    public void selectionChanged(IAction action, ISelection selection) {
+        this.selection = selection;
+        action.setEnabled(true);
+    }
+ 
+    public void run(IAction action) {
+        List&lt;?&gt; files = (selection instanceof IStructuredSelection)
+                ? ((IStructuredSelection) selection).toList()
+                : Collections.EMPTY_LIST;
+                
+        for (Iterator&lt;?&gt; i = files.iterator(); i.hasNext();) {
+            IFile file = (IFile) i.next();
+            IPath fullPath = file.getFullPath();
+ 
+            String templateURI = "platform:/resource" + fullPath;
+            <strong>ClassLoader classloader = getClass().getClassLoader();</strong>
+<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>         <tt class="code">JETEmitter</tt> emitter = new JETEmitter(templateURI, <strong>classloader</strong>);
+ 
+            // <strong>or: use an anonymous subclass</strong>
+
+<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>         // emitter = <strong>new JETEmitter(templateURI) {}</strong>; // notice the brackets
+            
+            try {
+                IProgressMonitor monitor = new NullProgressMonitor();
+                String[] arguments = new String[] { "hi" };
+ 
+                String result = emitter.generate(monitor, arguments);
+                
+                saveGenerated(result, file);
+ 
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+ 
+    // saveGenerated method omitted
+}
+</pre>
 <h4>3。类路径问题</h4>
 <p>JETEmitter将模板转换为Java中的Java源文件<i>。JETEmitters</i>项目，并调用JavaBuilder来编译这些源文件。如果模板使用的类不是标准Java类，或者不是EMF插件中的类，则需要将这些类添加到类的路径中<i>。JETEmitters</i>项目，或JavaBuilder无法编译模板实现源文件。幸运的是， <tt class="code">JETEmitter</tt>通过<tt class="code">addVariable</tt>方法提供了一种简单的方法来实现这一点，该方法将一个类路径变量添加到<i>。JETEmitter</i>项目。</p>
 <p><dfn>类路径变量</dfn>是工作区范围的名称，在Eclipse中用于引用JAR文件或目录。使用Window&gt; Preferences&gt; Java&gt; Classpath Variables menua动作可以看到所有这些变量的列表。您的程序需要为每个JAR文件或目录添加一个类路径变量<i>。JETEmitter</i>项目。</p>
@@ -138,7 +193,41 @@
 <p>在以下部分中，我们将逐一完成上述步骤。</p>
 <h3><a name="typesafe_enum_example"></a> Typesafe枚举</h3>
 <p>让我们看一下类型安全的枚举类，看看我们想要生成什么样的源代码。下面的Digit类是一个示例类型安全枚举。</p>
-<pre>//示例typesafe enum package xyz;公共类Digit { <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> public static final Digit ZERO = new Digit（0，“0”）; public static final Digit ONE = new Digit（1，“one”）; public static final Digit TWO = new Digit（2，“two”）; public static final Digit THREE = new Digit（3，“three”）; // ...public static final Digit NINE = new Digit（9，“nine”）; private static final Digit [] ALL = {ZERO，ONE，TWO，THREE，FOUR，FIVE，SIX，SEVEN，EIGHT，NINE}; <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span>私有最终int值; private final String name; private Digit（int value，String name）{this.value = value; this.name = name; } <span><img src="images/tag_3.gif" width="24" height="13" alt=""></span> public static Digit lookup（int key）{for（int i = 0; i &lt;ALL.length; i ++）{if（key == ALL [i] .getValue（））{return ALL [i]; }} //查找失败：//我们没有默认的数字，所以我们抛出异常<span><img src="images/tag_4.gif" width="24" height="13" alt=""></span>抛出新的IllegalArgumentException（“+键不存在数字”; public int getValue（）{返回值; public int getName（）{return name; public String toString（）{return getName（）; }}</pre>
+<pre> // an example typesafe enum
+ package x.y.z;
+ public class Digit { 
+<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>  public static final Digit ZERO = new Digit(0, "zero");
+     public static final Digit ONE = new Digit(1, "one");
+     public static final Digit TWO = new Digit(2, "two");
+     public static final Digit THREE = new Digit(3, "three");
+     // ...
+     public static final Digit NINE = new Digit(9, "nine");
+ 
+     private static final Digit[] ALL = 
+         {ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE};
+ 
+
+<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>  private final int value;
+     private final String name;
+ 
+     private Digit(int value, String name) { 
+         this.value = value; 
+         this.name = name; 
+     }
+ 
+<span><img src="images/tag_3.gif" width="24" height="13" alt=""/></span>  public static Digit lookup(int key) {
+         for (int i = 0; i &lt; ALL.length; i++) {
+             if (key == ALL[i].getValue()) { return ALL[i]; }
+         }
+         // lookup failed:
+         // we have no default Digit, so we throw an exception
+<span><img src="images/tag_4.gif" width="24" height="13" alt=""/></span>      throw new IllegalArgumentException("No digit exists for " + key);
+     }
+ 
+     public int getValue() { return value; }
+     public int getName() { return name; }
+     public String toString() { return getName(); }
+ }</pre>
 <p>让我们仔细看看这堂课。首先，Digit类有几个<strong><img src="images/tag_1.gif" width="24" height="13" alt="">实例</strong> - 常量ZERO，ONE，TWO等。每个实例都由其Java变量名称“ZERO”，“ONE”，“TWO”......以及每个实例的值定义。 <strong><img src="images/tag_2.gif" width="24" height="13" alt=""></strong>枚举类的<strong>属性</strong> 。大多数类型安全的枚举都有一个或多个属性。Digit类有两个属性： <tt class="code">值</tt>整数和<tt class="code">名称</tt> String。</p>
 
 <p>我们的示例Digit类也有一个<strong><img src="images/tag_3.gif" width="24" height="13" alt=""> <tt class="code">lookup</tt></strong>方法，返回<tt class="code">value</tt>属性等于指定int参数的实例。查找方法引入了<dfn>关键属性</dfn>的概念。许多类型安全的枚举具有一个或多个属性，可以唯一地区分一个实例与另一个实例</p>
@@ -204,12 +293,86 @@
 <h3><a name="typesafe_enum_template"></a> Typesafe枚举模板</h3>
 <p>现在我们有了一个模型，我们可以使用我们的Digit类，并用调用我们的模型类的JET scriptlet和表达式替换所有特定于Digit的代码。生成的模板可能如下所示：</p>
 
-<pre> <span class="highlight"><span class="highlight">&lt;％@ jet package =“translated”imports =“java.util。* org.eclipse.emf.examples.jet.article2.model。*”class =“TypeSafeEnumeration”％&gt;</span></span> <span class="highlight"><span class="highlight">&lt;％TypesafeEnum typesafeEnum =（TypesafeEnum）参数; ％&gt;</span></span> package <span class="highlight">&lt;％= typesafeEnum.getPackageName（）％&gt;</span> ; / ** *这个最后一个类在<span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span>的有效实例上实现了一个类型安全的枚举*。*此类的实例是不可变的。* / public final class <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> { <span class="highlight">&lt;％for（Iterator &lt;Instance&gt; i = typesafeEnum.instances（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Instance instance = i.next （）; ％&gt;</span> // <strong>实例定义</strong> public static final <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> <span class="highlight">&lt;％= instance.getName（）％&gt;</span> = <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> new <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> （ <span class="highlight">&lt;％= instance.constructorValues（）％&gt;</span> ）; <span class="highlight">&lt;％}％&gt;</span> <span class="highlight">&lt;％for（Iterator &lt;Attribute&gt; i = typesafeEnum.attributes（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Attribute attribute = i.next（）; ％&gt;</span> // <strong>属性声明</strong> <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span> private final <span class="highlight">&lt;％= attribute.getType（）％&gt;</span> m <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> ; <span class="highlight">&lt;％}％&gt;</span> / ** *私有<strong>构造函数</strong> 。* / <span><img src="images/tag_3.gif" width="24" height="13" alt=""></span> private <span class="highlight">&lt;％= typesafeEnum.getClassName（）％&gt;</span> （ <span class="highlight">&lt;％= typesafeEnum.constructorParameterDescription（）％&gt;</span> ）{ <span class="highlight">&lt;％for（Iterator &lt;Attribute&gt; i = typesafeEnum.attributes（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Attribute attribute = i.next（）; ％&gt;</span> <span><img src="images/tag_4.gif" width="24" height="13" alt=""></span> m <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> = <span class="highlight">&lt;％= attribute.getUncappedName（）％&gt;</span> ; <span class="highlight">&lt;％}％&gt;</span> } // <strong>getter访问器方法</strong> <span class="highlight">&lt;％for（Iterator &lt;Attribute&gt; i = typesafeEnum.attributes（）; i.hasNext（）;）{％&gt;</span> <span class="highlight">&lt;％Attribute attribute = i.next（）; ％&gt;</span> / ** *返回<span class="highlight">&lt;％= attribute.getName（）％&gt;</span> 。* * @return <span class="highlight">&lt;％= attribute.getName（）％&gt;</span> 。* / public <span class="highlight">&lt;％= attribute.getType（）％&gt;</span> get <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> （）{return m <span class="highlight">&lt;％= attribute.getCappedName（）％&gt;</span> ; } <span class="highlight">&lt;％}％&gt;</span> //省略查找方法...}</pre>
+<pre> <span class="highlight"><span class="highlight">&lt;%@ jet package="translated" imports="java.util.* org.eclipse.emf.examples.jet.article2.model.*" class="TypeSafeEnumeration" %&gt;</span></span>
+ <span class="highlight"><span class="highlight">&lt;% TypesafeEnum typesafeEnum = (TypesafeEnum) argument; %&gt;</span></span>
+ package <span class="highlight">&lt;%=typesafeEnum.getPackageName()%&gt;</span>;
+ 
+ /**
+  * This final class implements a type-safe enumeration
+  * over the valid instances of a <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span>.
+  * Instances of this class are immutable.
+  */
+ public final class <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span> {
+ 
+ <span class="highlight">&lt;% for (Iterator&lt;Instance&gt; i = typesafeEnum.instances(); i.hasNext(); ) { %&gt;</span>
+
+ <span class="highlight">&lt;%     Instance instance = i.next(); %&gt;</span>
+ 
+     // <strong>instance definition</strong>
+     public static final <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span> <span class="highlight">&lt;%=instance.getName()%&gt;</span> = 
+<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>      new <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span>(<span class="highlight">&lt;%=instance.constructorValues()%&gt;</span>);
+ <span class="highlight">&lt;% } %&gt;</span>
+
+ 
+ <span class="highlight">&lt;% for (Iterator&lt;Attribute&gt; i = typesafeEnum.attributes(); i.hasNext(); ) { %&gt;</span>
+ <span class="highlight">&lt;%     Attribute attribute = i.next(); %&gt;</span>
+ 
+     // <strong>attribute declaration</strong>
+<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>  private final <span class="highlight">&lt;%=attribute.getType()%&gt;</span> m<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span>;
+ <span class="highlight">&lt;% } %&gt;</span>
+
+ 
+     /**
+      * Private <strong>constructor</strong>.
+      */
+<span><img src="images/tag_3.gif" width="24" height="13" alt=""/></span>  private <span class="highlight">&lt;%=typesafeEnum.getClassName()%&gt;</span>(<span class="highlight">&lt;%=typesafeEnum.constructorParameterDescription()%&gt;</span>) {
+ <span class="highlight">&lt;% for (Iterator&lt;Attribute&gt; i = typesafeEnum.attributes(); i.hasNext(); ) { %&gt;</span>
+ <span class="highlight">&lt;%     Attribute attribute = i.next(); %&gt;</span>
+<span><img src="images/tag_4.gif" width="24" height="13" alt=""/></span>      m<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span> = <span class="highlight">&lt;%=attribute.getUncappedName()%&gt;</span>;
+ <span class="highlight">&lt;% } %&gt;</span>
+
+     }
+               
+ // <strong>getter accessor methods</strong>
+ <span class="highlight">&lt;% for (Iterator&lt;Attribute&gt; i = typesafeEnum.attributes(); i.hasNext(); ) { %&gt;</span>
+ <span class="highlight">&lt;%     Attribute attribute = i.next(); %&gt;</span>
+     /**
+      * Returns the <span class="highlight">&lt;%=attribute.getName()%&gt;</span>.
+      *
+      * @return the <span class="highlight">&lt;%=attribute.getName()%&gt;</span>. 
+      */
+     public <span class="highlight">&lt;%=attribute.getType()%&gt;</span> get<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span>() {
+         return m<span class="highlight">&lt;%=attribute.getCappedName()%&gt;</span>;
+     }
+ 
+ <span class="highlight">&lt;% } %&gt;</span>     
+ 
+     // lookup method omitted...
+ }</pre>
 
 <p>如您所见，模板调用了一些不在我们之前介绍的简单模型中的方法。我们添加了一些方便的方法，比如<tt class="code"><img src="images/tag_2.gif" width="24" height="13" alt=""> Attribute.getCappedName（）</tt>和<tt class="code"><img src="images/tag_4.gif" width="24" height="13" alt=""> getUncappedName（）</tt>方法。这些方法有助于保持模板简单。</p>
 <p>我们添加到模型中的另一个方法示例是<tt class="code"><img src="images/tag_3.gif" width="24" height="13" alt=""> TypesafeEnum.constructorParameterDescription（）</tt>方法和<tt class="code"><img src="images/tag_1.gif" width="24" height="13" alt=""> Instance.constructorValues（）</tt>方法。<tt class="code">constructorValues</tt>方法的实现如下所示。</p>
 
-<pre>// class Instance / ** *以此实例的构造函数所期望的顺序返回此实例的属性值的便捷方法。* * @return以逗号分隔的此实例的所有属性值列表，*格式为<tt class="code">attrib1-value，attrib2-value（，...）</tt>* / public String constructorValues（）{StringBuffer result = new StringBuffer（）; for（Iterator &lt;Attribute&gt; i = getType（）。attributes（）; i.hasNext（）;）{Attribute attribute = i.next（）; result.append（getAttributeValue（属性））; if（i.hasNext（））{result.append（“，”）;返回result.toString（）; }</pre>
+<pre>// class Instance
+/**
+ * Convenience method that returns the attribute values of this instance,
+ * in the order expected by the constructor of this instance.
+ * 
+ * @return a comma-separated list of all attribute values of this instance,
+ *         formatted like <tt class="code">attrib1-value, attrib2-value (, ...)</tt>
+ */
+public String constructorValues() {
+    StringBuffer result = new StringBuffer();
+    for (Iterator&lt;Attribute&gt; i = getType().attributes(); i.hasNext(); ) {
+        Attribute attribute = i.next();
+        result.append(getAttributeValue(attribute));
+        if (i.hasNext()) {
+            result.append(", ");
+        }
+    }
+    return result.toString();
+}
+</pre>
 <p><tt class="code">constructorValues</tt>方法遍历typesafe枚举的属性，查找实例中每个属性的值，并将这些值连接成一个以逗号分隔的字符串。例如，在我们上面的<tt>Digit</tt> typesafe枚举类中，此方法将为“ZERO”实例返回<tt>“0，\”零\“”</tt> 。</p>
 
 <p>我们可以遍历模板中的属性值，但这会使模板更难以阅读。将此逻辑推入模型使模板更易读，更易于维护。另一方面，我们失去了一些灵活性，因为用户无法通过编辑模板来自定义该逻辑。这是你必须做出的权衡。哪个更好取决于您的模板和您的应用程序。</p>
@@ -231,10 +394,44 @@
 <p>现在我们已经有了一个GUI来填充我们的模型，我们最终可以使用我们在本文第一部分中学到的知识，并使用我们的模板生成源代码。</p>
 
 <p>当用户在向导上按Finish时，将调用向导中的<tt class="code">performFinish</tt>方法。下面的代码显示了我们的方式<img src="images/tag_1.gif" width="24" height="13" alt="">使用<tt class="code">JETEmitter</tt>的自定义子类<img src="images/tag_2.gif" width="24" height="13" alt="">将我们的插件的JAR文件添加到的类路径中<i>。JETEmitters</i>项目在我们之前<img src="images/tag_3.gif" width="24" height="13" alt="">在<tt class="code">JETEmitter</tt>上调用generate。生成的类型安全枚举源代码是<img src="images/tag_4.gif" width="24" height="13" alt="">保存到用户指定的工作空间中的位置。</p>
-<pre>//类NewTypesafeEnumCreationWizard protected void finishPage（IProgressMonitor monitor）抛出InterruptedException，CoreException {String pluginId =“org.eclipse.emf.examples.jet.article2”; String base = Platform.getBundle（pluginId）.getEntry（“/”）。toString（）; String relativeUri =“templates / TypeSafeEnumeration.javajet”; <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> <tt class="code">JETEmitter</tt> emitter = new JETEmitter（base + relativeUri，getClass（）。getClassLoader（））; <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span> emitter.addClasspathVariable（“JET_TUTORIAL”，pluginId）; TypesafeEnum model = mPage1.getTypesafeEnumModel（）; IProgressMonitor sub = BasicMonitor.subProgress（monitor，1）; <span><img src="images/tag_3.gif" width="24" height="13" alt=""></span> String result = emitter.generate（sub，new Object [] {model}）; monitor.worked（1）; <span><img src="images/tag_4.gif" width="24" height="13" alt=""></span> IFile file = save（monitor，result.getBytes（））; selectAndReveal（文件）; openResource（文件）; }</pre>
+<pre> // class NewTypesafeEnumCreationWizard
+ protected void finishPage(IProgressMonitor monitor) 
+ throws InterruptedException, CoreException {
+ 
+     String pluginId = "org.eclipse.emf.examples.jet.article2";
+     String base = Platform.getBundle(pluginId).getEntry("/").toString();
+     String relativeUri = "templates/TypeSafeEnumeration.javajet";
+<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>  <tt class="code">JETEmitter</tt> emitter = new JETEmitter(base + relativeUri, getClass().getClassLoader());
+<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>  emitter.addClasspathVariable("JET_TUTORIAL", pluginId);
+ 
+     TypesafeEnum model = mPage1.getTypesafeEnumModel();
+     IProgressMonitor sub = BasicMonitor.subProgress(monitor, 1);
+
+<span><img src="images/tag_3.gif" width="24" height="13" alt=""/></span>  String result = emitter.generate(sub, new Object[] { model });
+     monitor.worked(1);
+ 
+<span><img src="images/tag_4.gif" width="24" height="13" alt=""/></span>  IFile file = save(monitor, result.getBytes());
+ 
+     selectAndReveal(file);
+     openResource(file);
+ }</pre>
 <h3><a name="pluginxml"></a>注册我们的向导</h3>
 <p>我们下面的最终代码片段显示了<tt class="code">plugin.xml</tt>配置文件的一部分，我们将向导注册为工作台的贡献。</p>
-<pre>&lt;extension point =“org.eclipse.ui.newWizards”&gt; &lt;wizard name =“Typesafe Enum”icon =“icons / newenum_wiz.gif”category =“org.eclipse.jdt.ui.java”id =“org.eclipse .emf.examples.jet.article2.ui。NewTypesafeEnumCreationWizard“&gt; &lt;description&gt;创建Typesafe枚举&lt;/ description&gt; &lt;class class =”org.eclipse.emf.examples.jet.article2.ui。NewTypesafeEnumCreationWizard“&gt; <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span> &lt;parameter name =“javatype”value =“true”/&gt; &lt;/ class&gt; &lt;/ wizard&gt; &lt;/ extension&gt;</pre>
+<pre>   &lt;extension point="org.eclipse.ui.newWizards"&gt;
+      &lt;wizard 
+            name="Typesafe Enum"
+            icon="icons/newenum_wiz.gif"
+            category="org.eclipse.jdt.ui.java"
+            id="org.eclipse.emf.examples.jet.article2.ui.NewTypesafeEnumCreationWizard"&gt;
+         &lt;description&gt;
+            Create a Typesafe Enumeration
+         &lt;/description&gt;
+         &lt;class class="org.eclipse.emf.examples.jet.article2.ui.NewTypesafeEnumCreationWizard"&gt;
+<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>         &lt;parameter name="javatype" value="true"/&gt;
+         &lt;/class&gt;
+      &lt;/wizard&gt;
+   &lt;/extension&gt;
+</pre>
 <p>现在，当用户从工作台中选择File&gt; New&gt; Other&gt; Java&gt; Typesafe Enum时，我们的向导就会被激活，如下图所示。</p>
 <p><img alt="Typesafe Enum向导显示在“新建”向导中" src="images/new_creation_wizard.gif"> 
 </p>
@@ -441,7 +638,19 @@
 </ul>
 <p>如果目标路径已包含先前的转换结果，并且您希望将新转换结果与现有转换结果合并，则可以将<tt class="code">JMerge</tt>控件模型文件指定为第三个参数。Eclipse安装中的<tt class="code">plugins / org.eclipse.emf.codegen / test</tt>文件夹包含一个示例<tt class="code">merge.xml</tt>文件。</p>
 
-<pre>@echo off set ECLIPSE_HOME = C：\ eclipse-2.1 \ eclipse set WORKSPACE =％ECLIPSE_HOME％\ workspace set OPTS = -Xmx900M -Djava.compiler = NONE -verify -cp％ECLIPSE_HOME％\ startup.jar set MAIN = org.eclipse .core.launcher。Main -noupdate -data％WORKSPACE％ <span><img src="images/tag_1.gif" width="24" height="13" alt=""></span>设置TEMPLATE_URI = test.javajet <span><img src="images/tag_2.gif" width="24" height="13" alt=""></span>设置TARGET_FOLDER = C：\ temp \ jetstandalone \ MyProject set ARGUMENTS =％TEMPLATE_URI %% TARGET_FOLDER％echo在运行此脚本之前关闭Eclipse。java％OPTS %% MAIN％-application org.eclipse.emf.codegen。CodeGen％ARGUMENTS％</pre>
+<pre>   @echo off
+   set ECLIPSE_HOME=C:\eclipse-2.1\eclipse
+   set WORKSPACE=%ECLIPSE_HOME%\workspace
+   set OPTS=-Xmx900M -Djava.compiler=NONE -verify -cp %ECLIPSE_HOME%\startup.jar
+   set MAIN=org.eclipse.core.launcher.Main -noupdate -data %WORKSPACE% 
+ 
+<span><img src="images/tag_1.gif" width="24" height="13" alt=""/></span>set TEMPLATE_URI=test.javajet
+<span><img src="images/tag_2.gif" width="24" height="13" alt=""/></span>set TARGET_FOLDER=C:\temp\jetstandalone\MyProject
+   set ARGUMENTS=%TEMPLATE_URI% %TARGET_FOLDER%
+   
+   echo Shut down Eclipse before running this script.
+   java %OPTS% %MAIN% -application org.eclipse.emf.codegen.CodeGen %ARGUMENTS%
+</pre>
 <h3><a name="jetc"></a> jetc：在Eclipse之外翻译JET模板的ANT任务</h3>
 <p>作者：Knut Wannheden（paranor.ch的knut.wannheden）</p>
 <p>二进制： <a href="images/../jetc-task.jar">jetc-task.jar</a> 。</p>
@@ -457,7 +666,47 @@
   </ul></li>
 </ul>
 <p>这是一个简单的Ant构建文件（taskdef类路径假设你有Eclipse 3.3和EMF 2.3.0）：</p>
-<pre>&lt;project default =“jetc_multiple_templates”&gt; &lt;property name =“eclipse.plugins.dir”location =“C：\ eclipse-SDK-3.3M4-win32 \ eclipse \ plugins”/&gt; &lt;taskdef name =“jetc”classname =“ ch.paranor.epla.structure。JETCTask“&gt; &lt;classpath&gt; &lt;pathelement location =”jetc-task.jar“/&gt; &lt;fileset dir =”$ {eclipse.plugins.dir}“&gt; &lt;include name =”org.eclipse.core.boot _ * .jar“ /&gt; &lt;include name =“org.eclipse.core.resources _ * .jar”/&gt; &lt;include name =“org.eclipse.core.runtime _ * .jar”/&gt; &lt;include name =“org.eclipse.jdt.core_ * .jar“/&gt; &lt;include name =”org.eclipse.emf.codegen _ * .jar“/&gt; &lt;/ fileset&gt; &lt;/ classpath&gt; &lt;/ taskdef&gt; &lt;！ - 用法示例1： - &gt; &lt;！ -  - 在“template”属性中指定模板文件。 - &gt; &lt;！ - 您可以使用“class”和“package”属性覆盖 - &gt; &lt;！ - “class”和“package”属性模板文件。 - &gt; &lt;target name =“jetc_single_template”&gt; &lt;mkdir dir =“jet-output”/&gt; &lt;jetc template =“test.xmljet”package =“com.foo”class =“Test”destdir =“ jet-output“/&gt; &lt;javac srcdir =”jet-output“destdir =”classes“/&gt; &lt;/ target&gt; &lt;！ - 用法示例2： - &gt; &lt;！ - 一次翻译一堆模板文件。 - &gt; &lt;！ - 使用文件集时不能使用“class”和“package”属性。 - &gt; &lt;target name =“jetc_mu ltiple_templates“&gt; &lt;mkdir dir =”jet-output“/&gt; &lt;jetc destdir =”jet-output“&gt; &lt;fileset dir =”jet-templates“includes =”*。* jet“/&gt; &lt;/ jetc&gt; &lt;javac srcdir =“jet-output”destdir =“classes”/&gt; &lt;/ target&gt; &lt;/ project&gt;</pre>
+<pre>&lt;project default=&quot;jetc_multiple_templates&quot;&gt;
+  &lt;property name=&quot;eclipse.plugins.dir&quot; location=&quot;C:\eclipse-SDK-3.3M4-win32\eclipse\plugins&quot; /&gt;
+    
+  &lt;taskdef name=&quot;jetc&quot; classname=&quot;ch.paranor.epla.structure.JETCTask&quot;&gt;
+    &lt;classpath&gt;
+      &lt;pathelement location=&quot;jetc-task.jar&quot; /&gt;
+      &lt;fileset dir=&quot;${eclipse.plugins.dir}&quot;&gt;
+        &lt;include name=&quot;org.eclipse.core.boot_*.jar&quot; /&gt;
+        &lt;include name=&quot;org.eclipse.core.resources_*.jar&quot; /&gt;
+        &lt;include name=&quot;org.eclipse.core.runtime_*.jar&quot; /&gt;
+        &lt;include name=&quot;org.eclipse.jdt.core_*.jar&quot; /&gt;
+
+        &lt;include name=&quot;org.eclipse.emf.codegen_*.jar&quot; /&gt;
+      &lt;/fileset&gt;
+    &lt;/classpath&gt;
+  &lt;/taskdef&gt;
+
+  &lt;!-- Usage example 1: --&gt;
+  &lt;!-- Specify the template file in the &quot;template&quot; attribute. --&gt;
+  &lt;!-- You can use the &quot;class&quot; and &quot;package&quot; attributes to override the --&gt;
+  &lt;!-- &quot;class&quot; and &quot;package&quot; attributes in the template file. --&gt;
+  &lt;target name=&quot;jetc_single_template&quot;&gt;
+    &lt;mkdir dir=&quot;jet-output&quot; /&gt;
+    &lt;jetc template=&quot;test.xmljet&quot;
+          package=&quot;com.foo&quot;
+          class=&quot;Test&quot;
+          destdir=&quot;jet-output&quot; /&gt;
+    &lt;javac srcdir=&quot;jet-output&quot; destdir=&quot;classes&quot; /&gt;
+  &lt;/target&gt;
+
+  &lt;!-- Usage example 2: --&gt;
+  &lt;!-- Translate a bunch of template files at once. --&gt;
+  &lt;!-- You cannot use the &quot;class&quot; and &quot;package&quot; attributes when using a fileset. --&gt;
+  &lt;target name=&quot;jetc_multiple_templates&quot;&gt;
+    &lt;mkdir dir=&quot;jet-output&quot; /&gt;
+    &lt;jetc destdir=&quot;jet-output&quot;&gt;
+      &lt;fileset dir=&quot;jet-templates&quot; includes=&quot;*.*jet&quot; /&gt;
+    &lt;/jetc&gt;
+    &lt;javac srcdir=&quot;jet-output&quot; destdir=&quot;classes&quot; /&gt;
+  &lt;/target&gt;
+&lt;/project&gt;</pre>
 <h2><a name="resources">资源</a></h2>
 <p><a href="http://developer.java.sun.com/developer/Books/shiftintojava/page1.html#replaceenums" target="_blank">缺失C构造的替代品</a> （作者Joshua Bloch）</p>
 <a href="http://www.javaworld.com/javaworld/javatips/jw-javatip122.html" target="_blank">Java技巧122：谨防Java类型安全枚举</a> （作者：Vladimir Roubtsov）<br>

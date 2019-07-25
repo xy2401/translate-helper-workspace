@@ -1,13 +1,13 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2012, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
-<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1"></link>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2012, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
 <title>Eclipse 3.8插件迁移常见问题解答</title>
 </head>
 
-<body dir="ltr">
+<body >
 
 <h1>Eclipse 3.8插件迁移常见问题解答</h1>
 
@@ -16,14 +16,41 @@
 </ol>
 <h2><a name="illegalAmbiguousVarargs">为什么我在3.7及更早版本中合法的varargs代码不再用3.8（Juno）编译？</a></h2>
 <p>JDK 6及更低版本有一个错误，因为以下代码被认为是合法的：</p>
-<pre>public class VarargPrimitiveTest {public static void test（int ... a）{System.out.println（Arrays.toString（a））; } public static &lt;T&gt; void test（Object ... a）{System.out.println（Arrays.toString（a））; public static void main（String [] args）{test（1）; }}</pre>
+<pre>
+public class VarargPrimitiveTest {
+    public static void test(int... a) {
+        System.out.println(Arrays.toString(a));
+    }
+
+    public static &lt;T&gt; void test(Object... a) {
+        System.out.println(Arrays.toString(a));
+    }
+
+    public static void main(String[] args) {
+        test(1);
+    }
+}
+</pre>
 <p>但是，这个错误在JDK 7中得到修复，上面的代码现在在调用站点报告了一个模糊的调用错误（...）。因此，Eclipse Juno通过所有合规级别的错误<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=346038" target="_blank">346038</a>修复了<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=346038" target="_blank">这个问题</a> 。这就是上面代码不再用Juno编译的原因。</p>
 
 <p>如果您仍然希望上述代码按照&lt;1.7进行编译，以模仿JDK 6或更低版本，则可以使用系统属性<b>tolerateIllegalAmbiguousVarargsInvocation</b>强制Eclipse容忍上述不明确的varargs案例。在-vmargs设置之后，可以在eclipse.ini文件中设置此属性，如下所示：</p>
-<pre>...-vmargs -DtolerateIllegalAmbiguousVarargsInvocation = true ...
+<pre>
+...
+-vmargs
+-DtolerateIllegalAmbiguousVarargsInvocation=true
+...
 </pre>
 <p>请注意，使用此设置，Eclipse Juno不仅模仿JDK 6及以下版本，而且还允许上述代码编译，但也模仿JDK 6及以下版本，在下面的情况下引发错误，即使它们在JDK 7中都是合法的禁用tolerateIllegalAmbiguousVarargsInvocation时在Eclipse Juno中：</p>
-<pre>class Test {public static void foo（int ... i）{} public static void foo（double ... d）{} public static void main（String [] args）{foo（1,2,3）; // foo flagged ambiguous}}</pre>
+<pre>
+class Test {
+        public static void foo(int ...i) {}
+        public static void foo(double...d) {}
+
+        public static void main(String[] args) {
+            foo(1, 2, 3);     // foo flagged ambiguous
+        }
+}
+</pre>
 
 <p>有关更多信息，请参阅<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=383780" target="_blank">错误383780</a> 。</p>
 

@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass开发人员指南 -  TMF Remote API</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">TMF远程API</th>
@@ -43,21 +43,38 @@
 		<p>进入PTP远程服务系统的主要入口点是<i>IRemoteServicesManager</i> OSGI服务。它提供了连接类型列表和所有连接的全局列表。
 		</p>
 		<p>要访问OSGI服务，请使用<b>TmfRemoteConnectionFactory</b>类的<b>getService（）</b>方法：</p>
-		<pre>IRemoteServicesManager manager = TmfRemoteConnectionFactory.getService（IRemoteServicesManager.class）;</pre>
+		<pre>
+IRemoteServicesManager manager = TmfRemoteConnectionFactory.getService(IRemoteServicesManager.class);
+</pre>
 		<h3 id="Obtaining_a_IRemoteConnection">获取IRemoteConnection</h3>
 		<p>要获取<b>IRemoteConnection</b>实例，请使用方法<b>TmfRemoteConnectionFactory.getRemoteConnection（String remoteServicesId，String name）</b> ，其中<i>remoteServicesId</i>是连接的服务ID的ID，并<i>命名</i>连接的名称。对于内置SSH， <i>remoteServicesId</i>是“org.eclipse.remote”。JSch”。
 		</p>
-		<pre>IRemoteConnection connection = TmfRemoteConnectionFactory.getRemoteConnection（“org.eclipse.remote。JSch“，”我的连接“）;</pre>
+		<pre>
+IRemoteConnection connection = TmfRemoteConnectionFactory.getRemoteConnection("org.eclipse.remote.JSch", "My Connection");
+</pre>
 		<p>请注意，需要使用执行此插件的Eclipse应用程序中的远程连接向导实现（ <b>窗口 - &gt;首选项 - &gt;远程开发 - &gt;远程连接</b> ）预先创建连接。有关使用PTP的远程连接功能创建连接的更多信息，请参阅<a href="http://help.eclipse.org/luna/index.jsp?topic=%2Forg.eclipse.ptp.doc.user%2Fhtml%2FremoteTools.html&amp;anchor=remote">链接</a> 。或者，可以使用TMF的相应API（ <a href="#Creating_an_IRemoteConnection_instance">创建IRemoteConnection实例</a> ）以编程方式创建它。
 		</p>
 		<p>要获取<b>IRemoteConnection</b>实例，请使用方法<b>TmfRemoteConnectionFactory.getLocalConnection（）</b> 。
 		</p>
-		<pre>IRemoteConnection connection = TmfRemoteConnectionFactory.getLocalConnection（）;</pre>
+		<pre>
+IRemoteConnection connection = TmfRemoteConnectionFactory.getLocalConnection();
+</pre>
 		<h3 id="Creating_an_IRemoteConnection_instance">创建IRemoteConnection实例</h3>
 		<p>可以使用<b>TmfRemoteConnectionFactory以</b>编程方式创建<b>IRemoteConnection</b>实例。现在只支持内置SSH或本地连接。
 		</p>
 		<p>要创建<b>IRemoteConnection</b>实例，请使用类<b>TmfRemoteConnectionFactory的</b> <b>createConnection（URI hostURI，String name）</b> <b>方法</b> ，其中<i>hostURI</i>是远程连接的URI，并<i>命名</i>连接的名称。对于内置SSH使用：</p>
-		<pre>import org.eclipse.remote.core。IRemoteConnection; ...try {URI hostUri = URIUtil.fromString（“ssh：//userID@127.0.0.1:22”）; IRemoteConnection connection = TmfRemoteConnectionFactory.createConnection（hostUri，“MyHost”）; } catch（URISyntaxException e）{return new Status（IStatus。错误，“my.plugin.id”，“URI语法错误”，e）; } catch（RemoteConnectionException e）{return new Status（IStatus。错误，“my.plugin.id”，“无法创建连接”，e）; } ...
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+...
+    try {
+        URI hostUri = URIUtil.fromString("ssh://userID@127.0.0.1:22");
+        IRemoteConnection connection = TmfRemoteConnectionFactory.createConnection(hostUri, "MyHost");
+    } catch (URISyntaxException e) {
+        return new Status(IStatus.ERROR, "my.plugin.id", "URI syntax error", e);
+    } catch (RemoteConnectionException e) {
+        return new Status(IStatus.ERROR, "my.plugin.id", "Connection cannot be created", e);
+    }
+...
 </pre>
 		<p>请注意，如果已存在具有给定名称的连接，则将返回此连接。</p>
 		<h3 id="Providing_a_connection_factory">提供连接工厂</h3>
@@ -68,31 +85,81 @@
 		</p>
 		<h3 id="Creating_a_RemoteSystemProxy">创建RemoteSystemProxy</h3>
 		<p>一旦有一个<b>IRemoteConnection</b>实例， <b>就</b>可以通过以下方式构建<b>RemoteSystemProxy</b> ：</p>
-		<pre>//获取本地连接（例如）IRemoteConnection connection = TmfRemoteConnectionFactory.getLocalConnection（）; RemoteSystemProxy proxy = new RemoteSystemProxy（connection）;</pre>
+		<pre>
+// Get local connection (for example)
+IRemoteConnection connection = TmfRemoteConnectionFactory.getLocalConnection();
+RemoteSystemProxy proxy = new RemoteSystemProxy(connection);
+</pre>
 		<h3 id="Opening_the_remote_connection">打开远程连接</h3>
 		<p>要打开连接调用方法<b>connect（）</b> ：</p>
-		<pre>proxy.connect（）;</pre>
+		<pre>
+    proxy.connect();
+</pre>
 		<p>这将打开连接。如果先前已打开连接，则会立即返回。</p>
 		<h3 id="Closing_the_remote_connection">关闭远程连接</h3>
 		<p>要关闭连接调用方法<b>disconnect（）</b> ：</p>
-		<pre>proxy.disconnect（）;</pre>
+		<pre>
+    proxy.disconnect();
+</pre>
 		<p>注意：如果此代理打开了连接，则会关闭连接。否则它将保持开放。</p>
 		<h3 id="Disposing_the_remote_connection">处理远程连接</h3>
 		<p>如果不再需要远程系统代理，则需要通过调用方法<b>dispose（）</b>来处理代理实例。如果此代理打开了连接，则可能会关闭连接。否则它将保持开放。
 		</p>
-		<pre>proxy.dispose（）;</pre>
+		<pre>
+    proxy.dispose();
+</pre>
 		<h3 id="Checking_the_connection_state">检查连接状态</h3>
 		<p>要检查连接状态，请使用<b>RemoteSystemProxy</b>类的<b>isConnected（）</b>方法。
 		</p>
-		<pre>if（proxy.isConnected（））{//做某事}</pre>
+		<pre>
+    if (proxy.isConnected()) {
+        // do something
+    }
+</pre>
 		<h3 id="Retrieving_the_IRemoteConnection_instance">检索IRemoteConnection实例</h3>
 		<p>要检索<b>IRemoteConnection</b>实例，请使用<b>RemoteSystemProxy</b>类的<b>getRemoteConnection（）</b>方法。使用此实例可以访问远程连接实现的相关功能，例如远程文件服务（ <b>IRemoteFileService</b> ）或远程进程服务（ <b>IRemoteProcessService</b> ）。
 		</p>
-		<pre>import org.eclipse.remote.core。IRemoteConnection; import org.eclipse.remote.core。IRemoteFileService; ...IRemoteRemoteConnection connection = proxy.getRemoteConnection（）; IRemoteFileService fileService = connection.getService（IRemoteFileService.class）; if（fileService！= null）{//做某事（例如下载或上传文件）}</pre>
-		<pre>import org.eclipse.remote.core。IRemoteConnection; import org.eclipse.remote.core。IRemoteFileService; ...IRemoteRemoteConnection connection = proxy.getRemoteConnection（）; IRemoteFileService processService = connection.getService（IRemoteProcessService.class）; if（processService！= null）{//做某事（例如执行命令）}</pre>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+import org.eclipse.remote.core.IRemoteFileService;
+...
+    IRemoteRemoteConnection connection = proxy.getRemoteConnection();
+    IRemoteFileService fileService = connection.getService(IRemoteFileService.class);
+    if (fileService != null) {
+        // do something (e.g. download or upload a file)
+    }
+</pre>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+import org.eclipse.remote.core.IRemoteFileService;
+...
+    IRemoteRemoteConnection connection = proxy.getRemoteConnection();
+    IRemoteFileService processService = connection.getService(IRemoteProcessService.class);
+    if (processService != null) {
+        // do something (e.g. execute command)
+    }
+</pre>
 		<h3 id="Obtaining_a_command_shell">获取命令shell</h3>
 		<p>TMF远程API提供Command shell实现来执行远程命令行命令。要获取命令行shell，请使用RemoteSystemProxy。</p>
-		<pre>import org.eclipse.remote.core。IRemoteConnection; import org.eclipse.remote.core。IRemoteFileService; import org.eclipse.tracecompass.tmf.remote.core.shell。ICommandShell ......ICommandShell shell = proxy.createCommandShell（）; ICommandInput命令= fCommandShell.createCommand（）; command.add（ “LS”）; command.add（ “ -  1”）; ICommandResult result = shell.executeCommand（command，new NullProgressMonitor）; System.out.println（“返回值：”result.getResult（））; for（String line：result.getOutput（））{System.out.println（line）; for（String line：result.getErrorOutput（））{System.err.println（line）; } shell.dispose（）;</pre>
+		<pre>
+import org.eclipse.remote.core.IRemoteConnection;
+import org.eclipse.remote.core.IRemoteFileService;
+import org.eclipse.tracecompass.tmf.remote.core.shell.ICommandShell
+...
+    ICommandShell shell = proxy.createCommandShell();
+    ICommandInput command = fCommandShell.createCommand();
+    command.add("ls");
+    command.add("-l");
+    ICommandResult result = shell.executeCommand(command, new NullProgressMonitor);
+    System.out.println("Return value: " result.getResult());
+    for (String line : result.getOutput()) {
+        System.out.println(line);
+    }
+    for (String line : result.getErrorOutput()) {
+        System.err.println(line);
+    }
+    shell.dispose();
+</pre>
 		<p>请注意，如果不再需要，需要处理shell。</p>
 		<p>请注意，使用<b>CommandInput</b>类创建带参数的命令时，请单独添加命令和每个参数，而不是使用一个String。
 		</p><hr class="navigation-separator">

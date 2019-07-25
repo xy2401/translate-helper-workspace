@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>GEF通用开发人员文档</title>
-		<link type="text/css" rel="stylesheet" href="../../book.css"></link>
+		<link type="text/css" rel="stylesheet" href="../../book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<p>
 			<em>非维基读者注意：本文档是从GEF@github.com维基生成的 - 如果您有更正或补充，如果您可以将它们贡献给<a href="https://github.com/eclipse/gef/wiki/Common" target="doc_external">原始维基页面，</a>那将非常棒</em> 。
 		</p>
@@ -66,7 +66,17 @@
 		</p>
 		<h4 id="activatablesupport">ActivatableSupport</h4>
 		<p>为了强制执行<a href="Common.html#iactivatable">IActivatable的</a>实现者， <a href="Common.html#iactivatable">请</a>遵循上述合同，可以使用<code>ActivatableSupport</code> 。它没有正式实现<a href="Common.html#iactivatable">IActivatable</a>接口，但为其所有方法提供了实现，因此可以简单地用作委托，如下所示：</p>
-		<pre><code>public class MyActivatable实现IActivatable {//创建委托私有ActivatableSupport acs = new ActivatableSupport（this）; public void activate（）{acs.activate（null / * pre-activation hook * /，this :: doActivate / * post-activation hook * /）; } ...}</code></pre>
+		<pre><code>public class MyActivatable implements IActivatable {
+
+  // create delegate
+  private ActivatableSupport acs = new ActivatableSupport(this);
+
+  public void activate() {
+    acs.activate(null /* pre-activation hook */, this::doActivate /* post-activation hook */);
+  }
+  
+  ...
+}</code></pre>
 		<hr>
 		<h3 id="adapt">适应</h3>
 		<ul>
@@ -94,15 +104,57 @@
 		<p>在从<code>IAdaptable</code>检索适配器之前，必须注册它们。注册再次包含一个角色（如果未提供角色，则使用“默认”角色），并且可能需要通过<a href="http://google.github.io/guava/releases/15.0/api/docs/com/google/common/reflect/TypeToken.html" target="doc_external">com.google.common.reflect获取有关实际适配器类型的其他信息<a href="http://google.github.io/guava/releases/15.0/api/docs/com/google/common/reflect/TypeToken.html" target="doc_external">。TypeToken</a> 。如果无法从注册的适配器实例本身推断出这种附加类型信息（参数化类型就是这种情况）。
 		</p>
 		<p>因此，现在可以通过各种方式注册和检索适配器：</p>
-		<pre><code>//在'default'角色下注册并检索原始类型'A'的适配器'a'（不需要输入信息）adaptable.setAdapter（a）; A = adaptable.getAdapter（A.class）; //在'default'角色下注册并检索参数化类型'A &lt;T&gt;'的适配器'a'（需要输入信息）adaptable.setAdapter（new TypeToken &lt;A &lt;T &gt;&gt;（）{}，a）; A &lt;T&gt; a = adaptable.getAdapter（new TypeToken &lt;A &lt;T &gt;&gt;（）{}）; //在角色'a1'下注册并检索原始类型'A'的适配器'a'（不需要输入信息）adaptable.setAdapter（a，“a1”）; A = adaptable.getAdapter（AdapterKey.get（A.class，“a1”））; //在角色'a1'下注册并检索参数化类型'A &lt;T&gt;'的适配器'a'（需要输入信息）adaptable.setAdapter（new TypeToken &lt;A &lt;T &gt;&gt;（）{}，a，“a1” ）; A = adaptable.getAdapter（AdapterKey.get（new TypeToken &lt;A &lt;T &gt;&gt;（）{}，“a1”））;</code></pre>
+		<pre><code>  // register and retrieve adapter 'a' of raw type 'A' under 'default' role (type info not required)
+  adaptable.setAdapter(a);
+  A a = adaptable.getAdapter(A.class);
+
+  // register and retrieve adapter 'a' of parameterized type 'A&lt;T&gt;' under 'default' role (type info required)
+  adaptable.setAdapter(new TypeToken&lt;A&lt;T&gt;&gt;(){}, a);
+  A&lt;T&gt; a = adaptable.getAdapter(new TypeToken&lt;A&lt;T&gt;&gt;(){});
+
+  // register and retrieve adapter 'a' of raw type 'A' under role 'a1' (type info not required)
+  adaptable.setAdapter(a, "a1");
+  A a = adaptable.getAdapter(AdapterKey.get(A.class, "a1"));
+
+  // register and retrieve adapter 'a' of parameterized type 'A&lt;T&gt;' under role 'a1' (type info required)
+  adaptable.setAdapter(new TypeToken&lt;A&lt;T&gt;&gt;(){}, a, "a1");
+  A a = adaptable.getAdapter(AdapterKey.get(new TypeToken&lt;A&lt;T&gt;&gt;(){}, "a1"));</code></pre>
 		<p>为了正式支持通知侦听器注册和取消注册适配器， <code>IAdaptable</code>通过<a href="http://docs.oracle.com/javafx/2/api/javafx/collections/ObservableMap.html" target="doc_external">javafx.collections提供其适配器<a href="http://docs.oracle.com/javafx/2/api/javafx/collections/ObservableMap.html" target="doc_external">。ObservableMap</a>和（不可修改的） <a href="http://docs.oracle.com/javafx/2/api/javafx/beans/property/ReadOnlyMapProperty.html" target="doc_external">javafx.beans.property。ReadOnlyMapProperty</a> 。
 		</p>
 		<h4 id="iadaptable-bound">IAdaptable的。界</h4>
 		<p>要形式化适配器可能需要获取<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>的后引用， <code>IAdaptable.Bound</code>接口被引入。如果适配器实现此接口，则适配器注册的适应性负责提供适配器的后向引用，如下所示：</p>
-		<pre><code>公共类MyAdaptable实现IAdaptable {public &lt;T&gt; void setAdapter（T adapter）{...if（适配器instanceof IAdaptable。约束）{（（IAdaptable。绑定&lt;A&gt;）适配器）.setAdaptable（this）; ...} public &lt;T&gt; void unsetAdapter（T adapter）{...if（适配器instanceof IAdaptable。约束）{（（IAdaptable。绑定&lt;A&gt;）适配器）.setAdaptable（null）; } ...} ...}</code></pre>
+		<pre><code>public class MyAdaptable implements IAdaptable {
+  
+  public &lt;T&gt; void setAdapter(T adapter) {
+    ...
+    if (adapter instanceof IAdaptable.Bound) {
+      ((IAdaptable.Bound&lt;A&gt;) adapter).setAdaptable(this);
+    ...
+  }
+
+  public &lt;T&gt; void unsetAdapter(T adapter) {
+    ...
+    if (adapter instanceof IAdaptable.Bound) {
+      ((IAdaptable.Bound&lt;A&gt;) adapter).setAdaptable(null);
+    }
+    ...
+  }
+
+  ...
+}</code></pre>
 		<h4 id="adaptablesupport">AdaptableSupport</h4>
 		<p>为了强制执行<a href="Common.html#iadaptable-adapterkey">IAdaptable的</a>实施者，请遵循上述合同，可以使用<code>AdaptableSupport</code> 。它没有正式实现<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>接口，但为其所有方法提供了实现，因此可以简单地用作委托，如下所示：</p>
-		<pre><code>公共类MyAdaptable实现IAdaptable {//创建委托私有AdaptableSupport &lt;MyAdaptable&gt; ads = new AdaptableSupport &lt;MyAdaptable&gt;（this）; public &lt;T&gt; T getAdapter（AdapterKey &lt;T&gt; key）{return ads.getAdapter（key）; } ...}</code></pre>
+		<pre><code>public class MyAdaptable implements IAdaptable {
+
+  // create delegate
+  private AdaptableSupport&lt;MyAdaptable&gt; ads = new AdaptableSupport&lt;MyAdaptable&gt;(this);
+
+  public &lt;T&gt; T getAdapter(AdapterKey&lt;T&gt; key){
+    return ads.getAdapter(key);
+  }
+
+  ...
+}</code></pre>
 		<h4 id="adapterstore">AdapterStore</h4>
 		<p><code>AdaptableStore</code>是一个可以独立使用的<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>实现。
 		</p>
@@ -119,28 +171,87 @@
 		</p>
 		<h4 id="adapterinjectionsupport-adaptabletypelistener-adapterinjector">AdapterInjectionSupport，AdaptableTypeListener，AdapterInjector</h4>
 		<p>要启用将适配器注入<a href="Common.html#iadaptable-adapterkey">IAdaptable</a> ，特定的<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/spi/TypeListener.html" target="doc_external">com.google.inject.spi。需要在<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject中注册TypeListener</a> （ <code>AdaptableTypeListener</code> ） <a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">。模块</a> 。为确保正确完成此操作，请使用相应的支持<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject。提供了模块</a> ，即<code>AdapterInjectionSupport</code> ，可以轻松集成到自定义的<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject中。模块</a>如下：</p>
-		<pre><code>public class MyModule extends AbstractModule {@Override protected void configure（）{// register adapter map injection support install（new AdapterInjectionSupport（））; ...}}</code></pre>
+		<pre><code>public class MyModule extends AbstractModule {
+
+  @Override
+  protected void configure() {
+    // register adapter map injection support
+    install(new AdapterInjectionSupport());
+
+    ...
+  }
+}</code></pre>
 		<p>这将确保<code>AdaptableTypeListener</code>正确注册（并自行注入）。<code>AdaptableTypeListener</code>将注册专用的<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/MembersInjector.html" target="doc_external">com.google.inject。在它遇到的所有合适的<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>实现上的MembersInjector</a> （ <code>AdapterInjector</code> ）。
 		</p>
 		<h4 id="injectadapters">@InjectAdapters</h4>
 		<p>在相应的<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>实现中指定注入点（即&lt;T&gt; setAdapter（TypeToken &lt;T&gt;，T，String）方法是通过添加@InjectAdapters注释来实现的，如下所示：</p>
-		<pre><code>公共类MyAdaptable实现IAdaptable {@InjectAdapters public &lt;T&gt; void setAdapter（TypeToken &lt;T&gt; adapterType，T adapter，String role）{...}}</code></pre>
+		<pre><code>public class MyAdaptable implements IAdaptable {
+
+  @InjectAdapters
+  public &lt;T&gt; void setAdapter(TypeToken&lt;T&gt; adapterType, T adapter, String role) {
+    ...
+  }
+}</code></pre>
 		<h4 id="adaptermap-adaptermaps">AdapterMap，AdapterMaps</h4>
 		<p>指定要注入的适配器是通过<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject中的映射绑定来执行的<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">。模块</a> ，使用@AdapterMap注释进行限定。如果无法从适配器实例本身或相应的绑定推断出要注册的适配器的实际类型，则必须通过所有绑定中使用的<a href="Common.html#iadaptable-adapterkey">AdapterKey</a>提供有关实际适配器类型的信息。在可以从实例或绑定本身推断出适配器的类型的情况下，可以省略它。
 		</p>
-		<pre><code>公共类MyModule扩展AbstractModule {@Override protected void configure（）{...//获取一个map binder来绑定各个IAdaptable类型的适配器。MapBinder &lt;AdapterKey &lt;？&gt;，Object&gt; adapterMapBinder = AdapterMaps.getAdapterMapBinder（binder（），MyAdaptable.class）; //为每个MyAdaptable实例添加带有'default'角色的原始类型'A'的适配器'a'的适配器（映射）绑定; //类型信息可以省略，因为它可以从适配器实例adapterMapBinder.addBinding（AdapterKey.defaultRole（））。toInstance（a）; //添加适配器（map）绑定，用于将具有角色'r'的原始类型'A'的实例绑定到每个MyAdaptable实例; //类型信息可以省略，因为它可以从绑定adapterMapBinder.addBinding（AdapterKey.role（“r”）。to（A.class）; //为绑定适配器'a'添加适配器（map）绑定推断出来参数化类型'A &lt;T&gt;'对每个MyAdaptable实例具有'default'角色; //类型信息是必需的，因为它不能从适配器实例推断，也不能从绑定adapterMapBinder.addBinding推断（AdapterKey.get（new TypeToken） &lt;A &lt;T &gt;&gt;（）{}））。toInstance（a）; ...}}</code></pre>
+		<pre><code>public class MyModule extends AbstractModule {
+
+  @Override
+  protected void configure() {
+    ...
+
+   // obtain a map binder to bind adapters for the respective IAdaptable type.
+   MapBinder&lt;AdapterKey&lt;?&gt;, Object&gt; adapterMapBinder = AdapterMaps.getAdapterMapBinder(binder(), MyAdaptable.class);
+    
+   // add adapter (map) binding for binding adapter 'a' of raw type 'A' with 'default' role to each MyAdaptable instance;
+   // type information can be omitted, as it can be inferred from the adapter instance
+   adapterMapBinder.addBinding(AdapterKey.defaultRole()).toInstance(a);
+
+   // add adapter (map) binding for binding an instance of raw type 'A' with role 'r' to each MyAdaptable instance;
+   // type information can be omitted, as it can be inferred from the binding
+   adapterMapBinder.addBinding(AdapterKey.role("r").to(A.class);
+
+   // add adapter (map) binding for binding adapter 'a' of parameterized type 'A&lt;T&gt;' with 'default' role to each MyAdaptable instance;
+   // type information is required, as it cannot be inferred from the adapter instance, nor from the binding
+   adapterMapBinder.addBinding(AdapterKey.get(new TypeToken&lt;A&lt;T&gt;&gt;(){})).toInstance(a); 
+
+   ...
+  }
+}</code></pre>
 		<p>在<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject中正确启用适配器映射注入时<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">。模块</a> ，通过<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Injector.html" target="doc_external">com.google.inject创建的所有合适的<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>实例<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Injector.html" target="doc_external">。Injector</a> ，它知道各自的<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject。模块</a> ，将被注入。
 		</p>
 		<p>为此，可以将<code>@AdapterMap</code>与Guice <a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/name/Named.html" target="doc_external">@Named</a> <code>@AdapterMap</code>进行比较，只与<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/Class.html" target="doc_external">java.lang进行比较。类</a>而不是<a href="http://docs.oracle.com/javase/7/docs/api/index.html?java/lang/String.html" target="doc_external">java.lang。使用字符串</a>键。但是， <code>@AdapterMap</code>更强大，因为它们是多态的。也就是说，如果为特定的<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>指定了绑定，让我们说'A'，它将被评估为'A'的所有子类型的实例，只要它们适合注入（即它们直接或通过继承）提供适合注入适配器的相应方法）。这是一个非常强大的机制，由<a href="MVC.html">MVC</a>组件密集使用。它允许为某些抽象基类型注册某些适配器，以便为每个具体子类型注入相应的适配器实例。
 		</p>
 		<p>此外，适配器映射绑定可以是有条件的，通过使用（传递）自适应类型和角色对它们进行限定。然后仅在要注入的自适应适配器链中存在指定类型的适应性（其本身在特定角色下适应）的情况下才评估相应的绑定。潜在的用例是为各个查看者中的可视部分绑定不同的行为和策略：</p>
-		<pre><code>//内容查看器中与GeometricShapePart相关的绑定bindGeometricShapePartAdaptersInContentViewerContext（AdapterMaps.getAdapterMapBinder（binder（），GeometricShapePart.class，AdapterKey.get（IViewer.class，CONTENT_VIEWER_ROLE）））; //调色板查看器中与GeometricShapePart相关的绑定bindGeometricShapePartAdapterInPaletteViewerContext（AdapterMaps.getAdapterMapBinder（binder（），GeometricShapePart.class，AdapterKey.get（IViewer.class，PALETTE_VIEWER_ROLE）））;</code></pre>
+		<pre><code>  // bindings related to GeometricShapePart within content viewer
+  bindGeometricShapePartAdaptersInContentViewerContext(AdapterMaps.getAdapterMapBinder(
+    binder(), 
+    GeometricShapePart.class,
+    AdapterKey.get(IViewer.class, CONTENT_VIEWER_ROLE)));
+    
+  // bindings related to GeometricShapePart within palette viewer  
+  bindGeometricShapePartAdapterInPaletteViewerContext(AdapterMaps.getAdapterMapBinder(
+    binder(), 
+    GeometricShapePart.class, 
+    AdapterKey.get(IViewer.class, PALETTE_VIEWER_ROLE)));</code></pre>
 		<p>如果适配器映射绑定是有条件的，则AdapterInjector会推迟其注入，直到建立完整的自适应适配器链。</p>
 		<h4 id="adaptablescope-adaptablescopes">AdaptableScope，AdaptableScopes</h4>
 		<p><code>AdaptableScope</code>是一个Guice <a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Scope.html" target="doc_external">com.google.inject。范围</a>绑定到一个<a href="Common.html#iadaptable-adapterkey">IAdaptable的</a>实例。它可用于在注入期间对对象实例（不限于适配器）进行范围调整。要启用此功能，绑定必须是“作用域”，并且必须在触发注入适配器之前为相应的<a href="Common.html#iadaptable-adapterkey">IAdaptable</a>实例输入范围（使用<code>AdaptableScopes</code>支持类最好支持）。
 		</p>
 		<p>范围绑定可以简单地在Guice <a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">com.google.inject中执行<a href="http://google.github.io/guice/api-docs/3.0/javadoc/com/google/inject/Module.html" target="doc_external">。模块</a>如下：</p>
-		<pre><code>公共类MyModule扩展AbstractModule {@Override protected void configure（）{...//在IAdaptable'A'的上下文中，重用一个'B'binder（）类型的实例.bind（B.class）.in（AdaptableScopes.typed（A.class））; ...}}</code></pre>
+		<pre><code>public class MyModule extends AbstractModule {
+
+  @Override
+  protected void configure() {
+    ...
+
+    // within the context of IAdaptable 'A', reuse a single instance of type 'B'
+    binder().bind(B.class).in(AdaptableScopes.typed(A.class));
+
+    ...
+  }
+}</code></pre>
 		<p>通过AdapterInjector在内部执行相应的AdaptableScope。</p>
 		<hr>
 		<h3 id="attributes">属性</h3>

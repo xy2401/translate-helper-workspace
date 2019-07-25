@@ -1,12 +1,12 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>典型语言配置</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="special-languages">典型语言配置</h1>
 
@@ -16,25 +16,62 @@
 
 <p>对于不区分大小写的关键字，请打开MWE工作流并启用ignoreCase属性：</p>
 
-<pre><code class="language-mwe2">...StandardLanguage {... other config parserGenerator = {options = {ignoreCase = true}}}对于不区分大小写的元素名称，也要在作用域中使用* ignoreCase *选项：```mwe2 scopeProvider = {ignoreCase = true}</code></pre>
+<pre><code class="language-mwe2"> ... StandardLanguage {
+    ... other config
+
+    parserGenerator = {
+      options = {
+        ignoreCase = true
+      }
+    }
+ }
+
+For case insensitive element names, use the *ignoreCase* option in the scoping, too :
+
+```mwe2
+    scopeProvider = {
+      ignoreCase = true
+    }
+</code></pre>
 
 <h2 id="whitespace-aware-languages">空白感知语言</h2>
 
 <p>一些语言设计者喜欢使用缩进来构造代码块，而不是用大括号<code>{ ... }</code>来包围它们，这些键盘很难用某些类型的键盘输入。这种语言的一个众所周知的例子是<a href="https://www.python.org">Python</a> 。另一个众所周知的例子是随Xtext一起提供的<em>家庭自动化</em>语言（自2.8版本起），可通过<em>文件→新建→示例→Xtext示例→Xtext家庭自动化示例获得</em> 。</p>
 
-<pre><code class="language-ruleengine">设备窗口可以打开，关闭设备加热器可以打开，关闭，错误规则'节省能源'当Window.open然后开火（Heater.off）println（'另一个便士到存钱罐！“）</code></pre>
+<pre><code class="language-ruleengine">Device Window can be open, closed
+
+Device Heater can be on, off, error
+
+Rule 'Save energy' when Window.open then
+    fire(Heater.off)
+    println('Another penny to the piggy bank!')
+</code></pre>
 
 <p><code>'Save energy'</code>规则包含一个包含两个操作的代码块，这些操作由这些操作的等压缩表示。嵌套块也是可能的：</p>
 
-<pre><code class="language-ruleengine">当Heater.error然后var String报告执行时，规则'报告错误'执行Thread.sleep（500）report = HeaterDiagnostic.readError while（report == null）println（report）</code></pre>
+<pre><code class="language-ruleengine">Rule 'Report error' when Heater.error then
+    var String report
+    do
+        Thread.sleep(500)
+        report = HeaterDiagnostic.readError
+    while (report == null)
+    println(report)
+</code></pre>
 
 <p>在您的语言中包含空白感知块的第一步是通过编写<code>'synthetic:&lt;terminal name&gt;'</code>形式<code>'synthetic:&lt;terminal name&gt;'</code>终端在语法中使用<em>合成令牌</em> ：</p>
 
-<pre><code class="language-xtext">终端开始：'合成：开始';终端END：'合成：END';</code></pre>
+<pre><code class="language-xtext">terminal BEGIN: 'synthetic:BEGIN';
+terminal END: 'synthetic:END';
+</code></pre>
 
 <p>这些终端可用于标记代码块的边界。Home Automation示例从<a href="305_xbase.html">Xbase</a>继承表达式并重新定义块表达式的语法：</p>
 
-<pre><code class="language-xtext">XBlockExpression返回xbase :: XExpression：{xbase :: XBlockExpression} BEGIN（表达式+ = XExpressionOrVarDeclaration';'？）* 结束;</code></pre>
+<pre><code class="language-xtext">XBlockExpression returns xbase::XExpression: 
+    {xbase::XBlockExpression}
+    BEGIN
+        (expressions+=XExpressionOrVarDeclaration ';'?)*
+    END;
+</code></pre>
 
 <p>在运行工作流之后，在子包<code>parser.antlr</code>生成<code>AbstractIndentationTokenSource</code>的存根实现，例如<code>RuleEngineTokenSource</code> 。您可以在此处指定应将哪个终端规则应用于合成令牌。对于家庭自动化语言，选择了<code>WS</code> （空白）规则，这带来了如上所示的缩进感知。</p>
 
@@ -46,11 +83,25 @@
 
 <p>在您的语言的<em>UIModule中</em> ，您必须覆盖两个绑定。首先，删除对组件的绑定，并支持<em>'classpath：'</em> URI协议，即</p>
 
-<pre><code class="language-java">@Override public Class &lt;？extends IResourceForEditorInputFactory&gt; bindIResourceForEditorInputFactory（）{return ResourceForIEditorInputFactory.class; } @Override public Class &lt;？extends IResourceSetProvider&gt; bindIResourceSetProvider（）{return SimpleResourceSetProvider.class; }</code></pre>
+<pre><code class="language-java">@Override
+public Class&lt;? extends IResourceForEditorInputFactory&gt;
+    bindIResourceForEditorInputFactory() {
+        return ResourceForIEditorInputFactory.class;
+}
+
+@Override
+public Class&lt;? extends IResourceSetProvider&gt; bindIResourceSetProvider() {
+    return SimpleResourceSetProvider.class;
+}
+</code></pre>
 
 <p>其次，配置全局范围提供程序以扫描项目根文件夹而不是Java项目的类路径。</p>
 
-<pre><code class="language-java">@Override public Provider &lt;IAllContainersState&gt; provideIAllContainersState（）{return org.eclipse.xtext.ui.shared。Access.getWorkspaceProjectsState（）; }</code></pre>
+<pre><code class="language-java">@Override
+public Provider&lt;IAllContainersState&gt; provideIAllContainersState() {
+  return org.eclipse.xtext.ui.shared.Access.getWorkspaceProjectsState();
+}
+</code></pre>
 
 <p>其余步骤将向您展示如何为您的语言调整项目向导，如果您已生成一个。执行此操作的最佳方法是在<em>ui</em>项目的<em>src /</em>文件夹中创建生成的<em>IProjectCreator</em>的新子类，并在那里应用必要的更改。首先，通过使用空主体覆盖<em>configureProject来</em>删除JDT项目配置。</p>
 
@@ -58,11 +109,28 @@
 
 <p>在这种情况下，只需以这种方式删除JDT：</p>
 
-<pre><code class="language-java">protected String [] getProjectNatures（）{return new String [] {“org.eclipse.pde。PluginNature“，”org.eclipse.xtext.ui.shared.xtextNature“};} protected String [] getBuilders（）{return new String [] {”org.eclipse.pde。ManifestBuilder“，”org.eclipse.pde。SchemaBuilder“};}</code></pre>
+<pre><code class="language-java">protected String[] getProjectNatures() {
+    return new String[] {
+        "org.eclipse.pde.PluginNature",
+        "org.eclipse.xtext.ui.shared.xtextNature"
+    };
+}
+
+protected String[] getBuilders() {
+    return new String[] {
+        "org.eclipse.pde.ManifestBuilder", 
+        "org.eclipse.pde.SchemaBuilder"
+    };
+}
+</code></pre>
 
 <p>之后，您必须绑定新的<em>IProjectCreator</em></p>
 
-<pre><code class="language-java">@Override public Class &lt;？扩展IProjectCreator&gt; bindIProjectCreator（）{return JDTFreeMyDslProjectCreator.class; }</code></pre>
+<pre><code class="language-java">@Override
+public Class&lt;? extends IProjectCreator&gt; bindIProjectCreator() {
+    return JDTFreeMyDslProjectCreator.class;
+}
+</code></pre>
 
 <p>现在，您的语言及其IDE现在不再依赖于JDT。</p>
 
@@ -76,7 +144,11 @@
 
 <p>如果您稍微了解EBNF并且不考虑避免左递归，运算符优先级或关联性，那么您可能会编写如下语法：</p>
 
-<pre><code class="language-xtext">表达式：表达式'+'表达式|表达式'*'表达式| INT;</code></pre>
+<pre><code class="language-xtext">Expression :
+  Expression '+' Expression |
+  Expression '*' Expression |
+  INT;
+</code></pre>
 
 <p>这个语法将是递归的，因为解析器从上到下从左到右读取语法，并且无限地调用表达式规则而不消耗任何字符，即改变解析器的基础状态。虽然这种语法可以为自下而上的解析器编写，但您仍然需要处理运算符优先级。这就是定义乘法具有比例如加法更高的优先级。</p>
 
@@ -84,13 +156,33 @@
 
 <p>这是上面的表达式语言的左因式语法（尚未使用Xtext）：</p>
 
-<pre><code class="language-xtext">增加：乘法（'+'乘法）*;乘法：NumberLiteral（'*'NumberLiteral）*; NumberLiteral：INT;</code></pre>
+<pre><code class="language-xtext">Addition :
+  Multiplication ('+' Multiplication)*;
+
+Multiplication:
+  NumberLiteral ('*' NumberLiteral)*;
+
+NumberLiteral:
+  INT;
+</code></pre>
 
 <p>正如您所看到的，主要区别在于它使用了三个规则而不是一个规则，如果您仔细观察一下，您会发现存在某种委托模式。规则Addition不会调用自身，而是调用Multiplication。运算符优先级由委托顺序定义。规则越晚称为更高的优先级。这至少是前两个具有左递归性质的规则的情况（但我们现在已经将它们考虑在内）。最后一条规则不是递归的，这就是为什么你可以在不应用这种模式的情况下实现它。</p>
 
 <p>下一个任务是允许用户通过添加括号来显式调整优先级，例如写入类似<code>(2 + 20) * 2</code> 。所以让我们添加对它的支持（注意语法仍然不能使用Xtext）：</p>
 
-<pre><code class="language-xtext">增加：乘法（'+'乘法）*;乘法：主要（'*'主要）*;主要：NumberLiteral | '（'加法'）'; NumberLiteral：INT;</code></pre>
+<pre><code class="language-xtext">Addition :
+  Multiplication ('+' Multiplication)*;
+
+Multiplication:
+  Primary ('*' Primary)*;
+
+Primary :
+  NumberLiteral |
+  '(' Addition ')';
+
+NumberLiteral:
+  INT;
+</code></pre>
 
 <p>再一次：如果您有一些在左侧进行递归的构造，则需要根据运算符优先级将其放入委托链中。模式始终是相同的：将委托递归到具有下一个更高优先级的规则的事物。</p>
 
@@ -100,23 +192,50 @@
 
 <p>可以使用<code>returns</code>关键字显式指定规则的返回类型，但如果类型的名称与规则的名称相同，则可以推断出规则的返回类型。那是</p>
 
-<pre><code class="language-xtext">NumberLiteral：...;</code></pre>
+<pre><code class="language-xtext">NumberLiteral : ... ;
+</code></pre>
 
 <p>是一种简短的形式</p>
 
-<pre><code class="language-xtext">NumberLiteral返回NumberLiteral：...;</code></pre>
+<pre><code class="language-xtext">NumberLiteral returns NumberLiteral : ... ;
+</code></pre>
 
 <p>但是在上面的表达式语法的情况下，所有规则都需要返回相同的类型，因为它们是递归的。为了使语法有效，必须显式添加一个公共返回类型（但语法仍然缺少一些位）：</p>
 
-<pre><code class="language-xtext">加法返回表达式：乘法（'+'乘法）*;乘法返回表达式：Primary（'*'Primary）*;主要返回表达式：NumberLiteral | '（'加法'）'; NumberLiteral：INT;</code></pre>
+<pre><code class="language-xtext">Addition returns Expression:
+  Multiplication ('+' Multiplication)*;
+  
+Multiplication returns Expression:
+  Primary ('*' Primary)*;
+  
+Primary returns Expression:
+  NumberLiteral |
+  '(' Addition ')';
+  
+NumberLiteral:
+  INT;
+</code></pre>
 
 <p>Xtext的AST类型推断机制将推断出两种类型：Expression和NumberLiteral。必须添加赋值和操作以存储AST中的所有重要信息，并为加法和乘法表达式创建合理的子类型。完全工作的Xtext语法是这样的：</p>
 
-<pre><code class="language-xtext">加法返回表达式：乘法（{Addition.left = current}'+'right =乘法）*;乘法返回表达式：Primary（{Multiplication.left = current}'*'right = Primary）*;主要返回表达式：NumberLiteral | '（'加法'）'; NumberLiteral：value = INT;</code></pre>
+<pre><code class="language-xtext">Addition returns Expression:
+  Multiplication ({Addition.left=current} '+' right=Multiplication)*;
+  
+Multiplication returns Expression:
+  Primary ({Multiplication.left=current} '*' right=Primary)*;
+  
+Primary returns Expression:
+  NumberLiteral |
+  '(' Addition ')';
+  
+NumberLiteral:
+  value=INT;
+</code></pre>
 
 <p>这是解析器处理以下表达式的方式：</p>
 
-<pre><code class="language-java">（1 + 20）* 2</code></pre>
+<pre><code class="language-java">(1 + 20) * 2
+</code></pre>
 
 <p>它始终以第一条规则（加法）开头。其中第一个元素是对Multiplication的未分配规则调用，而Multiplication又调用Primary。小学现在有两种选择。第一个是调用NumberLiteral，它只包含一个名为'value'的特性的赋值。'value'的类型必须与INT规则的返回类型兼容。</p>
 
@@ -124,14 +243,24 @@
 
 <p>一旦解析器命中一个赋值，它就会检查是否已经创建了当前规则的AST节点。否则，它将根据当前规则的返回类型创建一个，即NumberLiteral。Xtext生成器创建了EClass'RumberLiteral'，之前可以实例化它。该类型还将具有一个名为int的类型的属性，它将获得值“1”的设置。这就是Java等价物的样子：</p>
 
-<pre><code class="language-java">// value = INT if（current == null）current = new NumberLiteral（）; current.setValue（ruleINT（））; ...
+<pre><code class="language-java">// value=INT
+if (current == null)
+ current = new NumberLiteral();
+current.setValue(ruleINT());
+...
 </code></pre>
 
 <p>既然规则已经完成，生成的EObject将返回到调用规则Primary，后者又将对象返回到其自己的调用者。在Multiplication中，已成功解析规则Primary并返回NumberLiteral的实例。规则的其余部分（括号内的所有内容）都是所谓的组。右括号后面的星号表示该部分可以消耗零次或多次。在该组中使用的第一个标记是乘法运算符'*'。不幸的是，在当前输入中，接受的下一个标记是加号'+'，因此该组根本不被使用，并且该规则返回从先前未分配的规则调用返回的NumberLiteral。</p>
 
 <p>在规则Addition中有一个类似的组，但这次它需要正确的运算符。解析器进入组。组中的第一个元素是已分配的操作。它将创建一个Addition类型的新实例，并将要返回的对象分配给特征“left”。在Java中，这可能是这样的：</p>
 
-<pre><code class="language-java">//乘法规则调用current = ruleMultiplication（）; // {Addition.left = current}加法temp = new Addition（）; temp.setLeft（电流）; current = temp; ...
+<pre><code class="language-java">// Multiplication rule call
+current = ruleMultiplication();
+// {Addition.left=current}
+Addition temp = new Addition();
+temp.setLeft(current);
+current = temp;
+...
 </code></pre>
 
 <p>因此，该规则现在将返回一个Addition实例，该实例的NumberLiteral设置为其属性左侧。接下来，解析器使用'+'运算符。操作符本身不存储在AST中，因为存在显式的Addition类型。它隐含地包含这些信息。赋值<code>right=Multiplication</code>再次调用规则乘法，并将其结果对象（值为20的NumberLite）分配给属性<code>right</code> 。之后匹配右括号，消耗并再次减少解析器堆栈。</p>
@@ -150,15 +279,21 @@
 
 <p>考虑表达式a~b~c。如果运算符〜具有左关联性，则该表达式将被解释为（a~b）~c并从左到右进行求值。如果运算符具有正确的关联性，则表达式将被解释为〜（b~c）并从右向左进行计算。如果运算符是非关联的，则表达式可能是语法错误，或者它可能具有某些特殊含义。最常见的变体是左关联性：</p>
 
-<pre><code class="language-xtext">加法返回表达式：乘法（{Addition.left = current}'+'right =乘法）*;</code></pre>
+<pre><code class="language-xtext">Addition returns Expression:
+  Multiplication ({Addition.left=current} '+' right=Multiplication)*;
+</code></pre>
 
 <p>使用略微修改的模式完成右关联性。请注意数量运算符以及对组中规则本身的调用：</p>
 
-<pre><code class="language-xtext">加法返回表达式：乘法（{Addition.left = current}'+'right = Addition）？;</code></pre>
+<pre><code class="language-xtext">Addition returns Expression:
+  Multiplication ({Addition.left=current} '+' right=Addition)?;
+</code></pre>
 
 <p>非关联性可以以类似的方式实现，但这次最终规则调用不是立即递归的，而是委托给下一个优先级：</p>
 
-<pre><code class="language-xtext">加法返回表达式：乘法（{Addition.left = current}'+'right =乘法）？;</code></pre>
+<pre><code class="language-xtext">Addition returns Expression:
+  Multiplication ({Addition.left=current} '+' right=Multiplication)?;
+</code></pre>
 
 <p>有时在解析器级别允许关联性更方便，但稍后禁止使用验证。这允许更具描述性的诊断。此外，整个解析过程不依赖于错误恢复，但编辑器通常会更宽容。</p>
 

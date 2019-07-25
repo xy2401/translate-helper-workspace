@@ -1,11 +1,11 @@
-﻿<html lang="zh-Hans" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+﻿<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
-<link rel="stylesheet" href="images/../../../css/book.css" type="text/css"></link>
-<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css"></link>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" href="images/../../../css/book.css" type="text/css">
+<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css">
 <title>EMF概述</title>
 </head>
-<body lang="EN-US" dir="ltr" xml:lang="EN-US">
+<body lang="EN-US"  xml:lang="EN-US">
 <h1>Eclipse Modeling Framework（EMF）概述</h1>
 <p>最后更新时间：2005年6月16日（辅助功能更新）</p>
 <p>本文介绍了EMF及其代码生成器模式的基本概述。有关EMF所有功能的更完整描述，请参阅<a href="http://www.informit.com/title/9780321331885">EMF：Eclipse Modeling Framework，第二版</a> （Addison-Wesley Professional，2008）或参考框架类本身的Javadoc。
@@ -54,30 +54,77 @@
 </p>
 <h3>XMI</h3>
 <p>或者，我们可以直接在XMI文档中描述模型，看起来像这样：</p>
-<pre>&lt;ecore：EPackage xmi：version =“2.0”xmlns：xmi =“http://www.omg.org/XMI”xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xmlns ：ecore =“http://www.eclipse.org/emf/2002/Ecore”name =“library”nsURI =“http：///library.ecore”nsPrefix =“library”&gt; &lt;eClassifiers xsi：type =“ ecore：EClass“name =”Book“&gt; &lt;eStructuralFeatures xsi：type =”ecore：EAttribute“name =”title“eType =”ecore：EDataType http://www.eclipse.org/emf/2002/Ecore#// EString“/&gt; &lt;eStructuralFeatures xsi：type =”ecore：EAttribute“name =”pages“eType =”ecore：EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt“/&gt; &lt;/ eClassifiers&gt; &lt;/ ecore：EPackage&gt;</pre>
+<pre>
+  &lt;ecore:EPackage xmi:version=&quot;2.0&quot; xmlns:xmi=&quot;http://www.omg.org/XMI&quot;
+      xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+      xmlns:ecore=&quot;http://www.eclipse.org/emf/2002/Ecore&quot;
+      name=&quot;library &quot;nsURI=&quot;http:///library.ecore&quot; nsPrefix=&quot;library&quot;&gt;
+    &lt;eClassifiers xsi:type=&quot;ecore:EClass&quot; name=&quot;Book&quot;&gt;
+      &lt;eStructuralFeatures xsi:type=&quot;ecore:EAttribute&quot; name=&quot;title&quot;
+          eType=&quot;ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString&quot;/&gt;
+      &lt;eStructuralFeatures xsi:type=&quot;ecore:EAttribute&quot; name=&quot;pages&quot;
+          eType=&quot;ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt&quot;/&gt;
+    &lt;/eClassifiers&gt;
+  &lt;/ecore:EPackage&gt;</pre>
 <p>XMI文档包含与类图相同的所有信息，但稍微不那么紧凑。图中的每个类和属性在XMI文档中都有对应的类或属性定义。
 </p>
 <h3>带注释的Java</h3>
 <p>对于那些既没有图形建模工具也不想尝试手动输入所有XMI语法的人，第三个选项可用于描述您的模型。由于EMF生成器是代码合并生成器，通过提前提供部分Java接口（用模型信息注释），生成器可以使用接口作为其生成元数据，并将生成的代码与实现的其余部分合并。
 </p>
 <p>我们可以用Java定义我们的Book模型类，如下所示：</p>
-<pre>/ ** * @model * / public interface Book {/ ** * @model * / String getTitle（）; / ** * @model * / int getPages（）; }</pre>
+<pre>
+  /**
+   * @model
+   */
+  public interface Book
+  {
+    /**
+     * @model
+     */
+    String getTitle();
+
+    /**
+     * @model
+     */
+    int getPages();
+  }</pre>
 <p>通过这种方法，我们以Java接口的形式提供所有模型信息和标准的get方法<sup><a class="footnote" href="#fn3">[3]</a> <a name="ref3"> </a></sup>识别属性和引用。@model标记用于向代码生成器标识哪些接口以及这些接口的一部分对应于模型元素，因此需要生成代码。
 </p>
 <p>对于我们的简单示例，我们所有的模型信息实际上都是通过此内部的Java内省获得的，因此不需要其他模型信息。但是，在一般情况下，@ model标记后面可能跟有关于模型元素的其他详细信息。例如，如果我们希望pages属性是只读的（即，不生成set方法），我们需要将以下内容添加到注释中：</p>
-<pre>/ ** * @model changeable =“false”* / int getPages（）;</pre>
+<pre>
+  /**
+   * @model changeable=&quot;false&quot;
+   */
+  int getPages();</pre>
 <p>因为只需要指定与默认值不同的信息，所以注释可以保持简单和简洁。
 </p>
 <h3>XML Schema</h3>
 <p>有时，您可能希望描述具有模式的模型，该模式指定实例序列化的外观。这对于编写必须使用XML与现有应用程序集成或符合标准的应用程序非常有用。以下是我们如何指定一个与我们的简单书籍模型等效的模式：</p>
-<pre>&lt;xsd：schema targetNamespace =“http：///library.ecore”xmlns =“http：///library.ecore”xmlns：xsd =“http://www.w3.org/2001/XMLSchema”&gt; &lt;xsd ：complexType name =“Book”&gt; &lt;xsd：sequence&gt; &lt;xsd：element name =“title”type =“xsd：string”/&gt; &lt;xsd：element name =“pages”type =“xsd：integer”/&gt; &lt; / xsd：sequence&gt; &lt;/ xsd：complexType&gt; &lt;/ xsd：schema&gt;</pre>
+<pre>
+  &lt;xsd:schema targetNamespace=&quot;http:///library.ecore&quot;
+      xmlns=&quot;http:///library.ecore&quot; xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;&gt;
+    &lt;xsd:complexType name=&quot;Book&quot;&gt;
+      &lt;xsd:sequence&gt;
+        &lt;xsd:element name=&quot;title&quot; type=&quot;xsd:string&quot;/&gt;
+        &lt;xsd:element name=&quot;pages&quot; type=&quot;xsd:integer&quot;/&gt;
+      &lt;/xsd:sequence&gt;
+    &lt;/xsd:complexType&gt;
+  &lt;/xsd:schema&gt;</pre>
 <p>这种方法与其他三种方法略有不同，主要是因为EMF必须对它最终使用的序列化应用某些限制，以确保符合模式。因此，为模式创建的模型与以其他方式之一指定的模型略有不同。这些差异的细节超出了本概述的范围。
 </p>
 <p>在本文的其余部分，我们将使用UML图表来清晰和简洁。我们将说明的所有建模概念也可以使用带注释的Java或直接用XMI表示，并且大多数具有XML Schema等价物。无论如何提供信息，EMF生成的代码都是相同的。
 </p>
 <h2><a name="generation">生成Java实现</a></h2>
 <p>对于模型中的每个类，将生成Java接口和相应的实现类。在我们的示例中，Book的生成界面如下所示：</p>
-<pre>public interface Book扩展EObject {String getTitle（）; void setTitle（String value）; int getPages（）; void setPages（int value）; }</pre>
+<pre>
+  public interface Book extends EObject
+  {
+    String getTitle();
+    void setTitle(String value);
+
+    int getPages();
+    void setPages(int value);
+  }</pre>
 <p>每个生成的接口都包含每个属性的getter和setter方法以及相应模型类的引用。
 </p>
 <p>Interface Book扩展了基本接口EObject。EObject是java.lang的EMF等价物。对象，也就是说，它是每个EMF类的基础。EObject及其相应的实现类EObjectImpl（我们将在后面介绍）提供了一个相对轻量级的基类，使Book可以参与EMF通知和持久性框架。在我们开始研究EObject究竟是什么带入混合之前，让我们继续看看EMF如何生成Book。
@@ -85,7 +132,28 @@
 <p>每个生成的实现类都包括相应接口中定义的getter和setter的实现，以及EMF框架所需的其他一些方法。
 </p>
 <p>BookImpl类将包括标题和页面访问器的实现。例如，pages属性具有以下生成的实现：</p>
-<pre>public class BookImpl扩展EObjectImpl实现Book {...protected static final int PAGES_EDEFAULT = 0; protected int pages = PAGES_EDEFAULT; public int getPages（）{返回页面; public void setPages（int newPages）{int oldPages = pages; pages = newPages; if（eNotificationRequired（））eNotify（new ENotificationImpl（this，Notification。SET，...，oldPages，pages））; } ...}</pre>
+<pre>
+  public class BookImpl extends EObjectImpl implements Book
+  {
+    ...
+    protected static final int PAGES_EDEFAULT = 0;
+    protected int pages = PAGES_EDEFAULT;
+
+    public int getPages()
+    {
+      return pages;
+    }
+
+    public void setPages(int newPages)
+    {
+      int oldPages = pages;
+      pages = newPages;
+      if (eNotificationRequired())
+        eNotify(new ENotificationImpl(this, Notification.SET, ..., oldPages, pages));
+    }
+
+    ...
+  }</pre>
 <p>生成的get方法具有最佳效率。它只返回表示属性的实例变量。
 </p>
 <p>set方法虽然稍微复杂一点，但效率也很高。除了设置实例变量页面之外，set方法还需要通过调用eNotify（）方法向可能正在侦听对象的任何观察者发送更改通知。为了优化没有观察者的情况（例如，在批处理应用程序中），通过调用eNotificationRequired（）来保护通知对象（ENotificationImpl）的构造和对eNotify（）的调用。eNotificationRequired（）的默认实现只是检查是否有任何附加到对象的观察者（适配器）。因此，当没有观察者使用EMF对象时，对eNotificationRequired（）的调用只不过是一个有效的空指针检查，在使用JIT编译器时会内联。
@@ -100,13 +168,36 @@
 <p>在这个例子中，一本书和它的作者之间的关联是单一的单向参考。用于从Book访问Writer的引用（角色）名称是作者。
 </p>
 <p>通过EMF生成器运行此模型，除了生成新的接口Writer和实现类WriterImpl之外，还会在接口Book中生成其他get和set方法：</p>
-<pre>作家getAuthor（）; void setAuthor（Writer value）;</pre>
+<pre>
+  Writer getAuthor();
+  void setAuthor(Writer value);</pre>
 <p>由于作者引用是单向的，因此setAuthor（）方法的实现看起来很像一个简单的数据设置器，就像之前的setPages（）一样：</p>
-<pre>public void setAuthor（Writer newAuthor）{Writer oldAuthor = author; author = newAuthor; if（eNotificationRequired（））eNotify（new ENotificationImpl（this，...））; }</pre>
+<pre>
+  public void setAuthor(Writer newAuthor)
+  {
+    Writer oldAuthor = author;
+    author = newAuthor;
+    if(eNotificationRequired())
+      eNotify(new ENotificationImpl(this, ...));
+  }</pre>
 <p>唯一的区别是，我们在这里设置一个对象指针，而不仅仅是一个简单的数据字段。
 </p>
 <p>但是，因为我们正在处理对象引用，所以getAuthor（）方法稍微复杂一些。这是因为某些类型的引用的get方法（包括作者的类型）需要处理引用的对象（在本例中为Writer）可能在源对象的不同资源（文档）中持久化的可能性（在此案例书）。因为EMF持久性框架使用延迟加载方案，所以对象指针（在这种情况下是作者）可能在某个时间点是对象的代理，而不是实际引用的对象<sup><a class="footnote" href="#fn5">[5]</a> <a name="ref5"> </a></sup> 。因此，getAuthor（）方法如下所示：</p>
-<pre>public Writer getAuthor（）{if（作者！= null &amp;&amp; author.eIsProxy（））{Writer oldAuthor = author; author =（Writer）eResolveProxy（（InternalEObject）author）;如果（作者！= oldAuthor）{if（eNotificationRequired（））eNotify（new ENotificationImpl（this，Notification。RESOLVE，...））;返回作者; }</pre>
+<pre>
+  public Writer getAuthor()
+  {
+    if (author != null &amp;&amp; author.eIsProxy())
+    {
+      Writer oldAuthor = author;
+      author = (Writer)eResolveProxy((InternalEObject)author);
+      if (author != oldAuthor)
+      {
+        if (eNotificationRequired())
+          eNotify(new ENotificationImpl(this, Notification.RESOLVE, ...));
+      }
+    }
+    return author;
+  }</pre>
 <p>我们首先调用继承的框架方法eIsProxy（）方法来检查引用是否是代理，然后调用eResolveProxy（）（如果是），而不是简单地返回作者实例变量。后一种方法调用EcoreUtil.resolve（），这是一种静态实用程序方法，它尝试使用代理的URI加载目标对象的文档，从而加载对象。如果成功，它将返回已解析的对象。但是，如果文档无法加载，它将再次返回代理<sup><a class="footnote" href="#fn6">[6]</a> <a name="ref6"> </a></sup> 。
 </p>
 <h3>双向参考</h3>
@@ -115,24 +206,87 @@
 <p>该关联现在是双向的，正如关联线的Writer端缺少箭头所示。用于从Writer访问Books的角色名称是books。
 </p>
 <p>如果我们重新生成模型，getAuthor（）方法将不受影响，但setAuthor（）现在将如下所示：</p>
-<pre>public void setAuthor（Writer newAuthor）{if（newAuthor！= author）{NotificationChain msgs = null;如果（作者！= null）msgs =（（InternalEObject）author）.eInverseRemove（this，...，msgs）;如果（newAuthor！= null）msgs =（（InternalEObject）newAuthor）.eInverseAdd（this，...，msgs）; msgs = basicSetAuthor（newAuthor，msgs）;如果（消息！= null）msgs.dispatch（）; } else if（eNotificationRequired（））eNotify（new ENotificationImpl（this，...））; //发送“触摸”通知}</pre>
+<pre>
+  public void setAuthor(Writer newAuthor)
+  {
+    if (newAuthor != author)
+    {
+      NotificationChain msgs = null;
+      if (author != null)
+        msgs = ((InternalEObject)author).eInverseRemove(this, ..., msgs);
+      if (newAuthor != null)
+        msgs = ((InternalEObject)newAuthor).eInverseAdd(this, ..., msgs);
+      msgs = basicSetAuthor(newAuthor, msgs);
+      if (msgs != null) msgs.dispatch();
+    }
+    else if (eNotificationRequired())
+      eNotify(new ENotificationImpl(this, ...)); // send &quot;touch&quot; notification
+  }</pre>
 <p>如您所见，在设置像author这样的双向引用时，也需要设置引用的另一端（通过调用eInverseAdd（））。我们还需要删除任何前一作者的反转（通过调用eInverseRemove（）），因为在我们的模型中作者引用是单数的（也就是说，一本书只能有一个作者） <sup><a class="footnote" href="#fn7">[7]</a> <a name="ref7"> </a></sup>因此这本书不能在多本作家的书中参考。最后，我们通过调用另一个生成的方法（basicSetAuthor（））来设置作者引用，如下所示：</p>
-<pre>public NotificationChain basicSetAuthor（Writer newAuthor，NotificationChain msgs）{Writer oldAuthor = author; author = newAuthor; if（eNotificationRequired（））{ENotificationImpl notification = new ENotificationImpl（this，...）; if（msgs == null）msgs = notification; else msgs.add（通知）; } return msgs; }</pre>
+<pre>
+  public NotificationChain basicSetAuthor(Writer newAuthor, NotificationChain msgs)
+  {
+    Writer oldAuthor = author;
+    author = newAuthor;
+    if (eNotificationRequired())
+    {
+      ENotificationImpl notification = new ENotificationImpl(this, ...);
+      if (msgs == null) msgs = notification; else msgs.add(notification);
+    }
+    return msgs;
+  }</pre>
 <p>此方法看起来与单向引用集方法非常相似，只是如果msgs参数为非null，则会向其添加通知，直接触发int <sup><a class="footnote" href="#fn8">[8]</a> <a name="ref8"> </a></sup> 。由于在双向参考集操作期间的所有前向/反向添加/移除，可以生成多达四个（在该特定示例中为三个）不同的通知。NotificationChain用于收集所有这些单独的通知，因此可以推迟它们的触发，直到完成所有状态更改。排队通知是通过调用msgs.dispatch（）发送的，如上面的setAuthor（）方法所示。
 </p>
 <h3>多重性 - 许多参考文献</h3>
 <p>您可能已经注意到在我们的示例中，书籍关联（从Writer到Book）的多样性很多（即0 ..*）。换句话说，一位作家可能写过很多书。EMF中的多重引用（即，上限大于1的任何引用）都是使用集合API进行操作的，因此在接口中只生成get方法：</p>
-<pre>public interface Writer扩展了EObject {...EList getBooks（）; }</pre>
+<pre>
+  public interface Writer extends EObject
+  {
+    ...
+    EList getBooks();
+  }</pre>
 <p>请注意，getBooks（）返回一个EList而不是java.util。名单。实际上，它们几乎是一样的。EList是java.util的EMF子类。将两个移动方法添加到API的列表。除此之外，从客户端的角度来看，您可以将其视为标准Java列表。例如，要将书籍添加到图书协会，您只需致电：</p>
-<pre>。aWriter.getBooks（）添加（ABOOK）;</pre>
+<pre>
+  aWriter.getBooks().add(aBook);</pre>
 <p>或者迭代它们你会做这样的事情：</p>
-<pre>for（Iterator iter = aWriter.getBooks（）。iterator（）; iter.hasNext（）;）{Book book =（Book）iter.next（）; ...}</pre>
+<pre>
+  for (Iterator iter = aWriter.getBooks().iterator(); iter.hasNext(); )
+  {
+    Book book = (Book)iter.next();
+    ...
+  }</pre>
 <p>正如您所看到的，从客户端的角度来看，用于操纵多重性的API并没有什么特别之处。但是，因为书籍参考是双向关联的一部分（它与Book.author相反），我们仍然需要进行我们为setAuthor（）方法显示的所有奇特的反向握手。查看WriterImpl中getBooks（）方法的实现向我们展示了如何处理多重性 - 多个案例：</p>
-<pre>public EList getBooks（）{if（books == null）{books = new EObjectWithInverseResolvingEList（Book.class，this，LibraryPackage。WRITER__BOOKS，LibraryPackage。BOOK__AUTHOR）;返回书籍; }</pre>
+<pre>
+  public EList getBooks()
+  {
+    if (books == null)
+    {
+      books = new EObjectWithInverseResolvingEList(Book.class, this,
+                    LibraryPackage.WRITER__BOOKS, LibraryPackage.BOOK__AUTHOR);
+    }
+    return books;
+  }</pre>
 <p>getBooks（）方法返回一个特殊的实现类EObjectWithInverseResolvingEList，它构造了在添加和删除调用期间进行反向握手所需的所有信息。EMF实际上提供了20种不同的专业EList实现<sup><a class="footnote" href="#fn9">[9]</a> <a name="ref9"> </a></sup>有效地实现所有类型的多重性 - 许多功能。对于单向关联（即没有反向的关联），我们使用EObjectResolvingEList。如果引用不需要代理解析，我们将使用EObjectWithInverseEList或EObjectEList，依此类推。
 </p>
 <p>因此，对于我们的示例，使用参数LibraryPackage创建用于实现书籍参考的列表。BOOK__AUTHOR（表示反向特征的生成的静态int常量）。这将在add（）调用期间用于调用Book上的eInverseAdd（），类似于在setAuthor（）期间在Writer上调用eInverseAdd（）的方式。这是eInverseAdd（）在类BookImpl中的样子：</p>
-<pre>public NotificationChain eInverseAdd（InternalEObject otherEnd，int featureID，Class baseClass，NotificationChain msgs）{if（featureID&gt; = 0）{switch（eDerivedStructuralFeatureID（featureID，baseClass））{case LibraryPackage。BOOK__AUTHOR：if（作者！= null）msgs =（（InternalEObject）author）.eInverseRemove（this，..，msgs）; return basicSetAuthor（（Writer）otherEnd，msgs）;默认值：...} ...}</pre>
+<pre>
+  public NotificationChain eInverseAdd(InternalEObject otherEnd, int featureID,
+                                       Class baseClass, NotificationChain msgs)
+  {
+    if (featureID >= 0)
+    {
+      switch (eDerivedStructuralFeatureID(featureID, baseClass))
+      {
+        case LibraryPackage.BOOK__AUTHOR:
+          if (author != null)
+            msgs = ((InternalEObject)author).eInverseRemove(this, .., msgs);
+          return basicSetAuthor((Writer)otherEnd, msgs);
+        default:
+          ...
+      }
+    }
+    ...
+  }</pre>
 <p>它首先调用eInverseRemove（）来删除任何以前的作者（正如我们之前在查看setAuthor（）方法时所描述的那样），然后调用basicSetAuthor（）来实际设置引用。虽然我们的特定示例只有一个双向引用，但eInverseAdd（）使用switch语句，该语句包含类Book <sup><a class="footnote" href="#fn10">[10]</a></sup>上可用的每个双向引用的大小写<sup><a name="ref10"> </a></sup> 。
 </p>
 <h3><a name="containment">遏制参考</a></h3>
@@ -142,17 +296,33 @@
 <p>收容参考由关联的图书馆末端的黑色菱形表示。完整地，该关联表示库按值累计0个或更多书。按值聚合（包含）关联特别重要，因为它们标识目标实例的父级或所有者，这意味着持久化时对象的物理位置。
 </p>
 <p>包含以多种方式影响生成的代码。首先，因为保证包含的对象与其容器位于同一资源中，所以不需要代理解析。因此，LibraryImpl中生成的get方法将使用非解析的EList实现类：</p>
-<pre>public EList getBooks（）{if（books == null）{books = new EObjectContainmentEList（Book.class，this，...）;返回书籍; }</pre>
+<pre>
+  public EList getBooks()
+  {
+    if (books == null)
+    {
+      books = new EObjectContainmentEList(Book.class, this, ...);
+    }
+    return books;
+  }</pre>
 <p>除了不执行代理解析之外，EObjectContainmentEList还非常有效地实现contains（）操作（即，在一般情况下，在恒定时间内，相对于线性时间）。这一点尤为重要，因为EMF引用列表中不允许重复条目，因此在add（）操作期间也会调用contains（）。
 </p>
 <p>因为一个对象只能有一个容器，所以将一个对象添加到一个包含关联也意味着从它当前所在的任何容器中删除该对象，而不管实际的关联。例如，将图书添加到图书馆的图书清单可能需要将其从其他图书馆的图书清单中删除。这与任何其他双向关联没有什么不同，其中逆具有多重性1。但是，我们假设Writer类还有一个与Book的包含关联，称为ownedBooks。然后，如果给定的书籍实例位于某个Writer的ownedBooks列表中，当我们将其添加到Library的书籍参考时，则需要首先从Writer中删除它。
 </p>
 <p>为了有效地实现这种功能，基类EObjectImpl有一个EObject类型的实例变量（eContainer），它用于一般地存储容器。因此，包含引用始终是隐式双向的。要从Book访问库，您可以编写如下内容：</p>
-<pre>EObject container = book.eContainer（）; if（container instanceof Library）library =（Library）container;</pre>
+<pre>
+  EObject container = book.eContainer();
+  if (container instanceof Library)
+    library = (Library)container;</pre>
 <p>如果要避免向下转换，可以将关联更改为显式双向：</p>
 <img src="images/EMF/image005.gif" width="308" height="89" alt="双向收容参考：图书馆包含0本或以上的图书;书籍包含在图书馆中">
 <p>让EMF为您生成一个很好的类型安全的get方法：</p>
-<pre>public Library getLibrary（）{if（eContainerFeatureID！= LibraryPackage。BOOK__LIBRARY）返回null; return（图书馆）eContainer; }</pre>
+<pre>
+  public Library getLibrary()
+  {
+    if (eContainerFeatureID != LibraryPackage.BOOK__LIBRARY) return null;
+    return (Library)eContainer;
+  }</pre>
 <p>请注意，显式get方法使用EObjectImpl中的eContainer变量而不是生成的实例变量，正如我们之前看到的非容器引用（如上面的getAuthor（）） <sup><a class="footnote" href="#fn11">[11]</a> <a name="ref11"> </a></sup> 。
 </p>
 <h3>枚举属性</h3>
@@ -161,17 +331,58 @@
 <p>如果我们向类Book添加枚举属性category：</p>
 <img src="images/EMF/image006.gif" width="354" height="108" alt="枚举属性和定义：Book有一个类BookCategory，它是Mystery，ScienceFiction和Biography的枚举">
 <p>并重新生成实现类，接口Book现在将包含类别的getter和setter：</p>
-<pre>BookCategory getCategory（）; void setCategory（BookCategory value）;</pre>
+<pre>
+  BookCategory getCategory();
+  void setCategory(BookCategory value);</pre>
 <p>在生成的接口中，类别方法使用名为BookCategory的类型安全枚举类。此类为枚举值和其他便捷方法定义静态常量，如下所示：</p>
-<pre>public final class BookCategory extends AbstractEnumerator {public static final int MYSTERY = 0; public static final int SCIENCE_FICTION = 1; public static final int BIOGRAPHY = 2; public static final BookCategory MYSTERY_LITERAL = new BookCategory（MYSTERY，“Mystery”）; public static final BookCategory SCIENCE_FICTION_LITERAL = new BookCategory（SCIENCE_FICTION，“ScienceFiction”）; public static final BookCategory BIOGRAPHY_LITERAL = new BookCategory（BIOGRAPHY，“Biography”）; public static final List VALUES = Collections.unmodifiableList（...））; public static BookCategory get（String name）{...public static BookCategory get（int value）{...private BookCategory（int value，String name）{super（value，name）; }}</pre>
+<pre>
+  public final class BookCategory extends AbstractEnumerator
+  {
+    public static final int MYSTERY = 0;
+    public static final int SCIENCE_FICTION = 1;
+    public static final int BIOGRAPHY = 2;
+
+    public static final BookCategory MYSTERY_LITERAL =
+      new BookCategory(MYSTERY, &quot;Mystery&quot;);
+    public static final BookCategory SCIENCE_FICTION_LITERAL =
+      new BookCategory(SCIENCE_FICTION, &quot;ScienceFiction&quot;);
+    public static final BookCategory BIOGRAPHY_LITERAL =
+      new BookCategory(BIOGRAPHY, &quot;Biography&quot;);
+  
+    public static final List VALUES = Collections.unmodifiableList(...));
+
+    public static BookCategory get(String name)
+    {
+      ...
+    }
+
+    public static BookCategory get(int value)
+    {
+      ...
+    }
+  
+    private BookCategory(int value, String name)
+    {
+      super(value, name);
+    }
+  }</pre>
 <p>如图所示，枚举类为枚举的值提供静态int常量，为枚举的单例文字对象本身提供静态常量。int常量与模型的文字名称具有相同的名称<sup><a class="footnote" href="#fn13">[13]</a> <a name="ref13"> </a></sup> 。文字常量具有相同的名称，并附加_LITERAL。
 </p>
 <p>例如，在设置书籍类别时，常量可以方便地访问文字：</p>
-<pre>book.setCategory（BookCategory。SCIENCE_FICTION_LITERAL）;</pre>
+<pre>
+  book.setCategory(BookCategory.SCIENCE_FICTION_LITERAL);</pre>
 <p>BookCategory构造函数是私有的，因此枚举类的唯一实例是用于静态MYSTERY_LITERAL，SCIENCE_FICTION_LITERAL和BIOGRAPHY_LITERAL的实例。因此，永远不需要进行相等比较（即.equals（）调用）。使用更简单，更高效的==运算符，可以始终可靠地比较文字，如下所示：</p>
-<pre>book.getCategory（）== BookCategory。MYSTERY_LITERAL</pre>
+<pre>
+  book.getCategory() == BookCategory.MYSTERY_LITERAL</pre>
 <p>与许多值进行比较时，使用int值的switch语句更好：</p>
-<pre>switch（book.getCategory（）。value（））{case BookCategory。神秘：//做点什么......打破;案例BookCategory。科幻小说： ...}</pre>
+<pre>
+  switch (book.getCategory().value()) {
+    case BookCategory.MYSTERY:
+      // do something ...
+      break;
+    case BookCategory.SCIENCE_FICTION:
+      ...
+  }</pre>
 <p>对于只有文字名（String）或值（int）可用的情况，也可以在枚举类中生成方便的get（）方法，这些方法可用于检索相应的文字对象。
 </p>
 <h3>工厂和包裹</h3>
@@ -180,43 +391,134 @@
 <p>顾名思义，工厂用于创建模型类的实例，而包提供一些静态常量（例如，生成的方法使用的特征常量）和访问模型元数据的便捷方法<sup><a class="footnote" href="#fn14">[14]</a> <a name="ref14"> </a></sup> 。
 </p>
 <p>以下是本书示例的工厂界面：</p>
-<pre>public interface LibraryFactory扩展了EFactory {LibraryFactory eINSTANCE = new LibraryFactoryImpl（）;预订createBook（）; Writer createWriter（）;库createLibrary（）; LibraryPackage getLibraryPackage（）; }</pre>
+<pre>
+  public interface LibraryFactory extends EFactory
+  {
+    LibraryFactory eINSTANCE = new LibraryFactoryImpl();
+
+    Book createBook();
+    Writer createWriter();
+    Library createLibrary();
+
+    LibraryPackage getLibraryPackage();
+  }</pre>
 <p>如图所示，生成的工厂为模型中定义的每个类提供工厂方法（创建），为模型的包提供访问器，为工厂单例提供静态常量引用（即eINSTANCE）。
 </p>
 <p>LibraryPackage接口可以方便地访问我们模型的所有元数据：</p>
-<pre>public interface LibraryPackage扩展了EPackage {...LibraryPackage eINSTANCE = LibraryPackageImpl.init（）; static final int BOOK = 0; static final int BOOK__TITLE = 0; static final int BOOK__PAGES = 1; static final int BOOK__CATEGORY = 2; static final int BOOK__AUTHOR = 3; ...static final int WRITER = 1; static final int WRITER__NAME = 0; ...EClass getBook（）; EAttribute getBook_Title（）; EAttribute getBook_Pages（）; EAttribute getBook_Category（）; EReference getBook_Author（）; ...}</pre>
+<pre>
+  public interface LibraryPackage extends EPackage
+  {
+    ...
+    LibraryPackage eINSTANCE = LibraryPackageImpl.init();
+    
+    static final int BOOK = 0;
+    static final int BOOK__TITLE = 0;
+    static final int BOOK__PAGES = 1;
+    static final int BOOK__CATEGORY = 2;
+    static final int BOOK__AUTHOR = 3;
+    ...
+    
+    static final int WRITER = 1;
+    static final int WRITER__NAME = 0;
+    ...
+    
+    EClass getBook();
+    EAttribute getBook_Title();
+    EAttribute getBook_Pages();
+    EAttribute getBook_Category();
+    EReference getBook_Author();
+
+    ...
+  }</pre>
 <p>如您所见，元数据有两种形式：int常量和Ecore元对象本身。int常量提供了传递元信息的最有效方法。您可能已经注意到生成的方法在其实现中使用这些常量。稍后，当我们查看如何实现EMF适配器时，您将看到常量还提供了最有效的方法来确定处理通知时已更改的内容。此外，就像工厂一样，生成的包接口提供了对其单例实现的静态常量引用。
 </p>
 <h3>生成具有超类的类</h3>
 <p>假设我们要创建Book模型类的子类SchoolBook，如下所示：</p>
 <img src="images/EMF/image007.gif" width="164" height="198" alt="单继承：一本SchoolBook扩展了Book">
 <p>EMF生成器按照您的预期处理单继承：生成的接口扩展了超级接口：</p>
-<pre>公共界面SchoolBook扩展Book</pre>
+<pre>
+  public interface SchoolBook extends Book</pre>
 <p>并且实现类扩展了超级实现类：</p>
-<pre>公共类SchoolBookImpl扩展了BookImpl实现的SchoolBook</pre>
+<pre>
+  public class SchoolBookImpl extends BookImpl implements SchoolBook</pre>
 <p>与Java本身一样，支持多接口继承，但每个EMF类只能扩展一个实现基类。因此，当我们有一个具有多重继承的模型时，我们需要确定应该将多个基数中的哪一个用作实现基类。然后将其他的简单视为mixin接口，将其实现生成到派生的实现类中。
 </p>
 <p>请考虑以下示例：</p>
 <img src="images/EMF/image008.gif" width="284" height="213" alt="多重继承：SchoolBook扩展了Book和Asset（Asset有一个值：float）">
 <p>在这里，我们使SchoolBook派生自两个类：Book和Asset。我们已经将Book确定为实现基础（扩展）类，如图所示<sup><a class="footnote" href="#fn15">[15]</a> <a name="ref15"> </a></sup> 。如果我们重新生成模型，接口SchoolBook现在将扩展两个接口：</p>
-<pre>公共界面SchoolBook扩展了Book，Asset</pre>
+<pre>
+  public interface SchoolBook extends Book, Asset</pre>
 <p>实现类看起来和以前一样，只是现在它包含了混合方法getValue（）和setValue（）的实现：</p>
-<pre>公共类SchoolBookImpl扩展BookImpl实现了SchoolBook {public float getValue（）{...public void setValue（float newValue）{...} ...}</pre>
+<pre>
+  public class SchoolBookImpl extends BookImpl implements SchoolBook
+  {
+    public float getValue()
+    {
+      ...
+    }
+
+    public void setValue(float newValue)
+    {
+      ...
+    }
+    
+    ...
+  }</pre>
 <h3>自定义生成的实现类</h3>
 <p>您可以向生成的Java类添加行为（方法和实例变量），而不必担心如果您以后决定修改模型然后重新生成而丢失更改。例如，让我们在类Book中添加一个方法isRecommended（）。为此，您只需继续将新方法签名添加到Java接口Book：</p>
-<pre>公共界面书...{boolean isRecommended（）; ...}</pre>
+<pre>
+  public interface Book ...
+  {
+    boolean isRecommended();
+    ...
+  }</pre>
 <p>以及它在类BookImpl中的实现：</p>
-<pre>public boolean isRecommended（）{return getAuthor（）。getName（）。equals（“William Shakespeare”）; }</pre>
+<pre>
+  public boolean isRecommended()
+  {
+    return getAuthor().getName().equals(&quot;William Shakespeare&quot;);
+  }</pre>
 <p>EMF生成器不会消除此更改，因为它不是一个生成的方法。EMF生成的每个方法都包含一个包含@generated标记的Javadoc注释，如下所示：</p>
-<pre>/ ** * ......* @generated * / public String getTitle（）{return title; }</pre>
+<pre>
+  /**
+   * ...
+   * @generated
+   */
+  public String getTitle()
+  {
+    return title;
+  }</pre>
 <p>每当我们重新生成时，文件中不包含此标记的任何方法（如isRecommended（））都将保持不变。事实上，如果我们想要改变生成方法的实现，我们可以通过从中删除@generated标签来做到这一点<sup><a class="footnote" href="#fn16">[16]</a> <a name="ref16"> </a></sup> ：</p>
-<pre>/ ** * ......* <strike>@generated</strike> //（已删除）* / public String getTitle（）{//我们的自定义实现...}</pre>
+<pre>
+  /**
+   * ...
+   * <strike>@generated</strike> // (removed)
+   */
+  public String getTitle()
+  {
+    // our custom implementation ...
+  }</pre>
 <p>现在，由于缺少@generated标记，getTitle（）方法被认为是用户代码;如果我们重新生成模型，生成器将检测到碰撞并简单地丢弃生成的方法版本。
 </p>
 <p>实际上，在丢弃生成的方法之前，生成器首先检查文件中是否有另一个生成的方法具有相同的名称，但是附加了Gen。如果找到一个，则不是丢弃新生成的方法版本，而是将输出重定向到它。例如，如果我们想要扩展生成的getTitle（）实现，而不是完全丢弃它，那么我们可以通过简单地重命名它来做到这一点：</p>
-<pre>/ ** * ......* @generated * / public String getTitleGen（）{return title; }</pre>
+<pre>
+  /**
+   * ...
+   * @generated
+   */
+  public String getTitleGen()
+  {
+    return title;
+  }</pre>
 <p>然后添加我们的覆盖作为用户方法，做我们想要的任何事情：</p>
-<pre>public String getTitle（）{String result = getTitleGen（）; if（result == null）result = ...返回结果; }</pre>
+<pre>
+  public String getTitle()
+  {
+    String result = getTitleGen();
+    if (result == null)
+      result = ...
+    return result;
+  }</pre>
 <p>如果我们现在重新生成，生成器将检测与我们的用户版本的getTitle（）的冲突，但因为我们在类中也有@generated getTitleGen（）方法，它会将新生成的实现重定向到它，而不是丢弃它。
 </p>
 <h3>EMF模型中的操作</h3>
@@ -227,30 +529,99 @@
 <h2><a name="programming">使用生成的EMF类</a></h2>
 <h3>创建和访问实例</h3>
 <p>使用生成的类，客户端程序可以使用以下简单的Java语句创建和初始化Book：</p>
-<pre>LibraryFactory factory = LibraryFactory.eINSTANCE; Book book = factory.createBook（）; Writer writer = factory.createWriter（）; writer.setName（“威廉莎士比亚”）; book.setTitle（“李尔王”）; book.setAuthor（作家）;</pre>
+<pre>
+  LibraryFactory factory = LibraryFactory.eINSTANCE;
+
+  Book book = factory.createBook();
+
+  Writer writer = factory.createWriter();
+  writer.setName(&quot;William Shakespeare&quot;);
+
+  book.setTitle(&quot;King Lear&quot;);
+  book.setAuthor(writer);</pre>
 <p>由于Book to Writer关联（作者）是双向的，因此反向引用（books）会自动初始化。我们可以通过迭代书籍参考来验证这一点，如下所示：</p>
-<pre>System.out.println（“莎士比亚书籍：”）; for（Iterator iter = writer.getBooks（）。iterator（）; iter.hasNext（）;）{Book shakespeareBook =（Book）iter.next（）; System.out.println（“title：”+ shakespeareBook.getTitle（））; }</pre>
+<pre>
+  System.out.println(&quot;Shakespeare books:&quot;);
+  for (Iterator iter = writer.getBooks().iterator(); iter.hasNext(); )
+  {
+    Book shakespeareBook = (Book)iter.next();
+    System.out.println(&quot;  title: &quot; + shakespeareBook.getTitle());
+  }</pre>
 <p>运行此程序将产生如下输出：</p>
-<pre>莎士比亚书籍：标题：李尔王</pre>
+<pre>
+  Shakespeare books:
+    title: King Lear</pre>
 <h3>保存和加载资源</h3>
 <p>要创建一个包含上述模型的名为mylibrary.xmi的文档，我们需要做的就是在程序开头创建一个EMF资源，将book和writer放入资源，最后调用save（）：</p>
-<pre>//创建资源集。ResourceSet resourceSet = new ResourceSetImpl（）; //注册默认资源工厂 - 仅供独立使用！resourceSet.getResourceFactoryRegistry（）。getExtensionToFactoryMap（）。put（资源。厂。注册。DEFAULT_EXTENSION，新的XMIResourceFactoryImpl（））; //获取模型文件的URI。URI fileURI = URI.createFileURI（new File（“mylibrary.xmi”）。getAbsolutePath（））; //为此文件创建资源。资源资源= resourceSet.createResource（fileURI）; //将book和writer对象添加到内容中。。resource.getContents（）加（书）; 。resource.getContents（）加（作家）; //将资源的内容保存到文件系统。尝试{resource.save（收藏。EMPTY_MAP）; } catch（IOException e）{}</pre>
+<pre>
+  // Create a resource set.
+  ResourceSet resourceSet = new ResourceSetImpl();
+
+  // Register the default resource factory -- only needed for stand-alone!
+  resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put(
+    Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
+
+  // Get the URI of the model file.
+  URI fileURI = URI.createFileURI(new File(&quot;mylibrary.xmi&quot;).getAbsolutePath());
+
+  // Create a resource for this file.
+  Resource resource = resourceSet.createResource(fileURI);
+
+  // Add the book and writer objects to the contents.
+  resource.getContents().add(book);
+  resource.getContents().add(writer);
+
+  // Save the contents of the resource to the file system.
+  try
+  {
+    resource.save(Collections.EMPTY_MAP);
+  }
+  catch (IOException e) {}</pre>
 <p>请注意，资源集（接口ResourceSet）用于创建EMF资源。EMF框架使用资源集来管理可能具有跨文档引用的资源。使用注册表（界面资源。厂。注册表），它根据其方案，文件扩展名或其他可能的标准为给定的URI创建正确的资源类型。在这里，我们将XMI资源实现注册为此资源集的默认值<sup><a class="footnote" href="#fn18">[18]</a> <a name="ref18"> </a></sup> 。在加载期间，资源集还管理跨文档引用的需求加载。
 </p>
 <p>运行此程序将生成文件mylibrary.xmi，其内容如下：</p>
-<pre>&lt;xmi：XMI xmi：version =“2.0”xmlns：xmi =“http://www.omg.org/XMI”xmlns：library =“http：///library.ecore”&gt; &lt;library：Book title =“李尔王“author =”/ 1“/&gt; &lt;library：Writer name =”William Shakespeare“books =”/ 0“/&gt; &lt;/ xmi：XMI&gt;</pre>
+<pre>
+  &lt;xmi:XMI xmi:version=&quot;2.0&quot; xmlns:xmi=&quot;http://www.omg.org/XMI&quot;
+      xmlns:library=&quot;http:///library.ecore&quot;&gt;
+    &lt;library:Book title=&quot;King Lear&quot; author=&quot;/1&quot;/&gt;
+    &lt;library:Writer name=&quot;William Shakespeare&quot; books=&quot;/0&quot;/&gt;
+  &lt;/xmi:XMI&gt;</pre>
 <p>要加载文档mylibrary.xmi，如上所述，我们设置一个资源集，然后只需要将资源加载到其中，如下所示：</p>
-<pre>//创建资源集。ResourceSet resourceSet = new ResourceSetImpl（）; //注册默认资源工厂 - 仅供独立使用！resourceSet.getResourceFactoryRegistry（）。getExtensionToFactoryMap（）。put（资源。厂。注册。DEFAULT_EXTENSION，新的XMIResourceFactoryImpl（））; //注册包 - 仅供独立使用！LibraryPackage libraryPackage = LibraryPackage.eINSTANCE; //获取模型文件的URI。URI fileURI = URI.createFileURI（new File（“mylibrary.xmi”）。getAbsolutePath（））; //需求加载此文件的资源。资源资源= resourceSet.getResource（fileURI，true）; //将资源的内容打印到System.out。try {resource.save（System.out，Collections。EMPTY_MAP）; } catch（IOException e）{}</pre>
+<pre>
+   // Create a resource set.
+   ResourceSet resourceSet = new ResourceSetImpl();
+
+  // Register the default resource factory -- only needed for stand-alone!
+  resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put(
+    Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
+
+  // Register the package -- only needed for stand-alone!
+  LibraryPackage libraryPackage = LibraryPackage.eINSTANCE;
+
+   // Get the URI of the model file.
+   URI fileURI = URI.createFileURI(new File("mylibrary.xmi").getAbsolutePath());
+
+   // Demand load the resource for this file.
+   Resource resource = resourceSet.getResource(fileURI, true);
+
+   // Print the contents of the resource to System.out.
+   try
+   {
+     resource.save(System.out, Collections.EMPTY_MAP);
+   }
+   catch (IOException e) {}</pre>
 
 <p>同样，我们创建一个资源集，并且对于独立的情况，注册一个默认资源实现。此外，我们需要确保我们的软件包在软件包注册表中注册，资源使用该软件包来获取正在加载的模型的相应元数据和工厂。只需访问生成的包接口的eINSTANCE字段就足以确保它已注册。
 </p>
 <p>此示例使用save（）的第二种形式，它采用OutputStream将序列化打印到控制台。
 </p>
 <p>将模型拆分为多个文档，并在它们之间进行交叉引用很简单。如果我们想在上面的保存示例中将书籍和作者序列化为单独的文档，我们需要做的就是创建第二个资源：</p>
-<pre>资源anotherResource = resourceSet.createResource（anotherFileURI）;</pre>
+<pre>
+  Resource anotherResource = resourceSet.createResource(anotherFileURI);</pre>
 <p>并将编写器添加到它，而不是第一个：</p>
 <pre>
-  <strike>。resource.getContents（）加（作家）;</strike> //（替换）anotherResource.getContents（）。add（writer）;</pre>
+  <strike>resource.getContents().add(writer);</strike> // (replaced)
+  anotherResource.getContents().add(writer);</pre>
 <p>这将生成两个资源，每个资源包含一个对象，并且跨文档引用另一个。
 </p>
 <p>请注意，包含引用必然意味着包含的对象与其容器位于同一资源中。因此，例如，假设我们已经通过书籍包含参考创建了包含我们书籍的库实例。这将自动从资源的内容中删除Book，在这个意义上，它也像一个包含引用。如果我们随后将库添加到资源中，那么该书也将隐含地属于该资源，并且其详细信息将再次在其中序列化。
@@ -259,32 +630,71 @@
 </p>
 <h3>观察（调整）EMF对象</h3>
 <p>以前，当我们查看生成的EMF类中的set方法时，我们发现在更改属性或引用时始终会发送通知。例如，BookImpl.setPages（）方法包含以下行：</p>
-<pre>eNotify（newENotificationImpl（this，...，oldPages，pages））;</pre>
+<pre>
+  eNotify(newENotificationImpl(this, ..., oldPages, pages));</pre>
 <p>每个EObject都可以维护一个观察者列表（也称为适配器），每当发生状态更改时都会通知它们。框架eNotify（）方法遍历此列表并将通知转发给观察者。
 </p>
 <p>通过添加到eAdapters列表，可以将观察者附加到任何EObject（例如，书）：</p>
-<pre>适配器bookObserver = ...。book.eAdapters（）添加（bookObserver）;</pre>
+<pre>
+  Adapter bookObserver = ...
+  book.eAdapters().add(bookObserver);</pre>
 <p>但是，更常见的是，使用适配器工厂将适配器添加到EObjects。除了它们的观察者角色之外，适配器通常被用作扩展它们所附着的对象的行为的一种方式。客户端通常通过要求适配器工厂使用所需类型的扩展来调整对象来附加这种扩展行为。通常它看起来像这样：</p>
-<pre>EObject someObject = ...; AdapterFactory someAdapterFactory = ...;对象requiredType = ...; if（someAdapterFactory.isFactoryForType（requiredType））{Adapter theAdapter = someAdapterFactory.adapt（someObject，requiredType）; ...}</pre>
+<pre>
+  EObject someObject = ...;
+  AdapterFactory someAdapterFactory = ...;
+  Object requiredType = ...;
+  if(someAdapterFactory.isFactoryForType(requiredType))
+  {
+    Adapter theAdapter = someAdapterFactory.adapt(someObject, requiredType);
+    ...
+  }</pre>
 <p>通常，requiredType表示适配器支持的某些接口。例如，参数可能是实际的java.lang。所选适配器接口的类。然后可以将返回的适配器向下转换为所请求的接口，如下所示：</p>
-<pre>MyAdapter theAdapter =（MyAdapter）someAdapterFactory.adapt（someObject，MyAdapter.class）;</pre>
+<pre>
+  MyAdapter theAdapter =
+    (MyAdapter)someAdapterFactory.adapt(someObject, MyAdapter.class);</pre>
 <p>通常以这种方式使用适配器来扩展对象的行为而无需子类化。
 </p>
 <p>要处理适配器中的通知，我们需要覆盖eNotifyChanged（）方法，该方法由eNotify（）在每个注册的适配器上调用。典型的适配器根据通知的类型实现eNotifyChanged（）以对部分或全部通知执行某些操作。
 </p>
 <p>有时，适配器旨在适应特定的类（例如，Book）。在这种情况下，notifyChanged（）方法可能如下所示：</p>
-<pre>public void notifyChanged（通知通知）{Book book =（Book）notification.getNotifier（）; switch（notification.getFeatureID（Book.class））{case LibraryPackage。BOOK__TITLE：//书名更改了doSomething（）;打破; caseLibraryPackage。BOOK__CATEGORY：//书籍类别已更改...案件 ...}}</pre>
+<pre>
+  public void notifyChanged(Notification notification)
+  {
+    Book book = (Book)notification.getNotifier();
+    switch (notification.getFeatureID(Book.class))
+    {
+      case LibraryPackage.BOOK__TITLE:
+        // book title changed
+        doSomething();
+        break;
+      caseLibraryPackage.BOOK__CATEGORY:
+        // book category changed
+        ...
+      case ...
+    }
+  }</pre>
 <p>对notification.getFeatureID（）的调用是通过参数Book.class传递的，以处理被调整的对象不是类BookImpl的实例的可能性，而是一个多继承子类的实例，其中Book不是主要的（第一）界面。在这种情况下，通知中传递的功能ID将是一个相对于另一个类的数字，因此需要在我们使用BOOK__常量进行切换之前进行调整。在单继承情况下，此参数将被忽略。
 </p>
 <p>另一种常见类型的适配器未绑定到任何特定类，而是使用反射EMF API来执行其功能。它不是在通知上调用getFeatureID（），而是调用getFeature（），它返回实际的Ecore特征（即元代码中代表特征的对象）。
 </p>
 <h3>使用反射API</h3>
 <p>每个生成的模型类也可以使用接口EObject中定义的反射API进行操作：</p>
-<pre>公共接口EObject ...{..对象eGet（EStructuralFeature功能）; void eSet（EStructuralFeature feature，Object newValue）; boolean eIsSet（EStructuralFeature特性）; void eUnset（EStructuralFeature功能）; }</pre>
+<pre>
+  public interface EObject ...
+  {
+    ..
+    Object eGet(EStructuralFeature feature);
+    void eSet(EStructuralFeature feature, Object newValue);
+
+    boolean eIsSet(EStructuralFeature feature);
+    void eUnset(EStructuralFeature feature);
+  }</pre>
 <p>使用反射API，我们可以像这样设置作者的名字：</p>
-<pre>writer.eSet（LibraryPackage.eINSTANCE.getWriter_Name（），“William Shakespeare”）;</pre>
+<pre>
+  writer.eSet(LibraryPackage.eINSTANCE.getWriter_Name(), &quot;William Shakespeare&quot;);</pre>
 <p>或得到这样的名字：</p>
-<pre>String name =（String）writer.eGet（LibraryPackage.eINSTANCE.getWriter_Name（））;</pre>
+<pre>
+  String name = (String)writer.eGet(LibraryPackage.eINSTANCE.getWriter_Name());</pre>
 <p>请注意，正在访问的功能由从库包的单例实例获取的元数据标识。
 </p>
 <p>使用反射API的效率稍微低于直接调用生成的getName（）和setName（）方法<sup><a class="footnote" href="#fn19">[19]</a> <a name="ref19"> </a></sup> ，但打开了完全通用访问的模型。例如，EMF.Edit框架使用反射方法来实现可以与任何模型一起使用的完整通用命令集（例如，AddCommand，RemoveCommand，SetCommand）。有关详细信息，请参阅<a href="../../references/overview/EMF.Edit.html">EMF.Edit概述</a> 。
@@ -300,9 +710,13 @@
 <p>声明为不可设置的功能具有显式未设置或无值状态的概念。例如，不可设置的布尔属性可以采用以下两个值之一：true或false。相反，如果声明属性不可设置，则它可以具有以下三个值中的任何一个：true，false或unset。
 </p>
 <p>未设置的要素上的get方法将返回其默认值，但对于不可设置的要素，此状态与要素已明确设置为默认值时有区别。由于未设置状态超出允许值集，我们需要生成其他方法以将特征置于未设置状态并确定它是否处于该状态。例如，如果声明类Book中的pages属性是不可设置的，那么我们将获得另外两个生成的方法：</p>
-<pre>boolean isSetPages（）; void unsetPages（）;</pre>
+<pre>
+  boolean isSetPages();
+  void unsetPages();</pre>
 <p>除了原来的两个：</p>
-<pre>int getPages（）; void setPages（int value）;</pre>
+<pre>
+  int getPages();
+  void setPages(int value);</pre>
 <p>如果已显式设置该功能，则isSet方法返回true。unset方法更改已设置回其未设置状态的属性。
 </p>
 <p>当unsettable为false时，我们不会获得生成的isSet或unset方法，但我们仍然得到反射版本的实现：eIsSet（）和eUnset（）（每个EObject必须实现）。对于非不可设置的属性，如果当前值与默认值不同，则eIsSet（）返回true，eUnset（）将该功能设置为默认值（更像是重置）。
@@ -342,13 +756,44 @@
 <p>如图所示，数据类型只是模型中的一个命名元素，它充当某些Java类的代理。实际的Java类是作为javaclass构造型的属性提供的，其名称是表示的完全限定类。通过定义此数据类型，我们现在可以声明java.util类型的属性。这样的日期：</p>
 <img src="images/EMF/image010.gif" width="173" height="122" alt="数据类型为属性类型的属性：Book具有publicationDate：JavaDate">
 <p>如果我们重新生成，则publicationDate属性现在将出现在Book界面中：</p>
-<pre>import java.util。日期; public interface Book扩展EObject {...日期getPublicationDate（）; void setPublicationDate（Date value）; }</pre>
+<pre>
+  import java.util.Date;
+
+  public interface Book extends EObject
+  {
+    ...
+
+    Date getPublicationDate();
+    void setPublicationDate(Date value);
+  }</pre>
 <p>如您所见，这个Date-typed属性的处理方式与其他任何属性非常相似。实际上，所有属性（包括String，int等类型）都具有数据类型作为其类型。标准Java类型唯一特别之处在于它们的相应数据类型是在Ecore模型中预定义的，因此不需要在使用它们的每个模型中重新定义它们。
 </p>
 <p>数据类型定义对生成的模型有另一个影响。由于数据类型表示某个任意类，因此通用序列化程序和解析器（例如，默认的XMI序列化程序）无法知道如何保存该类型的属性的状态。它应该调用toString（）吗？这是一个合理的默认值，但EMF框架不希望这样做，因此它在工厂实现类中为模型中定义的每种数据类型生成另外两个方法：</p>
-<pre>/ ** * @generated * / public Date createJavaDateFromString（EDataType eDataType，String initialValue）{return（Date）super.createFromString（eDataType，initialValue）; } / ** * @generated * / public String convertJavaDateToString（EDataType eDataType，Object instanceValue）{return super.convertToString（eDataType，instanceValue）; }</pre>
+<pre>
+  /**
+   * @generated
+   */
+  public Date createJavaDateFromString(EDataType eDataType, String initialValue)
+  {
+    return (Date)super.createFromString(eDataType, initialValue);
+  }
+
+  /**
+   * @generated
+   */
+  public String convertJavaDateToString(EDataType eDataType, Object instanceValue)
+  {
+    return super.convertToString(eDataType, instanceValue);
+  }</pre>
 <p>默认情况下，这些方法只调用超类实现，它们提供合理但低效的默认值：convertToString（）只调用instanceValue上的toString（），但createFromString（）尝试使用Java反射来调用String构造函数，或者失败这是一个静态valueOf（）方法，如果存在的话。通常，您应该接管这些方法（通过删除@generated标记）并将它们更改为适当的自定义实现：</p>
-<pre>/ ** * <strike>@generated</strike> //（已删除）* / public String convertJavaDateToString（EDataType eDataType，Object instanceValue）{return instanceValue.toString（）; ）</pre>
+<pre>
+  /**
+   * <strike>@generated</strike> // (removed)
+   */
+  public String convertJavaDateToString(EDataType eDataType, Object instanceValue)
+  {
+    return instanceValue.toString();
+  )</pre>
 <h3>Ecore模型</h3>
 <p>这是Ecore模型的完整类层次结构（阴影框是抽象类）：</p>
 <img src="images/EMF/image011.gif" width="611" height="456" alt="Ecore类层次结构">

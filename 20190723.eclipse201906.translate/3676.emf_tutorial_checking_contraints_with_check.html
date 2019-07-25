@@ -1,14 +1,14 @@
-<html dir="ltr">
+<html >
 <head>
 <title>用检查语言检查约束</title>
-<link href="book.css" rel="stylesheet" type="text/css"></link>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.1"></meta>
-<link rel="home" href="index.html" title="Xpand Documentation"></link>
-<link rel="up" href="emf_tutorial.html" title="Getting Started"></link>
-<link rel="prev" href="emf_tutorial_generating_code.html" title="Generating code from the example model"></link>
-<link rel="next" href="emf_tutorial_extensions.html" title="Extensions"></link>
+<link href="book.css" rel="stylesheet" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.1">
+<link rel="home" href="index.html" title="Xpand Documentation">
+<link rel="up" href="emf_tutorial.html" title="Getting Started">
+<link rel="prev" href="emf_tutorial_generating_code.html" title="Generating code from the example model">
+<link rel="next" href="emf_tutorial_extensions.html" title="Extensions">
 </head>
-<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<body bgcolor="white"  text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">用检查语言检查约束</h1>
 <div class="section" title="用检查语言检查约束">
 <div class="titlepage">
@@ -29,11 +29,16 @@
 </div>
 </div>
 </div>
-<p>我们首先定义约束<a name="N1046D" class="indexterm"></a>本身。我们在项目的<code class="filename">src</code>文件夹中创建一个名为<code class="filename">checks.chk</code>的新文件。这个文件驻留在类路径中非常重要！该文件包含以下内容：</p>
-<pre class="programlisting">进口数据; context属性错误“名称必须多于一个char”：name.length&gt; 1;</pre>
+<p>我们首先定义约束<a name="N1046D" class="indexterm"></a>本身。我们在项目的<code class="filename">checks.chk</code>文件夹中创建一个名为<code class="filename">src</code>的新文件。这个文件驻留在类路径中非常重要！该文件包含以下内容：</p>
+<pre class="programlisting">import data;
+context Attribute ERROR
+   "Names must be more than one char long" :
+   name.length &gt; 1;</pre>
 <p>这个约束表明，对于元类<code class="classname">data::Attribute</code> ，我们要求名称长度超过一个字符。如果此表达式的计算结果为false，则将报告冒号前给出的错误消息。检查文件可以包含任意数量的此类约束。将针对相应元类的所有实例评估它们。</p>
 <p>为了显示一个更复杂的约束示例，这个示例确保属性的名称必须是唯一的：</p>
-<pre class="programlisting">context Entity ERROR“Entity属性的名称必须是唯一的”：attribute.forAll（a1 | attribute.notExists（a2 | a1！= a2 &amp;&amp; a1.name == a2.name））;</pre>
+<pre class="programlisting">context Entity ERROR
+  "Names of Entity attributes must be unique":
+  attribute.forAll(a1| attribute.notExists(a2| a1 != a2 &amp;&amp; a1.name == a2.name ) );</pre>
 </div>
 <div class="section" title="集成到工作流文件中">
 <div class="titlepage">
@@ -45,15 +50,28 @@
 </div>
 </div>
 <p>以下XML是我们上面已经使用过的工作流文件。</p>
-<pre class="programlisting">&lt;workflow&gt; &lt;property file =“workflow.properties”/&gt; ..&lt;component class =“org.eclipse.emf.mwe.utils。Reader“&gt; &lt;uri value =”platform：/ resource / $ {modelFile}“/&gt; ..&lt;/ component&gt; &lt;/ workflow&gt;</pre>
+<pre class="programlisting">&lt;workflow&gt;
+  &lt;property file="workflow.properties"/&gt;
+
+  ..
+
+  &lt;component class="org.eclipse.emf.mwe.utils.Reader"&gt;
+    &lt;uri value="platform:/resource/${modelFile}" /&gt;
+    ..
+  &lt;/component&gt;
+&lt;/workflow&gt;</pre>
 <p>在阅读模型后，我们添加了一个额外的组件，即<span class="emphasis"><em>CheckComponent</em></span> 。</p>
-<pre class="programlisting">&lt;component class =“org.eclipse.xtend.check。CheckComponent“&gt;</pre>
+<pre class="programlisting">&lt;component
+    class="org.eclipse.xtend.check.CheckComponent"&gt;</pre>
 <p>与代码生成器一样，我们必须向检查器解释我们使用的元元模型和元模型。</p>
-<pre class="programlisting">&lt;metaModel id =“mm”class =“org.eclipse.xtend.typesystem.emf。EmfRegistryMetaModel“&gt; &lt;/ metaModel&gt;</pre>
+<pre class="programlisting">  &lt;metaModel id="mm"
+   class="org.eclipse.xtend.typesystem.emf.EmfRegistryMetaModel"&gt;
+  &lt;/metaModel&gt;</pre>
 <p>然后我们必须提供检查文件。组件尝试通过将<code class="filename">.chk</code>附加到名称并搜索类路径来加载文件 - 这就是它必须位于类路径中的原因。</p>
-<pre class="programlisting">&lt;checkFile value =“checks”/&gt;</pre>
+<pre class="programlisting">   &lt;checkFile value="checks"/&gt;</pre>
 <p>最后，我们必须告诉引擎哪些模型或部分模型的检查应该起作用。通常，您可以使用<code class="code">&lt;expressionvalue="..."/&gt;</code>元素在插槽内容上定义任意表达式。出于我们的目的，我们希望在模型槽中使用完整的EMF数据结构，我们可以使用快捷方式<span class="emphasis"><em>emfAllChildrenSlot</em></span>属性，该属性返回特定槽的内容元素下面的完整子树，包括槽内容元素本身。</p>
-<pre class="programlisting">&lt;emfAllChildrenSlot value =“model”/&gt; &lt;/ component&gt;</pre>
+<pre class="programlisting">   &lt;emfAllChildrenSlot value="model"/&gt;
+  &lt;/component&gt;</pre>
 <p>如果名称的长度不大于1，则运行工作流会产生错误。同样，有意义的是将<code class="code">skipOnError="true"</code>添加到需要跳过的后续组件调用中，以防约束检查发现错误（通常是代码生成器或变换器）。</p>
 </div>
 </div>

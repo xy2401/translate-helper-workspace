@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?=""><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" gtc:encodedoriginal="PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBYSFRNTCAxLjAgVHJhbnNpdGlvbmFsLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL1RSL3hodG1sMS9EVEQveGh0bWwxLXRyYW5zaXRpb25hbC5kdGQiPg==">
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass开发人员指南 - 数据提供商</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">数据提供商</th>
@@ -57,7 +57,14 @@
 		<p>数据提供程序可以由<b>DataProviderManager</b>类处理，该类使用扩展点和数据提供程序的工厂。此管理器为每个跟踪和扩展点ID关联一个唯一的数据提供程序，确保可以重用数据提供程序，并且跟踪的每个条目都重用相同的唯一条目ID。</p>
 		<h3 id="Extension_point">延伸点</h3>
 		<p>例：</p>
-		<pre>&lt;extension point =“org.eclipse.tracecompass.tmf.core.dataprovider”&gt; &lt;dataProviderFactory class =“org.eclipse.tracecompass.analysis.graph.core.dataprovider。CriticalPathDataProviderFactory“id =”org.eclipse.tracecompass.analysis.graph.core.dataprovider。CriticalPathDataProvider“&gt; &lt;/ dataProviderFactory&gt; &lt;/ extension&gt;</pre>
+		<pre>
+&lt;extension point="org.eclipse.tracecompass.tmf.core.dataprovider"&gt;
+    &lt;dataProviderFactory
+        class="org.eclipse.tracecompass.analysis.graph.core.dataprovider.CriticalPathDataProviderFactory"
+        id="org.eclipse.tracecompass.analysis.graph.core.dataprovider.CriticalPathDataProvider"&gt;
+    &lt;/dataProviderFactory&gt;
+&lt;/extension&gt;
+</pre>
 		<h3 id="Experiments">实验</h3>
 		<p>在数据提供程序管理器中，实验还获得数据提供程序的唯一实例，该实例可以是特定的，也可以从子跟踪中封装数据提供程序。例如，实验可以在需要时拥有自己的具体数据提供者（仅在实验中运行的分析），或者工厂将创建一个<b>CompositeDataProvider</b> （使用<b>TmfTreeXYCompositeDataProvider</b>或<b>TmfTimeGraphCompositeDataProvider</b> ）从其跟踪中封装提供者。从子跟踪封装提供程序的好处是可以重用其条目/ ID，限制创建的对象的数量并确保视图的一致性。这些复合数据提供程序将请求分派给所有封装的提供程序，并将结果聚合到预期的数据结构中。
 		</p>
@@ -69,7 +76,52 @@
 		<h3 id="Example_Tree_XY_code">示例树XY代码</h3>
 		<p>下面是显示树XY数据提供程序中的数据所需的最低实现的示例。</p>
 		<p>开箱即用，它支持实验，在跟踪分析期间更新，Pin＆Clone和许多图表查看器功能。</p>
-		<pre>public class TreeXyView扩展了TmfChartView {/ ** * Constructor * / public TreeXyView（）{super（“Tree XY View”）; } @Override protected TmfXYChartViewer createChartViewer（Composite parent）{TmfXYChartSettings settings = new TmfXYChartSettings（null，null，null，1）;返回新的TmfFilteredXYChartViewer（父级，设置，DataProvider。ID）; private static final class TreeXyViewer extends AbstractSelectTreeViewer {private final class TreeXyLabelProvider extends TreeLabelProvider {@Override public Image getColumnImage（Object element，int columnIndex）{if（columnIndex == 1 &amp;&amp; element instanceof TmfTreeViewerEntry &amp;&amp; isChecked（element））{return getLegendImage（（ （TmfTreeViewerEntry）element）.getName（））; } return null; public TreeXyViewer（Composite parent）{super（parent，1，DataProvider。ID）; setLabelProvider（new TreeXyLabelProvider（））; } @Override protected ITmfTreeColumnDataProvider getColumnDataProvider（）{return（） - &gt; ImmutableList.of（createColumn（“Name”，Comparator.comparing（TmfTreeViewerEntry :: getName）），new TmfTreeColumnData（“Legend”））; @Override protected @NonNull TmfViewer createLeftChildViewer（Composite parent）{return new TreeXyViewer（parent）; }}</pre><hr class="navigation-separator">
+		<pre>
+public class TreeXyView extends TmfChartView {
+
+    /**
+     * Constructor
+     */
+    public TreeXyView() {
+        super("Tree XY View");
+    }
+
+    @Override
+    protected TmfXYChartViewer createChartViewer(Composite parent) {
+        TmfXYChartSettings settings = new TmfXYChartSettings(null, null, null, 1);
+        return new TmfFilteredXYChartViewer(parent, settings, DataProvider.ID);
+    }
+
+    private static final class TreeXyViewer extends AbstractSelectTreeViewer {
+
+        private final class TreeXyLabelProvider extends TreeLabelProvider {
+            @Override
+            public Image getColumnImage(Object element, int columnIndex) {
+                if (columnIndex == 1 &amp;&amp; element instanceof TmfTreeViewerEntry &amp;&amp; isChecked(element)) {
+                    return getLegendImage(((TmfTreeViewerEntry) element).getName());
+                }
+                return null;
+            }
+        }
+
+        public TreeXyViewer(Composite parent) {
+            super(parent, 1, DataProvider.ID);
+            setLabelProvider(new TreeXyLabelProvider());
+        }
+
+        @Override
+        protected ITmfTreeColumnDataProvider getColumnDataProvider() {
+            return () -&gt; ImmutableList.of(createColumn("Name", Comparator.comparing(TmfTreeViewerEntry::getName)),
+                    new TmfTreeColumnData("Legend"));
+        }
+    }
+
+    @Override
+    protected @NonNull TmfViewer createLeftChildViewer(Composite parent) {
+        return new TreeXyViewer(parent);
+    }
+}
+</pre><hr class="navigation-separator">
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<td align="left" style="width:20%">

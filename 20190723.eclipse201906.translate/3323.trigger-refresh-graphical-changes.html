@@ -1,21 +1,38 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>触发刷新的图形-变化</title>
-		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css"></link>
-		<link type="text/css" rel="stylesheet" href="../resources/custom.css"></link>
+		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css">
+		<link type="text/css" rel="stylesheet" href="../resources/custom.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<h1 id="TriggeraSiriusrefreshonspecificgraphicalchanges">触发Sirius刷新特定的图形更改</h1>
 		<h2 id="Description">描述</h2>
 		<p>在自动刷新模式下，只要完成至少一个语义更改，就会刷新表示。不考虑图形更改，因为它们不会影响映射前提条件。在某些情况下，映射可以取决于图形状态。一个典型的例子是一个的“崩溃”状态<a href="../specifier/diagrams/Diamgram.html#graphical_elements">区域</a>根据它改变映射。从Sirius 6.1.3开始，可以注册一个新的图形更改来触发Sirius刷新。
 		</p>
 		<h2 id="RegisteranewgraphicalchangetotriggeraSiriusrefresh">注册新的图形更改以触发Sirius刷新</h2>
-		<p><code>org.eclipse.sirius.tools.api.ui.RefreshHelper.registerImpactingNotification(Predicate&lt;Notification&gt;)</code>允许将某些图形修改视为需要刷新。通过预提交侦听器<code>org.eclipse.sirius.tools.api.ui.调用此方法<code>org.eclipse.sirius.tools.api.ui.RefreshEditorsPrecommitListener</code> 。因此，仅当您处于自动刷新模式或已激活“forceRefresh”模式（ <code>org.eclipse.sirius.tools.api.ui.时才会调用它<code>org.eclipse.sirius.tools.api.ui.RefreshEditorsPrecommitListener.setForceRefresh(boolean)</code> ），带有相应的刷新表示（ <code>org.eclipse.sirius.tools.api.ui.RefreshEditorsPrecommitListener.addRepresentationToForceRefresh(DRepresentation)</code> ）。
+		<p><code>org.eclipse.sirius.tools.api.ui.RefreshHelper.registerImpactingNotification(Predicate&lt;Notification&gt;)</code>允许将某些图形修改视为需要刷新。通过预提交侦听器<code>org.eclipse.sirius.tools.api.ui.RefreshEditorsPrecommitListener</code> 。因此，仅当您处于自动刷新模式或已激活“forceRefresh”模式（ <code>org.eclipse.sirius.tools.api.ui.RefreshEditorsPrecommitListener.setForceRefresh(boolean)</code> ），带有相应的刷新表示（ <code>org.eclipse.sirius.tools.api.ui.RefreshEditorsPrecommitListener.addRepresentationToForceRefresh(DRepresentation)</code> ）。
 			<br>对于折叠/展开的特定情况，当前表示将自动添加为强制刷新表示。因此，即使在手动刷新模式下，区域的折叠/扩展也会自动启动刷新。
 		</p>
 		<h3 id="Example">例</h3>
-		<pre>//注册谓词以考虑折叠/展开更改，以影响类型图“MyDiagramDescriptionName”。RefreshHelper.registerImpactingNotification（new Predicate &lt;Notification&gt;（）{@Override public boolean test（Notification notification）{if（notification！）= null）{if（NotationPackage.eINSTANCE.getDrawerStyle_Collapsed（）。equals（notification.getFeature（）））{if（notification.getNotifier（）instanceof EObject）{Option &lt;DDiagram&gt; optionalDDiagram = new EObjectQuery（（EObject）notification.getNotifier （））getParentDiagram（）; if（optionalDDiagram.some（））{return“MyDiagramDescriptionName”.equals（optionalDDiagram.get（）。getDescription（）。getName）;返回false; }};</pre>
+		<pre>// Register a predicate to consider Collapse/Expand changes as impacting in diagram of kind "MyDiagramDescriptionName".
+RefreshHelper.registerImpactingNotification(new Predicate&lt;Notification&gt;() {
+    @Override
+    public boolean test(Notification notification) {
+        if (notification != null) {
+            if (NotationPackage.eINSTANCE.getDrawerStyle_Collapsed().equals(notification.getFeature())) {
+                if (notification.getNotifier() instanceof EObject) {
+                    Option&lt;DDiagram&gt; optionalDDiagram = new EObjectQuery((EObject) notification.getNotifier()).getParentDiagram();
+                    if (optionalDDiagram.some()) {
+                        return "MyDiagramDescriptionName".equals(optionalDDiagram.get().getDescription().getName);
+                    }
+                }
+            }
+        }
+        return false;
+    }
+});
+</pre>
 		<h2 id="Unregisterapreviouslyregistergraphicalchanges">取消注册以前注册的图形更改</h2>
 		<p>您可以使用<code>org.eclipse.sirius.tools.api.ui.RefreshHelper.unregisterImpactingNotification(Predicate&lt;Notification&gt;)</code>取消注册以前注册的谓词。
 		</p>

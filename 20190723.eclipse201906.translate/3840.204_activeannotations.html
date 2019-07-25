@@ -1,12 +1,12 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>主动注释</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="active-annotations">主动注释</h1>
 
@@ -18,7 +18,9 @@
 
 <p>例如， <code>@Extract</code>是一个提取类的接口的注释。注释声明如下所示：</p>
 
-<pre><code class="language-xtend">@Active（ExtractProcessor）注释提取{}</code></pre>
+<pre><code class="language-xtend">@Active(ExtractProcessor)
+annotation Extract {}
+</code></pre>
 
 <h2 id="active-annotations-processor">注释处理器</h2>
 
@@ -50,7 +52,19 @@
 
 <p>例如，ExtractProcessor为每个带注释的类添加一个接口：</p>
 
-<pre><code class="language-xtend">class ExtractProcessor扩展AbstractClassProcessor {override doRegisterGlobals（ClassDeclaration annotatedClass，RegisterGlobalsContext context）{context.registerInterface（annotatedClass.interfaceName）} def getInterfaceName（ClassDeclaration annotatedClass）{annotatedClass.qualifiedName +“Interface”} ...}</code></pre>
+<pre><code class="language-xtend">class ExtractProcessor extends AbstractClassProcessor {
+  
+  override doRegisterGlobals(ClassDeclaration annotatedClass, RegisterGlobalsContext context) {
+    context.registerInterface(annotatedClass.interfaceName)
+  }
+
+  def getInterfaceName(ClassDeclaration annotatedClass) {
+    annotatedClass.qualifiedName+"Interface"
+  }
+  
+  ...
+}
+</code></pre>
 
 <p><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtend.lib.macro/src/org/eclipse/xtend/lib/macro/RegisterGlobalsContext.java">RegisterGlobalsContext</a>提供此编译步骤中可用的所有服务。它被传递到方法<code>doRegisterGlobals()</code>以及带注释的源元素的只读表示。对于使用<code>@Extract</code>注释的所有类，都会调用此示例中的AbstractClassProcessor。</p>
 
@@ -64,13 +78,45 @@
 
 <p><code>ExtractProcessor</code>实现方法<code>doTransform</code>如下所示：</p>
 
-<pre><code class="language-xtend">class ExtractProcessor扩展AbstractClassProcessor {override doRegisterGlobals（ClassDeclaration annotatedClass，RegisterGlobalsContext context）{context.registerInterface（annotatedClass.interfaceName）} def getInterfaceName（ClassDeclaration annotatedClass）{annotatedClass.qualifiedName +“Interface”} override doTransform（MutableClassDeclaration annotatedClass，extension TransformationContext context）{val interfaceType = findInterface（annotatedClass.interfaceName）//将接口添加到已实现接口列表annotatedClass.implementedInterfaces = annotatedClass.implementedInterfaces +＃[interfaceType.newTypeReference] //将公共方法添加到接口（method：annotatedClass.declaredMethods） {if（method.visibility == Visibility。PUBLIC）{interfaceType.addMethod（method.simpleName）[docComment = method.docComment returnType = method.returnType for（p：method.parameters）{addParameter（p.simpleName，p.type）} exceptions = method.exceptions]}} }}</code></pre>
+<pre><code class="language-xtend">class ExtractProcessor extends AbstractClassProcessor {
+  
+  override doRegisterGlobals(ClassDeclaration annotatedClass, RegisterGlobalsContext context) {
+    context.registerInterface(annotatedClass.interfaceName)
+  }
+
+  def getInterfaceName(ClassDeclaration annotatedClass) {
+    annotatedClass.qualifiedName+"Interface"
+  }
+  
+  override doTransform(MutableClassDeclaration annotatedClass, extension TransformationContext context) {
+    val interfaceType = findInterface(annotatedClass.interfaceName)
+    
+    // add the interface to the list of implemented interfaces
+    annotatedClass.implementedInterfaces = annotatedClass.implementedInterfaces + #[interfaceType.newTypeReference]
+    
+    // add the public methods to the interface
+    for (method : annotatedClass.declaredMethods) {
+      if (method.visibility == Visibility.PUBLIC) {
+        interfaceType.addMethod(method.simpleName) [
+          docComment = method.docComment
+          returnType = method.returnType
+          for (p : method.parameters) {
+            addParameter(p.simpleName, p.type)
+          }
+          exceptions = method.exceptions
+        ]
+      }
+    }
+  }
+}
+</code></pre>
 
 <p>在第一行中， <code>findInterface</code>检索在第一阶段注册全局符号期间注册的接口：该方法在<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtend.lib.macro/src/org/eclipse/xtend/lib/macro/TransformationContext.java">TransformationContext</a>中定义，该文件用作<a href="202_xtend_classes_members.html#extension-provider">扩展提供程序</a> 。</p>
 
 <p>接下来，新创建的接口将添加到现有的已实现接口列表中。</p>
 
-<pre><code class="language-xtend">annotatedClass.implementedInterfaces = annotatedClass.implementedInterfaces +＃[interfaceType.newTypeReference]</code></pre>
+<pre><code class="language-xtend">annotatedClass.implementedInterfaces = annotatedClass.implementedInterfaces + #[interfaceType.newTypeReference]
+</code></pre>
 
 <p>代码在带注释的类上调用<code>setImplementedInterfaces(Iterable&lt;TypeReference&gt;)</code> 。赋值的右侧是现有实现的接口和指向新创建的接口的类型引用的串联。</p>
 
@@ -84,7 +130,24 @@
 
 <p>编译器生命周期的最后一个阶段允许您参与编写和更新文件。在IDE中，此阶段仅在保存时执行，而前两个在编辑器中进行少量编辑后执行。为了参与您的处理器需要实现<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtend.lib.macro/src/org/eclipse/xtend/lib/macro/CodeGenerationParticipant.java">CodeGenerationParticipant</a> 。提取接口示例不使用此挂钩，但另外包含的国际化示例生成* .properties文件，如下所示：</p>
 
-<pre><code class="language-xtend">class ExternalizedProcessor扩展AbstractClassProcessor {...override doGenerateCode（List &lt;？扩展ClassDeclaration&gt; annotatedSourceElements，扩展CodeGenerationContext上下文）{for（clazz：annotatedSourceElements）{val filePath = clazz.compilationUnit.filePath val file = filePath.targetFolder.append（clazz.qualifiedName.replace（'。'，'/'）+“ .properties“）file.contents ='''«FOR field：clazz.declaredFields»«field.simpleName»=«field.initializerAsString»«ENDFOR»'''}}}</code></pre>
+<pre><code class="language-xtend">class ExternalizedProcessor extends AbstractClassProcessor {
+  
+  ...
+  
+  override doGenerateCode(List&lt;? extends ClassDeclaration&gt; annotatedSourceElements, extension CodeGenerationContext context) {
+    for (clazz : annotatedSourceElements) {
+      val filePath = clazz.compilationUnit.filePath
+      val file = filePath.targetFolder.append(clazz.qualifiedName.replace('.', '/') + ".properties")
+      file.contents = '''
+        «FOR field : clazz.declaredFields»
+          «field.simpleName» = «field.initializerAsString»
+        «ENDFOR»
+      '''
+    }
+  }
+
+}
+</code></pre>
 
 <p><a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtend.lib.macro/src/org/eclipse/xtend/lib/macro/CodeGenerationContext.java">CodeGenerationContext</a>提供此阶段可用的所有服务。有关更多详细信息，请查看Java文档。</p>
 
@@ -96,7 +159,15 @@
 
 <p>第一个选择是分配编译策略并自己处理Java代码。作为示例，可观察实例的setter方法的主体由以下代码片段实现：</p>
 
-<pre><code class="language-xtend">observableType.addMethod（'set'+ fieldName.toFirstUpper）[addParameter（fieldName，fieldType）body ='''«fieldType»_oldValue = this。«fieldName»;这个。«fieldName»=«fieldName»; _propertyChangeSupport.firePropertyChange（“«fieldName»”，_ oldValue，«fieldName»）; ''']</code></pre>
+<pre><code class="language-xtend">observableType.addMethod('set' + fieldName.toFirstUpper) [
+  addParameter(fieldName, fieldType)
+  body = '''
+    «fieldType» _oldValue = this.«fieldName»;
+    this.«fieldName» = «fieldName»;
+    _propertyChangeSupport.firePropertyChange("«fieldName»", _oldValue, «fieldName»);
+  '''
+]
+</code></pre>
 
 <p>模板表达式用于实现主体。尽管此代码在转换期间执行，但实际的连接仅在代码生成期间发生。它是字符串连接的一种特殊形式，在连接TypeReference，java.lang时会自动添加导入。类或TypeDeclaration。它会考虑现有的进口，并在必要时即时添加新的进口。</p>
 
@@ -104,11 +175,35 @@
 
 <p>第二种方法是将Xtend源中的表达式放入生成的Java元素的上下文中。这允许直接使用源文件中编写的代码。将字段转换为延迟初始化属性的注释<code>@Lazy</code>可以像这样使用：</p>
 
-<pre><code class="language-xtend">class MyClass {@Lazy String myField = expensiveComputation（）}</code></pre>
+<pre><code class="language-xtend">class MyClass {
+  @Lazy String myField = expensiveComputation()
+}
+</code></pre>
 
 <p>此<em>活动注释</em>的处理器可以推断合成初始化方法并添加getter方法，如果该字段仍为<code>null</code> ，则调用初始化方法。因此，字段的初始化表达式必须成为合成初始化方法的方法体。以下代码执行此转换：</p>
 
-<pre><code class="language-xtend">override doTransform（MutableFieldDeclaration field，extension TransformationContext context）{// add synthetic init-method field.declaringType.addMethod（'_ init'+ field.simpleName）[visibility = Visibility。PRIVATE returnType = field.type //将初始化表达式重新分配为init方法的主体//这会自动删除表达式，因为字段的初始化器主体= field.initializer] //添加一个懒惰地初始化字段field.declaringType的getter方法。 addMethod（'get'+ field.simpleName.toFirstUpper）[returnType = field.type body = ['''if（«field.simpleName»== null）«field.simpleName»= _init«field.simpleName»（）; return«field.simpleName»; ''']]}</code></pre>
+<pre><code class="language-xtend">override doTransform(MutableFieldDeclaration field, extension TransformationContext context) {
+
+  // add synthetic init-method
+  field.declaringType.addMethod('_init' + field.simpleName) [
+    visibility = Visibility.PRIVATE
+    returnType = field.type
+    // reassign the initializer expression to be the init method's body
+    // this automatically removes the expression as the field's initializer
+    body = field.initializer
+  ]
+
+  // add a getter method which lazily initializes the field
+  field.declaringType.addMethod('get' + field.simpleName.toFirstUpper) [
+    returnType = field.type
+    body = ['''
+      if («field.simpleName»==null)
+        «field.simpleName» = _init«field.simpleName»();
+      return «field.simpleName»;
+    ''']
+  ]
+}
+</code></pre>
 
 <h2 id="active-annotations-validation">自定义编译器检查</h2>
 
@@ -118,7 +213,15 @@
 
 <p>由于<code>context</code>被声明为<a href="202_xtend_classes_members.html#extension-provider">扩展提供程序</a> ，因此这些方法可以用作扩展，并允许相应地实现约束检查：</p>
 
-<pre><code class="language-xtend">override doTransform（MutableFieldDeclaration field，extension TransformationContext context）{if（field.type.primitive）field.addError（“@Lazy不支持带基元的字段”）if（field.initializer == null）field.addError（“A懒字段必须有一个初始化器。“）...}</code></pre>
+<pre><code class="language-xtend">override doTransform(MutableFieldDeclaration field, extension TransformationContext context) {
+  if (field.type.primitive)
+    field.addError("Fields with primitives are not supported by @Lazy")
+    
+  if (field.initializer == null)
+    field.addError("A lazy field must have an initializer.")
+  ...
+}
+</code></pre>
 
 <p>这可确保向用户通知<em>活动注释</em> <code>@Lazy</code>无效应用程序。</p>
 
@@ -132,7 +235,19 @@
 
 <p>因此，仔细测试和调试处理器至关重要。最好在单元测试中完成。这样的测试需要类路径上的整个Xtend编译器，您可以通过OSGi bundle依赖或Maven获取。maven依赖是</p>
 
-<pre><code>&lt;dependency&gt; &lt;groupId&gt; org.eclipse.xtend &lt;/ groupId&gt; &lt;artifactId&gt; org.eclipse.xtend.core &lt;/ artifactId&gt; &lt;version&gt; 2.17.0 &lt;/ version&gt; &lt;scope&gt; test &lt;/ scope&gt; &lt;/ dependency &gt; &lt;dependency&gt; &lt;groupId&gt; org.eclipse.xtext &lt;/ groupId&gt; &lt;artifactId&gt; org.eclipse.xtext.xbase.testing &lt;/ artifactId&gt; &lt;version&gt; 2.17.0 &lt;/ version&gt; &lt;scope&gt; test &lt;/ scope&gt; &lt;/依赖性&gt;</code></pre>
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.eclipse.xtend&lt;/groupId&gt;
+  &lt;artifactId&gt;org.eclipse.xtend.core&lt;/artifactId&gt;
+  &lt;version&gt;2.17.0&lt;/version&gt;
+  &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;org.eclipse.xtext&lt;/groupId&gt;
+  &lt;artifactId&gt;org.eclipse.xtext.xbase.testing&lt;/artifactId&gt;
+  &lt;version&gt;2.17.0&lt;/version&gt;
+  &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+</code></pre>
 
 <p>等效的OSGI包是<code>org.eclipse.xtend.core</code> 。</p>
 
@@ -142,11 +257,71 @@
 
 <p>示例项目包含几个测试用例：</p>
 
-<pre><code class="language-xtend">class LazyTest {extension XtendCompilerTester compilerTester = XtendCompilerTester.newXtendCompilerTester（Lazy.classLoader）@Test def void testLazy（）{'''import lazy。懒类Person {@Lazy String name ='foo'}'''。hassertCompilesTo（'''import lazy。懒; @SuppressWarnings（“all”）公共类Person {@Lazy private String name; private String _initname（）{return“foo”; public String getName（）{if（name == null）name = _initname（）;返回名称; }}'''}}}</code></pre>
+<pre><code class="language-xtend">class LazyTest {
+  extension XtendCompilerTester compilerTester = XtendCompilerTester.newXtendCompilerTester(Lazy.classLoader)
+
+  @Test def void testLazy() {
+    '''
+      import lazy.Lazy
+      
+      class Person {
+        @Lazy String name = 'foo'
+      }
+    '''.assertCompilesTo(
+    '''
+      import lazy.Lazy;
+
+      @SuppressWarnings("all")
+      public class Person {
+        @Lazy
+        private String name;
+        
+        private String _initname() {
+          return "foo";
+        }
+        
+        public String getName() {
+          if (name==null)
+            name = _initname();
+          return name;
+          
+        }
+      }
+    ''')
+  }
+}
+</code></pre>
 
 <p>这是一个基本的字符串比较。这是开始开发新注释处理器的好方法。稍后对生成的元素和语法树（AST）的断言可能是更好的选择，因为它们对格式化的更改不是那么脆弱。<code>@Extract</code> -example使用这种技术：</p>
 
-<pre><code class="language-xtend">@Test def void testExtractAnnotation（）{'''@ extraxt。Extract类MyClass {override String doStuff（String myParam）throws IllegalArgumentException {return myParam}}'''。compile [//将转换上下文声明为本地扩展名val扩展名ctx = transformationContext //查找接口和类val interf = findInterface（'MyClassInterface'）val clazz = findClass（'MyClass'）//断言assertEquals（interf，clazz.implementedInterfaces.head.type）interf.declaredMethods.head =&gt; [assertEquals（'doStuff'，simpleName）assertEquals（ string，returnType）assertEquals（IllegalArgumentException.newTypeReference，exceptions.head）]]}</code></pre>
+<pre><code class="language-xtend">@Test def void testExtractAnnotation() {
+  '''
+    @extract.Extract
+    class MyClass {
+      override String doStuff(String myParam) throws IllegalArgumentException {
+        return myParam
+      }
+    }
+  '''.compile [
+    // declare the transformation context as a local extensions
+    val extension ctx = transformationContext
+    
+    // look up the interface and the class
+    val interf = findInterface('MyClassInterface')
+    val clazz = findClass('MyClass')
+    
+    
+    // do assertions
+    assertEquals(interf, clazz.implementedInterfaces.head.type)
+    
+    interf.declaredMethods.head =&gt; [
+      assertEquals('doStuff', simpleName)
+      assertEquals(string, returnType)
+      assertEquals(IllegalArgumentException.newTypeReference, exceptions.head)
+    ]
+  ]
+}
+</code></pre>
 
 <h3 id="wrap-up">包起来</h3>
 
@@ -160,21 +335,68 @@
 
 <p>如果你想为你的字段添加getter和/或setter方法<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtend.lib/src/org/eclipse/xtend/lib/annotations/Accessors.xtend"><code>@Accessors</code></a>是你的朋友。这是一个基本的例子。</p>
 
-<pre><code class="language-xtend">@Accessors字符串名称</code></pre>
+<pre><code class="language-xtend">@Accessors String name
+</code></pre>
 
 <p>将编译为Java代码</p>
 
-<pre><code class="language-java">私有字符串名称; public String getName（）{return this.name; public void setName（final String name）{this.name = name; }</code></pre>
+<pre><code class="language-java">private String name;
+
+public String getName() {
+  return this.name;
+}
+
+public void setName(final String name) {
+  this.name = name;
+}
+</code></pre>
 
 <p>因此，默认情况下会创建公共getter和public setter方法。<code>@Accessors</code>可以配置为告诉您只需要一个或另一个并更改可见性。这是通过<a href="https://github.com/eclipse/xtext-lib/blob/master/org.eclipse.xtend.lib/src/org/eclipse/xtend/lib/annotations/Accessors.xtend">AccessorType</a>完成的。您还可以使用类级别的注释对所有字段执行相同操作。</p>
 
 <p>这是一个更复杂的示例，它显示了它的工作原理：</p>
 
-<pre><code class="language-xtend">@Accessors类Person {String name String firstName @Accessors（PUBLIC_GETTER，PROTECTED_SETTER）int age @Accessors（NONE）String internalField}</code></pre>
+<pre><code class="language-xtend">@Accessors class Person {
+  String name
+  String firstName
+  @Accessors(PUBLIC_GETTER, PROTECTED_SETTER) int age
+  @Accessors(NONE) String internalField
+}
+
+</code></pre>
 
 <p>将编译为Java代码</p>
 
-<pre><code class="language-java">@Accessors public class Person {private String name private String firstName @Accessors（PUBLIC_GETTER，PROTECTED_SETTER）private int age @Accessors（NONE）private String internalField public String getName（）{return this.name; public void setName（final String name）{this.name = name; public String getFirstName（）{return this.firstName; public void setFirstName（final String firstName）{this.firstName = firstName; public int getAge（）{return this.age; } protected void setAge（final int age）{this.age = age; }}</code></pre>
+<pre><code class="language-java">@Accessors public class Person {
+  private String name
+  private String firstName
+  @Accessors(PUBLIC_GETTER, PROTECTED_SETTER) private int age
+  @Accessors(NONE) private String internalField
+  
+  public String getName() {
+    return this.name;
+  }
+  
+  public void setName(final String name) {
+    this.name = name;
+  }
+  
+  public String getFirstName() {
+    return this.firstName;
+  }
+  
+  public void setFirstName(final String firstName) {
+    this.firstName = firstName;
+  }
+  
+  public int getAge() {
+    return this.age;
+  }
+  
+  protected void setAge(final int age) {
+    this.age = age;
+  }
+}
+</code></pre>
 
 <h2 id="data-annotation">@数据</h2>
 
@@ -190,7 +412,16 @@
 
 <p>例：</p>
 
-<pre><code class="language-xtend">@Data class Person {String firstName String lastName def static void main（String [] args）{val p = new Person（args.get（0），args.get（1））println（p.getFirstName（）+'' + p.lastName）}}</code></pre>
+<pre><code class="language-xtend">@Data class Person {
+  String firstName
+  String lastName
+  
+  def static void main(String[] args) {
+    val p = new Person(args.get(0), args.get(1))
+    println(p.getFirstName() + ' ' + p.lastName)
+  }
+}
+</code></pre>
 
 <h2 id="delegate-annotation">@代表</h2>
 
@@ -198,13 +429,30 @@
 
 <p>让我们从一个基本的例子开始：</p>
 
-<pre><code class="language-xtend">class MyClass实现SomeInterface {//生成List的所有方法并委托给该字段@Delegate SomeSubTypeOfSumInterface myDelegate}</code></pre>
+<pre><code class="language-xtend">class MyClass implements SomeInterface {
+
+  // generates all methods of List and delegates to this field
+  @Delegate SomeSubTypeOfSumInterface myDelegate
+
+}
+</code></pre>
 
 <p>它不仅可以委托给字段，还可以委托给方法，因此您可以懒得创建委托对象或每次使用不同的委托对象。如果您使用方法，您还可以声明其他参数，这将告诉您应该调用的方法。</p>
 
 <p>这是另一个例子：</p>
 
-<pre><code class="language-xtend">class MyClass实现SomeInterface {SomeInterface myDelegate; @Delegate def List &lt;？extends String&gt; provideDelegate（String methodName，Class [] paramTypes，Object [] actualArguments）{if（！canHandle（methodName，paramTypes，actualArguments）{throw new UnsupportedOperationException（“方法”+ methodName +“不受支持。”）; } return myDelegate}}</code></pre>
+<pre><code class="language-xtend">class MyClass implements SomeInterface {
+
+  SomeInterface myDelegate;
+
+  @Delegate def List&lt;? extends String&gt; provideDelegate(String methodName, Class[] paramTypes, Object[] actualArguments) {
+     if (!canHandle(methodName,paramTypes,actualArguments) {
+        throw new UnsupportedOperationException("The method "+methodName+" is not supported.");
+     }
+     return myDelegate
+  }
+}
+</code></pre>
 
 
 

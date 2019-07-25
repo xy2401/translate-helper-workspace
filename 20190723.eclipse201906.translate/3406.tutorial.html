@@ -1,14 +1,14 @@
-﻿<html lang="zh-Hans" dir="ltr">
+﻿<html lang="zh-Hans" >
 <head>
-<meta charset="UTF-8"></meta>
+<meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
 <title>VIATRA入门</title>
-<link rel="stylesheet" href="asset?aid=0"></link>
-<link rel="stylesheet" href="./asciidoctor.css"></link>
+<link rel="stylesheet" href="asset?aid=0">
+<link rel="stylesheet" href="./asciidoctor.css">
 </head>
-<body class="article" dir="ltr">
+<body class="article" >
 <div id="header">
 <h1>VIATRA入门</h1>
 </div>
@@ -184,7 +184,17 @@
 <div id="vql-first" class="listingblock">
 <div class="title">queries.vql</div>
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">// Java包声明，必须匹配文件包的容器org.eclipse.viatra.examples.cps.queries // EPackage import import“http：//org.eclipse.viatra/model/cps”//模式声明模式hostIpAddress（host：HostInstance，ip：java String）{//键入约束，声明变量'host'和'ip'通过'nodeIp'属性HostInstance.nodeIp（host，ip）连接; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">// Java package declaration, must match the container of the file
+package org.eclipse.viatra.examples.cps.queries
+
+// EPackage import
+import "http://org.eclipse.viatra/model/cps"
+
+// Pattern declaration
+pattern hostIpAddress(host: HostInstance, ip : java String) {
+    // Type constraint stating that variables 'host' and 'ip' are connected via a 'nodeIp' attribute
+    HostInstance.nodeIp(host,ip);
+}</code></pre>
 </div>
 </div>
 </li>
@@ -266,7 +276,9 @@
 <p>请注意，如果您创建新的<code>HostInstance</code>元素，它将不会出现在匹配结果中。发生这种情况是因为在EMF中未设置且空属性不同（类似于空字符串与Java中的空值之间的差异）。您可以使用<code>neg find</code>构造编写一个查找缺少属性值的模式（请参阅后面的内容）。</p>
 <div id="vql-emptyipaddress" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern emptyIpAddress（host：HostInstance）{HostInstance.nodeIp（host，“”）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern emptyIpAddress(host: HostInstance) {
+    HostInstance.nodeIp(host, "");
+}</code></pre>
 </div>
 </div>
 </li>
@@ -281,7 +293,11 @@
 <p>这种模式更复杂，因为它有三个参数和三个约束。前两个描述了我们看到的相似类型约束。该模式还使用<code>!比较变量<code>host1</code>和<code>host2</code>的值<code>!=</code> （ <em>不等于</em> ）运算符（ <code>==</code>运算符也可用）。</p>
 <div id="vql-sameipaddress" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern sameIpAddress（host1：HostInstance，host2：HostInstance，commonIp：java String）{HostInstance.nodeIp（host1，commonIp）; HostInstance.nodeIp（host2，commonIp）;主机1！= host2上; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern sameIpAddress(host1 : HostInstance, host2 : HostInstance, commonIp : java String) {
+    HostInstance.nodeIp(host1, commonIp);
+    HostInstance.nodeIp(host2, commonIp);
+    host1!=host2;
+}</code></pre>
 </div>
 </div>
 </li>
@@ -299,7 +315,12 @@
 <p>值得注意的是，检查表达式<strong>必须</strong>是无副作用的，并且只能在属性变量上调用。</p>
 <div id="vql-ipformatinvalid" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern ipFormatInvalid（host：HostInstance，ip：java String）{HostInstance.nodeIp（host，ip）;检查（！ip.matches（“^ [\\ d \\。] +”））; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern ipFormatInvalid(host : HostInstance, ip : java String) {
+    HostInstance.nodeIp(host,ip);
+    check (
+        !ip.matches("^[\\d\\.]+")
+    );
+}</code></pre>
 </div>
 </div>
 </li>
@@ -317,7 +338,11 @@
 <p>重要的是要注意，如果两个状态之间存在多个转换，则匹配集仍将仅包括一对状态，因为局部变量不包括在匹配元组中。如果需要所有边，则还应将相应的转换变量声明为参数。</p>
 <div id="vql-connectedto" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern connectedTo（state：State，other：State）{//存在从`state`到`other`的转换State.outgoingTransitions（state，transition）; Transition.targetState（transition，other）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern connectedTo(state: State, other: State){
+    // There exists a transition from `state` to `other`
+    State.outgoingTransitions(state, transition);
+    Transition.targetState(transition, other);
+}</code></pre>
 </div>
 </div>
 </li>
@@ -338,7 +363,14 @@
 <p>此模式还包括<em>一次性</em> （或不关心）变量，从字符“_”开始。这样的声明描述了一个变量，我们只关注它的存在而不是它的价值。</p>
 <div id="vql-badhost" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern badHost（host：HostInstance，ip：java String）{find sameIpAddress（host，_other，ip）; }或{HostInstance.nodeIp（host，ip）; find emptyIpAddress（host）; }或{find ipFormatInvalid（host，ip）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern badHost(host : HostInstance, ip : java String) {
+    find sameIpAddress(host, _other, ip);
+} or {
+    HostInstance.nodeIp(host, ip);
+    find emptyIpAddress(host);
+} or {
+    find ipFormatInvalid(host, ip);
+}</code></pre>
 </div>
 </div>
 </li>
@@ -356,7 +388,10 @@
 <p>在调用主体的其他地方没有使用的负模式调用的那些实际参数是<em>普遍量化的</em> ，这意味着调用模式仅在调用模式的变量不能绑定到匹配元素时才匹配。</p>
 <div id="vql-goodhost" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern goodHost（host：HostInstance，ip：java String）{HostInstance.nodeIp（host，ip）; neg find badHost（host，_）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern goodHost(host : HostInstance, ip : java String) {
+    HostInstance.nodeIp(host, ip);
+    neg find badHost(host, _);
+}</code></pre>
 </div>
 </div>
 </li>
@@ -374,7 +409,13 @@
 <p>可以使用<code>count find</code>表达式计算模式的匹配。此类表达式的值是使用所选匹配数找到的匹配数。</p>
 <div id="vql-countapplications" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">private pattern allocatedApplications（host：HostInstance，app：ApplicationInstance）{HostInstance.applications（host，app）; pattern countApplications（host：HostInstance，m：java Integer）{m == count find allocatedApplications（host，_）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">private pattern allocatedApplications(host : HostInstance, app : ApplicationInstance) {
+    HostInstance.applications(host, app);
+}
+
+pattern countApplications(host : HostInstance, m : java Integer) {
+    m == count find allocatedApplications(host, _);
+}</code></pre>
 </div>
 </div>
 </li>
@@ -389,7 +430,16 @@
 <p>使用先前引入的connectedTo模式的传递闭包来计算可达状态。</p>
 <div id="vql-reachablestate" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern reachableState（sm：StateMachine，state：State）{//状态机的初始状态是可达的StateMachine.initial（sm，state）; }或{StateMachine.initial（sm，initial）; //确保状态确实包含在状态机中;格式良好的模型StateMachine.states（sm，state）中不必要的; //模式名称后面的+符号代表传递闭包findSeoTo +（initial，state）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern reachableState(sm :StateMachine, state: State){
+    // The initial state of the statemachine is reachable
+    StateMachine.initial(sm, state);
+} or {
+    StateMachine.initial(sm, initial);
+    // Ensure the state is indeed included in the state machine; unnecessary in a well-formed model
+    StateMachine.states(sm, state);
+    // The + symbol after the pattern name represents transitive closure
+    find connectedTo+(initial, state);
+}</code></pre>
 </div>
 </div>
 </li>
@@ -439,7 +489,15 @@
 </div>
 <div id="vql-constraint" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">@Constraint（targetEditorId =“org.eclipse.viatra.examples.cps.cyberPhysicalSystem.presentation。CyberPhysicalSystemEditorID“，severity =”error“，message =”ip地址不唯一“，key = {host1}）pattern sameIpAddress（host1：HostInstance，host2：HostInstance，commonIp：java String）{HostInstance.nodeIp（host1，commonIp） ）; HostInstance.nodeIp（host2，commonIp）; host1！= host2上; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">@Constraint(targetEditorId = "org.eclipse.viatra.examples.cps.cyberPhysicalSystem.presentation.CyberPhysicalSystemEditorID",
+            severity = "error",
+            message = "The ip address is not unique",
+            key = {host1})
+pattern sameIpAddress(host1: HostInstance, host2: HostInstance, commonIp : java String) {
+    HostInstance.nodeIp(host1, commonIp);
+    HostInstance.nodeIp(host2, commonIp);
+    host1!=host2;
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -477,7 +535,13 @@
 </div>
 <div id="vql-maximumNumberOfInstances" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern maximumNumberOfInstances（at：ApplicationType，max：java Integer）{max == max find sumNumberOfInstances（at，＃）; pattern sumNumberOfInstances（at：ApplicationType，n：java Integer）{n == count ApplicationType.instances（at，_）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern maximumNumberOfInstances(at : ApplicationType, max : java Integer) {
+	max == max find sumNumberOfInstances(at, #);
+}
+
+pattern sumNumberOfInstances(at : ApplicationType, n : java Integer) {
+	n == count ApplicationType.instances(at, _);
+}</code></pre>
 </div>
 </div>
 </div>
@@ -514,7 +578,23 @@
 </div>
 <div id="vql-invalidMemoryRequirement" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern invalidMemoryRequirement（h：HostInstance，available：java Integer，assigned：java Integer，total：java Integer）{HostInstance.availableRam（h，available）; HostInstance.totalRam（h，total）; assigned == sum find totalMemoryRequirements（h，_，＃）;检查（总计！=已分配+可用）; private pattern totalMemoryRequirements（h：HostInstance，ai：ApplicationInstance，ram：java Integer）{HostInstance.applications（h，ai）; ApplicationInstance.type（ai，at）; ram == sum find applicationTypeRequirementRAM（at，＃）;私有模式applicationTypeRequirementRAM（at：ApplicationType，ram：java Integer）{ApplicationType.requirements（at，req）; ResourceRequirement.requiredRam（req，ram）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern invalidMemoryRequirement(h : HostInstance, available : java Integer, allocated : java Integer, total : java Integer) {
+	HostInstance.availableRam(h, available);
+	HostInstance.totalRam(h, total);
+	allocated == sum find totalMemoryRequirements(h, _, #);
+	check(total != allocated + available);
+}
+
+private pattern totalMemoryRequirements(h : HostInstance, ai : ApplicationInstance, ram : java Integer) {
+	HostInstance.applications(h, ai);
+	ApplicationInstance.type(ai, at);
+	ram == sum find applicationTypeRequirementRAM(at, #);
+}
+
+private pattern applicationTypeRequirementRAM(at : ApplicationType, ram : java Integer) {
+	ApplicationType.requirements(at, req);
+	ResourceRequirement.requiredRam(req, ram);
+}</code></pre>
 </div>
 </div>
 </div>
@@ -578,7 +658,11 @@
 </div>
 <div id="query-runtime-app-extension" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension id =“queryrunner”point =“org.eclipse.core.runtime.applications”&gt; &lt;application cardinality =“singleton-global”thread =“main”visible =“true”&gt; &lt;run class =“org.eclipse。 viatra.examples.cps.queries.runner。QueryRunner“/&gt; &lt;/ application&gt; &lt;/ extension&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension id="queryrunner" point="org.eclipse.core.runtime.applications"&gt;
+  &lt;application cardinality="singleton-global" thread="main" visible="true"&gt;
+    &lt;run class="org.eclipse.viatra.examples.cps.queries.runner.QueryRunner"/&gt;
+  &lt;/application&gt;
+&lt;/extension&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -586,7 +670,20 @@
 </div>
 <div id="query-runtime-app-code" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类QueryRunner实现IApplication {@Override public Object start（IApplicationContext context）throws Exception {//返回值0被视为在Unix系统上成功执行返回0; } @Override public void stop（）{//无头应用程序不需要特定的停止步骤}}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class QueryRunner implements IApplication {
+
+	@Override
+	public Object start(IApplicationContext context) throws Exception {
+        // Return value 0 is considered as a successful execution on Unix systems
+		return 0;
+	}
+
+	@Override
+	public void stop() {
+        // Headless applications do not require specific stop steps
+	}
+
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -606,7 +703,12 @@
 </div>
 <div id="query-runtime-scope" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private EMFScope initializeModelScope（）{ResourceSet rs = new ResourceSetImpl（）; rs.getResource（URI.createPlatformPluginURI（“org.eclipse.viatra.examples.cps.queries / example.cyberphysicalsystem”，true），true）;返回新的EMFScope（rs）; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private EMFScope initializeModelScope() {
+	ResourceSet rs = new ResourceSetImpl();
+	rs.getResource(URI.createPlatformPluginURI("org.eclipse.viatra.examples.cps.queries/example.cyberphysicalsystem", true), true);
+
+	return new EMFScope(rs);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -617,7 +719,15 @@
 </div>
 <div id="query-runtime-prepare" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private ViatraQueryEngine prepareQueryEngine（EMFScope scope）{//访问托管查询引擎ViatraQueryEngine engine = ViatraQueryEngine.on（范围）; //初始化引擎CPSQueries.instance（）上的所有查询.prepare（engine）;返回引擎; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private ViatraQueryEngine prepareQueryEngine(EMFScope scope) {
+	// Access managed query engine
+    ViatraQueryEngine engine = ViatraQueryEngine.on(scope);
+
+    // Initialize all queries on engine
+	CPSQueries.instance().prepare(engine);
+
+	return engine;
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -639,7 +749,15 @@
 </div>
 <div id="query-runtime-printallmatches" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printAllMatches（ViatraQueryEngine engine）{//访问模式匹配器HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; //获取并迭代所有匹配（HostIpAddress。匹配匹配：matcher.getAllMatches（））{//将所有匹配打印到标准输出System.out.println（match.getHost（））; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printAllMatches(ViatraQueryEngine engine ) {
+	// Access pattern matcher
+	HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+	// Get and iterate over all matches
+	for (HostIpAddress.Match match : matcher.getAllMatches()) {
+		// Print all the matches to the standard output
+		System.out.println(match.getHost());
+	}
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -658,7 +776,16 @@
 </div>
 <div id="query-runtime-printAllMatches2" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printAllMatches2（ViatraQueryEngine engine）{HostIpAddressMatcher matcher = HostIpAddressMatcher.on（engine）; matcher.forEachMatch（new HostIpAddressProcessor（）{@ Override public void process（HostInstance pHost，String pIp）{System.out.println（pHost）;}}）; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printAllMatches2(ViatraQueryEngine engine) {
+    HostIpAddressMatcher matcher = HostIpAddressMatcher.on(engine);
+    matcher.forEachMatch(new HostIpAddressProcessor() {
+
+        @Override
+        public void process(HostInstance pHost, String pIp) {
+            System.out.println(pHost);
+        }
+    });
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -666,7 +793,12 @@
 </div>
 <div id="query-runtime-printAllMatches3" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printAllMatches3（ViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; for（HostInstance hi：matcher.getAllValuesOfhost（））{System.out.println（hi）; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printAllMatches3(ViatraQueryEngine engine ) {
+	HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+	for (HostInstance hi : matcher.getAllValuesOfhost()) {
+		System.out.println(hi);
+	}
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -674,7 +806,13 @@
 </div>
 <div id="query-runtime-printonematch" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printOneMatch（ViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; // getOneArbitraryMatch返回一个可选的matcher.getOneArbitraryMatch（）//仅在可用时打印出匹配.ifPresent（match  - &gt; System.out.println（match.getHost（）））; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printOneMatch(ViatraQueryEngine engine) {
+	HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+	// getOneArbitraryMatch returns an optional
+	matcher.getOneArbitraryMatch()
+		//Print out the match only if available
+		.ifPresent(match -&gt; System.out.println(match.getHost()));
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock caution">
@@ -704,7 +842,12 @@
 </div>
 <div id="query-runtime-printalladdresses" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printAllAddresses（ViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; for（String ip：matcher.getAllValuesOfip（））{System.out.println（ip）; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printAllAddresses(ViatraQueryEngine engine) {
+    HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+    for (String ip : matcher.getAllValuesOfip()) {
+        System.out.println(ip);
+    }
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock caution">
@@ -723,7 +866,12 @@
 </div>
 <div id="query-runtime-printfilteredmatches" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printFilteredMatches（ViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; for（HostIpAddress。匹配匹配：matcher.getAllMatches（null，“152.66.102.1”））{System.out.println（match）; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printFilteredMatches(ViatraQueryEngine engine) {
+	HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+	for (HostIpAddress.Match match : matcher.getAllMatches(null, "152.66.102.1")) {
+		System.out.println(match);
+	}
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -742,7 +890,12 @@
 </div>
 <div id="query-runtime-printfilteredmatches2" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printFilteredMatches（ViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; for（HostIpAddress。匹配匹配：matcher.getAllMatches（null，“152.66.102.1”））{System.out.println（match）; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printFilteredMatches(ViatraQueryEngine engine) {
+	HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+	for (HostIpAddress.Match match : matcher.getAllMatches(null, "152.66.102.1")) {
+		System.out.println(match);
+	}
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -750,7 +903,13 @@
 </div>
 <div id="query-runtime-countmatches" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void printCounts（ViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）;的System.out.println（matcher.countMatches（））; System.out.println（matcher.hasMatch（null，null））; System.out.printf（“Count with ip 152.66.102.3：％d％n”，matcher.countMatches（null，“152.66.102.3”））; System.out.printf（“与ip 152.66.102.13：％b％n匹配”，matcher.hasMatch（null，“152.66.102.13”））; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void printCounts(ViatraQueryEngine engine) {
+	HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+	System.out.println(matcher.countMatches());
+	System.out.println(matcher.hasMatch(null, null));
+	System.out.printf("Count matches with ip 152.66.102.3: %d %n", matcher.countMatches(null, "152.66.102.3"));
+    System.out.printf("Has matches with ip 152.66.102.13: %b %n", matcher.hasMatch(null, "152.66.102.13"));
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock tip">
@@ -772,7 +931,14 @@
 </div>
 <div id="query-runtime-prepareadvanced" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private AdvancedViatraQueryEngine prepareAdvancedQueryEngine（EMFScope scope）{AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine（scope）; //初始化引擎CPSQueries.instance（）上的所有查询.prepare（engine）;返回引擎; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private AdvancedViatraQueryEngine prepareAdvancedQueryEngine(EMFScope scope) {
+    AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(scope);
+
+    // Initialize all queries on engine
+    CPSQueries.instance().prepare(engine);
+
+    return engine;
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock caution">
@@ -793,7 +959,34 @@
 </div>
 <div id="query-runtime-changelistener" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">IMatchUpdateListener &lt;HostIpAddress。Match&gt; listener = new IMatchUpdateListener &lt;HostIpAddress。匹配&gt;（）{@ Override public void notifyAppearance（HostIpAddress。匹配匹配）{System.out.printf（“[ADD]％s％n”，match.prettyPrint（））; } @Override public void notifyDisappearance（HostIpAddress。匹配匹配）{System.out.printf（“[REM]％s％n”，match.prettyPrint（））; }}; private void addChangeListener（AdvancedViatraQueryEngine engine）{HostIpAddress。Matcher matcher = HostIpAddress。Matcher.on（发动机）; try {// fireNow = true参数表示所有当前匹配都发送到监听器engine.addMatchUpdateListener（matcher，listener，true）; //执行模型操作matcher.getOneArbitraryMatch（）。ifPresent（match  - &gt; match.getHost（）。setNodeIp（“123.123.123.123”））; } finally {//如果不再需要，请不要忘记删除监听器engine.removeMatchUpdateListener（matcher，listener）; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">IMatchUpdateListener&lt;HostIpAddress.Match&gt; listener = new IMatchUpdateListener&lt;HostIpAddress.Match&gt;() {
+
+    @Override
+    public void notifyAppearance(HostIpAddress.Match match) {
+        System.out.printf("[ADD] %s %n", match.prettyPrint());
+    }
+
+    @Override
+    public void notifyDisappearance(HostIpAddress.Match match) {
+        System.out.printf("[REM] %s %n", match.prettyPrint());
+
+    }
+};
+
+private void addChangeListener(AdvancedViatraQueryEngine engine) {
+    HostIpAddress.Matcher matcher = HostIpAddress.Matcher.on(engine);
+
+    try {
+        // fireNow = true parameter means all current matches are sent to the listener
+        engine.addMatchUpdateListener(matcher, listener, true);
+        // execute model manipulations
+        matcher.getOneArbitraryMatch()
+        	.ifPresent(match -&gt; match.getHost().setNodeIp("123.123.123.123"));
+    } finally {
+        // Don't forget to remove listeners if not required anymore
+        engine.removeMatchUpdateListener(matcher, listener);
+    }
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -832,7 +1025,17 @@
 </div>
 <div id="query-runtime-localsearch" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private void queryWithLocalSearch（AdvancedViatraQueryEngine engine）{//为本地搜索准备一个提示QueryEvaluationHint hint = LocalSearchHints.getDefault（）。build（）; //确保本地搜索用于匹配HostIpAddress。Matcher matcher = engine.getMatcher（HostIpAddress.instance（），hint）; //本地搜索后端具有与Rete后端相同的API（HostIpAddress。匹配匹配：matcher.getAllMatches（））{System.out.println（match.prettyPrint（））; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private void queryWithLocalSearch(AdvancedViatraQueryEngine engine) {
+	// Prepares a hint for local search
+    QueryEvaluationHint hint = LocalSearchHints.getDefault().build();
+    // Ensures that local search is used for matching
+    HostIpAddress.Matcher matcher = engine.getMatcher(HostIpAddress.instance(), hint);
+
+    // The local search backend features the same API as the Rete backend
+    for (HostIpAddress.Match match : matcher.getAllMatches()) {
+        System.out.println(match.prettyPrint());
+    }
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -900,7 +1103,35 @@
 </div>
 <div id="bmt-queries" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">导入“http：//org.eclipse.viatra/model/cps”导入“http：//org.eclipse.viatra/model/deployment”import“http：//org.eclipse.viatra/model/cps-traceability” pattern hostInstance（hostInstance：HostInstance）{HostInstance（hostInstance）; pattern applicationInstance（appType：ApplicationType，appInstance：ApplicationInstance）{HostInstance.applications（_，appInstance）; ApplicationType.instances（appType，appInstance）; } / ** *可跟踪性链接访问* / pattern cps2depTrace（cps2dep：CPSToDeployment，trace：CPS2DeploymentTrace，cpsElement：Identifiable，depElement：DeploymentElement）{CPSToDeployment.traces（cps2dep，trace）; CPS2DeploymentTrace.cpsElements（trace，cpsElement）; CPS2DeploymentTrace.deploymentElements（trace，depElement）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">import "http://org.eclipse.viatra/model/cps"
+import "http://org.eclipse.viatra/model/deployment"
+import "http://org.eclipse.viatra/model/cps-traceability"
+
+pattern hostInstance(hostInstance : HostInstance) {
+    HostInstance(hostInstance);
+}
+
+pattern applicationInstance(
+    appType : ApplicationType,
+    appInstance : ApplicationInstance
+) {
+    HostInstance.applications(_, appInstance);
+    ApplicationType.instances(appType, appInstance);
+}
+
+/**
+ * Traceability link access
+ */
+pattern cps2depTrace(
+    cps2dep : CPSToDeployment,
+    trace : CPS2DeploymentTrace,
+    cpsElement : Identifiable,
+    depElement : DeploymentElement
+) {
+    CPSToDeployment.traces(cps2dep, trace);
+    CPS2DeploymentTrace.cpsElements(trace, cpsElement);
+    CPS2DeploymentTrace.deploymentElements(trace, depElement);
+}</code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -946,7 +1177,12 @@
 </div>
 <div id="bmt-codeextensions" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">/ ** VIATRA查询模式组** / val扩展名CpsXformM2M cpsXformM2M = CpsXformM2M.instance / ** EMF元模型** / val扩展名DeploymentPackage depPackage = DeploymentPackage.eINSTANCE val扩展名TraceabilityPackage trPackage = TraceabilityPackage.eINSTANCE</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">/** VIATRA Query Pattern group **/
+val extension CpsXformM2M cpsXformM2M = CpsXformM2M.instance
+
+/** EMF metamodels **/
+val extension DeploymentPackage depPackage = DeploymentPackage.eINSTANCE
+val extension TraceabilityPackage trPackage = TraceabilityPackage.eINSTANCE</code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -962,7 +1198,15 @@
 <p>IModelManipulations实现用于使模型访问可替换，这样，相同的转换可用于资源集是事务性的情况。其初始化自动生成到<code>createTransformation</code>方法中。</p>
 <div id="bmt-init" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val CPSToDeployment cps2dep new（CPSToDeployment cps2dep，ViatraQueryEngine引擎）{this.cps2dep = cps2dep resource = cps2dep.deployment.eResource this.engine = engine prepare（engine）createTransformation}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val CPSToDeployment cps2dep
+
+new(CPSToDeployment cps2dep, ViatraQueryEngine engine) {
+    this.cps2dep = cps2dep
+    resource = cps2dep.deployment.eResource
+    this.engine = engine
+    prepare(engine)
+    createTransformation
+}</code></pre>
 </div>
 </div>
 </li>
@@ -983,7 +1227,7 @@
 <p>VIATRA查询用作规则的前提条件，这意味着每次更改时给定模式都会激活规则，从而允许相应地更新输出。</p>
 <div id="bmt-rule-structure" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val hostRule = createRule.precondition（HostInstance.instance）.action [/ * Action part * /]。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val hostRule = createRule.precondition(HostInstance.instance).action[/*Action part*/].build</code></pre>
 </div>
 </div>
 </li>
@@ -994,7 +1238,24 @@
 <p>指定规则触发时要运行的操作。它将在输出模型中创建转换后的<code>DeploymentHost</code>元素，以及关联源<code>HostInstance</code>和目标<code>DeploymentHost</code>的跟踪元素：</p>
 <div id="bmt-hostrule" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val hostRule = createRule（HostInstance.instance）.action [val cpsHostInstance = it.hostInstance val nodeIp = cpsHostInstance.nodeIp println（'''使用IP映射主机：«nodeIp»'''）/ **在输出中创建并初始化DeploymentHost model ** / val depHost = cps2dep.deployment.createChild（deployment_Hosts，deploymentHost）=&gt; [set（deploymentHost_Ip，nodeIp）] / **在跟踪模型中创建跟踪元素** / cps2dep.createChild（CPSToDeployment_Traces，CPS2DeploymentTrace）=&gt; [ addTo（CPS2DeploymentTrace_CpsElements，cpsHostInstance）addTo（CPS2DeploymentTrace_DeploymentElements，depHost）] println（'''用IP映射：«nodeIp»'''）。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val hostRule = createRule(HostInstance.instance).action[
+    val cpsHostInstance = it.hostInstance
+    val nodeIp = cpsHostInstance.nodeIp
+    println('''Mapping host with IP: «nodeIp»''')
+
+    /** Create &amp; initialize DeploymentHost in output model **/
+    val depHost = cps2dep.deployment.createChild(deployment_Hosts, deploymentHost) =&gt; [
+        set(deploymentHost_Ip, nodeIp)
+    ]
+
+    /** Create trace element in trace model **/
+    cps2dep.createChild(CPSToDeployment_Traces, CPS2DeploymentTrace) =&gt; [
+        addTo(CPS2DeploymentTrace_CpsElements, cpsHostInstance)
+        addTo(CPS2DeploymentTrace_DeploymentElements, depHost)
+    ]
+
+    println('''Mapped with IP: «nodeIp»''')
+].build</code></pre>
 </div>
 </div>
 </li>
@@ -1017,7 +1278,27 @@
 <p>为<code>ApplicationInstance</code>对象创建<code>DeploymentApplication</code>元素的规则看起来很相似。它必须找到从分配源<code>ApplicationInstance</code>的<code>HostInstance</code>创建的<code>DeploymentHost</code> ，因此它假定<code>hostRule</code>已经触发：</p>
 <div id="bmt-apprule" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val applicationRule = createRule（ApplicationInstance.instance）.action [val cpsApplicationInstance = it.appInstance val appId = cpsApplicationInstance.identifier println（'''使用ID映射应用程序：«appId»'''）/ *查找从HostInstance创建的DeploymentHost分配源ApplicationInstance * / val cpsHostInstance = cpsApplicationInstance.allocatedTo val depHost = engine.cps2depTrace.getAllValuesOfdepElement（null，null，cpsHostInstance）.filter（DeploymentHost）.head / *在此DeploymentHost * / val部署应用程序中创建和初始化DeploymentApplication = depHost.createChild（deploymentHost_Applications，deploymentApplication）=&gt; [set（deploymentApplication_Id，appId）] / *在跟踪模型中创建跟踪元素* / cps2dep.createChild（CPSToDeployment_Traces，CPS2DeploymentTrace）=&gt; [addTo（CPS2DeploymentTrace_CpsElements，cpsApplicationInstance）addTo（CPS2DeploymentTrace_DeploymentElements， deploymentApplication）] println（'''带有ID的映射应用程序： «appId»'''）]。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val applicationRule = createRule(ApplicationInstance.instance).action[
+    val cpsApplicationInstance = it.appInstance
+    val appId = cpsApplicationInstance.identifier
+    println('''Mapping application with ID: «appId»''')
+
+    /* Find the DeploymentHost created from the HostInstance to which the source ApplicationInstance is allocated */
+    val cpsHostInstance = cpsApplicationInstance.allocatedTo
+    val depHost = engine.cps2depTrace.getAllValuesOfdepElement(null, null, cpsHostInstance).filter(DeploymentHost).head
+    /* Create &amp; initialize DeploymentApplication in this DeploymentHost */
+    val deploymentApplication = depHost.createChild(deploymentHost_Applications, deploymentApplication) =&gt; [
+        set(deploymentApplication_Id, appId)
+    ]
+
+    /* Create trace element in trace model */
+    cps2dep.createChild(CPSToDeployment_Traces, CPS2DeploymentTrace) =&gt; [
+        addTo(CPS2DeploymentTrace_CpsElements, cpsApplicationInstance)
+        addTo(CPS2DeploymentTrace_DeploymentElements, deploymentApplication)
+    ]
+
+    println('''Mapped application with ID: «appId»''')
+].build</code></pre>
 </div>
 </div>
 </li>
@@ -1032,7 +1313,15 @@
 <p>注意按正确的顺序解雇规则</p>
 <div id="bme-execute" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">def execute（）{println（'''执行转换：网络物理系统：«cps2dep.cps.identifier»'''）* *清除批量转换的输出和跟踪模型** / cps2dep.deployment.hosts.clear cps2dep.traces.clear / * Fire转换规则** / hostRule.fireAllCurrent applicationRule.fireAllCurrent}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">def execute() {
+    println('''Executing transformation on: Cyber-physical system: «cps2dep.cps.identifier»''')
+    /* Clear output &amp; trace model for batch transformation**/
+    cps2dep.deployment.hosts.clear
+    cps2dep.traces.clear
+    /* Fire transformation rules**/
+    hostRule.fireAllCurrent
+    applicationRule.fireAllCurrent
+}</code></pre>
 </div>
 </div>
 </li>
@@ -1050,7 +1339,10 @@
 <p>使用以下附加依赖项创建UI插件：</p>
 <div id="bmt-ui-dependencies" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">org.eclipse.ui，com.incquerylabs.course.cps.viatra.batch; bundle-version =“0.1.0”，org.eclipse.viatra.examples.cps.traceability; bundle-version =“0.1.0”， org.eclipse.viatra.query.runtime;捆版本= “1.2.0”</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">org.eclipse.ui,
+com.incquerylabs.course.cps.viatra.batch;bundle-version="0.1.0",
+org.eclipse.viatra.examples.cps.traceability;bundle-version="0.1.0",
+org.eclipse.viatra.query.runtime;bundle-version="1.2.0"</code></pre>
 </div>
 </div>
 </li>
@@ -1059,7 +1351,36 @@
 <div id="bmt-handler" class="listingblock">
 <div class="title">TransformHandler.java</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类TransformHandler扩展AbstractHandler实现IHandler {ViatraQueryEngine引擎; CPS2DeploymentTransformationViatra转换; @Override public Object execute（ExecutionEvent event）抛出ExecutionException {IStructuredSelection selection =（IStructuredSelection）HandlerUtil.getCurrentSelection（event）; CPSToDeployment tracemodel =（CPSToDeployment）selection.getFirstElement（）; if（engine == null）{try {engine = ViatraQueryEngine.on（new EMFScope（tracemodel.eResource（）。getResourceSet（）））; transformation = new CPS2DeploymentTransformationViatra（tracemodel，engine）; } catch（ViatraQueryException e）{throw new ExecutionException（e.getMessage（），e）; transformation.execute（）; return null; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class TransformHandler extends AbstractHandler implements IHandler {
+
+    ViatraQueryEngine engine;
+    CPS2DeploymentTransformationViatra transformation;
+
+    @Override
+    public Object execute(ExecutionEvent event) throws ExecutionException {
+        IStructuredSelection selection =
+            (IStructuredSelection) HandlerUtil.getCurrentSelection(event);
+
+        CPSToDeployment tracemodel =
+            (CPSToDeployment) selection.getFirstElement();
+
+        if (engine == null){
+            try {
+                engine = ViatraQueryEngine.on(
+                            new EMFScope(
+                                tracemodel.eResource().getResourceSet()));
+                transformation = new CPS2DeploymentTransformationViatra(tracemodel,
+                                                                engine);
+            } catch (ViatraQueryException e) {
+                throw new ExecutionException(e.getMessage(), e);
+            }
+        }
+        transformation.execute();
+
+        return null;
+    }
+
+}</code></pre>
 </div>
 </div>
 </li>
@@ -1067,7 +1388,31 @@
 <p>在<code>plugin.xml</code>的<code>CPSToDeployment</code>元素的上下文菜单中注册处理程序：</p>
 <div id="bmt-command" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension point =“org.eclipse.ui.commands”&gt; &lt;command defaultHandler =“com.incquerylabs.course.cps.viatra.batch.ui。TransformHandler“id =”com.incquerylabs.course.cps.viatra.batch.ui.command“name =”Transform“&gt; &lt;/ command&gt; &lt;/ extension&gt; &lt;extension point =”org.eclipse.ui.menus“&gt; &lt; menuContribution allPopups =“false”locationURI =“popup：org.eclipse.ui.popup.any？after = additions“&gt; &lt;command commandId =”com.incquerylabs.course.cps.viatra.batch.ui.command“style =”push“&gt; &lt;visibleWhen checkEnabled =”false“&gt; &lt;with variable =”selection“&gt; &lt;count value =“1”&gt; &lt;/ count&gt; &lt;iterate&gt; &lt;adapt type =“org.eclipse.viatra.examples.cps.traceability。CPSToDeployment“&gt; &lt;/ adapt&gt; &lt;/ iterate&gt; &lt;/ with&gt; &lt;/ visibleWhen&gt; &lt;/ command&gt; &lt;/ menuContribution&gt; &lt;/ extension&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension point="org.eclipse.ui.commands"&gt;
+    &lt;command
+        defaultHandler="com.incquerylabs.course.cps.viatra.batch.ui.TransformHandler"
+        id="com.incquerylabs.course.cps.viatra.batch.ui.command"
+        name="Transform"&gt;
+    &lt;/command&gt;
+&lt;/extension&gt;
+&lt;extension point="org.eclipse.ui.menus"&gt;
+    &lt;menuContribution allPopups="false"
+            locationURI="popup:org.eclipse.ui.popup.any?after=additions"&gt;
+        &lt;command commandId="com.incquerylabs.course.cps.viatra.batch.ui.command"
+                style="push"&gt;
+            &lt;visibleWhen checkEnabled="false"&gt;
+                &lt;with variable="selection"&gt;
+                    &lt;count value="1"&gt;
+                    &lt;/count&gt;
+                    &lt;iterate&gt;
+                        &lt;adapt type="org.eclipse.viatra.examples.cps.traceability.CPSToDeployment"&gt;
+                        &lt;/adapt&gt;
+                    &lt;/iterate&gt;
+                &lt;/with&gt;
+            &lt;/visibleWhen&gt;
+        &lt;/command&gt;
+    &lt;/menuContribution&gt;
+&lt;/extension&gt;</code></pre>
 </div>
 </div>
 </li>
@@ -1188,7 +1533,28 @@
 </div>
 <div id="emt-queries" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">导入“http：//org.eclipse.viatra/model/cps”导入“http：//org.eclipse.viatra/model/deployment”import“http：//org.eclipse.viatra/model/cps-traceability” pattern hostInstance（hostInstance）{HostInstance（hostInstance）; pattern applicationInstance（appType，appInstance）{HostInstance.applications（_，appInstance）; ApplicationType.instances（appType，appInstance）; pattern allocatedDeploymentApplication（depHost，depApp）{DeploymentHost.applications（depHost，depApp）; } cps2depTrace（cps2dep，trace，cpsElement，depElement）{CPSToDeployment.traces（cps2dep，trace）; CPS2DeploymentTrace.cpsElements（trace，cpsElement）; CPS2DeploymentTrace.deploymentElements（trace，depElement）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">import "http://org.eclipse.viatra/model/cps"
+import "http://org.eclipse.viatra/model/deployment"
+import "http://org.eclipse.viatra/model/cps-traceability"
+
+pattern hostInstance(hostInstance) {
+    HostInstance(hostInstance);
+}
+
+pattern applicationInstance(appType, appInstance){
+    HostInstance.applications(_, appInstance);
+    ApplicationType.instances(appType, appInstance);
+}
+
+pattern allocatedDeploymentApplication(depHost, depApp) {
+    DeploymentHost.applications(depHost, depApp);
+}
+
+pattern cps2depTrace(cps2dep, trace, cpsElement, depElement) {
+    CPSToDeployment.traces(cps2dep, trace);
+    CPS2DeploymentTrace.cpsElements(trace, cpsElement);
+    CPS2DeploymentTrace.deploymentElements(trace, depElement);
+}</code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -1235,7 +1601,16 @@
 <p>注册使用的特定于域的API作为扩展，已生成通用API</p>
 <div id="emt-extensions" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">/ * * VIATRA查询组* / val扩展名CpsXformM2M cpsXformM2M = CpsXformM2M.instance / * * EMF元模型* / val扩展名DeploymentPackage depPackage = DeploymentPackage :: eINSTANCE val扩展名TraceabilityPackage trPackage = TraceabilityPackage :: eINSTANCE</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">/*
+ * VIATRA Query group
+ */
+val extension CpsXformM2M cpsXformM2M = CpsXformM2M.instance
+
+/*
+ * EMF metamodels
+ */
+val extension DeploymentPackage depPackage = DeploymentPackage::eINSTANCE
+val extension TraceabilityPackage trPackage = TraceabilityPackage::eINSTANCE</code></pre>
 </div>
 </div>
 </li>
@@ -1250,7 +1625,15 @@
 <p>IModelManipulations实现用于使模型访问可替换，这种方式相同的转换可用于资源集是事务性的情况</p>
 <div id="emt-init" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val CPSToDeployment cps2dep new（CPSToDeployment cps2dep，ViatraQueryEngine引擎）{this.cps2dep = cps2dep this.resource = cps2dep.deployment.eResource this.engine = engine prepare（engine）createTransformation}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val CPSToDeployment cps2dep
+
+new(CPSToDeployment cps2dep, ViatraQueryEngine engine) {
+    this.cps2dep = cps2dep
+    this.resource = cps2dep.deployment.eResource
+    this.engine = engine
+    prepare(engine)
+    createTransformation
+}</code></pre>
 </div>
 </div>
 </li>
@@ -1271,7 +1654,7 @@
 <p>VIATRA查询模式用作规则的前提条件，这意味着每当给定模式更改时，将激活规则，从而允许相应地更新输出。</p>
 <div id="emt-rule-structure" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val hostRule = createRule（HostInstanceMatcher.querySpecification）</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val hostRule = createRule(HostInstanceMatcher.querySpecification)</code></pre>
 </div>
 </div>
 </li>
@@ -1301,7 +1684,20 @@
 <p>在创建HostInstance时</p>
 <div id="emt-hostrule" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">.action（CRUDActivationStateEnum。创建）[val hostinstance = hostInstance val nodeIp = hostInstance.nodeIp println（'''使用IP映射主机：«nodeIp»'''）/ *在输出模型中创建新的DeploymentHost元素* / val host = cps2dep.deployment.createChild（ deployment_Hosts，deploymentHost）=&gt; [set（deploymentHost_Ip，nodeIp）] / *创建跟踪条目* / cps2dep.createChild（CPSToDeployment_Traces，CPS2DeploymentTrace）=&gt; [addTo（CPS2DeploymentTrace_CpsElements，hostinstance）addTo（CPS2DeploymentTrace_DeploymentElements，host）]]</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">.action(CRUDActivationStateEnum.CREATED) [
+    val hostinstance = hostInstance
+    val nodeIp = hostInstance.nodeIp
+    println('''Mapping host with IP: «nodeIp»''')
+    /* Create new DeploymentHost element in output model */
+    val host = cps2dep.deployment.createChild(deployment_Hosts, deploymentHost) =&gt; [
+        set(deploymentHost_Ip, nodeIp)
+    ]
+    /* Create trace entry */
+    cps2dep.createChild(CPSToDeployment_Traces, CPS2DeploymentTrace) =&gt; [
+        addTo(CPS2DeploymentTrace_CpsElements, hostinstance)
+        addTo(CPS2DeploymentTrace_DeploymentElements, host)
+    ]
+]</code></pre>
 </div>
 </div>
 </li>
@@ -1309,7 +1705,18 @@
 <p>在更改HostInstance时</p>
 <div id="emt-hostupdated" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">.action（CRUDActivationStateEnum。UPDATED）[/ *找到关联的DeploymentHost元素* / val depHost = engine.cps2depTrace .getOneArbitraryMatch（cps2dep，null，hostInstance，null）.depElement as DeploymentHost val hostIp = depHost.ip println（'''用IP更新映射的主机：« hostIp»'''）/ *更新IP属性* / val nodeIp = hostInstance.nodeIp depHost.set（deploymentHost_Ip，nodeIp）println（'''使用IP更新映射主机：«nodeIp»''']]</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">.action(CRUDActivationStateEnum.UPDATED) [
+    /* find associated DeploymentHost element */
+    val depHost = engine.cps2depTrace
+                        .getOneArbitraryMatch(cps2dep, null, hostInstance, null)
+                        .depElement as DeploymentHost
+    val hostIp = depHost.ip
+    println('''Updating mapped host with IP: «hostIp»''')
+    /* update IP attribute */
+    val nodeIp = hostInstance.nodeIp
+    depHost.set(deploymentHost_Ip, nodeIp)
+    println('''Updated mapped host with IP: «nodeIp»''')
+]</code></pre>
 </div>
 </div>
 </li>
@@ -1317,7 +1724,18 @@
 <p>删除HostInstance后</p>
 <div id="emt-hostdeleted" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">.action（CRUDActivationStateEnum。DELETED）[/ *查找trace元素* / val traceMatch = engine.cps2depTrace .getOneArbitraryMatch（cps2dep，null，hostInstance，null）val hostIp = hostInstance.nodeIp println（'''删除带IP的主机：«hostIp»'''） / *删除DeploymentHost元素* / cps2dep.deployment.remove（deployment_Hosts，traceMatch.depElement）/ *删除跟踪* / cps2dep.remove（CPSToDeployment_Traces，traceMatch.trace）println（'''删除了主机IP：«hostIp»'' '）]</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">.action(CRUDActivationStateEnum.DELETED) [
+    /* Find trace element */
+    val traceMatch = engine.cps2depTrace
+                        .getOneArbitraryMatch(cps2dep, null, hostInstance, null)
+    val hostIp = hostInstance.nodeIp
+    println('''Removing host with IP: «hostIp»''')
+    /* Remove DeploymentHost element */
+    cps2dep.deployment.remove(deployment_Hosts, traceMatch.depElement)
+    /* Remove trace */
+    cps2dep.remove(CPSToDeployment_Traces, traceMatch.trace)
+    println('''Removed host with IP: «hostIp»''')
+]</code></pre>
 </div>
 </div>
 </li>
@@ -1329,7 +1747,7 @@
 <p>生命周期定义用于确定转换操作可以定义的可能状态的状态机。</p>
 <div id="emt-lifecycle" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">.addLifeCycle（Lifecycles.getDefault（true，true））。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">.addLifeCycle(Lifecycles.getDefault(true, true)).build</code></pre>
 </div>
 </div>
 </li>
@@ -1343,7 +1761,40 @@
 <p>为ApplicationInstances创建DeploymentApplication元素的规则看起来很相似</p>
 <div id="emt-applicationrule" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">val applicationRule = createRule（ApplicationInstanceMatcher.querySpecification）.action（CRUDActivationStateEnum。创建）[/ *查找HostInstance的相关DeploymentHost，此应用程序分配给* / val depHost = engine.cps2depTrace.getAllValuesOfdepElement（null，null，appInstance.allocatedTo）.filter（DeploymentHost）.head val appinstance = appInstance val appId = appInstance .identifier println（'''带有ID的映射应用程序：«appId»'''）/ *在host * / val app = depHost.createChild中创建DeploymentApplication应用程序（deploymentHost_Applications，deploymentApplication）=&gt; [set（deploymentApplication_Id，appId）] / *创建跟踪条目* / cps2dep.createChild（CPSToDeployment_Traces，CPS2DeploymentTrace）=&gt; [addTo（CPS2DeploymentTrace_CpsElements，appinstance）addTo（CPS2DeploymentTrace_DeploymentElements，app）] println（'''带有ID的映射应用程序：«appId»'''）。。action （CRUDActivationStateEnum。UPDATED）[/ *查找关联的DeploymentApplication * / val depApp = engine.cps2depTrace.getOneArbitraryMatch（cps2dep，null，appInstance，null）。depElement as DeploymentApplication / * Update ID * / if（depApp.id！= appInstance.identifier）depApp.set（deploymentApplication_Id，appInstance.identifier）]。action（CRUDActivationStateEnum。DELETED）[/ *查找关联的DeploymentApplication * / val trace = engine.cps2depTrace.getAllValuesOftrace（null，appInstance，null）.head作为CPS2DeploymentTrace val depApp = trace.deploymentElements.head作为DeploymentApplication / *从host * / engine.allocatedDeploymentApplication中删除应用程序.getAllValuesOfdepHost（depApp）.head.remove（deploymentHost_Applications，depApp）/ *删除跟踪* / cps2dep.remove（CPSToDeployment_Traces，trace）]。addLifeCycle（Lifecycles.getDefault（true，true））。build</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">val applicationRule = createRule(ApplicationInstanceMatcher.querySpecification)
+.action(CRUDActivationStateEnum.CREATED) [
+    /* Find associated DeploymentHost for the HostInstance this application is allocated to */
+    val depHost = engine.cps2depTrace.getAllValuesOfdepElement(null, null, appInstance.allocatedTo).filter(
+        DeploymentHost).head
+    val appinstance = appInstance
+    val appId = appInstance.identifier
+    println('''Mapping application with ID: «appId»''')
+    /* Create DeploymentApplication application in host */
+    val app = depHost.createChild(deploymentHost_Applications, deploymentApplication) =&gt; [
+        set(deploymentApplication_Id, appId)
+    ]
+    /* create trace entry */
+    cps2dep.createChild(CPSToDeployment_Traces, CPS2DeploymentTrace) =&gt; [
+        addTo(CPS2DeploymentTrace_CpsElements, appinstance)
+        addTo(CPS2DeploymentTrace_DeploymentElements, app)
+    ]
+    println('''Mapped application with ID: «appId»''')
+].action(CRUDActivationStateEnum.UPDATED) [
+    /* find associated DeploymentApplication */
+    val depApp = engine.cps2depTrace.getOneArbitraryMatch(cps2dep, null, appInstance, null).
+        depElement as DeploymentApplication
+    /* Update ID */
+    if (depApp.id != appInstance.identifier)
+        depApp.set(deploymentApplication_Id, appInstance.identifier)
+].action(CRUDActivationStateEnum.DELETED) [
+    /* find associated DeploymentApplication */
+    val trace = engine.cps2depTrace.getAllValuesOftrace(null, appInstance, null).head as CPS2DeploymentTrace
+    val depApp = trace.deploymentElements.head as DeploymentApplication
+    /* Remove application from host */
+    engine.allocatedDeploymentApplication.getAllValuesOfdepHost(depApp).head.remove(deploymentHost_Applications, depApp)
+    /* Remove traces */
+    cps2dep.remove(CPSToDeployment_Traces, trace)
+].addLifeCycle(Lifecycles.getDefault(true, true)).build</code></pre>
 </div>
 </div>
 </li>
@@ -1358,7 +1809,21 @@
 <p>我们使用基于优先级的解析器（优先级较低的规则将首先执行），它考虑要删除的消失规则的优先级（消失的应用程序的优先级将为-2）</p>
 <div id="emt-create" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">private def createTransformation（）{//初始化模型操作API this.manipulation = new SimpleModelManipulations（engine）//初始化事件驱动的转换val fixedPriorityResolver = new InvertedDisappearancePriorityConflictResolver fixedPriorityResolver.setPriority（hostRule.ruleSpecification，1）fixedPriorityResolver.setPriority（applicationRule.ruleSpecification ，2）transformation = EventDrivenTransformation.forEngine（engine）.setConflictResolver（fixedPriorityResolver）.addRule（hostRule）.addRule（applicationRule）.build}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">private def createTransformation() {
+    //Initialize model manipulation API
+    this.manipulation = new SimpleModelManipulations(engine)
+
+    //Initialize event-driven transformation
+    val fixedPriorityResolver = new InvertedDisappearancePriorityConflictResolver
+    fixedPriorityResolver.setPriority(hostRule.ruleSpecification, 1)
+    fixedPriorityResolver.setPriority(applicationRule.ruleSpecification, 2)
+
+    transformation = EventDrivenTransformation.forEngine(engine)
+        .setConflictResolver(fixedPriorityResolver)
+        .addRule(hostRule)
+        .addRule(applicationRule)
+        .build
+}</code></pre>
 </div>
 </div>
 </li>
@@ -1380,7 +1845,10 @@
 <div id="emt-dependencies" class="listingblock">
 <div class="title">MANIFEST.MF</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">org.eclipse.ui，com.incquerylabs.course.cps.viatra.incr; bundle-version =“0.1.0”，org.eclipse.viatra.examples.cps.traceability; bundle-version =“0.1.0”， org.eclipse.viatra.query.runtime;捆版本= “1.2.0”</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">org.eclipse.ui,
+com.incquerylabs.course.cps.viatra.incr;bundle-version="0.1.0",
+org.eclipse.viatra.examples.cps.traceability;bundle-version="0.1.0",
+org.eclipse.viatra.query.runtime;bundle-version="1.2.0"</code></pre>
 </div>
 </div>
 </li>
@@ -1389,7 +1857,45 @@
 <div id="emt-handler" class="listingblock">
 <div class="title">ToggleTransformationHandler.java</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类ToggleTransformationHandler扩展AbstractHandler实现IHandler {ViatraQueryEngine引擎; CPS2DeploymentTransformationViatra转换; / *（非Javadoc）* @see org.eclipse.core.commands。IHandler＃执行（org.eclipse.core.commands。ExecutionEvent）* / @Override public Object execute（ExecutionEvent event）throws ExecutionException {IStructuredSelection selection =（IStructuredSelection）HandlerUtil.getCurrentSelection（event）; CPSToDeployment tracemodel =（CPSToDeployment）selection.getFirstElement（）; if（transformation == null）{if（engine == null）{try {engine = ViatraQueryEngine.on（new EMFScope（tracemodel.eResource（）。getResourceSet（）））; transformation = new CPS2DeploymentTransformationViatra（tracemodel，engine）; } catch（ViatraQueryException e）{throw new ExecutionException（e.getMessage（），e）; }}} else {transformation.dispose（）; } return null; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class ToggleTransformationHandler extends AbstractHandler implements IHandler {
+
+    ViatraQueryEngine engine;
+    CPS2DeploymentTransformationViatra transformation;
+
+
+    /* (non-Javadoc)
+     * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
+     */
+    @Override
+    public Object execute(ExecutionEvent event) throws ExecutionException {
+        IStructuredSelection selection =
+            (IStructuredSelection) HandlerUtil.getCurrentSelection(event);
+
+        CPSToDeployment tracemodel =
+            (CPSToDeployment) selection.getFirstElement();
+
+        if(transformation == null) {
+            if(engine == null) {
+                try {
+                    engine = ViatraQueryEngine.on(
+                                new EMFScope(
+                                    tracemodel.eResource()
+                                                .getResourceSet()));
+                    transformation =
+                        new CPS2DeploymentTransformationViatra(tracemodel,
+                                                                engine);
+                } catch (ViatraQueryException e) {
+                    throw new ExecutionException(e.getMessage(), e);
+                }
+            }
+        } else {
+            transformation.dispose();
+        }
+
+        return null;
+    }
+
+}</code></pre>
 </div>
 </div>
 </li>
@@ -1398,7 +1904,31 @@
 <div id="emt-command" class="listingblock">
 <div class="title">plugin.xml中</div>
 <div class="content">
-<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension point =“org.eclipse.ui.commands”&gt; &lt;command defaultHandler =“com.incquerylabs.course.cps.viatra.incr.ui。ToggleTransformationHandler“id =”com.incquerylabs.course.cps.viatra.incr.ui.command“name =”Toggle Transformation“&gt; &lt;/ command&gt; &lt;/ extension&gt; &lt;extension point =”org.eclipse.ui.menus“&gt; &lt;menuContribution allPopups =“false”locationURI =“popup：org.eclipse.ui.popup.any？after = additions“&gt; &lt;command commandId =”com.incquerylabs.course.cps.viatra.incr.ui.command“label =”Toggle Incremental Transformation“style =”push“&gt; &lt;visibleWhen checkEnabled =”false“&gt; &lt;with variable =“selection”&gt; &lt;count value =“1”&gt; &lt;/ count&gt; &lt;iterate&gt; &lt;adapt type =“org.eclipse.viatra.examples.cps.traceability。CPSToDeployment“&gt; &lt;/ adapt&gt; &lt;/ iterate&gt; &lt;/ with&gt; &lt;/ visibleWhen&gt; &lt;/ command&gt; &lt;/ menuContribution&gt; &lt;/ extension&gt;</code></pre>
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;extension point="org.eclipse.ui.commands"&gt;
+    &lt;command defaultHandler="com.incquerylabs.course.cps.viatra.incr.ui.ToggleTransformationHandler"
+            id="com.incquerylabs.course.cps.viatra.incr.ui.command"
+            name="Toggle Transformation"&gt;
+    &lt;/command&gt;
+&lt;/extension&gt;
+&lt;extension point="org.eclipse.ui.menus"&gt;
+    &lt;menuContribution allPopups="false"
+            locationURI="popup:org.eclipse.ui.popup.any?after=additions"&gt;
+        &lt;command commandId="com.incquerylabs.course.cps.viatra.incr.ui.command"
+                label="Toggle Incremental Transformation"
+                style="push"&gt;
+            &lt;visibleWhen checkEnabled="false"&gt;
+                &lt;with variable="selection"&gt;
+                    &lt;count value="1"&gt;
+                    &lt;/count&gt;
+                    &lt;iterate&gt;
+                        &lt;adapt type="org.eclipse.viatra.examples.cps.traceability.CPSToDeployment"&gt;
+                        &lt;/adapt&gt;
+                    &lt;/iterate&gt;
+                &lt;/with&gt;
+            &lt;/visibleWhen&gt;
+        &lt;/command&gt;
+    &lt;/menuContribution&gt;
+&lt;/extension&gt;</code></pre>
 </div>
 </div>
 </li>
@@ -1569,7 +2099,12 @@
 </div>
 <div id="Transformation-setup" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-Java" data-lang="Java">private def createTransformation（）{import org.eclipse.viatra.transformation.debug.configuration。TransformationDebuggerConfiguration ...transformation = BatchTransformation.forEngine（engine）.addAdapterConfiguration（new TransformationDebuggerConfiguration（“TestTransformation”））。build ...}</code></pre>
+<pre class="highlight"><code class="language-Java" data-lang="Java">private def createTransformation() {
+    import org.eclipse.viatra.transformation.debug.configuration.TransformationDebuggerConfiguration
+    ...
+    transformation = BatchTransformation.forEngine(engine).addAdapterConfiguration(new TransformationDebuggerConfiguration("TestTransformation")).build
+    ...
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1577,7 +2112,26 @@
 </div>
 <div id="Transformation-handler" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-Java" data-lang="Java">public class BatchTestHandler extends AbstractHandler {@Override public Object execute（ExecutionEvent event）throws ExecutionException {final Job job = new Job（JOB_NAME）{protected IStatus run（IProgressMonitor monitor）{//加载CPS模型CPSModelInitializer init = new CPSModelInitializer（）; CPSToDeployment cps2dep = init.loadModel（SOURCE_MODEL_URI）; //将CPS初始化为部署转换CPSTransformation transformation = new CPSBatchTransformation（cps2dep）; //执行转换并观察所选适配器transformation.execute（）的效果; transformation.dispose（）;返回状态。OK_STATUS; }}; job.schedule（）; return null; }}</code></pre>
+<pre class="highlight"><code class="language-Java" data-lang="Java">public class BatchTestHandler extends AbstractHandler {
+    @Override
+    public Object execute(ExecutionEvent event) throws ExecutionException {
+        final Job job = new Job(JOB_NAME) {
+            protected IStatus run(IProgressMonitor monitor) {
+                // Load the CPS model
+                CPSModelInitializer init = new CPSModelInitializer();
+                CPSToDeployment cps2dep = init.loadModel(SOURCE_MODEL_URI);
+                // Initialize CPS to Deployment Transformation
+                CPSTransformation transformation = new CPSBatchTransformation(cps2dep);
+                // Execute the transformation and observe the effects of the selected adapter
+                transformation.execute();
+                transformation.dispose();
+                return Status.OK_STATUS;
+            }
+        };
+        job.schedule();
+        return null;
+    }
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1585,7 +2139,9 @@
 </div>
 <div id="Transformation-vmargs" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-Java" data-lang="Java">-Dcom.sun.management.jmxremote.port =“要使用的端口，通常为1099”-Dcom.sun.management.jmxremote.authenticate = false -Dcom.sun.management.jmxremote.ssl = false</code></pre>
+<pre class="highlight"><code class="language-Java" data-lang="Java">-Dcom.sun.management.jmxremote.port="port to be used, typically 1099"
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false</code></pre>
 </div>
 </div>
 </div>

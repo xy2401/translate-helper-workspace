@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass开发人员指南 - 组件交互</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">组件交互</th>
@@ -34,35 +34,68 @@
 		<p>组件可以注册为VIP接收器，这将确保他们将在非VIP接收器之前接收信号。</p>
 		<h2 id="Sending_Signals">发送信号</h2>
 		<p>为了发送信号，必须创建信号的实例并将其作为参数传递给要分派的信号管理器。每个可以处理信号的组件都会收到它。发送者不需要知道接收者。</p>
-		<pre>TmfExampleSignal signal = new TmfExampleSignal（this，...）; TmfSignalManager.dispatchSignal（信号）;</pre>
+		<pre>
+TmfExampleSignal signal = new TmfExampleSignal(this, ...);
+TmfSignalManager.dispatchSignal(signal);
+</pre>
 		<p>如果发送方是类TmfComponent的实例，则可以使用广播方法：</p>
-		<pre>TmfExampleSignal signal = new TmfExampleSignal（this，...）;广播（信号）;</pre>
+		<pre>
+TmfExampleSignal signal = new TmfExampleSignal(this, ...);
+broadcast(signal);
+</pre>
 		<h2 id="Receiving_Signals">接收信号</h2>
 		<p>为了接收任何信号，接收器必须首先向信号管理器注册。接收器可以注册为普通接收器或VIP接收器。</p>
-		<pre>TmfSignalManager.register（本）; TmfSignalManager.registerVIP（本）;</pre>
+		<pre>
+TmfSignalManager.register(this);
+TmfSignalManager.registerVIP(this);
+</pre>
 		<p>如果接收器是类TmfComponent的实例，它将自动注册为构造函数中的普通接收器。</p>
 		<p>当接收器被销毁或丢弃时，它应该从信号管理器中注销自己。</p>
-		<pre>TmfSignalManager.deregister（本）;</pre>
+		<pre>
+TmfSignalManager.deregister(this);
+</pre>
 		<p>为了实际接收和处理任何特定信号，接收器必须使用@TmfSignalHandler注释并实现在广播信号时将被调用的方法。方法的名称无关紧要。</p>
-		<pre>@TmfSignalHandler public void example（TmfExampleSignal signal）{...}</pre>
+		<pre>
+@TmfSignalHandler
+public void example(TmfExampleSignal signal) {
+    ...
+}
+</pre>
 		<p>如果需要，信号源可以被一个组件用来过滤掉并忽略当组件也是信号接收器时自己广播的信号，但只有当它被另一个组件发送时才需要处理它。或组件的另一个实例。</p>
 		<h2 id="Signal_Throttling">信号限制</h2>
 		<p>TmfComponent实例可以缓冲信号的调度，以便只有在指定的延迟之后排队的最后一个信号没有任何其他信号排队被发送到接收器。被延迟内的较新信号抢占的所有信号都被丢弃。</p>
 		<p>必须首先初始化信号调节器：</p>
-		<pre>final int delay = 100; // ms ms TmfSignalThrottler throttler = new TmfSignalThrottler（this，delay）;</pre>
+		<pre>
+final int delay = 100; // in ms
+TmfSignalThrottler throttler = new TmfSignalThrottler(this, delay);
+</pre>
 		<p>然后发送信号应该通过节流器排队：</p>
-		<pre>TmfExampleSignal signal = new TmfExampleSignal（this，...）; throttler.queue（信号）;</pre>
+		<pre>
+TmfExampleSignal signal = new TmfExampleSignal(this, ...);
+throttler.queue(signal);
+</pre>
 		<p>当不再需要节流器时，应该处理掉：</p>
-		<pre>throttler.dispose（）;</pre>
+		<pre>
+throttler.dispose();
+</pre>
 		<h2 id="Ignoring_inbound.2Foutbound_signals">忽略入站/出站信号</h2>
 		<p>可以阻止发送或接收某些信号。</p>
 		<p>阻止所有传入信号到对象：</p>
-		<pre>TmfSignalManager.addIgnoredInboundSignal（objectInstance，TmfSignal.class）;</pre>
+		<pre>
+    TmfSignalManager.addIgnoredInboundSignal(objectInstance, TmfSignal.class);
+</pre>
 		<p>阻止源自对象的所有传出信号：</p>
-		<pre>TmfSignalManager.addIgnoredOutboundSignal（objectInstance，TmfSignal.class）;</pre>
+		<pre>
+    TmfSignalManager.addIgnoredOutboundSignal(objectInstance, TmfSignal.class);
+</pre>
 		<p>阻塞信号过滤基于类型层次结构。阻止<code>TmfSignal.class</code>将阻止从TmfSignal派生的所有信号。阻塞<code>TmfTraceSelectedSignal</code>将阻止此类型的所有信号以及来自<code>TmfTraceSelectedSignal</code>派生信号</p>
 		<p>删除忽略规则或全部清除它们：</p>
-		<pre>TmfSignalManager.removeIgnoredOutboundSignal（对象源，Class &lt;？扩展TmfSignal&gt; signal）TmfSignalManager.removeIgnoredInboundSignal（对象监听器，Class &lt;？扩展TmfSignal&gt; signal）TmfSignalManager.clearIgnoredOutboundSignalList（Object source）TmfSignalManager.clearIgnoredInboundSignalList（Object listener）</pre>
+		<pre>
+    TmfSignalManager.removeIgnoredOutboundSignal(Object source, Class&lt;? extends TmfSignal&gt; signal)
+    TmfSignalManager.removeIgnoredInboundSignal(Object listener, Class&lt;? extends TmfSignal&gt; signal)
+    TmfSignalManager.clearIgnoredOutboundSignalList(Object source)
+    TmfSignalManager.clearIgnoredInboundSignalList(Object listener)
+</pre>
 		<h2 id="Signal_Reference">信号参考</h2>
 		<p>以下是框架中定义的内置信号列表。</p>
 		<h3 id="TmfStartSynchSignal">TmfStartSynchSignal</h3>

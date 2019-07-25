@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?="">
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" gtc:encodedoriginal="PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBYSFRNTCAxLjAgVHJhbnNpdGlvbmFsLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL1RSL3hodG1sMS9EVEQveGh0bWwxLXRyYW5zaXRpb25hbC5kdGQiPg==">
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>应用配置</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css">
 </head>
-<body dir="ltr">
+<body >
 
   <h1>应用配置</h1>
   <p>本文介绍如何在没有扩展注册表的情况下在<em>OSGi</em>或<em>RWT独立</em> <a href="application-setup.html#summary">安装中</a>配置RAP应用程序。此方法不适用于使用扩展配置的基于工作台的应用程序（请参阅<a href="branding.html">品牌</a> ）。
@@ -18,12 +18,28 @@
   </p>
   <p>应用程序配置是<em><a href="../reference/api/org/eclipse/rap/rwt/application/ApplicationConfiguration.html">ApplicationConfiguration</a></em>接口的实现。RAP使用回调方法在应用程序启动之前配置它们。调用方法<em><a href="../reference/api/org/eclipse/rap/rwt/application/ApplicationConfiguration.html#configure-org.eclipse.rap.rwt.application.Application-">configure（Application）时</a></em>引用创建的<em><a href="../reference/api/org/eclipse/rap/rwt/application/Application.html">Application</a></em>作为唯一参数。最小的实现必须至少注册一个<em><a href="../reference/api/org/eclipse/rap/rwt/application/EntryPoint.html">EntryPoint</a></em>接口的实现（ <a href="hello-world.html#entrypoint">建议</a>扩展<em><a href="../reference/api/org/eclipse/rap/rwt/application/AbstractEntryPoint.html">AbstractEntryPoint</a></em> ）。
   </p>
-<pre class="lang-java">public class SimpleConfiguration实现ApplicationConfiguration {public void configure（Application application）{application.addEntryPoint（“/ simple”，SimpleEntryPoint.class，null）; }}</pre>
+<pre class="lang-java">
+public class SimpleConfiguration implements ApplicationConfiguration {
+
+  public void configure( Application application ) {
+    application.addEntryPoint( "/simple", SimpleEntryPoint.class, null );
+  }
+
+}
+</pre>
   <p>应用程序可以具有任意数量的入口点，每个入口点都映射到单独的servlet路径。在上述示例的情况下，入口点将在URL <code>http://{rapserver}:{port}/simple</code>可用。
   </p>
   <p id="entrypointconfig"><em>addEntryPoint</em>的第三个参数是一个可选映射，用于配置入口点的可视方面。这些可能是特定于<a href="client.html">客户</a>端的，因此<a href="client.html">客户端</a>实现（例如<em><a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html">WebClient</a></em> ）提供了与地图一起使用的常量。例如，可以指定<a href="theming.html#rwt">要使用的主题</a> ，本机HTML文档<a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html#PAGE_OVERFLOW">溢出</a>行为以及要在浏览器标题栏中显示的<a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html#FAVICON">图标</a>和<a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html#PAGE_TITLE">标题</a> 。还可以将静态HTML添加到客户端文档<em><a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html#HEAD_HTML">头部</a></em>或<em><a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html#BODY_HTML">主体</a></em> ，例如，以实现简单的启动屏幕。
   </p>
-<pre class="lang-java">Map &lt;String，String&gt; properties = new HashMap &lt;String，String&gt;（）; properties.put（WebClient。PAGE_TITLE，“RAP示例”）; properties.put（WebClient。PAGE_OVERFLOW，“scrollY”）; properties.put（WebClient。BODY_HTML，“&lt;big&gt;加载应用程序&lt;big&gt;”）; properties.put（WebClient。FAVICON，“icons / favicon.png”）; properties.put（WebClient。THEME_ID，“MyCustomTheme”）; application.addEntryPoint（“/ example”，Example.class，properties）;</pre>
+<pre class="lang-java">
+Map&lt;String, String&gt; properties = new HashMap&lt;String, String&gt;();
+properties.put( WebClient.PAGE_TITLE, "RAP Example" );
+properties.put( WebClient.PAGE_OVERFLOW, "scrollY" );
+properties.put( WebClient.BODY_HTML, "&lt;big&gt;Loading Application&lt;big&gt;" );
+properties.put( WebClient.FAVICON, "icons/favicon.png" );
+properties.put( WebClient.THEME_ID, "MyCustomTheme" );
+application.addEntryPoint( "/example", Example.class, properties );
+</pre>
   <p>请注意，必须将favicon和您在其他HTML中使用的任何图像注册为静态资源。这也可以使用<em><a href="../reference/api/org/eclipse/rap/rwt/application/Application.html#addResource-java.lang.String-org.eclipse.rap.rwt.service.ResourceLoader-">Application＃addResource</a></em>方法在应用程序配置中完成。了解更多关于静态资源<a href="resources.html">在这里</a> 。
   </p>
   <p>主题id（ <em><a href="../reference/api/org/eclipse/rap/rwt/client/WebClient.html#THEME_ID">WebClient。THEME_ID</a></em> ）与<em><a href="../reference/api/org/eclipse/rap/rwt/application/Application.html#addStyleSheet-java.lang.String-java.lang.String, org.eclipse.rap.rwt.service.ResourceLoader-">Application＃addStyleSheet</a></em>方法中使用的相同。<a href="theming.html">在此处</a>详细了解自定义主题和主题贡献。
@@ -37,7 +53,15 @@
   <p>从RAP 2.1开始，可以在应用程序配置中注册自定义异常处理程序，以处理事件处理代码中发生的异常。注册异常处理程序时，运行事件循环时发生的所有异常都将转发到此处理程序。然后，异常处理程序可以决定忽略该异常，将其写入日志，向用户显示消息，或者正常终止UISession。
   </p>
 
-<pre class="lang-java">application.setExceptionHandler（new ExceptionHandler（）{@Override public void handleException（Throwable exception）{//显示错误对话框，重定向到错误页面，//将异常写入日志，...}};</pre>
+<pre class="lang-java">
+application.setExceptionHandler( new ExceptionHandler() {
+  @Override
+  public void handleException( Throwable exception ) {
+    // display error dialog, redirect to error page,
+    // write exception to log, ...
+  }
+});
+</pre>
 
   <p>要允许异常处理程序记录所有类型的错误，甚至会调用<code>Error</code>实例。但是，由于不能吞下错误，因此在调用处理程序后将重新抛出错误。
   </p>
@@ -48,9 +72,18 @@
 
   <h3>使用OSGi声明服务（DS）</h3>
   <p>使用OSGi <a href="http://wiki.osgi.org/wiki/Declarative_Services">Declarative Services</a> ，可以在bundle内的XML文件中声明服务组件。这是一个注册应用程序配置的示例：</p>
-<pre class="lang-xml">&lt;scr：component xmlns：scr =“http://www.osgi.org/xmlns/scr/v1.1.0”&gt; &lt;implementation class =“com.example。ExampleConfiguration“/&gt; &lt;service&gt; &lt;provide interface =”org.eclipse.rap.rwt.application。ApplicationConfiguration“/&gt; &lt;/ service&gt; &lt;/ scr：component&gt;</pre>
+<pre class="lang-xml">
+&lt;scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0"&gt;
+  &lt;implementation class="com.example.ExampleConfiguration"/&gt;
+  &lt;service&gt;
+     &lt;provide interface="org.eclipse.rap.rwt.application.ApplicationConfiguration"/&gt;
+  &lt;/service&gt;
+&lt;/scr:component&gt;
+</pre>
   <p>调整元素<em>实现</em>以指向您的应用程序配置。常见的约定是将此文件放在bundle root中名为<em>OSGI-INF</em>的目录中。必须在包清单（ <em>MANIFEST.MF</em> ）中引用该文件，如下所示：</p>
-<pre>服务组件：OSGI-INF / configuration.xml</pre>
+<pre>
+Service-Component: OSGI-INF/configuration.xml
+</pre>
   <p>Eclipse中的插件开发工具包括一个用于创建服务声明的向导： <em class="UILabel">New&gt; Plug-in Development&gt; Component Definition</em> 。
   </p>
 
@@ -58,12 +91,19 @@
   <p>默认情况下，RAP应用程序可直接在servlet容器的根目录下使用。例如，servlet路径“ <code>/simple</code> ”将映射到类似<code>http://example.com:8080/simple</code>的URL。使用servlet桥时，将包含代表Web应用程序的附加路径段。
   </p>
   <p>可以指定要包含在URL中的自定义<em>上下文路径</em> 。为此，必须使用服务参数<em>contextName</em>注册应用程序配置服务。使用声明性服务时，会将以下行添加到组件声明中：</p>
-<pre class="lang-xml">&lt;property name =“contextName”type =“String”value =“example”/&gt;</pre>
+<pre class="lang-xml">
+  &lt;property name=&quot;contextName&quot; type=&quot;String&quot; value=&quot;example&quot;/&gt;
+</pre>
   <p>使用此配置， <code>http://example.com:8080/example/simple</code>上将提供相同的入口点。</p>
 
   <h3>RWT独立</h3>
-  <p>在传统Web应用程序（即没有OSGi）中使用<a href="rwt-standalone.html">RWT作为库时</a> ，必须使用context参数注册应用程序配置。这可以通过向<code>web.xml</code>添加<code>context-param</code>元素来完成：</p>
-<pre class="lang-xml">&lt;context-param&gt; &lt;param-name&gt; org.eclipse.rap.applicationConfiguration &lt;/ param-name&gt; &lt;param-value&gt; com.example。ExampleConfiguration &lt;/ param-value&gt; &lt;/ context-param&gt;</pre>
+  <p>在传统Web应用程序（即没有OSGi）中使用<a href="rwt-standalone.html">RWT作为库时</a> ，必须使用context参数注册应用程序配置。这可以通过向<code>context-param</code>添加<code>web.xml</code>元素来完成：</p>
+<pre class="lang-xml">
+&lt;context-param&gt;
+  &lt;param-name&gt;org.eclipse.rap.applicationConfiguration&lt;/param-name&gt;
+  &lt;param-value&gt;com.example.ExampleConfiguration&lt;/param-value&gt;
+&lt;/context-param&gt;
+</pre>
   <p>将参数值替换为应用程序配置的完全限定类名。参数名称也包含在常量<em><a href="../reference/api/org/eclipse/rap/rwt/application/ApplicationConfiguration.html#CONFIGURATION_PARAM">ApplicationConfiguration＃CONFIGURATION_PARAM中</a></em>作为参考。
   </p>
 
@@ -73,7 +113,11 @@
   <p>还请确保您的配置中<strong>未</strong>包含<em>org.eclipse.rap.ui.workbench</em>软件包。除非使用自定义上下文注册应用程序，否则工作台捆绑包会在默认上下文中自动启动与已注册应用程序冲突的应用程序。
   </p>
   <p>作为让框架自动启动应用程序的替代方法，还可以使用<em><a href="../reference/api/org/eclipse/rap/rwt/application/ApplicationRunner.html">ApplicationRunner</a></em>显式启动<em><a href="../reference/api/org/eclipse/rap/rwt/application/ApplicationRunner.html">应用程序</a></em> ：</p>
-<pre class="lang-java">ApplicationConfiguration configuration = new SimpleConfiguration（）; ApplicationRunner runner = new ApplicationRunner（configuration，servletContext）; runner.start（）;</pre>
+<pre class="lang-java">
+ApplicationConfiguration configuration = new SimpleConfiguration();
+ApplicationRunner runner = new ApplicationRunner( configuration, servletContext );
+runner.start();
+</pre>
 
 </body>
 </html>

@@ -1,11 +1,11 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>扩展 -  provide_tabbar_extensions</title>
-		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css"></link>
-		<link type="text/css" rel="stylesheet" href="../resources/custom.css"></link>
+		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css">
+		<link type="text/css" rel="stylesheet" href="../resources/custom.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<h1 id="SiriusProvidetabbarextensions">Sirius  - 提供标签栏扩展</h1>
 		<h2 id="Goals">目标</h2>
 		<p>所有Sirius图编辑器的顶部区域都填充了<em>tab-bar</em> ，可以访问图表及其元素上的许多操作。标签栏的内容取决于当前选择是图表本身（即没有选择元素）还是一个或多个图表元素。
@@ -38,12 +38,48 @@
 			<img border="0" src="images/tabbar_extension_plugin_xml.png">
 		</p>
 		<p>第一步是创建菜单贡献以引用现有命令：</p>
-		<pre>&lt;extension point =“org.eclipse.ui.menus”&gt; &lt;menuContribution allPopups =“false”locationURI =“toolbar：org.eclipse.sirius.diagram.ui.tabbar？after = additions“&gt; &lt;command commandId =”org.example.myproject.command.id“icon =”images / action.gif“id =”org.eclipse.sirius.diagram.tabbar.test.action.on.diagramelement“ label =“DDiagramElement上的操作”tooltip =“DDiagramElement上的操作”&gt; &lt;！ -  [...]一个可见的元素将在以后添加以控制可见性 - &gt; &lt;/ command&gt; &lt;/ menuContribution&gt; &lt;/ extension &gt;</pre>
+		<pre> &lt;extension point="org.eclipse.ui.menus"&gt;
+    &lt;menuContribution
+          allPopups="false"
+          locationURI="toolbar:org.eclipse.sirius.diagram.ui.tabbar?after=additions"&gt;
+        &lt;command
+              commandId="org.example.myproject.command.id"
+              icon="images/action.gif"
+              id="org.eclipse.sirius.diagram.tabbar.test.action.on.diagramelement"
+              label="Action on DDiagramElement"
+              tooltip="Action on DDiagramElement"&gt;
+   &lt;!-- [...] a visible when element will be added later to control the visibility --&gt;
+        &lt;/command&gt;
+    &lt;/menuContribution&gt;
+ &lt;/extension&gt;
+
+</pre>
 		<p><em>locationURI</em>引用带有<code>toolbar:org.eclipse.sirius.diagram.ui.tabbar</code>的Sirius tabbar <code>toolbar:org.eclipse.sirius.diagram.ui.tabbar</code>和插入点<code>?after=additions</code> 。
 			<br>command元素引用现有的<em>commandID</em> ，并定义自己的菜单ID（可用作其他贡献<em>locationURI中的</em>插入/组织点），其标签和工具提示。如果引用的命令上存在键绑定，则工作台会将其添加到工具提示中。
 		</p>
 		<p>然后，您可以使用可见的when元素控制贡献的可见性。</p>
-		<pre>&lt;！ -  [...]继续上面的示例 - &gt; &lt;visibleWhen checkEnabled =“false”&gt; &lt;和&gt; &lt;with variable =“activeEditorId”&gt; &lt;equals value =“org.eclipse.sirius.diagram.ui 。部分。SiriusDiagramEditorID“/&gt; &lt;/ with&gt; &lt;with variable =”activeEditor“&gt; &lt;test property =”org.eclipse.sirius.sample.tabbar.isConcernedEditor“/&gt; &lt;/ with&gt; &lt;with variable =”selection“&gt; &lt;iterate ifEmpty =“false”operator =“或”&gt; &lt;和&gt; &lt;test property =“org.eclipse.sirius.diagram.ui.isDDiagramElement”/&gt; &lt;test property =“org.eclipse.sirius.sample.tabbar.shouldActivateTabbarExtension”/ &gt; &lt;/和&gt; &lt;/ iterate&gt; &lt;/ with&gt; &lt;/ and&gt; &lt;/ visibleWhen&gt; &lt;/ command&gt;</pre>
+		<pre>   &lt;!-- [...] continued from the example above --&gt;
+   &lt;visibleWhen checkEnabled="false"&gt;
+      &lt;and&gt;
+         &lt;with variable="activeEditorId"&gt;
+            &lt;equals value="org.eclipse.sirius.diagram.ui.part.SiriusDiagramEditorID"/&gt;
+         &lt;/with&gt;
+         &lt;with variable="activeEditor"&gt;
+             &lt;test property="org.eclipse.sirius.sample.tabbar.isConcernedEditor"/&gt;
+         &lt;/with&gt;
+         &lt;with variable="selection"&gt;
+            &lt;iterate ifEmpty="false" operator="or"&gt;
+               &lt;and&gt;
+                  &lt;test property="org.eclipse.sirius.diagram.ui.isDDiagramElement"/&gt;
+                  &lt;test property="org.eclipse.sirius.sample.tabbar.shouldActivateTabbarExtension"/&gt;
+               &lt;/and&gt;
+            &lt;/iterate&gt;
+         &lt;/with&gt;
+      &lt;/and&gt;
+   &lt;/visibleWhen&gt;
+&lt;/command&gt;
+     
+</pre>
 		<p>示例贡献声明了四个条件以启用其可见性：</p>
 		<ul>
 			<li>它使用工作台变量<em>activeEditorId</em>和Sirius Diagram Editor id检查活动编辑器是Sirius Diagram Editor。
@@ -56,10 +92,67 @@
 			</li>
 		</ul>
 		<p>属性测试器在plug-in.xml文件中定义。它们定义了命名空间，一些属性以及它们可以测试的元素类型。</p>
-		<pre>&lt;extension point =“org.eclipse.core.expressions.propertyTesters”&gt; &lt;propertyTester class =“org.eclipse.sirius.sample.tabbar。SampleTestTabbarExtensionActivationPropertyTester“id =”org.eclipse.sirius.sample.tabbar。ActiveExtensionTester“namespace =”org.eclipse.sirius.sample.tabbar“properties =”shouldActivateTabbarExtension“type =”org.eclipse.gmf.runtime.diagram.ui.editparts。IGraphicalEditPart“&gt; &lt;/ propertyTester&gt; &lt;propertyTester class =”org.eclipse.sirius.sample.tabbar。SampleTestTabbarExtensionActivationPropertyTester“id =”org.eclipse.sirius.sample.tabbar。ConcernEditorTester“namespace =”org.eclipse.sirius.sample.tabbar“properties =”isConcernedEditor“type =”org.eclipse.ui。IEditorPart“&gt; &lt;/ propertyTester&gt; &lt;/ extension&gt;</pre>
+		<pre>&lt;extension point="org.eclipse.core.expressions.propertyTesters"&gt;
+   &lt;propertyTester
+         class="org.eclipse.sirius.sample.tabbar.SampleTestTabbarExtensionActivationPropertyTester"
+         id="org.eclipse.sirius.sample.tabbar.ActiveExtensionTester"
+         namespace="org.eclipse.sirius.sample.tabbar"
+         properties="shouldActivateTabbarExtension"
+         type="org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart"&gt;
+   &lt;/propertyTester&gt;
+   &lt;propertyTester
+         class="org.eclipse.sirius.sample.tabbar.SampleTestTabbarExtensionActivationPropertyTester"
+         id="org.eclipse.sirius.sample.tabbar.ConcernEditorTester"
+         namespace="org.eclipse.sirius.sample.tabbar"
+         properties="isConcernedEditor"
+         type="org.eclipse.ui.IEditorPart"&gt;
+   &lt;/propertyTester&gt;
+&lt;/extension&gt;
+
+</pre>
 		<p>这是相应属性测试器的实现。<em>isConcerned</em>属性将导致检查当前编辑器的<code>DiagramDescription</code> id。<em>shouldActivateTabbarExtension</em>将导致检查所选域对象的属性。
 		</p>
-		<pre><code>包org.eclipse.sirius.sample.tabbar; import org.eclipse.core.expressions。PropertyTester; import org.eclipse.emf.ecore。的EClass; import org.eclipse.emf.ecore。EObject; import org.eclipse.sirius.diagram。DDiagram; import org.eclipse.sirius.diagram。DRepresentation; import org.eclipse.sirius.diagram.edit.api.part。IDiagramElementEditPart; import org.eclipse.sirius.ui.business.api.dialect。DialectEditor; / ** *样品属性测试仪。* * @author mporhel * / public class SampleTestTabbarExtensionActivationPropertyTester扩展了PropertyTester {public boolean test（Object receiver，String property，Object [] args，Object expectedValue）{if（“isConcernedEditor”.equals（property））{//在with中调用activeEditor元素if（receiver instanceof DialectEditor）{DRepresentation activeRepresentation =（（DialectEditor）receiver）.getRepresentation（）; if（activeRepresentation instanceof DDiagram）{// VSM编辑器中的id属性：meta //模型中的名称。return“diagram.description.sample.id”.equals（（（DDiagram）activeRepresentation）.getDescription（）。getName（））; else if（“shouldActivateTabbarExtension”.equals（property））{if（receiver instanceof IDiagramElementEditPart）{EObject domainElement =（（IDiagramElementEditPart）receiver）.resolveTargetSemanticElement（）; // sample condition返回domainElement instanceof EClass &amp;&amp;（（EClass）domainElement）.isAbstract（）;返回false; }}</code></pre>
+		<pre><code>package org.eclipse.sirius.sample.tabbar;
+
+import org.eclipse.core.expressions.PropertyTester;
+import org.eclipse.emf.ecore.EClass;
+import org.eclipse.emf.ecore.EObject;
+
+import org.eclipse.sirius.diagram.DDiagram;
+import org.eclipse.sirius.diagram.DRepresentation;
+import org.eclipse.sirius.diagram.edit.api.part.IDiagramElementEditPart;
+import org.eclipse.sirius.ui.business.api.dialect.DialectEditor;
+
+/**
+ * Sample property tester.
+ * 
+ * @author mporhel
+ */
+public class SampleTestTabbarExtensionActivationPropertyTester extends PropertyTester {
+    public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
+        if ("isConcernedEditor".equals(property)) {
+            // called in a with activeEditor element
+            if (receiver instanceof DialectEditor) {
+                DRepresentation activeRepresentation = ((DialectEditor) receiver).getRepresentation();
+                if (activeRepresentation instanceof DDiagram) {
+                    // the id property in the VSM editor : name in the meta
+                    // model.
+                    return "diagram.description.sample.id".equals(((DDiagram) activeRepresentation).getDescription().getName());
+                }
+            }
+        } else if ("shouldActivateTabbarExtension".equals(property)) {
+            if (receiver instanceof IDiagramElementEditPart) {
+                EObject domainElement = ((IDiagramElementEditPart) receiver).resolveTargetSemanticElement();
+                // sample condition
+                return domainElement instanceof EClass &amp;&amp; ((EClass) domainElement).isAbstract();
+            }
+        }
+        return false;
+    }
+}
+
+
+</code></pre>
 		<p>仅当选择包含抽象<code>EClass</code>并且活动编辑器对应于预期描述ID时，才会将新按钮添加到选项卡栏：</p>
 		<p>	
 			<img border="0" src="images/tabbar_extension_result.png">
@@ -69,6 +162,101 @@
 		</p>
 		<p>以下是<code>ITabbarContributor</code>实现的示例。此示例提供了两个不同的选项卡栏，无论选择是在图表元素（例如节点还是容器）上完成，还是在图表上完成（没有特定选择）。如果在Edge上完成选择，则选项卡栏将为空，因为样本不返回任何contributionItem。
 		</p>
-		<pre><code>公共类TestTabbarExt扩展AbstractTabbarContributor {private ArrayList &lt;IContributionItem&gt; diagramContributionItems; private ArrayList &lt;IContributionItem&gt; diagramElementContributionItems; @Override public List &lt;IContributionItem&gt; getContributionItems（ISelection selection，IDiagramWorkbenchPart part，ToolBarManager manager）{List &lt;IContributionItem&gt; contributionsItems = new ArrayList &lt;IContributionItem&gt;（）; if（选择instanceof IStructuredSelection）{Object firstElement =（（IStructuredSelection）selection）.getFirstElement（）; if（abstractElement instanceof AbstractDDiagramEditPart）{contributionItems = getDiagramContributionItem（part，manager）; } else if（firstElement instanceof IAbstractDiagramNodeEditPart）{contributionItems = getDiagramElementContributionItem（part，manager）;返回contributionItems; } @Override public boolean accept（ISelection selection）{boolean accept = false; if（selection == null）{accept = true; } else if（selection instanceof IStructuredSelection）{Object firstElement =（（IStructuredSelection）selection）.getFirstElement（）; if（firstElement instanceof AbstractDDiagramEditPart || firstElement instanceof IAbstractDiagramNodeEditPart）{accept = true; } return accept; } @Override public List &lt;IContributionItem&gt; getContributionItems（IDiagramWorkbenchPart part，ToolBarManager manager）{return getDiagramContributionItem（part，manager）; private List &lt;IContributionItem&gt; getDiagramContributionItem（IDiagramWorkbenchPart part，ToolBarManager manager）{if（diagramContributionItems == null）{diagramContributionItems = new ArrayList &lt;IContributionItem&gt;（）; diagramContributionItems.add（createArrangeMenuManager（部分））; diagramContributionItems.add（createSelectMenuManager（））; diagramContributionItems.add（createLayerContribution（part，manager））; diagramContributionItems.add（createZoomInContribution（部分））; diagramContributionItems.add（createZoomOutContribution（部分））; diagramContributionItems.add（createZoomContribution（部分））; diagramContributionItems.add（createSelectPinnedElementsContribution（部分））; diagramContributionItems.add（createSelectHiddenElementsContribution（部分））; diagramContributionItems.add（createFilterContribution（part，manager））; diagramContributionItems.add（createPasteFormatContribution（部分））; diagramContributionItems.add（createRefreshContribution（））; diagramContributionItems.add（createSaveAsImageContributionItem（））; diagramContributionItems.add（createModeMenuManagerContributionItem（部分））; diagramContributionItems.add（createCopyAppearancePropertiesContribution（部分））; diagramContributionItems.add（createCopyFormatContribution（部分））; } return diagramContributionItems; private List &lt;IContributionItem&gt; getDiagramElementContributionItem（IDiagramWorkbenchPart part，ToolBarManager manager）{if（diagramElementContributionItems == null）{diagramElementContributionItems = new ArrayList &lt;IContributionItem&gt;（）; diagramElementContributionItems.add（createArrangeMenuManager（部分））; diagramElementContributionItems.add（createAlignMenuManager（））; diagramElementContributionItems.add（createHideElementLabelContribution（部分））; diagramElementContributionItems.add（createHideElementContribution（部分））; diagramElementContributionItems.add（createDeleteFromDiagramContribution（部分））; diagramElementContributionItems.add（createDeleteFromModelContribution（部分））; IContributionItem pinElementContributionItem = createPinElementContribution（part）; diagramElementContributionItems.add（pinElementContributionItem）; diagramElementContributionItems.add（createUnPinElementContribution（part，pinElementContributionItem））; diagramElementContributionItems.add（createFontColorContribution（部分））; diagramElementContributionItems.add（createPasteFormatContribution（部分））; diagramElementContributionItems.add（createBoldFontStyleContribution（部分））; diagramElementContributionItems.add（createItalicFontStyleContribution（部分））; diagramElementContributionItems.add（createFontDialogContribution（部分））; diagramElementContributionItems.add（createFillColorContribution（部分））; diagramElementContributionItems.add（createLineColorPropertyContribution（部分））; diagramElementContributionItems.add（createResetStylePropertyContribution（部分））; diagramElementContributionItems.add（createSetStyleToWorkspaceImageContribution（部分））; diagramElementContributionItems.add（createSaveAsImageContributionItem（））; diagramElementContributionItems.add（createDistributeContribution（））; diagramElementContributionItems.add（createModeMenuManagerContributionItem（部分））; diagramElementContributionItems.add（createRouterContribution（））; diagramElementContributionItems.add（createCopyAppearancePropertiesContribution（部分））; diagramElementContributionItems.add（createCopyFormatContribution（部分））; diagramElementContributionItems.add（createSizeBothContribution（部分））; diagramElementContributionItems.add（createAutoSizeContribution（部分））; } return diagramElementContributionItems; }}</code></pre>
+		<pre><code>public class TestTabbarExt extends AbstractTabbarContributor {
+
+    private ArrayList&lt;IContributionItem&gt; diagramContributionItems;
+
+    private ArrayList&lt;IContributionItem&gt; diagramElementContributionItems;
+
+    @Override
+    public List&lt;IContributionItem&gt; getContributionItems(ISelection selection, IDiagramWorkbenchPart part, ToolBarManager manager) {
+        List&lt;IContributionItem&gt; contributionItems = new ArrayList&lt;IContributionItem&gt;();
+        if (selection instanceof IStructuredSelection) {
+            Object firstElement = ((IStructuredSelection) selection).getFirstElement();
+            if (firstElement instanceof AbstractDDiagramEditPart) {
+                contributionItems = getDiagramContributionItem(part, manager);
+            } else if (firstElement instanceof IAbstractDiagramNodeEditPart) {
+                contributionItems = getDiagramElementContributionItem(part, manager);
+            }
+        }
+        return contributionItems;
+    }
+
+    @Override
+    public boolean accept(ISelection selection) {
+        boolean accept = false;
+        if (selection == null) {
+            accept = true;
+        } else if (selection instanceof IStructuredSelection) {
+            Object firstElement = ((IStructuredSelection) selection).getFirstElement();
+            if (firstElement instanceof AbstractDDiagramEditPart || firstElement instanceof IAbstractDiagramNodeEditPart) {
+                accept = true;
+            }
+        }
+        return accept;
+    }
+
+    @Override
+    public List&lt;IContributionItem&gt; getContributionItems(IDiagramWorkbenchPart part, ToolBarManager manager) {
+        return getDiagramContributionItem(part, manager);
+    }
+
+    private List&lt;IContributionItem&gt; getDiagramContributionItem(IDiagramWorkbenchPart part, ToolBarManager manager) {
+        if (diagramContributionItems == null) {
+            diagramContributionItems = new ArrayList&lt;IContributionItem&gt;();
+            diagramContributionItems.add(createArrangeMenuManager(part));
+            diagramContributionItems.add(createSelectMenuManager());
+            diagramContributionItems.add(createLayerContribution(part, manager));
+            diagramContributionItems.add(createZoomInContribution(part));
+            diagramContributionItems.add(createZoomOutContribution(part));
+            diagramContributionItems.add(createZoomContribution(part));
+            diagramContributionItems.add(createSelectPinnedElementsContribution(part));
+            diagramContributionItems.add(createSelectHiddenElementsContribution(part));
+            diagramContributionItems.add(createFilterContribution(part, manager));
+            diagramContributionItems.add(createPasteFormatContribution(part));
+            diagramContributionItems.add(createRefreshContribution());
+            diagramContributionItems.add(createSaveAsImageContributionItem());
+            diagramContributionItems.add(createModeMenuManagerContributionItem(part));
+            diagramContributionItems.add(createCopyAppearancePropertiesContribution(part));
+            diagramContributionItems.add(createCopyFormatContribution(part));
+        }
+        return diagramContributionItems;
+    }
+
+    private List&lt;IContributionItem&gt; getDiagramElementContributionItem(IDiagramWorkbenchPart part, ToolBarManager manager) {
+        if (diagramElementContributionItems == null) {
+            diagramElementContributionItems = new ArrayList&lt;IContributionItem&gt;();
+            diagramElementContributionItems.add(createArrangeMenuManager(part));
+            diagramElementContributionItems.add(createAlignMenuManager());
+            diagramElementContributionItems.add(createHideElementLabelContribution(part));
+            diagramElementContributionItems.add(createHideElementContribution(part));
+            diagramElementContributionItems.add(createDeleteFromDiagramContribution(part));
+            diagramElementContributionItems.add(createDeleteFromModelContribution(part));
+            IContributionItem pinElementContributionItem = createPinElementContribution(part);
+            diagramElementContributionItems.add(pinElementContributionItem);
+            diagramElementContributionItems.add(createUnPinElementContribution(part, pinElementContributionItem));
+            diagramElementContributionItems.add(createFontColorContribution(part));
+            diagramElementContributionItems.add(createPasteFormatContribution(part));
+            diagramElementContributionItems.add(createBoldFontStyleContribution(part));
+            diagramElementContributionItems.add(createItalicFontStyleContribution(part));
+            diagramElementContributionItems.add(createFontDialogContribution(part));
+            diagramElementContributionItems.add(createFillColorContribution(part));
+            diagramElementContributionItems.add(createLineColorPropertyContribution(part));
+            diagramElementContributionItems.add(createResetStylePropertyContribution(part));
+            diagramElementContributionItems.add(createSetStyleToWorkspaceImageContribution(part));
+            diagramElementContributionItems.add(createSaveAsImageContributionItem());
+            diagramElementContributionItems.add(createDistributeContribution());
+            diagramElementContributionItems.add(createModeMenuManagerContributionItem(part));
+            diagramElementContributionItems.add(createRouterContribution());
+            diagramElementContributionItems.add(createCopyAppearancePropertiesContribution(part));
+            diagramElementContributionItems.add(createCopyFormatContribution(part));
+            diagramElementContributionItems.add(createSizeBothContribution(part));
+            diagramElementContributionItems.add(createAutoSizeContribution(part));
+        }
+        return diagramElementContributionItems;
+    }
+}
+
+</code></pre>
 	</body>
 </html>

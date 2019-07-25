@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass开发人员指南 -  JUL日志记录</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">JUL记录</th>
@@ -32,7 +32,8 @@
 		<p>对于调试类，查看其与其他组件的交互以及了解系统的行为，日志记录非常有用。TraceCompass使用JUL记录代码中的各种事件，然后可以使用它来建模和分析系统的工作流程。以下是在Trace Compass中有效使用日志记录的一些准则。有关如何启用日志记录和获取跟踪的说明，请参阅用户文档。</p>
 		<h3 id="Use_a_static_logger_for_each_class">为每个类使用静态记录器</h3>
 		<p>每个类都应该定义和使用自己的静态记录器，如下所示：</p>
-		<pre>private static final Logger LOGGER = TraceCompassLog.getLogger（StateSystem.class）;</pre>
+		<pre>   private static final Logger LOGGER = TraceCompassLog.getLogger(StateSystem.class);
+</pre>
 		<p>然后，可以轻松过滤组件以按其完整的类名进行记录。<i>TraceCompassLog＃getLogger</i>方法是<i>java.util.logging的包装器<i>。记录器#getLogger</i> ，但Trace Compass的日志记录初始化（在未启用日志记录时覆盖org.eclipse.tracecompass命名空间的默认ConsoleHandler和INFO级别）在此类的静态初始化程序中完成。使用包装器方法可确保调用此代码，并且用户不会在整个位置看到Console消息。
 		</p>
 		<p>
@@ -44,7 +45,8 @@
 		<p>这两种方法都有其优点，并没有明确的好答案。</p>
 		<h3 id="Use_a_message_supplier">使用消息供应商</h3>
 		<p>一个有意义的日志记录语句通常会记录一个包含来自上下文的数据的字符串，从而进行字符串连接。这具有不可忽视的开销。为了避免在未记录语句时必须进行昂贵的字符串连接，java提供了将<i>Supplier &lt;String&gt;</i>作为参数的方法，并且该方法应该用于所有日志记录语句</p>
-		<pre>LOGGER.info（（） - &gt;“[Component：Action] param1 =”+ myParam1 +“，param2 =”+ myParam2）;</pre>
+		<pre>   LOGGER.info(() -&gt; "[Component:Action] param1=" + myParam1 + ", param2=" + myParam2);
+</pre>
 		<h3 id="Choose_the_appropriate_log_level">选择适当的日志级别</h3>
 		<p>JUL的可用日志级别是SEVERE，WARNING，INFO，CONFIG，FINE，FINER，FINEST。未指定时的默认级别为INFO。</p>
 		<ul>
@@ -55,12 +57,19 @@
 		<h3 id="Log_message_format">记录消息格式</h3>
 		<p>JUL日志记录将生成跟踪数据，除非您希望一次可视地解析跟踪一个事件，否则它通常会与分析一起使用以生成结果。为此，日志消息应具有可与跟踪类型相关联的格式。</p>
 		<p>第三方插件为使用以下格式的JUL语句提供自定义跟踪解析器和LTTng跟踪类型</p>
-		<pre>[EventName：MayContainSemiColon] paramName1 = paramValue1，paramName2 = paramValue2</pre>
+		<pre>   [EventName:MayContainSemiColon] paramName1=paramValue1, paramName2=paramValue2
+</pre>
 		<h3 id="Logging_to_populate_Callstacks_and_Callgraph_analyses">记录以填充Callstacks和Callgraph分析</h3>
 		<p>为了以调用堆栈分析具有足够信息显示的方式记录数据，请使用TraceCompassLogUtils＃ScopeLog。它是一个可自动关闭的记录器，它将记录try-with-resources代码块。</p>
-		<pre>尝试（TraceCompassLogUtils。ScopeLog linksLogger = new TraceCompassLogUtils。ScopeLog（LOGGER，Level。CONFIG，“执行查询”））{// $ NON-NLS-1 $ //做一些新的Object（）; }</pre>
+		<pre>       try (TraceCompassLogUtils.ScopeLog linksLogger = new TraceCompassLogUtils.ScopeLog(LOGGER, Level.CONFIG, "Perform Query")) { //$NON-NLS-1$
+          // Do something
+          new Object();
+      }
+</pre>
 		<p>生成的跟踪将包含以下字段</p>
-		<pre>INFO：{“ts”：12345，“ph”：“B”，tid：1，“name：Perform Query”} INFO：{“ts”：“12366，”ph“：”E“，”tid“： 1}</pre>
+		<pre>      INFO: {"ts":12345,"ph":"B",tid:1,"name:Perform Query"}
+      INFO: {"ts":"12366,"ph":"E","tid":1}
+</pre>
 		<h3 id="Logging_to_track_Object_life_cycles">记录以跟踪对象生命周期</h3>
 		<p>为了记录数据以便可以遵循给定对象的生命周期，请使用TraceCompassLogUtils #traceObjectCreation和TraceCompassLogUtils #traceObjectDestruction。将跟踪和显示对象生命周期。</p>
 		<h3 id="Logging_to_track_Asynchronous_operations">记录以跟踪异步操作</h3>

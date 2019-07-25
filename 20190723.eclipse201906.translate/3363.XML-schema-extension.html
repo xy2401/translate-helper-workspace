@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass开发人员指南 -  XML架构扩展</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">XML架构扩展</th>
@@ -32,27 +32,82 @@
 		<p>数据驱动的XML分析通过开发自己的分析和视图来增加Trace Compass，而无需编写任何代码。现在，外部插件可以扩展XSD架构以添加其分析扩展和解析器，同时利用Trace Compass XML分析框架。</p>
 		<h2 id="Extending_the_schema">扩展架构</h2>
 		<p>想要将自己的元素添加到XSD架构的插件可以通过扩展<i>额外</i>元素并定义扩展基类型<i>extraType</i>的复杂类型来<i>实现</i> 。这些附加元素位于XSD的根级别，位于<i>tmfxml</i>元素下。以下示例显示了另一个<i>callstack</i>元素的XSD文件：</p>
-		<pre>&lt;？xml version =“1.0”encoding =“UTF-8”standalone =“no”？&gt; &lt;xs：schema xmlns：xs =“ <a href="http://www.w3.org/2001/XMLSchema">http://www.w3.org/2001/XMLSchema</a> ”attributeFormDefault =“unqualified”elementFormDefault =“qualified”&gt;</pre>
-		<pre>&lt;xs：element name =“callstack”substitutionGroup =“extra”type =“callstackType”/&gt;</pre>
-		<pre>&lt;xs：complexType name =“callstackType”&gt; &lt;xs：complexContent&gt; &lt;xs：extension base =“extraType”&gt; [...类型定义...]&lt;/ xs：extension&gt; &lt;/ xs：complexContent&gt; &lt;/ xs：complexType&gt;</pre>
-		<pre>&lt;/ XS：模式&gt;</pre>
+		<pre>   &lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;
+   &lt;xs:schema xmlns:xs="<a href="http://www.w3.org/2001/XMLSchema">http://www.w3.org/2001/XMLSchema</a>"
+       attributeFormDefault="unqualified" elementFormDefault="qualified"&gt;
+</pre>
+		<pre>       &lt;xs:element name="callstack" substitutionGroup="extra" type="callstackType"/&gt;
+</pre>
+		<pre>   &lt;xs:complexType name="callstackType"&gt;
+       &lt;xs:complexContent&gt;
+           &lt;xs:extension base="extraType"&gt;
+              [... type definition ...]
+           &lt;/xs:extension&gt;
+       &lt;/xs:complexContent&gt;
+   &lt;/xs:complexType&gt;
+</pre>
+		<pre>   &lt;/xs:schema&gt;
+</pre>
 		<h2 id="Parsing_the_schema">解析模式</h2>
 		<p>要对这个新的模式元素执行某些操作，需要能够解析它。解析器必须实现<i>ITmfXmlSchemaParser</i>类。由于架构扩展处于XML分析级别，因此预期的行为是定义新的分析类型。因此，解析器的返回值是模块助手。
 		</p>
 		<p>以下代码段显示了根据上面定义的<i>callstack</i>分析创建的分析助手的示例。
 		</p>
-		<pre>公共类CallstackXmlSchemaParser实现ITmfXmlSchemaParser {</pre>
-		<pre>@Override public Collection &lt;？扩展IAnalysisModuleHelper&gt; getModuleHelpers（File xmlFile，Document doc）{List &lt;IAnalysisModuleHelper&gt; list = new ArrayList &lt;&gt;（）; NodeList callstackNodes = doc.getElementsByTagName（CallstackXmlStrings。调用堆栈）; for（int i = 0; i &lt;callstackNodes.getLength（）; i ++）{Element node = NonNullUtils.checkNotNull（（Element）callstackNodes.item（i））;</pre>
-		<pre>IAnalysisModuleHelper helper = new CallstackXmlModuleHelper（xmlFile，node）; list.add（辅助）; } return list; }}</pre>
+		<pre>   public class CallstackXmlSchemaParser implements ITmfXmlSchemaParser {
+</pre>
+		<pre>       @Override
+       public Collection&lt;? extends IAnalysisModuleHelper&gt; getModuleHelpers(File xmlFile, Document doc) {
+           List&lt;IAnalysisModuleHelper&gt; list = new ArrayList&lt;&gt;();
+           NodeList callstackNodes = doc.getElementsByTagName(CallstackXmlStrings.CALLSTACK);
+           for (int i = 0; i &lt; callstackNodes.getLength(); i++) {
+               Element node = NonNullUtils.checkNotNull((Element) callstackNodes.item(i));
+</pre>
+		<pre>               IAnalysisModuleHelper helper = new CallstackXmlModuleHelper(xmlFile, node);
+               list.add(helper);
+           }
+           return list;
+       }
+   }
+</pre>
 		<p>由解析器创建的<i>CallstackXmlModuleHelper</i>延伸<i>TmfAnalysisModuleHelperXml</i>类并覆盖<i>TmfAnalysisModuleHelperXml＃createOtherModule</i>方法。以下代码显示了此示例。
 		</p>
-		<pre>public class CallstackXmlModuleHelper扩展TmfAnalysisModuleHelperXml {</pre>
-		<pre>/ ** *构造函数* * @param xmlFile *此元素来自* @param节点的XML文件*此callstack的XML元素* / public CallstackXmlModuleHelper（File xmlFile，Element node）{super（xmlFile，node，XmlAnalysisModuleType。其他）; //特定代码}</pre>
-		<pre>@Override protected IAnalysisModule createOtherModule（@NonNull String analysisid，@ NonNull String name）{IAnalysisModule module = new CallstackXmlAnalysis（...）; module.setId（analysisid）; module.setName（名称）;返回模块; }}</pre>
+		<pre>   public class CallstackXmlModuleHelper extends TmfAnalysisModuleHelperXml {
+</pre>
+		<pre>       /**
+        * Constructor
+        *
+        * @param xmlFile
+        *            The XML file this element comes from
+        * @param node
+        *            The XML element for this callstack
+        */
+       public CallstackXmlModuleHelper(File xmlFile, Element node) {
+           super(xmlFile, node, XmlAnalysisModuleType.OTHER);
+           // Specific code
+       }
+</pre>
+		<pre>       @Override
+       protected IAnalysisModule createOtherModule(@NonNull String analysisid, @NonNull String name) {
+           IAnalysisModule module = new CallstackXmlAnalysis(...);
+           module.setId(analysisid);
+           module.setName(name);
+           return module;
+       }
+   }
+</pre>
 		<h2 id="Adding_the_extension_point">添加扩展点</h2>
 		<p>要宣传此架构扩展和解析器，必须为插件指定<b>org.eclipse.tracecompass.tmf.analysis.xml.core.xsd</b>扩展名。
 		</p>
-		<pre>&lt;extension point =“org.eclipse.tracecompass.tmf.analysis.xml.core.xsd”&gt; &lt;xsdfile file =“xsd_files / xmlCallstack.xsd”&gt; &lt;/ xsdfile&gt; &lt;schemaParser class =“my.package。CallstackXmlSchemaParser“&gt; &lt;/ schemaParser&gt; &lt;/ extension&gt;</pre><hr class="navigation-separator">
+		<pre>   &lt;extension
+           point="org.eclipse.tracecompass.tmf.analysis.xml.core.xsd"&gt;
+       &lt;xsdfile
+           file="xsd_files/xmlCallstack.xsd"&gt;
+       &lt;/xsdfile&gt;
+       &lt;schemaParser
+            class="my.package.CallstackXmlSchemaParser"&gt;
+       &lt;/schemaParser&gt;
+   &lt;/extension&gt;
+</pre><hr class="navigation-separator">
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<td align="left" style="width:20%">

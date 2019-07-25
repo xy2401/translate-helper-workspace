@@ -1,15 +1,15 @@
-<html dir="ltr">
+<html >
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>3.4。�通过客户端API地址自定义控件</title>
-<link rel="stylesheet" type="text/css" href="../../css/style.css"></link>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1"></meta>
-<link rel="home" href="../index.html" title="Jubula Developer Manual"></link>
-<link rel="up" href="ch03.html" title="Chapter�3.�Creating toolkit extensions for custom UI widgets"></link>
-<link rel="prev" href="ch03s03s02.html" title="3.3.2.�Deploying the fragment"></link>
-<link rel="next" href="ch03s05.html" title="3.5.�ITE, client API and remote control extension examples"></link>
+<link rel="stylesheet" type="text/css" href="../../css/style.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="../index.html" title="Jubula Developer Manual">
+<link rel="up" href="ch03.html" title="Chapter�3.�Creating toolkit extensions for custom UI widgets">
+<link rel="prev" href="ch03s03s02.html" title="3.3.2.�Deploying the fragment">
+<link rel="next" href="ch03s05.html" title="3.5.�ITE, client API and remote control extension examples">
 </head>
-<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<body bgcolor="white"  text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
 <tr><th colspan="3" align="center">3.4。�通过客户端API地址自定义控件</th></tr>
@@ -32,15 +32,62 @@
 <p>要通过客户端API在自定义控件/自定义CAP上执行CAP，您必须执行两个额外步骤。
     </p>
 <p>首先，您必须使用以下命令为完全限定的新组件类名注册负责的测试器类：</p>
-<pre class="programlisting">public interface org.eclipse.jubula.toolkit。ToolkitInfo {/ ** *允许将组件类的测试器类添加到工具箱中* @param componentClassName组件类的完全限定名称* @param testerClassName测试器类的完全限定名称* @return以前注册的测试器类用于组件类*或&lt;code&gt; null &lt;/ code&gt;如果没有* / @Nullable public String registerTesterClass（@NonNull String componentClassName，@ NonNull String testerClassName）; ...
+<pre class="programlisting">
+
+public interface org.eclipse.jubula.toolkit.ToolkitInfo {
+    /**
+     * Allows adding of a tester class for a component class into a toolkit
+     * @param componentClassName fully qualified name of the component class
+     * @param testerClassName fully qualified name of the tester class
+     * @return previously registered tester class for the component class
+     *         or &lt;code&gt;null&lt;/code&gt; if there was none
+     */
+    @Nullable public String registerTesterClass(
+            @NonNull String componentClassName,
+            @NonNull String testerClassName);
+
+...
 
     </pre>
 <p>然后，此扩展的ToolkitInformation用于从AUT-Agent检索AUT：</p>
-<pre class="programlisting">public interface org.eclipse.jubula.client。AUTAgent扩展了远程{.../ ** * @param autID * autID获取AUT @ * param信息*有关工具包的信息* @return a AUT  - 注意：目前仅底层实现*支持&lt;b&gt; ONE &lt;/ b&gt;连接远程运行AUT的时间; *多个连接只能按顺序建立！* @throws CommunicationException *如果远程端出现通信问题* / AUT getAUT（AUTIdentifier autID，ToolkitInfo信息）抛出CommunicationException; ...
+<pre class="programlisting">
+
+public interface org.eclipse.jubula.client.AUTAgent extends Remote {
+...
+
+    /**
+     * @param autID
+     *            the autID to get an AUT for
+     * @param information
+     *            the information about the toolkit
+     * @return an AUT - note: currently the underlying implementation only
+     *         supports &lt;b&gt;ONE&lt;/b&gt; connection at a time to a remotely running AUT;
+     *         multiple connections may only be established sequentially!
+     * @throws CommunicationException
+     *             in case of communication problems with the remote side
+     */
+    AUT getAUT(AUTIdentifier autID, ToolkitInfo information)
+        throws CommunicationException;
+
+...
 
     </pre>
 <p>然后您可以使用CapBuilder创建自定义CAP实例：</p>
-<pre class="programlisting">公共类org.eclipse.jubula.toolkit。CapBuilder {...public CapBuilder addParameter（@NonNull String value）{...}public CapBuilder addParameter（@NonNull Integer value）{...}public CapBuilder addParameter（@NonNull Boolean value）{...}public CapBuilder setComponentIdentifier（@Nullable ComponentIdentifier ci）{...}public CAP build（）{} ...}</pre>
+<pre class="programlisting">
+
+public class org.eclipse.jubula.toolkit.CapBuilder {
+...
+         public CapBuilder addParameter(@NonNull String value) {...}
+         public CapBuilder addParameter(@NonNull Integer value) {...}
+         public CapBuilder addParameter(@NonNull Boolean value) {...}
+     
+         public CapBuilder setComponentIdentifier(@Nullable ComponentIdentifier ci) {...}
+             
+         public CAP build() {}
+...
+}
+
+    </pre>
 <p>然后，这些自定义CAP实例可以像往常一样在AUT上下文中执行。
     </p>
 <p xmlns:d="http://docbook.org/ns/docbook"></p><table>

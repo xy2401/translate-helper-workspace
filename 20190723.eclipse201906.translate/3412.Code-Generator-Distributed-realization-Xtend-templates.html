@@ -1,14 +1,14 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta charset="UTF-8"></meta>
+<meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
 <title>代码生成器（分布式实现，Xtend模板）</title>
-<link rel="stylesheet" href="asset?aid=0"></link>
-<link rel="stylesheet" href="./asciidoctor.css"></link>
+<link rel="stylesheet" href="asset?aid=0">
+<link rel="stylesheet" href="./asciidoctor.css">
 </head>
-<body class="article" dir="ltr">
+<body class="article" >
 <div id="header">
 <h1>代码生成器（分布式实现，Xtend模板）</h1>
 </div>
@@ -44,7 +44,12 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface ICPSGenerator {def CharSequence generateHostCode（DeploymentHost host）throws CPSGeneratorException def CharSequence generateApplicationCode（DeploymentApplication application）throws CPSGeneratorException def CharSequence generateBehaviorCode（DeploymentBehavior behavior）throws CPSGeneratorException def CharSequence generateDeploymentCode（Deployment deployment）throws CPSGeneratorException}</code></pre>
+<pre class="highlight"><code class="language-xtend" data-lang="xtend">interface ICPSGenerator {
+    def CharSequence generateHostCode(DeploymentHost host) throws CPSGeneratorException
+    def CharSequence generateApplicationCode(DeploymentApplication application) throws CPSGeneratorException
+    def CharSequence generateBehaviorCode(DeploymentBehavior behavior) throws CPSGeneratorException
+    def CharSequence generateDeploymentCode(Deployment deployment) throws CPSGeneratorException
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -57,7 +62,18 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类Host152661025扩展BaseHost {public Host152661025（CommunicationNetwork network）{super（network）; //添加主机应用程序的应用程序=列表。&lt;Application&gt; newArrayList（new AlarmApplication（this），new OtherApplication（this），）; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class Host152661025 extends BaseHost {
+
+    public Host152661025(CommunicationNetwork network) {
+        super(network);
+        // Add Applications of Host
+        applications = Lists.&lt;Application&gt;newArrayList(
+            new AlarmApplication(this),
+                        new OtherApplication(this),
+        );
+    }
+
+}</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -67,7 +83,23 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类AlarmApplication扩展BaseApplication &lt;BehaviorAlarmB&gt; {protected static final String APP_ID =“Alarm”; public AlarmApplication（Host host）{super（host）; //设置初始状态currentState = BehaviorAlarmB.AInit; } @Override public String getAppID（）{return APP_ID; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class AlarmApplication extends BaseApplication&lt;BehaviorAlarmB&gt; {
+
+    protected static final String APP_ID = "Alarm";
+
+    public AlarmApplication(Host host) {
+        super(host);
+
+        // Set initial State
+        currentState = BehaviorAlarmB.AInit;
+    }
+
+    @Override
+    public String getAppID() {
+        return APP_ID;
+    }
+
+}</code></pre>
 </div>
 </div>
 </div>
@@ -79,7 +111,75 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">public enum BehaviorAlarmB实现State &lt;BehaviorAlarmB&gt; {/////////// // States AInit {@Override public List &lt;State &lt;BehaviorAlarmB &gt;&gt; possibleNextStates（Application app）{List &lt;State &lt;BehaviorAlarmB &gt;&gt; possibleStates = Lists.newArrayList（）; //添加中性转换//添加发送转换possibleStates.add（ASent）; //添加等待转换返回possibleStates; } @Override public BehaviorAlarmB stepTo（BehaviorAlarmB nextState，Application app）{//发送触发器if（nextState == ASent）{app.sendTrigger（“152.66.102.5”，“Alarm”，“ISSReceiving”）; return super.stepTo（nextState，app）; } //其他情况（等待，中立）返回super.stepTo（nextState，app）; ，ASent {@Override public List &lt;State &lt;BehaviorAlarmB &gt;&gt; possibleNextStates（Application app）{List &lt;State &lt;BehaviorAlarmB &gt;&gt; possibleStates = Lists.newArrayList（）; //添加中性转换possibleStates.add（AInit）; //添加发送转换//添加等待转换返回possibleStates; }}; private static Logger logger = Logger.getLogger（“cps.proto.distributed.state”）; //////////// //触发器///////////////// //一般部分@Override abstract public List &lt;State &lt;BehaviorAlarmB &gt;&gt; possibleNextStates（Application应用程序）; @Override public BehaviorAlarmB stepTo（BehaviorAlarmB nextState，Application app）{if（possibleNextStates（app）.contains（nextState））{logger.info（“Step from”+ this.name（）+“to”+ nextState.name（） ）; return nextState; } else {logger.info（“!!!警告：无法从“+ this.name（）+”跳到“+ nextState.name（）+”，因为目标状态不可能是状态。“）;}返回此;}}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public enum BehaviorAlarmB implements State&lt;BehaviorAlarmB&gt; {
+     ///////////
+    // States
+    AInit {
+        @Override
+        public List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleNextStates(Application app) {
+            List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleStates = Lists.newArrayList();
+
+            // Add Neutral Transitions
+
+            // Add Send Transitions
+            possibleStates.add(ASent);
+
+            // Add Wait Transitions
+
+            return possibleStates;
+        }
+
+        @Override
+        public BehaviorAlarmB stepTo(BehaviorAlarmB nextState, Application app) {
+            // Send triggers
+            if(nextState == ASent){
+                app.sendTrigger("152.66.102.5", "Alarm", "ISSReceiving");
+                return super.stepTo(nextState, app);
+            }
+
+            // Other cases (wait, neutral)
+            return super.stepTo(nextState, app);
+        }
+    },
+    ASent {
+        @Override
+        public List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleNextStates(Application app) {
+            List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleStates = Lists.newArrayList();
+
+            // Add Neutral Transitions
+            possibleStates.add(AInit);
+
+            // Add Send Transitions
+
+            // Add Wait Transitions
+
+            return possibleStates;
+        }
+    };
+
+    private static Logger logger = Logger.getLogger("cps.proto.distributed.state");
+
+     ////////////
+    // Triggers
+
+     /////////////////
+    // General part
+    @Override
+    abstract public List&lt;State&lt;BehaviorAlarmB&gt;&gt; possibleNextStates(Application app);
+
+    @Override
+    public BehaviorAlarmB stepTo(BehaviorAlarmB nextState, Application app){
+        if(possibleNextStates(app).contains(nextState)){
+            logger.info("Step from " + this.name() + " to " + nextState.name());
+            return nextState;
+        }else{
+            logger.info("!!! Warning: Unable to step from " + this.name() + " to " + nextState.name()
+                    + " because the target state is not possible state.");
+        }
+        return this;
+    }
+
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">

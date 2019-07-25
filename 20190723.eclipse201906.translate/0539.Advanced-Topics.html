@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>JGit用户指南 - 高级主题</title>
-		<link type="text/css" rel="stylesheet" href="../../book.css"></link>
+		<link type="text/css" rel="stylesheet" href="../../book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">高级主题</th>
@@ -33,33 +33,79 @@
 		<p>版本控制界面以及RevWalk和RevCommit类都设计得很轻。但是，当与任何相当大的存储库一起使用时，它们可能仍然需要大量内存。本节提供了有关在行走修订图时可以采取哪些措施来减少内存的提示。</p>
 		<h3 id="Restrict_the_walked_revision_graph">限制步行修订图</h3>
 		<p>尝试只走你实际需要走的图表数量。也就是说，如果您正在refs / heads / master / master中查找refs / heads / master中的提交，请确保为refs / heads / master和markUninteresting（）refs / remotes / origin / master标记StartStart（） 。RevWalk遍历只会解析它回答你所需的提交，并会尽量避免回顾历史。这减少了内部对象映射的大小，从而减少了总体内存使用量。</p>
-		<pre>RevWalk walk = new RevWalk（repository）;来自= repository.resolve的ObjectId（“refs / heads / master”）; ObjectId to = repository.resolve（“refs / remotes / origin / master”）;</pre>
-		<pre>walk.markStart（walk.parseCommit（从））; walk.markUninteresting（walk.parseCommit（至））;</pre>
+		<pre>RevWalk walk = new RevWalk(repository);
+ObjectId from = repository.resolve("refs/heads/master");
+ObjectId to = repository.resolve("refs/remotes/origin/master");
+</pre>
+		<pre>walk.markStart(walk.parseCommit(from));
+walk.markUninteresting(walk.parseCommit(to));
+</pre>
 		<pre>// ...
 </pre>
 		<h3 id="Discard_the_body_of_a_commit">丢弃提交的正文</h3>
 		<p>如果在遍历期间不需要作者，提交者或消息信息，则可以使用setRetainBody（false）方法来丢弃提交正文。不需要此数据的示例是当您仅使用RevWalk来计算分支之间的合并基础，或者执行任务时，您将使用`git rev-list`及其默认格式。</p>
-		<pre>RevWalk walk = new RevWalk（repository）; walk.setRetainBody（假）; // ...
+		<pre>RevWalk walk = new RevWalk(repository);
+walk.setRetainBody(false);
+// ...
 </pre>
 		<p>如果您确实需要正文，请考虑提取所需的数据，然后在RevCommit上调用dispose（），假设您只需要一次数据然后可以丢弃它。如果您需要挂起数据，您可能会发现JGit的内部表示使用的内存总量比您自己保留的内存少，特别是如果您需要完整的消息。这是因为JGit在内部使用byte []以UTF-8存储消息。使用UTF-16，Java字符串存储会更大，假设消息主要是US-ASCII数据。</p>
-		<pre>RevWalk walk = new RevWalk（repository）; //更多设置Set &lt;String&gt; authorEmails = new HashSet &lt;String&gt;（）;</pre>
-		<pre>for（RevCommit commit：walk）{//提取所需的提交字段，例如：authorEmails.add（commit.getAuthorIdent（）。getEmailAddress（））;</pre>
-		<pre>commit.dispose（）; }</pre>
+		<pre>RevWalk walk = new RevWalk(repository);
+// more setup
+Set&lt;String&gt; authorEmails = new HashSet&lt;String&gt;();
+</pre>
+		<pre>for (RevCommit commit : walk) {
+	// extract the commit fields you need, for example:
+	authorEmails.add(commit.getAuthorIdent().getEmailAddress());
+</pre>
+		<pre> 	commit.dispose();
+}
+</pre>
 		<h3 id="Subclassing_RevWalk_and_RevCommit">子类化RevWalk和RevCommit</h3>
 		<p>如果需要将附加数据附加到提交，请考虑继承RevWalk和RevCommit，并使用RevWalk中的createCommit（）方法构建RevCommit子类的实例。将其他数据作为字段放在RevCommit子类中，这样您就不需要使用辅助HashMap将RevCommit或ObjectId转换为其他数据字段。</p>
-		<pre>public class reviewsRevision扩展了RevCommit {</pre>
-		<pre>私人最终日期审查日期;</pre>
-		<pre>privateRev.Revision（AnyObjectId id，Date reviewDate）{super（id）; this.reviewDate = reviewDate; }</pre>
-		<pre>public List &lt;String&gt; getReviewedBy（）{return getFooterLines（“Review-by”）; }</pre>
-		<pre>public Date getReviewDate（）{return reviewDate; }</pre>
-		<pre>public static class Walk扩展RevWalk {</pre>
-		<pre>public Walk（Repository repo）{super（repo）; }</pre>
-		<pre>@Override保护RevCommit createCommit（AnyObjectId id）{return new reviewsRevision（id，getReviewDate（id））; }</pre>
-		<pre>private Date getReviewDate（AnyObjectId id）{// ...}</pre>
-		<pre>}}</pre>
+		<pre>public class ReviewedRevision extends RevCommit {
+</pre>
+		<pre>	private final Date reviewDate;
+</pre>
+		<pre>	private ReviewedRevision(AnyObjectId id, Date reviewDate) {
+		super(id);
+		this.reviewDate = reviewDate;
+	}
+</pre>
+		<pre>	public List&lt;String&gt; getReviewedBy() {
+		return getFooterLines("Reviewed-by");
+	}
+</pre>
+		<pre>	public Date getReviewDate() {
+		return reviewDate;
+	}
+</pre>
+		<pre>	public static class Walk extends RevWalk {
+</pre>
+		<pre>		public Walk(Repository repo) {
+			super(repo);
+		}
+</pre>
+		<pre>		@Override
+		protected RevCommit createCommit(AnyObjectId id) {
+			return new ReviewedRevision(id, getReviewDate(id));
+		}
+</pre>
+		<pre>		private Date getReviewDate(AnyObjectId id) {
+			// ...
+		}
+</pre>
+		<pre>	}
+}
+</pre>
 		<h3 id="Cleaning_up_after_a_revision_walk">修改后的清理工作</h3>
 		<p>RevWalk无法缩小其内部对象图。如果您刚刚对存储库的所有历史记录进行了大量遍历，那么会将所有内容加载到对象映射中，并且无法释放它。如果您在不久的将来不需要这些数据，那么抛弃RevWalk并为下次遍历分配一个新数据可能是个好主意。这将让GC收回所有内容并使其可用于其他用途。另一方面，重用现有的对象图比从头构建新的对象图要快得多。因此，您需要平衡回收内存与用户执行现有存储库视图的快速更新的愿望。</p>
-		<pre>RevWalk walk = new RevWalk（repository）; // ...for（RevCommit commit：walk）{// ...walk.dispose（）;</pre><hr class="navigation-separator">
+		<pre>RevWalk walk = new RevWalk(repository);
+// ...
+for (RevCommit commit : walk) {
+	// ...
+}
+walk.dispose();
+</pre><hr class="navigation-separator">
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<td align="left" style="width:20%">

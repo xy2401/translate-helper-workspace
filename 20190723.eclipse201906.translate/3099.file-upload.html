@@ -1,11 +1,11 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>上传文件</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css">
 </head>
-<body dir="ltr">
+<body >
 
   <h1>上传文件</h1>
   <p>本文介绍如何允许用户将文件从其本地文件系统上载到RAP服务器或其他HTTP服务器。这可以使用RAP <a href="#fileupload"><em>FileUpload</em></a>小部件， <a href="#dnd">拖放</a> API或<a href="#file-dialog"><em>FileDialog来完成</em></a> 。
@@ -15,17 +15,55 @@
   <p id="fileupload"><em><a href="../reference/api/org/eclipse/rap/rwt/widgets/FileUpload.html">FileUpload</a></em>小部件看起来像一个按钮，但它会在单击时打开用户浏览器的文件选择器对话框（它包装了一个HTML <code>&lt;input type="file"/&gt;</code>元素）。当选择了一个或多个文件（由<em>Selection</em>事件指示）时，可以使用<em>submit</em>方法将这些文件发送到任何URL。
   </p>
   <p>要在服务器上接收文件，RAP在bundle <em>org.eclipse.rap.fileupload中</em>提供服务。要使用此服务，请创建<em><a href="../reference/api/org/eclipse/rap/fileupload/FileUploadHandler.html">FileUploadHandler</a></em>的实例，并从其方法<code>getUploadUrl</code>获取上载URL。这是一个上传文件并将其存储在临时目录中的最小示例：</p>
-  <pre class="lang-java">final DiskFileUploadReceiver receiver = new DiskFileUploadReceiver（）; final FileUploadHandler uploadHandler = new FileUploadHandler（receiver）; uploadHandler.addUploadListener（new FileUploadListener（）{public void uploadProgress（FileUploadEvent event）{} public void uploadFailed（FileUploadEvent event）{} public void uploadFinished（FileUploadEvent event）{System.out.println（“Stored file：”+ receiver.getTargetFiles （）[0] .getAbsolutePath（））;}}）; final FileUpload fileUpload = new FileUpload（parent，SWT.NONE）; fileUpload.setText（“选择文件”）; fileUpload.addSelectionListener（new SelectionAdapter（）{@ Override public void widgetSelected（SelectionEvent e）{fileUpload.submit（uploadHandler.getUploadUrl（））;}}）;</pre>
+  <pre class="lang-java">final DiskFileUploadReceiver receiver = new DiskFileUploadReceiver();
+final FileUploadHandler uploadHandler = new FileUploadHandler( receiver );
+uploadHandler.addUploadListener( new FileUploadListener() {
+  public void uploadProgress( FileUploadEvent event ) {}
+  public void uploadFailed( FileUploadEvent event ) {}
+  public void uploadFinished( FileUploadEvent event ) {
+    System.out.println( "Stored file: " + receiver.getTargetFiles()[ 0 ].getAbsolutePath() );
+  }
+} );
+
+final FileUpload fileUpload = new FileUpload( parent, SWT.NONE );
+fileUpload.setText( "Select File" );
+fileUpload.addSelectionListener( new SelectionAdapter() {
+  @Override
+  public void widgetSelected( SelectionEvent e ) {
+    fileUpload.submit( uploadHandler.getUploadUrl() );
+  }
+} );
+  </pre>
   <p>要一次上传多个文件，请使用<em>SWT.MULTI</em>标志创建<em>FileUpload</em> 。这些文件无限期地存储在临时目录中，因此一旦不再需要它们，您应该小心删除它们。
   </p>
 
   <h2 id="dnd">文件拖放</h2>
   <p>现代浏览器允许使用拖放从文件系统中选择文件。在RAP中，此功能已集成到SWT拖放API中。要使控件成为文件放置和删除的目标，请使用<em><a href="../reference/api/org/eclipse/rap/rwt/dnd/ClientFileTransfer.html">ClientFileTransfer</a></em>创建<em><a href="../reference/api/org/eclipse/rap/swt/dnd/DropTarget.html">DropTarget</a></em>的实例。<a href="../reference/api/org/eclipse/swt/dnd/DropTargetAdapter.html#drop-org.eclipse.swt.dnd.DropTargetEvent-">drop事件</a> <em><a href="../reference/api/org/eclipse/swt/events/TypedEvent.html#data">数据</a></em>将包含一个<em><a href="../reference/api/org/eclipse/rap/rwt/client/ClientFile.html">ClientFile</a></em>对象数组：</p>
-  <pre class="lang-java">DropTarget dropTarget = new DropTarget（control，DND.DROP_MOVE）; dropTarget.setTransfer（new Transfer [] {ClientFileTransfer.getInstance（）}）; dropTarget.addDropListener（new DropTargetAdapter（）{@Override public void drop（DropTargetEvent event）{handleFileDrop（（ClientFile []）event.data）;}}）;</pre>
+  <pre class="lang-java">DropTarget dropTarget = new DropTarget( control, DND.DROP_MOVE );
+dropTarget.setTransfer( new Transfer[] { ClientFileTransfer.getInstance() } );
+dropTarget.addDropListener( new DropTargetAdapter() {
+  @Override
+  public void drop( DropTargetEvent event ) {
+    handleFileDrop( ( ClientFile[] )event.data );
+  }
+} );
+  </pre>
   <p>请注意，与<q>普通</q>拖动手势不同，拖动反馈（附加到鼠标光标的图标）由操作系统呈现，因此在RAP中可能看起来与行为不同。此外，即使用户持有修改键，丢弃操作也将始终移动。
   </p>
   <p><em>ClientFile</em>对象表示在客户端上选择的文件，但尚未上载。为此，您必须使用<em><a href="../reference/api/org/eclipse/rap/rwt/client/ClientFileUploader.html">ClientFileUploader</a></em>服务，并且<a href="#fileupload">与上面的<em>FileUpload</em>小部件一样</a> ，使用<em>FileUploadHandler</em> ：</p>
-<pre>private void handleFileDrop（ClientFile [] files）{final DiskFileUploadReceiver receiver = new DiskFileUploadReceiver（）; final FileUploadHandler uploadHandler = new FileUploadHandler（receiver）; uploadHandler.addUploadListener（new FileUploadListener（）{public void uploadProgress（FileUploadEvent event）{} public void uploadFailed（FileUploadEvent event）{} public void uploadFinished（FileUploadEvent event）{System.out.println（“Stored file：”+ receiver.getTargetFiles （）[0] .getAbsolutePath（））;}}）; RWT.getClient（）。getService（ClientFileUploader.class）.submit（uploadHandler.getUploadUrl（），files）; }</pre>
+<pre>private void handleFileDrop( ClientFile[] files ) {
+  final DiskFileUploadReceiver receiver = new DiskFileUploadReceiver();
+  final FileUploadHandler uploadHandler = new FileUploadHandler( receiver );
+  uploadHandler.addUploadListener( new FileUploadListener() {
+    public void uploadProgress( FileUploadEvent event ) {}
+    public void uploadFailed( FileUploadEvent event ) {}
+    public void uploadFinished( FileUploadEvent event ) {
+      System.out.println( "Stored file: " + receiver.getTargetFiles()[ 0 ].getAbsolutePath() );
+    }
+  } );
+  RWT.getClient().getService( ClientFileUploader.class ).submit( uploadHandler.getUploadUrl(), files );
+}
+</pre>
 
   <h2 id="file-dialog">FileDialog的</h2>
   <p>这基本上是一体化解决方案。<em><a href="../reference/api/org/eclipse/rap/swt/widget/FileDialog.html">FileDialog</a></em>提供与SWT兼容的API，允许用户选择一个或多个文件供应用程序打开。使用<em>FileUpload</em> （文件选取器）或文件拖放选择文件后，立即上载它们。该对话框显示上传进度（使用<a href="server-push.html"><em>ServerPush</em></a> ）和 - 除非取消 - 只能在所有上传完成后关闭。
@@ -44,7 +82,18 @@
     <li>
       <p>
         <a href="rwt.html#dialog">与所有对话框一样</a> ，必须在<a href="application-setup.html#compat">JEE兼容模式下</a>以不同方式打开<em>FileDialog</em> ：</p>
-  <pre class="lang-java">final FileDialog fileDialog = new FileDialog（parent，SWT.APPLICATION_MODAL）; // SWT兼容模式：System.out.println（“Stored file：”+ fileDialog.open（））; // JEE兼容模式：fileDialog.open（new DialogCallback（）{public void dialogClosed（int returnCode）{System.out.println（“Stored file：”+ fileDialog.getFileName（））;}}）;</pre>
+  <pre class="lang-java">final FileDialog fileDialog = new FileDialog( parent, SWT.APPLICATION_MODAL );
+
+// SWT compatibility mode:
+System.out.println( "Stored file: " + fileDialog.open() );
+
+// JEE compatibility mode:
+fileDialog.open( new DialogCallback() {
+  public void dialogClosed( int returnCode ) {
+    System.out.println( "Stored file: " + fileDialog.getFileName() );
+  }
+} );
+  </pre>
     </li>
   </ul>
 </body>

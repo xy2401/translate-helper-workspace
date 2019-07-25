@@ -1,11 +1,11 @@
-<html lang="zh-Hans" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
-<link rel="stylesheet" href="images/../../../css/book.css" type="text/css"></link>
-<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css"></link>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" href="images/../../../css/book.css" type="text/css">
+<link rel="stylesheet" href="images/../../../css/emf-book.css" type="text/css">
 <title>EMF.Edit概述</title>
 </head>
-<body lang="EN-US" dir="ltr" xml:lang="EN-US">
+<body lang="EN-US"  xml:lang="EN-US">
 <h1>EMF.Edit概述</h1>
 
 <p>最后更新时间：2004年6月1日</p>
@@ -42,7 +42,14 @@
 
 <p>每个查看器类使用实现特定提供程序接口的内容提供程序。例如，TreeViewer使用实现以下接口的内容提供程序：</p>
 
-<pre>公共接口ITreeContentProvider ...{public Object [] getChildren（Object object）; public Object getParent（Object object）; ...}</pre>
+<pre>
+  public interface ITreeContentProvider ...
+  {
+    public Object[] getChildren(Object object);
+    public Object getParent(Object object);
+    ...
+  }
+</pre>
 
 <p>基本结构如下图所示：</p>
 
@@ -56,7 +63,14 @@
 
 <p>EMF.Edit框架提供了一个通用内容提供程序实现类，可用于为EMF模型提供内容。类AdapterFactoryContentProvider通过委托给知道如何导航查看器的模型对象（项）的EMF适配器来实现内容提供者接口。例如，用于支持树查看器的EMF适配器类将实现以下EMF.Edit接口：</p>
 
-<pre>public interface ITreeItemProvider {public Collection getChildren（Object object）; public Object getParent（Object object）; ...}</pre>
+<pre>
+  public interface ITreeItemProvider
+  {
+    public Collection getChildren(Object object);
+    public Object getParent(Object object);
+    ...
+  }
+</pre>
 
 <p>请注意此接口与上述内容提供程序接口ITreeContentProvider的相似性。AdapterFactoryContentProvider通过定位然后委派给所需项目的适配器（实现项目提供程序接口）来实现内容提供程序接口。术语从对象到项目的转换是有意识的：从观察者的角度来看，它们是项目，而不是对象。</p>
 
@@ -70,13 +84,29 @@
 
 <p>AdapterFactoryContentProvider中的getChildren（）方法如下所示：</p>
 
-<pre>public Object [] getChildren（Object object）{ITreeItemContentProvider adapter =（ITreeItemContentProvider）adapterFactory.adapt（object，ITreeItemContentProvider.class）; return adapter.getChildren（object）.toArray（）; }</pre>
+<pre>
+  public Object[] getChildren(Object object)
+  {
+    ITreeItemContentProvider adapter =
+      (ITreeItemContentProvider)
+        adapterFactory.adapt(object, ITreeItemContentProvider.class);
+    return adapter.getChildren(object).toArray();
+  }
+</pre>
 
 <p>所有内容提供者方法都使用相同的模式。如前所述，AdapterFactoryContentProvider只是简单地将内容提供者方法委托给知道如何为请求提供服务的特定项提供者（适配器）。</p>
 
 <p>在上面的getChildren（）方法中，传递给adapterFactory.adapt（）的对象是一个简单的java.lang。对象（不是org.eclipse.emf.ecore。EObject）。这是EMF.Edit框架的一个重要特性。该框架经过精心设计，以适应可能与模型本身不同的EMF模型的视图（即，抑制对象或包含其他虚拟对象的视图）。为了允许这种EMF和非EMF对象的混合，适配器工厂的框架基类提供了一个如下所示的adapt（）实现：</p>
 
-<pre>public Object adapt（Object object，Object type）{if（object instanceof Notifier）return this.adapt（（Notifier）object，type）;否则返回对象; }</pre>
+<pre>
+  public Object adapt(Object object, Object type)
+  {
+    if (object instanceof Notifier)
+      return this.adapt((Notifier)object, type);
+    else
+      return object;
+  }
+</pre>
 
 <p>如果指定的对象不是EMF通知程序<sup><a class="footnote" href="#fn1">[1]</a> <a name="ref1"> </a></sup> ，它返回对象本身。使用此设计，想要将非EMF项添加到视图的项提供程序可以简单地返回（例如，从其getChildren（）方法）它想要的任何非EMF对象。只要返回的对象实现了查看器的必需项提供程序接口（例如，ITreeItemProvider），它就会被视为所有其他EMF项。</p>
 
@@ -96,7 +126,14 @@
 
 <p>使用EMF.Edit提供程序类，用户可以为某些EMF模型构造TreeViewer，如下所示：</p>
 
-<pre>myAdapterFactory = ...treeViewer = new TreeViewer（）; treeViewer.setContentProvider（new AdapterFactoryContentProvider（myAdapterFactory））; treeViewer.setLabelProvider（new AdapterFactoryLabelProvider（myAdapterFactory））;</pre>
+<pre>
+  myAdapterFactory = ...
+
+  treeViewer = new TreeViewer();
+
+  treeViewer.setContentProvider(new AdapterFactoryContentProvider(myAdapterFactory));
+  treeViewer.setLabelProvider(new AdapterFactoryLabelProvider(myAdapterFactory));
+</pre>
 
 <p>然后，可以在通常的（JFace规定的）方式中将该TreeViewer显示在编辑器窗口中。</p>
 
@@ -131,7 +168,14 @@
 
 <p>在这张图片中，对象像往常一样有适配器指针，但项目提供程序（共享）没有指向对象的指针。如果您还记得我们之前在内容提供程序部分中查看过的树项提供程序接口，您可能已经注意到所有方法都采用了额外的参数（对象）：</p>
 
-<pre>public interface ITreeItemProvider {public Collection getChildren（Object object）; public Object getParent（Object object）; ...}</pre>
+<pre>
+  public interface ITreeItemProvider
+  {
+    public Collection getChildren(Object object);
+    public Object getParent(Object object);
+    ...
+  }
+</pre>
 
 <p>object参数被添加到每个项提供程序接口，专门用于支持此模式。在有状态的情况下，此对象将始终与适配器的目标相同。</p>
 
@@ -164,13 +208,24 @@
 
 <p>假设类公司有一个一对多的引用，命名为部门，到类部门。要从公司中删除部门（例如，实现编辑器删除操作），我们可以简单地编写以下代码：</p>
 
-<pre>部门d = ......公司c = ......。c.getDepartments（）除去（d）;</pre>
+<pre>
+  Department d = ...
+  Company c = ...
+  c.getDepartments().remove(d);
+</pre>
 
 <p>虽然很简单，但这段代码只是简单地进行修改。</p>
 
 <p>相反，我们使用EMF.Edit remove命令（org.eclipse.emf.edit.command。RemoveCommand）删除部门，我们会写下面的内容：</p>
 
-<pre>部门d = ......公司c = ......EditingDomain ed = ...RemoveCommand cmd = new RemoveCommand（ed，c，CompanyPackage.eINSTANCE.getCompany_Departments（），d）; 。ed.getCommandStack（）执行（CMD）;</pre>
+<pre>
+  Department d = ...
+  Company c = ...
+  EditingDomain ed = ...
+  RemoveCommand cmd = 
+    new RemoveCommand(ed, c, CompanyPackage.eINSTANCE.getCompany_Departments(), d);
+  ed.getCommandStack().execute(cmd);
+</pre>
 
 <p>以这种方式删除部门有几个好处：</p>
 
@@ -189,13 +244,25 @@
 
 <p>EditingDomain接口包含（除其他外）命令工厂方法createCommand（），可以使用而不是new来创建命令：</p>
 
-<pre>public interface EditingDomain {...命令createCommand（Class commandClass，CommandParameter commandParameter）; ...}</pre>
+<pre>
+  public interface EditingDomain
+  {
+    ...
+    Command createCommand(Class commandClass, CommandParameter commandParameter);
+    ...
+  }
+</pre>
 
 <p>要使用此方法创建命令，首先需要创建CommandParameter对象，将命令参数设置到其中，然后调用create方法，并将所需的命令类（例如，RemoveCommand.class）和参数传递给它。</p>
 
 <p>而不是让客户端完成所有这些，我们使用在每个命令类中提供静态方便create（）方法的约定。使用静态create（）方法，您可以创建和执行RemoveCommand，如下所示：</p>
 
-<pre>部门d = ......EditingDomain ed = ...命令cmd = RemoveCommand.create（ed，d）; 。ed.getCommandStack（）执行（CMD）;</pre>
+<pre>
+  Department d = ...
+  EditingDomain ed = ...
+  Command cmd = RemoveCommand.create(ed, d);
+  ed.getCommandStack().execute(cmd);
+</pre>
 
 <p>如您所见，这只是一个小的语法更改（RemoveCommand.create（）而不是新的RemoveCommand）。但是存在根本的差异。除了编辑域之外，我们只传递了一个参数（即被删除的对象），而不是之前的三个参数。注意现在如何使用这段代码来删除任何类型的对象。通过将命令的创建委托给编辑域，我们让它填写缺少的参数。</p>
 
@@ -203,11 +270,27 @@
 
 <p>要了解它是如何工作的，让我们继续使用RemoveCommand.create（）调用。如前所述，静态create（）方法只是一种方便的方法，它委托给编辑域，如下所示：</p>
 
-<pre>public static命令create（EditingDomain domain，Object value）{return domain.createCommand（RemoveCommand.class，new CommandParameter（null，null，Collections.singleton（value）））; }</pre>
+<pre>
+  public static Command create(EditingDomain domain, Object value) 
+  {
+    return domain.createCommand(
+      RemoveCommand.class,
+      new CommandParameter(null, null, Collections.singleton(value)));
+  }
+</pre>
 
 <p>然后，AdapterFactoryEditingDomain接受请求并使用标准委托模式将其传递给项目提供者（如前面的AdapterFactorContentProvider委托的getChildren（））：</p>
 
-<pre>public命令createCommand（Class commandClass，CommandParameter commandParameter）{Object owner = ... //获取命令的所有者对象IEditingDomainItemProvider adapter =（IEditingDomainItemProvider）adapterFactory.adapt（owner，IEditingDomainItemProvider.class）; return adapter.createCommand（owner，this，commandClass，commandParameter）; }</pre>
+<pre>
+  public Command createCommand(Class commandClass, CommandParameter commandParameter)
+  {
+    Object owner = ...  // get the owner object for the command
+    IEditingDomainItemProvider adapter = 
+      (IEditingDomainItemProvider)
+        adapterFactory.adapt(owner, IEditingDomainItemProvider.class);
+    return adapter.createCommand(owner, this, commandClass, commandParameter);
+  }
+</pre>
 
 <p class="Note">注意：如果你看一下实际的createCommand（）方法，你会发现它实际上要复杂得多。这是因为它还旨在处理一次删除对象集合等问题。然而，这是它在概念上所做的一切。</p>
 
@@ -215,7 +298,23 @@
 
 <p>所有这些的影响是最终在要删除的对象的父项的提供者（即原始代码片段中的公司c的CompanyItemProvider）上调用方法createCommand（）。因此，CompanyItemProvider可以通过执行以下操作来实现createCommand（）：</p>
 
-<pre>公共类CompanyItemProvider ...{...public命令createCommand（final Object object，...，Class commandClass，...）{if（commandClass == RemoveCommand.class）{return new RemoveCommand（object，CompanyPackage.eINSTANCE.getCompany_Departments（），commandParameter.getCollection（））; } ...}}</pre>
+<pre>
+  public class CompanyItemProvider ...
+  {
+    ...
+
+    public Command createCommand(final Object object, ..., Class commandClass, ...)
+    {
+      if (commandClass == RemoveCommand.class)
+      {
+        return new RemoveCommand(object,
+                                 CompanyPackage.eINSTANCE.getCompany_Departments(),
+                                 commandParameter.getCollection()); 
+      }
+    ...
+   }
+  }
+</pre>
 
 <p>这将完成工作，但有更好的方法。</p>
 
@@ -223,7 +322,12 @@
 
 <p>要使RemoveCommand示例正常工作，CompanyItemProvider只需要实现以下方法：</p>
 
-<pre>public Collection getChildrenFeatures（Object object）{return Collections.singleton（CompanyPackage.eINSTANCE.getCompany_Departments（））; }</pre>
+<pre>
+  public Collection getChildrenFeatures(Object object)
+  {
+    return Collections.singleton(CompanyPackage.eINSTANCE.getCompany_Departments());
+  }
+</pre>
 
 <p>如图所示，此方法返回用于引用对象子级的一个或多个要素（在本例中，仅为deparments引用）。调用此方法后，createCommand（）的默认实现将确定要使用的功能（如果返回多个功能）并使用正确的创建RemoveCommand。</p>
 
@@ -231,21 +335,59 @@
 
 <p>通过编辑域创建命令的另一个好处是，它允许我们插入不同的子类或标准命令的完全不同的实现，并让标准编辑器只需要它们。例如，假设我们在从公司中删除部门时要进行一些额外的清理。实现这一目标的最简单方法可能是创建一个名为RemoveDepartmentCommand的RemoveCommand子类，如下所示：</p>
 
-<pre>public class RemoveDepartmentCommand extends RemoveCommand {public void execute（）{super.execute（）; //做额外的事......}}</pre>
+<pre>
+  public class RemoveDepartmentCommand extends RemoveCommand
+  {
+    public void execute()
+    {
+      super.execute();
+      // do extra stuff ...
+    }
+  }
+</pre>
 
 <p>那部分很容易。</p>
 
 <p>现在，如果我们的编辑器使用静态RemoveCommand.create（）方法（调用editingDomain.createCommand（））而不是新的RemoveCommand（），那么我们可以通过覆盖项目提供程序中的createCommand（）轻松地将RemoveDepartmentCommand替换为标准的RemoveCommand。像这样：</p>
 
-<pre>公共类CompanyItemProvider ...{...public命令createCommand（最终的Object对象，...）{if（commandClass == RemoveCommand.class）{return new RemoveDepartmentCommand（...）; } return super.createCommand（...）; }}</pre>
+<pre>
+  public class CompanyItemProvider ...
+  {
+    ...
+
+    public Command createCommand(final Object object, ...)
+    {
+      if (commandClass == RemoveCommand.class)
+      {
+        return new RemoveDepartmentCommand(...); 
+      }
+      return super.createCommand(...);
+    }
+  }
+</pre>
 
 <p>实际上，如果我们想要专门化的命令是预定义命令之一（如RemoveCommand），则替换更加容易，因为createCommand（）的默认实现将每个命令的创建调度到特定于命令的方便方法，如下所示：</p>
 
-<pre>public命令createCommand（最终的Object对象，...{...if（commandClass == RemoveCommand.class）返回createRemoveCommand（...）; else if（commandClass == AddCommand.class）返回createAddCommand（...）;否则......}</pre>
+<pre>
+  public Command createCommand(final Object object, ...
+  {
+    ...
+    if (commandClass == RemoveCommand.class)
+      return createRemoveCommand(...); 
+    else if (commandClass == AddCommand.class)
+      return createAddCommand(...);
+    else ...
+  }
+</pre>
 
 <p>因此，我们可以通过重写createRemoveCommand（）而不是createCommand（）方法本身来创建我们的RemoveDepartmentCommand：</p>
 
-<pre>protected命令createRemoveCommand（...）{return new RemoveDepartmentCommand（...）; }</pre>
+<pre>
+  protected Command createRemoveCommand(...) 
+  {
+    return new RemoveDepartmentCommand(...);
+  }
+</pre>
 
 <p>总而言之，关键点在于编辑域是调整命令参数的钩子，包括命令类本身，因此我们可以轻松控制模型上任何编辑命令的行为。</p>
 
@@ -263,13 +405,35 @@
 
 <p>为此，它在ViewerNotification中包含有趣的通知，这是一个简单的IViewerNotification接口实现。此接口扩展了基本的Notification接口，如下所示：</p>
 
-<pre>public interface IViewerNotification扩展Notification {Object getElement（）; boolean isContentRefresh（）; boolean isLabelUpdate（）; }</pre>
+<pre>
+  public interface IViewerNotification extends Notification
+  {
+    Object getElement();
+    boolean isContentRefresh();
+    boolean isLabelUpdate();
+  }
+</pre>
 
 <p>这些方法指定查看器中要更新的项目，是否刷新该元素下的内容，以及是否更新该元素的标签。由于项目提供程序确定对象的子项和标签，因此它还必须确定如何有效地更新查看器。</p>
 
 <p>CompanyItemProvider类中的notifyChanged（）方法如下所示：</p>
 
-<pre>public void notifyChanged（通知通知）{...switch（notification.getFeatureID（Company.class））{case CompanyPackage。COMPANY__NAME：fireNotifyChanged（new ViewerNotification（notification，...，false，true））;返回;案例CompanyPackage。COMPANY__DEPARTMENT：fireNotifyChanged（new ViewerNotification（notification，...，true，false））;返回; } super.notifyChanged（通知）; }</pre>
+<pre>
+  public void notifyChanged(Notification notification)
+  {
+    ...
+    switch (notification.getFeatureID(Company.class))
+    {
+      case CompanyPackage.COMPANY__NAME:
+        fireNotifyChanged(new ViewerNotification(notification, ..., false, true));
+        return;
+      case CompanyPackage.COMPANY__DEPARTMENT:
+        fireNotifyChanged(new ViewerNotification(notification, ..., true, false));
+        return;
+    }
+    super.notifyChanged(notification);
+  }
+</pre>
 
 <p>在此实现中，对name属性的更改会导致标签更新，并且对部门引用的更改会导致内容刷新。任何其他更改通知对查看器都没有影响。</p>
 
@@ -287,7 +451,16 @@
 
 <p>要设置组合适配器工厂，您可以编写如下内容：</p>
 
-<pre>model1AdapterFactory = ...model2AdapterFactory = ...ComposedAdapterFactory myAdapterFactory = new ComposedAdapterFactory（）; myAdapterFactory.addAdapterFactory（model1AdapterFactory）; myAdapterFActory.addAdapterFActory（model2AdapterFactory）; myContentProvider = new AdapterFactoryContentProvider（myAdapterFactory）; ...
+<pre>
+  model1AdapterFactory = ...
+  model2AdapterFactory = ...
+
+  ComposedAdapterFactory myAdapterFactory = new ComposedAdapterFactory();
+  myAdapterFactory.addAdapterFactory(model1AdapterFactory);
+  myAdapterFActory.addAdapterFActory(model2AdapterFactory);
+
+  myContentProvider = new AdapterFactoryContentProvider(myAdapterFactory);
+  ...
 </pre>
 
 <h2><a name="generator">使用EMF.Edit代码生成器</a></h2>
@@ -322,26 +495,60 @@
 
 <p>使用有状态模式时，适配器工厂创建方法只返回一个新对象，如下所示：</p>
 
-<pre>class ABCItemProviderAdapterFactory扩展了ABCAdapterFactoryImpl {...public Adapter createCompanyAdapter（）{return new CompanyItemProvider（this）; } ...}</pre>
+<pre>
+  class ABCItemProviderAdapterFactory extends ABCAdapterFactoryImpl
+  {
+    ...
+    public Adapter createCompanyAdapter()
+    {
+      return new CompanyItemProvider(this);
+    }
+    ...
+  }
+</pre>
 
 <p>相反，如果使用Singleton模式，则适配器工厂还会跟踪单例实例并为每次调用返回它：</p>
 
-<pre>protected DepartmentItemProvider departmentItemProvider; public Adapter createDepartmentAdapter（）{if（departmentItemProvider == null）{departmentItemProvider = new DepartmentItemProvider（this）; } return departmentItemProvider; }</pre>
+<pre>
+  protected DepartmentItemProvider departmentItemProvider;
+
+  public Adapter createDepartmentAdapter()
+  {
+    if (departmentItemProvider == null)
+    {
+      departmentItemProvider = new DepartmentItemProvider(this);
+    }
+    return departmentItemProvider;
+  }
+</pre>
 
 <h3>ItemProvider类</h3>
 
 <p>对于模型中的每个类，将生成相应的项提供程序类。生成的项目提供程序混合了支持标准查看器，命令和属性表所需的所有接口：</p>
 
-<pre>公共类DepartmentItemProvider扩展...实现IEditingDomainItemProvider，IStructuredItemContentProvider，ITreeItemContentProvider，IItemLabelProvider，IItemPropertySource {...}</pre>
+<pre>
+  public class DepartmentItemProvider extends ...
+    implements 
+      IEditingDomainItemProvider,
+      IStructuredItemContentProvider, 
+      ITreeItemContentProvider, 
+      IItemLabelProvider, 
+      IItemPropertySource
+  {
+    ...
+  }
+</pre>
 
 <p>如果模型类是根（即，它没有显式基类），则生成的项提供程序将从EMF.Edit项提供程序基类ItemProviderAdapter扩展：</p>
 
-<pre>公共类EmployeeItemProvider扩展ItemProviderAdapter ...
+<pre>
+  public class EmployeeItemProvider extends ItemProviderAdapter ...
 </pre>
 
 <p>相反，如果模型类继承自基类，则生成的项提供程序将从基础项提供程序扩展，如下所示：</p>
 
-<pre>公共类EmployeeItemProvider扩展PersonItemProvider ...
+<pre>
+  public class EmployeeItemProvider extends PersonItemProvider ...
 </pre>
 
 <p>对于多重继承类，生成的项提供程序将从第一个基类的项提供程序扩展（如在单继承的情况下），并且它将为其余的基类实现提供程序函数。</p>

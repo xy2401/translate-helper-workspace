@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass开发人员指南 -  OS执行图扩展</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">OS执行图扩展</th>
@@ -37,17 +37,81 @@
 		<p>要扩展执行图，插件必须首先将<b>org.eclipse.tracecompass.analysis.os.linux.core</b>插件添加到其依赖项中。然后，需要编写一个扩展<b>AbstracTraceEventHandler</b>的类和另一个可能内联的类，实现<b>IOsExecutionGraphHandlerBuilder</b> ，以构建处理程序。
 		</p>
 		<p><b>handleEvent</b>方法是在事件处理程序中重写的方法。以下代码段显示了扩展图形的示例类：</p>
-		<pre>公共类PThreadLockGraphHandler扩展AbstractTraceEventHandler {</pre>
-		<pre>/ ** *构造函数* * @param提供者*图形提供者* @param priority *此处理程序的优先级* / public PThreadLockGraphHandler（OsExecutionGraphProvider provider，int priority）{super（priority）; fProvider = provider; fLastRequest = HashBasedTable.create（）; }</pre>
-		<pre>/ ** *事件上下文处理程序的处理程序构建器* / public static class HandlerBuilderPThreadLock实现IOsExecutionGraphHandlerBuilder {</pre>
-		<pre>@Override public ITraceEventHandler createHandler（@NonNull OsExecutionGraphProvider provider，int priority）{return new PThreadLockGraphHandler（provider，priority）; }}</pre>
-		<pre>private OsWorker getOrCreateKernelWorker（ITmfEvent event，Integer tid）{HostThread ht = new HostThread（event.getTrace（）。getHostId（），tid）; OsWorker worker = fProvider.getSystem（）。findWorker（ht）;如果（工人！= null）{return worker; } worker = new OsWorker（ht，“kernel /”+ tid，event.getTimestamp（）。getValue（））; // $ NON-NLS-1 $ worker.setStatus（ProcessStatus。跑）; 。fProvider.getSystem（）addWorker（工人）;返回工人; }</pre>
-		<pre>@Override public void handleEvent（ITmfEvent event）{String name = event.getName（）; if（“myevent”.equals（name））{//获取TID和相应的worker Integer tid = TmfTraceUtils.resolveIntEventAspectOfClassForEvent（event.getTrace（），LinuxTidAspect.class，event）; if（tid == null）{return; } OsWorker worker = getOrCreateKernelWorker（event，tid）; //获取图表更新TmfGraph graph = fProvider.getAssignedGraph（）; //在事件发生时创建一个新的顶点以添加到图形中TmfVertex vertex = new TmfVertex（event.getTimestamp（）。toNanos（））; //以下代码显示了图形的不同可能性//将顶点附加到worker并创建特定类型graph.append的水平边缘（worker，vertex，EdgeType。BLOCKED）; //要创建2个worker之间的关系，需要另一个顶点// TmfVertex otherVertex = getOriginVertexForThisEvent（[...]）; // otherVertex.linkVertical（vertex）; }}}</pre>
+		<pre>   public class PThreadLockGraphHandler extends AbstractTraceEventHandler {
+</pre>
+		<pre>       /**
+        * Constructor
+        *
+        * @param provider
+        *            The graph provider
+        * @param priority
+        *            The priority of this handler
+        */
+       public PThreadLockGraphHandler(OsExecutionGraphProvider provider, int priority) {
+           super(priority);
+           fProvider = provider;
+           fLastRequest = HashBasedTable.create();
+       }
+</pre>
+		<pre>       /**
+        * The handler builder for the event context handler
+        */
+       public static class HandlerBuilderPThreadLock implements IOsExecutionGraphHandlerBuilder {
+</pre>
+		<pre>           @Override
+           public ITraceEventHandler createHandler(@NonNull OsExecutionGraphProvider provider, int priority) {
+               return new PThreadLockGraphHandler(provider, priority);
+           }
+       }
+</pre>
+		<pre>       private OsWorker getOrCreateKernelWorker(ITmfEvent event, Integer tid) {
+           HostThread ht = new HostThread(event.getTrace().getHostId(), tid);
+           OsWorker worker = fProvider.getSystem().findWorker(ht);
+           if (worker != null) {
+               return worker;
+           }
+           worker = new OsWorker(ht, "kernel/" + tid, event.getTimestamp().getValue()); //$NON-NLS-1$
+           worker.setStatus(ProcessStatus.RUN);
+           fProvider.getSystem().addWorker(worker);
+           return worker;
+       }
+</pre>
+		<pre>       @Override
+       public void handleEvent(ITmfEvent event) {
+           String name = event.getName();
+           if ("myevent".equals(name)) {
+               // Get the TID and corresponding worker
+               Integer tid = TmfTraceUtils.resolveIntEventAspectOfClassForEvent(event.getTrace(), LinuxTidAspect.class, event);
+               if (tid == null) {
+                   return;
+               }
+               OsWorker worker = getOrCreateKernelWorker(event, tid);
+               // Get the graph to update
+               TmfGraph graph = fProvider.getAssignedGraph();
+               // Create a new vertex at the time of the event to add to the graph
+               TmfVertex vertex = new TmfVertex(event.getTimestamp().toNanos());
+               // The following code shows different possibilities for the graph
+               // Append the vertex to the worker and create an horizontal edge of a specific type
+               graph.append(worker, vertex, EdgeType.BLOCKED);
+               // To create a relation between 2 workers, one needs another vertex
+               // TmfVertex otherVertex = getOriginVertexForThisEvent([...]);
+               // otherVertex.linkVertical(vertex);
+           }
+       }
+   }
+</pre>
 		<p>该类通常具有检索线程之间关系信息所需的所有逻辑。它将在工作人员感兴趣的任何位置创建顶点。这些顶点可以附加到图形中。当响应此操作的工作者到达时，该类可以保留此顶点以供将来在链接中使用。</p>
 		<p>请注意，由于许多类可能会向图形添加顶点，因此建议仅在当前时间戳附加顶点，否则，它可能会在最后一个顶点之前添加顶点。</p>
 		<h2 id="Adding_the_extension_point_2">添加扩展点</h2>
 		<p>要将此扩展通告给执行图，应在插件中添加以下扩展名：</p>
-		<pre>&lt;extension point =“org.eclipse.tracecompass.analysis.os.linux.core.graph.handler”&gt; &lt;handler class =“org.eclipse.tracecompass.incubator.internal.lttng2.ust.extras.core.pthread。PThreadLockGraphHandler $ HandlerBuilderPThreadLock“priority =”10“&gt; &lt;/ handler&gt; &lt;/ extension&gt;</pre>
+		<pre>   &lt;extension
+        point="org.eclipse.tracecompass.analysis.os.linux.core.graph.handler"&gt;
+       &lt;handler
+          class="org.eclipse.tracecompass.incubator.internal.lttng2.ust.extras.core.pthread.PThreadLockGraphHandler$HandlerBuilderPThreadLock"
+           priority="10"&gt;
+       &lt;/handler&gt;
+   &lt;/extension&gt;
+</pre>
 		<p><i>class</i>属性链接到处理程序构建器类， <i>priority</i>属性指示处理程序将注册的优先级。具有较低优先级的处理程序将在具有较高优先级的处理程序之前执行。默认优先级为10，这是内核图本身构建的优先级。
 		</p><hr class="navigation-separator">
 		<table class="navigation" border="0" style="width:100%" summary="navigation">

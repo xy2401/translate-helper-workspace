@@ -1,14 +1,14 @@
-<html dir="ltr">
+<html >
 <head>
 <title>扩展</title>
-<link href="book.css" rel="stylesheet" type="text/css"></link>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.1"></meta>
-<link rel="home" href="index.html" title="Xpand Documentation"></link>
-<link rel="up" href="emf_tutorial.html" title="Getting Started"></link>
-<link rel="prev" href="emf_tutorial_checking_contraints_with_check.html" title="Checking Constraints with the Check Language"></link>
-<link rel="next" href="Reference.html" title="Part I. Reference"></link>
+<link href="book.css" rel="stylesheet" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.1">
+<link rel="home" href="index.html" title="Xpand Documentation">
+<link rel="up" href="emf_tutorial.html" title="Getting Started">
+<link rel="prev" href="emf_tutorial_checking_contraints_with_check.html" title="Checking Constraints with the Check Language">
+<link rel="next" href="Reference.html" title="Part I. Reference">
 </head>
-<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<body bgcolor="white"  text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">扩展</h1>
 <div class="section" title="扩展">
 <div class="titlepage">
@@ -31,14 +31,28 @@
 </div>
 </div>
 <p>假设我们想要更改模板的<span class="emphasis"><em>Attribute</em></span>部分，如下所示：</p>
-<pre class="programlisting">«FOREACH属性AS»私人«a.type»«a.name»; public void«a.setterName（）»（«a.type»value）{this。«a.name»= value; } public«a.type»«a.getterName（）»（）{return this。«a.name»; }«ENDFOREACH»</pre>
+<pre class="programlisting">«FOREACH attribute AS a»
+  private «a.type» «a.name»;
+
+  public void «a.setterName()»( «a.type» value ) {
+    this.«a.name» = value;
+  }
+
+  public «a.type» «a.getterName()»() {
+    return this.«a.name»;
+  }
+«ENDFOREACH»</pre>
 <p>为了使其工作，我们需要定义<code class="methodname">setterName()</code>和<code class="methodname">getterName()</code>操作。我们通过编写一个所谓的扩展文件来做到这一点;我们称之为<code class="filename">java.ext</code> 。它必须具有<code class="filename">.ext</code>后缀才能被Xpand识别; <span class="emphasis"><em>Java</em></span>名称是因为它包含Java生成特定属性。我们将此文件直接放在<code class="filename">src</code>下的<code class="filename">templates</code>目录中，即直接放在<code class="filename">Root.xpt</code>文件旁边。扩展文件如下所示：</p>
 <p>首先，我们必须导入数据元模型;否则我们将无法使用<span class="emphasis"><em>属性</em></span>元类。</p>
-<pre class="programlisting">进口数据;</pre>
+<pre class="programlisting">import data;</pre>
 <p>然后我们可以定义两个新的操作<code class="methodname">setterName</code>和<code class="methodname">getterName</code> 。请注意，它们将它们被称为第一个参数的类型，一种“明确地”。在冒号之后，我们使用一个返回待定义值的表达式。</p>
-<pre class="programlisting">String setterName（Attribute ele）：'set'+ ele.name.toFirstUpper（）; String getterName（Attribute ele）：'get'+ ele.name.toFirstUpper（）;</pre>
+<pre class="programlisting">String setterName(Attribute ele) :
+  'set'+ele.name.toFirstUpper();
+
+String getterName(Attribute ele) :
+  'get'+ele.name.toFirstUpper();</pre>
 <p>要使这些扩展工作，我们必须<code class="filename">Root.xpt</code>添加到<code class="filename">Root.xpt</code>模板文件的开头：</p>
-<pre class="programlisting">«EXTENSION templates :: java»</pre>
+<pre class="programlisting">«EXTENSION templates::java»</pre>
 </div>
 <div class="section" title="Java扩展">
 <div class="titlepage">
@@ -51,16 +65,65 @@
 </div>
 </div>
 <p>如果您无法使用表达式语言表达表达式的“业务逻辑”，则可以回退到Java。请查看以下扩展定义文件。它被称为<code class="filename">util.ext</code> ，位于<code class="filename">src/datamodel/generator/util</code> ：</p>
-<pre class="programlisting">String timestamp（）：JAVA datamodel.generator.util。TemplateUtils.timestamp（）;</pre>
+<pre class="programlisting">String timestamp() :
+  JAVA datamodel.generator.util.TemplateUtils.timestamp();</pre>
 <p>在这里，我们定义一个独立于特定模型元素的扩展，因为它没有形式参数！扩展的实现被委托给Java类的静态操作。这是它的实现：</p>
-<pre class="programlisting">public class TemplateUtils {public static String timestamp（）{return String.valueOf（System.currentTimeMillis（））; }}</pre>
+<pre class="programlisting">public class TemplateUtils {
+  public static String timestamp() {
+    return String.valueOf( System.currentTimeMillis() );
+  }
+}</pre>
 <p>该元素可以独立于任何模型元素使用 - 它可以在全球范围内使用。</p>
 <p>有时，不仅需要从模板和其他Xtend文件访问扩展，还需要从Java代码访问扩展。以下示例属于这种类型：我们希望定义从实体名称本身派生实现类名称的属性。此用例的最佳实践是将派生属性实现为Java方法，如上所述。以下代码声明了<code class="classname">Entity</code>属性：</p>
-<pre class="programlisting">包数据模型;导入数据。实体; public class EntityHelper {public static String className（Entity e）{return e.getName（）+“Implementation”; public static String classFileName（Entity e）{return className（e）+“。java”; }}</pre>
+<pre class="programlisting">package datamodel;
+
+import data.Entity;
+
+public class EntityHelper {
+
+  public static String className( Entity e ) {
+    return e.getName()+"Implementation";
+  }
+
+  public static String classFileName( Entity e ) {
+    return className(e)+".java";
+  }
+
+}</pre>
 <p>此外，要从模板文件访问属性，我们定义了一个使用辅助方法的扩展。<code class="filename">helper.ext</code>文件位于上面显示的辅助类旁边，即在<span class="package">datamodel</span>包中：</p>
-<pre class="programlisting">进口数据; String className（Entity e）：JAVA datamodel。EntityHelper.className（数据。实体）; String classFileName（Entity e）：JAVA datamodel。EntityHelper.classFileName（数据。实体）;</pre>
+<pre class="programlisting">import data;
+
+String className( Entity e ) :
+   JAVA datamodel.EntityHelper.className(data.Entity);
+
+String classFileName( Entity e ) :
+   JAVA datamodel.EntityHelper.classFileName(data.Entity);</pre>
 <p>除了可以通过调用<code class="code">EntityHelper.className(someEntity)</code>从Java代码访问这些新属性<code class="code">EntityHelper.className(someEntity)</code> ，我们现在可以编写以下模板：</p>
-<pre class="programlisting">«EXTENSION templates :: java»«EXTENSION datamodel :: generator :: util :: util»«EXTENSION datamodel :: helper»«DEFINE Root FOR data :: DataModel»«EXPAND Entity FOREACH entity»«ENDDEFINE»«DEFINE Entity FOR data ::实体»«FILE classFileName（）»//生成于«timestamp（）»公共抽象类«className（）»{«FOREACH属性AS a»private«a.type»«a.name»; public void«a.setterName（）»（«a.type»value）{this。«a.name»= value; } public«a.type»«a.getterName（）»（）{return this。«a.name»; }«ENDFOREACH»}«ENDFILE»«ENDDEFINE»</pre>
+<pre class="programlisting">«EXTENSION templates::java»
+«EXTENSION datamodel::generator::util::util»
+«EXTENSION datamodel::helper»
+
+«DEFINE Root FOR data::DataModel»
+  «EXPAND Entity FOREACH entity»
+«ENDDEFINE»
+
+«DEFINE Entity FOR data::Entity»
+  «FILE classFileName()»
+    // generated at «timestamp()»
+    public abstract class «className()» {
+      «FOREACH attribute AS a»
+        private «a.type» «a.name»;
+        public void «a.setterName()»( «a.type» value ) {
+          this.«a.name» = value;
+        }
+
+        public «a.type» «a.getterName()»() {
+          return this.«a.name»;
+        }
+      «ENDFOREACH»
+    }
+  «ENDFILE»
+«ENDDEFINE»</pre>
 <p>为完整起见，下图显示了生成的目录和文件结构。</p>
 <div class="figure">
 <a name="emf_tutorial_what_happened_so_far"></a>

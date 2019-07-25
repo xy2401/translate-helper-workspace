@@ -1,12 +1,12 @@
-<html dir="ltr">
+<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>与EMF集成</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="emf-integration">与EMF集成</h1>
 
@@ -101,7 +101,34 @@
 
 <p>以下代码段显示了如何将限定名称用作片段：</p>
 
-<pre><code class="language-java">public QualifiedNameFragmentProvider实现IFragmentProvider {@Inject private IQualifiedNameProvider qualifiedNameProvider; public String getFragment（EObject obj，Fallback fallback）{String qName = qualifiedNameProvider.getQualifiedName（obj）;返回qName！= null？qName：fallback.getFragment（obj）; public EObject getEObject（资源资源，字符串片段，后备回退）{if（fragment！）= null）{Iterator &lt;EObject&gt; i = EcoreUtil.getAllContents（resource，false）; while（i.hasNext（））{EObject eObject = i.next（）;字符串candidateFragment =（eObject.eIsProxy（））？（（InternalEObject）eObject）.eProxyURI（）。fragment（）：getFragment（eObject，fallback）; if（fragment.equals（candidateFragment））返回eObject; return fallback.getEObject（fragment）; }}</code></pre>
+<pre><code class="language-java">public QualifiedNameFragmentProvider implements IFragmentProvider {
+
+  @Inject
+  private IQualifiedNameProvider qualifiedNameProvider;
+
+  public String getFragment(EObject obj, Fallback fallback) {
+    String qName = qualifiedNameProvider.getQualifiedName(obj);
+    return qName != null ? qName : fallback.getFragment(obj);
+  }
+
+  public EObject getEObject(Resource resource,
+                            String fragment,
+                            Fallback fallback) {
+    if (fragment != null) {
+      Iterator&lt;EObject&gt; i = EcoreUtil.getAllContents(resource, false);
+      while(i.hasNext()) {
+        EObject eObject = i.next();
+        String candidateFragment = (eObject.eIsProxy())
+            ? ((InternalEObject) eObject).eProxyURI().fragment()
+            : getFragment(eObject, fallback);
+        if (fragment.equals(candidateFragment))
+          return eObject;
+      }
+    }
+    return fallback.getEObject(fragment);
+  }
+}
+</code></pre>
 
 <p>出于性能原因，通常基于片段信息导航资源而不是完全遍历它是一个好主意。如果您知道您的片段是由限定名称计算的，并且您的模型包含类似<em>NamedElements的内容</em> ，则应将片段拆分为这些部分并查询根元素，最佳匹配的子元素等等。</p>
 
@@ -200,15 +227,19 @@
 
 <p>在测试编辑器时，您会注意到编辑几个标签后节点模型将损坏。这是因为节点模型仅由Xtext解析器更新，而不是由序列化器更新。因此，每次更改语义模型时，我们都需要一种自动调用（部分）解析器的方法。您将在包<em>org.eclipse.xtext.gmf.glue.editingdomain中</em>找到所需的类。要激活节点模型协调，您必须添加一行</p>
 
-<pre><code class="language-java">XtextNodeModelReconciler.adapt（editingDomain）;</code></pre>
+<pre><code class="language-java">XtextNodeModelReconciler.adapt(editingDomain);
+</code></pre>
 
 <p>在生成的<em>EntitiesDocumentProvider</em>的方法<code>createEditingDomain()</code>中。为避免更改生成的代码，您可以通过设置修改该类的代码生成模板</p>
 
-<pre><code class="language-java">动态模板 - &gt; true Template Directory =“org.eclipse.xtext.example.gmf.models / templates”</code></pre>
+<pre><code class="language-java">Dynamic Templates -&gt; true
+  Template Directory = "org.eclipse.xtext.example.gmf.models/templates"
+</code></pre>
 
 <p>在<em>GenEditorGenerator</em>和</p>
 
-<pre><code class="language-java">必需的插件 - &gt;“org.eclipse.xtext.gmf.glue”</code></pre>
+<pre><code class="language-java">Required Plugins -&gt; "org.eclipse.xtext.gmf.glue" 
+</code></pre>
 
 <p>在重新生成图编辑器之前，在gmfgen的<em>GenPlugin</em>元素中。</p>
 

@@ -1,11 +1,11 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>国际化</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css">
 </head>
-<body dir="ltr">
+<body >
 
   <h1>RAP的国际化</h1>
 
@@ -34,7 +34,18 @@
 
   <h2>JFace的国际化</h2>
   <p>传统上，JFace对话框按钮的文本直接设置为<code>IDialogConstants</code>一个常量。此方法不适合多个用户，因为这些常量中包含的字符串只翻译一次。对于多用户应用， <code>IDialogLabelKeys</code>还提供了可被解析为动态使用本地化字符串<em>键</em> <code>JFaceResources.getString( key )</code> 。在RAP应用程序中，应该获得标签文本，如下例所示：</p>
-<pre class="lang-java">protected void createButtonsForButtonBar（Composite parent）{createButton（parent，IDialogConstants。OK_ID，JFaceResources.getString（IDialogLabelKeys。OK_LABEL_KEY），true）; createButton（parent，IDialogConstants。CANCEL_ID，JFaceResources.getString（IDialogLabelKeys。CANCEL_LABEL_KEY），false）; }</pre>
+<pre class="lang-java">
+protected void createButtonsForButtonBar( Composite parent ) {
+  createButton( parent,
+                IDialogConstants.OK_ID,
+                JFaceResources.getString( IDialogLabelKeys.OK_LABEL_KEY ),
+                true );
+  createButton( parent,
+                IDialogConstants.CANCEL_ID,
+                JFaceResources.getString( IDialogLabelKeys.CANCEL_LABEL_KEY ),
+                false );
+}
+</pre>
 
   <h2>RCP国际化</h2>
 
@@ -44,32 +55,75 @@
   <p>这是一个RCP代码片段，它从存取器类的静态字段（通常称为“Messages”）中读取本地化字符串。
   </p>
 
-<pre class="lang-java">label.setText（消息。ExampleView_Message）;</pre>
+<pre class="lang-java">
+label.setText( Messages.ExampleView_Message );
+</pre>
 
   <p>对于多个用户，我们需要不同的翻译。因此，我们建议使用实例字段而不是静态字段，并为每种语言创建不同的类实例。这允许仅使用最小的更改来重用现有代码，即插入一个<em>get（）</em>方法，该方法返回当前UISession语言环境的资源包访问器类的实例：</p>
 
-<pre class="lang-java">label.setText（Messages <strong>.get（）</strong> 。ExampleView_Message）;</pre>
+<pre class="lang-java">
+label.setText( Messages<strong>.get()</strong>.ExampleView_Message );
+</pre>
 
   <p>要允许此模式，必须将<code>Messages</code>类中的静态字段更改为实例字段。而且，必须将<em>get（）</em>方法添加到此类中。此方法必须返回类的实例，并将所有字段转换为当前的UISession语言环境。RAP框架提供了一个助手类RWT.NLS来执行此操作。以下是修改后的访问者类的示例：</p>
 
-<pre class="lang-java">public class Messages {private static final String BUNDLE_NAME =“org.example.views.messages”; // $ NON-NLS-1 $ public String ExampleView_Title; public String ExampleView_Message; public static Messages get（）{Class clazz = Messages.class; return（Messages）RWT.NLS.getISO8859_1Encoded（BUNDLE_NAME，clazz）; } private Messages（）{//阻止实例化}}</pre>
-  <p>请注意，与RCP相比，该类不会扩展<code>org.eclipse.osgi.util.NLS</code> 。常量<code>BUNDLE_NAME</code>包含属性文件的名称（不带扩展名），该文件包含从键到本地化字符串的映射。在上面的示例中，包<code>org/example/views</code>一个属性文件<code>messages.properties</code> 。此属性文件必须包含每个键的默认字符串：</p>
-<pre>ExampleView_Title =示例ExampleView_Message = Hello World</pre>
+<pre class="lang-java">
+public class Messages {
+
+  private static final String BUNDLE_NAME = "org.example.views.messages"; //$NON-NLS-1$
+
+  public String ExampleView_Title;
+  public String ExampleView_Message;
+
+  public static Messages get() {
+    Class clazz = Messages.class;
+    return ( Messages )RWT.NLS.getISO8859_1Encoded( BUNDLE_NAME, clazz );
+  }
+
+  private Messages() {
+    // prevent instantiation
+  }
+
+}
+</pre>
+  <p>请注意，与RCP相比，该类不会扩展<code>org.eclipse.osgi.util.NLS</code> 。常量<code>BUNDLE_NAME</code>包含属性文件的名称（不带扩展名），该文件包含从键到本地化字符串的映射。在上面的示例中，包<code>messages.properties</code>一个属性文件<code>org/example/views</code> 。此属性文件必须包含每个键的默认字符串：</p>
+<pre>
+ExampleView_Title = Example
+ExampleView_Message = Hello World
+</pre>
   <p>注意：为了简化对非拉丁语言的翻译，RAP NLS实用程序还接受UTF-8编码的属性文件。
   </p>
 
   <h2>插件国际化（plugin.xml）</h2>
   <p>插件清单文件（ <code>plugin.xml</code> ）也可以包含可翻译的字符串，例如视图名称或菜单标签。因此，plugin.xml可能包含前缀为<code>%</code>符号的占位符字符串。然后，这些占位符键在属性文件中解析，该文件按照惯例命名为<code>plugin.properties</code>并驻留在插件的根目录中。以下是包含name属性占位符的视图扩展示例：</p>
-<pre class="lang-xml">&lt;extension point =“org.eclipse.ui.views”&gt; &lt;view id =“org.example.views.exampleView”class =“org.example.views。ExampleView“name =” <strong>％exampleView_name</strong> “&gt; &lt;/ view&gt; &lt;/ extension&gt;</pre>
+<pre class="lang-xml">
+&lt;extension
+      point="org.eclipse.ui.views"&gt;
+   &lt;view
+         id="org.example.views.exampleView"
+         class="org.example.views.ExampleView"
+         name="<strong>%exampleView_name</strong>"&gt;
+   &lt;/view&gt;
+&lt;/extension&gt;
+</pre>
   <p>该包将包含一个文件<code>plugin.properties</code> ，其中包含此占位符的可翻译文本，如下所示：</p>
-<pre>exampleView_name =示例</pre>
+<pre>
+exampleView_name = Example
+</pre>
   <p>为了使其工作，OSGi清单（ <code>MANIFEST.MF</code> ）必须包含一个<em>Bundle-Localization</em>标头，该标头指向属性文件的名称（不带扩展名）：</p>
-<pre>Bundle-Localization：插件</pre>
-  <p>在多用户环境中，必须将Equinox扩展注册表设置为多语言环境模式，才能同时为多个语言环境中的字符串提供服务。这是通过设置系统属性<code>eclipse.registry.来完成的<code>eclipse.registry.MultiLanguage</code>为<code>true</code>或通过设置框架属性<code>registryMultiLanguage</code> 。
+<pre>
+Bundle-Localization: plugin
+</pre>
+  <p>在多用户环境中，必须将Equinox扩展注册表设置为多语言环境模式，才能同时为多个语言环境中的字符串提供服务。这是通过设置系统属性<code>eclipse.registry.MultiLanguage</code>为<code>true</code>或通过设置框架属性<code>registryMultiLanguage</code> 。
   </p>
 
   <p>如果要将<a href="deployment.html">应用程序部署为WAR</a> ，请确保在<code>web.xml</code>包含framework属性，如下所示：</p>
-<pre class="lang-xml">&lt;init-param&gt; &lt;param-name&gt;命令行&lt;/ param-name&gt; &lt;param-value&gt; -registryMultiLanguage &lt;/ param-value&gt; &lt;/ init-param&gt;</pre>
+<pre class="lang-xml">
+&lt;init-param&gt;
+  &lt;param-name&gt;commandline&lt;/param-name&gt;
+  &lt;param-value&gt;-registryMultiLanguage&lt;/param-value&gt;
+&lt;/init-param&gt;
+</pre>
 
   <h2>工具支持</h2>
   <p>Eclipse IDE中的Java工具提供了一个工具，可以轻松地将字符串提取到消息包中，即<em>Externalize Strings</em>向导（ <em>Source&gt; Externalize String ...</em> ）。该向导具有“使用Eclipse的字符串外部化机制”（[1]中描述的机制）的选项，默认情况下为插件项目启用。如上所述，该机制不适用于多用户应用程序。

@@ -1,10 +1,10 @@
-<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Trace Compass用户指南 - 数据驱动分析</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">数据驱动分析</th>
@@ -74,7 +74,13 @@
 			<i>目前，XSD只能通过org.eclipse.tracecompass.tmf.analysis.xml.core / src / org / eclipse / tracecompass / tmf / analysis / xml / core / module / xmlDefinition.xsd中的源代码获得</i> 。
 		</p>
 		<p>没有内容的空文件看起来像这样：</p>
-		<pre>&lt;？xml version =“1.0”encoding =“UTF-8”？&gt; &lt;tmfxml xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xsi：noNamespaceSchemaLocation =“xmlDefinition.xsd”&gt; &lt;/ tmfxml&gt;</pre>
+		<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="xmlDefinition.xsd"&gt;
+
+&lt;/tmfxml&gt;
+</pre>
 		<h2 id="Defining_an_XML_state_provider">定义XML状态提供程序</h2>
 		<p>状态系统是TMF的一个组件，它可以在跟踪的持续时间内跟踪系统的不同元素的状态。要构建此状态系统，事件必须按时间顺序通过状态提供程序，该状态提供程序定义事件对系统所引起的更改。</p>
 		<p>然后，状态提供程序获取的状态系统可用于填充数据驱动的视图，而无需重新读取跟踪，或查询跟踪中的特定时间戳而无需访问跟踪文件。</p>
@@ -117,11 +123,27 @@
 		<p>首先要确定我们将用于表示系统模型的属性树。属性树类似于具有目录和文件的文件系统，其中文件在逻辑上收集在同一父目录中。构建树没有一种好方法，逻辑将取决于情况和定义它的人。</p>
 		<p>生成的状态系统可以稍后用于填充视图，因此树的属性可以以这样的方式分组，以便使用简单的路径容易地到达它们。然后视图将更加简单。</p>
 		<p>在我们的示例中，我们将要跟踪每个任务的状态，并为每个关键部分跟踪正在运行它们的任务。</p>
-		<pre>|  - 任务| |  -  1 | |  -  2 | ...|  - 关键部分|  -  Crit_sect1 |  -  Crit_sect2 ......
+		<pre>
+|- Tasks
+|    |- 1
+|    |- 2
+|   ...
+|- Critical section
+     |- Crit_sect1
+     |- Crit_sect2
+    ...
 </pre>
 		<p>然后我们确定每个事件将如何影响属性的状态。但首先，让我们问问自己每个州应该采取什么样的价值观。</p>
 		<p>让我们看看树：</p>
-		<pre>|  - 任务 - &gt;空| |  -  1  - &gt;每个任务都可以在|中的一个中|  -  2 RUNNING，CRITICAL，WAITING | ...|  - 关键部分 - &gt;空|  -  Crit_sect1  - &gt;每个关键部分将保存当前正在运行的任务编号|  -  Crit_sect2 ...
+		<pre>
+|- Tasks            -&gt; Empty
+|    |- 1           -&gt; Each task can be in one of
+|    |- 2             RUNNING, CRITICAL, WAITING
+|   ...
+|- Critical section -&gt; Empty
+     |- Crit_sect1  -&gt; Each critical section will hold the currently running task number
+     |- Crit_sect2
+    ...
 </pre>
 		<p>然后我们确定每个事件将如何影响属性的状态。在下面的属性路径中，{}中的元素是来自trace事件的值，而字符串是常量。为简单起见，我们将说“更新属性”，但如果某个属性不存在，则会创建该属性。</p>
 		<ul>
@@ -136,18 +158,100 @@
 		<p>首先定义state provider元素。</p>
 		<p>“version”属性指示此处定义了哪个版本的状态系统。一旦为跟踪类型定义了状态提供程序，它通常将由一组人员使用，并且可能会随着时间的推移而被修改。每次发布新版本的状态提供程序时，都应该触发此版本号。这将强制重建版本号与当前版本号不同的任何现有状态历史（如果适用）。</p>
 		<p>“id”属性唯一标识此状态提供程序以及包含它的分析。</p>
-		<pre>&lt;stateProvider version =“0”id =“my.test.state.provider”&gt;</pre>
+		<pre>
+&lt;stateProvider version="0" id="my.test.state.provider"&gt;
+</pre>
 		<p>可选的标头信息可以添加到状态提供者。应定义“traceType”以告知TMF此分析将应用于哪种跟踪类型。如果未指定tracetype，则分析将显示在每个跟踪下。可以选择添加“标签”以使分析具有更加用户友好的名称。</p>
-		<pre>&lt;head&gt; &lt;traceType id =“my.trace.id”/&gt; &lt;label value =“我的测试分析”/&gt; &lt;/ head&gt;</pre>
+		<pre>
+&lt;head&gt;
+    &lt;traceType id="my.trace.id" /&gt;
+    &lt;label value="My test analysis" /&gt;
+&lt;/head&gt;
+</pre>
 		<p>如果将在状态提供程序中使用预定义值，则必须在状态提供程序之前定义它们。然后可以通过名称在状态更改中引用它们，前面带有'$'符号。没有必要使用预定义值，状态更改可以直接使用（100,101,102）等值。</p>
-		<pre>&lt;definedValue name =“RUNNING”value =“100”/&gt; &lt;definedValue name =“CRITICAL”value =“101”/&gt; &lt;definedValue name =“WAITING”value =“102”/&gt;</pre>
+		<pre>
+&lt;definedValue name="RUNNING" value="100" /&gt;
+&lt;definedValue name="CRITICAL" value="101" /&gt;
+&lt;definedValue name="WAITING" value="102" /&gt;
+</pre>
 		<p>以下事件处理程序显示如何处理名为<i>start</i>的事件。它导致一个状态改变。<b>stateAttribute</b>元素的序列表示属性树中属性的路径，每个元素都是树的一个级别。<b>stateValue</b>指示要分配给给定路径上的属性的值。“$ RUNNING”值表示它将使用上面名为RUNNING的预定义值。
 		</p>
 		<p>假设实际事件是<i>开始（3）</i> 。此状态更改的结果是，在事件发生时，状态系统属性“Tasks / 3”将具有值100。
 		</p>
-		<pre>&lt;eventHandler eventName =“start”&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“Tasks”/&gt; &lt;stateAttribute type =“eventField”value =“number”/&gt; &lt;stateValue type =“int”value =“$运行“/&gt; &lt;/ stateChange&gt; &lt;/ eventHandler&gt;</pre>
+		<pre>
+&lt;eventHandler eventName="start"&gt;
+    &lt;stateChange&gt;
+        &lt;stateAttribute type="constant" value="Tasks" /&gt;
+        &lt;stateAttribute type="eventField" value="number" /&gt;
+        &lt;stateValue type="int" value="$RUNNING" /&gt;
+    &lt;/stateChange&gt;
+&lt;/eventHandler&gt;
+</pre>
 		<p>上面示例的完整XML文件如下所示：</p>
-		<pre>&lt;？xml version =“1.0”encoding =“UTF-8”？&gt; &lt;tmfxml xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xsi：noNamespaceSchemaLocation =“../../ org.eclipse.tracecompass.tmf.analysis.xml.core / src / org / eclipse / tracecompass / tmf / analysis / xml / core / module / xmlDefinition.xsd“&gt; &lt;stateProvider version =”0“id = “my.test.state.provider”&gt; &lt;head&gt; &lt;traceType id =“my.trace.id”/&gt; &lt;label value =“我的测试分析”/&gt; &lt;/ head&gt; &lt;definedValue name =“RUNNING”value = “100”/&gt; &lt;definedValue name =“CRITICAL”value =“101”/&gt; &lt;definedValue name =“WAITING”value =“102”/&gt; &lt;eventHandler eventName =“start”&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant “value =”Tasks“/&gt; &lt;stateAttribute type =”eventField“value =”number“/&gt; &lt;stateValue type =”int“value =”$ RUNNING“/&gt; &lt;/ stateChange&gt; &lt;/ eventHandler&gt; &lt;eventHandler eventName =”执行“&gt; &lt;stateChange&gt; &lt;stateAttribute type =”constant“value =”Tasks“/&gt; &lt;stateAttribute type =”eventField“value =”number“/&gt; &lt;stateValue type =”int“value =”$ CRITICAL“/&gt; &lt; / stateChange&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“Critical section”/&gt; &lt;stateAttribute type =“eventField”value =“fct_name”/&gt; &lt;stateValue type =“eventField”value =“numbe r“/&gt; &lt;/ stateChange&gt; &lt;/ eventHandler&gt; &lt;eventHandler eventName =”wait“&gt; &lt;stateChange&gt; &lt;stateAttribute type =”constant“value =”Tasks“/&gt; &lt;stateAttribute type =”eventField“value =”number“/ &gt; &lt;stateValue type =“int”value =“$ WAITING”/&gt; &lt;/ stateChange&gt; &lt;/ eventHandler&gt; &lt;eventHandler eventName =“exec_end”&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“Tasks”/&gt; &lt; stateAttribute type =“query”&gt; &lt;stateAttribute type =“constant”value =“Critical section”/&gt; &lt;stateAttribute type =“eventField”value =“fct_name”/&gt; &lt;/ stateAttribute&gt; &lt;stateValue type =“int”value =“ $ RUNNING“/&gt; &lt;/ stateChange&gt; &lt;stateChange&gt; &lt;stateAttribute type =”constant“value =”Critical section“/&gt; &lt;stateAttribute type =”eventField“value =”fct_name“/&gt; &lt;stateValue type =”null“/&gt; &lt;/ stateChange&gt; &lt;/ eventHandler&gt; &lt;eventHandler eventName =“stop”&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“Tasks”/&gt; &lt;stateAttribute type =“eventField”value =“number”/&gt; &lt;stateValue type =“null”/&gt; &lt;/ stateChange&gt; &lt;/ eventHandler&gt; &lt;/ stateProvider&gt; &lt;/ tmfxml&gt;</pre>
+		<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd"&gt;
+    &lt;stateProvider version="0" id="my.test.state.provider"&gt;
+        &lt;head&gt;
+            &lt;traceType id="my.trace.id" /&gt;
+            &lt;label value="My test analysis" /&gt;
+        &lt;/head&gt;
+
+        &lt;definedValue name="RUNNING" value="100" /&gt;
+        &lt;definedValue name="CRITICAL" value="101" /&gt;
+        &lt;definedValue name="WAITING" value="102" /&gt;
+
+        &lt;eventHandler eventName="start"&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Tasks" /&gt;
+                &lt;stateAttribute type="eventField" value="number" /&gt;
+                &lt;stateValue type="int" value="$RUNNING" /&gt;
+            &lt;/stateChange&gt;
+        &lt;/eventHandler&gt;
+        &lt;eventHandler eventName="execute"&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Tasks" /&gt;
+                &lt;stateAttribute type="eventField" value="number" /&gt;
+                &lt;stateValue type="int" value="$CRITICAL" /&gt;
+            &lt;/stateChange&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Critical section" /&gt;
+                &lt;stateAttribute type="eventField" value="fct_name" /&gt;
+                &lt;stateValue type="eventField" value="number" /&gt;
+            &lt;/stateChange&gt;
+        &lt;/eventHandler&gt;
+        &lt;eventHandler eventName="wait"&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Tasks" /&gt;
+                &lt;stateAttribute type="eventField" value="number" /&gt;
+                &lt;stateValue type="int" value="$WAITING" /&gt;
+            &lt;/stateChange&gt;
+        &lt;/eventHandler&gt;
+        &lt;eventHandler eventName="exec_end"&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Tasks" /&gt;
+                &lt;stateAttribute type="query"&gt;
+                    &lt;stateAttribute type="constant" value="Critical section" /&gt;
+                    &lt;stateAttribute type="eventField" value="fct_name" /&gt;
+                &lt;/stateAttribute&gt;
+                &lt;stateValue type="int" value="$RUNNING" /&gt;
+            &lt;/stateChange&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Critical section" /&gt;
+                &lt;stateAttribute type="eventField" value="fct_name" /&gt;
+                &lt;stateValue type="null" /&gt;
+            &lt;/stateChange&gt;
+        &lt;/eventHandler&gt;
+        &lt;eventHandler eventName="stop"&gt;
+            &lt;stateChange&gt;
+                &lt;stateAttribute type="constant" value="Tasks" /&gt;
+                &lt;stateAttribute type="eventField" value="number" /&gt;
+                &lt;stateValue type="null" /&gt;
+            &lt;/stateChange&gt;
+        &lt;/eventHandler&gt;
+    &lt;/stateProvider&gt;
+&lt;/tmfxml&gt;
+</pre>
 		<h3 id="Debugging_the_XML_state_provider">调试XML状态提供程序</h3>
 		<p>要调试由XML状态提供程序生成的状态系统，可以使用<a href="Trace-Compass-Main-Features.html#State_System_Explorer_View">State System Explorer View</a>以及事件编辑器。通过选择事件，您可以看到此事件引起的更改以及当时其他属性的状态。
 		</p>
@@ -161,55 +265,288 @@
 		<p>我们可能在模式中有多个运行状态机的实例（场景）。在状态系统中具有其自己路径的每个场景可以生成用于填充数据驱动视图的段</p>
 		<h3 id="The_state_system_structure">国家体制结构</h3>
 		<p>模式分析生成预定义的属性树，描述如下：</p>
-		<pre>|  - 状态机| |  - 状态机0 | |  - 方案0 | |  - 状态| |  - 州| |  - 开始| ...| |  -  storedFields | |  - 字段1 | ...| |  -  startTime | ...| ...| |  - 场景1 | ...| |  - 状态机1 | ...
+		<pre>
+|- state machines
+|    |- state machine 0
+|       |- scenario 0
+|          |- status
+|          |- state
+|              |- start
+|             ...
+|          |- storedFields
+|              |- field 1
+|             ...
+|          |- startTime
+|             ...
+|         ...
+|       |- scenarios 1
+|      ...
+|    |- state machine 1
+|   ...
 </pre>
 		<p>用户可以在此树中添加自定义数据，也可以在此树之间确定自己的属性树。</p>
 		<h3 id="Writing_the_XML_pattern_provider">编写XML模式提供程序</h3>
 		<p>XSD文件中提供了有关XML结构的详细信息。</p>
 		<p>首先定义模式元素。作为<a href="#Writing_the_XML_state_provider">编写XML状态提供</a>程序中描述的状态提供程序元素，它具有“version”属性和“id”属性。
 		</p>
-		<pre>&lt;pattern version =“0”id =“my.test.pattern”&gt;</pre>
+		<pre>
+&lt;pattern version="0" id="my.test.pattern"&gt;
+</pre>
 		<p>可以添加可选的头信息以及<a href="#Writing_the_XML_state_provider">编写XML状态提供程序中</a>描述的预定义值。
 		</p>
 		<p>可以在模式处理程序之前添加存储的值。预定义操作<b>saveStoredField</b>触发存储字段的更新，预定义操作<b>clearStoredFields</b>重置值。
 		</p>
-		<pre>&lt;storedField id =“offset”alias =“offset”/&gt;</pre>
+		<pre>
+&lt;storedField id="offset" alias="offset"/&gt;
+</pre>
 		<p>存储字段的<i>id</i>用作事件中的字段名称。如果该字段不可用，则将为其保存空值。<i>别名</i>是在州系统中可以访问此字段的名称。
 		</p>
 		<p>模式的行为及其所需的模型在模式处理程序元素中描述。</p>
 		<p>状态机（FSM）的结构基于SCXML结构。以下示例描述了与LTTng内核跟踪中的所有系统调用匹配的FSM。</p>
-		<pre>&lt;fsm id =“syscall”initial =“start”&gt; &lt;state id =“start”&gt; &lt;transition event =“syscall_entry_ *”target =“in_progress”action =“sys_x_founded”saveStoredFields =“true”/&gt; &lt;/ state&gt; &lt;state id =“in_progress”&gt; &lt;transition event =“syscall_exit_ *”cond =“thread_condition”target =“end”action =“exit_syscall_found”saveStoredFields =“true”clearStoredFields =“true”/&gt; &lt;/ state&gt; &lt;final id =“结束”/&gt; &lt;/ fsm&gt;</pre>
+		<pre>
+&lt;fsm id="syscall" initial="start"&gt;
+    &lt;state id="start"&gt;
+        &lt;transition event="syscall_entry_*" target="in_progress" action="sys_x_founded" saveStoredFields="true"/&gt;
+    &lt;/state&gt;
+    &lt;state id="in_progress" &gt;
+        &lt;transition event="syscall_exit_*" cond="thread_condition" target="end" action="exit_syscall_found" saveStoredFields="true" clearStoredFields="true"/&gt;
+    &lt;/state&gt;
+    &lt;final id="end"/&gt;
+&lt;/fsm&gt;
+</pre>
 		<p><b>目标</b>属性的值对应于同一FSM中的状态的“id”。类似地， <b>action</b>属性的值对应于XML文件中描述的action元素的'id'，并且是对它的引用。可以通过“：”分隔名称来执行多个操作，如<i>action1：action2</i>
 		</p>
 		<p>在转换中使用条件以在FSM的状态之间切换。可以通过在转换中设置<b>cond</b>属性来指定它们，它们对应于<b>测试</b>元素。允许两种类型的条件： <b>数据条件</b>和<b>时间条件</b> 。可以使用逻辑运算符（OR，AND，...）组合多个条件。
 		</p>
 		<p>数据条件根据状态系统中的数据或常量值测试正在进行的事件信息。以下条件测试事件的当前线程是否也是正在进行的场景线程。</p>
-		<pre>&lt;test id =“thread_condition”&gt; &lt;if&gt; &lt;condition&gt; &lt;stateValue type =“eventField”value =“tid”/&gt; &lt;stateValue type =“query”&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/ &gt; &lt;stateAttribute type =“constant”value =“thread”/&gt; &lt;/ stateValue&gt; &lt;/ condition&gt; &lt;/ if&gt; &lt;/ test&gt;</pre>
+		<pre>
+&lt;test id="thread_condition"&gt;
+    &lt;if&gt;
+        &lt;condition&gt;
+            &lt;stateValue type="eventField" value="tid" /&gt;
+            &lt;stateValue type="query"&gt;
+                &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+                &lt;stateAttribute type="constant" value="thread" /&gt;
+            &lt;/stateValue&gt;
+        &lt;/condition&gt;
+    &lt;/if&gt;
+&lt;/test&gt;
+</pre>
 		<p>有两种时间条件：</p>
 		<ul>
 			<li>时间范围条件测试正在进行的事件是否发生在特定时间范围内。以下条件测试正在进行的事件是否发生在1纳秒和3纳秒之间。</li>
 		</ul>
-		<pre>&lt;test id =“time_condition”&gt; &lt;if&gt; &lt;condition&gt; &lt;timerange unit =“ns”&gt; &lt;in begin =“1”end =“3”/&gt; &lt;/ timerange&gt; &lt;/ condition&gt; &lt;/ if&gt; &lt;/测试&gt;</pre>
+		<pre>
+&lt;test id="time_condition"&gt;
+    &lt;if&gt;
+        &lt;condition&gt;
+            &lt;timerange unit="ns"&gt;
+                &lt;in begin="1" end="3" /&gt;
+            &lt;/timerange&gt;
+        &lt;/condition&gt;
+    &lt;/if&gt;
+&lt;/test&gt;
+</pre>
 		<ul>
 			<li>经过的时间条件测试自fsm的特定状态以来所花费的时间的值。以下条件测试在场景达到状态“syscall_entry_x”之后，正在进行的事件是否发生在3纳秒以内。</li>
 		</ul>
-		<pre>&lt;test id =“time_condition”&gt; &lt;if&gt; &lt;condition&gt; &lt;elapsedTime unit =“ns”&gt; &lt;less since =“in_progress”value =“3”/&gt; &lt;/ elapsedTime&gt; &lt;/ condition&gt; &lt;/ if&gt; &lt;/测试&gt;</pre>
+		<pre>
+&lt;test id="time_condition"&gt;
+    &lt;if&gt;
+        &lt;condition&gt;
+            &lt;elapsedTime unit="ns"&gt;
+                &lt;less since="in_progress" value="3" /&gt;
+            &lt;/elapsedTime&gt;
+        &lt;/condition&gt;
+    &lt;/if&gt;
+&lt;/test&gt;
+</pre>
 		<p>允许两种类型的操作：</p>
 		<ul>
 			<li>状态更改将属性的值更新到状态系统中。以下示例设置当前方案的线程值。</li>
 		</ul>
-		<pre>&lt;action id =“sys_x_founded”&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/&gt; &lt;stateAttribute type =“constant”value =“syscall”/&gt; &lt;stateAttribute type =“constant”value =“ name“/&gt; &lt;stateValue type =”eventName“/&gt; &lt;/ stateChange&gt; &lt;stateChange&gt; &lt;stateAttribute type =”constant“value =”＃CurrentScenario“/&gt; &lt;stateAttribute type =”constant“value =”thread“/&gt; &lt; stateValue type =“eventField”value =“tid”/&gt; &lt;/ stateChange&gt; &lt;/ action&gt;</pre>
+		<pre>
+&lt;action id="sys_x_founded"&gt;
+    &lt;stateChange&gt;
+        &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+        &lt;stateAttribute type="constant" value="syscall" /&gt;
+        &lt;stateAttribute type="constant" value="name" /&gt;
+        &lt;stateValue type="eventName"/&gt;
+    &lt;/stateChange&gt;
+
+    &lt;stateChange&gt;
+        &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+        &lt;stateAttribute type="constant" value="thread" /&gt;
+        &lt;stateValue type="eventField" value="tid"/&gt;
+    &lt;/stateChange&gt;
+&lt;/action&gt;
+</pre>
 		<ul>
 			<li>生成细分。以下示例表示系统调用段。</li>
 		</ul>
-		<pre>&lt;action id =“exit_syscall_founded”&gt; &lt;segment&gt; &lt;segType&gt; &lt;segName&gt; &lt;stateValue type =“query”&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/&gt; &lt;stateAttribute type =“constant”value =“系统调用“/&gt; &lt;stateAttribute type =”constant“value =”name“/&gt; &lt;/ stateValue&gt; &lt;/ segName&gt; &lt;/ segType&gt; &lt;/ segment&gt; &lt;/ action&gt;</pre>
+		<pre>
+&lt;action id="exit_syscall_founded"&gt;
+    &lt;segment&gt;
+        &lt;segType&gt;
+            &lt;segName&gt;
+                &lt;stateValue type="query"&gt;
+                    &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+                    &lt;stateAttribute type="constant" value="syscall" /&gt;
+                    &lt;stateAttribute type="constant" value="name" /&gt;
+                &lt;/stateValue&gt;
+            &lt;/segName&gt;
+        &lt;/segType&gt;
+    &lt;/segment&gt;
+&lt;/action&gt;
+</pre>
 		<p>存在时，存储的字段将作为生成的段的字段添加。</p>
 		<p>以下是上述所有示例模型的完整XML文件：</p>
-		<pre>&lt;？xml version =“1.0”encoding =“UTF-8”？&gt; &lt;tmfxml xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xsi：noNamespaceSchemaLocation =“xmlDefinition.xsd”&gt; &lt;pattern version =“1”id =“my.test.pattern” &gt; &lt;head&gt; &lt;traceType id =“org.eclipse.linuxtools.lttng2.kernel.tracetype”/&gt; &lt;label value =“xml syscall”/&gt; &lt;/ head&gt; &lt;storedField id =“filename”/&gt; &lt;storedField id = “fd”/&gt; &lt;storedField id =“ret”alias =“ret”/&gt; &lt;storedField id =“flags”alias =“flags”/&gt; &lt;storedField id =“offset”alias =“offset”/&gt; &lt;storedField id =“fd_in”alias =“fd_in”/&gt; &lt;storedField id =“fd_out”alias =“fd_out”/&gt; &lt;storedField id =“uservaddr”alias =“uservaddr”/&gt; &lt;storedField id =“upeer_sockaddr”alias =“upeer_sockaddr “/&gt; &lt;patternHandler&gt; &lt;test id =”time_condition“&gt; &lt;if&gt; &lt;或&gt; &lt;not&gt; &lt;condition&gt; &lt;timerange unit =”ns“&gt; &lt;in begin =”1“end =”3“/&gt; &lt;/ timerange&gt; &lt;/ condition&gt; &lt;/ not&gt; &lt;condition&gt; &lt;elapsedTime unit =“ns”&gt; &lt;less since =“syscall_entry_x”value =“3”/&gt; &lt;/ elapsedTime&gt; &lt;/ condition&gt; &lt;/ or&gt; &lt;/ if &gt; &lt;/ test&gt; &lt;test id =“thread_condition”&gt; &lt;if&gt; &lt;condition&gt; &lt;stateValue type =“eventField”value =“tid”/&gt; &lt;st ateValue type =“query”&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/&gt; &lt;stateAttribute type =“constant”value =“thread”/&gt; &lt;/ stateValue&gt; &lt;/ condition&gt; &lt;/ if&gt; &lt;/ test&gt; &lt;action id =“sys_x_founded”&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/&gt; &lt;stateAttribute type =“constant”value =“syscall”/&gt; &lt;stateAttribute type =“constant”value =“name”/&gt; &lt;stateValue type =“eventName”/&gt; &lt;/ stateChange&gt; &lt;stateChange&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/&gt; &lt;stateAttribute type =“constant”value =“thread”/ &gt; &lt;stateValue type =“eventField”value =“tid”/&gt; &lt;/ stateChange&gt; &lt;/ action&gt; &lt;action id =“exit_syscall_found”&gt; &lt;segment&gt; &lt;segType&gt; &lt;segName&gt; &lt;stateValue type =“query”&gt; &lt;stateAttribute type =“constant”value =“＃CurrentScenario”/&gt; &lt;stateAttribute type =“constant”value =“syscall”/&gt; &lt;stateAttribute type =“constant”value =“name”/&gt; &lt;/ stateValue&gt; &lt;/ segName&gt; &lt; / segType&gt; &lt;/ segment&gt; &lt;/ action&gt; &lt;fsm id =“syscall”initial =“start”&gt; &lt;state id =“start”&gt; &lt;transition event =“syscall_ entry_ *“target =”in_progress“action =”sys_x_founded“saveStoredFields =”true“/&gt; &lt;/ state&gt; &lt;state id =”in_progress“&gt; &lt;transition event =”syscall_exit_ *“cond =”thread_condition“target =”end“ action =“exit_syscall_found”saveStoredFields =“true”clearStoredFields =“true”/&gt; &lt;/ state&gt; &lt;final id =“end”/&gt; &lt;/ fsm&gt; &lt;/ patternHandler&gt; &lt;/ pattern&gt; &lt;/ tmfxml&gt;</pre>
+		<pre>
+    &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+    &lt;tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="xmlDefinition.xsd"&gt;
+
+    &lt;pattern version="1" id="my.test.pattern"&gt;
+        &lt;head&gt;
+            &lt;traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" /&gt;
+            &lt;label value="xml syscall" /&gt;
+        &lt;/head&gt;
+
+        &lt;storedField id="filename"/&gt;
+        &lt;storedField id="fd"/&gt;
+        &lt;storedField id="ret" alias="ret"/&gt;
+        &lt;storedField id="flags" alias="flags"/&gt;
+        &lt;storedField id="offset" alias="offset"/&gt;
+        &lt;storedField id="fd_in" alias="fd_in"/&gt;
+        &lt;storedField id="fd_out" alias="fd_out"/&gt;
+        &lt;storedField id="uservaddr" alias="uservaddr"/&gt;
+        &lt;storedField id="upeer_sockaddr" alias="upeer_sockaddr"/&gt;
+
+        &lt;patternHandler&gt;
+            &lt;test id="time_condition"&gt;
+                &lt;if&gt;
+                    &lt;or&gt;
+                        &lt;not&gt;
+                            &lt;condition&gt;
+                                &lt;timerange unit="ns"&gt;
+                                    &lt;in begin="1" end="3" /&gt;
+                                &lt;/timerange&gt;
+                            &lt;/condition&gt;
+                        &lt;/not&gt;
+                        &lt;condition&gt;
+                            &lt;elapsedTime unit="ns"&gt;
+                                &lt;less since="syscall_entry_x" value="3" /&gt;
+                            &lt;/elapsedTime&gt;
+                        &lt;/condition&gt;
+                    &lt;/or&gt;
+                &lt;/if&gt;
+            &lt;/test&gt;
+
+            &lt;test id="thread_condition"&gt;
+                &lt;if&gt;
+                    &lt;condition&gt;
+                        &lt;stateValue type="eventField" value="tid" /&gt;
+                        &lt;stateValue type="query"&gt;
+                            &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+                            &lt;stateAttribute type="constant" value="thread" /&gt;
+                        &lt;/stateValue&gt;
+                    &lt;/condition&gt;
+                &lt;/if&gt;
+            &lt;/test&gt;
+
+            &lt;action id="sys_x_founded"&gt;
+                &lt;stateChange&gt;
+                    &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+                    &lt;stateAttribute type="constant" value="syscall" /&gt;
+                    &lt;stateAttribute type="constant" value="name" /&gt;
+                    &lt;stateValue type="eventName"/&gt;
+                &lt;/stateChange&gt;
+
+                &lt;stateChange&gt;
+                    &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+                    &lt;stateAttribute type="constant" value="thread" /&gt;
+                    &lt;stateValue type="eventField" value="tid"/&gt;
+                &lt;/stateChange&gt;
+            &lt;/action&gt;
+
+            &lt;action id="exit_syscall_found"&gt;
+                &lt;segment&gt;
+                    &lt;segType&gt;
+                        &lt;segName&gt;
+                            &lt;stateValue type="query"&gt;
+                                &lt;stateAttribute type="constant" value="#CurrentScenario" /&gt;
+                                &lt;stateAttribute type="constant" value="syscall" /&gt;
+                                &lt;stateAttribute type="constant" value="name" /&gt;
+                            &lt;/stateValue&gt;
+                        &lt;/segName&gt;
+                    &lt;/segType&gt;
+                &lt;/segment&gt;
+            &lt;/action&gt;
+
+            &lt;fsm id="syscall" initial="start"&gt;
+                &lt;state id="start"&gt;
+                    &lt;transition event="syscall_entry_*" target="in_progress" action="sys_x_founded" saveStoredFields="true"/&gt;
+                &lt;/state&gt;
+                &lt;state id="in_progress" &gt;
+                    &lt;transition event="syscall_exit_*" cond="thread_condition" target="end" action="exit_syscall_found" saveStoredFields="true" clearStoredFields="true"/&gt;
+                &lt;/state&gt;
+                &lt;final id="end"/&gt;
+            &lt;/fsm&gt;
+        &lt;/patternHandler&gt;
+    &lt;/pattern&gt;
+    &lt;/tmfxml&gt;
+</pre>
 		<p>下面是另一个XML分析示例，它根据名为<i>testField</i>的字段为每个事件读取创建一个段：</p>
-		<pre>&lt;？xml version =“1.0”encoding =“UTF-8”？&gt; &lt;tmfxml xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xsi：noNamespaceSchemaLocation =“xmlDefinition.xsd”&gt; &lt;pattern version =“0”id =“test.seg.duration” &gt; &lt;head&gt; &lt;label value =“analysis name”/&gt; &lt;/ head&gt; &lt;patternHandler&gt; &lt;action id =“segment_create”&gt; &lt;segment&gt; &lt;segType&gt; &lt;segName&gt; &lt;stateValue type =“string”value =“seg1” /&gt; &lt;/ segName&gt; &lt;/ segType&gt; &lt;segTime&gt; &lt;begin type =“eventField”value =“timestamp”/&gt; &lt;end type =“eventField”value =“testField”/&gt; &lt;/ segTime&gt; &lt;/ segment&gt; &lt; / action&gt; &lt;fsm id =“test”multiple =“true”&gt; &lt;state id =“start”&gt; &lt;transition event =“*”target =“end”action =“segment_create”/&gt; &lt;/ state&gt; &lt;final id =“end”/&gt; &lt;/ fsm&gt; &lt;/ patternHandler&gt; &lt;/ pattern&gt; &lt;/ tmfxml&gt;</pre>
+		<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="xmlDefinition.xsd"&gt;
+&lt;pattern version="0" id="test.seg.duration"&gt;
+    &lt;head&gt;
+        &lt;label value="analysis name" /&gt;
+    &lt;/head&gt;
+    &lt;patternHandler&gt;
+        &lt;action id="segment_create"&gt;
+            &lt;segment&gt;
+                &lt;segType&gt;
+                    &lt;segName&gt;
+                        &lt;stateValue type="string" value="seg1"/&gt;
+                    &lt;/segName&gt;
+                &lt;/segType&gt;
+                &lt;segTime&gt;
+                    &lt;begin type="eventField" value="timestamp"/&gt;
+                    &lt;end type="eventField" value="testField" /&gt;
+                &lt;/segTime&gt;
+            &lt;/segment&gt;
+        &lt;/action&gt;
+
+        &lt;fsm id="test" multiple="true"&gt;
+            &lt;state id="start"&gt;
+                &lt;transition event="*" target="end" action="segment_create" /&gt;
+            &lt;/state&gt;
+            &lt;final id="end"/&gt;
+        &lt;/fsm&gt;
+    &lt;/patternHandler&gt;
+&lt;/pattern&gt;
+&lt;/tmfxml&gt;
+</pre>
 		<p>这是相关的跟踪：</p>
-		<pre>&lt;trace&gt; &lt;event timestamp =“1”name =“test”&gt; &lt;field name =“testField”type =“long”value =“10”/&gt; &lt;/ event&gt; &lt;event timestamp =“3”name =“test1 “&gt; &lt;field name =”testField“type =”long“value =”100“/&gt; &lt;/ event&gt; &lt;event timestamp =”5“name =”test“&gt; &lt;field name =”testField“type =”long“ value =“20”/&gt; &lt;/ event&gt; &lt;event timestamp =“7”name =“test1”&gt; &lt;field name =“testField”type =“long”value =“200”/&gt; &lt;/ event&gt; &lt;/ trace &gt;</pre>
+		<pre>
+&lt;trace&gt;
+&lt;event timestamp="1" name="test"&gt;
+&lt;field name="testField" type="long" value="10" /&gt;
+&lt;/event&gt;
+&lt;event timestamp="3" name="test1"&gt;
+&lt;field name="testField" type="long" value="100" /&gt;
+&lt;/event&gt;
+&lt;event timestamp="5" name="test"&gt;
+&lt;field name="testField" type="long" value="20" /&gt;
+&lt;/event&gt;
+&lt;event timestamp="7" name="test1"&gt;
+&lt;field name="testField" type="long" value="200" /&gt;
+&lt;/event&gt;
+&lt;/trace&gt;
+</pre>
 		<p>这将产生如下所述的4个部分：</p>
 		<ul>
 			<li>name = seg1，开始时间= 1，结束时间= 10;</li>
@@ -251,17 +588,49 @@
 		<p>可以使用状态系统中的数据以XML定义这样的视图。状态系统本身可以由XML定义的状态提供程序或任何预定义的Java分析构建。它只需要知道状态系统的结构，可以使用<a href="Trace-Compass-Main-Features.html#State_System_Explorer_View">State System Explorer View</a> （或以编程方式使用<i>ITmfStateSystem中</i>的方法）来<i>探索</i> 。
 		</p>
 		<p>在上面的示例中，假设我们要显示每个任务的状态。在状态系统中，它表示要显示的条目的路径是“Tasks / *”。应在甘特图中显示其值的属性是条目属性本身。因此，显示这些条目的XML将如下：</p>
-		<pre>&lt;entry path =“Tasks / *”&gt; &lt;display type =“self”/&gt; &lt;/ entry&gt;</pre>
+		<pre>
+&lt;entry path="Tasks/*"&gt;
+    &lt;display type="self" /&gt;
+&lt;/entry&gt;
+</pre>
 		<p>但首先，必须宣布这一观点。它有一个ID，用于在所有可用的XML文件中唯一标识此视图。</p>
-		<pre>&lt;timeGraphView id =“my.test.time.graph.view”&gt;</pre>
+		<pre>
+&lt;timeGraphView id="my.test.time.graph.view"&gt;
+</pre>
 		<p>可以将可选标头信息添加到视图中。
 			<b>分析</b>元素仅将视图与“id”属性标识的分析相关联。它可以是状态提供程序的ID（在本例中），也可以是Java中定义的任何分析的分析ID。如果未指定分析，则视图将显示在使用状态系统的每次分析下。<b>label</b>元素允许为视图提供更加用户友好的名称。标签不必是唯一的。只要ID是唯一的，不同分析的视图就可以使用相同的名称。
 		</p>
-		<pre>&lt;head&gt; &lt;analysis id =“my.test.state.provider”/&gt; &lt;label value =“我的示例XML视图”/&gt; &lt;/ head&gt;</pre>
+		<pre>
+&lt;head&gt;
+    &lt;analysis id="my.test.state.provider" /&gt;
+    &lt;label value="My Sample XML View" /&gt;
+&lt;/head&gt;
+</pre>
 		<p>此外，如果要显示的属性的值是已知的，则可以定义它们，以及用于解释它们的文本和用于绘制它们的颜色。请注意，这些值与状态提供程序中定义的值相同，但名称不必相同。在状态提供程序中，一个简单的常量字符串在状态更改中使用是有意义的。但在视图中，名称将出现在图例中，因此用户友好的文本更合适。</p>
-		<pre>&lt;definedValue name =“进程正在运行”value =“100”color =“＃118811”/&gt; &lt;definedValue name =“Critical section”value =“101”color =“＃881111”/&gt; &lt;definedValue name =“Waiting对于临界区“value =”102“color =”＃AEB522“/&gt;</pre>
+		<pre>
+&lt;definedValue name="The process is running" value="100" color="#118811" /&gt;
+&lt;definedValue name="Critical section" value="101" color="#881111" /&gt;
+&lt;definedValue name="Waiting for critical section" value="102" color="#AEB522" /&gt;
+</pre>
 		<p>以下是时间图表视图的完整XML：</p>
-		<pre>&lt;tmfxml xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xsi：noNamespaceSchemaLocation =“../../ org.eclipse.tracecompass.tmf.analysis.xml.core / src / org / eclipse / tracecompass / tmf / analysis / xml / core / module / xmlDefinition.xsd“&gt; &lt;timeGraphView id =”my.test。 time.graph.view“&gt; &lt;head&gt; &lt;analysis id =”my.test.state.provider“/&gt; &lt;label value =”我的示例XML视图“/&gt; &lt;/ head&gt; &lt;definedValue name =”进程正在运行“value =”100“color =”＃118811“/&gt; &lt;definedValue name =”Critical section“value =”101“color =”＃881111“/&gt; &lt;definedValue name =”等待临界区“值=”102“ color =“＃AEB522”/&gt; &lt;entry path =“Tasks / *”&gt; &lt;display type =“self”/&gt; &lt;/ entry&gt; &lt;/ timeGraphView&gt; &lt;/ tmfxml&gt;</pre>
+		<pre>
+&lt;tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd"&gt;
+    &lt;timeGraphView id="my.test.time.graph.view"&gt;
+        &lt;head&gt;
+            &lt;analysis id="my.test.state.provider" /&gt;
+            &lt;label value="My Sample XML View" /&gt;
+        &lt;/head&gt;
+
+        &lt;definedValue name="The process is running" value="100" color="#118811" /&gt;
+        &lt;definedValue name="Critical section" value="101" color="#881111" /&gt;
+        &lt;definedValue name="Waiting for critical section" value="102" color="#AEB522" /&gt;
+
+        &lt;entry path="Tasks/*"&gt;
+            &lt;display type="self" /&gt;
+        &lt;/entry&gt;
+    &lt;/timeGraphView&gt;
+&lt;/tmfxml&gt;
+</pre>
 		<p>以下屏幕截图显示了上一个示例在测试跟踪上的结果。所使用的痕迹，以及XML文件都可以<a href="https://secretaire.dorsal.polymtl.ca/~gbastien/Xml4Traces/XML_documentation_example.tar.gz">在这里</a> 。
 		</p>
 		<p>
@@ -277,15 +646,41 @@
 		<p>可以使用状态系统中的数据以XML定义这样的视图。状态系统本身可以由XML定义的状态提供程序或任何预定义的Java分析构建。它只需要知道状态系统的结构，可以使用<a href="Trace-Compass-Main-Features.html#State_System_Explorer_View">State System Explorer View</a> （或以编程方式使用<i>ITmfStateSystem中</i>的方法）来<i>探索</i> 。
 		</p>
 		<p>我们将在LTTng内核跟踪上使用Linux内核分析来显示示例XY图表。在该状态系统中，每个CPU的状态是数值。我们将此值显示为系列的Y轴。每个CPU将有一个系列。显示这些条目的XML将如下：</p>
-		<pre>&lt;entry path =“CPUs / *”&gt; &lt;display type =“constant”value =“Status”/&gt; &lt;name type =“self”/&gt; &lt;/ entry&gt;</pre>
+		<pre>
+&lt;entry path="CPUs/*"&gt;
+	&lt;display type="constant" value="Status" /&gt;
+	&lt;name type="self" /&gt;
+&lt;/entry&gt;
+</pre>
 		<p>但首先，必须宣布这一观点。它有一个ID，用于在所有可用的XML文件中唯一标识此视图。</p>
-		<pre>&lt;xyView id =“my.test.xy.chart.view”&gt;</pre>
+		<pre>
+&lt;xyView id="my.test.xy.chart.view"&gt;
+</pre>
 		<p>与时间图表视图一样，可以将可选的标题信息添加到视图中。
 			<b>分析</b>元素仅将视图与“id”属性标识的分析相关联。它可以是状态提供程序的ID（在本例中），也可以是Java中定义的任何分析的分析ID。如果未指定分析，则视图将显示在使用状态系统的每次分析下。<b>label</b>元素允许为视图提供更加用户友好的名称。标签不必是唯一的。只要ID是唯一的，不同分析的视图就可以使用相同的名称。
 		</p>
-		<pre>&lt;head&gt; &lt;analysis id =“org.eclipse.tracecompass.analysis.os.linux.kernel”/&gt; &lt;label value =“CPU status XY view”/&gt; &lt;/ head&gt;</pre>
+		<pre>
+&lt;head&gt;
+    &lt;analysis id="org.eclipse.tracecompass.analysis.os.linux.kernel" /&gt;
+    &lt;label value="CPU status XY view" /&gt;
+&lt;/head&gt;
+</pre>
 		<p>以下是XY图表的完整XML，用于显示LTTng内核跟踪的CPU状态：</p>
-		<pre>&lt;tmfxml xmlns：xsi =“http://www.w3.org/2001/XMLSchema-instance”xsi：noNamespaceSchemaLocation =“../../ org.eclipse.tracecompass.tmf.analysis.xml.core / src / org / eclipse / tracecompass / tmf / analysis / xml / core / module / xmlDefinition.xsd“&gt; &lt;xyView id =”my.test。 xy.chart.view“&gt; &lt;head&gt; &lt;analysis id =”org.eclipse.tracecompass.lttng2.kernel.analysis“/&gt; &lt;label value =”CPU状态XY视图“/&gt; &lt;/ head&gt; &lt;entry path =” CPUs / *“&gt; &lt;display type =”constant“value =”Status“/&gt; &lt;name type =”self“/&gt; &lt;/ entry&gt; &lt;/ xyView&gt; &lt;/ tmfxml&gt;</pre>
+		<pre>
+&lt;tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd"&gt;
+	&lt;xyView id="my.test.xy.chart.view"&gt;
+		&lt;head&gt;
+			&lt;analysis id="org.eclipse.tracecompass.lttng2.kernel.analysis" /&gt;
+			&lt;label value="CPU status XY view" /&gt;
+		&lt;/head&gt;
+
+		&lt;entry path="CPUs/*"&gt;
+			&lt;display type="constant" value="Status" /&gt;
+			&lt;name type="self" /&gt;
+		&lt;/entry&gt;
+	&lt;/xyView&gt;
+&lt;/tmfxml&gt;
+</pre>
 		<p>以下屏幕截图显示了LTTng内核跟踪上的上述示例的结果。</p>
 		<p>
 			<img title="XML XY图表" alt="XML XY图表" border="0" src="images/XML_xy_chart.png">
