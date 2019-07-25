@@ -1,177 +1,75 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-  <meta content="text/html; charset=ISO-8859-1"
- http-equiv="Content-Type">
-  <meta content="text/css" http-equiv="Content-Style-Type">
-  <link type="text/css" charset="ISO-8859-1" href="../book.css"
- rel="STYLESHEET">
-  <title>Synchronization Support - Beyond the basics</title>
-  <link href="../book.css" type="text/css" rel="stylesheet">
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"></meta>
+  <meta content="text/css" http-equiv="Content-Style-Type"></meta>
+  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1"></link>
+  <title>同步支持 - 超越基础</title>
+  <link href="../book.css" type="text/css" rel="stylesheet"></link>
 </head>
-<body style="background-color: rgb(255, 255, 255);">
-<h2>Beyond the Basics</h2>
-<p>If you plan on providing synchronization support and don't have an existing 
-  mechanism for managing synchronization state, this section explains how to implementing 
-  a Subscriber from scratch. This means that there is no existing synchronization 
-  infrastructure and illustrates how to use some API that is provided to maintain 
-  the synchronization state.<br>
+<body dir="ltr" style="background-color:rgb(255,255,255)">
+<h2>超越基础</h2>
+<p>如果您计划提供同步支持并且没有用于管理同步状态的现有机制，则本节将介绍如何从头开始实施订阅服务器。这意味着没有现有的同步基础结构，并说明了如何使用提供的某些API来维护同步状态。<br>
 </p>
-<p>For the remainder of this example we will make use of a running
-example. The source code can be found in the file system provider
-package of the <a
- href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>
-plug-in. You should check the project out from the Git repository and
-use as a reference while you are reading this tutorial. </p>
-<h3>Implementing a Subscriber From Scratch</h3>
-<p>This first example assumes that there is no existing infrastructure for maintaining 
-  the synchronization state of the local workspace. When implementing a subscriber 
-  from scratch, you can make use of some additional API provided in the <em>org.eclipse.team.core</em> 
-  plug-in. The <a
- href="../reference/api/org/eclipse/team/core/variants/package-summary.html">org.eclipse.team.core.variants</a> 
-  package contains two subclasses of <a
- href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html">Subscriber 
-  </a>which can be used to simplify implementation. The first is <a
- href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber 
-  </a>which will be discussed in the second example below. The second is a subclass 
-  of the first: <a
- href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>. 
-  This subscriber implementation provides several helpful classes for managing 
-  the synchronization state of a local workspace. If you do not have any existing 
-  infrastructure, this is a good place to start. </p>
-<p>Implementing a subscriber from scratch will be illustrated using the file system 
-  example available in the <a
- href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a> 
-  plug-in. The code in the following description is kept to a minimum since it 
-  is available from the Eclipse Git repository. Although not technically a three-way 
-  subscriber, the file system example can still make good use of this infrastructure. 
-  The FTP and WebDAV plug-ins also are built using this infrastructure.</p>
+<p>对于本示例的其余部分，我们将使用一个运行示例。源代码可以在<a href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>插件的文件系统提供程序包中找到。您应该从Git存储库中检查项目，并在阅读本教程时将其用作参考。</p>
+<h3>从头开始实施订阅者</h3>
+<p>第一个示例假定没有用于维护本地工作空间的同步状态的现有基础结构。从头开始实现订户时，您可以使用<em>org.eclipse.team.core</em>插件中提供的一些其他API。<a href="../reference/api/org/eclipse/team/core/variants/package-summary.html">org.eclipse.team.core.variants</a>包中包含两个<a href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html">Subscriber</a>子类，可用于简化实现。第一个是<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a> ，将在下面的第二个例子中讨论。第二个是第一个的子类： <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a> 。此订户实现提供了几个有用的类，用于管理本地工作空间的同步状态。如果您没有任何现有的基础设施，这是一个很好的起点。</p>
+<p>将使用<a href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>插件中提供的文件系统示例来说明从头开始实现订户。以下描述中的代码保持最小，因为它可以从Eclipse Git存储库中获得。虽然从技术上讲不是三方用户，但文件系统示例仍然可以充分利用这种基础设施。FTP和WebDAV插件也是使用此基础结构构建的。</p>
 <h3>ThreeWaySubscriber</h3>
-<p>For the file system example, we already had an implementation of a <a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider 
-  </a>that associated a local project with a file system location where the local 
-  contents were mirrored. FileSystemSubscriber was created as a subclass of <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a> 
-  in order to make use of a <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a> 
-  to manage workspace synchronization state. Subclasses of this class must do 
-  the following:</p>
+<p>对于文件系统示例，我们已经有一个<a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a>的实现，它将本地项目与文件系统位置相关联，其中本地内容被镜像。FileSystemSubscriber是作为<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>的子类创建的，以便利用<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>来管理工作区同步状态。此类的子类必须执行以下操作：</p>
 <ul>
-  <li>create a <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a> 
-    instance to manage the local workspace synchronization state.</li>
-  <li>create an instance of a <a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a> 
-    subclass to provide remote tree refresh. 
+  <li>创建<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>实例以管理本地工作区同步状态。</li>
+  <li>创建<a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a>子类的实例以提供远程树刷新。
   <ul>
-    <li>The class FileSystemRemoteTree was defined for this
-purpose</li>
+    <li>为此目的定义了FileSystemRemoteTree类</li>
   </ul></li>
-  <li>implement a method to create the resource variant handles used to
-calculate the synchronization state.
+  <li>实现一种方法来创建用于计算同步状态的资源变量句柄。
     <ul>
-      <li>The class FileSystemResourceVariant (a subclass of <a href="../reference/api/org/eclipse/team/core/variants/CachedResourceVariant.html">CachedResourceVariant</a>) 
-        was defined for this</li>
+      <li>为此定义了FileSystemResourceVariant类（ <a href="../reference/api/org/eclipse/team/core/variants/CachedResourceVariant.html">CachedResourceVariant</a>的子类）</li>
     </ul>
   </li>
-  <li>implement the roots method
-    <ul>
-      <li>The roots for the subscriber are all the projects mapped to
-the FileSystemProvider. Callbacks were added to FileSystemProvider
-in order to allow the FileSystemSubscriber to generate change
-events when projects are mapped and unmapped.</li>
+  <li>实现根方法<ul>
+      <li>订阅者的根是映射到FileSystemProvider的所有项目。回调被添加到FileSystemProvider，以便允许FileSystemSubscriber在映射和取消映射项目时生成更改事件。</li>
     </ul>
   </li>
 </ul>
-<p>In addition to the subscriber implementation, the get and put
-operations for the file system provider were modified to update the
-synchronization state in the ThreeWaySynchronizer. The
-operations are implemented in the class
-org.eclipse.team.examples.filesystem.FileSystemOperations.</p>
+<p>除了订户实现之外，还修改了文件系统提供程序的get和put操作，以更新ThreeWaySynchronizer中的同步状态。这些操作在org.eclipse.team.examples.filesystem类中实现。FileSystemOperations。</p>
 <h3>ThreeWaySynchronizer</h3>
-<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a> 
-  manages the synchronization state between the local workspace and a remote location. 
-  It caches and persists the local, base and remote timestamps in order to support 
-  the efficient calculation of the synchronization state of a resource. It also 
-  fires change notifications to any registered listeners. The <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a> 
-  translates these change events into the proper format to be sent to listeners 
-  registered with the subscriber.</p>
-<p>The <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a> 
-  makes use of Core scheduling rules and locks to ensure thread safety and provide 
-  change notification batching.</p>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>管理本地工作空间和远程位置之间的同步状态。它缓存并保留本地，基本和远程时间戳，以支持有效计算资源的同步状态。它还会向任何已注册的侦听器发出更改通知。<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>将这些更改事件转换为适当的格式，以发送给向订户注册的侦听器。</p>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>利用Core调度规则和锁来确保线程安全并提供更改通知批处理。</p>
 <h3>ThreeWayRemoteTree</h3>
-<p>A <a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a> 
-  is a subclass of <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> 
-  that is tailored to the <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>. 
-  It must be overridden by clients to provide the mechanism for fetching the remote 
-  state from the server. <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> 
-  is discussed in more detail in the next example.</p>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a>是<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a>的子类，它是为<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>量身定制的。客户端必须重写它以提供从服务器获取远程状态的机制。在下一个示例中将更详细地讨论<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> 。</p>
 <h3>CachedResourceVariant</h3>
-<p>A <a href="../reference/api/org/eclipse/team/core/variants/CachedResourceVariant.html">CachedResourceVariant</a> 
-  is a partial implementation of IResourceVariant that caches any fetched contents 
-  for a period of time (currently 1 hour). This is helpful since the contents 
-  may be accessed several times in a short period of time (for example, to determine 
-  the synchronization state and display the contents in a compare editor). Subclasses 
-  must still provide the unique content identifier along with the byte array that 
-  can be persisted in order to recreate the resource variant handle.</p>
-<h3>Building on Top of Existing Workspace Synchronization</h3>
-<p>Many repository providers may already have a mechanism for managing their synchronization 
-  state (e.g. if they have existing plug-ins). The <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a> 
-  and its related classes provide the ability to build on top of an existing synchronization 
-  infrastructure. For example, this is the superclass of all of the Git subscribers.</p>
+<p><a href="../reference/api/org/eclipse/team/core/variants/CachedResourceVariant.html">CachedResourceVariant</a>是IResourceVariant的部分实现，它将任何提取的内容缓存一段时间（当前为1小时）。这是有帮助的，因为可以在短时间内多次访问内容（例如，确定同步状态并在比较编辑器中显示内容）。子类必须仍然提供唯一的内容标识符以及可以持久化的字节数组，以便重新创建资源变体句柄。</p>
+<h3>构建于现有工作区同步之上</h3>
+<p>许多存储库提供程序可能已经具有用于管理其同步状态的机制（例如，如果它们具有现有插件）。<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a>及其相关类提供了在现有同步基础结构之上构建的能力。例如，这是所有Git订阅者的超类。</p>
 <h4>ResourceVariantTreeSubscriber</h4>
-<p>As was mentioned in the previous example, the <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a> 
-  is a subclass of <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a> 
-  that provides local workspace synchronization using a <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>. 
-  Subclasses of <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a> 
-  must provide:</p>
+<p>正如前面的示例中所提到的， <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>是<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a>的子类，它使用<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>提供本地工作区同步。<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber的</a>子类必须提供：</p>
 <ul>
   <li>
-    <p>Subclasses of <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> 
-      (or <a href="../reference/api/org/eclipse/team/core/variants/AbstractResourceVariantTree.html">AbstractResourceVariantTree</a>) 
-      that provide the behavior for traversing and refreshing the remote resource 
-      variants and, for subscribers that support three-way comparisons, the base 
-      resource variants.</p>
+    <p><a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> （或<a href="../reference/api/org/eclipse/team/core/variants/AbstractResourceVariantTree.html">AbstractResourceVariantTree</a> ）的子类，它们提供遍历和刷新远程资源变体的行为，对于支持三向比较的订阅者，提供基本资源变体。</p>
   </li>
-  <li>An implementation of <a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantComparator.html">IResourceVariantComparator</a> 
-    that performs the two-way or three-way comparison for a local resource and 
-    its base and remote resource variants.It is common to also provide a subclass 
-    of <a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html">SyncInfo</a> 
-    in order to customize the synchronization state determination algorithm. </li>
-  <li>An implementation of the roots method for providing the roots of the subscriber 
-    and an implementation of the isSupervised method for determining what resources 
-    are supervised by the subscriber.</li>
+  <li><a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantComparator.html">IResourceVariantComparator</a>的实现，它执行本地资源及其基本和远程资源变体的双向或三向比较。通常还提供<a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html">SyncInfo</a>的子类以便定制同步状态确定算法。</li>
+  <li>用于提供订户根的根方法的实现和用于确定订户监督哪些资源的isSupervised方法的实现。</li>
 </ul>
-<p>The other capabilities of the subscriber are implemented using these
-facilities.</p>
+<p>使用这些设施实现订户的其他功能。</p>
 <h4>ResourceVariantTree</h4>
-<p><a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> 
-  is a concrete implementation of <a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantTree.html">IResourceVariantTree</a> 
-  that provides the following:</p>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a>是<a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantTree.html">IResourceVariantTree</a>的具体实现，它提供以下内容：</p>
 <ul>
-  <li>traversal of the resource variant tree</li>
-  <li>logic to merge the previous resource variant tree state with the
-current fetched state.</li>
-  <li>caching of the resource variant tree using a <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a>.</li>
+  <li>遍历资源变体树</li>
+  <li>将先前资源变体树状态与当前获取状态合并的逻辑。</li>
+  <li>使用<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a>缓存资源变体树。</li>
 </ul>
-<p>The following must be implemented by subclasses:</p>
+<p>以下内容必须由子类实现：</p>
 <ul>
-  <li>creation of resource variant handles from the cached bytes that
-represent a resource variant</li>
-  <li>fetching of the current remote state from the server</li>
-  <li>creation of the byte store instance used to cache the bytes that
-uniquely identify a resource variant</li>
+  <li>从表示资源变体的缓存字节创建资源变量句柄</li>
+  <li>从服务器获取当前远程状态</li>
+  <li>创建用于缓存唯一标识资源变体的字节的字节存储实例</li>
 </ul>
-<p>Concrete implementations of <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a> 
-  are provided that persist bytes across workbench invocations (<a href="../reference/api/org/eclipse/team/core/variants/PersistantResourceVariantByteStore.html">PersistantResourceVariantByteStore</a>) 
-  or cached the bytes only for the current session (<a href="../reference/api/org/eclipse/team/core/variants/SessionResourceVariantByteStore.html">SessionResourceVariantByteStore</a>). 
-  However, building a subscriber on top of an existing workspace synchronization 
-  infrastructure will typically require the implementation of <a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a> 
-  subclasses that interface with the underlying synchronizer. For example the 
-  <a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a> 
-  makes use of a byte store implementation that stores the remote bytes in the 
-  <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>.</p>
-<p>The creation of resource variant handles for this example does not differ from 
-  the previous example except that the handles are requested from a resource variant 
-  tree instance instead of the subscriber.</p>
+<p>提供了<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore的</a>具体实现，它们跨工作台调用（ <a href="../reference/api/org/eclipse/team/core/variants/PersistantResourceVariantByteStore.html">PersistantResourceVariantByteStore</a> ） <a href="../reference/api/org/eclipse/team/core/variants/PersistantResourceVariantByteStore.html">持久</a>保存字节，或仅为当前会话缓存字节（ <a href="../reference/api/org/eclipse/team/core/variants/SessionResourceVariantByteStore.html">SessionResourceVariantByteStore</a> ）。但是，在现有工作区同步基础结构之上构建订户通常需要实现与底层同步器交互的<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a>子类。例如， <a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a>使用一个字节存储实现，它将远程字节存储在<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer中</a> 。</p>
+<p>除了从资源变体树实例而不是订户请求句柄之外，此示例的资源变体句柄的创建与前面的示例没有区别。</p>
 
 </body>
 </html>

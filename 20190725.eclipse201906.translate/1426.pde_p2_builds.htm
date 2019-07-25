@@ -1,46 +1,39 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-  <meta name="copyright"
- content="Copyright (c) IBM Corporation and others 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
-  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <link rel="STYLESHEET" href="../book.css" charset="ISO-8859-1" type="text/css">
-  <title>Building p2 Repositories and Products</title>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+  <meta http-equiv="Content-Style-Type" content="text/css"></meta>
+  <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+  <title>构建p2存储库和产品</title>
 </head>
-<body>
-<h1>Building p2 Repositories and Products</h1>
-<p>PDE/Build has built in support for publishing p2 metadata using the new <a href="../../org.eclipse.platform.doc.isv/guide/p2_publisher.html">p2 Publisher</a>.  3.4-style <a href="pde_p2_integration.htm">integration</a> with the old metadata generator still works, but does not support newer features like the <a href="../../org.eclipse.platform.doc.isv/guide/p2_customizing_metadata.html">customization of metadata</a>.
+<body dir="ltr">
+<h1>构建p2存储库和产品</h1>
+<p>PDE / Build内置支持使用新的<a href="../../org.eclipse.platform.doc.isv/guide/p2_publisher.html">p2 Publisher</a>发布p2元数据。与旧元数据生成器的3.4样式<a href="pde_p2_integration.htm">集成</a>仍然有效，但不支持更新的功能，如<a href="../../org.eclipse.platform.doc.isv/guide/p2_customizing_metadata.html">元数据</a>的<a href="../../org.eclipse.platform.doc.isv/guide/p2_customizing_metadata.html">自定义</a> 。
 </p>
-<p>The new publisher integration gathers your features and bundles from source and publishes them directly to a p2 repository. To use the new functionality, the builder should define the property:</p>
+<p>新的发布者集成从源收集您的功能和包，并将它们直接发布到p2存储库。要使用新功能，构建器应定义属性：</p>
 <div align="center"><tt><b>p2.gathering = true</b></tt></div>
 <br>
-<p>Setting this property will change the build in significant manner:</p>
+<p>设置此属性将以显着方式更改构建：</p>
 <ul>
-<li><a href="pde_p2_featurebuilds.htm">Feature builds</a> produce a single p2 repository that is a group of all the configurations being built.</li>
-<li><a href="pde_p2_productbuilds.htm">Product builds</a> produce a properly installed fully enabled p2 product.  (And optionally the corresponding repository.)</li>
+<li><a href="pde_p2_featurebuilds.htm">功能构建</a>生成单个p2存储库，该存储库是正在构建的所有配置的组。</li>
+<li><a href="pde_p2_productbuilds.htm">产品构建</a>产生正确安装的完全启用的p2产品。（以及可选的相应存储库。）</li>
 </ul>
-<p>See the separate feature and product build help pages for more detail on those types of builds.</p>
+<p>有关这些类型的构建的更多详细信息，请参阅单独的功能和产品构建帮助页面。</p>
 
 
-<h2><a name="gathering_overview">Overview of the changes</a></h2>
-<h3>The build's local repository</h3>
-<p>During the build, all metadata and artifacts will be published into a build repository defined by the property <tt><b>p2.build.repo</b></tt>.  This property should specify a URI, the default value for this is <tt>file:${buildDirectory}/buildRepo</tt>.</p>
-<p>Once all the metadata and artifacts are published into this repository, the final assemble and packaging scripts will mirror and/or install from this repository into the locations that will become the archives produced by the build.  This final
-mirroring and installation can be skipped using <tt><b>skipMirroring</b></tt> and <tt><b>skipDirector</b></tt> properties, in which case the build results would all just be in the build repository.</p>
+<h2><a name="gathering_overview">变更概述</a></h2>
+<h3>构建的本地存储库</h3>
+<p>在构建期间，所有元数据和工件都将发布到由属性<tt><b>p2.build.repo</b></tt>定义的构建存储库中。此属性应指定URI，其默认值为<tt>file：$ {buildDirectory} / buildRepo</tt> 。</p>
+<p>将所有元数据和工件发布到此存储库后，最终的汇编和打包脚本将从此存储库镜像和/或安装到将成为构建生成的存档的位置。可以使用<tt><b>skipMirroring</b></tt>和<tt><b>skipDirector</b></tt>属性跳过此最终镜像和安装，在这种情况下，构建结果将只在构建存储库中。</p>
 
-<h3>Generated build.xml : gathering vs publishing</h3>
-<p>In the generated build.xml for features and plugins there is a target <tt>gather.bin.parts</tt> which was responsible for gathering the contents of the feature/plug-in and copying them to a final directory to be jared (or not) and included in the build results.
-When using <tt>p2.gathering=true</tt>, we instead publish the feature/plug-in directly into a p2 repository.  That is, we are using p2 to gather the binary artifacts directly from the source (this is where the name of the property comes from).</p>
-<p>This is done using a new target named <tt>publish.bin.parts</tt> which uses a new <a href="pde_p2_buildtasks.htm">ant tasks</a> contributed by PDE/Build.  In old style builds, calling <tt>gather.bin.parts</tt> was done by delegating through the feature structure.  Calling <tt>publish.bin.parts</tt> is instead
-done directly from a new assemble p2 script that is generated.</p>
-<h3>Rootfiles contributed by features</h3>
-<p>Old style integrations grouped all the rootfiles contributed by all the features in the build into a single root file installable unit and artifact (which may have been named for a product). With the new publishing support, root files are instead 
-associated with the feature that contributed them.  See the <a href="pde_p2_featuremetadata.htm">feature metadata layout</a> page for more details.</p>
-<h3>The assemble scripts</h3>
-<p>Old style integration was done by calling the metadata generator on the binary results during the assembly and packaging process.  When using <tt>p2.gathering=true</tt> there is a new <tt>assemble.&lt;feature&gt;.p2.xml</tt> script.</p>  
-<p>This script will invoke the publish.bin.parts for all features and bundles being built.  It will also publish metadata for all pre-existing binary features and plug-ins, as well as publishing metadata for products.</p>
-<p>At the end of the p2 assemble script, before the remaining assemble and package scripts are called, we have a complete repository with the full results of the build.  The remaining assemble and package scripts are simply
-slicing up the repository and/or performing installs using the <a href="../../org.eclipse.platform.doc.isv/guide/p2_director.html">p2 director</a> to create the final archives which are the results of the build.</p>
+<h3>生成的build.xml：收集与发布</h3>
+<p>在生成的功能和插件的build.xml中，有一个目标<tt>gather.bin.parts</tt> ，它负责收集功能/插件的内容并将它们复制到最终目录中以进行jared（或不包含）并包含在构建结果。使用<tt>p2.gathering = true时</tt> ，我们<tt>会将</tt>功能/插件直接发布到p2存储库中。也就是说，我们使用p2直接从源收集二进制工件（这是属性名称的来源）。</p>
+<p>这是使用名为<tt>publish.bin.parts</tt>的新目标完成的，该目标使用由PDE / Build提供的新<a href="pde_p2_buildtasks.htm">ant任务</a> 。在旧式构建中，调用<tt>gather.bin.parts</tt>是通过委托功能结构完成的。而是直接从生成的新汇编p2脚本调用<tt>publish.bin.parts</tt> 。</p>
+<h3>Rootfiles由功能贡献</h3>
+<p>旧式集成将构建中所有功能所贡献的所有根文件分组为单个根文件可安装单元和工件（可能已为产品命名）。通过新的发布支持，根文件将与贡献它们的功能相关联。有关详细信息，请参阅<a href="pde_p2_featuremetadata.htm">功能元数据布局</a>页面。</p>
+<h3>汇编脚本</h3>
+<p>通过在组装和打包过程中调用二进制结果上的元数据生成器来完成旧样式集成。使用<tt>p2.gathering = true时，</tt>会有一个新的<tt>汇编。&lt;feature&gt; .p2.xml</tt>脚本。</p>  
+<p>此脚本将为正在构建的所有功能和包调用publish.bin.parts。它还将发布所有预先存在的二进制功能和插件的元数据，以及发布产品的元数据。</p>
+<p>在p2汇编脚本结束时，在调用剩余的汇编和包脚本之前，我们有一个完整的存储库，其中包含构建的完整结果。剩下的汇编和包脚本只是简单地整理存储库和/或使用<a href="../../org.eclipse.platform.doc.isv/guide/p2_director.html">p2 director</a>执行安装，以创建最终存档，这是构建的结果。</p>
 </body>
 </html>

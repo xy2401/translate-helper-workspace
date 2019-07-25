@@ -1,594 +1,225 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-<meta name="copyright"
-	content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
-<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
-<meta content="text/css" http-equiv="Content-Style-Type">
-<link type="text/css" charset="ISO-8859-1" href="../book.css"
-	rel="STYLESHEET">
-<title>Repository Roadmap for Logical Model Integration</title>
-<link href="../book.css" type="text/css" rel="stylesheet">
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"></meta>
+<meta content="text/css" http-equiv="Content-Style-Type"></meta>
+<link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1"></link>
+<title>逻辑模型集成的存储库路线图</title>
+<link href="../book.css" type="text/css" rel="stylesheet"></link>
 </head>
 
-<body bgcolor="#ffffff">
+<body bgcolor="#ffffff" dir="ltr">
 
 
-<h1>Repository Roadmap for Logical Model Integration</h1>
+<h1>逻辑模型集成的存储库路线图</h1>
 
-<p>To provide full support for logical models, a repository provider
-can perform the following steps:</p>
+<p>要为逻辑模型提供完全支持，存储库提供程序可以执行以下步骤：</p>
 <ol>
 
-	<li>Contribute the appropriate repository operations to elements
-	that adapt to <a href="#ResourceMapping"><code>ResourceMapping</code></a>.</li>
+	<li>将适当的存储库操作贡献给适应<a href="#ResourceMapping"><code>ResourceMapping</code></a>元素。</li>
 
-	<li>Ensure that operations performed on resource mappings include
-	all the appropriate model elements and resources by using an <a
-		href="#SyncScope"><code>ISynchronizationScope</code></a> and
-	supporting API.</li>
+	<li>通过使用<a href="#SyncScope"><code>ISynchronizationScope</code></a>和支持API，确保对资源映射执行的操作包括所有适当的模型元素和资源。</li>
 
-	<li>Allow model providers to participate in headless merging
-	through the <a href="#AutoMerge"><code>IMergeContext</code></a>
-	interface and supporting API.</li>
+	<li>允许模型提供者通过<a href="#AutoMerge"><code>IMergeContext</code></a>接口和支持API参与无头合并。</li>
 
-	<li>Allow model providers to participate in merge previews by
-	using the <a href="#TeamContent"><code>teamContentProviders</code></a>
-	for the models involved in the merge. A <code>ModelSynchronizeParticipant</code>
-	class is provided to help manage the relationship between the model
-	content, a merge context and the Compare framework.</li>
+	<li>允许模型提供程序通过使用<a href="#TeamContent"><code>teamContentProviders</code></a>参与合并中涉及的模型来参与合并预览。提供<code>ModelSynchronizeParticipant</code>类以帮助管理模型内容，合并上下文和Compare框架之间的关系。</li>
 
-	<li>Provide access to the history of workspace files through the <a
-		href="#FileHistory"><code>IFileHistoryProvider</code></a> API</li>
+	<li>通过<a href="#FileHistory"><code>IFileHistoryProvider</code></a> API提供对工作区文件历史的访问</li>
 
-	<li>Provide access to remote configurations using the Eclipse File
-	System API in the <em>org.eclipse.core.filesystem</em> plug-in and link
-	this to workspace projects through the <a href="#EFS"><code>ProjectSetCapability</code></a>
+	<li>使用<em>org.eclipse.core.filesystem</em>插件中的Eclipse File System API提供对远程配置的访问，并通过<a href="#EFS"><code>ProjectSetCapability</code></a>将其链接到工作区项目
 
 	</li>
-	<li>Support logical model element decoration by providing a
-	workspace <code>Subscriber</code> for use with the <a
-		href="#Decoration"><code>SynchronizationStateTester</code></a> API.</li>
+	<li>通过提供用于<a href="#Decoration"><code>SynchronizationStateTester</code></a> API的工作空间<code>Subscriber</code>来支持逻辑模型元素修饰。</li>
 		
-	<li>Allow models to group related changes by implementing the <a
-		href="#ChangeGrouping"><code>IChangeGroupingRequestor</code></a> API.</li>
+	<li>允许模型通过实现<a href="#ChangeGrouping"><code>IChangeGroupingRequestor</code></a> API对相关更改进行<a href="#ChangeGrouping"><code>IChangeGroupingRequestor</code></a> 。</li>
 </ol>
 
-<p>The following sections describe each of these points in more
-detail. The <a
- href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a> 
-  plug-in contain an example that illustrate several of these points.
-  You can check the project out from the Git repository and use it as 
-  a reference while you are reading this tutorial. <em>Disclaimer</em>: The source 
-  code in the example plug-ins may change over time. To get a copy that matches 
-  what is used in this example, you can check out the project using the 3.3 version 
-  tag (most likely R3_3) or a date tag of June 30, 2007.
+<p>以下部分更详细地描述了这些要点。<a href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>插件包含一个示例，说明了其中的几个要点。您可以从Git存储库中检查项目，并在阅读本教程时将其用作参考。<em>免责声明</em> ：示例插件中的源代码可能会随时间而变化。要获得与此示例中使用的副本相匹配的副本，您可以使用3.3版本标记（最可能是R3_3）或2007年6月30日的日期标记来检出项目。
 </p>
 
 
-<h2><a name="ResourceMapping"></a>Contributing Actions to Resource
-Mappings</h2>
+<h2><a name="ResourceMapping"></a>对资源映射的贡献操作</h2>
 
-<h3>The Basic Resource Mapping API</h3>
+<h3>基本资源映射API</h3>
 
-<p>The resource mapping API consists of the following classes:</p>
+<p>资源映射API包含以下类：</p>
 <ul>
-	<li><a
-		href="../reference/api/org/eclipse/core/resources/mapping/ResourceMapping.html">ResourceMapping</a>:
-	The class to which logical model elements adapt to indicate that the
-	model corresponds to a set of resources in the workspace. The methods
-	of interest are:
-	<ul>
-		<li><code>Object getModelObject()</code>: The model object from
-		which the mapping was derived (or adapted).</li>
-		<li><code>ResourceTraversal[]
-		getTraversals(ResourceMappingContext, IProgressMonitor)</code>: The resource
-		traversal that cover the resources that constitute the model object.</li>
+	<li><a href="../reference/api/org/eclipse/core/resources/mapping/ResourceMapping.html">ResourceMapping</a> ：逻辑模型元素适应的类，表示模型对应于工作空间中的一组资源。感兴趣的方法是：<ul>
+		<li><code>Object getModelObject()</code> ：从中派生（或调整）映射的模型对象。</li>
+		<li><code>ResourceTraversal[] getTraversals(ResourceMappingContext, IProgressMonitor)</code> ：覆盖构成模型对象的资源的资源遍历。</li>
 	</ul>
 	</li>
-	<li><a
-		href="../reference/api/org/eclipse/core/resources/mapping/ResourceTraversal.html">ResourceTraversal</a>:
-	A <code>ResourceTraversal</code> contains a set of resources and a
-	depth flag that indicates the depth to which the resources in the
-	traversal are associated with the originating model object. Resource
-	traversals are provided to a client by a resource mapping in order to
-	describe the contents of a model in such a way that the client (e.g. a
-	repository provider) can perform its operations in as efficient a means
-	as possible. Methods of interest are:
-	<ul>
-		<li><code>getResources()</code></li>
-		<li><code>getDepth()</code></li>
+	<li><a href="../reference/api/org/eclipse/core/resources/mapping/ResourceTraversal.html">ResourceTraversal</a> ： <code>ResourceTraversal</code>包含一组资源和一个深度标志，指示遍历中的资源与原始模型对象关联的深度。通过资源映射向客户端提供资源遍历，以便以客户端（例如，存储库提供者）可以尽可能有效的方式执行其操作的方式来描述模型的内容。感兴趣的方法是：<ul>
+		<li><code>getResources（）</code></li>
+		<li><code>getDepth（）</code></li>
 	</ul>
 	</li>
-	<li><a
-		href="../reference/api/org/eclipse/core/resources/mapping/ResourceMappingContext.html">ResourceMappingContext</a>:
-	a context that is provided to the resource mapping by the client when
-	obtaining traversals. This context allows the logical model to
-	determine what the remote state of the model is so that the proper
-	resources can be covered by the resource traversals returned by the
-	resource mapping. The use of the <code>ResourceMappingContext</code>
-	and <code><a
-		href="../reference/api/org/eclipse/core/resources/mapping/RemoteResourceMappingContext.html">RemoteResourceMappingContext</a></code>
-	is a bit more complicated and is described <a
-		href="#ResourceMappingContext">later</a>.</li>
+	<li><a href="../reference/api/org/eclipse/core/resources/mapping/ResourceMappingContext.html">ResourceMappingContext</a> ：客户端在获取遍历时提供给资源映射的上下文。此上下文允许逻辑模型确定模型的远程状态是什么，以便资源映射返回的资源遍历可以覆盖适当的资源。<code>ResourceMappingContext</code>和<code><a href="../reference/api/org/eclipse/core/resources/mapping/RemoteResourceMappingContext.html">RemoteResourceMappingContext</a></code>的使用有点复杂， <a href="#ResourceMappingContext">稍后</a>将对其进行描述。</li>
 </ul>
-<p>There are two types of plugins that should be interested in
-resource mappings. Those who provide a model that consists of, or is
-persisted in, resources in the workspace and those that want to perform
-operations on resources. The former case will be covered in the <a
-	href="team_model_model.htm">model roadmap</a> and the later case is
-covered in the next section.</p>
+<p>有两种类型的插件应该对资源映射感兴趣。提供由工作空间中的资源组成或持久存储的模型以及希望对资源执行操作的模型的人员。前一种情况将在<a href="team_model_model.htm">模型路线图中介绍</a> ，后一种情况将在下一节中介绍。</p>
 
-<h3>Resource Mappings and Object Contributions</h3>
+<h3>资源映射和对象贡献</h3>
 
-<p>Plug-ins that contribute extensions to adaptable extension points
-will have to make two changes to support the new <code>ResourceMapping</code>
-APIs:</p>
+<p>为可适应扩展点提供扩展的插件必须进行两项更改才能支持新的<code>ResourceMapping</code> API：</p>
 <ol>
-	<li>Update any <em>objectContributions</em> of the <a
-		href="../reference/extension-points/org_eclipse_ui_popupMenus.html">popupMenus</a>
-	extension point in their plugin.xml file to target <code>ResourceMapping</code>
-	instead of <code>IResource</code> (for those for which this is
-	appropriate).</li>
-	<li>Update their actions to work on <code>ResourceMapping</code>
-	instead of <code>IResource</code> and respect the depth constraints
-	provided in the traversals.</li>
+	<li>更新plugin.xml文件中<a href="../reference/extension-points/org_eclipse_ui_popupMenus.html">popupMenus</a>扩展点的任何<em>objectContributions</em>以定位<code>ResourceMapping</code>而不是<code>IResource</code> （对于那些适合的那些）。</li>
+	<li>更新他们的操作以使用<code>ResourceMapping</code>而不是<code>IResource</code>并尊重遍历中提供的深度约束。</li>
 </ol>
-<p>Plug-ins that add object contributions to <code>IResource</code>
-can now add them to <code>ResourceMapping</code> instead, if the action
-can apply to multiple resources. Here is an XML snippet that contributes
-a menu action to objects that adapt to resource mappings:</p>
+<p>如果操作可以应用于多个资源，则向<code>IResource</code>添加对象贡献的插件现在可以将它们添加到<code>ResourceMapping</code> 。这是一个XML片段，它为适应资源映射的对象提供菜单操作：</p>
 
-<pre style="background-color: rgb(204, 204, 255);">   &lt;extension
-       point="org.eclipse.ui.popupMenus"&gt;
-      &lt;objectContribution
-            objectClass="org.eclipse.core.resources.mapping.ResourceMapping"
-            adaptable="true"
-            id="org.eclipse.team.ccvs.ui.ResourceMapperContributions"&gt;
-         &lt;enablement&gt;<br>           &lt;adapt type="org.eclipse.core.resources.mapping.ResourceMapping"&gt;<br>              &lt;test <br>                 property="org.eclipse.core.resources.projectPersistentProperty" <br>                 args="org.eclipse.team.core.repository,org.eclipse.team.cvs.core.cvsnature" /&gt;<br>           &lt;/adapt&gt;<br>         &lt;/enablement&gt;<br>         &lt;action<br>               label="%UpdateAction.label"<br>               definitionId="org.eclipse.team.cvs.ui.update"<br>               class="org.eclipse.team.internal.ccvs.ui.actions.UpdateAction"<br>               tooltip="%UpdateAction.tooltip"<br>               menubarPath="team.main/group2"<br>               id="org.eclipse.team.cvs.ui.update"&gt;<br>         &lt;/action&gt;<br>         ...<br>      	&lt;/objectContribution&gt;<br>   &lt;/extension&gt;</pre>
+<pre style="background-color:rgb(204,204,255)">&lt;extension point =“org.eclipse.ui.popupMenus”&gt; &lt;objectContribution objectClass =“org.eclipse.core.resources.mapping。ResourceMapping“adaptable =”true“id =”org.eclipse.team.ccvs.ui。ResourceMapperContributions“&gt; &lt;enablement&gt;<br>&lt;adapt type =“org.eclipse.core.resources.mapping。ResourceMapping“&gt;<br>&lt;测试<br>属性= “org.eclipse.core.resources.projectPersistentProperty”<br>args =“org.eclipse.team.core.repository，org.eclipse.team.cvs.core.cvsnature”/&gt;<br>&lt;/适应&gt;<br>&lt;/启用&gt;<br>&lt;动作<br>标签= “％UpdateAction.label”<br>definitionId = “org.eclipse.team.cvs.ui.update”<br>类=“org.eclipse.team.internal.ccvs.ui.actions。UpdateAction”<br>工具提示= “％UpdateAction.tooltip”<br>menubarPath = “team.main /组2”<br>ID = “org.eclipse.team.cvs.ui.update”&gt;<br>&lt;/动作&gt;<br>...<br>&lt;/ objectContribution&gt;<br>&lt;/分机&gt;</pre>
 
-<p>Contributions to <code>ResourceMapping</code> will automatically
-apply to objects that adapt to <code>IResource</code>. This transitive
-association is handled by the Workbench. Filtering of the contributions
-to resource mappings can be done using enablement expressions. An
-expression for filtering by project persistent property has been added
-to allow repository providers to have their menus appear on projects
-that are mapped to their repositories.</p>
+<p>对<code>ResourceMapping</code>贡献将自动应用于适应<code>IResource</code>对象。这种传递关联由Workbench处理。可以使用启用表达式来过滤对资源映射的贡献。添加了一个用于按项目持久属性进行过滤的表达式，以允许存储库提供程序将其菜单显示在映射到其存储库的项目上。</p>
 
-<p>Actions that have been contributed to the <code>ResourceMapping</code>
-class will be given a selection that contains one or more <code>ResourceMappings</code>.
-It is the actions responsibility to translate the resource mapping into
-a set of resources to be operated on. This can be done by calling <code>getTraversals</code>
-to get the traversals of the mapping. Traversals are used to allow the
-clients of the traversal to optimize their operations based on the depth
-of the resources being traversed. A client may traverse the resource
-manually or may use the resource and the depth as input into an
-operation that the action delegates to do the work. As an example, if
-the user performs a CVS update on a java package and the java package
-resource mapping maps to a folder of depth one, CVS would issue an
-appropriate command ("cvs update -l" for those who are curious) which
-would perform a shallow update on the folder the package represents.</p>
+<p>已经为<code>ResourceMapping</code>类提供的操作将被赋予包含一个或多个<code>ResourceMappings</code> 。将资源映射转换为要操作的一组资源是行动的责任。这可以通过调用<code>getTraversals</code>来获取映射的遍历来完成。遍历用于允许遍历的客户端基于所遍历的资源的深度来优化其操作。客户端可以手动遍历资源，或者可以使用资源和深度作为操作委托进行工作的操作的输入。例如，如果用户在java包上执行CVS更新并且java包资源映射映射到深度为1的文件夹，则CVS将发出适当的命令（对于那些好奇的人来说，“cvs update -l”）对包表示的文件夹执行浅更新。</p>
 
-<p>Although it is possible to obtain a set of traversals directly
-from the selected resource mappings, there are model relationships (or
-repository relationships) that may require the inclusion of additional
-resources or model elements in an operation. The next section describes
-how to ensure that all required resources are included in an operation</p>
+<p>尽管可以直接从所选资源映射获得一组遍历，但是存在可能需要在操作中包括附加资源或模型元素的模型关系（或存储库关系）。下一节将介绍如何确保操作中包含所有必需的资源</p>
 
-<h2><a name="SyncScope"></a>Operation Scope</h2>
+<h2><a name="SyncScope"></a>经营范围</h2>
 
-<p>For team operations, the selected mappings need to be translated
-into the set of mappings to be operated on. This process involves
-consulting all model providers to ensure that they get included in
-operations on resources that match their enablement rules. The term we
-use to describe the complete set of resource mappings to be operated on
-is the operation <em>scope</em>. The following API has been provided for
-this:</p>
+<p>对于团队操作，需要将选定的映射转换为要操作的映射集。此过程涉及咨询所有模型提供程序，以确保它们包含在与其启用规则匹配的资源上的操作中。我们用来描述要操作的完整资源映射集的术语是操作<em>范围</em> 。为此提供了以下API：</p>
 <ul>
-	<li><code><a
-		href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationScope.html">ISynchronizationScope</a></code>:
-	Interface that defines the API for accessing the scope of the
-	operation. It provides access to all the resource mappings being
-	operated on and the traversals for those mappings as they were
-	calculated during the scope building process.</li>
-	<li><code><a
-		href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationScopeManager.html">ISynchronizationScopeManager</a></code>:
-	Interface that defines the API for creating and managing a scope.</li>
-	<li><code><a
-		href="../reference/api/org/eclipse/team/core/mapping/provider/SynchronizationScopeManager.html">SynchronizationScopeManager</a></code>:
-	Extendable class that provides a default implementation of the <code>ISynchronizationScopeManager</code>
-	API.</li>
-	<li><code><a
-		href="../reference/api/org/eclipse/team/ui/synchronize/ModelOperation.html">ModelOperation</a></code>:
-	Extendable operation class that generates a scope using a provided
-	scope manager and prompts if additional resources or mappings have been
-	included in the operation due to model provider relationships.</li>
+	<li><code><a href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationScope.html">ISynchronizationScope</a></code> ：定义用于访问操作范围的API的接口。它提供对所操作的所有资源映射的访问以及在范围构建过程中计算的那些映射的遍历。</li>
+	<li><code><a href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationScopeManager.html">ISynchronizationScopeManager</a></code> ：定义用于创建和管理范围的API的接口。</li>
+	<li><code><a href="../reference/api/org/eclipse/team/core/mapping/provider/SynchronizationScopeManager.html">SynchronizationScopeManager</a></code> ：可扩展的类，它提供<code>ISynchronizationScopeManager</code> API的默认实现。</li>
+	<li><code><a href="../reference/api/org/eclipse/team/ui/synchronize/ModelOperation.html">ModelOperation</a></code> ：可扩展的操作类，使用提供的范围管理器生成范围，并提示是否由于模型提供者关系而在操作中包含其他资源或映射。</li>
 </ul>
-<p>The <em>initialize(IProgressMonitor)</em> method of the <code>SynchronizationScopeManager</code>
-class handles the entire process of converting an input set of resource
-mappings into the complete set of mappings that need to be operated on
-as well as the complete set of traversals that cover these mappings. A
-repository provider can tailor the process by:</p>
+<p><code>SynchronizationScopeManager</code>类的<em>initialize（IProgressMonitor）</em>方法处理将输入资源映射集转换为需要操作的完整映射集以及覆盖这些映射的完整遍历集的整个过程。存储库提供程序可以通过以下方式定制进程：</p>
 <ol>
-	<li>Providing a <code>RemoteResourceMappingContext</code> for use
-	when obtaining resource traversals from resource mappings.</li>
-	<li>Overriding <code>SynchronizationScopeManager</code> to tailor
-	the scope management process as required.</li>
+	<li>提供<code>RemoteResourceMappingContext</code> ，以便在从资源映射获取资源遍历时使用。</li>
+	<li>重写<code>SynchronizationScopeManager</code>以根据需要定制范围管理过程。</li>
 </ol>
-<p>The next two sections describe these points in more detail.</p>
+<p>接下来的两节将更详细地描述这些要点。</p>
 
-<h3><a name="ResourceMappingContext"></a>Remote Resource Mapping
-Context</h3>
+<h3><a name="ResourceMappingContext"></a>远程资源映射上下文</h3>
 
-<p>In order to guarantee that all necessary resources get included
-in a team operation, the model provider may need the ability to glimpse
-at the state of one or more resources in the repository. For some
-models, this may not be required. For instance, a java package is a
-container visited to a depth of one, regardless of the remote state of
-the model. Given this, a repository provider can easily determine that
-outgoing deletions should be included when committing or that incoming
-additions should be included when updating. However, the resources that
-constitute some logical models may change over time. For instance, the
-resources that constitute a model element may depend of the contents of
-a manifest file (or some other similar mechanism). In order for the
-resource mapping to return the proper traversal, it must access the
-remote contents of the manifest file (if it differs from the local
-contents) in order to see if there are additional resources that need to
-be included. These additional resources may not exist in the workspace
-but the repository provider would know how to make sure they did when
-the selected action was performed.</p>
-<p>In order to support these more complex models, a <code>RemoteResourceMappingContext</code>
-can be passed to the <code>ResourceMapping#getTraversals</code> method.
-When a context is provided, the mapping can use it to ensure that all
-the necessary resources are included in the traversal. If a context is
-not provided, the mapping can assume that only the local state is of
-interest.</p>
+<p>为了保证所有必要的资源都包含在团队操作中，模型提供者可能需要能够一瞥存储库中的一个或多个资源的状态。对于某些型号，可能不需要这样做。例如，无论模型的远程状态如何，java包都是访问深度为1的容器。鉴于此，存储库提供程序可以轻松确定在提交时应包含传出删除，或者在更新时应包括传入添加。但是，构成某些逻辑模型的资源可能会随时间而变化。例如，构成模型元素的资源可以取决于清单文件（或一些其他类似机制）的内容。为了使资源映射返回正确的遍历，它必须访问清单文件的远程内容（如果它与本地内容不同），以便查看是否需要包含其他资源。这些额外资源可能不存在于工作空间中，但存储库提供程序将知道如何确保它们在执行所选操作时执行。</p>
+<p>为了支持这些更复杂的模型，可以将<code>RemoteResourceMappingContext</code>传递给<code>ResourceMapping#getTraversals</code>方法。提供上下文时，映射可以使用它来确保遍历中包含所有必需的资源。如果未提供上下文，则映射可以假定仅感兴趣本地状态。</p>
 
-<p>The remote resource mapping context provides three basic queries:</p>
+<p>远程资源映射上下文提供三个基本查询：</p>
 <ul>
-	<li>What type of comparison is being performed: two-way or
-	three-way?
+	<li>正在进行什么类型的比较：双向还是三向？
 	<ul>
-		<li>For two-way, does the local contents differ from the remote
-		contents?</li>
-		<li>For three-way, are there local changes and are there remote
-		changes?</li>
+		<li>对于双向，本地内容是否与远程内容不同？</li>
+		<li>对于三向，是否存在本地更改并且是否存在远程更改？</li>
 	</ul>
 	</li>
-	<li>What are the contents of the remote (and base for three-way)
-	counterparts of the file?</li>
-	<li>What are the remote members of a folder?</li>
+	<li>文件的远程（和三向）对应的内容是什么？</li>
+	<li>文件夹的远程成员是什么？</li>
 </ul>
-<p>The answer to the first question above depends on the type of
-operation that is being performed. Typically, updates and merges are
-three-way while comparisons and replace operations (at least for CVS)
-are two-way.</p>
-<p>The Eclipse Team API includes a <code>Subscriber</code> class
-that defines an API for providing the synchronization state between the
-local workspace and a remote server. A <code><a
-	href="../reference/api/org/eclipse/team/core/subscribers/SubscriberResourceMappingContext.html">SubscriberResourceMappingContext</a></code>
-is provided that uses a <code><a
-	href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html">Subscriber</a></code>
-to access the necessary remote state. Clients that have a <code>Subscriber</code>
-do not need to do any additional work to get a resource mapping context.</p>
+<p>上面第一个问题的答案取决于正在执行的操作类型。通常，更新和合并是三向的，而比较和替换操作（至少对于CVS）是双向的。</p>
+<p>Eclipse Team API包括一个<code>Subscriber</code>类，它定义了一个API，用于在本地工作空间和远程服务器之间提供同步状态。甲<code><a href="../reference/api/org/eclipse/team/core/subscribers/SubscriberResourceMappingContext.html">SubscriberResourceMappingContext</a></code>提供一种使用<code><a href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html">Subscriber</a></code>访问必要的远程状态。具有<code>Subscriber</code>客户端不需要执行任何其他工作来获取资源映射上下文。</p>
 
-<h3>Subclassing SynchronizationScopeManager</h3>
+<h3>子类化SynchronizationScopeManager</h3>
 
-<p>The <code>SynchronizationScopeManager</code> class can be
-subclassed to tailor the scope generation and management process. The
-two main reasons for subclassing the scope manager are:</p>
+<p>可以对<code>SynchronizationScopeManager</code>类进行子类化以定制范围生成和管理过程。子范围管理器的两个主要原因是：</p>
 <ol>
-	<li>The repository provider needs to include additional resources
-	due to some repository level relationship (e.g. change set). This can
-	be accomplished by overriding the <em>adjustInputTraversals(ResourceTraversal[])</em>
-	method.</li>
-	<li>The synchronization has a longer lifecycle (e.g. Synchronize
-	view vs. dialog) and needs the potential to react to scope changes. The
-	<code><a
-		href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationScopeParticipant.html">ISynchronizationScopeParticipant</a></code>
-	interface defines the API that model providers can use to participate
-	in the scope management process. The <code><a
-		href="../reference/api/org/eclipse/team/core/subscribers/SubscriberScopeManager.html">SubscriberScopeManager</a></code>
-	class is a <code>Subscriber</code> based subclass of <code>SynchronizationScopeManager</code>
-	that involves participants in the scope management process. An example
-	of why this type of process is needed is working sets. If a working set
-	is one of the resource mappings in a scope, the set of traversals
-	covered by the scope would increase if resources were added to the
-	working set.</li>
+	<li>由于某些存储库级别关系（例如，更改集），存储库提供程序需要包含其他资源。这可以通过重写<em>adjustInputTraversals（ResourceTraversal []）</em>方法来完成。</li>
+	<li>同步具有更长的生命周期（例如，同步视图与对话框），并且需要对范围更改做出反应的可能性。<code><a href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationScopeParticipant.html">ISynchronizationScopeParticipant</a></code>接口定义模型提供程序可用于参与范围管理过程的API。<code><a href="../reference/api/org/eclipse/team/core/subscribers/SubscriberScopeManager.html">SubscriberScopeManager</a></code>类是<code>SynchronizationScopeManager</code>基于<code>Subscriber</code>的子类，涉及范围管理过程的参与者。需要这种类型的过程的一个例子是工作集。如果工作集是作用域中的资源映射之一，则在将资源添加到工作集时，作用域所涵盖的遍历集将会增加。</li>
 </ol>
 
-<h2><a name="AutoMerge"></a>Model-based Merging</h2>
+<h2><a name="AutoMerge"></a>基于模型的合并</h2>
 
-<p>The main repository operation type that requires model
-participation is merging. In many cases, models only need to participate
-at the file level. For this, the <code>IStorageMerger</code> API was
-introduced to allow model providers to contribute mergers that should be
-used to merge files of a particular extension or content type. However,
-in some cases, models may need additional context to participate
-properly in a merge. For this purpose, we introduced the <code>IResourceMappingMerger</code>
-and <code>IMergeContext</code> APIs.</p>
+<p>需要模型参与的主存储库操作类型是合并。在许多情况下，模型只需要参与文件级别。为此，引入了<code>IStorageMerger</code> API以允许模型提供者提供合并，这些合并应该用于合并特定扩展或内容类型的文件。但是，在某些情况下，模型可能需要其他上下文才能正确参与合并。为此，我们引入了<code>IResourceMappingMerger</code>和<code>IMergeContext</code> API。</p>
 
-<p>Merge operations are still triggered by actions associated with a
-repository provider. However, once a merge type operation is requested
-by the user, the repository provider needs to involve the model
-providers in the merge process to ensure that the merge does not corrupt
-the model in some way.</p>
+<p>合并操作仍由与存储库提供程序关联的操作触发。但是，一旦用户请求合并类型操作，存储库提供程序需要在合并过程中涉及模型提供程序，以确保合并不会以某种方式破坏模型。</p>
 
-<p>There are two main pieces of repository provider API related to
-the model-based merging support.</p>
+<p>与基于模型的合并支持相关的存储库提供程序API有两个主要部分。</p>
 <ol>
-	<li>API to describe the synchronization state of the resources
-	involved in the merge.</li>
-	<li>API to allow model providers to merge model elements.</li>
-</ol>
-The following sections describe these two pieces.
+	<li>用于描述合并中涉及的资源的同步状态的API。</li>
+	<li>允许模型提供者合并模型元素的API。</li>
+</ol>以下部分描述了这两部分。
 
-<h3>API for Synchronization State Description</h3>
+<h3>用于同步状态描述的API</h3>
 
-<p>An important aspect of model-based merging is the API used to
-communicate the synchronization state of the resources involved to the
-model provider. The following interfaces are used to describe the
-synchronization state:</p>
+<p>基于模型的合并的一个重要方面是用于将所涉及的资源的同步状态传达给模型提供者的API。以下接口用于描述同步状态：</p>
 <ul>
-	<li><a
-		href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationContext.html">ISynchronzationContext</a>:
-	provides access to the synchronization state of all resources within
-	the scope of the operation. The following API pieces are used to
-	describe the synchronization state of resources.
+	<li><a href="../reference/api/org/eclipse/team/core/mapping/ISynchronizationContext.html">ISynchronzationContext</a> ：提供对操作范围内所有资源的同步状态的访问。以下API部分用于描述资源的同步状态。
 	<ul>
-		<li><a
-			href="../reference/api/org/eclipse/team/core/diff/IDiff.html">IDiff</a>:
-		A generic path-based diff that consist of a diff kind (NO_CHANGE, ADD,
-		REMOVE, CHANGE).</li>
-		<li><a
-			href="../reference/api/org/eclipse/team/core/diff/ITwoWayDiff.html">ITwoWayDiff</a>:
-		A diff that provides more details about a change between two states of
-		an element (CONTENT, MOVE_TO, MOVE_FROM, COPY_FROM, REPLACE).</li>
-		<li><a
-			href="../reference/api/org/eclipse/team/core/diff/IThreeWayDiff.html">IThreeWayDiff</a>:
-		A diff that consists of either a local or remote two-way diff or both
-		and provides a direction description for the change (INCOMING,
-		OUTGOING, CONFLICTING) based on the presence of either or both the
-		local and remote change.</li>
-		<li><a
-			href="../reference/api/org/eclipse/team/core/mapping/IResourceDiff.html">IResourceDiff</a>:
-		A two-way diff that applies to resources and provides access to the
-		before state and after state of files through the <a
-			href="../reference/api/org/eclipse/team/core/history/IFileRevision.html">IFileRevision</a>
-		API.</li>
-		<li><a
-			href="../reference/api/org/eclipse/team/core/diff/IDiffTree.html">IDiffTree</a>:
-		A generic path-based data structure for accessing a tree of diffs.</li>
-		<li><a
-			href="../reference/api/org/eclipse/team/core/mapping/IResourceDiffTree.html">IResourceDiffTree</a>:
-		A resource-based data structure that contains the synchronization
-		state for all resources in the operation scope that are out-of-sync.</li>
+		<li><a href="../reference/api/org/eclipse/team/core/diff/IDiff.html">IDiff</a> ：一种基于路径的通用差异，由diff类型（NO_CHANGE，ADD，REMOVE，CHANGE）组成。</li>
+		<li><a href="../reference/api/org/eclipse/team/core/diff/ITwoWayDiff.html">ITwoWayDiff</a> ：一个diff，提供有关元素的两个状态之间的更改的更多详细信息（CONTENT，MOVE_TO，MOVE_FROM，COPY_FROM，REPLACE）。</li>
+		<li><a href="../reference/api/org/eclipse/team/core/diff/IThreeWayDiff.html">IThreeWayDiff</a> ：由本地或远程双向差异或两者组成的差异，并根据本地和远程更改中的任何一个或两者的存在提供变更的方向描述（INCOMING，OUTGOING，CONFLICTING）。</li>
+		<li><a href="../reference/api/org/eclipse/team/core/mapping/IResourceDiff.html">IResourceDiff</a> ：一种双向差异，它适用于资源，并通过<a href="../reference/api/org/eclipse/team/core/history/IFileRevision.html">IFileRevision</a> API提供对文件的前状态和后状态的<a href="../reference/api/org/eclipse/team/core/history/IFileRevision.html">访问</a> 。</li>
+		<li><a href="../reference/api/org/eclipse/team/core/diff/IDiffTree.html">IDiffTree</a> ：用于访问差异树的基于路径的通用数据结构。</li>
+		<li><a href="../reference/api/org/eclipse/team/core/mapping/IResourceDiffTree.html">IResourceDiffTree</a> ：基于资源的数据结构，包含操作范围内不同步的所有资源的同步状态。</li>
 	</ul>
 	</li>
 </ul>
 
-<p>Abstract classes are provided for all these interfaces with the
-convention that the class names match the interface names with the "I"
-prefix removed. The only class that repository providers must override
-is the <code>ResourceDiff</code> class so that appropriate before and
-after file revisions can be provided.</p>
+<p>为所有这些接口提供抽象类，其约定是类名与删除了“I”前缀的接口名称匹配。存储库提供程序必须覆盖的唯一类是<code>ResourceDiff</code>类，以便在提供文件修订之前和之后适当。</p>
 
-<h3>API for Model Merging</h3>
+<h3>模型合并的API</h3>
 
-<p>The <a
-	href="../reference/api/org/eclipse/team/core/mapping/IMergeContext.html">IMergeContext</a>
-interface extends synchronization context with additional methods that
-support merging. Callback methods exist for:</p>
+<p><a href="../reference/api/org/eclipse/team/core/mapping/IMergeContext.html">IMergeContext</a>接口使用支持合并的其他方法扩展同步上下文。回调方法适用于：</p>
 <ul>
-	<li>Merging one or more diffs.</li>
-	<li>Rejecting the remote changes in one or more diffs</li>
-	<li>Indicating that one or more conflicts have been merged by the
-	model</li>
-	<li>Performing a group of operations while holding an appropriate
-	scheduling rule.</li>
+	<li>合并一个或多个差异。</li>
+	<li>拒绝一个或多个差异中的远程更改</li>
+	<li>指示模型已合并一个或多个冲突</li>
+	<li>在保持适当的调度规则的同时执行一组操作。</li>
 </ul>
-<p>An abstract <a
-	href="../reference/api/org/eclipse/team/core/mapping/provider/MergeContext.html">MergeContext</a>
-class is provided that contains default implementations for much of the
-merging behavior and also uses the <a
-	href="../reference/api/org/eclipse/team/core/mapping/IStorageMerger.html">IStorageMerger</a>
-to perform three-way merges. A <a
-	href="../reference/api/org/eclipse/team/core/subscribers/SubscriberMergeContext.html">SubscriberMergeContext</a>
-class is also provided which handles the population and maintenance of
-the synchronization state description associated with the merge context.</p>
+<p>提供了一个抽象的<a href="../reference/api/org/eclipse/team/core/mapping/provider/MergeContext.html">MergeContext</a>类，它包含大部分合并行为的默认实现，还使用<a href="../reference/api/org/eclipse/team/core/mapping/IStorageMerger.html">IStorageMerger</a>执行三向合并。还提供了<a href="../reference/api/org/eclipse/team/core/subscribers/SubscriberMergeContext.html">SubscriberMergeContext</a>类，其处理与合并上下文相关联的同步状态描述的填充和维护。</p>
 
-<p>An operation class, <a
-	href="../reference/api/org/eclipse/team/ui/synchronize/ModelMergeOperation.html">ModelMergeOperation</a>
-is provided which uses the <code>IResourceMappingMerger</code> API to
-perform a model-based merge operation. Subclasses need to override the <code>initializeContext(IProgressMonitor)</code>
-method to return a merge context. The operation uses this context to
-attempt a headless model-based merge. If conflicts exist, the preview of
-the merge is left to the subclass. As we'll see in the next section,
-there is a <a
-	href="../reference/api/org/eclipse/team/ui/synchronize/ModelParticipantMergeOperation.html">ModelParticipantMergeOperation</a>
-that provides preview capabilities using a <a
-	href="../reference/api/org/eclipse/team/ui/synchronize/ModelSynchronizeParticipant.html">ModelSynchronizeParticipant</a>.</p>
+<p>提供了一个操作类<a href="../reference/api/org/eclipse/team/ui/synchronize/ModelMergeOperation.html">ModelMergeOperation</a> ，它使用<code>IResourceMappingMerger</code> API执行基于模型的合并操作。子类需要覆盖<code>initializeContext(IProgressMonitor)</code>方法以返回合并上下文。该操作使用此上下文来尝试无头模型的合并。如果存在冲突，则合并的预览将留给子类。正如我们将在下一节中看到的，有一个<a href="../reference/api/org/eclipse/team/ui/synchronize/ModelParticipantMergeOperation.html">ModelParticipantMergeOperation</a> ，它使用<a href="../reference/api/org/eclipse/team/ui/synchronize/ModelSynchronizeParticipant.html">ModelSynchronizeParticipant</a>提供预览功能。</p>
 
 
-<h2><a name="TeamContent"></a>Model Content in Team Viewers</h2>
+<h2><a name="TeamContent"></a>团队查看器中的模型内容</h2>
 
-<p>Support for the display of logical models in a team operation is
-provided using the Common Navigator framework which was introduced in
-Eclipse 3.2. Logical models can associate a content extension with a
-model provider using the <em><a
-	href="../reference/extension-points/org_eclipse_team_ui_teamContentProviders.html">org.eclipse.team.ui.teamContentProviders</a></em>
-extension point. Team providers access these content providers through
-the <code>ITeamContentProviderManager</code>.</p>
+<p>使用Eclipse 3.2中引入的Common Navigator框架，支持在团队操作中显示逻辑模型。逻辑模型可以使用<em><a href="../reference/extension-points/org_eclipse_team_ui_teamContentProviders.html">org.eclipse.team.ui.teamContentProviders</a></em>扩展点将内容扩展与模型提供程序相关联。团队提供者通过<code>ITeamContentProviderManager</code>访问这些内容提供者。</p>
 
-<p>There are several places where a team provider may wish to
-display logical models:</p>
+<p>有几个地方，团队提供者可能希望显示逻辑模型：</p>
 <ul>
-	<li>When the scope of an operation has been expanded due to model
-	provider relationships. The <code>ModelOperation</code> class provides
-	a prompt that uses the registered team content providers to inform the
-	user of a scope expansion.</li>
-	<li>When a merge preview is required. The <a
-		href="../reference/api/org/eclipse/team/ui/synchronize/ModelSynchronizeParticipant.html">ModelSynchronizeParticipant</a>
-	class makes use of the team content providers and a merge context to
-	display a merge preview. Team providers can extend this class in
-	several ways to tailor the preview.</li>
+	<li>当由于模型提供者关系而扩展操作范围时。<code>ModelOperation</code>类提供一个提示，该提示使用已注册的团队内容提供程序通知用户范围扩展。</li>
+	<li>需要合并预览时。<a href="../reference/api/org/eclipse/team/ui/synchronize/ModelSynchronizeParticipant.html">ModelSynchronizeParticipant</a>类使用团队内容提供程序和合并上下文来显示合并预览。团队提供者可以通过多种方式扩展此类以定制预览。</li>
 </ul>
-<p>The <code>ModelSynchronizeParticipant</code> provides integration
-into the Synchronize view or any container that can display <code>ISynchronizePage</code>s.
-The participant makes use of both the pre-existing synchronization
-participant capabilities and the Common Navigator capabilities to allow
-for team providers and models to tailor the toolbar, context menu and
-other aspects of the merge preview. The <code>ModelSynchronizeParticipant</code>
-provides the following:</p>
+<p><code>ModelSynchronizeParticipant</code>提供了与Synchronize视图或任何可以显示<code>ISynchronizePage</code>的容器的集成。参与者利用预先存在的同步参与者功能和Common Navigator功能，允许团队提供者和模型定制工具栏，上下文菜单和合并预览的其他方面。<code>ModelSynchronizeParticipant</code>提供以下内容：</p>
 <ul>
-	<li>A synchronize page that defines the link between a scope
-	manager, merge context and team content providers.</li>
-	<li>Toolbar actions for displaying direction modes (Incoming,
-	Outgoing, Both and Conflicting modes).</li>
-	<li>Toolbar action for cycling through models involved (i.e. Show
-	All, Show Resources, Show Java, etc).</li>
-	<li>Refresh and scheduled refresh actions.</li>
-	<li>Action to open elements in a compare editor.</li>
-	<li>Change Navigation actions.</li>
-	<li>Standard Merge actions (Merge, Overwrite and Mark as Merged) for
-	which models can register handlers and team providers can provide
-	appropriate labels (e.g. Update for CVS).</li>
+	<li>同步页面，用于定义范围管理器，合并上下文和团队内容提供者之间的链接。</li>
+	<li>用于显示方向模式的工具栏操作（传入，传出，两者和冲突模式）。</li>
+	<li>用于在所涉及的模型中循环的工具栏操作（即显示全部，显示资源，显示Java等）。</li>
+	<li>刷新和计划的刷新操作。</li>
+	<li>在比较编辑器中打开元素的操作。</li>
+	<li>更改导航操作。</li>
+	<li>模型可以注册处理程序和团队提供程序的标准合并操作（合并，覆盖和标记为合并）可以提供适当的标签（例如，CVS更新）。</li>
 </ul>
 
-<p>Here's a checklist of steps for tailoring a model synchronize
-participant for a particular Team provider:</p>
+<p>以下是为特定Team提供程序定制模型同步参与者的步骤清单：</p>
 <ul>
-	<li>Define the participant using the 
-	<em><a
-	href="../reference/extension-points/org_eclipse_team_ui_synchronizeParticipants.html">org.eclipse.team.ui.synchronizeParticipants</a></em>
-	extension point. This will require team providers to create a subclass
-	of <code>ModelSynchronizeParticipant</code></li>
-	<li>Define a viewer for the participant using the 
-		<em><a
-	href="../reference/extension-points/org_eclipse_ui_navigator_viewer.html">org.eclipse.ui.navigator.viewer</a></em>
-	extension point. The viewer definition is used to specify what menu
-	groups appear in the context menu.</li>
-	<li>Override the <em>initializeConfiguration</em> method of the
-	participant in order to set the <code>ISynchronizePageConfiguration.P_VIEWER_ID</code>
-	to the id of the viewer specified in the previous step.</li>
-	<li>Override the <em>createMergeActionGroup</em> to provide a
-	custom subclass of <code>MergeActionGroup</code> in order to tailor the
-	appearance of the merge related actions.</li>
-	<li>If the participant is persistable, override the <em>createScopeManager</em>
-	and <em>restoreContext</em> methods to recreate the scope manager and
-	merge context for the participant when it is restored on startup.</li>
-	<li>Implement a subclass of <code>ModelParticipantMergeOperation</code>
-	for handling the transition from a model-based merge to a preview in a
-	dialog or Synchronize view.</li>
+	<li>使用<em><a href="../reference/extension-points/org_eclipse_team_ui_synchronizeParticipants.html">org.eclipse.team.ui.synchronizeParticipants</a></em>扩展点定义参与者。这将要求团队提供者创建<code>ModelSynchronizeParticipant</code>的子类</li>
+	<li>使用<em><a href="../reference/extension-points/org_eclipse_ui_navigator_viewer.html">org.eclipse.ui.navigator.viewer</a></em>扩展点为参与者定义查看器。查看器定义用于指定上下文菜单中显示的菜单组。</li>
+	<li>覆盖参与者的<em>initializeConfiguration</em>方法以设置<code>ISynchronizePageConfiguration.P_VIEWER_ID</code>为上一步中指定的查看者的ID。</li>
+	<li>重写<em>createMergeActionGroup</em>以提供<code>MergeActionGroup</code>的自定义子类，以便定制合并相关操作的外观。</li>
+	<li>如果参与者是可持久的，则覆盖<em>createScopeManager</em>和<em>restoreContext</em>方法，以便在参与者在启动时恢复时重新创建范围管理器和合并上下文。</li>
+	<li>实现<code>ModelParticipantMergeOperation</code>的子类，以处理从基于模型的合并到对话框或同步视图中的预览的转换。</li>
 </ul>
-<p>The following XML snipets illustrate how the CVS participant class
-is registered and how it's viewer is defined.</p>
-<pre style="background-color: rgb(204, 204, 255);">   &lt;extension point="org.eclipse.team.ui.synchronizeParticipants"&gt;
-      &lt;participant
-            name="CVS"
-            icon="$nl$/icons/full/eview16/cvs_persp.gif"
-            class="org.eclipse.team.internal.ccvs.ui.mappings.WorkspaceModelParticipant"
-            id="org.eclipse.team.cvs.ui.workspace-participant"&gt;
-      &lt;/participant&gt;
-   &lt;/extension&gt;
-   
-   &lt;extension point="org.eclipse.ui.navigator.viewer"&gt;
-       &lt;viewer viewerId="org.eclipse.team.cvs.ui.workspaceSynchronization"&gt;
-           &lt;popupMenu
-                allowsPlatformContributions="false"
-                id="org.eclipse.team.cvs.ui.workspaceSynchronizationMenu"&gt; 
-             &lt;insertionPoint name="file"/&gt;
-             &lt;insertionPoint name="edit" separator="true"/&gt;       
-             &lt;insertionPoint name="synchronize"/&gt;
-             &lt;insertionPoint name="navigate" separator="true"/&gt;
-             &lt;insertionPoint name="update" separator="true"/&gt;
-             &lt;insertionPoint name="commit" separator="false"/&gt;
-             &lt;insertionPoint name="overrideActions" separator="true"/&gt;
-             &lt;insertionPoint name="otherActions1" separator="true"/&gt;
-             &lt;insertionPoint name="otherActions2" separator="true"/&gt;
-             &lt;insertionPoint name="sort" separator="true"/&gt;
-             &lt;insertionPoint name="additions" separator="true"/&gt;             
-             &lt;insertionPoint name="properties" separator="true"/&gt;
-          &lt;/popupMenu&gt;
-       &lt;/viewer&gt;
-   &lt;/extension&gt;
-</pre>
+<p>以下XML snipets说明了如何注册CVS参与者类以及如何定义它的查看器。</p>
+<pre style="background-color:rgb(204,204,255)">&lt;extension point =“org.eclipse.team.ui.synchronizeParticipants”&gt; &lt;participant name =“CVS”icon =“$ nl $ / icons / full / eview16 / cvs_persp.gif”class =“org.eclipse.team.internal .ccvs.ui.mappings。WorkspaceModelParticipant“id =”org.eclipse.team.cvs.ui.workspace-participant“&gt; &lt;/ participant&gt; &lt;/ extension&gt; &lt;extension point =”org.eclipse.ui.navigator.viewer“&gt; &lt;viewer viewerId =”org .eclipse.team.cvs.ui.workspaceSynchronization“&gt; &lt;popupMenu allowsPlatformContributions =”false“id =”org.eclipse.team.cvs.ui.workspaceSynchronizationMenu“&gt; &lt;insertionPoint name =”file“/&gt; &lt;insertionPoint name =”edit “separator =”true“/&gt; &lt;insertionPoint name =”synchronize“/&gt; &lt;insertionPoint name =”navigate“separator =”true“/&gt; &lt;insertionPoint name =”update“separator =”true“/&gt; &lt;insertionPoint name =” commit“separator =”false“/&gt; &lt;insertionPoint name =”overrideActions“separator =”true“/&gt; &lt;insertionPoint name =”otherActions1“separator =”true“/&gt; &lt;insertionPoint name =”otherActions2“separator =”true“/ &gt; &lt;insertionPoint name =“sort”separator =“true”/&gt; &lt;insertionPoint name =“additions”separator =“true”/&gt; &lt;insertionPoint name =“properties”separator =“true”/&gt; &lt;/ popupMenu&gt; &lt;/ viewer &gt; &lt;/ extension&gt;</pre>
 
-<h2><a name="FileHistory"></a>File History</h2>
-<p>A file history API has been added to allow models to access the
-history of files. The file history API consists of the following
-interfaces:</p>
+<h2><a name="FileHistory"></a>档案历史</h2>
+<p>添加了文件历史记录API，以允许模型访问文件的历史记录。文件历史记录API包含以下接口：</p>
 <ul>
-	<li><a
-		href="../reference/api/org/eclipse/team/core/history/IFileHistoryProvider.html">IFileHistoryProvider</a>:
-	Obtained from a RepositoryProvider, the file history provider allows
-	clients to obtain the file history of a particular file.</li>
-	<li><a
-		href="../reference/api/org/eclipse/team/core/history/IFileHistory.html">IFileHistory</a>:
-	A data structure that allows access to the history of a file</li>
-	<li><a
-		href="../reference/api/org/eclipse/team/core/history/IFileRevision.html">IFileRevision</a>:
-	The description of a single revision or state of a file at a particular
-	point in time in its history.</li>
+	<li><a href="../reference/api/org/eclipse/team/core/history/IFileHistoryProvider.html">IFileHistoryProvider</a> ：文件历史记录提供程序从RepositoryProvider获取，允许客户端获取特定文件的文件历史记录。</li>
+	<li><a href="../reference/api/org/eclipse/team/core/history/IFileHistory.html">IFileHistory</a> ：允许访问文件历史的数据结构</li>
+	<li><a href="../reference/api/org/eclipse/team/core/history/IFileRevision.html">IFileRevision</a> ：历史记录中特定时间点的文件的单个修订或状态的描述。</li>
 </ul>
-<p>Along with this API, a generic file History view has been added.
-This will allow Team providers to display their file/resource history in
-a shared view and also allows models to display model element history
-for elements that do not map directly to files. The History view is a
-page-based view which obtains a page for the selected element in the
-following way:</p>
+<p>除此API外，还添加了通用文件History视图。这将允许团队提供者在共享视图中显示其文件/资源历史记录，并允许模型显示不直接映射到文件的元素的模型元素历史记录。“历史记录”视图是基于页面的视图，它以下列方式获取所选元素的页面：</p>
 <ul>
-	<li>A history page for workspace resources is obtained by adapting
-	the <code>RepositoryProvider</code> associated with the project that
-	contains the resource to an <a
-		href="../reference/api/org/eclipse/team/ui/history/IHistoryPageSource.html">IHistoryPageSource</a>.
+	<li>通过将与包含资源的项目相关联的<code>RepositoryProvider</code>调整为<a href="../reference/api/org/eclipse/team/ui/history/IHistoryPageSource.html">IHistoryPageSource</a>来获得工作空间资源的历史页面。
 	</li>
-	<li>A history page for other objects is obtained by adapting the
-	object itself to an <code>IHistoryPageSource</code>.</li>
+	<li>通过使对象本身适应<code>IHistoryPageSource</code>来获得其他对象的历史页面。</li>
 </ul>
 
 
-<h2><a name="EFS"></a>Project Set Capability</h2>
+<h2><a name="EFS"></a>项目集能力</h2>
 
-<p>Methods have been added to <code><a
-		href="../reference/api/org/eclipse/team/core/ProjectSetCapability.html">ProjectSetCapability</a></code> to
-support the translation between a reference string used to identify a
-mapping between a project and remote content and URIs that identify a
-file-system scheme registered with the 
-	<em><a
-	href="../reference/extension-points/org_eclipse_core_filesystem_filesystems.html">org.eclipse.core.filesystem.filesystems</a></em>
-extension point. Team providers can optionally provide support for this
-in order to allow logical models to performing remote browsing and
-project loading.</p>
+<p><code><a href="../reference/api/org/eclipse/team/core/ProjectSetCapability.html">ProjectSetCapability</a></code>添加了一些方法，以支持用于标识项目和远程内容之间映射的引用字符串与标识用<em><a href="../reference/extension-points/org_eclipse_core_filesystem_filesystems.html">org.eclipse.core.filesystem.filesystems</a></em>扩展点注册的文件系统方案的URI之间的转换。团队提供者可以选择为此提供支持，以允许逻辑模型执行远程浏览和项目加载。</p>
 
-<h2><a name="Decoration"></a>Decorating Model Elements</h2>
+<h2><a name="Decoration"></a>装饰模型元素</h2>
 
-<p>Team providers can decorate model elements by converting their
-lightweight decorators to work for resource mappings in the same way
-object contributions are converted to work for resource mappings.
-However, there is one aspect of logical model element decoration that is
-problematic. If a model element does not have a one-to-one mapping to a
-resource, the model element may not receive a label update when the
-underlying resources change.</p>
+<p>团队提供者可以通过将轻量级装饰器转换为资源映射来装饰模型元素，就像将对象贡献转换为资源映射一样。然而，逻辑模型元素装饰的一个方面是有问题的。如果模型元素没有与资源的一对一映射，则在底层资源更改时，模型元素可能不会接收标签更新。</p>
 
-<p>To address this issue, the <code><a
-		href="../reference/api/org/eclipse/team/ui/mapping/ITeamStateProvider.html">ITeamStateProvider</a></code> was introduced in order to give model
-providers access to state changes that may affect team decorations. In addition,
-model views can use a <code><a
-		href="../reference/api/org/eclipse/team/ui/mapping/SynchronizationStateTester.html">SynchronizationStateTester</a></code> to determine when the
-labels of logical model elements need to be updated. This API relies on
-the <code>ITeamStateProvider</code> interface to determine when the team state
-of resource has changed and can be passed to a team decorator as part of an <code><a
-		href="../reference/api/org/eclipse/jface/viewers/IDecorationContext.html">IDecorationContext</a></code>.</p>
+<p>为解决此问题，引入了<code><a href="../reference/api/org/eclipse/team/ui/mapping/ITeamStateProvider.html">ITeamStateProvider</a></code> ，以便为模型提供者提供对可能影响团队装饰的状态更改的访问权限。此外，模型视图可以使用<code><a href="../reference/api/org/eclipse/team/ui/mapping/SynchronizationStateTester.html">SynchronizationStateTester</a></code>来确定何时需要更新逻辑模型元素的标签。此API依赖于<code>ITeamStateProvider</code>接口来确定资源的团队状态何时发生更改，并且可以作为<code><a href="../reference/api/org/eclipse/jface/viewers/IDecorationContext.html">IDecorationContext</a></code>一部分传递给团队装饰器。</p>
 		
-<h2><a name="ChangeGrouping"></a>Grouping Related Changes</h2>
-
-Some logical models need to ensure that a set of changed files get committed or checked-in to the repository at the same time.
-To facilitate this, repository providers can adapt their 
-<code><a href="../reference/api/org/eclipse/team/core/RepositoryProviderType.html">RepositoryProviderType</a></code>
-to an instance of 
-<code><a href="../reference/api/org/eclipse/team/core/mapping/IChangeGroupingRequestor.html">IChangeGroupingRequestor</a></code>.
-This API allows models to request that a set of files get committed or checked-in as a single unit.
+<h2><a name="ChangeGrouping"></a>分组相关更改</h2>某些逻辑模型需要确保一组已更改的文件同时提交或签入到存储库。为此，存储库提供程序可以将其<code><a href="../reference/api/org/eclipse/team/core/RepositoryProviderType.html">RepositoryProviderType</a></code>调整为<code><a href="../reference/api/org/eclipse/team/core/mapping/IChangeGroupingRequestor.html">IChangeGroupingRequestor</a></code>的实例。此API允许模型请求将一组文件作为单个单元提交或签入。
 		
 </body>
 </html>

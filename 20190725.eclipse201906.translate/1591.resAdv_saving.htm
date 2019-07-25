@@ -1,263 +1,85 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>
-Workspace save participation
-</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>工作区保存参与</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<H2>
-Workspace save participation</H2>
-<P >
-Workspace save processing is triggered when the workbench is shut down by the user and at other times
-periodically by the platform.&nbsp; Plug-ins can participate in the workspace save process so that critical
-plug-in data is saved to disk whenever the rest of the workspace's persistent data is saved. </P>
-<P >
-The workspace save process can also be used to track changes that occur between activations of your plug-in.</P>
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h2>工作区保存参与</h2>
+<p>当工作台由用户关闭时，以及平台定期关闭工作台时，会触发工作区保存处理。插件可以参与工作空间保存过程，以便在保存工作空间的其余持久数据时将关键插件数据保存到磁盘。</p>
+<p>工作区保存过程还可用于跟踪插件激活之间发生的更改。</p>
 
-<H3>
-Implementing a save participant</H3>
-<P >
-To participate in workspace saving, you must add a save participant to the workspace. This is typically done during your plug-in's startup method.&nbsp;
-This is also where you read any state that you might have saved
-when your plug-in was last shut down.</P>
-<P >
-Let's look at a simple plug-in which will demonstrate the save process.</P>
-<pre>
-   package com.example.saveparticipant;
-
-   import org.eclipse.core.runtime.*;
-   import org.eclipse.core.resources.*;
-   import java.io.File;
-   import java.util.*;
-
-   public class MyPlugin extends Plugin {
-      private static MyPlugin plugin;
-
-      public MyPlugin(IPluginDescriptor descriptor) {
-         super(descriptor);
-         plugin = this;
-      }
-
-      public static MyPlugin getDefault() {
-         return plugin;
-      }
-
-      protected void readStateFrom(File target) {
-      }
-
-      public void startup() throws CoreException {
-         super.startup();
-         ISaveParticipant saveParticipant = new MyWorkspaceSaveParticipant();
-         ISavedState lastState =
-            <b>ResourcesPlugin.getWorkspace().addSaveParticipant(this, saveParticipant);</b>
-         if (lastState == null)
-            return;
-         IPath location = lastState.lookup(new Path(&quot;save&quot;));
-         if (location == null)
-            return;
-         // the plugin instance should read any important state from the file.
-         File f = getStateLocation().append(location).toFile();
-         readStateFrom(f);
-      }
-
-      protected void writeImportantState(File target) {
-      }
-   }</pre>
-<P >
-<b><a href="../reference/api/org/eclipse/core/resources/ISaveParticipant.html">
-ISaveParticipant</a></b> defines the protocol for a workspace save participant. Implementors of this
-interface can provide behavior for different stages of the save process.&nbsp;
-Let's look at the stages and how our class <b>WorkspaceSaveParticipant</b>
-implements each of these steps.</P>
+<h3>实施保存参与者</h3>
+<p>要参与工作区保存，必须将保存参与者添加到工作区。这通常在插件的启动方法期间完成。这也是您读取上次关闭插件时可能已保存的状态的位置。</p>
+<p>让我们看一个简单的插件，它将演示保存过程。</p>
+<pre>package com.example.saveparticipant; import org.eclipse.core.runtime。*; import org.eclipse.core.resources。*; import java.io.文件; import java.util。*;公共类MyPlugin扩展了Plugin {private static MyPlugin插件; public MyPlugin（IPluginDescriptor descriptor）{super（descriptor）; plugin = this; public static MyPlugin getDefault（）{return plugin; } void void readStateFrom（File target）{} public void startup（）throws CoreException {super.startup（）; ISaveParticipant saveParticipant = new MyWorkspaceSaveParticipant（）; ISavedState lastState = <b>ResourcesPlugin.getWorkspace（）。addSaveParticipant（this，saveParticipant）;</b> if（lastState == null）返回; IPath location = lastState.lookup（new Path（“save”））; if（location == null）return; //插件实例应该从文件中读取任何重要的状态。文件f = getStateLocation（）。append（location）.toFile（）; readStateFrom（F）; } protected void writeImportantState（File target）{}}</pre>
+<p>
+<b><a href="../reference/api/org/eclipse/core/resources/ISaveParticipant.html">ISaveParticipant</a></b>定义工作空间保存参与者的协议。此接口的实现者可以为保存过程的不同阶段提供行为。让我们看一下阶段以及我们的类<b>WorkspaceSaveParticipant</b>如何实现这些步骤。</p>
 <ul>
   <li>
-<b>
-prepareToSave</b> notifies the participant that the workspace is about to be saved and that it should suspend normal operation until further notice.&nbsp;
-Our save particpant does nothing here.</li>
+<b>prepareToSave</b>通知参与者即将保存工作空间，并且应该暂停正常操作，直到另行通知为止。我们的保存参与者在这里什么也没做。</li>
 </ul>
-<pre>
-      public void prepareToSave(ISaveContext context) throws CoreException {
-      }
-</pre>
+<pre>public void prepareToSave（ISaveContext context）抛出CoreException {}</pre>
 <ul>
   <li>
-<b>
-saving</b> tells the participant to save its important state.</li>
+<b>保存</b>告诉参与者保存其重要状态。</li>
 </ul>
-<pre>
-      public void saving(ISaveContext context) throws CoreException {
-         switch (context.getKind()) {
-            case ISaveContext.FULL_SAVE:
-               MyPlugin myPluginInstance = MyPlugin.getDefault();
-               // save the plug-in state
-               <b>int saveNumber = context.getSaveNumber();
-               String saveFileName = &quot;save-&quot; + Integer.toString(saveNumber);
-               File f = myPluginInstance.getStateLocation().append(saveFileName).toFile();
-               </b>// if we fail to write, an exception is thrown and we do not update the path
-               <b>myPluginInstance.writeImportantState(f);
-               context.map(new Path(&quot;save&quot;), new Path(saveFileName));
-               context.needSaveNumber();</b>
-               break;
-            case ISaveContext.PROJECT_SAVE:
-               // get the project related to this save operation
-               IProject project = context.getProject();
-               // save its information, if necessary
-               break;
-            case ISaveContext.SNAPSHOT:
-               // This operation needs to be really fast because
-               // snapshots can be requested frequently by the
-               // workspace.
-               break;
-         }
-      }
-</pre>
+<pre>public void saving（ISaveContext context）抛出CoreException {switch（context.getKind（））{case ISaveContext。FULL_SAVE：MyPlugin myPluginInstance = MyPlugin.getDefault（）; //保存插件状态<b>int saveNumber = context.getSaveNumber（）; String saveFileName =“save-”+ Integer.toString（saveNumber）; File f = myPluginInstance.getStateLocation（）。append（saveFileName）.toFile（）;</b> //如果我们写不出来，就抛出异常，我们不更新路径<b>myPluginInstance.writeImportantState（f）; context.map（new Path（“save”），new Path（saveFileName））; context.needSaveNumber（）;</b>打破; case ISaveContext。PROJECT_SAVE：//获取与此保存操作相关的项目IProject project = context.getProject（）; //保存信息，必要时休息; case ISaveContext。SNAPSHOT：//此操作需要非常快，因为//工作空间可以经常请求快照。打破; }}</pre>
 <blockquote>
-  <p>The <a href="../reference/api/org/eclipse/core/resources/ISaveContext.html"><b> ISaveContext</b></a> describes information about the save operation.&nbsp;
-There are three kinds of save operations:&nbsp; <b>FULL_SAVE</b>,
-<b>SNAPSHOT</b>, and <b>PROJECT_SAVE</b>.&nbsp;
-Save participants should be careful to perform the processing appropriate for
-the kind of save event they have received.&nbsp; For example, snapshot events
-may occur quite frequently and are intended to allow plug-ins to save their
-critical state.&nbsp; Taking a long time to save state which can be recomputed
-in the event of a crash will slow down the platform.</p>
-<P >
-A save number is used to create data save files that are named using sequential numbers (<b>save-1</b>,
-<b>save-2</b>, etc.)&nbsp; Each save file is mapped to a logical file name (<b>save</b>) that is independent of the save number. Plug-in data is written to the corresponding file and can be retrieved later without knowing the specific save number of the last successful save operation.&nbsp;
-Recall that we saw this technique in our&nbsp; plug-in's startup code:</P>
+  <p><a href="../reference/api/org/eclipse/core/resources/ISaveContext.html"><b>ISaveContext</b></a>描述有关保存操作的信息。有三种保存操作： <b>FULL_SAVE</b> ， <b>SNAPSHOT</b>和<b>PROJECT_SAVE</b> 。保存参与者应该小心执行适合他们收到的保存事件的处理。例如，快照事件可能非常频繁地发生，并且旨在允许插件保存其临界状态。花费很长时间来保存可以在发生崩溃时重新计算的状态会降低平台的速度。</p>
+<p>保存号用于创建使用序列号命名的数据保存文件（ <b>save-1</b> ， <b>save-2</b>等）每个保存文件都映射到一个独立于保存号的逻辑文件名（ <b>保存</b> ）。插件数据被写入相应的文件，以后可以在不知道上次成功保存操作的特定保存号的情况下检索。回想一下，我们在插件的启动代码中看到了这种技术：</p>
 <pre>
-<b>IPath location = lastState.lookup(new Path(&quot;save&quot;));</b>
+<b>IPath location = lastState.lookup（new Path（“save”））;</b>
 </pre>
-<P >
-After we have saved our data and mapped the file name, we call <b>needSaveNumber</b> 
-to indicate that we have actively participated in a workspace save and want to assign a number to the save activity.
-The save numbers can be used to create data files as above.&nbsp;</P>
+<p>在我们保存数据并映射文件名后，我们调用<b>needSaveNumber</b>来指示我们已经积极参与工作区保存并希望为保存活动分配一个数字。保存号可用于创建如上所述的数据文件。</p>
 
 
 </blockquote>
 <ul>
   <li>
-<b>
-doneSaving</b> notifies the participant that the workspace has been saved and the participant can continue normal operation.</li>
+<b>doneSaving</b>通知参与者工作空间已保存，参与者可以继续正常操作。</li>
 </ul>
-<pre>
-      public void doneSaving(ISaveContext context) {
-         MyPlugin myPluginInstance = MyPlugin.getDefault();
-
-         // delete the old saved state since it is not necessary anymore
-         int previousSaveNumber = <b>context.getPreviousSaveNumber()</b>;
-         String oldFileName = &quot;save-&quot; + Integer.toString(previousSaveNumber);
-         File f = myPluginInstance.getStateLocation().append(oldFileName).toFile();
-         f.delete();
-      }
-</pre>
+<pre>public void doneSaving（ISaveContext context）{MyPlugin myPluginInstance = MyPlugin.getDefault（）; //删除旧的已保存状态，因为不再需要int previousSaveNumber = <b>context.getPreviousSaveNumber（）</b> ; String oldFileName =“save-”+ Integer.toString（previousSaveNumber）; File f = myPluginInstance.getStateLocation（）。append（oldFileName）.toFile（）; f.delete（）; }</pre>
 <blockquote>
-  <p>Here, we clean up the save information from the previous save
-  operation.&nbsp; We use <b>getPreviousSaveNumber</b> 
-  to get the save number that was assigned in the previous save operation (not
-  the one we just completed).&nbsp; We use this number to construct the name of
-  the file that we need to delete.&nbsp; Note that we do not use the save
-  state's logical file map since we've already mapped our current save file
-  number.&nbsp;</p>
+  <p>在这里，我们清理以前的保存操作中的保存信息。我们使用<b>getPreviousSaveNumber</b>来获取在前一个保存操作中分配的保存号（不是我们刚刚完成的保存号）。我们使用此数字来构造我们需要删除的文件的名称。请注意，我们不使用保存状态的逻辑文件映射，因为我们已经映射了当前的保存文件编号。</p>
 </blockquote>
 <ul>
   <li>
-<b>
-rollback</b> tells the participant to rollback the important state because the save operation has failed.</li>
+<b>rollback</b>告诉参与者回滚重要状态，因为保存操作失败。</li>
 </ul>
-<pre>
-      public void rollback(ISaveContext context) {
-         MyPlugin myPluginInstance = MyPlugin.getDefault();
-
-         // since the save operation has failed, delete the saved state we have just written
-         int saveNumber = context.getSaveNumber();
-         String saveFileName = &quot;save-&quot; + Integer.toString(saveNumber);
-         File f = myPluginInstance.getStateLocation().append(saveFileName).toFile();
-         f.delete();
-      }
-</pre>
+<pre>public void rollback（ISaveContext context）{MyPlugin myPluginInstance = MyPlugin.getDefault（）; //因为保存操作失败了，删除我们刚刚编写的保存状态int saveNumber = context.getSaveNumber（）; String saveFileName =“save-”+ Integer.toString（saveNumber）; File f = myPluginInstance.getStateLocation（）。append（saveFileName）.toFile（）; f.delete（）; }</pre>
 <blockquote>
-  <p>Here, we delete the state that we just saved.&nbsp; Note that we use the
-  current save number to construct the file name of the file we just saved.&nbsp;
-  We don't have to worry about the fact that we mapped this file name into the <a href="../reference/api/org/eclipse/core/resources/ISaveContext.html"><b> ISaveContext</b></a><b>.
-  </b>The platform will discard the context when a save operation fails.</p>
+  <p>在这里，我们删除刚刚保存的状态。请注意，我们使用当前保存编号来构造我们刚刚保存的文件的文件名。我们不必担心我们将此文件名映射到<a href="../reference/api/org/eclipse/core/resources/ISaveContext.html"><b>ISaveContext中</b></a> <b>。
+  </b>当保存操作失败时，平台将丢弃上下文。</p>
 </blockquote>
 
 
-<p>If your plug-in throws an exception at any time during the save lifecycle, it
-will be removed from the current save operation and will not get any of the
-remaining lifecycle methods.&nbsp; For example, if you fail during your <b>saving</b> 
-method, you will not receive a
-<b>
-rollback</b>  or
-<b>
-doneSaving</b>  message.&nbsp;</p>
+<p>如果您的插件在保存生命周期中的任何时候抛出异常，它将从当前保存操作中删除，并且不会获得任何剩余的生命周期方法。例如，如果在<b>保存</b>方法期间失败，则不会收到<b>回滚</b>或<b>doneSaving</b>消息。</p>
 
 
-<H3>
-Using previously saved state</H3>
-<P >
-When you add a save participant to the workspace, it will return an <b><a href="../reference/api/org/eclipse/core/resources/ISavedState.html"> ISavedState</a></b> 
-object, which describes what your plug-in saved during its last save operation (or
-<b> null</b> if your plug-in has not previously saved any state). This
-object can be used to access information from the previous save file (using the save number and file map) or to process changes that have occurred between activations of a plug-in.</P>
+<h3>使用以前保存的状态</h3>
+<p>将保存参与者添加到工作空间时，它将返回一个<b><a href="../reference/api/org/eclipse/core/resources/ISavedState.html">ISavedState</a></b>对象，该对象描述插件在上次保存操作期间保存的内容（如果插件以前未保存任何状态，则为<b>null</b> ）。此对象可用于访问先前保存文件中的信息（使用保存编号和文件映射）或处理插件激活之间发生的更改。</p>
 
-<H4>
-Accessing the save files</H4>
-<P >
-If a file map was used to save logically named files according to the save number, this same map can be used to retrieve the data from the last known save state.</P>
-<pre>
-   ISaveParticipant saveParticipant = new MyWorkspaceSaveParticipant();
-   ISavedState lastState =
-      ResourcesPlugin.getWorkspace().addSaveParticipant(myPluginInstance, saveParticipant);
-
-   if (lastState != null) {
-      String saveFileName = lastState.lookup(new Path(&quot;save&quot;)).toString();
-      File f = myPluginInstance.getStateLocation().append(saveFileName).toFile();
-      // the plugin instance should read any important state from the file.
-      myPluginInstance.readStateFrom(f);
-   }
-</pre>
+<h4>访问保存文件</h4>
+<p>如果使用文件映射根据保存号保存逻辑命名的文件，则可以使用此相同的映射从上次已知的保存状态检索数据。</p>
+<pre>ISaveParticipant saveParticipant = new MyWorkspaceSaveParticipant（）; ISavedState lastState = ResourcesPlugin.getWorkspace（）。addSaveParticipant（myPluginInstance，saveParticipant）; if（lastState！= null）{String saveFileName = lastState.lookup（new Path（“save”））。toString（）; File f = myPluginInstance.getStateLocation（）。append（saveFileName）.toFile（）; //插件实例应该从文件中读取任何重要的状态。myPluginInstance.readStateFrom（F）; }</pre>
 
 
-<H4>
-Processing resource deltas between activations</H4>
-<P >
-Recall that any number of resource change events could occur in the workspace before your plug-in is ever activated. If you want to know what changes have occurred since your plug-in was
-deactivated, you can use the save mechanism to do so, even if you don't need to save any other data.</P>
-<P >
-The save participant must request that the platform keep a resource delta on its behalf. This is done as part of the save operation.</P>
-<pre>
-   public void saving(ISaveContext context) throws CoreException {
-      // no state to be saved by the plug-in, but request a
-      // resource delta to be used on next activation.
-      context.needDelta();
-   }
-</pre>
-<P >
-During plug-in startup, the previous saved state can be accessed and change events will be created for all changes that have occurred since the last save.</P>
-<pre>
-   ISaveParticipant saveParticipant = new MyWorkspaceSaveParticipant();
-   ISavedState lastState =
-      ResourcesPlugin.getWorkspace().addSaveParticipant(myPluginInstance, saveParticipant);
-   if (lastState != null) {
-      lastState.processResourceChangeEvents(new MyResourceChangeReporter());
-   }
-</pre>
-<P >
-The provided class must implement <a href="../reference/api/org/eclipse/core/resources/IResourceChangeListener.html"><b>IResourceChangeListener</b></a>, as described in
-<a HREF="resAdv_events.htm" CLASS="XRef"> Tracking resource changes</a>.&nbsp; The changes since the last save are reported as part of the <b> POST_AUTO_BUILD</b> resource change event.</P>
-<blockquote><i>
-Note:&nbsp; Marker changes are not reported in the change events stored in an <b> ISavedState</b>. 
-You must assume that any or all markers have changed since your last state was saved.</i></blockquote>
+<h4>处理激活之间的资源增量</h4>
+<p>回想一下，在激活插件之前，工作区中可能会发生任何数量的资源更改事件。如果您想知道自插件停用以来发生了哪些更改，即使您不需要保存任何其他数据，也可以使用保存机制来执行此操作。</p>
+<p>保存参与者必须请求平台代表其保留资源增量。这是作为保存操作的一部分完成的。</p>
+<pre>public void saving（ISaveContext context）抛出CoreException {//没有状态由插件保存，但请求//资源增量在下次激活时使用。context.needDelta（）; }</pre>
+<p>在插件启动期间，可以访问先前保存的状态，并且将为自上次保存以来发生的所有更改创建更改事件。</p>
+<pre>ISaveParticipant saveParticipant = new MyWorkspaceSaveParticipant（）; ISavedState lastState = ResourcesPlugin.getWorkspace（）。addSaveParticipant（myPluginInstance，saveParticipant）; if（lastState！= null）{lastState.processResourceChangeEvents（new MyResourceChangeReporter（））; }</pre>
+<p>提供的类必须实现<a href="../reference/api/org/eclipse/core/resources/IResourceChangeListener.html"><b>IResourceChangeListener</b></a> ，如<a href="resAdv_events.htm" class="XRef">跟踪资源更改中所述</a> 。自上次保存以来的更改将作为<b>POST_AUTO_BUILD</b>资源更改事件的一部分进行报告。</p>
+<blockquote><i>注意：在<b>ISavedState中</b>存储的更改事件中不会报告标记更改。您必须假设自上次状态保存以来任何或所有标记都已更改。</i></blockquote>
 
-</BODY>
-</HTML>
+</body>
+</html>

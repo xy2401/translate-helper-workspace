@@ -1,168 +1,78 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-<meta name="copyright" content="Copyright (c) GK Software AG and others 2015. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="stylesheet" href="../book.css" charset="ISO-8859-1" type="text/css">
-<title>Using external null annotations</title>
+<meta name="copyright" content="Copyright (c) GK Software AG and others 2015. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>使用外部null注释</title>
 </head>
-<body>
-<h1> Using external null annotations </h1>
+<body dir="ltr">
+<h1>使用外部null注释</h1>
 <p>
-<a href="task-using_null_annotations.htm">Null annotations</a>,
-or even better, <a href="task-using_null_type_annotations.htm">null type annotations</a>
-can significantly reduce (ideally: eliminate) the danger of <code>NullPointerException</code>
-thrown at program runtime.
-Unfortunately, the API of many libraries does not yet consistently specify
-where <code>null</code> is allowed and where it isn't.
-This can be a major source of incompleteness in this endeavor.
-In order to fill this gap, starting with Eclipse 4.5 (Mars),
-JDT supports the concept of <em>external annotations</em>,
-which means that null annotations can be specified in separate files &ndash; without modifying the original library.
-If you attach such external null annotations to a given library,
-JDT will then consider these annotations for its static null analysis.<br>
-This help page describes
-</p>
+<a href="task-using_null_annotations.htm">空注释</a> ，甚至更好的<a href="task-using_null_type_annotations.htm">空类型注释</a>可以显着减少（理想情况：消除）在程序运行时抛出<code>NullPointerException</code>的危险。不幸的是，许多库的API还没有一致地指定允许<code>null</code>位置和不允许的位置。这可能是这项努力中不完整的主要原因。为了填补这个空白，从Eclipse 4.5（Mars）开始，JDT支持<em>外部注释</em>的概念，这意味着可以在单独的文件中指定空注释 - 而无需修改原始库。如果将这样的外部空注释附加到给定库，则JDT将考虑这些注释以进行静态空分析。<br>此帮助页面描述</p>
 <ul>
-<li><a href="#structure">the structure of external annotations</a></li>
-<li><a href="#configure">configuring a project to use external annotations</a></li>
-<li><a href="#create">interactively creating external annotations</a></li>
-<li><a href="#inspect">inspecting external annotations</a></li>
-<li><a href="#annotation_kind">differences between declaration annotations and type annotations</a></li>
+<li><a href="#structure">外部注释的结构</a></li>
+<li><a href="#configure">配置项目以使用外部注释</a></li>
+<li><a href="#create">以交互方式创建外部注释</a></li>
+<li><a href="#inspect">检查外部注释</a></li>
+<li><a href="#annotation_kind">声明注释和类型注释之间的差异</a></li>
 </ul>
-<h2 id="structure">Structure of external annotations</h2>
-<p>
-External annotations can be provided as a <em>directory tree</em>, 
-whose leaves are text files with extension <code>.eea</code> ("Eclipse External Annotations").
-In this structure, each directory corresponds to a Java package,
-and each <code>.eea</code> file corresponds to a Java type (class, interface etc.).
+<h2 id="structure">外部注释的结构</h2>
+<p>外部注释可以作为<em>目录树提供</em> ，其叶子是扩展名为<code>.eea</code>文本文件（“Eclipse外部注释”）。在该结构中，每个目录对应于Java包，并且每个<code>.eea</code>文件对应于Java类型（类，接口等）。
 </p>
-<p>
-Optionally, the above structure can be packed in a single zip file with extension <code>.zip</code>
-or <code>.jar</code>.
+<p>可选地，上述结构可以打包在扩展名为<code>.zip</code>或<code>.jar</code>的单个zip文件中。
 </p>
-<p>
-The exact format of <code>.eea</code> text files has been designed with slight bias towards processing by tools.
-Still, these files are amenable to storing, comparing and merging using any version control system.
-The format is based on <em>signatures</em> as defined in 
-<a target="_blank" href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.9.1"><img src="../images/external-link-ltr-icon.png" alt="external link"> JVMS 4.7.9.1</a>.
+<p><code>.eea</code>文本文件的确切格式设计时略微偏向于按工具处理。尽管如此，这些文件仍适合使用任何版本控制系统进行存储，比较和合并。格式基于中定义的<em>签名</em> <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.9.1" target="_blank"><img src="../images/external-link-ltr-icon.png" alt="外部链接"> JVMS 4.7.9.1</a> 。
 <!-- 
 the full definition is given in TODO: write a page for doc.isv: target audience: developers of converts to/from .eea.
  -->
 </p>
-<h2 id="configure">Configuring a project to use external annotations</h2>
-<blockquote id="caveat-configure"><strong>Caveat:</strong>
-	When different projects referring to the same library have different configurations with respect 
-	to external annotations, the UI support described below (command Annotate and Javadoc hovers)
-	can easily get confused: When looking at a given library class, JDT may not know which
-	project the user is currently working on, producing unexpected results.
-	While hopefully this will be improved in a future version, for the time being users are advised
-	to use the same external annotation location for all projects referring to the same library.
-	A shared ("common") base project will typically be a good choice for hosting external annotations.
+<h2 id="configure">配置项目以使用外部注释</h2>
+<blockquote id="caveat-configure"><strong>警告：</strong>当引用相同库的不同项目在外部注释方面有不同的配置时，下面描述的UI支持（命令Annotate和Javadoc盘旋）很容易混淆：当查看给定的库类时，JDT可能不知道哪个项目用户当前正在处理，产生意外结果。虽然希望在将来的版本中这将得到改进，但目前建议用户对引用同一个库的所有项目使用相同的外部注释位置。共享（“通用”）基础项目通常是托管外部注释的不错选择。
 </blockquote>
-<h3>Java Runtime Environments</h3>
-<p>
-External annotations can be directly attached to each JRE configured in the current workspace.
-For this purpose, please use the <a href="./tasks-JREs.htm">Installed JREs</a>
-preference page and click <b>Edit</b> for details of the selected JRE.
-After selecting one or more Jar files contributed by the given JRE installation,
-click <b>External Annotations</b> to open a new dialog,
-where either a directory or a zip file can be selected as the external annotation location for the selected jar(s). 
+<h3>Java运行时环境</h3>
+<p>外部注释可以直接附加到当前工作空间中配置的每个JRE。为此，请使用<a href="./tasks-JREs.htm">Installed JREs</a>首选项页面，然后单击<b>Edit</b>以获取所选JRE的详细信息。选择由给定JRE安装提供的一个或多个Jar文件后，单击“ <b>外部注释”</b>以打开一个新对话框，其中可以选择目录或zip文件作为所选jar的外部注释位置。
 </p>
-<p>Alternatively, you may select the properties of a specific JRE bound in the 
-<a href="../concepts/concept-build-classpath.htm">Java Build Path</a> of a specific project.
-Please note, that attaching external annotations to individual jars of a JRE <em>always</em> affects the workspace preference,
-even if accessed via the project's build path.
-The only way to define a project-specific location for external annotation location for a JRE is via
-the direct child <b>External annotations:</b> of the top-level node called <b>JRE System Library</b>,
-<em>but note, that project specific locations are not recommended, see the <a href="#caveat-configure">"Caveat"</a> above.</em>
+<p>或者，您可以选择特定项目的<a href="../concepts/concept-build-classpath.htm">Java构建路径</a>中绑定的特定JRE的属性。请注意，将外部注释附加到JRE的各个jar <em>始终</em>会影响工作区首选项，即使通过项目的构建路径访问也是如此。为JRE定义外部注释位置的项目特定位置的唯一方法是通过名为<b>JRE System Library</b>的顶级节点的直接子<b>外部注释：</b> <em>但请注意，不推荐项目特定位置，请参阅<a href="#caveat-configure">“警告“</a>上面。</em>
 </p>
-<h3>Other Classpath Containers</h3>
-<p>Depending on the build technology in use, projects may have additional classpath containers like
-<b>Plug-in Dependencies</b> or <b>Maven Dependencies</b>.
-For these containers, the only option currently is
-to specify the external annotation location via each projects build path.
-In this case users are advised to manually ensure that the same location is used
-for all projects of the workspace, <em>see the <a href="#caveat-configure">"Caveat"</a> above.</em>
+<h3>其他类路径容器</h3>
+<p>根据所使用的构建技术，项目可能有其他类路径容器，如<b>插件依赖项</b>或<b>Maven依赖项</b> 。对于这些容器，当前唯一的选择是通过每个项目构建路径指定外部注释位置。在这种情况下，建议用户手动确保工作区的所有项目都使用相同的位置， <em>请参阅上面的<a href="#caveat-configure">“警告”</a> 。</em>
 </p>
-<h3>Other Libraries</h3>
-<p>For any other libraries (jars) explicitly referenced from the Java Build Path of a project,
-external annotations can be attached separately in the <a href="../reference/ref-properties-build-path.htm#libraries">Libraries</a> page of the project's build path.
+<h3>其他图书馆</h3>
+<p>对于从项目的Java Build Path显式引用的任何其他库（jar），可以在项目构建路径的<a href="../reference/ref-properties-build-path.htm#libraries">Libraries</a>页面中单独附加外部注释。
 </p> 
-<h2 id="create">Creating external annotations</h2>
-<p><u>Pre-requisites:</u>
-External annotations require a library with <a href="../reference/ref-properties-source-attachment.htm">source attachment</a>.
-Additionally, annotation based null analysis must be enabled for the current project,
-an external annotation location must be defined for the library and that location must be a directory (not a zip file) within the workspace.
+<h2 id="create">创建外部注释</h2>
+<p><u>先决条件：</u>外部注释需要具有<a href="../reference/ref-properties-source-attachment.htm">源附件</a>的库。此外，必须为当前项目启用基于注释的空分析，必须为库定义外部注释位置，并且该位置必须是工作空间中的目录（不是zip文件）。
 </p>
-<p>
-After navigating to the desired class, you may select the type (method parameter or method return type)
-that should be affected by an annotation,
-and invoke the new command <b>Annotate</b> (available via context menu and by default bound to <b>Ctrl-1</b>).
-Similar to quick assists in a Java source code editor,
-this command will offer proposals applicable at the current location.
-For external annotations, the three options are:
-</p>
+<p>导航到所需的类后，您可以选择应该受注释影响的类型（方法参数或方法返回类型），并调用新命令<b>Annotate</b> （可通过上下文菜单获得，默认情况下绑定到<b>Ctrl-1</b> ）。与Java源代码编辑器中的快速助手类似，此命令将提供适用于当前位置的提议。对于外部注释，三个选项是：</p>
 <ul>
-<li>Annotate as '@NonNull SomeType'</li>
-<li>Annotate as '@Nullable SomeType'</li>
-<li>Remove nullness annotation from type 'SomeType'</li>
+<li>注释为'@NonNull SomeType'</li>
+<li>注释为'@Nullable SomeType'</li>
+<li>从'SomeType'类型中删除nullness注释</li>
 </ul>
-<p>
-For obvious reasons, exactly 2 of these three proposals are offered at any suitable location.
-Behind the scenes this command will create and/or update an <code>.eea</code> file corresponding to the current class.
-The new annotation will then be respected by the compiler:
-Errors and warnings in an open editor will be updated immediately;
-The <b>Problems</b> view will be updated when affected classes are re-compiled.
+<p>出于显而易见的原因，这三个提案中恰好有2个在任何合适的位置提供。在幕后，此命令将创建和/或更新与当前类对应的<code>.eea</code>文件。然后编译器将遵循新注释：打开编辑器中的错误和警告将立即更新;重新编译受影响的类时，将更新<b>Problems</b>视图。
 </p>
-<blockquote><b>Be careful:</b>
-When attaching external annotations to a library, keep in mind that you are defining a new contract,
-that will then be used to check your program against.
-The compiler will, however, not check the library, whether it actually conforms to this contract.
-By carelessly marking, e.g., a return type as <code>@NonNull</code> you let the compiler
-advise you to remove null checks against return values from the given method.
-If the library <em>does</em> return null in any situation, this null will hit you unguarded.
-<br>
-Before adding an annotation, make sure it is backed by facts, like, e.g.:
-<ul>
-<li>explicit mention in Javadoc, e.g., when a <code>@return</code> specification says: "... or null when ...".</li>
-<li>an explicit null check of a method parameter, which does not throw an exception (implying that null is accepted &rarr; <code>@Nullable</code> parameter)</li>
-<li>uncheck dereference of a method parameter (implying that null is not accepted &rarr; <code>@NonNull</code> parameter)
-<li>an explicit <code>null</code> return (implying a <code>@Nullable</code> return type)</li>
-<li>explicitly created return values at each return statement (implying a <code>@NonNull</code> return type).</li>
+<blockquote><b>注意：</b>将外部注释附加到库时，请记住您正在定义一个新合同，然后将用于检查您的程序。但是，编译器不会检查库是否实际符合此合同。通过<code>@NonNull</code>标记（例如，返回类型为<code>@NonNull</code>您可以让编译器建议您对给定方法的返回值删除空检查。如果库在任何情况下<em>确实</em>返回null，则此null将使您无人看守。
+<br>在添加注释之前，请确保它由事实支持，例如：<ul>
+<li>在Javadoc中明确提及，例如，当<code>@return</code>规范说：“......或......时为null”。</li>
+<li>方法参数的显式空检查，它不会抛出异常（暗示接受null→ <code>@Nullable</code>参数）</li>
+<li>取消选中方法参数的取消引用（暗示不接受null→ <code>@NonNull</code>参数）</li><li>显式<code>null</code>返回（暗示<code>@Nullable</code>返回类型）</li>
+<li>在每个return语句中显式创建返回值（暗示<code>@NonNull</code>返回类型）。</li>
 </ul>
 </blockquote>
-<h2 id="inspect">Inspecting external annotations</h2>
-<p>The immediate effect of external annotations can be observed via changes in compiler errors / warnings.
-For full transparency, annotated library signatures can be inspected using the <em>Javadoc hover</em> 
-or <a href="../reference/views/ref-view-javadoc.htm">Javadoc view</a>.<br>
-<em>Due to an implementation limitation, this feature currently only works for
-<a href="./task-using_null_type_annotations.htm">type annotations</a> (Java 8).</em>
+<h2 id="inspect">检查外部注释</h2>
+<p>通过编译器错误/警告的更改可以观察到外部注释的直接影响。为了完全透明，可以使用<em>Javadoc悬停</em>或<a href="../reference/views/ref-view-javadoc.htm">Javadoc视图</a>检查带注释的库签名。<br>
+<em>由于实现限制，此功能目前仅适用于<a href="./task-using_null_type_annotations.htm">类型注释</a> （Java 8）。</em>
 </p>
 
-<h2 id="annotation_kind">Declaration annotations vs type annotations</h2>
-<p>Generally, support for external annotations has been developed with regard to fully supporting
-all locations of <a href="task-using_null_type_annotations.htm">null type annotations</a> (Java 8).
-This means, you may refer to any detail of a type in a method signature and annotate, e.g., a type parameter, a type bound or an array dimension.
-When using declaration annotations, the relevant subset of location shares the same mechanisms for external annotations.
+<h2 id="annotation_kind">声明注释与类型注释</h2>
+<p>通常，关于完全支持<a href="task-using_null_type_annotations.htm">空类型注释的</a>所有位置（Java 8），已经开发了对外部注释的支持。这意味着，您可以参考方法签名和注释中类型的任何细节，例如，类型参数，类型绑定或数组维度。使用声明注释时，相关的位置子集共享相同的外部注释机制。
 </p>
-<p>
-In one situation the design for type annotations shines through even when using declaration annotations:
-annotating an array type is based on the new syntax of type annotations (see also <a href="task-using_null_type_annotations.htm#compatibility_syntax">Compatibility > Syntax</a>).
-For illustration consider the following method in type <code>Collection</code>:
+<p>在一种情况下，即使使用声明注释，类型注释的设计也会闪耀：注释数组类型是基于类型注释的新语法（另请参见<a href="task-using_null_type_annotations.htm#compatibility_syntax">兼容性&gt;语法</a> ）。为了便于说明，请考虑<code>Collection</code>类型中的以下方法：</p>
+<pre>Object [] toArray（）;</pre>
+<p>即使项目使用Java 7或更低版本，也可以通过将光标放在数组括号之前来注释此方法的返回类型。调用<b>Annotate</b>将创建一个外部注释，该注释在内部被解释为方法的注释（但仍然意思是：描述此方法的返回）。
 </p>
-<pre>    Object [] toArray();
-</pre>
-<p>
-Even when a project uses Java 7 or below, the return type of this method is annotated by
-placing the cursor before the array brackets.
-Invoking <b>Annotate</b> will create an external annotation that is internally interpreted
-as an annotation on the method (but still the meaning is: describing the return of this method).
-</p>
-<p>
-Other than this one exception, external annotations closely mimic how annotations directly within a source file would be handled,
-with a reduced set of locations for declaration annotations, and the full set of locations for type annotations.
+<p>除了这一个例外，外部注释非常类似于如何处理源文件中的注释，减少了声明注释的位置集，以及类型注释的完整位置集。
 </p>
 </body>
 </html>

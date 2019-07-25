@@ -1,114 +1,48 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<html lang="zh-Hans" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<meta name="copyright" content=
-"Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta http-equiv="Content-Style-Type" content="text/css" />
-<link rel="STYLESHEET" href="../book.css" charset="ISO-8859-1" type="text/css" />
-<title>Compiling Java code</title>
-<link rel="stylesheet" type="text/css" href="../book.css" />
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>编译Java代码</title>
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
 </head>
-<body>
-<h2>Compiling Java code</h2>
-<p> See the
-Java development user guide for <a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_batch_compiler.htm">using the batch compiler</a> and
-<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-ant_javac_adapter.htm">using the ant javac adapter</a>.</p>
+<body dir="ltr">
+<h2>编译Java代码</h2>
+<p>有关<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_batch_compiler.htm">使用批处理编译器</a>和<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-ant_javac_adapter.htm">使用ant javac适配器的信息，</a>请参阅Java开发用户指南。</p>
 
-<p>The JDT plug-ins include an incremental and batch Java compiler for building Java .class files from source code. There is no direct API provided by the compiler. It is installed as a builder on
-Java projects. Compilation is triggered using standard platform build mechanisms.</p>
+<p>JDT插件包括用于从源代码构建Java .class文件的增量和批量Java编译器。编译器没有提供直接API。它作为Java项目的构建器安装。使用标准平台构建机制触发编译。</p>
 
-<p>The platform build mechanism is described in detail in <a href="../../org.eclipse.platform.doc.isv/guide/resAdv_builders.htm" class="XRef">Incremental project builders</a>.</p>
-<h3>Compiling code</h3>
-<p>You can programmatically compile the Java source files in a project using the build API.</p>
-<pre class="color1">
+<p><a href="../../org.eclipse.platform.doc.isv/guide/resAdv_builders.htm" class="XRef">增量项目构建器</a>中详细描述了平台构建机制。</p>
+<h3>编译代码</h3>
+<p>您可以使用构建API以编程方式编译项目中的Java源文件。</p>
+<pre class="color1">IProject myProject; IProgressMonitor myProgressMonitor; myProject.build（IncrementalProjectBuilder。INCREMENTAL_BUILD，myProgressMonitor）;</pre>
+<p>对于Java项目，这将调用Java增量项目构建器（以及已添加到项目构建规范中的任何其他增量项目构建器）。生成的.class文件将写入指定的输出文件夹。其他资源文件也会复制到输出文件夹。</p>
+<p>在完整批处理构建的情况下，输出文件夹中的所有.class文件都可以“擦除”以确保找不到过时的文件。这是使用JDT Core Builder选件（ <a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#CORE_JAVA_BUILD_CLEAN_OUTPUT_FOLDER">CORE_JAVA_BUILD_CLEAN_OUTPUT_FOLDER</a> ）控制的。此选项的默认设置是清除输出文件夹。除非重置此选项，否则必须确保将没有相应源文件的所有.class文件放在类路径上的单独类文件文件夹中而不是输出文件夹中。</p>
+<p>可以使用其他选项配置增量和批处理构建器，以控制将哪些资源复制到输出文件夹。以下示例显示如何设置资源筛选器，以便以“.ignore”结尾的文件和名为“META-INF”的文件夹不会复制到输出文件夹：</p>
+<pre class="color1">Hashtable options = JavaCore.getOptions（）; options.put（javacore中。CORE_JAVA_BUILD_RESOURCE_COPY_FILTER，“* .ignore，META-INF /”）; JavaCore.setOptions（选项）;</pre>
+<p>如果文件名与提供的模式之一匹配，则会过滤掉它们。如果整个文件夹的名称与以路径分隔符结尾的提供的文件夹名称之一匹配，则会过滤掉它们。</p>
+<p>增量和批处理构建器还可以配置为仅在.classpath文件出错时生成单个错误。默认情况下会设置此选项并消除大量错误。有关与构建器相关的选项及其缺省值的完整列表，请参阅<a href="jdt_api_options.htm#builder">JDT Core Builder选项</a> 。</p>
 
-   IProject myProject;
-   IProgressMonitor myProgressMonitor;
-   myProject.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, myProgressMonitor);
-</pre>
-<p>For a Java project, this invokes the Java incremental project builder (along with any other incremental project builders that have been added to the project's build spec). The generated .class
-files are written to the designated output folder. Additional resource files are also copied to the output folder.&nbsp;</p>
-<p>In the case of a full batch build, all the .class files in the output folder may be 'scrubbed' to ensure that no stale files are found. This is controlled using a JDT Core Builder Option (<a href=
-"../reference/api/org/eclipse/jdt/core/JavaCore.html#CORE_JAVA_BUILD_CLEAN_OUTPUT_FOLDER">CORE_JAVA_BUILD_CLEAN_OUTPUT_FOLDER</a>).&nbsp; The default for this option is to clean output folders.&nbsp;
-
-Unless this option is reset, you must ensure that you place all .class files for which you do not have corresponding source files in a separate class file folder on the classpath instead of the
-output folder.</p>
-<p>The incremental and batch builders can be configured with other options that control which resources are copied to the output folder.&nbsp; The following sample shows how to set up a resource
-filter so that files ending with '.ignore' and folders named 'META-INF', are not copied to the output folder:</p>
-<pre class="color1">
-
-   Hashtable options = JavaCore.getOptions();
-   options.put(JavaCore.CORE_JAVA_BUILD_RESOURCE_COPY_FILTER, "*.ignore,META-INF/");
-   JavaCore.setOptions(options);
-</pre>
-<p>Filenames are filtered out if they match one of the supplied patterns. Entire folders are filtered out if their name matches one of the supplied folder names which end in a path separator.</p>
-<p>The incremental and batch builders can also be configured to only generate a single error when the .classpath file has errors. This option is set by default and eliminates numerous errors.&nbsp;
-See <a href="jdt_api_options.htm#builder">JDT Core Builder Options</a> for a complete list of builder-related options and their defaults.</p>
-
-<p>The compiler can also be configured using <a href="../reference/api/org/eclipse/jdt/core/JavaCore.html"><b>JavaCore</b></a> options.&nbsp; For example, you can define the severity that should be
-used for different kinds of problems that are found during compilation.&nbsp; See <a href="jdt_api_options.htm#compiler">JDT Core Compiler Options</a> for a complete list of compiler-related options
-and their defaults.</p>
-<p>When programmatically configuring options for the builder or compiler, you should specify the scope of the option.&nbsp; For example, setting up a resource filter may apply to a particular project
-only:</p>
+<p>也可以使用<a href="../reference/api/org/eclipse/jdt/core/JavaCore.html"><b>JavaCore</b></a>选项配置编译器。例如，您可以定义应该用于编译期间发现的各种问题的严重性。有关与编译器相关的选项及其缺省值的完整列表，请参阅<a href="jdt_api_options.htm#compiler">JDT核心编译器选项</a> 。</p>
+<p>以编程方式配置构建器或编译器的选项时，应指定选项的范围。例如，设置资源过滤器可能仅适用于特定项目：</p>
 <pre>
 
-<span class="c2">
-   Hashtable options = myProject.getOptions(false);  // get only the options set up in this project
-   options.put(JavaCore.CORE_JAVA_BUILD_RESOURCE_COPY_FILTER, "*.ignore,META-INF/");
-   myProject.setOptions(options);
-</span>
+<span class="c2">Hashtable options = myProject.getOptions（false）; //只获取此项目中设置的选项options.put（JavaCore。CORE_JAVA_BUILD_RESOURCE_COPY_FILTER，“* .ignore，META-INF /”）; myProject.setOptions（选项）;</span>
 </pre>
-<h3>Problem determination</h3>
+<h3>问题确定</h3>
 
-<p>JDT Core defines a specialized marker (marker type "<b>org.eclipse.jdt.core.problem</b> ") to denote compilation problems. To programmatically discover problems detected by the compiler, the
-standard platform marker protocol should be used. See <a href="../../org.eclipse.platform.doc.isv/guide/resAdv_markers.htm" class="XRef">Resource Markers</a> for an overview of using markers.</p>
-<p>The following snippet finds all Java problem markers in a compilation unit.</p>
+<p>JDT Core定义了一个专门的标记（标记类型“ <b>org.eclipse.jdt.core.problem</b> ”）来表示编译问题。要以编程方式发现编译器检测到的问题，应使用标准平台标记协议。有关使用标记的概述，请参阅<a href="../../org.eclipse.platform.doc.isv/guide/resAdv_markers.htm" class="XRef">资源标记</a> 。</p>
+<p>以下代码段在编译单元中查找所有Java问题标记。</p>
 <pre>
-<span class="c2">
-   public IMarker[] findJavaProblemMarkers(ICompilationUnit cu) 
-      throws CoreException {
-      IResource javaSourceFile = cu.getUnderlyingResource();
-      IMarker[] markers = 
-         javaSourceFile.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER,
-            true, IResource.DEPTH_INFINITE);
-   }
-</span>
+<span class="c2">public IMarker [] findJavaProblemMarkers（ICompilationUnit cu）抛出CoreException {IResource javaSourceFile = cu.getUnderlyingResource（）; IMarker [] markers = javaSourceFile.findMarkers（IJavaModelMarker。JAVA_MODEL_PROBLEM_MARKER，true，IResource。DEPTH_INFINITE）; }</span>
 </pre>
-<p>Java problem markers are maintained by the Java project builder and are removed automatically as problems are resolved and the Java source is recompiled.</p>
+<p>Java问题标记由Java项目构建器维护，并在问题得到解决并重新编译Java源代码时自动删除。</p>
 
-<p>The problem id value is set to one of the constants defined in <b><a href="../reference/api/org/eclipse/jdt/core/compiler/IProblem.html">IProblem</a></b> . The problem's id is reliable, but the
-message is localized and therefore can be changed according to the default locale. The constants defined in <b><a href="../reference/api/org/eclipse/jdt/core/compiler/IProblem.html">IProblem</a></b>
-are self-descriptive.</p>
-<p>An implementation of <b><a href="../reference/api/org/eclipse/jdt/core/IProblemRequestor.html">IProblemRequestor</a></b> should be defined to collect the problems discovered during a Java
-operation. Working copies can be reconciled with problem detection if a <b><a href="../reference/api/org/eclipse/jdt/core/IProblemRequestor.html">IProblemRequestor</a></b> has been supplied for the
-working copy creation. To achieve this, you can use the <b><a href=
-"../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int,%20boolean,%20org.eclipse.jdt.core.WorkingCopyOwner,%20org.eclipse.core.runtime.IProgressMonitor)">reconcile</a></b> method.
-Here is an example:</p>
+<p>问题id值设置为<b><a href="../reference/api/org/eclipse/jdt/core/compiler/IProblem.html">IProblem中</a></b>定义的常量之一。问题的ID是可靠的，但消息是本地化的，因此可以根据默认语言环境进行更改。<b><a href="../reference/api/org/eclipse/jdt/core/compiler/IProblem.html">IProblem</a></b>中定义的<b><a href="../reference/api/org/eclipse/jdt/core/compiler/IProblem.html">常量</a></b>是自描述的。</p>
+<p>应定义<b><a href="../reference/api/org/eclipse/jdt/core/IProblemRequestor.html">IProblemRequestor</a></b>的实现以收集Java操作期间发现的问题。如果已为工作副本创建提供了<b><a href="../reference/api/org/eclipse/jdt/core/IProblemRequestor.html">IProblemRequestor，</a></b>则可以将工作副本与问题检测进行协调。为此，您可以使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">reconcile</a></b>方法。这是一个例子：</p>
 
-<pre class="color1">
-
-  ICompilationUnit unit = ..; // get some compilation unit
-   
-  // create requestor for accumulating discovered problems
-  IProblemRequestor problemRequestor = new IProblemRequestor() {
-    public void acceptProblem(IProblem problem) {
-      System.out.println(problem.getID() + ": " + problem.getMessage());
-    }
-    public void beginReporting() {}
-    public void endReporting() {}
-    public boolean isActive() { return true; } // will detect problems if active
-  };
-    
-  // use working copy to hold source with error
-  ICompilationUnit workingCopy = unit.getWorkingCopy(new WorkingCopyOwner() {}, problemRequestor, null);
-  ((IOpenable)workingCopy).getBuffer().setContents("public class X extends Zork {}");
-
-  // trigger reconciliation   
-  workingCopy.reconcile(NO_AST, true, null, null);
-</pre>
-<p>You can add an action on the reported problems in the acceptProblem(IProblem) method. In this example, the reported problem will be that <b>Zork cannot be resolved or is not a valid superclass</b>
-and its id is <b>IProblem.SuperclassNotFound</b>.</p>
+<pre class="color1">ICompilationUnit unit = ..; //获取一些编译单元//创建请求者以累积发现的问题IProblemRequestor problemRequestor = new IProblemRequestor（）{public void acceptProblem（IProblem problem）{System.out.println（problem.getID（）+“：”+ problem.getMessage（ ））; public void beginReporting（）{} public void endReporting（）{} public boolean isActive（）{return true; } //将检测问题是否有效}; //使用工作副本来保存带有错误的源ICompilationUnit workingCopy = unit.getWorkingCopy（new WorkingCopyOwner（）{}，problemRequestor，null）; （（IOpenable）workingCopy）.getBuffer（）。setContents（“public class X extends Zork {}”）; //触发对帐workingCopy.reconcile（NO_AST，true，null，null）;</pre>
+<p>您可以在acceptProblem（IProblem）方法中对报告的问题添加操作。在此示例中，报告的问题是<b>Zork无法解析或者不是有效的超类，</b>并且其id是<b>IProblem。SuperclassNotFound</b> 。</p>
 </body>
 </html>

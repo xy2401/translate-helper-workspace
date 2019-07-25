@@ -1,88 +1,47 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-<meta name="copyright" content="Copyright (c) GK Software AG and others 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="stylesheet" href="../book.css" charset="ISO-8859-1" type="text/css">
-<title>Avoiding resource leaks</title>
+<meta name="copyright" content="Copyright (c) GK Software AG and others 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>避免资源泄漏</title>
 </head>
-<body>
-<h1> Avoiding resource leaks </h1>
-<p>
-Classes implementing the interface <code>java.io.Closeable</code> (since JDK 1.5) and
-<code>java.lang.AutoCloseable</code> (since JDK 1.7) are considered to represent external
-resources, which should be closed using method <code>close()</code>, when they are 
-no longer needed.
+<body dir="ltr">
+<h1>避免资源泄漏</h1>
+<p>实现接口<code>java.io.类。Closeable</code> （自JDK 1.5起）和<code>java.lang.AutoCloseable</code> （因为JDK 1.7）被认为代表外部资源，当不再需要它们时，应该使用<code>close()</code>方法<code>close()</code>它们。
 </p>
-<p>
-The Eclipse Java compiler is able to analyze whether code using such types adheres
-to this policy. E.g., the following snippet represents an obvious resource leak:
-</p>
-<pre>    int len(File f) throws IOException {
-        InputStream stream = new FileInputStream(f);
-        return stream.available();
-    }
-</pre>
-<p>
-The compiler will flag this with <b>"Resource leak: 'stream' is never closed".</b>
-<h2>Basic flow analysis for resource leaks</h2>
-<p>
-Flow analysis detects the following situations:
-</p>
+<p>Eclipse Java编译器能够分析使用此类型的代码是否符合此策略。例如，以下代码段表示明显的资源泄漏：</p>
+<pre>int len（File f）抛出IOException {InputStream stream = new FileInputStream（f）; return stream.available（）; }</pre>
+<p>编译器将标记为<b>“资源泄漏：'流'永远不会关闭”。</b>
+</p><h2>资源泄漏的基本流量分析</h2>
+<p>流量分析检测以下情况：</p>
 <ul>
-<li>A resource is definitely not closed</li>
-<li>A resource is not closed on all control flows (flagged as "may not be closed")</li>
-<li>A resource is not closed at a method exit point (return statement or when an exception is raised) (definitely or on some control flow)</li>
-<li>In a Java 7 program a resource is closed but the code could still be improved by using a try-with-resources statement.</li>
+<li>资源肯定没有关闭</li>
+<li>资源未在所有控制流上关闭（标记为“可能未关闭”）</li>
+<li>资源未在方法出口点（return语句或引发异常时）关闭（肯定或在某些控制流上）</li>
+<li>在Java 7程序中，资源已关闭，但仍可通过使用try-with-resources语句来改进代码。</li>
 </ul>
-<p>
-Additionally, flow analysis tries to follow resource values through variable assignments.
-However, if different resources may be assigned to the same variable (on different control flows or in sequence),
-the analysis can become less accurate.
+<p>此外，流分析尝试通过变量赋值来跟踪资源值。但是，如果可以将不同的资源分配给同一变量（在不同的控制流上或按顺序），则分析可能变得不太准确。
 </p>
-<p>Not all the analysis is enabled by default. Please consult the <a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#resource-leak">compiler preferences</a> 
-regarding the individual configuration options.
+<p>并非所有分析都默认启用。有关各个配置选项，请参阅<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#resource-leak">编译器首</a>选项。
 </p>
-<p><strong>Hints:</strong> Code will generally be easier to analyze (and easier to understand by human readers)
-if resource-type variables are not reused for different purposes.
-Ideally, in Java 7 programs all resources should be managed with a try-with-resources statement.
+<p><strong>提示：</strong>如果不为不同目的重用资源类型变量，则代码通常更容易分析（并且更容易被人类读者理解）。理想情况下，在Java 7程序中，应使用try-with-resources语句管理所有资源。
 </p>
-<h2>Ownership / responsibility</h2>
-<p>
-The above diagnostics basically assume that a method that creates an instance of a resource type
-is also responsible for closing this resource.
-However, some resources will be shared among several methods. Here the analysis makes the following assumptions:
-</p>
+<h2>所有权/责任</h2>
+<p>上述诊断基本上假设创建资源类型实例的方法也负责关闭此资源。但是，一些资源将在几种方法之间共享。这里的分析做出以下假设：</p>
 <ul>
-<li>If a method returns a resource to its caller, it is not responsible for closing; no problem is reported.</li>
-<li>If a resource is stored in a field, no single method is considered as responsible for closing; no problem is reported.</li>
-<li>If a method obtains a resource via a method call rather than by a <code>new</code> expression, it may or may not
- be responsible; any problems are only flagged as potential resource leaks.</li>
-<li>If a resource is passed as an argument in a method call or constructor call, the current method
-may or may not be responsible; any problems are only flagged as potential resource leaks.</li>
+<li>如果方法将资源返回给其调用者，则它不负责关闭;没有问题报道。</li>
+<li>如果资源存储在字段中，则没有一种方法被视为负责关闭;没有问题报道。</li>
+<li>如果方法通过方法调用而不是通过<code>new</code>表达式获取资源，则它可能负责也可能不负责;任何问题都只被标记为潜在的资源泄漏。</li>
+<li>如果资源在方法调用或构造函数调用中作为参数传递，则当前方法可能负责也可能不负责;任何问题都只被标记为潜在的资源泄漏。</li>
 </ul>
-<h2>Resource wrappers and resource-free closeables</h2>
-<p>
-The JDK defines a few classes which implement <code>Closeable</code> but do not directly represent
-a resource at the level of the operating system.
+<h2>资源包装和无资源的可关闭</h2>
+<p>JDK定义了一些实现<code>Closeable</code>类，但不直接表示操作系统级别的资源。
 </p>
-<p><code>java.io.StringReader</code> is an example of a closeable that doesn't require calling <code>close()</code>
-because <b>no operating system resources</b> are held that would require clean-up.
-The analysis uses an explicit white list to detect classes from <code>java.io</code> that fall in this category.
-No resource leak warnings are issued regarding these classes.
+<p><code>java.io.StringReader</code>是一个StringReader</code>的示例，它不需要调用<code>close()</code>因为<b>没有</b>需要清理的<b>操作系统资源</b> 。该分析使用显式白名单来检测属于此类别的<code>java.io</code>中的类。没有针对这些类发出资源泄漏警告。
 </p>
-<p>Instances of classes like <code>java.io.BufferedInputStream</code> are <b>wrappers</b> around another resource
-(where wrappers can be applied at multiple levels).
-Also these objects do not directly represent an operating system resource.
-If the wrapped resource is closed, the wrapper doesn't need closing.
-Conversely, if a wrapper is closed this will include closing of the wrapped resource.
-The analysis has a second white list for detecting wrapper resources, and will recognize whether
-the underlying actual resource will be closed directly or indirectly via the wrapper.
-Either one suffices to silence warnings regarding resource leaks.
-The white list contains classes from <code>java.io</code>, <code>java.util.zip</code>, <code>java.security</code>, <code>java.beans</code>
-and <code>java.sound.sampled</code>.
+<p>像<code>java.io.这样的类的实例。BufferedInputStream</code>是围绕另一个资源<b>包装</b> （其中包装器可以在多个级别被施加）。这些对象也不直接表示操作系统资源。如果包装的资源已关闭，则包装器不需要关闭。相反，如果封装器关闭，这将包括关闭包装的资源。该分析具有用于检测包装器资源的第二个白名单，并将识别是否将通过包装器直接或间接关闭基础实际资源。任何一个都足以沉默关于资源泄漏的警告。白名单包含来自<code>java.io</code> ， <code>java.util.zip</code> ， <code>java.security</code> ， <code>java.beans</code>和<code>java.sound.sampled</code> 。
 </p>
-<p><strong>Hint:</strong> It is generally preferable/safest to close the outermost wrapper, not a wrapped resource.
-</body>
+<p><strong>提示：</strong>关闭最外面的包装器而不是包装资源通常是最好/最安全的。
+</p></body>
 </html>

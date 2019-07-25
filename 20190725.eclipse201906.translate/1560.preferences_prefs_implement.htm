@@ -1,166 +1,46 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2013. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2013. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>
-Implementing a preference page
-</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>实现首选项页面</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<h3>Implementing a preference page</h3>
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h3>实现首选项页面</h3>
 
-<h4>
-Defining the page</h4>
+<h4>定义页面</h4>
+<p>JFace插件提供了用于实现向导，首选项页面和对话框的框架。这些对话框的实现遵循一个共同的模式。通过实现<b>createContents</b>方法来定义页面或对话框的内容，该方法创建表示页面内容的SWT控件。此方法还应为任何感兴趣的事件添加侦听器。该页面负责创建和返回将合成页面中所有控件的组合。以下代码段显示了亮点：</p>
+<pre>protected Control createContents（复合父）{...// composite_textField &lt;&lt; parent Composite_textField = createComposite（parent，2）;标签label_textField = createLabel（composite_textField，MessageUtil.getString（“Text_Field”））; textField = createTextField（composite_textField）; pushButton_textField = createPushButton（composite_textField，MessageUtil.getString（“Change”））; // composite_tab &lt;&lt; parent Composite_tab = createComposite（parent，2）;标签label1 = createLabel（composite_tab，MessageUtil.getString（“Radio_Button_Options”））; // tabForward（composite_tab）; //单选按钮复合&lt;&lt; tab复合复合composite_radioButton = createComposite（composite_tab，1）; radioButton1 = createRadioButton（composite_radioButton，MessageUtil.getString（“Radio_button_1”））; radioButton2 = createRadioButton（composite_radioButton，MessageUtil.getString（“Radio_button_2”））; radioButton3 = createRadioButton（composite_radioButton，MessageUtil.getString（“Radio_button_3”））; // composite_tab2 &lt;&lt; parent Composite_tab2 = createComposite（parent，2）;标签label2 = createLabel（composite_tab2，MessageUtil.getString（“Check_Box_Options”））; // $ NON-NLS-1 $ // tabForward（composite_tab2）; // composite_checkBox &lt;&lt; composite_tab2 Composite composite_checkBox = createComposite（composite_tab2,1）; checkBox1 = createCheckBox（composite_checkBox，MessageUtil.getString（“Check_box_1”））; checkBox2 = createCheckBox（composite_checkBox，MessageUtil.getString（“Check_box_2”））; checkBox3 = createCheckBox（composite_checkBox，MessageUtil.getString（“Check_box_3”））; initializeValues（）;返回new Composite（parent，SWT.NULL）; }</pre>
+<p>此方法中的大多数代码都与创建和布局控件有关，因此我们不会在此处进行剖析。以下是相应页面的外观：</p>
 <p>
-The JFace plug-in provides a framework for implementing wizards, preference pages, 
-and dialogs.  The implementation for these dialogs follows a common pattern.
-The contents of a page or dialog is defined by implementing a <b>createContents</b> 
-method that creates the SWT controls representing the page content.  This method
-should also add listeners for any events of interest. The page is responsible for 
-creating and returning the composite that will parent all of the controls in the page.
-The following snippet shows the highlights:</p>
-<pre>
-protected Control createContents(Composite parent)
-{
-	...
-	//composite_textField &lt;&lt; parent
-	Composite composite_textField = createComposite(parent, 2);
-	Label label_textField = createLabel(composite_textField, MessageUtil.getString(&quot;Text_Field&quot;));	 
-	textField = createTextField(composite_textField);
-	pushButton_textField = createPushButton(composite_textField, MessageUtil.getString(&quot;Change&quot;)); 
-
-	//composite_tab &lt;&lt; parent
-	Composite composite_tab = createComposite(parent, 2);
-	Label label1 = createLabel(composite_tab, MessageUtil.getString(&quot;Radio_Button_Options&quot;)); 
-
-	//
-	tabForward(composite_tab);
-	//radio button composite &lt;&lt; tab composite
-	Composite composite_radioButton = createComposite(composite_tab, 1);
-	radioButton1 = createRadioButton(composite_radioButton, MessageUtil.getString(&quot;Radio_button_1&quot;)); 
-	radioButton2 = createRadioButton(composite_radioButton, MessageUtil.getString(&quot;Radio_button_2&quot;)); 
-	radioButton3 = createRadioButton(composite_radioButton, MessageUtil.getString(&quot;Radio_button_3&quot;)); 
+<img src="images/readmepreferences.png" alt="自述文件工具首选项页面" border="0"></p>
+<p>首选项页面的另一个主要职责是对<b>performOk</b>消息做出反应。通常，此方法更新并存储用户首选项，并在必要时更新任何其他插件对象以反映首选项的更改。<b>performDefaults</b>方法用于在用户按下<b>恢复默认值</b>时将首选项恢复为其默认状态。</p>
+<p>如果在用户选择“ <b>应用”</b>时进行了其他处理，则可以覆盖<b>performApply</b> 。默认实现是调用<b>performOk</b> 。</p>
+<p>首选项页面应覆盖<b>doGetPreferenceStore（）</b>方法，以返回用于存储其值的首选项存储。</p>
 
 
-	//composite_tab2 &lt;&lt; parent
-	Composite composite_tab2 = createComposite(parent, 2);
-	Label label2 = createLabel(composite_tab2, MessageUtil.getString(&quot;Check_Box_Options&quot;)); //$NON-NLS-1$
+<h4>插件首选项存储</h4>
+<p>首选项存储是用于在插件类中访问和存储首选项值的便利机制。它们提供对使用运行时首选项服务实际存储的首选项的插件级访问。<a href="../reference/api/org/eclipse/ui/plugin/AbstractUIPlugin.html"><b>AbstractUIPlugin</b></a>定义了插件广泛的首选项存储，该存储在插件的生命周期内维护。您的插件可以向此首选项存储添加条目，并在用户更改首选项页面中的设置时更新值。由于首选项存储使用平台首选项服务，因此它们将负责在适当的范围和位置保存首选项值，并使用适当的机制初始化首选项存储。</p>
+<p>在<b>ReadmePreferencePage</b>下面的代码获得用于<b>ReadmePlugin</b>首选项存储。</p>
+<pre>protected IPreferenceStore doGetPreferenceStore（）{return ReadmePlugin.getDefault（）。getPreferenceStore（）; }</pre>
+<blockquote><i>注意：如果插件的任何位置都没有保存首选项，则插件将获得一个空的首选项存储。</i></blockquote>
+<p>首选项存储在<b>ReadmePreferenceInitializer中</b>使用默认值初始化。使用<b>org.eclipse.core.runtime.preferences</b>扩展点将首选项初始化程序提供给首选项服务。这些值在首次显示首选项页面时或用户在首选项页面中按<b>“恢复默认值”</b>时使用。</p>
+<pre>public void initializeDefaultPreferences（）{//这些设置将在首次显示自述首选项页面时显示。store.setDefault（IReadmeConstants。PRE_CHECK1，true）; store.setDefault（IReadmeConstants。PRE_CHECK2，true）; store.setDefault（IReadmeConstants。PRE_CHECK3，false）; store.setDefault（IReadmeConstants。PRE_RADIO_CHOICE，2）; store.setDefault（IReadmeConstants。PRE_TEXT，MessageUtil.getString（“Default_text”））; // $ NON-NLS-1 $}</pre>
 
-	//
-	tabForward(composite_tab2);
-	//composite_checkBox &lt;&lt; composite_tab2
-	Composite composite_checkBox = createComposite(composite_tab2, 1);
-	checkBox1 = createCheckBox(composite_checkBox, MessageUtil.getString(&quot;Check_box_1&quot;)); 
-	checkBox2 = createCheckBox(composite_checkBox, MessageUtil.getString(&quot;Check_box_2&quot;)); 
-	checkBox3 = createCheckBox(composite_checkBox, MessageUtil.getString(&quot;Check_box_3&quot;)); 
+<h4>检索和保存首选项</h4>
+<p>将插件的首选项存储与首选项页面关联后，可以实现检索和保存首选项的逻辑。</p>
+<p>首选项页面负责使用首选项存储中的首选项设置初始化其控件的值。此过程类似于从对话框设置初始化对话框控件值。<b>ReadmePreferencePage</b>在一个方法<b>initializeValues中初始化</b>其所有控件，该方法是从其<b>createContents</b>方法调用的。</p>
+<pre>private void initializeValues（）{IPreferenceStore store = getPreferenceStore（）; checkBox1.setSelection（store.getBoolean（IReadmeConstants。PRE_CHECK1））; checkBox2.setSelection（store.getBoolean（IReadmeConstants。PRE_CHECK2））; checkBox3.setSelection（store.getBoolean（IReadmeConstants。PRE_CHECK3））; ...}</pre>
+<p>按下“ <b>确定”</b>或“ <b>应用”</b>时，首选项页面上控件的当前值应存储回首选项存储。所述<b>ReadmePreferencePage</b>实现在一个单独的方法<b>，storeValues</b>此逻辑。</p>
+<pre>private void storeValues（）{IPreferenceStore store = getPreferenceStore（）; store.setValue（IReadmeConstants。PRE_CHECK1，checkBox1.getSelection（））; store.setValue（IReadmeConstants。PRE_CHECK2，checkBox2.getSelection（））; store.setValue（IReadmeConstants。PRE_CHECK3，checkBox3.getSelection（））; ...}</pre>
+<p>当用户按下<b>恢复默认值时</b> ，首选项页面上控件的当前值应重置为首选项存储中的默认值。使用首选项初始化程序<b>ReadmePreferenceInitializer</b>定义默认值。<b>ReadmePreferencePage</b>在一个单独的方法<b>initializeDefaults中</b>实现了这个逻辑。</p>
+<pre>private void initializeDefaults（）{IPreferenceStore store = getPreferenceStore（）; checkBox1.setSelection（store.getDefaultBoolean（IReadmeConstants。PRE_CHECK1））; checkBox2.setSelection（store.getDefaultBoolean（IReadmeConstants。PRE_CHECK2））; checkBox3.setSelection（store.getDefaultBoolean（IReadmeConstants。PRE_CHECK3））; ...}</pre>
 
-	initializeValues();
-
-	return new Composite(parent, SWT.NULL);
-}</pre>
-<p>
-Most of the code in this method is concerned with creating and laying out the controls, so we won't dissect it here.
-Here is what the corresponding page looks like:</p>
-<p>
-<img src="images/readmepreferences.png" alt="Readme tool preferences page" border="0"></p>
-<p>
-The other primary responsibility of a preference page is to react to the <b> performOk</b> message. Typically, this 
-method updates and stores the user preferences and, if necessary, updates any other plug-in objects to reflect the 
-change in preferences.  The <b>performDefaults</b> method is used to restore preferences to their
-default state when the user presses <b>Restore Defaults</b>.</p>
-<p>
-You may override <b>performApply</b> if you have additional processing when the
-user selects <b>Apply</b>. The default implementation is to call <b>performOk</b>.</p>
-<p>
-Preference pages should override the <b> doGetPreferenceStore()</b> method to return a preference store for 
-storing their values. </p>
-
-
-<h4>
-Plug-in preference store</h4>
-<p>Preference stores are a convenience mechanism for accessing and storing preference values in a
-plug-in class.  They provide plug-in level access to preferences that are actually stored using 
-the runtime preferences service.  <a href="../reference/api/org/eclipse/ui/plugin/AbstractUIPlugin.html"><b>AbstractUIPlugin</b></a> 
-defines a plug-in wide preference store that is maintained during the lifetime of the plug-in.  Your plug-in
-can add entries to this preference store and update the values as the user changes the settings in your preferences page.   
-Since preference stores use the platform preferences service, they will take care of saving preference values at the 
-appropriate scope and location, and initializing the preference store using the appropriate mechanisms.</p>
-<p>
-The following code in the <b> ReadmePreferencePage</b> obtains the preference store for the
-<b>ReadmePlugin</b>.</p>
-<pre>
-   protected IPreferenceStore doGetPreferenceStore() {
-      return ReadmePlugin.getDefault().getPreferenceStore();
-   }
-</pre>
-<blockquote><i>
-Note: If there are no preferences saved anywhere for a plug-in, the plug-in will get an empty preference
-store.</i></blockquote>
-<p>
-The preference store is initialized with default values in <b>ReadmePreferenceInitializer</b>.  The preference initializer
-is contributed to the preferences service using the <b>org.eclipse.core.runtime.preferences</b> extension point. These values 
-are used the first time the preference page is shown or when the user presses <b>Restore Defaults</b> in the preferences 
-page.</p>
-<pre>
-public void initializeDefaultPreferences() {
-	// These settings will show up when the Readme preference page
-	// is shown for the first time.
-	store.setDefault(IReadmeConstants.PRE_CHECK1, true);
-	store.setDefault(IReadmeConstants.PRE_CHECK2, true);
-	store.setDefault(IReadmeConstants.PRE_CHECK3, false);
-	store.setDefault(IReadmeConstants.PRE_RADIO_CHOICE, 2);
-	store.setDefault(IReadmeConstants.PRE_TEXT, MessageUtil.getString(&quot;Default_text&quot;)); //$NON-NLS-1$
-}</pre>
-
-<h4>
-Retrieving and saving preferences</h4>
-<p>
-Once you've associated your plug-in's preference store with your preference page, you can implement the logic for retrieving and saving the preferences.</p>
-<p>
-Preference pages are responsible for initializing the values of their controls using the preferences settings from the preference store. This
-process is similar to initializing dialog control values from dialog settings. The
-<b> ReadmePreferencePage</b> initializes all of its controls in a single method,
-<b>initializeValues</b>, which is called from its <b> createContents</b> method.</p>
-<pre>private void initializeValues() {
-	IPreferenceStore store = getPreferenceStore();
-	checkBox1.setSelection(store.getBoolean(IReadmeConstants.PRE_CHECK1));
-	checkBox2.setSelection(store.getBoolean(IReadmeConstants.PRE_CHECK2));
-	checkBox3.setSelection(store.getBoolean(IReadmeConstants.PRE_CHECK3));
-	...
-}</pre>
-<p>
-When <b>OK</b> or <b>Apply</b> is pressed, the current values of the controls on the preference page should be stored back into the
-preference store. The
-<b> ReadmePreferencePage</b> implements this logic in a separate method,
-<b>storeValues</b>.</p>
-<pre>
-private void storeValues() {
-	IPreferenceStore store = getPreferenceStore();
-	store.setValue(IReadmeConstants.PRE_CHECK1, checkBox1.getSelection());
-	store.setValue(IReadmeConstants.PRE_CHECK2, checkBox2.getSelection());
-	store.setValue(IReadmeConstants.PRE_CHECK3, checkBox3.getSelection());
-	...
-}</pre>
-<p>
-When the user presses <b>Restore Defaults</b>, the current values of the controls on the preference page should be
-reset to the default values in the preference store. The default values are defined using a preference initializer,
-<b>ReadmePreferenceInitializer</b>. The <b>ReadmePreferencePage</b> implements this logic in a separate method,
-<b>initializeDefaults</b>.</p>
-<pre>
-   private void initializeDefaults() {
-      IPreferenceStore store = getPreferenceStore();
-      checkBox1.setSelection(store.getDefaultBoolean(IReadmeConstants.PRE_CHECK1));
-      checkBox2.setSelection(store.getDefaultBoolean(IReadmeConstants.PRE_CHECK2));
-      checkBox3.setSelection(store.getDefaultBoolean(IReadmeConstants.PRE_CHECK3));
-      ...
-   }</pre>
-
-</BODY>
-</HTML>
+</body>
+</html>

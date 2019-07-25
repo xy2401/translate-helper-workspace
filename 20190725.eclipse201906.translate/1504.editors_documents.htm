@@ -1,150 +1,45 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2017. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2017. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>
-Documents and partitions
-</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>文件和分区</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<H2>Documents and partitions</H2>
-<p>The platform text framework defines a document model for text and provides 
-  a viewer that displays text using this model.&nbsp;We will start by looking 
-  at the Java editor example and how it uses this model.&nbsp; We will not focus 
-  on the basic mechanics of registering an editor extension, since we've already 
-  seen this in the section discussing <a href="workbench_basicext_editors.htm"><b>org.eclipse.ui.editors</b></a>.&nbsp; 
-  Instead, we'll look at the specifics of how the editor class is implemented 
-  in the example.</p>
-<h3>Document providers and documents</h3>
-<p>In the workbench, an editor is typically opened when the user selects a domain 
-  element (such as a file or an element stored inside an archive file) and opens 
-  it.&nbsp; When the editor is created, it is associated with an editor input 
-  (<a href="../reference/api/org/eclipse/ui/IEditorInput.html"><b>IEditorInput</b></a>), 
-  which describes the object being edited.</p>
-<p>The Java editor example opens when the user opens a file with the &quot;*.jav&quot; 
-  extension.&nbsp; In this case, the input to the editor is an <a href="../reference/api/org/eclipse/ui/IFileEditorInput.html"><b>IFileEditorInput</b></a>.&nbsp; 
-  The platform text framework assumes little about the editor input itself.&nbsp; 
-  It works with a presentation model, called an <a href="../reference/api/org/eclipse/jface/text/IDocument.html"><b>IDocument</b></a>, 
-  for the input, so that it can effectively display and manipulate text.</p>
-<p>This means that there must be a way to map from an expected domain model (the 
-  editor input) to the presentation model.&nbsp; This mapping is defined in an 
-  <a href="../reference/api/org/eclipse/ui/texteditor/IDocumentProvider.html"><b>IDocumentProvider</b></a>.&nbsp; 
-  Given an editor input, the document provider returns an appropriate <a href="../reference/api/org/eclipse/jface/text/IDocument.html"><b>IDocument</b></a>.</p>
-<p>The Java editor example inherits the <b>TextFileDocumentProvider</b> defined by 
-  the plug-in <b>org.eclipse.ui.editors</b>. The extension
-  <b><a href="../reference/extension-points/org_eclipse_ui_editors_documentProviders.html">org.eclipse.ui.editors.documentProviders</a></b> 
-  is used to define mappings between editor input types (or file extensions)
-  and document providers. The editors plug-in defines its document provider as follows:</p>
-<pre>
-   &lt;extension
-         point="org.eclipse.ui.editors.documentProviders"&gt;
-      &lt;provider
-            class="org.eclipse.ui.editors.text.TextFileDocumentProvider"
-            inputTypes="org.eclipse.ui.IStorageEditorInput"
-            id="org.eclipse.ui.editors.text.StorageDocumentProvider"&gt;
-      &lt;/provider&gt;
-   &lt;/extension&gt;
-</pre>
-<p>This extension point allows plug-ins to register document providers and associate them
-  with either a file extension or an editor input class.  Since the Java editor example does
-  not define its own document provider extension, it inherits the generic document provider
-  specified for all input types that are <a href="../reference/api/org/eclipse/ui/IStorageEditorInput.html"><b>IStorageEditorInput</b></a>.
-  When the user opens a file for editing, the platform manages the details of creating the
-  proper document provider instance.  If a specific document provider is registered for the file extension, that one
-  will be used.  If there is no specific document provider for the file extension, then the editor input type
-  will be used to find the appropriate provider.</p>
-<p>By using the generic platform document provider, the Java editor example can take advantage of all of the
-features of the document provider, such as file buffering and other optimizations.</p>
-<h4>Document setup</h4>
-<p>Since the Java editor uses the platform text document provider, how can it supply any specialized behavior
-for handling Java files?</p>
-<p>
-The extension <b><a href="../reference/extension-points/org_eclipse_core_filebuffers_documentSetup.html" id="documentSetup">org.eclipse.core.filebuffers.documentSetup</a></b> 
-is used to define mappings between file extensions and an <a href="../reference/api/org/eclipse/core/filebuffers/IDocumentSetupParticipant.html"><b>IDocumentSetupParticipant</b></a>.
-The setup participant will set up the document with any special features once it has been provided to the editor.</p>
-<pre>&lt;extension
-	id="ExampleJavaDocumentSetupParticipant"
-	name="%documentSetupParticipantName"
-	point="org.eclipse.core.filebuffers.documentSetup"&gt;
-	&lt;participant
-		extensions="jav"
-		<b>class="org.eclipse.ui.examples.javaeditor.JavaDocumentSetupParticipant"</b>&gt;
-	&lt;/participant&gt;
-&lt;/extension&gt;
-</pre>
-<p>This extension definition is what gives the example a chance to setup the document for Java specific
-tasks.  So what does <b>JavaDocumentSetupParticipant</b> do?  We'll look at a simplified version of the
-<b>setup</b> method.</p>
-<pre> 	public void setup(IDocument document) {
-		...
-		IDocumentPartitioner partitioner= new FastPartitioner(JavaEditorExamplePlugin.getDefault().getJavaPartitionScanner(), JavaPartitionScanner.JAVA_PARTITION_TYPES);
-		partitioner.connect(document);
-		...
-	}
-</pre>
-<p>The setup code configures an object called a <b>partitioner</b>.</p>
-<h4 id="Partitions">Partitions</h4>
-<p>The partitioner (<a href="../reference/api/org/eclipse/jface/text/IDocumentPartitioner.html"><b>IDocumentPartitioner</b></a>)
-is responsible for dividing the document into non-overlapping 
-  regions called partitions.&nbsp; Partitions (represented by <a href="../reference/api/org/eclipse/jface/text/ITypedRegion.html"><b>ITypedRegion</b></a>) 
-  are useful for treating different sections of the document differently with 
-  respect to features like syntax highlighting or formatting.</p>
-<p> In the case of the Java editor
-example, the document is divided into partitions that represent the javadoc
-comments, multi line comments, and everything else.&nbsp; Each region is assigned a
-content type and its position in the document.&nbsp; Positions are updated as the user edits text.</p>
-<h4>Rule based document partitioning</h4>
-<p>It is up to each editor to determine the appropriate implementation for a
-document partitioner.&nbsp; Support is provided in <b><a href="../reference/api/org/eclipse/jface/text/rules/package-summary.html">org.eclipse.jface.text.rules</a></b>
- for rule-based document scanning.&nbsp; Using a rule-based scanner allows an editor to use
-the <a href="../reference/api/org/eclipse/jface/text/rules/FastPartitioner.html"><b>FastPartitioner</b></a>
-provided by the framework.</p>
-<pre>IDocumentPartitioner partitioner= new FastPartitioner(JavaEditorExamplePlugin.getDefault().getJavaPartitionScanner(), JavaPartitionScanner.JAVA_PARTITION_TYPES);
-</pre>
-<p><a href="../reference/api/org/eclipse/jface/text/rules/RuleBasedPartitionScanner.html"><b>RuleBasedPartitionScanner</b></a>
-is the superclass for rule based scanners.&nbsp; Subclasses are responsible
-for enumerating and implementing the rules that should be used to distinguish
-tokens such as line delimiters, white space, and generic
-    patterns when scanning a document.&nbsp; The example's <b>JavaPartitionScanner</b>
-defines rules for distinguishing single line comments, character constants, javadoc, multi
-line comments, and&nbsp;words.&nbsp; This is done in the scanner's constructor:</p>
-<pre>public JavaPartitionScanner() {
-	super();
-	IToken javaDoc= new Token(JAVA_DOC);
-	IToken comment= new Token(JAVA_MULTILINE_COMMENT);
-
-	List rules= new ArrayList();
-	// Add rule for single line comments.
-	rules.add(new EndOfLineRule(&quot;//&quot;, Token.UNDEFINED)); 
-
-	// Add rule for strings and character constants.
-	rules.add(new SingleLineRule(&quot;\&quot;&quot;, &quot;\&quot;&quot;, Token.UNDEFINED, '\\')); 
-	rules.add(new SingleLineRule(&quot;'&quot;, &quot;'&quot;, Token.UNDEFINED, '\\')); 
-
-	// Add special case word rule.
-	rules.add(new WordPredicateRule(comment));
-
-	// Add rules for multi-line comments and javadoc.
-	rules.add(new MultiLineRule(&quot;/**&quot;, &quot;*/&quot;, javaDoc, (char) 0, true)); 
-	rules.add(new MultiLineRule(&quot;/*&quot;, &quot;*/&quot;, comment, (char) 0, true)); 
-
-	IPredicateRule[] result= new IPredicateRule[rules.size()];
-	rules.toArray(result);
-	setPredicateRules(result);
-}</pre>
-<p>See the classes in <b><a href="../reference/api/org/eclipse/jface/text/rules/package-summary.html">org.eclipse.jface.text.rules</a></b>
- for more details about defining rules and the types of rules availables.&nbsp;
-We'll look at the scanners again when we look at <a href="editors_highlighting.htm">syntax
-coloring</a>.</p>
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h2>文件和分区</h2>
+<p>平台文本框架定义文本的文档模型，并提供使用此模型显示文本的查看器。我们将从查看Java编辑器示例以及它如何使用此模型开始。我们不会关注注册编辑器扩展的基本机制，因为我们已经在讨论<a href="workbench_basicext_editors.htm"><b>org.eclipse.ui.editors</b></a>的部分中看到了这一点。相反，我们将在示例中查看编辑器类的实现细节。</p>
+<h3>文件提供者和文件</h3>
+<p>在工作台中，通常在用户选择域元素（例如存储在归档文件中的文件或元素）并打开它时打开编辑器。创建编辑器时，它与编辑器输入（ <a href="../reference/api/org/eclipse/ui/IEditorInput.html"><b>IEditorInput</b></a> ）相关联，该输入描述了正在编辑的对象。</p>
+<p>当用户打开具有“* .jav”扩展名的文件时，将打开Java编辑器示例。在这种情况下，编辑器的输入是<a href="../reference/api/org/eclipse/ui/IFileEditorInput.html"><b>IFileEditorInput</b></a> 。平台文本框架假设编辑器输入本身很少。它与输入的表示模型（称为<a href="../reference/api/org/eclipse/jface/text/IDocument.html"><b>IDocument</b></a> ）一起使用，以便它可以有效地显示和操作文本。</p>
+<p>这意味着必须有一种方法可以从预期的域模型（编辑器输入）映射到表示模型。此映射在<a href="../reference/api/org/eclipse/ui/texteditor/IDocumentProvider.html"><b>IDocumentProvider中</b></a>定义。给定编辑器输入，文档提供者返回适当的<a href="../reference/api/org/eclipse/jface/text/IDocument.html"><b>IDocument</b></a> 。</p>
+<p>Java编辑器示例继承了插件<b>org.eclipse.ui.editors</b>定义的<b>TextFileDocumentProvider</b> 。扩展<b><a href="../reference/extension-points/org_eclipse_ui_editors_documentProviders.html">org.eclipse.ui.editors.documentProviders</a></b>用于定义编辑器输入类型（或文件扩展名）和文档提供程序之间的映射。编辑器插件定义其文档提供程序，如下所示：</p>
+<pre>&lt;extension point =“org.eclipse.ui.editors.documentProviders”&gt; &lt;provider class =“org.eclipse.ui.editors.text。TextFileDocumentProvider“inputTypes =”org.eclipse.ui。IStorageEditorInput“id =”org.eclipse.ui.editors.text。StorageDocumentProvider“&gt; &lt;/ provider&gt; &lt;/ extension&gt;</pre>
+<p>此扩展点允许插件注册文档提供程序并将它们与文件扩展名或编辑器输入类相关联。由于Java编辑器示例未定义自己的文档提供程序扩展，因此它继承了为<a href="../reference/api/org/eclipse/ui/IStorageEditorInput.html"><b>IStorageEditorInput的</b></a>所有输入类型指定的通用文档提供程序。当用户打开文件进行编辑时，平台会管理创建正确文档提供程序实例的详细信息。如果为文件扩展名注册了特定文档提供程序，则将使用该文件扩展名。如果文件扩展名没有特定的文档提供程序，则编辑器输入类型将用于查找适当的提供程序。</p>
+<p>通过使用通用平台文档提供程序，Java编辑器示例可以利用文档提供程序的所有功能，例如文件缓冲和其他优化。</p>
+<h4>文件设置</h4>
+<p>由于Java编辑器使用平台文本文档提供程序，它如何提供处理Java文件的任何专门行为？</p>
+<p>扩展<b><a href="../reference/extension-points/org_eclipse_core_filebuffers_documentSetup.html" id="documentSetup">org.eclipse.core.filebuffers.documentSetup</a></b>用于定义文件扩展名和<a href="../reference/api/org/eclipse/core/filebuffers/IDocumentSetupParticipant.html"><b>IDocumentSetupParticipant</b></a>之间的映射。一旦将文档提供给编辑器，安装参与者将使用任何特殊功能设置文档。</p>
+<pre>&lt;extension id =“ExampleJavaDocumentSetupParticipant”name =“％documentSetupParticipantName”point =“org.eclipse.core.filebuffers.documentSetup”&gt; &lt;participant extensions =“jav” <b>class =“org.eclipse.ui.examples.javaeditor。JavaDocumentSetupParticipant“</b> &gt; &lt;/ participant&gt; &lt;/ extension&gt;</pre>
+<p>此扩展定义使示例有机会为Java特定任务设置文档。那么<b>JavaDocumentSetupParticipant</b>做了什么？我们将看一下<b>设置</b>方法的简化版本。</p>
+<pre>public void setup（IDocument document）{...IDocumentPartitioner partitioner = new FastPartitioner（JavaEditorExamplePlugin.getDefault（）。getJavaPartitionScanner（），JavaPartitionScanner。JAVA_PARTITION_TYPES）; partitioner.connect（文件）; ...}</pre>
+<p>设置代码配置称为<b>分区</b>程序的对象。</p>
+<h4 id="Partitions">分区</h4>
+<p>分区程序（ <a href="../reference/api/org/eclipse/jface/text/IDocumentPartitioner.html"><b>IDocumentPartitioner</b></a> ）负责将文档划分为称为分区的非重叠区域。分区（由<a href="../reference/api/org/eclipse/jface/text/ITypedRegion.html"><b>ITypedRegion</b></a>表示）对于处理文档的不同部分对于语法突出显示或格式化等功能有所不同。</p>
+<p>对于Java编辑器示例，文档分为表示javadoc注释，多行注释和其他所有内容的分区。为每个区域分配内容类型及其在文档中的位置。位置会在用户编辑文本时更新。</p>
+<h4>基于规则的文档分区</h4>
+<p>由每个编辑器决定文档分区程序的适当实现。在<b><a href="../reference/api/org/eclipse/jface/text/rules/package-summary.html">org.eclipse.jface.text.rules中</a></b>提供了对基于规则的文档扫描的支持。使用基于规则的扫描程序允许编辑器使用框架提供的<a href="../reference/api/org/eclipse/jface/text/rules/FastPartitioner.html"><b>FastPartitioner</b></a> 。</p>
+<pre>IDocumentPartitioner partitioner = new FastPartitioner（JavaEditorExamplePlugin.getDefault（）。getJavaPartitionScanner（），JavaPartitionScanner。JAVA_PARTITION_TYPES）;</pre>
+<p><a href="../reference/api/org/eclipse/jface/text/rules/RuleBasedPartitionScanner.html"><b>RuleBasedPartitionScanner</b></a>是基于规则的扫描程序的超类。子类负责枚举和实现在扫描文档时应用于区分标记（如行分隔符，空格和通用模式）的规则。示例的<b>JavaPartitionScanner</b>定义了区分单行注释，字符常量，javadoc，多行注释和单词的规则。这是在扫描程序的构造函数中完成的：</p>
+<pre>public JavaPartitionScanner（）{super（）; IToken javaDoc = new Token（JAVA_DOC）; IToken comment = new Token（JAVA_MULTILINE_COMMENT）; List rules = new ArrayList（）; //为单行注释添加规则。rules.add（new EndOfLineRule（“//”，Token。未定义））; //为字符串和字符常量添加规则。rules.add（new SingleLineRule（“\”“，”\“”，Token。未定义，'\\'））; rules.add（new SingleLineRule（“'”，“'”，Token。未定义，'\\'））; //添加特殊用例词规则。rules.add（new WordPredicateRule（comment））; //添加多行注释和javadoc的规则。rules.add（new MultiLineRule（“/ **”，“* /”，javaDoc，（char）0，true））; rules.add（new MultiLineRule（“/ *”，“* /”，comment，（char）0，true））; IPredicateRule [] result = new IPredicateRule [rules.size（）]; rules.toArray（结果）; setPredicateRules（结果）; }</pre>
+<p>有关定义规则和可用规则类型的更多详细信息，请参阅<b><a href="../reference/api/org/eclipse/jface/text/rules/package-summary.html">org.eclipse.jface.text.rules中</a></b>的类。当我们查看<a href="editors_highlighting.htm">语法着色</a>时，我们将再次查看扫描仪。</p>
 
 
 
-</BODY>
-</HTML>
+</body>
+</html>

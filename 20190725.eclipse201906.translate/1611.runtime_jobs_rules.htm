@@ -1,228 +1,45 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>Scheduling rules</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>调度规则</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<H3>
-Scheduling rules</H3>
-<p>
-Job <i>scheduling rules</i> can be used to control when your jobs run in relation to
-other jobs. In particular, scheduling rules allow you to prevent multiple jobs
-from running concurrently in situations where concurrency can lead to inconsistent
-results. They also allow you to guarantee the execution order of a series of jobs.
-The power of scheduling rules is best illustrated by an example. Let's start by 
-defining two jobs that are used to turn a light switch on and off concurrently:</p>
-<pre>   public class LightSwitch {
-      private boolean isOn = false;
-      public boolean isOn() {
-         return isOn;
-      }
-      public void on() {
-         new LightOn().schedule();
-      }
-      public void off() {
-         new LightOff().schedule();
-      }
-      class LightOn extends Job {
-         public LightOn() {
-            super("Turning on the light");
-         }
-         public IStatus run(IProgressMonitor monitor) {
-            System.out.println("Turning the light on");
-            isOn = true;
-            return Status.OK_STATUS;
-         }
-      }
-      class LightOff extends Job {
-         public LightOff() {
-            super("Turning off the light");
-         }
-         public IStatus run(IProgressMonitor monitor) {
-            System.out.println("Turning the light off");
-            isOn = false;
-            return Status.OK_STATUS;
-         }
-      }
-   }
-</pre>
-<p>Now we create a simple program that creates a light switch and turns it
-on and off again:</p>
-<pre>   LightSwitch light = new LightSwitch();
-   light.on();
-   light.off();
-   System.out.println("The light is on? " + switch.isOn());
-</pre>
-<p>If we run this little program enough times, we will eventually obtain the following output:</p>
-<pre>   Turning the light off
-   Turning the light on
-   The light is on? true
-</pre>
-<p>How can that be?  We told the light to turn on and then off, so its final state
-should be off!  The problem is that there was nothing preventing the
-<tt>LightOff</tt> job from running at the same time as the <tt>LightOn</tt>
-job.  So, even though the &quot;on&quot; job was scheduled first, their
-concurrent execution means that there is no way to predict the exact
-execution order of the two concurrent jobs. If the <tt>LightOff</tt> job ends
-up running before the <tt>LightOn</tt> job, we get this invalid result.
-What we need is a way to prevent the two jobs from running concurrently, and 
-that's where scheduling rules come in.</p>
-<p>
-We can fix this example by creating a simple scheduling rule that acts as a 
-<i>mutex</i> (also known as a <i>binary semaphore</i>):</p>
-<pre>   class Mutex implements ISchedulingRule {
-      public boolean isConflicting(ISchedulingRule rule) {
-         return rule == this;
-      }
-      public boolean contains(ISchedulingRule rule) {
-         return rule == this;
-      }
-   }
-</pre>
-<p>This rule is then added to the two light switch jobs from our previous example:</p>
-<pre>   public class LightSwitch {
-      <b>final MutextRule rule = new MutexRule();</b>
-      ...
-      class LightOn extends Job {
-         public LightOn() {
-            super("Turning on the light");
-            <b>setRule(rule);</b>
-         }
-         ...
-      }
-      class LightOff extends Job {
-         public LightOff() {
-            super("Turning off the light");
-            <b>setRule(rule);</b>
-         }
-         ...
-      }
-   }
-</pre>
-<p>
-Now, when the two light switch jobs are scheduled, the job infrastructure will
-call the <tt>isConflicting</tt> method to compare the scheduling rules of the
-two jobs. It will notice that the two jobs have conflicting scheduling rules, and 
-will make sure that they run in the correct order. It will also make sure they never
-run at the same time. Now, if you run the example program a million times,
-you will always get the same result:</p>
-<pre>   Turning the light on
-   Turning the light off
-   The light is on? false
-</pre>
-<p>
-Rules can also be used independently from jobs as a general locking mechanism.
-The following example acquires a rule within a try/finally block, preventing other
-threads and jobs from running with that rule for the duration between 
-invocations of <tt>beginRule</tt> and <tt>endRule</tt>.</p>
-<pre>   IJobManager manager = Job.getJobManager();
-   try {
-      manager.beginRule(rule, monitor);
-      ... do some work ...
-   } finally {
-      manager.endRule(rule);
-   }
-</pre>
-<p>You should exercise extreme caution when acquiring and releasing scheduling
-rules using such a coding pattern. If you fail to end a rule for which you
-have called <tt>beginRule</tt>, you will have locked that rule forever.</p>
-<H3>Making your own rules</H3>
-<p>
-Although the job API defines the contract of scheduling rules, it does not actually
-provide any scheduling rule implementations. Essentially, the generic infrastructure
-has no way of knowing what sets of jobs are ok to run concurrently. By default,
-jobs have no scheduling rules, and a scheduled job is executed as fast as a 
-thread can be created to run it.</p> 
-<p>
-When a job does have a scheduling rule,
-the <tt>isConflicting</tt> method is used to determine if the rule conflicts with
-the rules of any jobs that are currently running. Thus, your implementation
-of <tt>isConflicting</tt> can define exactly when it is safe to execute your job.
-In our light switch example, the <tt>isConflicting</tt> implementation simply uses
-an identity comparison with the provided rule. If another job has the identical rule,
-they will not be run concurrently.  When writing your own scheduling rules, be
-sure to read and follow the API contract for <tt>isConflicting</tt> carefully.</p>
-<p>
-If your job has several unrelated constraints, you can compose multiple
-scheduling rules together using a 
-<a href="../reference/api/org/eclipse/core/runtime/jobs/MultiRule.html">MultiRule</a>.
-For example, if your job needs to turn on a light switch, and also write information to
-a network socket, it can have a rule for the light switch and a rule for write access to the socket,
-combined into a single rule using the factory method <tt>MultiRule.combine</tt>.</p>
-<H3>Rule hierarchies</H3>
-<p>
-We have discussed the <tt>isConflicting</tt> method on 
-<a href="../reference/api/org/eclipse/core/runtime/jobs/ISchedulingRule.html">ISchedulingRule</a>,
-but thus far have not mentioned the <tt>contains</tt> method. This method is
-used for a fairly specialized application of scheduling rules that many clients will not require.
-Scheduling rules can be logically composed into hierarchies for controlling access to
-naturally hierarchical resources. The simplest example to illustrate this concept is
-a tree-based file system. If an application wants to acquire an exclusive lock
-on a directory, it typically implies that it also wants exclusive access to the files
-and sub-directories within that directory. The <tt>contains</tt> method is
-used to specify the hierarchical relationship among locks. If you do not need
-to create hierarchies of locks, you can implement the <tt>contains</tt> method
-to simply call <tt>isConflicting</tt>.</p>
-<p>
-Here is an example of a hierarchical lock for controlling write access to <tt>java.io.File</tt> handles.
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h3>调度规则</h3>
+<p>作业<i>调度规则</i>可用于控制作业相对于其他作业的运行时间。特别是，调度规则允许您在并发可能导致结果不一致的情况下防止多个作业同时运行。它们还允许您保证一系列作业的执行顺序。通过示例可以最好地说明调度规则的强大功能。让我们首先定义两个用于同时打开和关闭灯开关的作业：</p>
+<pre>public class LightSwitch {private boolean isOn = false; public boolean isOn（）{return isOn; public void on（）{new LightOn（）。schedule（）; } public void off（）{new LightOff（）。schedule（）;类LightOn扩展Job {public LightOn（）{super（“打开灯”）; public IStatus run（IProgressMonitor monitor）{System.out.println（“打开灯”）; isOn = true;返回状态。OK_STATUS;类LightOff扩展Job {public LightOff（）{super（“关灯”）; public IStatus run（IProgressMonitor monitor）{System.out.println（“关灯”）; isOn = false;返回状态。OK_STATUS; }}}</pre>
+<p>现在我们创建一个简单的程序，创建一个灯开关并再次打开和关闭它：</p>
+<pre>LightSwitch light = new LightSwitch（）;点亮（）; light.off（）; System.out.println（“灯亮了吗？“+ switch.isOn（））;</pre>
+<p>如果我们运行这个小程序足够多次，我们最终将获得以下输出：</p>
+<pre>关闭指示灯打开指示灯指示灯亮？真正</pre>
+<p>怎么可能？我们告诉灯打开然后关闭，所以它的最终状态应该关闭！问题是，有没有办法来防止<tt>起燃</tt>的工作从在同一时间作为<tt>LightOn</tt>工作运行。因此，即使首先安排了“on”作业，它们的并发执行意味着无法预测两个并发作业的确切执行顺序。如果<tt>LightOn</tt>作业在<tt>LightOn</tt>作业之前运行， <tt>则会</tt>得到此无效结果。我们需要的是一种防止两个作业同时运行的方法，这就是调度规则的用武之地。</p>
+<p>我们可以通过创建一个充当<i>互斥锁</i> （也称为<i>二进制信号量</i> ）的简单调度规则来修复此示例：</p>
+<pre>class Mutex实现ISchedulingRule {public boolean isConflicting（ISchedulingRule rule）{return rule == this; public boolean contains（ISchedulingRule rule）{return rule == this; }}</pre>
+<p>然后将此规则添加到我们上一个示例中的两个灯光开关作业中：</p>
+<pre>公共类LightSwitch { <b>final MutextRule rule = new MutexRule（）;</b> ...class LightOn扩展Job {public LightOn（）{super（“打开灯”）; <b>setRule（规则）;</b> } ...}类LightOff扩展Job {public LightOff（）{super（“关灯”）; <b>setRule（规则）;</b> } ...}}</pre>
+<p>现在，当安排两个灯光切换作业时，作业基础结构将调用<tt>isConflicting</tt>方法来比较两个作业的调度规则。它会注意到这两个作业具有冲突的调度规则，并将确保它们以正确的顺序运行。它还将确保它们永远不会同时运行。现在，如果您运行示例程序一百万次，您将始终得到相同的结果：</p>
+<pre>打开灯关灯关灯指示灯亮？假</pre>
+<p>规则也可以独立于作业使用，作为一般锁定机制。以下示例获取try / finally块中的规则，防止其他线程和作业在<tt>beginRule</tt>和<tt>endRule</tt>调用之间的持续时间内与该规则一起运行。</p>
+<pre>IJobManager manager = Job.getJobManager（）; try {manager.beginRule（rule，monitor）; ... 做一些工作 ...} finally {manager.endRule（rule）; }</pre>
+<p>使用这种编码模式获取和释放调度规则时应格外小心。如果您未能结束已调用<tt>beginRule</tt>的规则，则您将永久锁定该规则。</p>
+<h3>制定自己的规则</h3>
+<p>虽然作业API定义了调度规则的契约，但它实际上并不提供任何调度规则实现。从本质上讲，通用基础架构无法知道可以同时运行哪些作业集。默认情况下，作业没有调度规则，并且可以创建计划作业的速度与创建运行它的线程一样快。</p> 
+<p>当作业确实具有调度规则时， <tt>isConflicting</tt>方法用于确定规则是否与当前正在运行的任何作业的规则冲突。因此， <tt>isConflicting</tt>的实现可以准确定义何时可以安全地执行作业。在我们的灯开关示例中， <tt>isConflicting</tt>实现仅使用与提供的规则进行身份比较。如果另一个作业具有相同的规则，则它们不会同时运行。编写自己的调度规则时，请务必仔细阅读并遵循<tt>isConflicting</tt>的API协议。</p>
+<p>如果您的作业有多个不相关的约束，则可以使用<a href="../reference/api/org/eclipse/core/runtime/jobs/MultiRule.html">MultiRule</a>一起组合多个调度规则。例如，如果您的工作需要打开一个灯开关，并将信息写入网络套接字，它可以有一个灯开关规则和一个写入访问套接字的规则，使用工厂组合成一个规则方法<tt>MultiRule.combine</tt> 。</p>
+<h3>规则层次结构</h3>
+<p>我们已经讨论了<tt>isConflicting</tt>方法<a href="../reference/api/org/eclipse/core/runtime/jobs/ISchedulingRule.html">ISchedulingRule</a> ，但迄今为止还没有提到的<tt>contains</tt>方法。此方法用于许多客户端不需要的调度规则的相当专业的应用程序。可以将调度规则逻辑地组合成层次结构，以控制对自然分层资源的访问。说明这个概念的最简单的例子是基于树的文件系统。如果应用程序想要获取目录上的独占锁，则通常意味着它还希望独占访问该目录中的文件和子目录。<tt>contains</tt>方法用于指定锁之间的层次关系。如果您不需要创建锁的层次结构，则可以实现<tt>contains</tt>方法来简单地调用<tt>isConflicting</tt> 。</p>
+<p>以下是用于控制对<tt>java.io的写访问的分层锁的示例。文件</tt>句柄。
 </p>
-<pre>   public class FileLock implements ISchedulingRule {
-      private String path;
-      public FileLock(java.io.File file) {
-         this.path = file.getAbsolutePath();
-      }
-      public boolean <b>contains</b>(ISchedulingRule rule) {
-         if (this == rule)
-            return true;
-         if (rule instanceof FileLock)
-            return ((FileLock)rule).path.startsWith(path);
-         if (rule instanceof MultiRule) {
-            MultiRule multi = (MultiRule) rule;
-            ISchedulingRule[] children = multi.getChildren();
-            for (int i = 0; i &lt; children.length; i++)
-               if (!contains(children[i]))
-                  return false;
-            return true;
-         }
-         return false;
-      }
-      public boolean <b>isConflicting</b>(ISchedulingRule rule) {
-         if (!(rule instanceof FileLock))
-            return false;
-         String otherPath = ((FileLock)rule).path;
-         return path.startsWith(otherPath) || otherPath.startsWith(path);
-      }
-   }
-</pre>
-<p>The <tt>contains</tt> method comes into play if a thread tries to acquire
-a second rule when it already owns a rule. To avoid the possibility of deadlock,
-any given thread can only own <em>one</em> scheduling rule at any given time.
-If a thread calls <tt>beginRule</tt> when it already owns a rule, either through 
-a previous call to <tt>beginRule</tt> or by executing a job with a scheduling rule, 
-the <tt>contains</tt> method is consulted to see if the two rules are equivalent.
-If the <tt>contains</tt> method for the rule that is already owned returns <tt>true</tt>,
-the <tt>beginRule</tt> invocation will succeed. If the <tt>contains</tt> method returns
-<tt>false</tt> an error will occur.</p>
-<p>
-To put this in more concrete terms, say a thread owns our example <tt>FileLock</tt>
-rule on the directory at &quot;c:\temp&quot;. While it owns this rule, it is only allowed
-to modify files within that directory subtree. If it tries to modify files in other directories that
-are not under &quot;c:\temp&quot;, it should fail. Thus a scheduling rule is a 
-concrete specification for what a job or thread is allowed or not allowed to do. 
-Violating that specification will result in a runtime exception. In
-concurrency literature, this technique is known as <i>two-phase locking</i>. In a
-two-phase locking scheme, a process much specify in advance all locks it will need for a particular
-task, and is then not allowed to acquire further locks during the operation. Two-phase locking eliminates
-the hold-and-wait condition that is a prerequisite for circular wait deadlock. Therefore, it is impossible
-for a system using only scheduling rules as a locking primitive to enter a deadlock.
+<pre>公共类FileLock实现ISchedulingRule {private String path; public FileLock（java.io。文件文件）{this.path = file.getAbsolutePath（）; public boolean <b>contains</b> （ISchedulingRule rule）{if（this == rule）return true; if（rule instanceof FileLock）return（（FileLock）rule）.path.startsWith（path）; if（规则实例MultiRule）{MultiRule multi =（MultiRule）规则; ISchedulingRule [] children = multi.getChildren（）; for（int i = 0; i &lt;children.length; i ++）if（！）contains（children [i]））返回false;返回true; } return false; public boolean <b>isConflicting</b> （ISchedulingRule rule）{if（！（规则instanceof FileLock））返回false; String otherPath =（（FileLock）rule）.path; return path.startsWith（otherPath）|| otherPath.startsWith（路径）; }}</pre>
+<p>如果线程在已经拥有规则时尝试获取第二个规则，则<tt>contains</tt>方法起作用。为了避免死锁的可能性，任何给定的线程在任何给定时间只能拥有<em>一个</em>调度规则。如果一个线程在已经拥有规则时调用<tt>beginRule</tt> ，或者通过先前调用<tt>beginRule</tt>或者通过执行具有调度规则的作业，则查询<tt>contains</tt>方法以查看这两个规则是否相同。如果已拥有的规则的<tt>contains</tt>方法返回<tt>true</tt> ，则<tt>beginRule</tt>调用将成功。如果<tt>contains</tt>方法返回<tt>false</tt> ，则会发生错误。</p>
+<p><tt>换句话说</tt> ，一个线程拥有我们在“c：\ temp”目录下的示例<tt>FileLock</tt>规则。虽然它拥有此规则，但只允许修改该目录子树中的文件。如果它试图修改不在“c：\ temp”下的其他目录中的文件，它应该失败。因此，调度规则是允许或不允许作业或线程允许执行的具体规范。违反该规范将导致运行时异常。在并发文献中，这种技术称为<i>两阶段锁定</i> 。在两阶段锁定方案中，进程很多事先指定特定任务所需的所有锁，然后在操作期间不允许获取进一步的锁。两阶段锁定消除了保持和等待条件，这是循环等待死锁的先决条件。因此，仅使用调度规则作为锁定原语的系统不可能进入死锁。
 </p>
-</BODY>
-</HTML>
+</body>
+</html>

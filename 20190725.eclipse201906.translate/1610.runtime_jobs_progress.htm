@@ -1,157 +1,48 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-  <meta content="text/html; charset=ISO-8859-1"
- http-equiv="Content-Type">
-  <meta content="text/css" http-equiv="Content-Style-Type">
-  <link type="text/css" charset="ISO-8859-1" href="../book.css"
- rel="STYLESHEET">
-  <title>Reporting progress</title>
-  <link href="../book.css" type="text/css" rel="stylesheet">
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"></meta>
+  <meta content="text/css" http-equiv="Content-Style-Type"></meta>
+  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1"></link>
+  <title>报告进度</title>
+  <link href="../book.css" type="text/css" rel="stylesheet"></link>
 </head>
-<body bgcolor="#ffffff">
-<h3>
-Reporting progress</h3>
-<p>
-Long running jobs (those lasting more than a second) should report
-progress to the
-<b><a
- href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>
-that is passed to the job's <b>run</b> method. The workbench progress
-view will
-show all progress messages and units of completed work given to this
-monitor. </p>
-<p>The supplied progress monitor should also be used to check for
-cancellation requests made from the progress view. When a user (or
-plug-in using job API) attempts to cancel a job, the <b><a
- href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>
-method <b>isCanceled()</b> will return <tt>true</tt>. It is the job's
-responsibility to frequently
-check the cancellation status of a job and respond to a cancellation by
-exiting the <b>run</b> method as soon as possible once it detects a
-cancellation. The following <b>run</b> method reports progress
-and responds to job cancellation:
+<body bgcolor="#ffffff" dir="ltr">
+<h3>报告进度</h3>
+<p>长时间运行的作业（持续时间超过一秒）应该向<b><a href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>报告进度，该进程将传递给作业的<b>运行</b>方法。工作台进度视图将显示给予此监视器的所有进度消息和已完成工作的单位。</p>
+<p>提供的进度监视器还应用于检查从进度视图发出的取消请求。当用户（或使用作业API的插件）尝试取消作业时， <b><a href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>方法<b>isCanceled（）</b>将返回<tt>true</tt> 。作业负责经常检查作业的取消状态，并在检测到取消后尽快退出<b>运行</b>方法来响应取消。以下<b>运行</b>方法报告进度并响应取消作业：</p>
+<pre>public IStatus run（IProgressMonitor monitor）{final int ticks = 6000;监控。 <b>beginTask</b> （“做一些工作”，滴答<b>作响</b> ）; try {for（int i = 0; i &lt;ticks; i ++）{if（ <b>monitor.isCanceled</b> （））return Status。CANCEL_STATUS;监控。 <b>subTask</b> （“Processing tick＃”+ i）; //... 做一些工作 ...监控。 <b>工作</b> （1）;终于{监视器。 <b>完成</b> （）; }返回状态。OK_STATUS;<br>}</pre>
+<p><b>beginTask</b>方法用于在相应的进度视图中命名任务，并确定要完成的工作总量，以便视图可以计算进度。当工作完成时，子<b>任务</b>消息将在进度树中显示为子项。进度视图将根据<b>工作</b>调用中报告的工作量计算并显示完成百分比。
 </p>
-<pre>   public IStatus run(IProgressMonitor monitor) {
-      final int ticks = 6000;
-      monitor.<b>beginTask</b>("Doing some work", ticks);
-      try {
-         for (int i = 0; i &lt; ticks; i++) {
-            if (monitor.<b>isCanceled</b>())
-               return Status.CANCEL_STATUS;
-            monitor.<b>subTask</b>("Processing tick #" + i);
-            //... do some work ...
-            monitor.<b>worked</b>(1);
-         }
-      } finally {
-         monitor.<b>done</b>();
-      }
-      return Status.OK_STATUS;<br>   }
-</pre>
-<p>The <b>beginTask</b> method is used to name the task in the
-corresponding progress view and to
-establish the total amount of work to be done so that the view can
-compute progress. The
-<b>subTask</b> messages will appear as a child in the progress tree as
-work is done. The progress view will calculate and display a percent
-completion based on the amount of work
-reported in the <b>worked</b> calls.
+<h3>进度监视器和UI</h3>
+<p>如您所见， <b><a href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>类在设计时考虑了相应的UI支持。该平台的UI插件提供支持，以便工作台可以显示正在运行的作业的进度。您可以考虑到这一点来设置您的工作，以便您可以控制它们的呈现方式。<br>
 </p>
-<h3>Progress monitors and the UI</h3>
-<p>
-As you can see, the <b><a
- href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>
-class is designed with corresponding UI support in mind. The platform's
-UI plug-in provides support so that
-the workbench can show progress for jobs that are running. You can set
-up your jobs with this in mind, so that
-you can control how they are presented.<br>
+<p>有关可用于显示作业进度的API的详细信息，请参阅<a href="workbench_jobs.htm">Workbench并发支持</a> 。<br>
 </p>
-<p>See <a href="workbench_jobs.htm">Workbench Concurrency Support</a>
-for a detailed look at the APIs available for showing progress for jobs.<br>
-</p>
-<h4>System jobs</h4>
+<h4>系统工作</h4>
 
-<p>What if your job is a low-level implementation detail that you don't
-want to show to users? You can flag your job as a <i>system job</i>. A
-system job is just like any other job, except the corresponding UI
-support will not set up a progress view or show any other UI
-affordances associated with running a job. If your job is not either
-directly initiated by a user, or a periodic task that can be configured
-by a user, then your job should be a system job. The protocol for
-setting a system job is simple:
+<p>如果您的工作是您不希望向用户显示的低级实施细节，该怎么办？您可以将作业标记为<i>系统作业</i> 。系统作业就像任何其他作业一样，除了相应的UI支持不会设置进度视图或显示与运行作业相关的任何其他UI可用性。如果您的工作不是由用户直接启动，也不是由用户配置的定期任务，那么您的工作应该是系统工作。设置系统作业的协议很简单：</p>
+<pre>class TrivialJob扩展了Job {public TrivialJob（）{super（“Trivial Job”）; <b>setSystem（true）</b> ; } ...}</pre>
+<p>必须在安排作业之前进行<b>setSystem</b>调用。如果在当前正在等待，正在休眠或正在运行的作业上尝试此调用，则会触发异常。
 </p>
-<pre>   class TrivialJob extends Job {
-      public TrivialJob() {
-         super("Trivial Job");
-         <b>setSystem(true)</b>;
-      }
-      ...
-   }
-</pre>
-<p>The <b>setSystem</b> call must be made before the job is
-scheduled. An exception will be triggered if you attempt this call on a
-job that is currently waiting, sleeping, or running.
-</p>
-<h4>User jobs</h4>
+<h4>用户工作</h4>
 
-<p>If your job is a long running operation that is initiated by a user,
-then you should flag your job as a <i>user job</i>. A user job will
-appear in a modal progress dialog that provides a button
-for moving the dialog into the background. The workbench defines a user
-preference that controls whether
-these dialogs are ever modal. By defining your job as a user job, your
-progress feedback will
-automatically conform with the user preference for progress viewing.
-The protocol for setting a user job
-is similar:
-</p>
-<pre>   class TrivialJob extends Job {
-      public TrivialJob() {
-         super("Trivial Job");
-         <b>setUser(true)</b>;
-      }
-      ...
-   }
-</pre>
-<p>The <b>setUser</b> call must also be made before the job is scheduled. 
+<p>如果您的作业是由用户启动的长时间运行操作，则应将作业标记为<i>用户作业</i> 。用户作业将显示在模式进度对话框中，该对话框提供用于将对话框移动到背景中的按钮。工作台定义了一个用户首选项，用于控制这些对话框是否是模态的。通过将作业定义为用户作业，您的进度反馈将自动符合用户对进度查看的偏好。设置用户作业的协议类似：</p>
+<pre>class TrivialJob扩展了Job {public TrivialJob（）{super（“Trivial Job”）; <b>setUser（true）</b> ; } ...}</pre>
+<p>必须在安排作业之前进行<b>setUser</b>调用。
 </p>
 
-<h3>Progress groups</h3>
+<h3>进度组</h3>
 
-<p><i>Progress groups</i> are another mechanism that can be used to
-influence the way that a job is shown in the UI. When it is more
-appropriate to show the aggregate progress of several related jobs in
-the UI, a special
-<b><a
- href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b>
-that represents
-a group of related jobs can be created. This monitor is created using <b><a
- href="../reference/api/org/eclipse/core/runtime/jobs/IJobManager.html">IJobManager</a></b>
-protocol. The following snippet shows how to create a progress group
-and associate it with a job.
+<p><i>进度组</i>是另一种可用于影响作业在UI中显示方式的机制。如果更适合在UI中显示多个相关作业的聚合进度，则可以创建表示一组相关作业的特殊<b><a href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b> 。此监视器使用<b><a href="../reference/api/org/eclipse/core/runtime/jobs/IJobManager.html">IJobManager</a></b>协议创建。以下代码段显示了如何创建进度组并将其与作业关联。
 </p>
-<pre>   ...
-   IJobManager jobMan = Job.getJobManager();
-   myGroup = jobMan.createProgressGroup();
-   job.setProgressGroup(myGroup, 600);  // specify the units of work the job needs to show.
-   job.schedule()
-   ...
+<pre>...IJobManager jobMan = Job.getJobManager（）; myGroup = jobMan.createProgressGroup（）; job.setProgressGroup（myGroup，600）; //指定作业需要显示的工作单位。job.schedule（）...
 </pre>
-<p>The group facility allows plug-ins to break tasks into multiple
-jobs if needed, but to report them to the user as if
-they are a single task. The progress group monitor will handle the
-details for computing the percentage completion
-relative to all of the jobs in the group.
+<p>组工具允许插件在需要时将任务分解为多个作业，但是将它们报告给用户就好像它们是单个任务一样。进度组监视器将处理计算相对于组中所有作业的完成百分比的详细信息。
 </p>
-<p>A job must be placed into the progress group before it is scheduled.
-After a job finishes running, its reference to the progress group is
-lost. If the job is to be scheduled again, it must be set into the
-group
-once again before it is scheduled.</p>
+<p>在安排作业之前，必须将作业放入进度组。作业完成运行后，对进度组的引用将丢失。如果要再次安排作业，则必须在安排之前将其再次设置到组中。</p>
 
 </body>
 </html>

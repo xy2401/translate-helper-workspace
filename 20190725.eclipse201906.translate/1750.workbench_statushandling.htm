@@ -1,185 +1,98 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="STYLESHEET" href="../book.css" charset="ISO-8859-1" type="text/css">
-<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
-<title>Status handling</title>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<script src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript" language="JavaScript"></script>
+<title>状态处理</title>
 </head>
-<body>
+<body dir="ltr">
 
-<h2>Status handling</h2>
+<h2>状态处理</h2>状态处理是一种工具，允许引入一种自定义方式，向用户显示基于Eclipse的应用程序中的问题。可以在应用程序和产品级别配置该工具。
 
-Status handling is a facility that allows to introduce a custom way of showing problems 
-in the Eclipse based applications to users. The facility can be configured at both 
-the application and the product level.
+<h3><a name="statusHandlers">状态处理程序</a></h3>
 
-<h3><a name="statusHandlers">Status handlers</a></h3>
-
-<p>
-The handlers are responsible for presenting problems by logging or showing appropriate 
-feedback to the user (generally dialogs). 
+<p>处理程序负责通过记录或向用户显示适当的反馈（通常是对话框）来呈现问题。
 </p>
 
-<p>
-All status handlers extend <em>org.eclipse.ui.statushandlers.AbstractStatusHandler</em> 
-which requires each handler to implement <em>handle(StatusAdapter status, int style)</em>. 
-This method handles statuses based on a handling style. The style indicates how status 
-handler should handle a status. See <a href="#acceptableStyles">Acceptable styles</a>.
+<p>所有状态处理程序都扩展了<em>org.eclipse.ui.statushandlers。AbstractStatusHandler</em> ，它要求每个处理程序实现<em>句柄（StatusAdapter status，int style）</em> 。此方法基于处理样式处理状态。样式指示状态处理程序应如何处理状态。请参阅<a href="#acceptableStyles">可接受的样式</a> 。
 </p>
 
-<p>
-There are two ways for contributing handlers to the Workbench:</p>
+<p>有两种方法可以为Workbench提供处理程序：</p>
 <ol>
-	<li>
-    	using the <em>org.eclipse.ui.statusHandlers</em> extension point, see 
-    	<a href="ua_statushandling.htm">User assistance and status handling</a>
-    </li><li>
-    	using the workbench advisor and its method <em>WorkbenchAdvisor#getWorkbenchErrorHandler()</em>
+	<li>使用<em>org.eclipse.ui.statusHandlers</em>扩展点，请参阅<a href="ua_statushandling.htm">用户帮助和状态处理</a>
+    </li><li>使用workbench顾问程序及其方法<em>WorkbenchAdvisor＃getWorkbenchErrorHandler（）</em>
     </li>
 </ol>
-<p><b>NOTE!</b> if there exists a handler associated with the product, it is used instead of the one defined in the advisor.
+<p><b>注意！</b> 如果存在与产品关联的处理程序，则使用它而不是顾问程序中定义的处理程序。
+</p>状态处理程序具有id和一组参数。处理程序可以在处理过程中使用它们。如果将处理程序添加为扩展，则在处理程序初始化期间使用<b>statusHandler</b>元素的元素和属性设置id和参数集。
+
+<h4>使用默认日志记录机制进行日志记录</h4>
+
+<p>为了使用默认日志记录机制记录额外信息，有必要执行一些额外的步骤。状态管理器为您提供了一个API，允许您挂钩该机制。</p>
+
+<pre>StatusManager #addLoggedStatus（IStatus status）</pre>
+
+
+<p>以下是<em>addLoggedStatus（IStatus status）</em>正确用法的示例。</p>
+
+<pre>public void handle（最终StatusAdapter statusAdapter，int style）{...if（（style＆StatusManager。LOG）== StatusManager。LOG）{StatusManager.getManager（）。addLoggedStatus（statusAdapter.getStatus（））; 。WorkbenchPlugin.getDefault（）getLog（）日志（statusAdapter.getStatus（））。 }}</pre>
+
+
+<h4>默认状态处理程序</h4>
+
+<p>该平台提供自己的状态处理程序实现<em>org.eclipse.ui.statushandlers。WorkbenchErrorHandler</em> 。它尊重所有<a href="#acceptableStyles">可接受的风格</a> 。它使用默认的日志记录机制和基于JFace <em>org.eclipse.jface.dialogs的对话框<em>。ErrorDialog</em> 。
 </p>
 
-A status handler has an id and a set of parameters. The handler can use them during 
-the handling process. If the handler is added as an extension, both the id 
-and parameter set are set during initialization of the handler with the use of elements 
-and attributes of the <b>statusHandler</b> element. 
+<h4>使用状态处理程序注册ErrorSupportProvider</h4>
 
-<h4>Logging with the use of the default logging mechanism</h4>
-
-<p>
-In order to log extra information with the use of the default logging mechanism, 
-it is necessary to perform some additional steps. The status manager provides you 
-with an API that allows you to hook into the mechanism.</p>
-
-<pre>
-   StatusManager#addLoggedStatus(IStatus status)
-</pre>
-
-
-<p>
-And below is the example of <em>addLoggedStatus(IStatus status)</em> proper usage.</p>
-
-<pre>
-   public void handle(final StatusAdapter statusAdapter, int style) {
-      ...
-   
-      if ((style &amp; StatusManager.LOG) == StatusManager.LOG) {
-         StatusManager.getManager().addLoggedStatus(statusAdapter.getStatus());
-         WorkbenchPlugin.getDefault().getLog().log(statusAdapter.getStatus());
-      }
-   }
-</pre>
-
-
-<h4>The default status handler</h4>
-
-<p>
-The platform supplies its own status handler implementation <em>org.eclipse.ui.statushandlers.WorkbenchErrorHandler</em>.
-It respects all <a href="#acceptableStyles">acceptable styles</a>. It uses the default logging mechanism
-and a dialog based on the JFace <em>org.eclipse.jface.dialogs.ErrorDialog</em>.
+<p>有一种简单的方法可以在JFace <em>ErrorDialog中</em>提供支持区域。它是可以在JFace策略中设置的<em>ErrorSupportProvider</em> 。由于默认工作台处理程序为其对话框使用<em>ErrorDialog</em>的子类，因此在JFace策略上设置提供程序也会影响此对话框。
 </p>
 
-<h4>Registering the ErrorSupportProvider with your status handler</h4>
+<p>当创建类似下面的处理程序时</p>
 
-<p>
-There is a simple way to contribute a support area in the JFace <em>ErrorDialog</em>. 
-It is the <em>ErrorSupportProvider</em> which can be set in the JFace policy. Because the default workbench handler 
-uses a subclass of the <em>ErrorDialog</em> for its dialog, setting the provider on the JFace policy 
-will affect this dialog as well.
+<pre>公共类CustomStatusHandler扩展WorkbenchErrorHandler {public CompanyStatusHandler（）{ErrorSupportProvider provider = createSupportProvider（）; Policy.setErrorSupportProvider（提供商）; } private ErrorSupportProvider createSupportProvider（）{...}}</pre>
+<p>并以两种可用方式之一提供给Workbench，所有基于<em>ErrorDialog的</em>对话框（包括默认处理程序显示的对话框）都将具有额外的支持区域。
+</p>
+
+<h3>状态管理员</h3>
+
+<p>状态管理器是要在用户界面中显示的所有状态的入口点。处理程序不能直接使用。它们应该通过StatusManager引用，它选择要应用的适当处理程序。以下方法是StatusManager的API入口点</p>
+
+<pre>StatusManager #handle（IStatus）StatusManager＃handle（IStatus，int）StatusManager＃handle（StatusAdapter）StatusManager＃handle（StatusAdapter，int）</pre>
+
+<p>使用Status访问StatusManager单例</p>
+
+<pre>StatusManager.getManager（）</pre>
+<p>int参数用于提供处理样式。请参阅<a href="#acceptableStyles">可接受的样式</a> 。
 </p>
 
 <p>
-When a handler like the one below is created</p>
-
-<pre>
-   public class CustomStatusHandler extends WorkbenchErrorHandler {
-      public CompanyStatusHandler() {
-         ErrorSupportProvider provider = createSupportProvider();
-         Policy.setErrorSupportProvider(provider);
-      }
-	
-      private ErrorSupportProvider createSupportProvider() {
-         ...
-      }
-   }
-</pre>
-<p>
-and is contributed to the Workbench in one of two available ways, all dialogs based on
-the <em>ErrorDialog</em> including the one shown by the default handler, will have an extra 
-support area.
+<b>注意！</b> 风格只是一个建议，可能不会受到当前处理程序的尊重。例如，处理程序可以选择在发送SHOW标志时不向用户显示任何内容。有关详细信息，请参阅<a href="#statusHandlers">状态处理程序</a>
 </p>
 
-<h3>Status manager</h3>
-
-<p>
-The status manager is the entry point for all statuses that are to be displayed in the user interface. 
-Handlers are not intended to be used directly. They should be referenced via the StatusManager 
-which selects the appropriate handler to apply.
-
-The following methods are the API entry points to the StatusManager</p>
-
-<pre>
-   StatusManager#handle(IStatus)
-   
-   StatusManager#handle(IStatus, int)
-   
-   StatusManager#handle(StatusAdapter)
-   
-   StatusManager#handle(StatusAdapter, int)
-</pre>
-
-<p>The StatusManager singleton is accessed using</p>
-
-<pre>
-   StatusManager.getManager()
-</pre>
-<p>
-The int parameters are used for supplying styles for handling. See <a href="#acceptableStyles">Acceptable styles</a>.
+<p>如果处理程序与产品关联，则使用它而不是在顾问程序中定义的处理程序。但是，由于产品处理程序是惰性初始化的，因此在第一次尝试访问它时可能会发生错误。如果产品处理程序中发生任何创建错误，则工作台处理程序将处理此错误。
 </p>
 
-<p>
-<b>NOTE!</b> the style is only a suggestion and may not be honored by the current handler. 
-For instance a handler may choose not to show the user anything when the SHOW flag is sent. 
-See <a href="#statusHandlers">Status handlers</a> for more details.
-</p>
+<h3><a name="acceptableStyles">可接受的款式</a></h3>
 
-<p>
-If a handler is associated with a product, it is used instead of the one that was defined in advisor. 
-However because product handler is lazy initialized, an error can occur during the first attempt to access it. 
-If any creation error occurs in the product handler, the workbench handler will process this error. 
-</p>
-
-<h3><a name="acceptableStyles">Acceptable styles</a></h3>
-
-<p>
-Below is a list of StatusManager styles which can be combined with logical OR:</p>
+<p>下面是StatusManager样式列表，可以与逻辑OR组合：</p>
 
 <ol>
 	<li>
-  		<b>NONE</b> - a style indicating that the status should not be acted on. This is used by objects such as log listeners that do not want to report a status twice
-    </li><li>
-    	<b>LOG</b> - a style indicating that the status should be logged only
-    </li><li>
-    	<b>SHOW</b> - a style indicating that handlers should show a problem to a user without blocking the calling method while awaiting user response. This is generally done using a non modal dialog
-    </li><li>	
-    	<b>BLOCK</b> - a style indicating that the handling should block the calling method until the user has responded. This is generally done using a modal window such as a dialog 
-	</li>
+  		<b>NONE</b> - 表示不应对状态执行操作的样式。对象（例如不希望两次报告状态的日志侦听器）使用此方法</li><li>
+    	<b>LOG</b> - 表示仅应记录状态的样式</li><li>
+    	<b>SHOW</b> - 一种样式，指示处理程序应该向用户显示问题，而不会在等待用户响应时阻止调用方法。这通常使用非模态对话框完成</li><li>	
+    	<b>BLOCK</b> - 一种样式，指示处理应阻止调用方法，直到用户响应。这通常使用模式窗口（例如对话框）来完成</li>
 </ol>
 
 <h3><a name="statusAdapter">StatusAdapter</a></h3>
 
-<p>
-The StatusAdapter wraps an instance of IStatus subclass and can hold additional information 
-either by using properties or by adding a new adapter. It is used during status handling process.
+<p>StatusAdapter包装了一个IStatus子类的实例，可以通过使用属性或添加新适配器来保存其他信息。它在状态处理过程中使用。
 </p>
 
-<p>
-Each handler should specify what properties or types it accepts, being aware of the fact that 
-developers can pass status adapters with such extra information. 
+<p>每个处理程序应指定它接受的属性或类型，并意识到开发人员可以使用此类额外信息传递状态适配器。
 </p>
 
 </body>

@@ -1,78 +1,60 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-  <meta name="copyright"
- content="Copyright (c) IBM Corporation and others 2008, 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
-  <meta http-equiv="Content-Type"
- content="text/html; charset=ISO-8859-1">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
-  <title>Customizing a Headless Build</title>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+  <meta http-equiv="Content-Style-Type" content="text/css"></meta>
+  <link rel="STYLESHEET" href="../guide/book.css" type="text/css"></link>
+  <title>定制无头构建</title>
 </head>
-<body>
-<h1>Customizing a Headless Build</h1>
-<p>There are multiple methods for customizing a headless build:</p>
+<body dir="ltr">
+<h1>定制无头构建</h1>
+<p>有多种方法可以自定义无头构建：</p>
 <ul>
-<li>Using a customTargets.xml file</li>
-<li>Using an allElements.xml file</li>
-<li>Using a customAssembly.xml file</li>
-<li>Using feature or plug-in custom callbacks.  (See <a href="pde_custom_callbacks.htm">Customizing feature and plug-in builds</a>)</li>
+<li>使用customTargets.xml文件</li>
+<li>使用allElements.xml文件</li>
+<li>使用customAssembly.xml文件</li>
+<li>使用功能或插件自定义回调。（请参阅<a href="pde_custom_callbacks.htm">自定义功能和插件版本</a> ）</li>
 </ul>
-<p>The exact format of the contents of these files all depend on each other.  Therefore, when using customTargets, allElements or customAssembly customizations, it is recommended to ensure that the templates used for these files all come from the same version of PDE/Build.  New versions of PDE/Build are backward compatible with old versions of these customization scripts.</p>
-<p>Template versions of these scripts are available in the <tt>org.eclipse.pde.build</tt> plug-in under the <tt>templates/headless-build</tt> folder.  To use the customization, simply copy the template into your build configuration directory and edit the appropriate targets.</p>
+<p>这些文件内容的确切格式都相互依赖。因此，在使用customTargets，allElements或customAssembly自定义时，建议确保用于这些文件的模板都来自相同版本的PDE / Build。新版本的PDE / Build向后兼容这些自定义脚本的旧版本。</p>
+<p>这些脚本的模板版本可在<tt>templates / headless-build</tt>文件夹下的<tt>org.eclipse.pde.build</tt>插件中找到。要使用自定义，只需将模板复制到构建配置目录中并编辑相应的目标。</p>
 
 <h2><a name="custom_targets">customTargets.xml</a></h2>
-<p>The customTargets.xml script is for top level customization of the build process.  It provides ant targets that are called between the major phases of the build.  There are pre and post targets available around each of the following build steps:</p>
+<p>customTargets.xml脚本用于构建过程的顶级自定义。它提供了在构建的主要阶段之间调用的ant目标。围绕以下每个构建步骤都有可用的前后目标：</p>
 <ul>
-<li>Process p2 repositories</li>
-<li>Get Map files</li>
-<li>Fetch source</li>
-<li>Generate build scripts</li>
-<li>Process and run the build scripts</li>
-<li>Assemble the compiled plug-ins and features</li>
-<li>Package pre-compiled binary plug-ins and features</li>
+<li>处理p2存储库</li>
+<li>获取地图文件</li>
+<li>获取源</li>
+<li>生成构建脚本</li>
+<li>处理并运行构建脚本</li>
+<li>汇编已编译的插件和功能</li>
+<li>打包预编译的二进制插件和功能</li>
 </ul>
-<p>To use the customTargets.xml script, simply copy it from the PDE/Build templates directory into your build configuration directory and edit the appropriate ant targets.  The script will be automatically detected and used by the headless build.</p>
-<p>The customTargets.xml script also provides delegation to the allElements.xml script for each of the build phases.</p>
+<p>要使用customTargets.xml脚本，只需将其从PDE / Build模板目录复制到构建配置目录中，然后编辑相应的ant目标。该脚本将由无头构建自动检测和使用。</p>
+<p>customTargets.xml脚本还为每个构建阶段的allElements.xml脚本提供委派。</p>
 
 <h2>allElements.xml</h2>
-<p>The allElements.xml script is a kind of delegation script that is used to run the various build steps on a given element (usually a feature).  As with the customTargets.xml, to use these customization steps, copy the template from PDE/Build into your build configuration directory.  In Eclipse 3.4, the target element that will be built can be specified in the top level build configuration build.properties file using the properties <tt>topLevelElementType</tt> and <tt>topLevelElementId</tt>.  The elementType should be set to <tt>feature</tt> and the elementId should be set to the feature-id you wish to build.</p>
-<pre>
- 	&lt;target name="allElementsDelegator"&gt;
- 		&lt;ant antfile="${genericTargets}" target="${target}"&gt;
-	 		&lt;property name="type" value="${topLevelElementType}" /&gt;
-	 		&lt;property name="id" value="${topLevelElementId}" /&gt;
- 		&lt;/ant&gt;
- 	&lt;/target&gt;
-</pre>
-<p>The allElements.xml also provides targets used during the assembly and packaging phase of the build.  The <tt>defaultAssemble</tt> target will be called to assemble the archives for all platforms.  If desired, custom targets can be defined for individual platforms.</p>
-<p>To use a custom target for a given platform, define a property "<tt>assemble.&lt;element-id&gt;[.&lt;config&gt;]</tt> and a corresponding target.  The property tells PDE/Build to use this custom target instead of the default target.  This custom target can then be used to give the archive a custom name or perform pre or post processing on the archive.</p>
-<p><b>Example:</b></p>
-<pre>
-	&lt;property name="assemble.org.foo.feature.id.linux.gtk.x86" value="true" /&gt;
- 	&lt;target name="assemble.org.foo.feature.id.linux.gtk.x86"&gt;
- 		&lt;property name="archiveName" value="acme-RCP-${buildId}-linux.gtk.x86.tar.gz" /&gt;
- 		&lt;-- custom pre assemble steps for linux.gtk.x86--&gt;
- 		&lt;ant antfile="${assembleScriptName}" dir="${buildDirectory}"/&gt;
- 		&lt;-- custom post assemble steps for linux.gtk.x86--&gt;
- 	&lt;/target&gt;
-</pre>
+<p>allElements.xml脚本是一种委托脚本，用于在给定元素（通常是特征）上运行各种构建步骤。与customTargets.xml一样，要使用这些自定义步骤，请将模板从PDE / Build复制到构建配置目录中。在Eclipse 3.4中，可以使用属性<tt>topLevelElementType</tt>和<tt>topLevelElementId</tt>在顶级构建配置build.properties文件中指定将构建的目标元素。elementType应设置为<tt>feature</tt> ，elementId应设置为您要构建的feature-id。</p>
+<pre>&lt;target name =“allElementsDelegator”&gt; &lt;ant antfile =“$ {genericTargets}”target =“$ {target}”&gt; &lt;property name =“type”value =“$ {topLevelElementType}”/&gt; &lt;property name =“id “value =”$ {topLevelElementId}“/&gt; &lt;/ ant&gt; &lt;/ target&gt;</pre>
+<p>allElements.xml还提供在构建的组装和打包阶段使用的目标。将调用<tt>defaultAssemble</tt>目标来汇编所有平台的归档。如果需要，可以为各个平台定义自定义目标。</p>
+<p>要为给定平台使用自定义目标，请定义属性“ <tt>assemble。&lt;element-id&gt; [。&lt;config&gt;]</tt>和相应的目标。该属性告诉PDE / Build使用此自定义目标而不是默认目标。然后，可以使用此自定义目标为存档提供自定义名称，或对存档执行预处理或后处理。</p>
+<p><b>例：</b></p>
+<pre>&lt;property name =“assemble.org.foo.feature.id.linux.gtk.x86”value =“true”/&gt; &lt;target name =“assemble.org.foo.feature.id.linux.gtk.x86”&gt; &lt;property name =“archiveName”value =“acme-RCP  -  $ {buildId} -linux.gtk.x86.tar.gz”/&gt; &lt; -  linux.gtk.x86的自定义预组装步骤 - &gt; &lt;ant antfile =“$ {assembleScriptName}”dir =“$ {buildDirectory}”/&gt; &lt; -  linux.gtk.x86的自定义后汇编步骤 - &gt; &lt;/ target&gt;</pre>
 
 <h2>customAssembly.xml</h2>
-<p>The customAssembly.xml script is new in 3.4.  It provides customization points that will be called during the assembly and packaging phases of the build.  As with customTargets.xml and allElements.xml, to use these customization, copy the template from PDE/Build into your build configuration directory.</p>
-<p>The assemble and packaging scripts generated by PDE/Build perform the following actions:</p>
+<p>customAssembly.xml脚本是3.4中的新增功能。它提供了将在构建的组装和打包阶段调用的自定义点。与customTargets.xml和allElements.xml一样，要使用这些自定义，请将模板从PDE / Build复制到构建配置目录中。</p>
+<p>PDE / Build生成的汇编和打包脚本执行以下操作：</p>
 <ul>
-<li>Call the gather.bin.parts target in the generated build.xml for all features and plug-ins being built.</li>
-<li>Jar up (and optionally sign) any plug-ins and features that are not shipped as folders</li>
-<li>Copy the final results into a staging area and create the final archive</li>
+<li>在生成的build.xml中调用gather.bin.parts目标，以获取正在构建的所有功能和插件。</li>
+<li>备份（并选择签名）任何未作为文件夹提供的插件和功能</li>
+<li>将最终结果复制到临时区域并创建最终存档</li>
 </ul>
-<p>The assemble scripts deal with collecting the features and plug-ins that were compiled during the build and the package scripts deal with collecting any pre-compiled binary features and plug-ins.  The customAssembly.xml script provides the following targets before or after each of the above steps:</p>
+<p>汇编脚本处理收集在构建期间编译的功能和插件，并且包脚本处理收集任何预编译的二进制功能和插件。customAssembly.xml脚本在上述每个步骤之前或之后提供以下目标：</p>
 <ul>
-<li>gather.bin.parts: Called after each invocation of the gather.bin.parts target on the individual plug-ins and features.</li>
-<li>post.gather.bin.parts: Called after invoking the gather.bin.parts targets for all plug-ins and features. Results exist as folders and have not yet been jarred.</li>
-<li>pre.jarsigning: Called just prior to signing a jar.</li>
-<li>post.jarup: Called after all plug-ins and features have been jarred (and potentially signed). </li>
-<li>pre.archive: Called just before the archive file is built</li>
+<li>gather.bin.parts：在各个插件和功能上每次调用gather.bin.parts目标后调用。</li>
+<li>post.gather.bin.parts：调用所有插件和功能的gather.bin.parts目标后调用。结果以文件夹形式存在，尚未受到影响。</li>
+<li>pre.jarsigning：在签署jar之前调用。</li>
+<li>post.jarup：在所有插件和功能受到震动（并可能签名）后调用。</li>
+<li>pre.archive：在构建归档文件之前调用</li>
 </ul>
 
 

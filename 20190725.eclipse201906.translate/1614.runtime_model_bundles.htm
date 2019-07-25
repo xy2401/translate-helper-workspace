@@ -1,103 +1,43 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>Plug-ins and bundles</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>插件和捆绑包</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<H3>
-Plug-ins and bundles</H3>
-<p>
-The mechanics for supporting plug-ins are implemented using the <a href="http://www.osgi.org">OSGi</a> framework.  From this
-standpoint, a plug-in is the same thing as an OSGi <b>bundle</b>.  The bundle and its associated classes specify and implement
-the process for Java class-loading, prequisite management, and the bundle's life-cycle.  For the rest of this discussion, we use
-the terms <b>plug-in</b> and <b>bundle</b> interchangeably, unless discussing a particular class in the framework.  
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h3>插件和捆绑包</h3>
+<p>支持插件的机制是使用<a href="http://www.osgi.org">OSGi</a>框架实现的。从这个角度来看，插件与OSGi <b>包</b>相同。bundle及其相关类指定并实现Java类加载，必备管理和bundle的生命周期的过程。对于本讨论的其余部分，除非在框架中讨论特定的类，否则我们可以交替使用术语<b>插件</b>和<b>bundle</b> 。
 </p>
-<h4>Plugin</h4>
-<p>
-The <b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b> class represents a plug-in that
-is running in the platform.  It is a convenient place to centralize the life-cycle aspects and overall 
-semantics of a plug-in.  A plug-in can implement specialized functionality for the <b>start</b> and <b>stop</b>
-aspects of its life-cycle.  Each life-cycle method includes a reference to a  
-<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b> which can supply
-additional information.</p>
-<p>
-The <b>start</b> portion of the life-cycle is worth particular discussion.  We've seen already that information 
-about a plug-in can be obtained from the plug-in's manifest file without ever running any of the 
-plug-in's code.  Typically, some user action in the workbench causes a chain of events that 
-requires the starting of a plug-in.  From an implementation point of view, a plug-in is
-never started until a class contained in the plug-in needs to be loaded.
+<h4>插入</h4>
+<p><b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>类表示在平台中运行的插件。它是集中插件的生命周期方面和整体语义的便利场所。插件可以实现其生命周期的<b>启动</b>和<b>停止</b>方面的专用功能。每个生命周期方法都包含对<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>的引用，该<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>可以提供其他信息。</p>
+<p>生命周期的<b>开始</b>部分值得特别讨论。我们已经看到，可以从插件的清单文件中获取有关插件的信息，而无需运行任何插件的代码。通常，工作台中的某些用户操作会导致需要启动插件的一系列事件。从实现的角度来看，在插件中包含的类需要加载之前，永远不会启动插件。
 </p>
-<p>
-The <b>start</b> method has been a convenient place to implement initialization and
-registration behavior for a plug-in.  However, it is important to realize that your plug-in
-can be started in many different circumstances.  Something as simple as obtaining an icon to decorate
-an object can cause one of your plug-in's classes to be loaded, thus starting your plug-in.  Over-eager 
-initialization can cause your plug-in's code and data to be loaded long before it is necessary.  Therefore,
-it's important to look closely at your plug-in's initialization tasks and consider alternatives
-to performing initialization at start-up.</p>
+<p><b>start</b>方法是实现插件初始化和注册行为的便利场所。但是，重要的是要意识到您的插件可以在许多不同的环境中启动。像获取图标来装饰对象这样简单的事情可能会导致加载一个插件类，从而启动插件。过度的初始化可能导致插件的代码和数据在必要时很久就被加载。因此，仔细查看插件的初始化任务并考虑在启动时执行初始化的替代方法非常重要。</p>
 <ul>
-<li><b>Registration</b> activities such as registering listeners or starting background threads are appropriate
-during plug-in start-up if they can be performed quickly.  However, it is advisable to trigger these
-actions as part of accessing the plug-in's data if the registration activities have side-effects such
-as initializing large data structures or performing unrelated operations. </li>
-<li><b>Initialization</b> of data is best done lazily, when the data is first accessed, rather than automatically
-in the start-up code.  This ensures that large data structures are not built until they are truly necessary.</li>
+<li>如果可以快速执行<b>注册</b>活动，例如注册监听器或启动后台线程，则在插件启动期间是适当的。但是，如果注册活动具有诸如初始化大型数据结构或执行不相关操作之类的副作用，则建议将这些操作作为访问插件数据的一部分来触发。</li>
+<li>数据<b>初始化</b>最好是在首次访问数据时懒惰，而不是在启动代码中自动完成。这可确保在真正需要之前不构建大型数据结构。</li>
 </ul>
 
-<h4>Bundle Context</h4>
-<p>
-Life-cycle management is where the OSGi &quot;bundle&quot; terminology and the platform's 
-&quot;plug-in&quot; terminology meet.  When your plug-in is started, it is given a reference to a <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">
-BundleContext</a></b> from which it can obtain information related to the plug-in.  The
-<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>
-can also be used to find out about other bundles/plug-ins in the system.  
+<h4>捆绑上下文</h4>
+<p>生命周期管理是OSGi“捆绑”术语和平台“插件”术语相遇的地方。当您的插件启动时，它会被一个<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>引用，从中可以获取与该插件相关的信息。<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>还可用于查找系统中的其他bundle / plug-ins。
 </p>
 <p>
-<b>BundleContext.getBundles()</b> can be used to obtain an array of all bundles in the system.  Listeners for
-<b>BundleEvent</b> can be registered so that your plug-in is aware when another bundle has a change
-in its life-cycle status.  See the javadoc for 
-<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b> and
-<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleEvent.html">BundleEvent</a></b> for more information.
+<b>BundleContext.getBundles（）</b>可用于获取系统中所有包的数组。可以注册<b>BundleEvent的</b>监听器，以便插件在其他捆绑包的生命周期状态发生变化时知道。有关更多信息，请参阅<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>和<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleEvent.html">BundleEvent</a></b>的javadoc。
 </p>
-<blockquote><i>
-Prior to 3.0, a plug-in registry (<b>IPluginRegistry</b>) was provided to supply similar information.  For example,
-it could be queried for the plug-in descriptors of all plug-ins in the system.  This registry is now deprecated and
-<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b> should be
-used for this purpose.  The platform registry is now used exclusively for information about extensions 
-and extension points.
+<blockquote><i>在3.0之前，提供了一个插件注册表（ <b>IPluginRegistry</b> ）来提供类似的信息。例如，可以查询系统中所有插件的插件描述符。现在不推荐使用此注册表，并且应该使用<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>来实现此目的。平台注册表现在专门用于有关扩展和扩展点的信息。
 </i></blockquote>
-<h4>Bundle Activator</h4>
-<p>
-The <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b> interface defines
-the start and stop behavior implemented in 
-<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>.  Although the
-<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b> class is a convenient place
-to implement this function, a plug-in developer has complete freedom to implement the interface for
-<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b> in any class
-appropriate for the plug-in's design.  In fact, your plug-in need not implement this interface at all if it
-does not have specific life-cycle management needs.  </p>
-<h4>Bundles</h4>
-<p>
-Underneath every plug-in lies an OSGi bundle managed by the framework.
-The <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle</a></b> is the OSGi unit of modularity.  Fundamentally, a 
-bundle is just a collection of files (resources and code) installed in the 
-platform.  Each bundle has its own Java
-class loader, and includes protocol for starting, stopping, and uninstalling itself.  From the Eclipse platform 
-point of view, <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle</a></b> is merely an implementation 
-class.   Plug-in developers do not extend the bundle class, but use <b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>
-or other <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b> implementations
-to represent the plug-in.</p>
+<h4>捆绑激活器</h4>
+<p><b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b>接口定义了<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin中</a></b>实现的启动和停止行为。尽管<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>类是实现此功能的便利位置，但插件开发人员可以完全自由地在适合插件设计的任何类中实现<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b>的接口。实际上，如果没有特定的生命周期管理需求，您的插件根本不需要实现此接口。</p>
+<h4>捆绑</h4>
+<p>每个插件下面都有一个由框架管理的OSGi包。<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle</a></b>是OSGi模块化单元。从根本上说，bundle只是安装在平台中的文件（资源和代码）的集合。每个bundle都有自己的Java类加载器，并包含用于启动，停止和卸载自身的协议。从Eclipse平台的角度来看， <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle</a></b>只是一个实现类。插件开发人员不会扩展bundle类，而是使用<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>或其他<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b>实现来表示插件。</p>
 
 
-</BODY>
-</HTML>
-
-
+</body>
+</html>

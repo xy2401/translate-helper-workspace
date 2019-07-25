@@ -1,174 +1,65 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>Open Files</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>打开文件</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<h2>Associate and Open Files</h2>
-<p>
-An Eclipse based <b>product</b> is a stand-alone program built with the
-Eclipse platform.  In many cases such a program would like to be associated with
-particular file types or extensions.  For example, the Eclipse IDE  
-could be configured to open all Java files.  This would allow a user 
-to double click on a Java file and have it be opened in a running Eclipse
-IDE instance or start a new instance of the Eclipse IDE if it was not 
-previously running.  In order to support this coordination is needed 
-between the Eclipse native launcher, SWT, the workbench and the RCP
-application.
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h2>关联和打开文件</h2>
+<p>基于Eclipse的<b>产品</b>是使用Eclipse平台构建的独立程序。在许多情况下，这样的程序希望与特定的文件类型或扩展相关联。例如，Eclipse IDE可以配置为打开所有Java文件。这将允许用户双击Java文件并在正在运行的Eclipse IDE实例中打开它，或者如果以前没有运行，则启动Eclipse IDE的新实例。为了支持这种协调，需要在Eclipse本机启动程序，SWT，工作台和RCP应用程序之间进行协调。
 </p>
-<p>
-New command line options have been added to support this scenario:
-</p>
+<p>添加了新的命令行选项以支持此方案：</p>
 <ul>
-  <li><a href="../reference/misc/runtime-options.html#launcheropenfile">--launcher.openFile</a>
-      Specifies a file to be opened.
+  <li><a href="../reference/misc/runtime-options.html#launcheropenfile">--launcher.openFile</a>指定要打开的文件。
   </li>
-  <li><a href="../reference/misc/runtime-options.html#launcherdefaultaction">--launcher.defaultAction</a>
-      Specifies an action to take when the launcher is started witout any &quot;-&quot; arguments on 
-      the command line.
+  <li><a href="../reference/misc/runtime-options.html#launcherdefaultaction">--launcher.defaultAction</a>指定在启动启动程序时使用命令行上的任何“ - ”参数执行的操作。
   </li>
 </ul>
-<p>
-The openFile argument opens the specified file in an instance of 
-Eclipse.  If an instance is not already running then a new instance will be started.
+<p>openFile参数在Eclipse实例中打开指定的文件。如果实例尚未运行，则将启动新实例。
 </p>
 
-<pre>  eclipse --launcher.openFile myFile.txt</pre>
+<pre>eclipse --launcher.openFile myFile.txt</pre>
 
-<p>
-A second option is needed to configure the launcher to automatically perform the open file 
-request without requiring the user to always specify --launcher.openFile.  A new &quot;default action&quot; argument has been introduced to accomplish this.  This option
-can go in the launcher.ini (eclipse.ini) file, the value must be &quot;openFile&quot;:
+<p>需要第二个选项来配置启动程序以自动执行打开文件请求，而无需用户始终指定--launcher.openFile。为了实现这一目的，引入了一个新的“默认动作”参数。此选项可以放在launcher.ini（eclipse.ini）文件中，值必须为“openFile”：</p>
+
+<pre>...-showsplash org.eclipse.platform --launcher.defaultAction openFile -vmargs -Xms256m -Xmx768m</pre>
+
+<p>这告诉启动器，如果命令行参数都没有以“ - ”开头，则应将所有命令行参数视为遵循“--launcher.openFile”参数。
 </p>
 
-<pre>  ...
-  -showsplash
-  org.eclipse.platform
-  --launcher.defaultAction
-  openFile
-  -vmargs
-  -Xms256m
-  -Xmx768m</pre>
+<pre>eclipse myFile.txt</pre>
 
-<p>
-This tells the launcher that if none of the command line arguments start with &quot;-&quot; then all command line arguments should be treated as if they
-followed the &quot;--launcher.openFile&quot; argument.
+<p>添加此选项是因为没有注册表更改，这是当您双击与eclipse关联的文件时，启动程序将在窗口上接收的命令行，或者您选择文件并选择“打开方式”或“发送到”Eclipse 。
 </p>
 
-<pre>  eclipse myFile.txt</pre>
+<h3>与SWT交谈</h3>
 
-<p>
-This option was added because without registry changes, this is the kind of command line the launcher will receive on windows when you double click a file that 
-is associated with eclipse, or you select files and choose &quot;Open With&quot; or &quot;Send To&quot; Eclipse.
+<p>发射器通过使用隐藏窗口与SWT对话。启动器和SWT都需要就此窗口的名称达成一致。这允许启动器找到已经运行的eclipse并告诉它打开文件。任何RCP应用程序都需要确保它们能够正常运行。
+</p>
+<p>发射器以其“官方名称”为基础。可以使用-name参数设置正式名称。如果未设置-name，则从启动器可执行文件派生官方名称，删除扩展名并将第一个字母大写：rcp.exe变为Rcp。
+</p>
+<p>SWT以使用Display.setAppName（）函数设置的值为基础。通常，这是由Workbench在创建显示时设置的，值是从产品扩展点获取的“appName”。
 </p>
 
-<h3>Talking to SWT</h3>
-
-<p>
-The launcher talks to SWT through the use of a hidden window. The launcher and SWT both need to agree on 
-the name of this window. This allows the launcher to find an already running eclipse and tell it to open 
-the file. Any RCP application will need to ensure they get this right for things to work.
+<h3>听SWT.OpenDocument事件</h3>
+<p>启动器与SWT通信以通知SWT关于打开一个或多个文件的请求。然后SWT可以触发SWT.OpenDocument事件。对于要利用此功能的RCP应用程序，它必须为SWT.OpenDocument事件注册一个侦听器。它应该在调用PlatformUI.createAndRunWorkbench之前注册此侦听器，以便在工作台开始运行事件循环之前侦听器就位。
 </p>
-<p>
-The launcher bases this on its &quot;official name&quot;. The official name can be set with the -name argument.
-If -name is not set, then the official name is derived from the launcher executable, the extension is removed
-and the first letter is capitalized: rcp.exe becomes Rcp.
-</p>
-<p>
-SWT bases this on the value set with the Display.setAppName() function. Normally, this is set by the
-Workbench when it creates the display and the value is the "appName" taken from the product extension point.
+<p>当启动画面仍处于运行状态时，事件循环将开始运行，因此事件可能在工作台准备好实际打开文件的编辑器之前到达。这意味着侦听器应该保存从OpenDocument事件中获取的文件路径，以便稍后可以打开它们。WorkbenchAdvisor.eventLoopIdle可以是检查已保存的打开文件事件的好地方。
 </p>
 
-<h3>Listening to SWT.OpenDocument events</h3>
-<p>
-The launcher communicates with SWT to inform SWT about a request to open one or more files.  SWT then
-can fire the SWT.OpenDocument event.  For an RCP application to take advantage of this it must register
-a listener for the SWT.OpenDocument event.  It should register this listener before calling
-PlatformUI.createAndRunWorkbench so that the listener is in place before the workbench starts running 
-the event loop.
-</p>
-<p>
-The event loop will start running while the splash screen is still up, so events may arrive before the 
-workbench is ready to actually open an editor for the file. This means that the listener should save 
-the file paths it gets from the OpenDocument events so they can be opened at some later time. 
-WorkbenchAdvisor.eventLoopIdle can be a good place to check for saved open file events.
-</p>
+<p>以下是执行此操作的示例RCP应用程序。首先是IApplication实现：</p>
+<pre>public class Application实现IApplication {public Object start（IApplicationContext context）{OpenDocumentEventProcessor openDocProcessor = new OpenDocumentEventProcessor（）;显示display = PlatformUI.createDisplay（）; display.addListener（SWT.OpenDocument，openDocProcessor）; try {int returnCode = PlatformUI.createAndRunWorkbench（display，new ApplicationWorkbenchAdvisor（openDocProcessor））; if（returnCode == PlatformUI.RETURN_RESTART）{return IApplication。EXIT_RESTART;返回IApplication。EXIT_OK; } finally {display.dispose（）; } ...}</pre>
 
-<p>
-Here is an example RCP application that does this.  First is the IApplication implementation:
-</p>
-<pre>public class Application implements IApplication {	
-
-	public Object start(IApplicationContext context) {
-		OpenDocumentEventProcessor openDocProcessor = 
-			new OpenDocumentEventProcessor();
-
-		Display display = PlatformUI.createDisplay();
-		display.addListener(SWT.OpenDocument, openDocProcessor);
-
-		try {
-			int returnCode = PlatformUI.createAndRunWorkbench(display, new 
-				ApplicationWorkbenchAdvisor(openDocProcessor));
-			if (returnCode == PlatformUI.RETURN_RESTART) {
-				return IApplication.EXIT_RESTART;
-			}
-			return IApplication.EXIT_OK;
-		} finally {
-			display.dispose();
-		}
-	}
-	...
-}</pre>
-
-<p>
-Next is an example SWT Listener that listens to the SWT.OpenDocument event:
-</p>
-<pre>public class OpenDocumentEventProcessor implements Listener {
-	private ArrayList&lt;String&gt; filesToOpen = new ArrayList&lt;String&gt;(1);
-	
-	public void handleEvent(Event event) {
-		if (event.text != null)
-			filesToOpen.add(event.text);
-	}
-
-	public void openFiles() {
-		if (filesToOpen.isEmpty())
-			return;
-
-		String[] filePaths = filesToOpen.toArray(
-			new String[filesToOpen.size()]);
-		filesToOpen.clear();
-		
-		for (String path : filePaths) {
-			// open the file path
-		}
-	}
-}</pre>
-<p>
-Finally we need a WorkbenchAdvisor that will open the files durying eventLoopIdle:
-</p>
-<pre>public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
-	private OpenDocumentEventProcessor openDocProcessor;
-
-	public ApplicationWorkbenchAdvisor(
-			OpenDocumentEventProcessor openDocProcessor) {
-		this.openDocProcessor = openDocProcessor;
-	}
-
-	...
-
-	public void eventLoopIdle(Display display) {
-		openDocProcessor.openFiles();
-		super.eventLoopIdle(display);
-	}
-}</pre>
-</BODY>
-</HTML>
+<p>接下来是一个示例SWT Listener，它监听SWT.OpenDocument事件：</p>
+<pre>public class OpenDocumentEventProcessor实现Listener {private ArrayList &lt;String&gt; filesToOpen = new ArrayList &lt;String&gt;（1）; public void handleEvent（Event event）{if（event.text！= null）filesToOpen.add（event.text）; public void openFiles（）{if（filesToOpen.isEmpty（））return; String [] filePaths = filesToOpen.toArray（new String [filesToOpen.size（）]）; filesToOpen.clear（）; for（String path：filePaths）{//打开文件路径}}}</pre>
+<p>最后，我们需要一个WorkbenchAdvisor，它将在eventLoopIdle中打开文件：</p>
+<pre>公共类ApplicationWorkbenchAdvisor扩展了WorkbenchAdvisor {private OpenDocumentEventProcessor openDocProcessor; public ApplicationWorkbenchAdvisor（OpenDocumentEventProcessor openDocProcessor）{this.openDocProcessor = openDocProcessor; } ...public void eventLoopIdle（显示显示）{openDocProcessor.openFiles（）; super.eventLoopIdle（显示器）; }}</pre>
+</body>
+</html>

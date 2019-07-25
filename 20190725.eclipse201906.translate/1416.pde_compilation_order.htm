@@ -1,52 +1,30 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-  <meta name="copyright"
- content="Copyright (c) IBM Corporation and others 2008, 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
-  <meta http-equiv="Content-Type"
- content="text/html; charset=ISO-8859-1">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
-  <title>Compilation Order and Parallelization</title>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+  <meta http-equiv="Content-Style-Type" content="text/css"></meta>
+  <link rel="STYLESHEET" href="../guide/book.css" type="text/css"></link>
+  <title>编译顺序和并行化</title>
 </head>
-<body>
-<h1>Compilation Order and Parallelization</h1>
-<p>By default, PDE/Build compiles plug-ins by delegating through the feature structure.  Features are visited depth first, the plug-ins within each feature are compiled in dependency-order (as determined by the OSGi resolver).</p>
-<p>This means that all dependencies of a given bundle must contained in the same feature, or in a feature that appears earlier in the depth-first traversal of the feature inclusion hierarchy.  This can make it difficult to organize your
-features.</p>
+<body dir="ltr">
+<h1>编译顺序和并行化</h1>
+<p>默认情况下，PDE / Build通过委派功能结构来编译插件。首先访问功能深度，每个功能中的插件按依赖顺序编译（由OSGi解析器确定）。</p>
+<p>这意味着给定包的所有依赖关系必须包含在同一要素中，或者包含在要素包含层次结构的深度优先遍历中较早出现的要素中。这可能会使您难以整理您的功能。</p>
 
-<h3>Flattening Dependencies</h3>
-<p>New in 3.5 is a builder property <b><tt>flattenDependencies</tt></b>.  Setting this property to true will cause PDE/Build to instead sort all plug-ins regardless accross feature boundaries.  PDE/Build will then generate a new build script
-<i>compile.&lt;feature&gt;.xml</i> which lists all plug-ins in order sorted by their dependencies.  This allows you to partition your bundles into different features according to their functionality without worrying about their inter-dependencies.</p>
+<h3>展平依赖关系</h3>
+<p>3.5中的新增属性是构建器属性<b><tt>flattenDependencies</tt></b> 。将此属性设置为true将导致PDE / Build对所有插件进行排序，而不管是否跨越功能边界。然后，PDE / Build将生成一个新的构建脚本<i>compile。&lt;feature&gt; .xml</i> ，它按顺序列出按顺序排序的所有插件。这允许您根据其功能将捆绑包划分为不同的功能，而不必担心它们的相互依赖性。</p>
 
-<h3>Parallel Compilation</h3>
-<p>If <tt>flattenDependencies</tt> is specified, then PDE/Build is then able to compile bundles in parallel.  It does this by partitioning the sorted list of bundles into groups where each group contains bundles that depend only on bundles in earlier groups.</p>
-<p>Each group is then wrapped in an Ant <tt>&lt;parallel&gt;</tt> task.  The following properties control the parallelization behaviour:</p>
+<h3>并行编译</h3>
+<p>如果指定了<tt>flattenDependencies</tt> ，那么PDE / Build就能够并行编译bundle。它通过将已排序的分发列表分组到组中来实现此目的，其中每个组包含仅依赖于先前组中的分发包的分组。</p>
+<p>然后将每个组包装在Ant <tt>&lt;parallel&gt;</tt>任务中。以下属性控制并行化行为：</p>
 		<table border="5" cellspacing="0" cellpadding="1" width="95%" align="center">
-			<tr><td><tt>parallelCompilation</tt></td><td>Set to <b><tt>true</tt></b> to enable parallel compilation. (Requires <tt>flattenDependencies=true</tt>)</td></tr>
-			<tr><td><tt>parallelThreadCount</tt></td><td>The maximum number of threads to use.  Default is 3.  Corresponds to <i>threadCount</i> on the ant parallel task.</td></tr>
-			<tr><td><tt>parallelThreadsPerProcessor</tt></td><td>The maximum number of threads to use per available processor.  Corresponds to <i>threadsPerProcessor</i> on the ant parallel task.</td></tr>
+			<tr><td><tt>parallelCompilation</tt></td><td>设置为<b><tt>true</tt></b>以启用并行编译。（需要<tt>flattenDependencies = true</tt> ）</td></tr>
+			<tr><td><tt>parallelThreadCount</tt></td><td>要使用的最大线程数。默认值为3。对应于ant并行任务的<i>threadCount</i> 。</td></tr>
+			<tr><td><tt>parallelThreadsPerProcessor</tt></td><td>每个可用处理器使用的最大线程数。对应于ant并行任务上的<i>threadsPerProcessor</i> 。</td></tr>
 		</table>
 		
-<p>The resulting compile script that gets generated then looks something like this:</p>
-<pre>
-  &lt;project name="Compile master" default="main"&gt;
-     &lt;target name="main"&gt;
-        &lt;parallel threadsPerProcessor='3'&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.osgi" target="build.jars"/&gt;
-        &lt;/parallel&gt;
-        &lt;parallel threadsPerProcessor='3'&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.equinox.common" target="build.jars"/&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.equinox.p2.jarprocessor" target="build.jars"/&gt;
-        &lt;/parallel&gt;
-        &lt;parallel threadsPerProcessor='3'&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.update.configurator" target="build.jars"/&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.equinox.simpleconfigurator" target="build.jars"/&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.equinox.frameworkadmin" target="build.jars"/&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.core.jobs" target="build.jars"/&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.core.databinding.observable" target="build.jars"/&gt;
-             &lt;ant antfile="build.xml" dir="plugins/org.eclipse.swt" target="build.jars"/&gt;
-             ...
+<p>生成的生成的编译脚本看起来像这样：</p>
+<pre>&lt;project name =“Compile master”default =“main”&gt; &lt;target name =“main”&gt; &lt;parallel threadsPerProcessor ='3'&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.osgi” target =“build.jars”/&gt; &lt;/ parallel&gt; &lt;parallel threadsPerProcessor ='3'&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.equinox.common”target =“build.jars” /&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.equinox.p2.jarprocessor”target =“build.jars”/&gt; &lt;/ parallel&gt; &lt;parallel threadsPerProcessor ='3'&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.update.configurator”target =“build.jars”/&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.equinox.simpleconfigurator” target =“build.jars”/&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.equinox.frameworkadmin”target =“build.jars”/&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.core.jobs”target =“build.jars”/&gt; &lt;ant antfile =“build.xml”dir =“plugins / org.eclipse.core.databinding.observable”target =“build。 jars“/&gt; &lt;ant antfile =”build.xml“dir =”plugins / org.eclipse.swt“target =”buil d.jars“/&gt; ......
 
 </pre>
 </body>

@@ -1,154 +1,56 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html lang="en">
-<HEAD>
+<html lang="zh-Hans" dir="ltr">
+<head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
-<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
 
-<LINK REL="STYLESHEET" HREF="../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<TITLE>
-Content assist
-</TITLE>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>内容辅助</title>
 
-<link rel="stylesheet" type="text/css" HREF="../book.css">
-</HEAD>
-<BODY BGCOLOR="#ffffff">
-<H2>Content assist</H2>
-<p>Content assist allows you to provide context sensitive content completion upon 
-  user request.&nbsp; This functionality is implemented by the platform text framework 
-  in <b><a href="../reference/api/org/eclipse/jface/text/contentassist/package-summary.html">org.eclipse.jface.text.contentassist</a></b>.&nbsp; 
-  Popup windows (infopops) are used to propose possible text choices to complete 
-  a phrase.&nbsp; The user can select these choices for insertion in the text.&nbsp; 
-  Content assist also supports contextual infopops for providing the user with 
-  information that is related to the current position in the document.&nbsp;</p>
-<p>Implementing content assist is
-optional.&nbsp; By default, <b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewerConfiguration.html">SourceViewerConfiguration</a>
-</b>does not install a content assistant since it does not know the
-document model used for a particular editor, and has no generic behavior for
-content assist.&nbsp;</p>
-<p>In order to implement content assist, your editor's source
-viewer configuration must be <a href="editors_sourceviewers.htm">configured</a>
-to define a content assistant.&nbsp; This is done in the Java editor example
-inside the <b>JavaSourceViewerConfiguration</b>.</p>
+<link rel="stylesheet" type="text/css" href="../book.css"></link>
+</head>
+<body bgcolor="#ffffff" dir="ltr">
+<h2>内容辅助</h2>
+<p>内容辅助允许您根据用户请求提供上下文相关内容。此功能由<b><a href="../reference/api/org/eclipse/jface/text/contentassist/package-summary.html">org.eclipse.jface.text.contentassist中</a></b>的平台文本框架实现。弹出窗口（infopops）用于提出可能的文本选择以完成短语。用户可以选择这些选项以插入文本中。内容辅助还支持上下文信息流，以向用户提供与文档中当前位置相关的信息。</p>
+<p>实现内容辅助是可选的。默认情况下， <b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewerConfiguration.html">SourceViewerConfiguration</a></b>不会安装内容助手，因为它不知道用于特定编辑器的文档模型，并且没有内容辅助的通用行为。</p>
+<p>为了实现内容辅助，必须<a href="editors_sourceviewers.htm">配置</a>编辑器的源查看器<a href="editors_sourceviewers.htm">配置</a>以定义内容助手。这是在<b>JavaSourceViewerConfiguration</b>内部的Java编辑器示例中<b>完成的</b> 。</p>
 
-<pre>public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
+<pre>public IContentAssistant getContentAssistant（ISourceViewer sourceViewer）{ContentAssistant assistant = new ContentAssistant（）; <b>assistant.setContentAssistProcessor（新的JavaCompletionProcessor（），IDocument。DEFAULT_CONTENT_TYPE）; assistant.setContentAssistProcessor（新的JavaDocCompletionProcessor（），JavaPartitionScanner。JAVA_DOC）;</b> ...回归助手; }</pre>
+<p>内容辅助行为在接口<a href="../reference/api/org/eclipse/jface/text/contentassist/IContentAssistant.html"><b>IContentAssistant中</b></a>定义。设置内容助手有点类似于设置语法突出显示。应为不同的文档内容类型配置不同的短语完成策略。完成策略使用<a href="../reference/api/org/eclipse/jface/text/contentassist/IContentAssistProcessor.html"><b>IContentAssistProcessor</b></a>实现。处理器提出完成并计算特定内容类型内的偏移的上下文信息。</p>
+<h3>内容辅助处理器</h3>
+<p>并非所有内容类型都需要内容帮助。在Java示例编辑器中，内容辅助处理器是为默认内容类型和javadoc提供的，但不适用于多行注释。让我们看看每个处理器。</p>
+<p><b>JavaCompletionProcessor</b>非常简单。它只能提出关键字作为完成候选人。关键字在字段<code>fgProposals</code>中定义，并且这些关键字始终被建议作为候选者：</p>
 
-	ContentAssistant assistant= new ContentAssistant();
-<b>	assistant.setContentAssistProcessor(new JavaCompletionProcessor(), IDocument.DEFAULT_CONTENT_TYPE);
-	assistant.setContentAssistProcessor(new JavaDocCompletionProcessor(), JavaPartitionScanner.JAVA_DOC);
-</b>
-	...
-	return assistant;
-}</pre>
-<p>Content assist behavior is defined in the interface <a href="../reference/api/org/eclipse/jface/text/contentassist/IContentAssistant.html"><b>IContentAssistant</b></a>.&nbsp;
-Setting up a content assistant is somewhat similar to setting up syntax
-highlighting.&nbsp; The assistant should be configured with different phrase completion strategies for different
-document content types.&nbsp; The completion strategies are implemented
-using&nbsp; <a href="../reference/api/org/eclipse/jface/text/contentassist/IContentAssistProcessor.html"><b>IContentAssistProcessor</b></a>.&nbsp;
-A processor proposes completions and computes context information for an offset
-within particular content type.</p>
-<h3>Content assist processors</h3>
-<p>Not all content types need to have content assistance.&nbsp; In the Java example 
-  editor, content assist processors are provided for the default content type 
-  and javadoc, but not for multi-line comments.&nbsp; Let's look at each of these 
-  processors.</p>
-<p>The <b>JavaCompletionProcessor</b> is quite simple.&nbsp; It can only propose
-keywords as completion candidates.&nbsp; The keywords are defined in a field,
-<code>fgProposals</code>, and these keywords are always proposed as the
-candidates:</p>
+<pre>public ICompletionProposal [] computeCompletionProposals（ITextViewer viewer，int documentOffset）{ICompletionProposal [] result = new ICompletionProposal [fgProposals.length]; for（int i = 0; i &lt;fgProposals.length; i ++）{IContextInformation info = new ContextInformation（fgProposals [i]，MessageFormat.format（JavaEditorMessages.getString（“CompletionProcessor。提案。ContextInfo.pattern“），new Object [] {fgProposals [i]}））; // $ NON-NLS-1 $ result [i] = new CompletionProposal（fgProposals [i]，documentOffset，0，fgProposals [i]。 length（），null，fgProposals [i]，info，MessageFormat.format（JavaEditorMessages.getString（“CompletionProcessor。Proposal.hoverinfo.pattern“），new Object [] {fgProposals [i]}））; // $ NON-NLS-1 $}返回结果;}</pre>
+<p><img src="images/javacontentassist.png" alt="关键字内容辅助" border="0"></p>
 
-<pre>public ICompletionProposal[] computeCompletionProposals(ITextViewer viewer, int documentOffset) {
-	ICompletionProposal[] result= new ICompletionProposal[fgProposals.length];
-	for (int i= 0; i &lt; fgProposals.length; i++) {
-		IContextInformation info= new ContextInformation(fgProposals[i], MessageFormat.format(JavaEditorMessages.getString(&quot;CompletionProcessor.Proposal.ContextInfo.pattern&quot;), new Object[] { fgProposals[i] })); //$NON-NLS-1$
-		result[i]= new CompletionProposal(fgProposals[i], documentOffset, 0, fgProposals[i].length(), null, fgProposals[i], info, MessageFormat.format(JavaEditorMessages.getString(&quot;CompletionProcessor.Proposal.hoverinfo.pattern&quot;), new Object[] { fgProposals[i]})); //$NON-NLS-1$
-	}
-	return result;
-}</pre>
-<p><img src="images/javacontentassist.png" alt="Keyword content assist" border="0"></p>
+<p>完成可以由用户请求触发，也可以在键入“（”或“。”字符时自动触发：</p>
 
-<p>Completion can be triggered by user request or can be automatically triggered
-when the &quot;(&quot; or &quot;.&quot; character is typed:</p>
-
-<pre>public char[] getCompletionProposalAutoActivationCharacters() {
-	return new char[] { '.', '(' };
-}</pre>
-<p>In addition to proposing completions, the <b>JavaCompletionProcessor</b> 
-defines context information that can be requested by the user.&nbsp; Context
-information includes a description of the pieces of information available in a
-given context and the detailed information message.&nbsp;&nbsp;</p>
-<p>In the Java editor example, the information is not really contextual.&nbsp; 
-  An array containing five similar context information objects is computed for the 
-  current offset when the user requests context info.&nbsp;All of these context 
-  information objects define a context that contains the five characters in front 
-  of the offset and the five after the offset. If any one of these five proposals is 
-  selected, the detailed information will appear near the cursor and will stay 
-  as long as the cursor is within the context of the five characters around the offset. 
+<pre>public char [] getCompletionProposalAutoActivationCharacters（）{return new char [] {'。'，'（'};}</pre>
+<p>除了提出完成之外， <b>JavaCompletionProcessor还</b>定义了用户可以请求的上下文信息。上下文信息包括对给定上下文中可用信息的描述和详细信息消息。</p>
+<p>在Java编辑器示例中，信息实际上不是上下文。当用户请求上下文信息时，为当前偏移计算包含五个类似上下文信息对象的数组。所有这些上下文信息对象都定义了一个上下文，其中包含偏移前面的五个字符和偏移后的五个字符。如果选择了这五个提议中的任何一个，则详细信息将出现在光标附近，并且只要光标位于偏移周围的五个字符的上下文中，它就会保留。
 </p>
 
-<pre>public IContextInformation[] computeContextInformation(ITextViewer viewer, int documentOffset) {
-	IContextInformation[] result= new IContextInformation[5];
-	for (int i= 0; i &lt; result.length; i++)
-		result[i]= new ContextInformation(
-			MessageFormat.format(JavaEditorMessages.getString(&quot;CompletionProcessor.ContextInfo.display.pattern&quot;), new Object[] { new Integer(i), new Integer(documentOffset) }),
-			MessageFormat.format(JavaEditorMessages.getString(&quot;CompletionProcessor.ContextInfo.value.pattern&quot;), new Object[] { new Integer(i), new Integer(documentOffset - 5), new Integer(documentOffset + 5)}));
-	return result;
-}</pre>
-<p><img src="images/javacontextassist.png" alt="Java context assist" border="0"></p>
-<p>&nbsp;</p>
-<p>This context information is shown automatically when the &quot;#&quot; character 
-  is typed:</p>
-<pre>public char[] getContextInformationAutoActivationCharacters() {
-	return new char[] { '#' };
-}</pre>
-<h3>Content assist configuration</h3>
-<p>The appearance and behavior of content assist can be configured using <a href="../reference/api/org/eclipse/jface/text/contentassist/IContentAssistant.html"><b>IContentAssistant</b></a>.&nbsp;
-For example, you can configure the auto activation time out, and the orientation
-and color of information popups.</p>
+<pre>public IContextInformation [] computeContextInformation（ITextViewer viewer，int documentOffset）{IContextInformation [] result = new IContextInformation [5]; for（int i = 0; i &lt;result.length; i ++）result [i] = new ContextInformation（MessageFormat.format（JavaEditorMessages.getString（“CompletionProcessor。ContextInfo.display.pattern“），new Object [] {new Integer（i），new Integer（documentOffset）}），MessageFormat.format（JavaEditorMessages.getString（”CompletionProcessor。ContextInfo.value.pattern“），new Object [] {new Integer（i），new Integer（documentOffset  -  5），new Integer（documentOffset + 5）}））; return result;}</pre>
+<p><img src="images/javacontextassist.png" alt="Java上下文辅助" border="0"></p>
+<p> </p>
+<p>键入“＃”字符时会自动显示此上下文信息：</p>
+<pre>public char [] getContextInformationAutoActivationCharacters（）{return new char [] {'＃'}; }</pre>
+<h3>内容辅助配置</h3>
+<p>可以使用<a href="../reference/api/org/eclipse/jface/text/contentassist/IContentAssistant.html"><b>IContentAssistant</b></a>配置内容辅助的外观和行为。例如，您可以配置自动激活超时，以及信息弹出窗口的方向和颜色。</p>
 
-<pre>public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
+<pre>public IContentAssistant getContentAssistant（ISourceViewer sourceViewer）{ContentAssistant assistant = new ContentAssistant（）; ...assistant.enableAutoActivation（真）; assistant.setAutoActivationDelay（500）; assistant.setProposalPopupOrientation（了IContentAssistant。PROPOSAL_OVERLAY）; assistant.setContextInformationPopupOrientation（了IContentAssistant。CONTEXT_INFO_ABOVE）; assistant.setContextInformationPopupBackground（JavaEditorEnvironment.getJavaColorProvider（）。getColor（new RGB（150,150,0）））;回归助手; }</pre>
 
-	ContentAssistant assistant= new ContentAssistant();
-	...
-	assistant.enableAutoActivation(true);
-	assistant.setAutoActivationDelay(500);
-	assistant.setProposalPopupOrientation(IContentAssistant.PROPOSAL_OVERLAY);
-	assistant.setContextInformationPopupOrientation(IContentAssistant.CONTEXT_INFO_ABOVE);
-	assistant.setContextInformationPopupBackground(JavaEditorEnvironment.getJavaColorProvider().getColor(new RGB(150, 150, 0)));
-
-	return assistant;
-}</pre>
-
-<h3>Show the content assist action in the menu</h3>
-<p>
-If the content assistant is correctly supplied as mentioned above then the key binding (<strong>Ctrl+Space</strong> per default) will work out of the box.
-To make the action appear in the main menu the editor action bar contributor has to be extended:</p>
-<pre>
-...
-private RetargetTextEditorAction fContentAssist;
-
-public MyEditorActionContributor() {
-	fContentAssist= new RetargetTextEditorAction();
-	String commandId= ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS;
-	fContentAssist.setActionDefinitionId(commandId);
-}
-
-public void contributeToMenu(IMenuManager menu) {
-	IMenuManager editMenu= menu.findMenuUsingPath(M_EDIT);
-	editMenu.appendToGroup(MB_ADDITIONS, fContentAssist);
-}
-
-public void setActiveEditor(IEditorPart part) {
-	IAction editorAction= getAction(part, ITextEditorActionConstants.CONTENT_ASSIST);
-	fContentAssist.setAction(editorAction);
-}
-...
+<h3>在菜单中显示内容辅助操作</h3>
+<p>如果如上所述正确提供内容助手，那么键绑定（默认为<strong>Ctrl + Space</strong> ）将开箱即用。要使操作显示在主菜单中，必须扩展编辑器操作栏贡献者：</p>
+<pre>...private RetargetTextEditorAction fContentAssist; public MyEditorActionContributor（）{fContentAssist = new RetargetTextEditorAction（）; String commandId = ITextEditorActionDefinitionIds。CONTENT_ASSIST_PROPOSALS; fContentAssist.setActionDefinitionId（commandId）; public void contribToMenu（IMenuManager菜单）{IMenuManager editMenu = menu.findMenuUsingPath（M_EDIT）; editMenu.appendToGroup（MB_ADDITIONS，fContentAssist）; public void setActiveEditor（IEditorPart part）{IAction editorAction = getAction（part，ITextEditorActionConstants。CONTENT_ASSIST）; fContentAssist.setAction（editorAction）; } ...
 </pre>
 
-<p>&nbsp;</p>
+<p> </p>
 
 
 
-</BODY>
-</HTML>
+</body>
+</html>
