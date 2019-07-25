@@ -1,192 +1,116 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="STYLESHEET" href="../../book.css" charset="ISO-8859-1" type="text/css">
-<title>Incompatibilities between Eclipse 3.7 and 4.2</title>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>Eclipse 3.7和4.2之间的不兼容性</title>
 </head>
 
-<body>
+<body dir="ltr">
 
-<h1>Incompatibilities between Eclipse 3.7 and 4.2</h1>
+<h1>Eclipse 3.7和4.2之间的不兼容性</h1>
 
-<p>
-  Eclipse changed in incompatible ways between 3.7 and 4.2 in ways that affect 
-  plug-ins. The following entries describe the areas that changed and provide 
-  instructions for migrating 3.7 plug-ins to 4.2. Note that you only need to look 
-  here if you are experiencing problems running your 3.7 plug-in on 4.2.
+<p>Eclipse以不同的方式在3.7和4.2之间以影响插件的方式进行了更改。以下条目描述了已更改的区域，并提供了将3.7插件迁移到4.2的说明。请注意，如果您在4.2上运行3.7插件时遇到问题，则只需查看此处。
 </p>
 
 <ol>
-	<li><a href="#runtime-auth">Platform keyring implementation removed</a></li>
-	<li><a href="#2x-compatibility-removed">Compatibility bundles for Eclipse 1.0-2.1 removed</a></li>
-	<li><a href="#help-appserver">Bundle org.eclipse.help.appserver removed</a></li>
-	<li><a href="#concurrent">Bundle org.eclipse.equinox.concurrent no longer in Platform feature</a></li>
-	<li><a href="#update-manager">Update Manager bundles removed</a></li>
-	<li><a href="#presentationAPI">Presentation API no longer functional</a></li>
-	<li><a href="#window-advisor">Workbench window advisor can no longer customize window creation</a></li>
-	<li><a href="#jetty">Servlet 3.0 and Jetty 8</a></li>
-	<li><a href="#osgiconsole">Equinox OSGi console no longer built into the Equinox Framework</a></li>
+	<li><a href="#runtime-auth">平台密钥环实现已删除</a></li>
+	<li><a href="#2x-compatibility-removed">删除了Eclipse 1.0-2.1的兼容性捆绑包</a></li>
+	<li><a href="#help-appserver">删除了捆绑org.eclipse.help.appserver</a></li>
+	<li><a href="#concurrent">在平台功能中不再捆绑org.eclipse.equinox.concurrent</a></li>
+	<li><a href="#update-manager">已删除Update Manager捆绑包</a></li>
+	<li><a href="#presentationAPI">Presentation API不再起作用</a></li>
+	<li><a href="#window-advisor">Workbench窗口顾问程序无法再自定义窗口创建</a></li>
+	<li><a href="#jetty">Servlet 3.0和Jetty 8</a></li>
+	<li><a href="#osgiconsole">Equinox OSGi控制台不再内置于Equinox Framework中</a></li>
 </ol>
 
 <hr>
 <!-- ############################################## -->
-<h2>1. <a name="runtime-auth">Platform keyring implementation removed</a></h2>
-<p><strong>What is affected:</strong> Clients that call the following methods for
-storing and retrieving passwords in the platform keyring file:
-<ul>
-<li>Platform#addAuthorizationInfo</li>
-<li>Platform#getAuthorizationInfo</li>
-<li>Platform#flushAuthorizationInfo</li>
-<li>Platform#addProtectionSpace</li>
-<li>Platform#getProtectionSpace</li>
+<h2>1。<a name="runtime-auth">平台密钥环实现已删除</a></h2>
+<p><strong>受影响的内容：</strong>调用以下方法在平台密钥环文件中存储和检索密码的客户端：</p><ul>
+<li>平台＃addAuthorizationInfo</li>
+<li>平台＃getAuthorizationInfo</li>
+<li>平台＃flushAuthorizationInfo</li>
+<li>平台＃addProtectionSpace</li>
+<li>平台＃getProtectionSpace</li>
 </ul>
+
+<p><strong>描述：</strong>这些API在Eclipse 3.4的<tt>org.eclipse.equinox.security.storage</tt>包中被弃用并被新API取代。这些API使用自定义加密算法，这会导致组织分发和导出基于Eclipse的产品出现问题。由于依赖于用户从未设置的命令行提供的密码，该系统本身也存在缺陷。在Eclipse 4.2中，这个有问题的实现已被删除。API保持不变，并在使用时记录异常。
 </p>
-<p><strong>Description:</strong> These APIs were deprecated and superseded by new
-API in the <tt>org.eclipse.equinox.security.storage</tt> package in Eclipse 3.4.
-These APIs made use of a custom encryption algorithm that caused problems
-for organizations distributing and exporting Eclipse-based products. The system was
-also inherently flawed due to relying on a password supplied on the command line
-that users never set. In Eclipse 4.2 this problematic implementation has been removed.
-The API remains in place and will log an exception when used.
-</p>
-<p><strong>Action required:</strong> Clients that call these methods should instead
-use the corresponding Equinox security APIs for storing authentication information instead.
-Refer to the deprecation comment on each method for precise migration instructions.
+<p><strong>需要采取的措施：</strong>调用这些方法的客户端应该使用相应的Equinox安全API来存储身份验证信息。有关精确的迁移说明，请参阅每种方法的弃用注释。
 </p>
 <!-- ############################################## -->
-<h2>2. <a name="2x-compatibility-removed">Compatibility bundles for Eclipse 1.0-2.1 removed</a></h2>
-<p><strong>What is affected:</strong>Bundles built for Eclipse 1.0 to 2.1 that have
-not been compiled in Eclipse 3.0 or later. Also, any bundle or feature that requires
-or includes a removed bundle.</p>
-<p><strong>Description:</strong> The following bundles provided implementation
-of compatibility mechanisms to support bundles compiled against Eclipse prior to version 3.0.
-These bundles have not contained any API since the 3.0 release, and no API is
-changed or removed as a consequence of these bundles being removed.
-<ul>
+<h2>2。<a name="2x-compatibility-removed">删除了Eclipse 1.0-2.1的兼容性捆绑包</a></h2>
+<p><strong>受影响的内容：</strong>为Eclipse 1.0或2.1构建的捆绑包尚未在Eclipse 3.0或更高版本中编译。此外，任何需要或包含已删除捆绑包的捆绑包或功能。</p>
+<p><strong>描述：</strong>以下bundle提供了兼容机制的实现，以支持在3.0版之前针对Eclipse编译的bundle。自3.0版本以来，这些捆绑包未包含任何API，并且由于删除了这些捆绑包，因此不会更改或删除API。
+</p><ul>
 <li>org.eclipse.core.boot</li>
 <li>org.eclipse.ui.presentations.r21</li>
 <li>org.eclipse.ui.workbench.compatibility</li>
 </ul>
-</p>
-<p><strong>Action required:</strong> Clients with a bundle or feature including
-or requiring any of these bundles should remove the requirement.
-</p>
-<!-- ############################################## -->
-<h2>3. <a name="help-appserver">Bundle org.eclipse.help.appserver removed</a></h2>
-<p><strong>What is affected:</strong>Any bundle or feature that requires or includes 
-the bundle <tt>org.eclipse.help.appserver</tt>.
-</p>
-<p><strong>Description:</strong> This bundle provided implementation of a Tomcat-based
-web server application for the Eclipse help system. This was replaced in Eclipse 3.3 with
-a Jetty-based application server. This bundle defines no API and has been unused
-in the Eclipse platform for many releases.
-</p>
-<p><strong>Action required:</strong> Clients with a bundle or feature including
-or requiring the bundle <tt>org.eclipse.help.appserver</tt> should remove the requirement.
+
+<p><strong>需要采取的措施：</strong>具有捆绑或功能（包括或要求任何捆绑包）的客户端应删除该要求。
 </p>
 <!-- ############################################## -->
-<h2>4. <a name="concurrent">Bundle org.eclipse.equinox.concurrent no longer in Platform feature</a></h2>
-<p><strong>What is affected:</strong>Any bundle or feature that requires or includes 
-the bundle <tt>org.eclipse.equinox.concurrent</tt>.
+<h2>3。<a name="help-appserver">删除了捆绑org.eclipse.help.appserver</a></h2>
+<p><strong>受影响的是：</strong>任何需要或包含bundle <tt>org.eclipse.help.appserver的</tt> bundle或feature。
 </p>
-<p><strong>Description:</strong>This bundle was never explicitly included in the Eclipse
-platform, but was installed due to an optional dependency from one of the platform's bundles.
-Due to a change in how optional dependencies are treated at install-time, this bundle
-is no longer included in the Eclipse platform. The bundle is still included in the Equinox SDK,
-and is included in both the Eclipse project and Juno release train central repositories.
+<p><strong>描述：</strong>该捆绑包为Eclipse帮助系统提供了基于Tomcat的Web服务器应用程序的实现。这在Eclipse 3.3中被替换为基于Jetty的应用程序服务器。此捆绑包不定义API，并且在许多版本的Eclipse平台中未使用。
 </p>
-<p><strong>Action required:</strong> Clients with a feature depending on
-but not directly including the bundle <tt>org.eclipse.equinox.concurrent</tt>
-will need to add a direct dependency if they need it.
+<p><strong>需要采取的措施：</strong>具有包或要求包<tt>org.eclipse.help.appserver</tt>的包或功能的客户端应删除该要求。
 </p>
 <!-- ############################################## -->
-<h2>5. <a name="update-manager">Update Manager bundles removed</a></h2>
-<p><strong>What is affected:</strong> Clients that rely on the provisional API
-or implementation found in the following bundles:
-<ul>
+<h2>4。<a name="concurrent">在平台功能中不再捆绑org.eclipse.equinox.concurrent</a></h2>
+<p><strong>受影响的内容：</strong>任何需要或包含bundle <tt>org.eclipse.equinox.concurrent的</tt> bundle或feature。
+</p>
+<p><strong>说明：</strong>此捆绑包从未显式包含在Eclipse平台中，但由于来自其中一个平台捆绑包的可选依赖项而安装。由于安装时处理可选依赖项的方式发生了变化，因此Eclipse平台中不再包含此包。该捆绑包仍包含在Equinox SDK中，并包含在Eclipse项目和Juno发行版中央存储库中。
+</p>
+<p><strong>需要采取的措施：</strong>具有依赖但不直接包含<tt>org.eclipse.equinox.concurrent</tt>的功能的客户端需要在需要时添加直接依赖项。
+</p>
+<!-- ############################################## -->
+<h2>5。<a name="update-manager">已删除Update Manager捆绑包</a></h2>
+<p><strong>受影响的内容：</strong>依赖以下捆绑包中的临时API或实现的客户端：</p><ul>
 <li>org.eclipse.update.core</li>
 <li>org.eclipse.update.core.win32</li>
 <li>org.eclipse.update.scheduler</li>
 <li>org.eclipse.update.ui</li>
 </ul>
+
+<p><strong>描述：</strong>这些临时API已被不推荐使用，并被Eclipse 3.4中Equinox p2提供的新API取代。这些捆绑包已从4.2中的Eclipse SDK中删除，但如果任何应用程序或产品需要它们，则仍然可用并与4.2完全兼容。
 </p>
-<p><strong>Description:</strong> These provisional APIs were deprecated and 
-superseded by new API provided by Equinox p2 in Eclipse 3.4. These bundles have
-been removed from the Eclipse SDK in 4.2, but remain available and fully compatible
-with 4.2 should any application or product require them.
-</p>
-<p><strong>Action required:</strong> Clients that rely on the provisional
-API or implementation in these bundles should migrate to the functionality and API
-provided by Equinox p2. Alternatively, products can install these bundles from the
-Eclipse 3.8 repository and they will continue to function in Eclipse 4.2-based applications.
+<p><strong>需要采取的措施：</strong>依赖这些捆绑包中的临时API或实现的客户端应迁移到Equinox p2提供的功能和API。或者，产品可以从Eclipse 3.8存储库安装这些软件包，它们将继续在基于Eclipse 4.2的应用程序中运行。
 </p>
 
 <!-- ############################################## -->
-<h2>6. <a name="presentationAPI">Presentation API no longer functional</a></h2>
-<p><strong>What is affected:</strong> Clients that the used the API in package
-<tt>org.eclipse.ui.presentations</tt>, or the <tt>org.eclipse.ui.presentationFactories</tt>
-extension point.
+<h2>6。<a name="presentationAPI">Presentation API不再起作用</a></h2>
+<p><strong>受影响的是：</strong>在<tt>org.eclipse.ui.presentations</tt>包中使用API的客户端，或<tt>org.eclipse.ui.presentationFactories</tt>扩展点。
 </p>
-<p><strong>Description:</strong> The workbench <i>presentation API</i> allowed
-plug-ins to override certain aspects of the workbench appearance, such as the shape
-of view and editor tabs. This mechanism is fundamentally incompatible with the pluggable
-rendering and declarative styling systems in Eclipse 4.2, which offer applications complete
-control over all aspects of the workbench layout and style. 
+<p><strong>描述：</strong>工作台<i>演示API</i>允许插件覆盖工作台外观的某些方面，例如视图形状和编辑器选项卡。这种机制基本上与Eclipse 4.2中的可插入呈现和声明性样式系统不兼容，后者为应用程序提供了对工作台布局和样式的所有方面的完全控制。
 </p>
-<p><strong>Action required:</strong> Using the presentation API
-and extension point to customize the workbench appearance will no longer have any
-effect. Clients are encouraged to try out the provisional new API in Eclipse 4.2 for
-performing equivalent workbench customization. Complete rendering control can
-be achieved by supplying an <tt>org.eclipse.e4.ui.workbench.IPresentationEngine</tt>.
-Customization of fonts, spacing, and color can be achieved by supplying custom
-CSS style sheets via the <tt>org.eclipse.e4.ui.css.swt.theme</tt> extension point.
-For more details, see the <a href="http://wiki.eclipse.org/Eclipse4/RCP/CSS">Eclipse 4 CSS Styling</a> wiki page.
+<p><strong>需要采取的措施：</strong>使用演示文稿API和扩展点来自定义工作台外观将不再有任何效果。我们鼓励客户试用Eclipse 4.2中的临时新API来执行等效的工作台自定义。可以通过提供<tt>org.eclipse.e4.ui.workbench来实现完整的渲染控制<tt>。IPresentationEngine</tt> 。可以通过<tt>org.eclipse.e4.ui.css.swt.theme</tt>扩展点提供自定义CSS样式表来实现字体，间距和颜色的自定义。有关更多详细信息，请参阅<a href="http://wiki.eclipse.org/Eclipse4/RCP/CSS">Eclipse 4 CSS样式</a>维基页面。
 </p>
 
 <!-- ############################################## -->
-<h2>7. <a name="window-advisor">Workbench window advisor can no longer customize window creation</a></h2>
-<p><strong>What is affected:</strong> Clients that implemented the API methods
-<tt>createWindowContents</tt> or <tt>createEmptyWindowContents</tt> on subclasses
-of <tt>org.eclipse.ui.application.WorkbenchWindowAdvisor</tt>.
+<h2>7。<a name="window-advisor">Workbench窗口顾问程序无法再自定义窗口创建</a></h2>
+<p><strong>受影响的内容：</strong>在<tt>org.eclipse.ui.application的子类上实现API方法<tt>createWindowContents</tt>或<tt>createEmptyWindowContents的</tt>客户端<tt>。WorkbenchWindowAdvisor</tt> 。
 </p>
-<p><strong>Description:</strong> The workbench window advisor provided these methods
-for rich client applications to build customized workbench windows. This is achieved in 
-Eclipse 4.2 by defining a customized application model, so these workbench window
-advisor methods are no longer used. Client implementations of these methods will
-no longer be called, and therefore no longer have any effect.
+<p><strong>描述：</strong>工作台窗口顾问程序为富客户端应用程序提供了这些方法来构建自定义工作台窗口。这是通过定义自定义应用程序模型在Eclipse 4.2中实现的，因此不再使用这些工作台窗口顾问方法。将不再调用这些方法的客户端实现，因此不再有任何影响。
 </p>
-<p><strong>Action required:</strong> Clients that still customize many aspects
-of the workbench window layout by invoking the <tt>set*</tt> methods on
-<tt>org.eclipse.ui.application.IWorkbenchWindowConfigurer</tt>. Complete customization
-of the workbench window elements can be achieved by defining a custom workbench
-model for the application.
-For more details, see the <a href="http://wiki.eclipse.org/Eclipse4/RCP#Contributing_to_the_Model">Eclipse 4 workbench model</a> wiki page.
+<p><strong>需要采取的措施：</strong>通过调用<tt>org.eclipse.ui.application上的<tt>set *</tt>方法，仍然可以自定义工作台窗口布局的许多方面的客户端<tt>。IWorkbenchWindowConfigurer</tt> 。通过为应用程序定义自定义工作台模型，可以实现工作台窗口元素的完全自定义。有关更多详细信息，请参阅<a href="http://wiki.eclipse.org/Eclipse4/RCP#Contributing_to_the_Model">Eclipse 4工作台模型</a> Wiki页面。
 </p>
 
 <!-- ############################################## -->
-<h2>8. <a name="jetty">Servlet 3.0 and Jetty 8</a></h2>
-<p><strong>What is affected:</strong> Clients that relied on the Servlet and Jetty implementations provided
-by the platform.
+<h2>8。<a name="jetty">Servlet 3.0和Jetty 8</a></h2>
+<p><strong>受影响的是：</strong>依赖于平台提供的Servlet和Jetty实现的客户端。
 </p>
-<p><strong>Description:</strong>
-For the Juno release, Equinox will no longer support the use of older
-Jetty implementations and we are no longer shipping Jetty 6.  The
-Equinox HTTP service implementation will no longer work with the
-Servlet 2.5 and JSP 2.1 APIs.  Also note that the 
-Jasper and expresson language implementation bundles
-have changed in order to support the Servlet 3.0 and JSP 2.2 
-specifications.  The following bundles have been removed:
-<ul>
+<p><strong>描述：</strong>对于Juno版本，Equinox将不再支持使用旧的Jetty实现，我们不再提供Jetty 6。Equinox HTTP服务实现将不再适用于Servlet 2.5和JSP 2.1 API。另请注意，Jasper和expresson语言实现包已更改，以支持Servlet 3.0和JSP 2.2规范。以下捆绑包已被删除：</p><ul>
   <li>org.apache.jasper</li>
   <li>org.apache.commons.el</li>
   <li>org.mortbay.jetty.server</li>
   <li>org.mortbay.jetty.util</li>
-</ul>
-These have been replaced with the following to support Servlet 3.0 and JSP 2.2:
-<ul>
+</ul>这些已被替换为以下以支持Servlet 3.0和JSP 2.2：<ul>
   <li>org.eclipse.jetty.continuation</li>
   <li>org.eclipse.jetty.http</li>
   <li>org.eclipse.jetty.io</li>
@@ -198,36 +122,17 @@ These have been replaced with the following to support Servlet 3.0 and JSP 2.2:
   <li>org.apache.jasper.glassfish</li>
   <li>com.sun.el</li>
 </ul>
-</p>
-<p><strong>Action required:</strong> Clients relying on old Servlet and JSP specifications,
-or directly requiring old Jetty 6 packages and bundles, must migrate to the new Servlet 3.0 specification,
-and Jetty 8.
+
+<p><strong>需要采取的措施：</strong>依赖旧的Servlet和JSP规范，或直接需要旧的Jetty 6软件包和软件包的客户端必须迁移到新的Servlet 3.0规范和Jetty 8。
 </p>
 
 <!-- ############################################## -->
-<h2>9. <a name="osgiconsole">Equinox OSGi console no longer built into the Equinox Framework</a></h2>
-<p><strong>What is affected:</strong>Any product or launch configuration that supports the 
-Equinox -console command line option.
+<h2>9。<a name="osgiconsole">Equinox OSGi控制台不再内置于Equinox Framework中</a></h2>
+<p><strong>受影响的内容：</strong>支持Equinox -console命令行选项的任何产品或启动配置。
 </p>
-<p><strong>Description:</strong>
-The new Equinox console shell is based on Apache Felix Gogo shell and provides features
-upon it. It is decoupled from the framework itself.  The built-in OSGi console
-provided by the Equinox framework (org.eclipse.osgi) is disabled by default.  The
-new Equinox console is now provided by bundles which must be installed in order
-to support the -console option.  The new console supports completely and 
-transparently the traditional Equinox-style commands, and also supports the 
-new Gogo-style commands. It also provides telnet and ssh connectivity.
+<p><strong>描述：</strong>新的Equinox控制台外壳基于Apache Felix Gogo外壳，并提供了功能。它与框架本身分离。默认情况下，Equinox框架（org.eclipse.osgi）提供的内置OSGi控制台处于禁用状态。新的Equinox控制台现在由捆绑包提供，必须安装捆绑包才能支持-console选项。新控制台完全透明地支持传统的Equinox风格命令，并且还支持新的Gogo风格命令。它还提供telnet和ssh连接。
 </p>
-<p><strong>Action required:</strong>
-In order to use Equinox with the new shell, it is necessary to install along with
-the framework also the console bundle itself - org.eclipse.equinox.console and
-the three Gogo bundles - org.apache.felix.gogo.runtime,
-org.apache.felix.gogo.command, org.apache.felix.gogo.shell.
-A detailed documentation for the new Equinox console is available at
-<a href="../../guide/console_shell.htm"><b>Console Shell</b></a>.
-The old built-in Equinox OSGi console shell may be enabled by specifying
-the following configuration property:
-<pre>  osgi.console.enable.builtin=true</pre>
-</p>
+<p><strong>需要采取的措施：</strong>为了将Equinox与新shell一起使用，有必要与框架一起安装控制台软件包本身 -  org.eclipse.equinox.console和三个Gogo软件包 -  org.apache.felix.gogo.runtime ，org.apache.felix.gogo.command，org.apache.felix.gogo.shell。<a href="../../guide/console_shell.htm"><b>Console Shell</b></a>提供了有关新Equinox控制台的详细文档。可以通过指定以下配置属性来启用旧的内置Equinox OSGi控制台shell：</p><pre>osgi.console.enable.builtin =真</pre>
+
 </body>
 </html>

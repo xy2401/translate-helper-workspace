@@ -1,137 +1,46 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  <title>Scopes in RAP</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+  <meta name="copyright" content="Copyright (c) 2012, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <title>RAP中的范围</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
 </head>
-<body>
+<body dir="ltr">
 
-  <h1>Scopes in RAP</h1>
-  <p>
-    While RAP inherits many traits of a desktop application framework from SWT/RCP, it is in fact
-    a multi-user, client-server based web framework. This means there are some significant
-    architectural differences that need to be considered when building RAP applications.
+  <h1>RAP中的范围</h1>
+  <p>虽然RAP从SWT / RCP继承了桌面应用程序框架的许多特性，但它实际上是一个基于客户端服务器的多用户Web框架。这意味着在构建RAP应用程序时需要考虑一些重要的体系结构差异。
   </p>
-  <p>
-    In a desktop environment, an instance of an application normally serves only a <b>single user</b>,
-    runs in its <b>own Java VM</b> instance, and the operating system usually provides a user-specific
-    <b>storage on the file system</b>. The <b>UI is rendered on the same machine</b> as
-    the application runs on, and when the user exits, the <b>application is terminated</b>.
-    For RAP applications, these things work differently.
+  <p>在桌面环境中，应用程序的实例通常仅服务于<b>单个用户</b> ，在其<b>自己的Java VM</b>实例中运行，并且操作系统通常<b>在文件系统上</b>提供用户特定的<b>存储</b> 。<b>UI在</b>运行应用程序<b>的同一台机器上呈现</b> ，当用户退出时， <b>应用程序终止</b> 。对于RAP应用程序，这些工作方式不同。
   </p>
-  <p>
-    A RAP application does not own the VM. It runs on a server and <b>shares the VM</b> with the
-    servlet container, other applications, maybe even other RAP applications.
-    There are <b>multiple users</b> accessing an application, each one with a <b>separate UI
-    connected via HTTP</b>, but all sharing
-    the same classes.
-    Moreover, a RAP application runs for a very long time.
-    When a user logs in, the application is already running, and it will <b>continue to run when
-    the user leaves</b>.
-  </p><p>
-    For these reasons, it is necessary to distinguish various scopes and threads in RAP.
-  </p>
+  <p>RAP应用程序不拥有VM。它在服务器上运行，并与servlet容器，其他应用程序，甚至其他RAP应用程序<b>共享VM</b> 。有<b>多个用户</b>访问应用程序，每个<b>用户</b>都有一个<b>通过HTTP连接</b>的<b>单独UI</b> ，但都共享相同的类。此外，RAP应用程序运行很长时间。当用户登录时，应用程序已在运行，并且<b>当用户离开时</b>它将<b>继续运行</b> 。
+  </p><p>由于这些原因，有必要区分RAP中的各种范围和线程。</p>
 
-  <h2 id="application">ApplicationContext</h2>
-  <p>
-    There can be more than one RAP application running at the same time, e.g. in different web
-    applications, or even on different servlet containers listening on different network ports.
-    Every <a href="application-configuration.html">application</a> has it's own set of entry points,
-    registered resources and service handlers.
-    All these things have <em>application scope</em> and are kept in the
-    <em><a href="../reference/api/org/eclipse/rap/rwt/service/ApplicationContext.html">ApplicationContext</a></em>.
-    The current instance of the application context can be obtained via
-    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getApplicationContext--">RWT.getApplicationContext()</a></em>.
+  <h2 id="application">的ApplicationContext</h2>
+  <p>可以有多个RAP应用程序同时运行，例如在不同的Web应用程序中运行，甚至可以在不同的网络端口上侦听不同的servlet容器。每个<a href="application-configuration.html">应用程序</a>都有自己的入口点，注册资源和服务处理程序。所有这些东西都有<em>应用范围</em> ，并保存在<em><a href="../reference/api/org/eclipse/rap/rwt/service/ApplicationContext.html">ApplicationContext中</a></em> 。可以通过<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getApplicationContext--">RWT.getApplicationContext（）</a></em>获取应用程序上下文的当前实例。
   </p>
-  <p>
-    The ApplicationContext can be used to acquire application-scoped instances of framework
-    services such as the ResourceManager.
-    An application can also use the ApplicationContext to
-    <a href="data-stores.html">store any data</a> as attributes.
-    Objects stored in the application context have application scope, i.e. they are accessible
-    from everywhere in the application, but not from another application.
+  <p>ApplicationContext可用于获取框架服务的应用程序范围实例，例如ResourceManager。应用程序还可以使用ApplicationContext <a href="data-stores.html">将任何数据存储</a>为属性。存储在应用程序上下文中的对象具有应用程序范围，即它们可以从应用程序的任何位置访问，但不能从其他应用程序访
   </p>
-  <p>
-    The application context lives as long as the application runs
-    on the server, even if there are currently no clients connected. When the application is
-    stopped (e.g. when the servlet context is destroyed), all data in this scope is lost.
-   The application context is <b>thread safe</b>, it can be accessed concurrently from different threads.
-   However, an instance of the application context can only be acquired from the context of a
-   UI Session (see <a href="threads.html">Threads</a>).
+  <p>只要应用程序在服务器上运行，应用程序上下文就会存在，即使当前没有连接客户端也是如此。当应用程序停止时（例如，当servlet上下文被销毁时），此范围内的所有数据都将丢失。应用程序上下文是<b>线程安全的</b> ，可以从不同的线程同时访问它。但是，应用程序上下文的实例只能从UI会话的上下文中获取（请参阅“ <a href="threads.html">线程”</a> ）。
   </p>
 
   <h2 id="uisession">UISession</h2>
-  <p>
-    A UI session in RAP spans exactly one execution of an
-    <em><a href="../reference/api/org/eclipse/rap/rwt/application/EntryPoint.html">EntryPoint</a></em>.
-    It is created when the user connects to the server, and usually ends with a refresh or timeout.
-    While UI sessions are built on top of the servlet container's session management,
-    they are not identical to the underlying HTTP session.
-    For example, when the browser is refreshed (usually by hitting <em>F5</em>) to start over,
-    the user still has the same HTTP session, but a fresh UI session.
+  <p>RAP中的UI会话恰好只执行一次<em><a href="../reference/api/org/eclipse/rap/rwt/application/EntryPoint.html">EntryPoint</a></em>执行。它是在用户连接到服务器时创建的，通常以刷新或超时结束。虽然UI会话建立在servlet容器的会话管理之上，但它们与底层HTTP会话不同。例如，当浏览器刷新（通常通过点击<em>F5</em> ）重新开始时，用户仍然具有相同的HTTP会话，但是具有新的UI会话。
   </p>
-  <p>
-    A UI session is represented by an
-    <em><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html">UISession</a></em>
-    instance that can be obtained by calling
-    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession()</a></em>.
-    It provides access to session details such as the
-    <a href="client.html">client object</a>, and also to the underlying
-    <a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#getHttpSession--">HTTP session</a>.
-    Similar to the ApplicationContext, the UISession it can be used to
-    <a href="data-stores.html">store session-scoped data</a> as attributes.
-    Often, what would be a singleton or static field in a desktop application, requires
-    UI Session scope in RAP.
+  <p>UI会话由<em><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html">UISession</a></em>实例表示，可以通过调用<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession（）获得</a></em> 。它提供对会话详细信息（如<a href="client.html">客户端对象</a> ）以及底层<a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#getHttpSession--">HTTP会话的访问</a> 。与ApplicationContext类似，UISession可用于将会话<a href="data-stores.html">范围的数据存储</a>为属性。通常，桌面应用程序中的单个或静态字段需要RAP中的UI会话范围。</p>
+
+  <h3>会话超时</h3>
+  <p>当完成入口点的执行（放置显示）或基础HTTP会话超时时，UI会话结束。必须使用servlet容器配置超时间隔。对于Web应用程序，可以在Web应用程序的部署描述符（ <em>web.xml</em> ）中完成：</p>
+<pre class="lang-xml">&lt;session-config&gt; &lt;session-timeout&gt; 30 &lt;/ session-timeout&gt; &lt;/ session-config&gt;</pre>
+  <p>还可以基于每个会话以编程方式更改超时值：</p>
+<pre class="lang-java">RWT.getUISession（）。getHttpSession（）。setMaxInactiveInterval（&lt;timeout in Seconds&gt;）;</pre>
+  <p>请注意，使用<a href="launcher.html#rap-launcher">RAP启动程序时</a> ，默认情况下会话永不过期。要更改此设置，请在“ <em class="UiLabel">主”</em>选项卡上调整超时设置。
   </p>
 
-  <h3>Session Timeout</h3>
-  <p>
-    A UI session ends when the execution of an entry point is finished (display is disposed)
-    or when the underlying HTTP session times out.
-    The timeout interval must be be configured with the servlet container.
-    For web applications, this can be done in the web application's deployment descriptor (<em>web.xml</em>):
-  </p>
-<pre class="lang-xml">
-&lt;session-config&gt;
-  &lt;session-timeout&gt;30&lt;/session-timeout&gt;
-&lt;/session-config&gt;
-</pre>
-  <p>
-    The timeout value can also be changed programmatically on a per session basis:
-  </p>
-<pre class="lang-java">
-RWT.getUISession().getHttpSession().setMaxInactiveInterval(&lt;timeout in Seconds&gt;);
-</pre>
-  <p>
-    Note that when using the
-    <a href="launcher.html#rap-launcher">RAP launcher</a>,
-    sessions never expire by default.
-    To change this, adjust the timeout setting on the <em class="UiLabel">Main</em> tab.
-  </p>
+  <h3>会话清理</h3>
+  <p>要清理UI会话范围的对象，可以在UI会话中注册<em><a href="../reference/api/org/eclipse/rap/rwt/service/UISessionListener.html">UISessionListener</a></em> ：</p>
+<pre class="lang-java">RWT.getUISession（）。addUISessionListener（new UISessionListener（）{public void beforeDestroy（UISessionEvent event）{// Perform cleanup}}）;</pre>
 
-  <h3>Session Cleanup</h3>
-  <p>
-    To cleanup UI session-scoped objects, a
-    <em><a href="../reference/api/org/eclipse/rap/rwt/service/UISessionListener.html">UISessionListener</a></em>
-    can be registered with the UI session:
-  </p>
-<pre class="lang-java">
-RWT.getUISession().addUISessionListener( new UISessionListener() {
-  public void beforeDestroy( UISessionEvent event ) {
-    // Perform cleanup
-  }
-} );
-</pre>
-
-  <p>
-    Another way to run cleanup code is to register a dispose runnable with the <em>Display</em>
-    using its method <em>disposeExec()</em>.
-    This method also works in SWT.
-  </p>
+  <p>运行清理代码的另一种方法是使用其方法<em>disposeExec（）</em>注册一个可与<em>Display</em>一起运行的dispose。此方法也适用于SWT。</p>
 
 </body>
 </html>

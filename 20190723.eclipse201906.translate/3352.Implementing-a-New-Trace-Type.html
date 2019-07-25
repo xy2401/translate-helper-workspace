@@ -1,464 +1,252 @@
-<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Trace Compass Developer Guide - Implementing a New Trace Type</title>
-		<link type="text/css" rel="stylesheet" href="book.css"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<title>Trace Compass开发人员指南 - 实现新的跟踪类型</title>
+		<link type="text/css" rel="stylesheet" href="book.css"></link>
 	</head>
-	<body>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+	<body dir="ltr">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<th style="width: 100%" align="center" colspan="3">Implementing a New Trace Type</th>
+				<th align="center" colspan="3" style="width:100%">实现新的跟踪类型</th>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left">
-					<a href="Introduction.html" title="Introduction">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+				<td align="left" style="width:20%">
+					<a href="Introduction.html" title="介绍">
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right">
-					<a href="View-Tutorial.html" title="View Tutorial">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="center" style="width:60%"></td>
+				<td align="right" style="width:20%">
+					<a href="View-Tutorial.html" title="查看教程">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Introduction</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">View Tutorial</td>
+				<td align="left" valign="top" style="width:20%">介绍</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">查看教程</td>
 			</tr>
-		</table><hr class="navigation-separator"/>
-		<h1 id="Implementing_a_New_Trace_Type">Implementing a New Trace Type</h1>
-		<p>The framework can easily be extended to support more trace types. To make a new
-			trace type, one must define the following items:</p>
+		</table><hr class="navigation-separator">
+		<h1 id="Implementing_a_New_Trace_Type">实现新的跟踪类型</h1>
+		<p>可以轻松扩展该框架以支持更多跟踪类型。要创建新的跟踪类型，必须定义以下项：</p>
 		<ul>
-			<li>The event type</li>
-			<li>The trace type</li>
-			<li>The trace context</li>
-			<li>The trace location</li>
-			<li>The 
-				<i>org.eclipse.linuxtools.tmf.core.tracetype</i> plug-in extension point
-			</li>
-			<li>(Optional) The 
-				<i>org.eclipse.linuxtools.tmf.ui.tracetypeui</i> plug-in extension point
-			</li>
+			<li>事件类型</li>
+			<li>跟踪类型</li>
+			<li>跟踪上下文</li>
+			<li>跟踪位置</li>
+			<li><i>org.eclipse.linuxtools.tmf.core.tracetype</i>插件扩展点</li>
+			<li>（可选） <i>org.eclipse.linuxtools.tmf.ui.tracetypeui</i>插件扩展点</li>
 		</ul>
-		<p>The 
-			<b>event type</b> must implement an 
-			<i>ITmfEvent</i> or extend a class that
-			implements an 
-			<i>ITmfEvent</i>. Typically it will extend 
-			<i>TmfEvent</i>. The event
-			type must contain all the data of an event.
+		<p><b>事件类型</b>必须实现<i>ITmfEvent</i>或扩展实现的<i>ITmfEvent</i>类。通常它会扩展<i>TmfEvent</i> 。事件类型必须包含事件的所有数据。
 		</p>
-		<p>The 
-			<b>trace type</b> must be of an 
-			<i>ITmfTrace</i> type. The 
-			<i>TmfTrace</i> class
-			will supply many background operations so that the reader only needs to
-			implement certain functions. This includes the 
-			<i>event aspects</i> for events of
-			this trace type. See the section below.
+		<p><b>跟踪类型</b>必须是<i>ITmfTrace</i>类型。<i>TmfTrace</i>类将提供许多后台操作，以便读者只需要实现某些功能。这包括此跟踪类型事件的<i>事件方面</i> 。请参阅以下部分。
 		</p>
-		<p>The 
-			<b>trace context</b> can be seen as the internals of an iterator. It is
-			required by the trace reader to parse events as it iterates the trace and to
-			keep track of its rank and location. It can have a timestamp, a rank, a file
-			position, or any other element, it should be considered to be ephemeral.
+		<p><b>跟踪上下文</b>可以看作迭代器的内部。跟踪读取器需要在迭代跟踪时解析事件并跟踪其等级和位置。它可以有时间戳，等级，文件位置或任何其他元素，它应该被认为是短暂的。
 		</p>
-		<p>The 
-			<b>trace location</b> is an element that is cloned often to store
-			checkpoints, it is generally persistent. It is used to rebuild a context,
-			therefore, it needs to contain enough information to unambiguously point to one
-			and only one event. Finally the 
-			<i>tracetype</i> plug-in extension associates a
-			given trace, non-programmatically to a trace type for use in the UI.
+		<p><b>跟踪位置</b>是经常克隆以存储检查点的元素，通常是持久性的。它用于重建上下文，因此，它需要包含足够的信息以明确指向一个且仅一个事件。最后， <i>tracetype</i>插件扩展将给定跟踪以非编程方式与跟踪类型相关联，以便在UI中使用。</p>
+		<h2 id="Event_Aspects">事件方面</h2>
+		<p>在Trace Compass中， <i>事件方面</i>表示可以从跟踪事件中提取的任何类型的信息。简单的情况是直接出现在事件中的信息。例如，事件的时间戳，LTTng事件的字段或文本跟踪条目的同一行上的“有效负载”。但它也可能是间接操作的结果，例如在给定事件的时间戳处的状态系统查询（请参阅<a href="Generic-State-System.html#Generic_State_System">通用状态系统</a>部分）。
 		</p>
-		<h2 id="Event_Aspects">Event Aspects</h2>
-		<p>In Trace Compass, an 
-			<i>event aspect</i> represents any type of information that
-			can be extracted from a trace event. The simple case is information that is
-			present directly in the event. For example, the timestamp of an event, a field
-			of an LTTng event, or the "payload" that is on the same line of a text trace
-			entry. But it could also be the result of an indirect operation, for example a
-			state system query at the timestamp of the given event (see the section
-
-			<a href="Generic-State-System.html#Generic_State_System">Generic State System</a>).
+		<p>所有方面都应该实现<b>ITmfEventAspect</b>接口。其中重要的方法是<i>resolve（ITmfEvent）</i> ，它告诉这个方面给定事件的输出内容。一般而言，单例模式非常适合预定义的方面类。
 		</p>
-		<p>All aspects should implement the 
-			<b>ITmfEventAspect</b> interface. The important
-			method in there is 
-			<i>resolve(ITmfEvent)</i>, which tells this aspect what to
-			output for a given event. The singleton pattern fits well for pre-defined aspect
-			classes, in general.
+		<p>为跟踪类型定义的方面确定事件表中的初始列，以及可以过滤跟踪的元素等。</p>
+		<h3 id="Base_and_custom_aspects">基础和自定义方面</h3>
+		<p>一些基本方面在<b>TmfTrace＃BASE_ASPECTS</b>中定义。它们使用<b>ITmfEvent中的</b>通用方法，因此它们应适用于框架中定义的任何事件类型。如果没有覆盖<b>TmfTrace＃getEventAspects</b> ，那么只有基本方面将与此跟踪一起使用。
 		</p>
-		<p>The aspects defined for a trace type determine the initial columns in the Event
-			Table, as well as the elements on which the trace can be filtered, among other
-			things.</p>
-		<h3 id="Base_and_custom_aspects">Base and custom aspects</h3>
-		<p>Some base aspects are defined in 
-			<b>TmfTrace#BASE_ASPECTS</b>. They use generic
-			methods found in 
-			<b>ITmfEvent</b>, so they should be applicable for any event
-			type defined in the framework. If one does not override
-
-			<b>TmfTrace#getEventAspects</b>, then only the base aspects will be used with
-			this trace.
+		<p>覆盖该方法不会附加到此列表，它将替换它。因此，如果您希望为新的跟踪类型定义其他方面，请不要忘记在列表中包含要使用的BASE_ASPECTS（如果有）。</p>
+		<p>返回的<i>Iterable中</i>元素的顺序可能与其他组件有关。例如，事件表中列的初始排序将与之匹配。
 		</p>
-		<p>Overriding the method does not append to this list, it replaces it. So if you
-			wish to define additional aspects for a new trace type, do not forget to include
-			the BASE_ASPECTS you want to use, if any, within the list.</p>
-		<p>The order of the elements in the returned 
-			<i>Iterable</i> may matter to other
-			components. For instance, the initial ordering of the columns in the Events
-			Table will match it.
+		<p>定义其他方面允许从跟踪事件中公开更多数据，而无需使用方面API更新所有视图。</p>
+		<h3 id="Creating_event_aspects_programmatically">以编程方式创建事件方面</h3>
+		<p>事件方面的另一个优点是它们可以通过编程方式创建，而无需修改基本跟踪或事件类。应用于预先存在的跟踪类型的新分析可能希望定义其他方面以使其工作更容易。</p>
+		<p>虽然事件方面的概念不应直接暴露给用户，但可以根据用户输入创建新方面。例如，“事件字段”对话框可以要求用户输入字段名称，然后创建一个方面，该方面将在每个事件中查找具有此名称的字段的值。然后，用户可以在这方面显示或过滤。</p>
+		<h2 id="Optional_Trace_Type_Attributes">可选的跟踪类型属性</h2>
+		<p>在按照前面章节中的描述定义跟踪类型后，可以为跟踪类型定义可选属性。</p>
+		<h3 id="Default_Editor">默认编辑器</h3>
+		<p><b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>扩展点的<b>defaultEditor</b>属性允许配置编辑器以用于显示事件。如果省略，则默认使用<i>TmfEventsEditor</i> 。
 		</p>
-		<p>Defining additional aspects allows to expose more data from the trace events
-			without having to update all the views using the aspects API.</p>
-		<h3 id="Creating_event_aspects_programmatically">Creating event aspects programmatically</h3>
-		<p>Another advantage of event aspects is that they can be created programmatically,
-			without having to modify the base trace or event classes. A new analysis
-			applying to a pre-existing trace type may wish to define additional aspects to
-			make its job easier.</p>
-		<p>While the notion of event aspects should not be exposed to users directly, it is
-			possible to create new aspects based on user input. For example, an "event
-			field" dialog could ask the user to enter a field name, which would then create
-			an aspect that would look for the value of a field with this name in every
-			event. The user could then be able to display or filter on this aspect.</p>
-		<h2 id="Optional_Trace_Type_Attributes">Optional Trace Type Attributes</h2>
-		<p>After defining the trace type as described in the previous chapters it is
-			possible to define optional attributes for the trace type.</p>
-		<h3 id="Default_Editor">Default Editor</h3>
-		<p>The 
-			<b>defaultEditor</b> attribute of the 
-			<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>
-			extension point allows for configuring the editor to use for displaying the
-			events. If omitted, the 
-			<i>TmfEventsEditor</i> is used as default.
+		<p>要配置编辑器，首先将<b>defaultEditor</b>属性添加到扩展定义中的跟踪类型。这可以通过在插件清单编辑器中选择跟踪类型来完成。然后单击鼠标右键并在上下文相关菜单中选择<b>New  - &gt; defaultEditor</b> 。然后选择新添加的属性。现在，您可以在清单编辑器的右侧指定要使用的编辑器ID。例如，此属性可用于实现类<i>org.eclipse.ui.part的扩展<i>。MultiPageEditor</i> 。第一页可以使用<i>TmfEventsEditor</i> '像往常一样显示表中的事件，其他页面可以显示跟踪的其他方面。
 		</p>
-		<p>To configure an editor, first add the 
-			<b>defaultEditor</b> attribute to the trace
-			type in the extension definition. This can be done by selecting the trace type
-			in the plug-in manifest editor. Then click the right mouse button and select
-
-			<b>New -&gt; defaultEditor</b> in the context sensitive menu. Then select the newly
-			added attribute. Now you can specify the editor id to use on the right side of
-			the manifest editor. For example, this attribute could be used to implement an
-			extension of the class 
-			<i>org.eclipse.ui.part.MultiPageEditor</i>. The first page
-			could use the 
-			<i>TmfEventsEditor</i>' to display the events in a table as usual and
-			other pages can display other aspects of the trace.
+		<h3 id="Events_Table_Type">事件表类型</h3>
+		<p><b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>扩展点的<b>eventsTableType</b>属性允许配置要在默认事件编辑器中使用的事件表类。如果省略，将使用默认事件表。
 		</p>
-		<h3 id="Events_Table_Type">Events Table Type</h3>
-		<p>The  
-			<b>eventsTableType</b> attribute of the 
-			<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>
-			extension point allows for configuring the events table class to use in the
-			default events editor. If omitted, the default events table will be used.
+		<p>要配置跟踪类型特定事件表，请首先将<b>eventsTableType</b>属性添加到扩展定义中的跟踪类型。这可以通过在插件清单编辑器中选择跟踪类型来完成。然后单击鼠标右键并在上下文相关菜单中选择<b>New  - &gt; eventsTableType</b> 。然后选择新添加的属性，并单击清单编辑器右侧的<i>类</i> 。新的类向导将打开。<i>超类</i>字段已经填充了类<i>org.eclipse.tracecompass.tmf.ui.viewers.events。TmfEventsTable</i> 。
 		</p>
-		<p>To configure a trace type specific events table, first add the
-
-			<b>eventsTableType</b> attribute to the trace type in the extension definition.
-			This can be done by selecting the trace type in the plug-in manifest editor.
-			Then click the right mouse button and select 
-			<b>New -&gt; eventsTableType</b> in the
-			context sensitive menu. Then select the newly added attribute and click on
-
-			<i>class</i> on the right side of the manifest editor. The new class wizard will
-			open. The 
-			<i>superclass</i> field will be already filled with the class 
-			<i>org.eclipse.tracecompass.tmf.ui.viewers.events.TmfEventsTable</i>.
+		<p>通过使用此属性，可以定义具有与默认列不同的列的表。请参阅类<i>org.eclipse.tracecompass.internal.gdbtrace.ui.views.events。GdbEventsTable</i>用于示例实现。
 		</p>
-		<p>By using this attribute, a table with different columns than the default columns
-			can be defined. See the class
-
-			<i>org.eclipse.tracecompass.internal.gdbtrace.ui.views.events.GdbEventsTable</i>
-			for an example implementation.
+		<h3 id="Perspective">透视</h3>
+		<p><b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>扩展点的<b>透视</b>元素允许配置与跟踪类型关联的默认透视图。如果省略，将使用当前透视图。
 		</p>
-		<h3 id="Perspective">Perspective</h3>
-		<p>The  
-			<b>perspective</b> element of the 
-			<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>
-			extension point allows for configuring the default perspective associated with a
-			trace type. If omitted, the current perspective will be used.
+		<p>要配置关联的透视图，首先将<b>perspective</b>元素添加到扩展定义中的跟踪类型。这可以通过在插件清单编辑器中选择跟踪类型来完成。然后单击鼠标右键并在上下文相关菜单中选择“ <b>新建” - &gt;“透视</b> ”。然后选择新添加的元素并选择清单编辑器右侧的<i>id</i>文本字段。输入关联的透视ID，可以在定义透视的<b>org.eclipse.ui.perspectives</b>扩展中找到。
 		</p>
-		<p>To configure an associated perspective, first add the
-
-			<b>perspective</b> element to the trace type in the extension definition.
-			This can be done by selecting the trace type in the plug-in manifest editor.
-			Then click the right mouse button and select 
-			<b>New -&gt; perspective</b> in the
-			context sensitive menu. Then select the newly added element and select the
-
-			<i>id</i> text field on the right side of the manifest editor. Enter the associated
-			perspective id, which can be found in the 
-			<b>org.eclipse.ui.perspectives</b>
-			extension that defines the perspective.
+		<p>通过使用此元素，当打开此跟踪类型的跟踪时，工作台将切换到关联的透视图。可以通过用户对话框或首选项控制此行为。</p>
+		<h2 id="Other_Considerations">其他考虑因素</h2>
+		<p>其他视图和组件可以提供仅在事件或跟踪类型类实现某些附加接口时才处于活动状态的其他功能。</p>
+		<h3 id="Collapsing_of_repetitive_events">折叠重复事件</h3>
+		<p>通过实现接口<i>org.eclipse.tracecompass.tmf.core.event.collapse。ITmfCollapsibleEvent</i>事件表将允许通过在表格中按下鼠标右键后选择菜单项“ <b>折叠事件”</b>来折叠重复事件。
 		</p>
-		<p>By using this element, the workbench will switch to the associated perspective
-			when a trace of this trace type is opened. This behavior can be controlled by a
-			user dialog or preference.</p>
-		<h2 id="Other_Considerations">Other Considerations</h2>
-		<p>Other views and components may provide additional features that are active only
-			when the event or trace type class implements certain additional interfaces.</p>
-		<h3 id="Collapsing_of_repetitive_events">Collapsing of repetitive events</h3>
-		<p>By implementing the interface
-
-			<i>org.eclipse.tracecompass.tmf.core.event.collapse.ITmfCollapsibleEvent</i> the
-			event table will allow to collapse repetitive events by selecting the menu item
-
-			<b>Collapse Events</b> after pressing the right mouse button in the table.
-		</p>
-		<h2 id="Best_Practices">Best Practices</h2>
+		<h2 id="Best_Practices">最佳实践</h2>
 		<ul>
-			<li>Do not load the whole trace in RAM, it will limit the size of the trace that can be read.</li>
-			<li>Reuse as much code as possible, it makes the trace format much easier to maintain.</li>
-			<li>Use Eclipse's editor instead of editing the XML directly.</li>
-			<li>Do not forget Java supports only signed data types, there may be special care needed to handle unsigned data.</li>
-			<li>If the support for your trace has custom UI elements (like icons, views, etc.), split the core and UI parts in separate plugins, named identically except for a 
-				<i>.core</i> or 
-				<i>.ui</i> suffix.
+			<li>不要将整个跟踪加载到RAM中，它将限制可以读取的跟踪的大小。</li>
+			<li>重用尽可能多的代码，使跟踪格式更容易维护。</li>
+			<li>使用Eclipse的编辑器而不是直接编辑XML。</li>
+			<li>不要忘记Java只支持签名数据类型，处理无符号数据可能需要特别小心。</li>
+			<li>如果对跟踪的支持具有自定义UI元素（如图标，视图等），请将核心和UI部分拆分为单独的插件，名称相同，但<i>.core</i>或<i>.ui</i>后缀除外。
 				<ul>
-					<li>Implement the 
-						<i>tmf.core.tracetype</i> extension in the core plugin, and the 
-						<i>tmf.ui.tracetypeui</i> extension in the UI plugin if applicable.
+					<li>在核心插件中实现<i>tmf.core.tracetype</i>扩展，并在UI插件中实现<i>tmf.ui.tracetypeui</i>扩展（如果适用）。
 					</li>
 				</ul>
 			</li>
 		</ul>
-		<h2 id="An_Example:_Nexus-lite_parser">An Example: Nexus-lite parser</h2>
-		<h3 id="Description_of_the_file">Description of the file</h3>
-		<p>This is a very small subset of the nexus trace format, with some changes to make
-			it easier to read. There is one file. This file starts with 64 Strings
-			containing the event names, then an arbitrarily large number of events. The
-			events are each 64 bits long. the first 32 are the timestamp in microseconds,
-			the second 32 are split into 6 bits for the event type, and 26 for the data
-			payload.</p>
-		<p>The trace type will be made of two parts, part 1 is the event description, it is
-			just 64 strings, comma separated and then a line feed.</p>
-		<pre>
-Startup,Stop,Load,Add, ... ,reserved\n
-</pre>
-		<p>Then there will be the events in this format</p>
+		<h2 id="An_Example:_Nexus-lite_parser">示例：Nexus-lite解析器</h2>
+		<h3 id="Description_of_the_file">文件描述</h3>
+		<p>这是nexus跟踪格式的一个非常小的子集，有一些更改使其更易于阅读。有一个文件。此文件以包含事件名称的64个字符串开头，然后是任意大量的事件。事件每个都是64位长。前32个是以微秒为单位的时间戳，第二个32分为事件类型的6比特，数据有效载荷分为26比特。</p>
+		<p>跟踪类型将由两部分组成，第1部分是事件描述，它只是64个字符串，逗号分隔，然后是换行符。</p>
+		<pre>启动，停止，加载，添加，...，保留\ n</pre>
+		<p>然后会有这种格式的事件</p>
 		<table>
 			<tr>
-				<td style="width: 50%; background-color: #ffffcc;">timestamp (32 bits)</td>
-				<td style="width: 10%; background-color: #ffccff;">type (6 bits)</td>
-				<td style="width: 40%; background-color: #ccffcc;">payload (26 bits)</td>
+				<td style="width:50%;background-color:#ffffcc">时间戳（32位）</td>
+				<td style="width:10%;background-color:#ffccff">类型（6位）</td>
+				<td style="width:40%;background-color:#ccffcc">有效载荷（26位）</td>
 			</tr>
 			<tr>
-				<td style="background-color: #ffcccc;" colspan="3">64 bits total</td>
+				<td colspan="3" style="background-color:#ffcccc">总共64位</td>
 			</tr>
 		</table>
-		<p>all events will be the same size (64 bits).</p>
-		<h3 id="NexusLite_Plug-in">NexusLite Plug-in</h3>
-		<p>Create a 
-			<b>New</b>, 
-			<b>Project...</b>, 
-			<b>Plug-in Project</b>, set the title to
-
-			<b>com.example.nexuslite</b>, click 
-			<b>Next &gt;</b> then click on 
-			<b>Finish</b>.
+		<p>所有事件的大小都相同（64位）。</p>
+		<h3 id="NexusLite_Plug-in">NexusLite插件</h3>
+		<p>创建一个<b>New</b> ， <b>Project ...</b> ， <b>Plug-in Project</b> ，将标题设置为<b>com.example.nexuslite</b> ，单击<b>Next&gt;</b>然后单击<b>Finish</b> 。
 		</p>
-		<p>Now the structure for the Nexus trace Plug-in is set up.</p>
-		<p>Add a dependency to TMF core and UI by opening the 
-			<b>MANIFEST.MF</b> in
+		<p>现在设置了Nexus跟踪插件的结构。</p>
+		<p>通过在<b>META-INF中</b>打开<b>MANIFEST.MF</b> ，选择<b>Dependencies</b>选项卡并<b>添加...</b> ，为TMF核心和UI <b>添加</b> <b>依赖关系</b>
 
-			<b>META-INF</b>, selecting the 
-			<b>Dependencies</b> tab and 
-			<b>Add ...</b>
-
-			<b>org.eclipse.tracecompass.tmf.core</b> and 
-			<b>org.eclipse.tracecompass.tmf.ui</b>.
+			<b>org.eclipse.tracecompass.tmf.core</b>和<b>org.eclipse.tracecompass.tmf.ui</b> 。
 		</p>
 		<p>
-			<img border="0" src="images/NTTAddDepend.png"/>
-			<br/>
+			<img border="0" src="images/NTTAddDepend.png">
+			<br>
 
-			<img border="0" src="images/NTTSelectProjects.png"/>
-			<br/>
+			<img border="0" src="images/NTTSelectProjects.png">
+			<br>
 		</p>
-		<p>Now the project can access TMF classes.</p>
-		<h3 id="Trace_Event">Trace Event</h3>
-		<p>The 
-			<b>TmfEvent</b> class will work for this example. No code required.
+		<p>现在该项目可以访问TMF类。</p>
+		<h3 id="Trace_Event">跟踪事件</h3>
+		<p><b>TmfEvent</b>类适用于此示例。无需代码。
 		</p>
-		<h3 id="Trace_Reader">Trace Reader</h3>
-		<p>The trace reader will extend a 
-			<b>TmfTrace</b> class.
+		<h3 id="Trace_Reader">跟踪阅读器</h3>
+		<p>跟踪阅读器将扩展<b>TmfTrace</b>类。
 		</p>
-		<p>It will need to implement:</p>
+		<p>它需要实现：</p>
 		<ul>
-			<li>validate (is the trace format valid?)</li>
+			<li>验证（跟踪格式是否有效？）</li>
 		</ul>
 		<ul>
-			<li>initTrace (called as the trace is opened)</li>
+			<li>initTrace（称为跟踪打开）</li>
 		</ul>
 		<ul>
-			<li>seekEvent (go to a position in the trace and create a context)</li>
+			<li>seekEvent（转到跟踪中的位置并创建上下文）</li>
 		</ul>
 		<ul>
-			<li>getNext (implemented in the base class)</li>
+			<li>getNext（在基类中实现）</li>
 		</ul>
 		<ul>
-			<li>parseEvent (read the next element in the trace)</li>
+			<li>parseEvent（读取跟踪中的下一个元素）</li>
 		</ul>
-		<p>For reference, there is an example implementation of the Nexus Trace file in
-			org.eclipse.tracecompass.tracing.examples.core.trace.nexus.NexusTrace.java.</p>
-		<p>In this example, the 
-			<b>validate</b> function first checks if the file
-			exists, then makes sure that it is really a file, and not a directory. Then we
-			attempt to read the file header, to make sure that it is really a Nexus Trace.
-			If that check passes, we return a TraceValidationStatus with a confidence of 20.
+		<p>作为参考，org.eclipse.tracecompass.tracing.examples.core.trace.nexus中有一个Nexus Trace文件的示例实现。NexusTrace.java。</p>
+		<p>在此示例中， <b>validate</b>函数首先检查文件是否存在，然后确保它确实是文件，而不是目录。然后我们尝试读取文件头，以确保它真的是一个Nexus Trace。如果该检查通过，我们返回一个置信度为20的TraceValidationStatus。
 		</p>
-		<p>Typically, TraceValidationStatus confidences should range from 1 to 100. 1 meaning
-			"there is a very small chance that this trace is of this type", and 100 meaning
-			"it is this type for sure, and cannot be anything else". At run-time, the
-			auto-detection will pick the type which returned the highest confidence. So
-			checks of the type "does the file exist?" should not return a too high
-			confidence. If confidence 0 is returned the auto-detection won't pick this type.</p>
-		<p>Here we used a confidence of 20, to leave "room" for more specific trace types
-			in the Nexus format that could be defined in TMF.</p>
-		<p>The 
-			<b>initTrace</b> function will read the event names, and find where the data
-			starts. After this, the number of events is known, and since each event is 8
-			bytes long according to the specs, the seek is then trivial.
+		<p>通常，TraceValidationStatus置信度应该在1到100之间.1表示“此跟踪具有此类型的可能性非常小”，100表示“它确实是这种类型，并且不能是其他任何东西”。在运行时，自动检测将选择返回最高置信度的类型。因此检查类型“文件是否存在？“不应该回报过高的信心。如果返回置信度0，则自动检测不会选择此类型。</p>
+		<p>在这里，我们使用20的置信度，为Nexus格式中可以在TMF中定义的更具体的跟踪类型留出“空间”。</p>
+		<p><b>initTrace</b>函数将读取事件名称，并查找数据的开始位置。在此之后，事件的数量是已知的，并且由于每个事件根据规范是8字节长，因此搜索是微不足道的。
 		</p>
-		<p>The 
-			<b>seek</b> here will just reset the reader to the right location.
+		<p>此处的<b>搜索</b>只会将阅读器重置到正确的位置。
 		</p>
-		<p>The 
-			<b>parseEvent</b> method needs to parse and return the current event and
-			store the current location.
+		<p><b>parseEvent</b>方法需要解析并返回当前事件并存储当前位置。
 		</p>
-		<p>The 
-			<b>getNext</b> method (in base class) will read the next event and update the
-			context. It calls the 
-			<b>parseEvent</b> method to read the event and update the
-			location. It does not need to be overridden and in this example it is not. The
-			sequence of actions necessary are parse the next event from the trace, create an
-
-			<b>ITmfEvent</b> with that data, update the current location, call
-
-			<b>updateAttributes</b>, update the context then return the event.
+		<p><b>getNext</b>方法（在基类中）将读取下一个事件并更新上下文。它调用<b>parseEvent</b>方法来读取事件并更新位置。它不需要被覆盖，在这个例子中它不是。必要的操作序列是从跟踪解析下一个事件，使用该数据创建<b>ITmfEvent</b> ，更新当前位置，调用<b>updateAttributes</b> ，更新上下文然后返回事件。
 		</p>
-		<p>Traces will typically implement an index, to make seeking faster. The index can
-			be rebuilt every time the trace is opened. Alternatively, it can be saved to
-			disk, to make future openings of the same trace quicker. To do so, the trace
-			object can implement the 
-			<b>ITmfPersistentlyIndexable</b> interface.
+		<p>跟踪通常会实现索引，以便更快地进行搜索。每次打开跟踪时都可以重建索引。或者，它可以保存到磁盘，以便将来更快地打开相同的跟踪。为此，trace对象可以实现<b>ITmfPersistentIndexable</b>接口。
 		</p>
-		<h3 id="Trace_Context">Trace Context</h3>
-		<p>The trace context will be a 
-			<b>TmfContext</b>.
+		<h3 id="Trace_Context">跟踪上下文</h3>
+		<p>跟踪上下文将是<b>TmfContext</b> 。
 		</p>
-		<h3 id="Trace_Location">Trace Location</h3>
-		<p>The trace location will be a long, representing the rank in the file. The
-
-			<b>TmfLongLocation</b> will be the used, once again, no code is required.
+		<h3 id="Trace_Location">跟踪位置</h3>
+		<p>跟踪位置将是一个长，表示文件中的排名。<b>TmfLongLocation</b>将被使用，再一次，不需要代码。
 		</p>
-		<h3 id="The_.27.27org.eclipse.linuxtools.tmf.core.tracetype.27.27_and_.27.27org.eclipse.linuxtools.tmf.ui.tracetypeui.27.27_plug-in_extension_points">The 
-			<i>org.eclipse.linuxtools.tmf.core.tracetype</i> and 
-			<i>org.eclipse.linuxtools.tmf.ui.tracetypeui</i> plug-in extension points
-		</h3>
-		<p>One should use the 
-			<i>tmf.core.tracetype</i> extension point in their own plug-in.
-			In this example, the Nexus trace plug-in will be modified.
+		<h3 id="The_.27.27org.eclipse.linuxtools.tmf.core.tracetype.27.27_and_.27.27org.eclipse.linuxtools.tmf.ui.tracetypeui.27.27_plug-in_extension_points"><i>org.eclipse.linuxtools.tmf.core.tracetype</i>和<i>org.eclipse.linuxtools.tmf.ui.tracetypeui</i>插件扩展点</h3>
+		<p>应该在自己的插件中使用<i>tmf.core.tracetype</i>扩展点。在此示例中，将修改Nexus跟踪插件。
 		</p>
-		<p>The 
-			<b>plugin.xml</b> file in the ui plug-in needs to be updated if one wants
-			users to access the given event type. It can be updated in the Eclipse plug-in
-			editor.
+		<p>如果希望用户访问给定的事件类型，则需要更新ui插件中的<b>plugin.xml</b>文件。它可以在Eclipse插件编辑器中更新。
 		</p>
 		<ol>
-			<li>In Extensions tab, add the 
-				<b>org.eclipse.linuxtools.tmf.core.tracetype</b> extension point.
+			<li>在Extensions选项卡中，添加<b>org.eclipse.linuxtools.tmf.core.tracetype</b>扩展点。
 			</li>
 		</ol>
 		<p>
-			<img border="0" src="images/NTTExtension.png"/>
-			<br/>
+			<img border="0" src="images/NTTExtension.png">
+			<br>
 
-			<img border="0" src="images/NTTTraceType.png"/>
-			<br/>
+			<img border="0" src="images/NTTTraceType.png">
+			<br>
 
-			<img border="0" src="images/NTTExtensionPoint.png"/>
-			<br/>
+			<img border="0" src="images/NTTExtensionPoint.png">
+			<br>
 		</p>
 		<ol>
-			<li>Add in the 
-				<b>org.eclipse.linuxtools.tmf.ui.tracetype</b> extension a new type. To do that, 
-				<b>right click</b> on the extension then in the context menu, go to 
-				<b>New &gt;</b>, 
-				<b>type</b>.
+			<li>在<b>org.eclipse.linuxtools.tmf.ui.tracetype</b>扩展中添加一个新类型。为此， <b>右键单击</b>扩展，然后在上下文菜单中，转到<b>新建&gt;</b> ， <b>键入</b> 。
 			</li>
 		</ol>
 		<p>
-			<img border="0" src="images/NTTAddType.png"/>
-			<br/>
+			<img border="0" src="images/NTTAddType.png">
+			<br>
 		</p>
-		<p>The 
-			<b>id</b> is the unique identifier used to refer to the trace.
+		<p><b>id</b>是用于引用跟踪的唯一标识符。
 		</p>
-		<p>The 
-			<b>name</b> is the field that shall be displayed when a trace type is selected.
+		<p><b>名称</b>是选择跟踪类型时应显示的字段。
 		</p>
-		<p>The 
-			<b>trace type</b> is the canonical path refering to the class of the trace.
+		<p><b>跟踪类型</b>是引用<b>跟踪类</b>的规范路径。
 		</p>
-		<p>The 
-			<b>event type</b> is the canonical path refering to the class of the events of a given trace.
+		<p><b>事件类型</b>是指向给定跟踪的<b>事件类</b>的规范路径。
 		</p>
-		<p>The  
-			<b>category</b> (optional) is the container in which this trace type will be stored.
+		<p><b>类别</b> （可选）是将存储此跟踪类型的容器。
 		</p>
 		<ol>
-			<li>(Optional) To also add UI-specific properties to your trace type, use the 
-				<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b> extension. To do that, 
-				<b>right click</b> on the extension then in the context menu, go to 
-				<b>New &gt;</b>, 
-				<b>type</b>.
+			<li>（可选）要将特定于UI的属性添加到跟踪类型，请使用<b>org.eclipse.linuxtools.tmf.ui.tracetypeui</b>扩展名。为此， <b>右键单击</b>扩展，然后在上下文菜单中，转到<b>新建&gt;</b> ， <b>键入</b> 。
 			</li>
 		</ol>
-		<p>The 
-			<b>tracetype</b> here is the 
-			<b>id</b> of the
-
-			<i>org.eclipse.linuxtools.tmf.core.tracetype</i> mentioned above.
+		<p>这里的<b>tracetype</b>是上面提到的<i>org.eclipse.linuxtools.tmf.core.tracetype</i>的<b>id</b> 。
 		</p>
-		<p>The 
-			<b>icon</b> is the image to associate with that trace type.
+		<p><b>图标</b>是与该跟踪类型关联的图像。
 		</p>
-		<p>In the end, the extension menu should look like this.</p>
+		<p>最后，扩展菜单应如下所示。</p>
 		<p>
-			<img border="0" src="images/NTTPluginxmlComplete.png"/>
-			<br/>
-		</p><hr class="navigation-separator"/>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<img border="0" src="images/NTTPluginxmlComplete.png">
+			<br>
+		</p><hr class="navigation-separator">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<td style="width: 20%" align="left">
-					<a href="Introduction.html" title="Introduction">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+				<td align="left" style="width:20%">
+					<a href="Introduction.html" title="介绍">
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center">
-					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
-						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+				<td align="center" style="width:60%">
+					<a href="Developer-Guide.html" title="Trace Compass开发人员指南">
+						<img alt="Trace Compass开发人员指南" border="0" src="images/home.gif">
 					</a>
 				</td>
-				<td style="width: 20%" align="right">
-					<a href="View-Tutorial.html" title="View Tutorial">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="right" style="width:20%">
+					<a href="View-Tutorial.html" title="查看教程">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Introduction</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">View Tutorial</td>
+				<td align="left" valign="top" style="width:20%">介绍</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">查看教程</td>
 			</tr>
 		</table>
 	</body>

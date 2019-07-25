@@ -1,87 +1,86 @@
-<html>
+<html dir="ltr">
 <head>
-<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>Pivot Thread Safety</title>
-<link href="book.css" rel="stylesheet" type="text/css">
-<meta content="DocBook XSL Stylesheets V1.75.1" name="generator">
-<link rel="home" href="index.html" title="OCL Documentation">
-<link rel="up" href="PivotProgrammersGuide.html" title="Unified or Pivot Programmers Guide">
-<link rel="prev" href="PivotStandalone.html" title="Pivot Standalone Configuration">
-<link rel="next" href="PivotParsingConstraints.html" title="Parsing Constraints and Queries">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
+<title>枢轴螺纹安全</title>
+<link href="book.css" rel="stylesheet" type="text/css"></link>
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.1"></meta>
+<link rel="home" href="index.html" title="OCL Documentation"></link>
+<link rel="up" href="PivotProgrammersGuide.html" title="Unified or Pivot Programmers Guide"></link>
+<link rel="prev" href="PivotStandalone.html" title="Pivot Standalone Configuration"></link>
+<link rel="next" href="PivotParsingConstraints.html" title="Parsing Constraints and Queries"></link>
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">Pivot Thread Safety</h1>
-<div class="section" title="Pivot Thread Safety">
+<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">枢轴螺纹安全</h1>
+<div class="section" title="枢轴螺纹安全">
 <div class="titlepage">
 <div>
 <div>
-<h2 class="title" style="clear: both">
-<a name="PivotThreadSafety"></a>Pivot Thread Safety</h2>
+<h2 class="title" style="clear:both">
+<a name="PivotThreadSafety"></a>枢轴螺纹安全</h2>
 </div>
 </div>
 </div>
-<p>OCL is declarative and side effect free and so particularly suitable for execution on multiple threads, provided all shared context is maintained in ways that avoid inter-thread conflicts.</p>
-<p>The classic Ecore-based OCL evaluation makes no attempt to guarantee thread safety and some of the more recent functionality involving EMF delegate caches is very suspect for multiple thread usage. So if you want thread safety use the Pivot-based evaluation.</p>
-<p>The thread safety of interpreted Pivot evaluation is similarly suspect, however the much faster code generated evaluation is designed for thread safety.</p>
-<div class="section" title="Code Generated Evaluation">
+<p>OCL是声明性和副作用，因此特别适合在多个线程上执行，前提是所有共享上下文都以避免线程间冲突的方式进行维护。</p>
+<p>经典的基于Ecore的OCL评估没有尝试保证线程安全，并且一些涉及EMF委托缓存的最新功能对于多线程使用非常可疑。因此，如果您想要线程安全，请使用基于数据透视的评估。</p>
+<p>解释的Pivot评估的线程安全性同样令人怀疑，但是更快的代码生成评估是针对线程安全性而设计的。</p>
+<div class="section" title="代码生成评估">
 <div class="titlepage">
 <div>
 <div>
 <h3 class="title">
-<a name="CodeGeneratedEvaluation"></a>Code Generated Evaluation</h3>
+<a name="CodeGeneratedEvaluation"></a>代码生成评估</h3>
 </div>
 </div>
 </div>
-<p>The code-generated evaluator is intended to be thread-safe; all shared objects update their caches within relatively fine-grained synchronized regions. However there are a number of class static variables that are not synchronized and might therefore experience at best a redundant multiple initialization and at worst an assumed uniqueness violation. Thread safe code must therefore invoke:</p>
+<p>代码生成的求值程序旨在是线程安全的;所有共享对象都在相对细粒度的同步区域内更新其缓存。但是，有许多类静态变量未同步，因此最多可能会遇到冗余的多重初始化，最坏的情况是假定的唯一性违规。因此，线程安全代码必须调用：</p>
 <div class="literallayout">
 <p>
-<code class="code">	org.eclipse.ocl.domain.values.util.ValuesUtil.initAllStatics()<br>
+<code class="code">org.eclipse.ocl.domain.values.util。ValuesUtil.initAllStatics（）<br>
 
 </code>
 </p>
 </div>
 <p></p>
-<p>to ensure eager initialization of unsynchronized class variables. This routine is itself synchronized and so may be safely invoked on all threads, if it is not practical to invoke it solely from just a startup thread.</p>
-<p>It is not permissible to modify any part of any OCL object, array or collection.</p>
-<p>Application code should not assume that the getter for a protected final field is invoked internally and so should not attempt to modify behavior by overriding it.</p>
-<div class="section" title="Design Notes">
+<p>确保非同步类变量的初始化。此例程本身是同步的，因此可以在所有线程上安全地调用，如果仅从启动线程调用它是不切实际的。</p>
+<p>不允许修改任何OCL对象，数组或集合的任何部分。</p>
+<p>应用程序代码不应假设在内部调用受保护的最终字段的getter，因此不应尝试通过覆盖它来修改行为。</p>
+<div class="section" title="设计说明">
 <div class="titlepage">
 <div>
 <div>
 <h4 class="title">
-<a name="DesignNotes"></a>Design Notes</h4>
+<a name="DesignNotes"></a>设计说明</h4>
 </div>
 </div>
 </div>
-<p>Loose miscellaneous static fields are initialized by ValuesUtil.initAllStatics().</p>
-<p>Most non-static fields are @NonNull and final eliminating thread hazards. However lazy caches cannot be avoided and these require manual review. Caches shared across OCl invocations use Weak references to avoid leakage.</p>
-<p>ElementIds are unique and shared across OCL evaluations and so IdManager maintains a hierarchy of synchronized caches for distinct forms of ElementId.
-						Some ElementIds such as TemplateParameterId are subject to two-phase construction (constructor followed by install). It is assumed that a half-constructed ElementId will not be made visible to other threads.</p>
-<p>Values are optionally shared and so valuesUtil has a few loose statics for simple values such as FALSE, and a synchronized cache for integers in the range -256 to 1024.</p>
-<p>EvaluatorIterationManagers do not currently permit forking of iterations to multiple threads and may malfunction if application code does so.</p>
+<p>ValueUtil.initAllStatics（）初始化松散的各种静态字段。</p>
+<p>大多数非静态字段是@NonNull，最终消除了线程危险。但是，懒惰的缓存无法避免，这些需要手动审查。跨OCl调用共享的缓存使用弱引用来避免泄漏。</p>
+<p>ElementIds是唯一的，并且在OCL评估中共享，因此IdManager为不同形式的ElementId维护同步缓存的层次结构。一些ElementIds（如TemplateParameterId）需要进行两阶段构造（构造函数后跟安装）。假设半构造的ElementId不会对其他线程可见。</p>
+<p>值可选地是共享的，因此valuesUtil对于简单值（如FALSE）有一些松散静态，对于-256到1024范围内的整数有一个同步缓存。</p>
+<p>EvaluatorIterationManagers目前不允许迭代迭代到多个线程，如果应用程序代码这样做可能会出现故障。</p>
 </div>
 </div>
-<div class="section" title="Interpreted Evaluation">
+<div class="section" title="口译评估">
 <div class="titlepage">
 <div>
 <div>
 <h3 class="title">
-<a name="InterpretedEvaluation"></a>Interpreted Evaluation</h3>
+<a name="InterpretedEvaluation"></a>口译评估</h3>
 </div>
 </div>
 </div>
-<p>This is not considered thread-safe. Superficial consideration suggests that the EMF delegate dispatching in particular needs careful attention.</p>
+<p>这不被认为是线程安全的。表面上的考虑表明，特别是EMF代表的派遣需要特别注意。</p>
 </div>
-<div class="section" title="OCL Analysis">
+<div class="section" title="OCL分析">
 <div class="titlepage">
 <div>
 <div>
 <h3 class="title">
-<a name="OCLAnalysis"></a>OCL Analysis</h3>
+<a name="OCLAnalysis"></a> OCL分析</h3>
 </div>
 </div>
 </div>
-<p>The Xtext-based functionality is only thread-safe in so far as Xtext imposes strict main/worker thread disciplines. It is very unlikely that activating additional worker threads will give satisfactory results.</p>
+<p>基于Xtext的功能只是线程安全的，因为Xtext强加严格的主/工作线程规则。激活额外的工作线程不太可能产生令人满意的结果。</p>
 </div>
 </div>
 </body>

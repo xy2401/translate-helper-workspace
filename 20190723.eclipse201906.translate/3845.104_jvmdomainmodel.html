@@ -1,395 +1,224 @@
-<html>
+<html dir="ltr">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
-	<title>Five simple steps to your JVM language</title>
-	<link href="book.css" rel="stylesheet" type="text/css">
-	<link href="code.css" rel="stylesheet" type="text/css">
-	<link rel="home" href="index.html" title="">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<title>JVM语言的五个简单步骤</title>
+	<link href="book.css" rel="stylesheet" type="text/css"></link>
+	<link href="code.css" rel="stylesheet" type="text/css"></link>
+	<link rel="home" href="index.html" title=""></link>
 </head>
-<body>
+<body dir="ltr">
 
-<h1 id="jvm-domain-model">Five simple steps to your JVM language</h1>
+<h1 id="jvm-domain-model">JVM语言的五个简单步骤</h1>
 
-<p>In this tutorial we will basically implement the domain model language again, but this time we will make use of the special JVM support shipped with Xtext 2.x. This kind of language really is a sweet spot for DSLs, so feel free to use this as a blueprint and add your project specific features later on.</p>
+<p>在本教程中，我们将基本上再次实现域模型语言，但这次我们将使用Xtext 2.x附带的特殊JVM支持。这种语言确实是DSL的最佳选择，因此可以随意将其用作蓝图并在以后添加项目特定功能。</p>
 
-<p>The revised domain model language supports expressions and cross-links to Java types. It is directly translated to Java source code. The syntax should look very familiar. Here is an example:</p>
+<p>修订后的域模型语言支持表达式和Java类型的交叉链接。它直接翻译为Java源代码。语法应该看起来非常熟悉。这是一个例子：</p>
 
-<pre><code class="language-domainexample">import java.util.List
+<pre><code class="language-domainexample">import java.util。列表包my.model {entity Person {name：String firstName：String friends：List &lt;Person&gt; address：Address op getFullName（）：String {return firstName +“”+ name; } op getFriendsSortedByFullName（）：List &lt;Person&gt; {return friends.sortBy [f | f.fullName]}} entity Address {street：String zip：String city：String}}</code></pre>
 
-package my.model {
+<p>如您所见，它支持各种高级功能，如Java泛型和完整表达式，甚至包括lambda表达式。不要惊慌，你不必自己实现这些概念，但会重用很多有用的基础设施来构建语言。</p>
 
-    entity Person {
-        name: String
-        firstName: String
-        friends: List&lt;Person&gt;
-        address : Address
-        op getFullName() : String {
-            return firstName + " " + name;
-        }
-        
-        op getFriendsSortedByFullName() : List&lt;Person&gt; {
-            return friends.sortBy[ f | f.fullName ]
-        }
-    }
-    
-    entity Address {
-        street: String
-        zip: String
-        city: String
-    }
-}
-</code></pre>
+<p>我们现在将介绍使该语言完全正常工作所需的五个小步骤，包括其编译器。前三个步骤与<a href="102_domainmodelwalkthrough.html">15 Minutes Tutorial</a>中的步骤非常相似。</p>
 
-<p>As you can see, it supports all kinds of advanced features such as Java generics and full expressions, even including lambda expressions. Don’t panic, you will not have to implement these concepts on your own but will reuse a lot of helpful infrastructure to build the language.</p>
+<p>在计算机上安装Xtext后，启动Eclipse并设置一个新的工作区。</p>
 
-<p>We will now walk through the five little steps needed to get this language fully working including its compiler. The first three steps are very similar to those in the <a href="102_domainmodelwalkthrough.html">15 Minutes Tutorial</a>.</p>
+<h2 id="domain-model-step1">第一步：创建一个新的Xtext项目</h2>
 
-<p>After you have installed Xtext on your machine, start Eclipse and set up a fresh workspace.</p>
+<p>为了开始，我们首先需要创建一些Eclipse项目。使用Eclipse向导执行此操作：</p>
 
-<h2 id="domain-model-step1">Step One: Create A New Xtext Project</h2>
+<p><em>文件→新建→项目...→Xtext→Xtext项目</em></p>
 
-<p>In order to get started we first need to create some Eclipse projects. Use the Eclipse wizard to do so:</p>
-
-<p><em>File → New → Project… → Xtext → Xtext Project</em></p>
-
-<p>Choose a meaningful project name, language name and file extension, e.g.</p>
+<p>选择有意义的项目名称，语言名称和文件扩展名，例如</p>
 
 <table>
   <tbody>
     <tr>
-      <td><strong>Main project name:</strong></td>
+      <td><strong>主要项目名称：</strong></td>
       <td>org.example.domainmodel</td>
     </tr>
     <tr>
-      <td><strong>Language name:</strong></td>
-      <td>org.example.domainmodel.Domainmodel</td>
+      <td><strong>语言名称：</strong></td>
+      <td>org.example.domainmodel。的DomainModel</td>
     </tr>
     <tr>
-      <td><strong>DSL-File extension:</strong></td>
+      <td><strong>DSL-File扩展：</strong></td>
       <td>dmodel</td>
     </tr>
   </tbody>
 </table>
 
-<p>Click on <em>Finish</em> to create the projects.</p>
+<p>单击“ <em>完成”</em>以创建项目。</p>
 
-<p><img src="images/30min_wizard.png" alt="" /></p>
+<p><img src="images/30min_wizard.png" alt=""></p>
 
-<p>After you have successfully finished the wizard, you will find five new projects in your workspace.</p>
+<p>成功完成向导后，您将在工作区中找到五个新项目。</p>
 
 <table>
   <tbody>
     <tr>
       <td>org.example.domainmodel</td>
-      <td>The grammar definition and all language-specific components (parser, lexer, linker, validation, etc.)</td>
+      <td>语法定义和所有特定于语言的组件（解析器，词法分析器，链接器，验证等）</td>
     </tr>
     <tr>
       <td>org.example.domainmodel.tests</td>
-      <td>Unit tests for the language</td>
+      <td>语言的单元测试</td>
     </tr>
     <tr>
       <td>org.example.domainmodel.ide</td>
-      <td>Platform-independent IDE functionality (e.g. services for content assist)</td>
+      <td>独立于平台的IDE功能（例如，用于内容辅助的服务）</td>
     </tr>
     <tr>
       <td>org.example.domainmodel.ui</td>
-      <td>The Eclipse editor and other workbench related functionality</td>
+      <td>Eclipse编辑器和其他工作台相关的功能</td>
     </tr>
     <tr>
       <td>org.example.domainmodel.ui.tests</td>
-      <td>Unit tests for the Eclipse editor</td>
+      <td>Eclipse编辑器的单元测试</td>
     </tr>
   </tbody>
 </table>
 
-<p><img src="images/30min_initialprojectlayout.png" alt="" /></p>
+<p><img src="images/30min_initialprojectlayout.png" alt=""></p>
 
-<h2 id="domain-model-step2">Step Two: Write the Grammar</h2>
+<h2 id="domain-model-step2">第二步：写出语法</h2>
 
-<p>The wizard will automatically open the grammar file <em>Domainmodel.xtext</em> in the editor. As you can see it already contains a simple <em>Hello World</em> grammar. Replace that grammar definition with the one for our language:</p>
+<p>该向导将在编辑器中自动打开语法文件<em>Domainmodel.xtext</em> 。如您所见，它已经包含一个简单的<em>Hello World</em>语法。将该语法定义替换为我们语言的定义：</p>
 
-<pre><code class="language-xtext">grammar org.example.domainmodel.Domainmodel with
-                                      org.eclipse.xtext.xbase.Xbase
+<pre><code class="language-xtext">语法org.example.domainmodel。带有org.eclipse.xtext.xbase的Domainmodel。Xbase生成domainmodel“http://www.example.org/domainmodel/Domainmodel”Domainmodel：importSection = XImportSection？元素+ = AbstractElement *; AbstractElement：PackageDeclaration |实体; PackageDeclaration：'package'name = QualifiedName'{'elements + = AbstractElement *'}';实体：'entity'name = ValidID（'extends'superType = JvmTypeReference）？'{'features + = Feature *'}';特征：财产|操作;属性：name = ValidID'：'type = JvmTypeReference;操作：'op'name = ValidID'（'（params + = FullJvmFormalParameter（'，'params + = FullJvmFormalParameter）*）？'）''：'type = JvmTypeReference body = XBlockExpression;</code></pre>
 
-generate domainmodel "http://www.example.org/domainmodel/Domainmodel"
-
-Domainmodel:
-    importSection=XImportSection?
-    elements+=AbstractElement*;
-
-AbstractElement:
-    PackageDeclaration | Entity;
-
-PackageDeclaration:
-    'package' name=QualifiedName '{'
-        elements+=AbstractElement*
-    '}';
-
-Entity:
-    'entity' name=ValidID ('extends' superType=JvmTypeReference)? '{'
-        features+=Feature*
-    '}';
-
-Feature:
-    Property | Operation;
-
-Property:
-    name=ValidID ':' type=JvmTypeReference;
-
-Operation:
-    'op' name=ValidID 
-        '('(params+=FullJvmFormalParameter 
-        (',' params+=FullJvmFormalParameter)*)?')'
-        ':' type=JvmTypeReference 
-    body=XBlockExpression;
-
-</code></pre>
-
-<p>Some parts of this grammar are equal to the one in the <a href="102_domainmodelwalkthrough.html">15 Minutes Tutorial</a>, but other parts are different.</p>
+<p>该语法的某些部分与<a href="102_domainmodelwalkthrough.html">15分钟教程中的</a>部分相同，但其他部分则不同。</p>
 
 <ol>
   <li>
 
-    <pre><code class="language-xtext">grammar org.example.domainmodel.Domainmodel with
-              org.eclipse.xtext.xbase.Xbase
-</code></pre>
+    <pre><code class="language-xtext">语法org.example.domainmodel。带有org.eclipse.xtext.xbase的Domainmodel。XBASE</code></pre>
 
-    <p>The first thing to note is that instead of inheriting from the usual <em>org.eclipse.xtext.common.Terminals</em> grammar, we make use of <em>org.eclipse.xtext.xbase.Xbase</em>. Xbase allows us to easily reuse and embed modern, statically typed expressions as well as Java type signatures in our language.</p>
+    <p>首先要注意的是，而不是从通常的<em>org.eclipse.xtext.common继承<em>。终端</em>语法，我们使用<em>org.eclipse.xtext.xbase。Xbase</em> 。Xbase允许我们在我们的语言中轻松地重用和嵌入现代的静态类型表达式以及Java类型签名。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">Domainmodel:
-    importSection=XImportSection?
-    elements+=AbstractElement*;
-</code></pre>
+    <pre><code class="language-xtext">Domainmodel：importSection = XImportSection？元素+ = AbstractElement *;</code></pre>
 
-    <p>A <em>Domainmodel</em> contains an optional import section and an arbitrary number of <em>AbstractElements</em>. The concept of <em>XImportSection</em> is part of <em>org.eclipse.xtext.xbase.Xbase</em> and comes with tool support and syntax like you know it from Java.</p>
+    <p><em>Domainmodel</em>包含可选的导入部分和任意数量的<em>AbstractElements</em> 。<em>XImportSection</em>的概念是<em>org.eclipse.xtext.xbase的一部分<em>。Xbase</em>并提供了工具支持和语法，就像您从Java中了解到的那样。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">AbstractElement:
-    PackageDeclaration | Entity;
-</code></pre>
+    <pre><code class="language-xtext">AbstractElement：PackageDeclaration |实体;</code></pre>
 
-    <p>The rule <em>AbstractElement</em> delegates to either the rule <em>PackageDeclaration</em> or the rule <em>Entity</em>.</p>
+    <p>规则<em>AbstractElement</em>委托给规则<em>PackageDeclaration</em>或规则<em>Entity</em> 。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">PackageDeclaration:
-    'package' name=QualifiedName '{'
-        elements+=AbstractElement*
-    '}';
-</code></pre>
+    <pre><code class="language-xtext">PackageDeclaration：'package'name = QualifiedName'{'elements + = AbstractElement *'}';</code></pre>
 
-    <p>A <em>PackageDeclaration</em> is used to declare a name space which can again contain any number of <em>AbstractElement</em>s. Xtext has built-in support for qualified names and scoping based on the hierarchy of the produced model. The default implementation will add the package names as the prefix to contained entities and nested packages. The qualified name of an <em>Entity</em> ‘Baz’ which is contained in a <em>PackageDeclaration</em> ‘foo.bar’ will be ‘foo.bar.Baz’. In case you do not like the default behavior you will need to use a different implementation of <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/naming/IQualifiedNameProvider.java">IQualifiedNameProvider</a>.</p>
+    <p><em>PackageDeclaration</em>用于声明一个名称空间，该空间可以再次包含任意数量的<em>AbstractElement</em> 。Xtext基于生成的模型的层次结构内置了对限定名称和作用域的支持。默认实现将添加包名称作为包含实体和嵌套包的前缀。这是包含在<em>PackageDeclaration“foo.bar”</em> <em>实体</em> “巴兹”的限定名称将是“foo.bar。巴兹”。如果您不喜欢默认行为，则需要使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/naming/IQualifiedNameProvider.java">IQualifiedNameProvider</a>的其他实现。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">Entity:
-    'entity' name=ValidID ('extends' superType=JvmTypeReference)? '{'
-        features+=Feature*
-    '}';
-</code></pre>
+    <pre><code class="language-xtext">实体：'entity'name = ValidID（'extends'superType = JvmTypeReference）？'{'features + = Feature *'}';</code></pre>
 
-    <p>The rule <em>Entity</em> starts with the definition of a keyword followed by a name. The <em>extends</em> clause makes use of the rule <em>JvmTypeReference</em> which is defined in a super grammar. <em>JvmTypeReference</em> defines the syntax for full Java-like type names. That is everything from simple names, over fully qualified names to fully-fledged generics, including wildcards, lower bounds and upper bounds. Finally between curly braces there can be any number of <em>Features</em>, which leads us to the next rule.</p>
+    <p>规则<em>实体</em>以关键字的定义开头，后跟名称。<em>extends</em>子句使用以超级语法定义的规则<em>JvmTypeReference</em> 。<em>JvmTypeReference</em>定义完整类Java类型名称的语法。这就是从简单的名称，完全限定的名称到完全成熟的泛型，包括通配符，下界和上界。最后在花括号之间可以有任意数量的<em>功能</em> ，这将引导我们进入下一个规则。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">Feature:
-    Property | Operation;
-</code></pre>
+    <pre><code class="language-xtext">特征：财产|操作;</code></pre>
 
-    <p>The rule <em>Feature</em> delegates to either a <em>Property</em> or an <em>Operation</em>.</p>
+    <p>规则<em>功能</em>委托给<em>属性</em>或<em>操作</em> 。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">Property:
-    name=ValidID ':' type=JvmTypeReference;
-</code></pre>
+    <pre><code class="language-xtext">属性：name = ValidID'：'type = JvmTypeReference;</code></pre>
 
-    <p>A <em>Property</em> has a name and makes again use of the inherited rule <em>JvmTypeReference</em>.</p>
+    <p><em>属性</em>具有名称，并再次使用继承的规则<em>JvmTypeReference</em> 。</p>
   </li>
   <li>
 
-    <pre><code class="language-xtext">Operation:
-    'op' name=ValidID 
-        '('(params+=FullJvmFormalParameter 
-        (',' params+=FullJvmFormalParameter)*)?')'
-        ':' type=JvmTypeReference 
-    body=XBlockExpression;
-</code></pre>
+    <pre><code class="language-xtext">操作：'op'name = ValidID'（'（params + = FullJvmFormalParameter（'，'params + = FullJvmFormalParameter）*）？'）''：'type = JvmTypeReference body = XBlockExpression;</code></pre>
 
-    <p><em>Operation</em>s also have a signature as expected. Note that also for formal parameters we can reuse a rule from the super grammar.</p>
+    <p><em>操作</em> s也有预期的签名。请注意，对于形式参数，我们可以重用超语法中的规则。</p>
 
-    <p>The body of the <em>Operation</em> is the actual implementation and is defined by the rule <em>XBlockExpression</em>, which is one of the most often used entry rules from Xbase. A block consist of any number of expressions between curly braces such as:</p>
+    <p><em>Operation</em>的主体是实际的实现，由规则<em>XBlockExpression</em>定义， <em>XBlockExpression</em>是Xbase中最常用的入口规则之一。块由大括号之间的任意数量的表达式组成，例如：</p>
 
-    <pre><code class="language-xbase">{
-    return "Hello World" + "!"
-}
-</code></pre>
+    <pre><code class="language-xbase">{返回“Hello World”+“！“}</code></pre>
   </li>
 </ol>
 
-<h2 id="domain-model-step3">Step Three: Generate Language Artifacts</h2>
+<h2 id="domain-model-step3">第三步：生成语言工件</h2>
 
-<p>Now that we have the grammar in place we need to execute the code generator that will derive the various language components. To do so, right-click into the grammar editor and select</p>
+<p>现在我们已经掌握了语法，我们需要执行将派生各种语言组件的代码生成器。为此，右键单击语法编辑器并选择</p>
 
-<p><em>Run As → Generate Xtext Artifacts</em>.</p>
+<p><em>运行方式→生成Xtext工件</em> 。</p>
 
-<p>This action generates the parser and text editor and some additional infrastructure code. You will see its logging messages in the Console View.</p>
+<p>此操作将生成解析器和文本编辑器以及一些其他基础结构代码。您将在控制台视图中看到其日志消息。</p>
 
-<p><img src="images/JvmTutorial_RunGenerator.png" alt="" /></p>
+<p><img src="images/JvmTutorial_RunGenerator.png" alt=""></p>
 
-<h2 id="domain-model-step4">Step Four: Define the Mapping to JVM Concepts</h2>
+<h2 id="domain-model-step4">第四步：定义映射到JVM概念</h2>
 
-<p>The syntax alone is not enough to make the language work. We need to map the domain-specific concepts to some other language in order to instruct Xtext how it is executed. Usually you define a code generator or an interpreter for that matter, but languages using Xbase can omit this step and make use of the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a>.</p>
+<p>单凭语法不足以使语言有效。我们需要将特定于域的概念映射到其他语言，以便指示Xtext如何执行它。通常您为此定义代码生成器或解释器，但使用Xbase的语言可以省略此步骤并使用<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/IJvmModelInferrer.java">IJvmModelInferrer</a> 。</p>
 
-<p>The idea is that you translate your language concepts to any number of Java types (<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmDeclaredType.java">JvmDeclaredType</a>). Such a type can be a Java class, Java interface, Java annotation type or a Java enum and may contain any valid members. In the end you as a language developer are responsible to create a correct model according to the Java language.</p>
+<p>我们的想法是将您的语言概念转换为任意数量的Java类型（ <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmDeclaredType.java">JvmDeclaredType</a> ）。这种类型可以是Java类，Java接口，Java注释类型或Java枚举，并且可以包含任何有效成员。最后，作为语言开发人员，您有责任根据Java语言创建正确的模型。</p>
 
-<p>By mapping your language concepts to Java elements, you implicitly tell Xtext in what kind of scopes the various expressions live and what return types are expected from them. Xtext 2.x also comes with a code generator which can translate that Java model into readable Java code, including the expressions.</p>
+<p>通过将您的语言概念映射到Java元素，您可以隐式地告诉Xtext各种表达式所处的范围以及它们所期望的返回类型。Xtext 2.x还附带了一个代码生成器，可以将该Java模型转换为可读的Java代码，包括表达式。</p>
 
-<p>If you have already triggered the ‘Generate Xtext Artifacts’ action, you should find a stub called <em>org/example/domainmodel/jvmmodel/DomainmodelJvmModelInferrer.xtend</em> in the src folder. Please replace its contents with the following :</p>
+<p>如果您已经触发了“生成Xtext工件”操作，则应该在src文件夹中找到名为<em>org / example / domainmodel / jvmmodel / DomainmodelJvmModelInferrer.xtend</em>的存根。请用以下内容替换其内容：</p>
 
-<pre><code class="language-xtend">package org.example.domainmodel.jvmmodel
+<pre><code class="language-xtend">包org.example.domainmodel.jvmmodel import com.google.inject。注入import org.example.domainmodel.domainmodel。实体导入org.example.domainmodel.domainmodel。操作导入org.example.domainmodel.domainmodel。属性导入org.eclipse.xtext.naming。IQualifiedNameProvider导入org.eclipse.xtext.xbase.jvmmodel。AbstractModelInferrer导入org.eclipse.xtext.xbase.jvmmodel。IJvmDeclaredTypeAcceptor导入org.eclipse.xtext.xbase.jvmmodel。JvmTypesBuilder类DomainmodelJvmModelInferrer扩展AbstractModelInferrer {/ ** *构建器API，以可读方式以编程方式创建Jvm元素*。* / @Inject扩展名JvmTypesBuilder @Inject扩展名IQualifiedNameProvider def dispatch void infer（实体元素，IJvmDeclaredTypeAcceptor acceptor，boolean isPrelinkingPhase）{acceptor.accept（element.toClass（element.fullyQualifiedName））[documentation = element.documentation if（element.superType！== null）superTypes + = element.superType.cloneWithProxies for（feature：element.features）{switch feature {Property：{members + = feature.toField（feature.name，feature.type）members + = feature.toGetter（feature .name，feature.type）members + = feature.toSetter（feature.name，feature.type）}操作：{members + = feature.toMethod（feature.name，feature.type）[documentation = feature.documentation for（p ：feature.params）{parameters + = p.toParameter（p.name，p.parameterType）} body = feature.body]}}}]}}</code></pre>
 
-import com.google.inject.Inject
-import org.example.domainmodel.domainmodel.Entity
-import org.example.domainmodel.domainmodel.Operation
-import org.example.domainmodel.domainmodel.Property
-import org.eclipse.xtext.naming.IQualifiedNameProvider
-import org.eclipse.xtext.xbase.jvmmodel.AbstractModelInferrer
-import org.eclipse.xtext.xbase.jvmmodel.IJvmDeclaredTypeAcceptor
-import org.eclipse.xtext.xbase.jvmmodel.JvmTypesBuilder
-
-class DomainmodelJvmModelInferrer extends AbstractModelInferrer {
-
-  /**
-   * a builder API to programmatically create Jvm elements 
-   * in readable way.
-   */
-  @Inject extension JvmTypesBuilder
-  
-  @Inject extension IQualifiedNameProvider
-  
-  def dispatch void infer(Entity element, 
-                IJvmDeclaredTypeAcceptor acceptor, 
-                boolean isPrelinkingPhase) {
-    acceptor.accept(element.toClass( element.fullyQualifiedName )) [
-      documentation = element.documentation
-      if (element.superType !== null)
-        superTypes += element.superType.cloneWithProxies
-      for (feature : element.features) {
-        switch feature {
-          
-          Property : {
-            members += feature.toField(feature.name, feature.type)
-            members += feature.toGetter(feature.name, feature.type)
-            members += feature.toSetter(feature.name, feature.type)
-          }
-          
-          Operation : {
-            members += feature.toMethod(feature.name, feature.type) [
-              documentation = feature.documentation
-              for (p : feature.params) {
-                parameters += p.toParameter(p.name, p.parameterType)
-              }
-              body = feature.body
-            ]
-          }
-        }
-      }
-    ]
-  }
-}
-</code></pre>
-
-<p>Let’s go through the code to get an idea of what is going on. (Please also refer to the JavaDoc of the used API for details, especially the <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a>).</p>
+<p>让我们通过代码来了解正在发生的事情。（有关详细信息，请参阅所用API的JavaDoc，尤其是<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a> ）。</p>
 
 <ol>
   <li>
-    <pre><code class="language-xtend">def dispatch void infer(Entity element, 
-        IJvmDeclaredTypeAcceptor acceptor, 
-        boolean isPrelinkingPhase) {
-</code></pre>
+    <pre><code class="language-xtend">def dispatch void infer（实体元素，IJvmDeclaredTypeAcceptor acceptor，boolean isPrelinkingPhase）{</code></pre>
 
-    <p>Using the dispatch keyword makes sure that the method is called for instances of type <em>Entity</em> only. Have a look at <a href="http://www.eclipse.org/xtend/documentation/202_xtend_classes_members.html#polymorphic-dispatch">the Xtend documentation</a> on polymorphic dispatch to understand Xtend’s dispatch functions. Extending <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/AbstractModelInferrer.java">AbstractModelInferrer</a> makes sure we don’t have to walk the syntax model on our own.</p>
+    <p>使用dispatch关键字可确保仅为<em>Entity</em>类型的实例调用该方法。查看有关多态调度<a href="http://www.eclipse.org/xtend/documentation/202_xtend_classes_members.html#polymorphic-dispatch">的Xtend文档</a> ，了解Xtend的调度函数。扩展<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/AbstractModelInferrer.java">AbstractModelInferrer</a>确保我们不必独自遍历语法模型。</p>
   </li>
   <li>
-    <pre><code class="language-xtend">acceptor.accept(element.toClass(element.fullyQualifiedName)) [  
-    ...
-]
-</code></pre>
+    <pre><code class="language-xtend">acceptor.accept（element.toClass（element.fullyQualifiedName））[...]</code></pre>
 
-    <p>Every <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmDeclaredType.java">JvmDeclaredType</a> you create in the model inference needs to be passed to the <em>acceptor</em> in order to get recognized. The extension method <em>toClass</em> comes from <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a>. That class provides a lot of convenient extension methods, which help making the code extremely readable and concise. It is important to understand that the creation and assignment of a qualified name is done in an early phase where the compiler collects all global symbols. You cannot resolve type references at this point.</p>
+    <p>您在模型推断中创建的每个<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmDeclaredType.java">JvmDeclaredType</a>都需要传递给<em>接受器</em>才能被识别。扩展方法<em>toClass</em>来自<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a> 。该类提供了许多方便的扩展方法，有助于使代码具有极高的可读性和简洁性。重要的是要理解限定名称的创建和分配是在编译器收集所有全局符号的早期阶段完成的。此时无法解析类型引用。</p>
   </li>
-  <li>The second argument to <em>accept</em> is a lambda block that contains further initialization of the created Java type. Only in this block you are allowed to do type reference resolution. This is also the place where you add members and put the XExpressions into context. Let’s see what we do in the initialization block in detail:</li>
+  <li><em>接受</em>的第二个参数是一个lambda块，它包含已创建的Java类型的进一步初始化。只有在此块中，您才可以进行类型参考分辨率。这也是您添加成员并将XExpressions放入上下文的位置。让我们详细了解一下我们在初始化块中做了些什么：</li>
   <li>
-    <pre><code class="language-xtend">documentation = element.documentation
-</code></pre>
+    <pre><code class="language-xtend">documentation = element.documentation</code></pre>
 
-    <p>Here we assign some JavaDoc to the newly created element. The assignment is translated to an invocation of the method <em><a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a>.setDocumentation(<a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmIdentifiableElement.java">JvmIdentifiableElement</a>, String)</em>, and <code>element.documentation</code> is in fact calling the extension method <em><a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a>.getDocumentation(<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EObject.java">EObject</a>)</em>. Such extension methods are explained in detail in the <a href="https://www.eclipse.org/xtend/documentation/202_xtend_classes_members.html#extension-methods">Xtend documentation</a>.</p>
+    <p>这里我们将一些JavaDoc分配给新创建的元素。赋值转换为方法<em><a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a> .setDocumentation（ <a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.common.types/emf-gen/org/eclipse/xtext/common/types/JvmIdentifiableElement.java">JvmIdentifiableElement</a> ，String）的</em>调用，而<code>element.documentation</code>实际上是调用扩展方法<em><a href="https://github.com/eclipse/xtext-extras/blob/master/org.eclipse.xtext.xbase/src/org/eclipse/xtext/xbase/jvmmodel/JvmTypesBuilder.java">JvmTypesBuilder</a> .getDocumentation（ <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EObject.java">EObject</a> ）</em> 。这些扩展方法在<a href="https://www.eclipse.org/xtend/documentation/202_xtend_classes_members.html#extension-methods">Xtend文档</a>中有详细<a href="https://www.eclipse.org/xtend/documentation/202_xtend_classes_members.html#extension-methods">说明</a> 。</p>
   </li>
   <li>
-    <pre><code class="language-xtend">if (element.superType !== null)
-    superTypes += entity.superType.cloneWithProxies
-</code></pre>
+    <pre><code class="language-xtend">if（element.superType！== null）superTypes + = entity.superType.cloneWithProxies</code></pre>
 
-    <p>Set the <em>superType</em> on the inferred element. Note that we have to clone the type reference from the <em>element.superType</em>. If we did not do that, the type reference would be automatically removed from the <em>element</em>, as <em>superType</em> is an EMF containment reference.</p>
+    <p>在推断的元素上设置<em>superType</em> 。请注意，我们必须从<em>element.superType</em>克隆类型引用。如果我们不这样做，类型引用将自动从<em>元素中</em>删除，因为<em>superType</em>是EMF包含引用。</p>
   </li>
   <li>
-    <pre><code class="language-xtend">for (feature : element.features) {
-    switch feature {
-        Property : {
-            // ...
-        }
-        Operation : {
-            // ...
-        }
-    }
-}
-</code></pre>
+    <pre><code class="language-xtend">for（feature：element.features）{switch feature {Property：{// ...操作：{// ...}}}</code></pre>
 
-    <p>When iterating over a list of heterogeneous types, the switch expression with its type guards comes in handy. If <em>feature</em> is of type <em>Property</em> the first block is executed. If it is an <em>Operation</em> the second block is executed. Note that the variable <em>feature</em> will be implicitly casted to the respective type within the blocks.</p>
+    <p>迭代异构类型列表时，带有类型保护的switch表达式就派上用场了。如果<em>feature</em>属于<em>Property</em>类型，则执行第一个块。如果是<em>操作</em> ，则执行第二个块。请注意，变量<em>要素</em>将隐式地转换为块中的相应类型。</p>
   </li>
   <li>
-    <pre><code class="language-xtend">Property : {
-    members += feature.toField(feature.name, feature.type)
-    members += feature.toSetter(feature.name, feature.type)
-    members += feature.toGetter(feature.name, feature.type)
-}
-</code></pre>
+    <pre><code class="language-xtend">属性：{members + = feature.toField（feature.name，feature.type）members + = feature.toSetter（feature.name，feature.type）members + = feature.toGetter（feature.name，feature.type）}</code></pre>
 
-    <p>For each <em>Property</em> we create a field as well as a corresponding getter and setter.</p>
+    <p>对于每个<em>Property，</em>我们创建一个字段以及相应的getter和setter。</p>
   </li>
   <li>
-    <pre><code class="language-xtend">Operation : {
-    members += feature.toMethod(feature.name, feature.type) [
-        documentation = feature.documentation
-        for (p : feature.params) {
-            parameters += p.toParameter(p.name, p.parameterType)
-        }
-        body = feature.body
-    ]
-}
-</code></pre>
+    <pre><code class="language-xtend">操作：{members + = feature.toMethod（feature.name，feature.type）[documentation = feature.documentation for（p：feature.params）{parameters + = p.toParameter（p.name，p.parameterType）} body = feature.body]}</code></pre>
 
-    <p><em>Operations</em> are mapped to a corresponding Java method. The documentation is translated and the parameters are added within the initializer. The line <code>body = feature.body</code> registers the <em>Operation</em>’s expression as the body of the newly created Java method. This defines the scope of the expression. The framework deduces the visible fields and parameters as well as the expected return type from that information.</p>
+    <p><em>操作</em>映射到相应的Java方法。翻译文档并在初始化程序中添加参数。line <code>body = feature.body</code>将<em>Operation</em>的表达式注册为新创建的Java方法的主体。这定义了表达式的范围。该框架从该信息中推导出可见字段和参数以及预期的返回类型。</p>
   </li>
 </ol>
 
-<h2 id="domain-model-step5">Step Five : Try the Editor!</h2>
+<h2 id="domain-model-step5">第五步：尝试编辑！</h2>
 
-<p>We are now able to test the IDE integration by spawning a new Eclipse using our plug-ins: right-click the project <code>org.example.domainmodel</code> in the Package Explorer and select <em>Run As → Eclipse Application</em>.</p>
+<p>我们现在可以使用我们的插件生成一个新的Eclipse来测试IDE集成：右键单击Package Explorer中的项目<code>org.example.domainmodel</code> ，然后选择<em>Run As→Eclipse Application</em> 。</p>
 
-<p>In the new workbench, create a Java project (<em>File → New → Project… → Java Project</em>). Xbase relies on a small runtime library on the class path. To add this, right-click on the project and go to <em>Java Build Path → Libraries → Add Library</em> and choose <em>Xtend Library</em>. Then create a new file with the file extension you chose in the beginning (<em>*.dmodel</em>) in the source folder of the Java project. This will open the generated entity editor. Try it and discover the rich functionality it provides. You should also have a look at the preferences of your language to find out what can be individually configured to your users needs.</p>
+<p>在新工作台中，创建一个Java项目（ <em>文件→新建→项目...→Java项目</em> ）。Xbase依赖于类路径上的小型运行时库。要添加它，请右键单击项目，然后转到<em>Java Build Path→Libraries→Add Library</em>并选择<em>Xtend Library</em> 。然后使用您在Java项目的源文件夹中的开头（ <em>* .dmodel</em> ）中选择的文件扩展名创建一个新文件。这将打开生成的实体编辑器。试一试，发现它提供的丰富功能。您还应该查看语言的首选项，以了解可以根据用户需求单独配置的内容。</p>
 
-<p>Have fun!</p>
+<p>玩得开心！</p>
 
-<p><img src="images/JvmTutorial_Editor.png" alt="" /></p>
+<p><img src="images/JvmTutorial_Editor.png" alt=""></p>
 
-<hr />
+<hr>
 
-<p><strong><a href="301_grammarlanguage.html">Next Chapter: The Grammar Language</a></strong></p>
+<p><strong><a href="301_grammarlanguage.html">下一章：语法语言</a></strong></p>
 
 
 </body>

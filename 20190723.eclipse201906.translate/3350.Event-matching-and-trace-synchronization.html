@@ -1,360 +1,146 @@
-<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Trace Compass Developer Guide - Event matching and trace synchronization</title>
-		<link type="text/css" rel="stylesheet" href="book.css"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<title>Trace Compass开发人员指南 - 事件匹配和跟踪同步</title>
+		<link type="text/css" rel="stylesheet" href="book.css"></link>
 	</head>
-	<body>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+	<body dir="ltr">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<th style="width: 100%" align="center" colspan="3">Event matching and trace synchronization</th>
+				<th align="center" colspan="3" style="width:100%">事件匹配和跟踪同步</th>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left">
+				<td align="left" style="width:20%">
 					<a href="CTF-Parser.html" title="CTF Parser">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right">
-					<a href="Analysis-Framework.html" title="Analysis Framework">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="center" style="width:60%"></td>
+				<td align="right" style="width:20%">
+					<a href="Analysis-Framework.html" title="分析框架">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">CTF Parser</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Analysis Framework</td>
+				<td align="left" valign="top" style="width:20%">CTF Parser</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">分析框架</td>
 			</tr>
-		</table><hr class="navigation-separator"/>
-		<h1 id="Event_matching_and_trace_synchronization">Event matching and trace synchronization</h1>
-		<p>Event matching consists in taking an event from a trace and linking it to another event in a possibly different trace. The example that comes to mind is matching network packets sent from one traced machine to another traced machine. These matches can be used to synchronize traces.</p>
-		<p>Trace synchronization consists in taking traces, taken on different machines, with a different time reference, and finding the formula to transform the timestamps of some of the traces, so that they all have the same time reference.</p>
-		<h2 id="Event_matching_interfaces">Event matching interfaces</h2>
-		<p>Here's a description of the major parts involved in event matching.  These classes are all in the 
-			<i>org.eclipse.tracecompass.tmf.core.event.matching</i> package:
-		</p>
+		</table><hr class="navigation-separator">
+		<h1 id="Event_matching_and_trace_synchronization">事件匹配和跟踪同步</h1>
+		<p>事件匹配包括从跟踪中获取事件并将其链接到可能不同的跟踪中的另一个事件。想到的示例是匹配从一个跟踪机器发送到另一个跟踪机器的网络数据包。这些匹配可用于同步跟踪。</p>
+		<p>跟踪同步包括在不同的机器上获取具有不同时间参考的跟踪，并找到用于转换某些跟踪的时间戳的公式，以便它们都具有相同的时间参考。</p>
+		<h2 id="Event_matching_interfaces">事件匹配接口</h2>
+		<p>以下是事件匹配中涉及的主要部分的描述。这些类都在<i>org.eclipse.tracecompass.tmf.core.event.matching</i>包中：</p>
 		<ul>
 			<li>
-				<b>ITmfEventMatching</b>: Controls the event matching process
-			</li>
+				<b>ITmfEventMatching</b> ：控制事件匹配过程</li>
 			<li>
-				<b>ITmfMatchEventDefinition</b>: Describes how events are matched
-			</li>
+				<b>ITmfMatchEventDefinition</b> ：描述事件的匹配方式</li>
 			<li>
-				<b>IMatchProcessingUnit</b>: Processes the matched events
-			</li>
+				<b>IMatchProcessingUnit</b> ：处理匹配的事件</li>
 		</ul>
-		<h2 id="Implementation_details_and_how_to_extend_it">Implementation details and how to extend it</h2>
-		<h3 id="ITmfEventMatching_interface_and_derived_classes">ITmfEventMatching interface and derived classes</h3>
-		<p>This interface controls the event matching itself. Their only public method is 
-			<i>matchEvents</i>. The implementing classes needs to manage how to setup the traces, and any initialization or finalization procedures.
+		<h2 id="Implementation_details_and_how_to_extend_it">实现细节以及如何扩展它</h2>
+		<h3 id="ITmfEventMatching_interface_and_derived_classes">ITmfEventMatching接口和派生类</h3>
+		<p>此接口控制事件匹配本身。他们唯一的公共方法是<i>matchEvents</i> 。实现类需要管理如何设置跟踪以及任何初始化或完成过程。
 		</p>
-		<p>The is one concrete implementation of this interface: 
-			<b>TmfEventMatching</b>. It makes a request on the traces and match events where a 
-			<i>cause</i> event can be uniquely matched with a 
-			<i>effect</i> event. It creates a 
-			<b>TmfEventDependency</b> between the source and destination events. The dependency is added to the processing unit.
+		<p>这是该接口的一个具体实现： <b>TmfEventMatching</b> 。它对跟踪和匹配事件发出请求，其中<i>原因</i>事件可以与<i>效果</i>事件唯一匹配。它在源事件和目标事件之间创建<b>TmfEventDependency</b> 。依赖关系被添加到处理单元。
 		</p>
-		<p>To match events requiring other mechanisms (for instance, a series of events can be matched with another series of events), one would need to add another class either implementing 
-			<b>ITmfEventMatching</b>. It would most probably also require a new 
-			<b>ITmfMatchEventDefinition</b> implementation.
+		<p>要匹配需要其他机制的事件（例如，一系列事件可以与另一系列事件匹配），需要添加另一个实现<b>ITmfEventMatching的</b>类。它很可能还需要一个新的<b>ITmfMatchEventDefinition</b>实现。
 		</p>
-		<h3 id="ITmfMatchEventDefinition_interface_and_its_derived_classes">ITmfMatchEventDefinition interface and its derived classes</h3>
-		<p>These are the classes that describe how to actually match specific events together.</p>
-		<p>The 
-			<b>canMatchTrace</b> method will tell if a definition is compatible with a given trace.
+		<h3 id="ITmfMatchEventDefinition_interface_and_its_derived_classes">ITmfMatchEventDefinition接口及其派生类</h3>
+		<p>这些类描述了如何将特定事件实际匹配在一起。</p>
+		<p><b>canMatchTrace</b>方法将告诉定义是否与给定跟踪兼容。
 		</p>
-		<p>The 
-			<b>getEventKey</b> method will return a key for an event that uniquely identifies this event and will match the key from another event.
+		<p><b>getEventKey</b>方法将返回唯一标识此事件的事件的键，并将匹配另一个事件的键。
 		</p>
-		<p>The 
-			<b>getDirection</b> method indicates whether this event is a 
-			<i>cause</i> or 
-			<i>effect</i> event to be matched with one from the opposite direction.
+		<p>该方法<b>getDirection</b>指示此事件是否是被一个从相反的方向相匹配的<i>原因</i>或<i>效果</i>事件。
 		</p>
-		<p>As examples, two concrete network match definitions have been implemented in the 
-			<i>org.eclipse.tracecompass.internal.lttng2.kernel.core.event.matching</i> package for two compatible methods of matching TCP packets (See the Trace Compass User Guide on 
-			<i>trace synchronization</i> for information on those matching methods). Each one tells which events need to be present in the metadata of a CTF trace for this matching method to be applicable. It also returns the field values from each event that will uniquely match 2 events together.
+		<p>作为示例，在<i>org.eclipse.tracecompass.internal.lttng2.kernel.core.event.matching</i>包中实现了两个具体的网络匹配定义，用于匹配TCP数据包的两种兼容方法（请参阅<i>跟踪同步</i>的跟踪指南针用户指南）关于那些匹配方法的信息）。每个事件都告诉CTF跟踪的元数据中需要存在哪些事件，以使这种匹配方法适用。它还返回每个事件的字段值，这些事件将唯一匹配2个事件。
 		</p>
-		<p>Each 
-			<b>IMatchEventDefinition</b> needs to be registered to the 
-			<b>TmfEventMatching</b> class using the following code for example
-		</p>
-		<pre>
-TmfEventMatching.registerMatchObject(new TcpEventMatching());
-</pre>
-		<h3 id="IMatchProcessingUnit_interface_and_derived_classes">IMatchProcessingUnit interface and derived classes</h3>
-		<p>While matching events is an exercise in itself, it's what to do with the match that really makes this functionality interesting. This is the job of the 
-			<b>IMatchProcessingUnit</b> interface.
+		<p>例如，每个<b>IMatchEventDefinition都</b>需要使用以下代码注册到<b>TmfEventMatching</b>类</p>
+		<pre>TmfEventMatching.registerMatchObject（new TcpEventMatching（））;</pre>
+		<h3 id="IMatchProcessingUnit_interface_and_derived_classes">IMatchProcessingUnit接口和派生类</h3>
+		<p>虽然匹配事件本身就是一个练习，但它是如何处理真正使这个功能变得有趣的匹配。这是<b>IMatchProcessingUnit</b>接口的工作。
 		</p>
 		<p>
-			<b>TmfEventMatches</b> provides a default implementation that only stores the matches to count them. When a new match is obtained, the 
-			<i>addMatch</i> is called with the match and the processing unit can do whatever needs to be done with it.
+			<b>TmfEventMatches</b>提供了一个默认实现，它只存储匹配项来计算它们。获得新匹配时，将使用匹配调用<i>addMatch</i> ，处理单元可以执行任何需要执行的操作。
 		</p>
-		<p>A match processing unit can be an analysis in itself. For example, trace synchronization is done through such a processing unit. One just needs to set the processing unit in the TmfEventMatching constructor.</p>
-		<h2 id="Code_examples">Code examples</h2>
-		<h3 id="Using_network_packets_matching_in_an_analysis">Using network packets matching in an analysis</h3>
-		<p>This example shows how one can create a processing unit inline to create a link between two events. In this example, the code already uses an event request, so there is no need here to call the 
-			<i>matchEvents</i> method, that will only create another request.
+		<p>匹配处理单元本身可以是分析。例如，跟踪同步是通过这样的处理单元完成的。只需要在TmfEventMatching构造函数中设置处理单元。</p>
+		<h2 id="Code_examples">代码示例</h2>
+		<h3 id="Using_network_packets_matching_in_an_analysis">在分析中使用网络数据包匹配</h3>
+		<p>此示例显示了如何创建内联处理单元以在两个事件之间创建链接。在此示例中，代码已使用事件请求，因此此处无需调用<i>matchEvents</i>方法，该方法仅创建另一个请求。</p>
+		<pre>class MyAnalysis扩展了TmfAbstractAnalysisModule {private TmfNetworkEventMatching tcpMatching; ...protected void executeAnalysis（）{IMatchProcessingUnit matchProcessing = new IMatchProcessingUnit（）{@ Override public void matchingEnded（）{} @Override public void init（ITmfTrace [] fTraces）{} @Override public int countMatches（）{return 0; } @Override public void addMatch（TmfEventDependency match）{log.debug（“我们得到了一个tcp匹配！“+ match.getSourceEvent（）。getContent（）+”“+ match.getDestinationEvent（）。getContent（））; TmfEvent source = match.getSourceEvent（）; TmfEvent destination = match.getDestinationEvent（）; / *创建一个链接这两个事件* /}}; ITmfTrace [] traces = {getTrace（）}; tcpMatching = new TmfEventMatching（traces，matchProcessing）; tcpMatching.initMatching（）; MyEventRequest request = new MyEventRequest（this，i）; getTrace（）。 sendRequest（request）;} public void analyzeEvent（TmfEvent event）{...tcpMatching.matchEvent（event，0）; ...} ...} MyEventRequest扩展TmfEventRequest {private final MyAnalysis分析; MyEventRequest（MyAnalysis analysis，int traceno）{super（CtfTmfEvent.class，TmfTimeRange。ETERNITY，0，TmfDataRequest.ALL_DATA，ITmfDataRequest.ExecutionType。前景）; this.analysis = analysis; } @Override public void handleData（final ITmfEvent event）{super.handleData（event）;如果（事件！= null）{analysis.analyzeEvent（event）; }}}</pre>
+		<h3 id="Match_events_from_UST_traces">匹配来自UST痕迹的事件</h3>
+		<p>假设使用LTTng-UST检测客户端 - 服务器应用程序。在服务器和不同计算机上的一些客户端上收集跟踪。可以使用网络事件匹配来同步跟踪。</p>
+		<p>以下元数据描述了这些事件：</p>
+		<pre>event {name =“myapp：send”; id = 0; stream_id = 0; loglevel = 13; fields：= struct {integer {size = 32; align = 8; signed = 1; encoding = none; base = 10; } _发送至;整数{size = 64; align = 8; signed = 1; encoding = none; base = 10; } _messageid;整数{size = 64; align = 8; signed = 1; encoding = none; base = 10; } _data; }; }; event {name =“myapp：receive”; id = 1; stream_id = 0; loglevel = 13; fields：= struct {integer {size = 32; align = 8; signed = 1; encoding = none; base = 10; } _from;整数{size = 64; align = 8; signed = 1; encoding = none; base = 10; } _messageid;整数{size = 64; align = 8; signed = 1; encoding = none; base = 10; } _data; }; };</pre>
+		<p>需要为这两个事件编写事件匹配定义，如下所示：</p>
+		<pre>公共类MyAppUstEventMatching实现ITmfMatchEventDefinition {public class MyEventMatchingKey实现IEventMatchingKey {private static final HashFunction HF = checkNotNull（Hashing.goodFastHash（32））; private final int fTo;私人决赛长期; public MyEventMatchingKey（int to，long id）{fTo = to; fId = id; } @Override public int hashCode（）{return HF.newHasher（）.putInt（fTo）.putLong（fId）.hash（）。asInt（）; } @Override public boolean equals（@Nullable Object o）{if（o instanceof MyEventMatchingKey）{MyEventMatchingKey key =（MyEventMatchingKey）o; return（key.fTo == fTo &amp;&amp; key.fId == fId）; } return false; @Override public Direction getDirection（ITmfEvent event）{String evname = event.getType（）。getName（）; if（evname.equals（“myapp：receive”））{return Direction。影响; } else if（evname.equals（“myapp：send”））{return Direction。原因; } return null; } @Override public IEventMatchingKey getEventKey（ITmfEvent event）{IEventMatchingKey key; if（evname.equals（“myapp：receive”））{key = new MyEventMatchingKey（event.getContent（）。getField（“from”）。getValue（），event.getContent（）。getField（“messageid”）。getValue （））; } else {key = new MyEventMatchingKey（event.getContent（）。getField（“sendto”）。getValue（），event.getContent（）。getField（“messageid”）。getValue（））; }返回键; } @Override public boolean canMatchTrace（ITmfTrace trace）{Set &lt;String&gt; events = ImmutableSet.of（“myapp：receive”，“myapp：send”）;如果（！（trace instanceof ITmfTraceWithPreDefinedEvents））{return false; } ITmfTraceWithPreDefinedEvents ktrace =（ITmfTraceWithPreDefinedEvents）trace;设置&lt;String&gt; traceEvents = TmfEventTypeCollectionHelper.getEventName（ktrace.getContainedEventTypes（））; traceEvents.retainAll（事件）;回来！traceEvents.isEmpty（）; }}</pre>
+		<p>必须在跟踪同步发生之前运行以下代码，例如在插件的Activator中：</p>
+		<pre>TmfEventMatching.registerMatchObject（new MyAppUstEventMatching（））;</pre>
+		<p>现在，仅在实验中添加跟踪并单击“ <b>同步跟踪”</b>菜单项将使用新的事件匹配定义来同步跟踪。
 		</p>
-		<pre>
-class MyAnalysis extends TmfAbstractAnalysisModule {
-
-    private TmfNetworkEventMatching tcpMatching;
-
-    ...
-
-    protected void executeAnalysis() {
-
-        IMatchProcessingUnit matchProcessing = new IMatchProcessingUnit() {
-            @Override
-            public void matchingEnded() {
-            }
-
-            @Override
-            public void init(ITmfTrace[] fTraces) {
-            }
-
-            @Override
-            public int countMatches() {
-                return 0;
-            }
-
-            @Override
-            public void addMatch(TmfEventDependency match) {
-                log.debug("we got a tcp match! " + match.getSourceEvent().getContent() + " " + match.getDestinationEvent().getContent());
-                TmfEvent source = match.getSourceEvent();
-                TmfEvent destination = match.getDestinationEvent();
-                /* Create a link between the two events */
-            }
-        };
-
-        ITmfTrace[] traces = { getTrace() };
-        tcpMatching = new TmfEventMatching(traces, matchProcessing);
-        tcpMatching.initMatching();
-
-        MyEventRequest request = new MyEventRequest(this, i);
-        getTrace().sendRequest(request);
-    }
-
-    public void analyzeEvent(TmfEvent event) {
-        ...
-        tcpMatching.matchEvent(event, 0);
-        ...
-    }
-
-    ...
-
-}
-
-class MyEventRequest extends TmfEventRequest {
-
-    private final MyAnalysis analysis;
-
-    MyEventRequest(MyAnalysis analysis, int traceno) {
-        super(CtfTmfEvent.class,
-            TmfTimeRange.ETERNITY,
-            0,
-            TmfDataRequest.ALL_DATA,
-            ITmfDataRequest.ExecutionType.FOREGROUND);
-        this.analysis = analysis;
-    }
-
-    @Override
-    public void handleData(final ITmfEvent event) {
-        super.handleData(event);
-        if (event != null) {
-            analysis.analyzeEvent(event);
-        }
-    }
-}
-</pre>
-		<h3 id="Match_events_from_UST_traces">Match events from UST traces</h3>
-		<p>Suppose a client-server application is instrumented using LTTng-UST. Traces are collected on the server and some clients on different machines. The traces can be synchronized using network event matching.</p>
-		<p>The following metadata describes the events:</p>
-		<pre>
-    event {
-        name = "myapp:send";
-        id = 0;
-        stream_id = 0;
-        loglevel = 13;
-        fields := struct {
-            integer { size = 32; align = 8; signed = 1; encoding = none; base = 10; } _sendto;
-            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _messageid;
-            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _data;
-        };
-    };
-
-    event {
-        name = "myapp:receive";
-        id = 1;
-        stream_id = 0;
-        loglevel = 13;
-        fields := struct {
-            integer { size = 32; align = 8; signed = 1; encoding = none; base = 10; } _from;
-            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _messageid;
-            integer { size = 64; align = 8; signed = 1; encoding = none; base = 10; } _data;
-        };
-    };
-</pre>
-		<p>One would need to write an event match definition for those 2 events as follows:</p>
-		<pre>
-public class MyAppUstEventMatching implements ITmfMatchEventDefinition {
-
-    public class MyEventMatchingKey implements IEventMatchingKey {
-
-        private static final HashFunction HF = checkNotNull(Hashing.goodFastHash(32));
-        private final int fTo;
-        private final long fId;
-
-        public MyEventMatchingKey(int to, long id) {
-            fTo = to;
-            fId = id;
-        }
-
-        @Override
-        public int hashCode() {
-            return HF.newHasher()
-                .putInt(fTo)
-                .putLong(fId).hash().asInt();
-        }
-
-        @Override
-        public boolean equals(@Nullable Object o) {
-            if (o instanceof MyEventMatchingKey) {
-                MyEventMatchingKey key = (MyEventMatchingKey) o;
-                return (key.fTo == fTo &amp;&amp;
-                    key.fId == fId);
-            }
-            return false;
-        }
-    }
-
-
-    @Override
-    public Direction getDirection(ITmfEvent event) {
-        String evname = event.getType().getName();
-        if (evname.equals("myapp:receive")) {
-            return Direction.EFFECT;
-        } else if (evname.equals("myapp:send")) {
-            return Direction.CAUSE;
-        }
-        return null;
-    }
-
-    @Override
-    public IEventMatchingKey getEventKey(ITmfEvent event) {
-        IEventMatchingKey key;
-
-        if (evname.equals("myapp:receive")) {
-            key = new MyEventMatchingKey(event.getContent().getField("from").getValue(),
-                event.getContent().getField("messageid").getValue());
-        } else {
-            key = new MyEventMatchingKey(event.getContent().getField("sendto").getValue(),
-                event.getContent().getField("messageid").getValue());
-        }
-
-        return key;
-    }
-
-    @Override
-    public boolean canMatchTrace(ITmfTrace trace) {
-        Set&lt;String&gt; events = ImmutableSet.of("myapp:receive", "myapp:send");
-        if (!(trace instanceof ITmfTraceWithPreDefinedEvents)) {
-            return false;
-        }
-        ITmfTraceWithPreDefinedEvents ktrace = (ITmfTraceWithPreDefinedEvents) trace;
-
-        Set&lt;String&gt; traceEvents = TmfEventTypeCollectionHelper.getEventName(ktrace.getContainedEventTypes());
-        traceEvents.retainAll(events);
-        return !traceEvents.isEmpty();
-    }
-
-}
-</pre>
-		<p>The following code will have to be run before the trace synchronization takes place, for example in the Activator of the plugin:</p>
-		<pre>
-TmfEventMatching.registerMatchObject(new MyAppUstEventMatching());
-</pre>
-		<p>Now, only adding the traces in an experiment and clicking the 
-			<b>Synchronize traces</b> menu item will synchronize the traces using the new definition for event matching.
+		<h2 id="Trace_synchronization">跟踪同步</h2>
+		<p>跟踪同步类和接口位于<i>org.eclipse.tracecompass.tmf.core.synchronization</i>包中。
 		</p>
-		<h2 id="Trace_synchronization">Trace synchronization</h2>
-		<p>Trace synchronization classes and interfaces are located in the 
-			<i>org.eclipse.tracecompass.tmf.core.synchronization</i> package.
+		<h3 id="Synchronization_algorithm">同步算法</h3>
+		<p>同步算法用于同步跟踪之间匹配的事件的跟踪。在同步之后，在具有不同时间参考的不同机器上进行的跟踪看到它们的时间戳被修改，使得它们都使用相同的时间参考（通常，至少一条迹线的时间）。对于来自不同机器的跟踪，不可能实现完美的同步，因此结果是考虑网络延迟的最佳近似。</p>
+		<p>抽象类<b>SynchronizationAlgorithm</b>是匹配的处理单元。新的同步算法必须扩展这一算法，它已经包含了为不同的跟踪获取时间戳转换的函数。
 		</p>
-		<h3 id="Synchronization_algorithm">Synchronization algorithm</h3>
-		<p>Synchronization algorithms are used to synchronize traces from events matched between traces. After synchronization, traces taken on different machines with different time references see their timestamps modified such that they all use the same time reference (typically, the time of at least one of the traces). With traces from different machines, it is impossible to have perfect synchronization, so the result is a best approximation that takes network latency into account.</p>
-		<p>The abstract class 
-			<b>SynchronizationAlgorithm</b> is a processing unit for matches. New synchronization algorithms must extend this one, it already contains the functions to get the timestamp transforms for different traces.
+		<p><i>全增量凸壳</i>同步算法是默认的同步算法。
 		</p>
-		<p>The 
-			<i>fully incremental convex hull</i> synchronization algorithm is the default synchronization algorithm.
+		<p>虽然同步系统提供了更多的同步算法，但还没有办法选择一个，实验的跟踪同步使用默认算法。要测试新的同步算法，应该直接调用同步，如下所示：</p>
+		<pre>SynchronizationAlgorithm syncAlgo = new MyNewSynchronizationAlgorithm（）; syncAlgo = SynchronizationManager.synchronizeTraces（syncFile，traces，syncAlgo，true）;</pre>
+		<h3 id="Timestamp_transforms">时间戳转换</h3>
+		<p>时间戳转换是用于将时间戳从跟踪转换为引用时间的公式。<b>ITmfTimestampTransform</b>是实现添加新转换的接口。
 		</p>
-		<p>While the synchronization system provisions for more synchronization algorithms, there is not yet a way to select one, the experiment's trace synchronization uses the default algorithm. To test a new synchronization algorithm, the synchronization should be called directly like this:</p>
-		<pre>
-SynchronizationAlgorithm syncAlgo = new MyNewSynchronizationAlgorithm();
-syncAlgo = SynchronizationManager.synchronizeTraces(syncFile, traces, syncAlgo, true);
-</pre>
-		<h3 id="Timestamp_transforms">Timestamp transforms</h3>
-		<p>Timestamp transforms are the formulae used to transform the timestamps from a trace into the reference time. The 
-			<b>ITmfTimestampTransform</b> is the interface to implement to add a new transform.
-		</p>
-		<p>The following classes implement this interface:</p>
+		<p>以下类实现此接口：</p>
 		<ul>
 			<li>
-				<b>TmfTimestampTransform</b>: default transform. It cannot be instantiated, it has a single static object 
-				<i>TmfTimestampTransform.IDENTITY</i>, which returns the original timestamp.
+				<b>TmfTimestampTransform</b> ：默认转换。它无法实例化，它有一个静态对象<i>TmfTimestampTransform。IDENTITY</i> ，返回原始时间戳。
 			</li>
 			<li>
-				<b>TmfConstantTransform</b>: simply applies an offset to the timestamp, so the formula would be: 
-				<i>f(t) = t + c</i> where 
-				<i>c</i> is the offset to apply.
+				<b>TmfConstantTransform</b> ：只是对时间戳应用偏移量，因此公式为： <i>f（t）= t + c</i>其中<i>c</i>是要应用的偏移量。
 			</li>
 			<li>
-				<b>TmfTimestampTransformLinear</b>: transforms the timestamp using a linear formula: 
-				<i>f(t) = at + b</i>, where 
-				<i>a</i> and 
-				<i>b</i> are computed by the synchronization algorithm.
+				<b>TmfTimestampTransformLinear</b> ：使用线性公式转换时间戳： <i>f（t）= at + b</i> ，其中<i>a</i>和<i>b</i>由同步算法计算。
 			</li>
 		</ul>
-		<p>These classes are not accessible directly, to create any timestamp transform, one needs to use one of the methods from the 
-			<b>TimestampTransformFactory</b> utility class.
+		<p>这些类不能直接访问，要创建任何时间戳转换，需要使用<b>TimestampTransformFactory</b>实用程序类中的一种方法。
 		</p>
-		<p>One could extend the interface for other timestamp transforms, for instance to have a transform where the formula would change over the course of the trace.</p>
-		<h2 id="Todo">Todo</h2>
-		<p>Here's a list of features not yet implemented that would enhance trace synchronization and event matching:</p>
+		<p>可以扩展用于其他时间戳变换的接口，例如具有变换，其中公式将在跟踪过程中改变。</p>
+		<h2 id="Todo">去做</h2>
+		<p>这是一个尚未实现的功能列表，可以增强跟踪同步和事件匹配：</p>
 		<ul>
-			<li>Ability to select a synchronization algorithm</li>
-			<li>Implement the minimum spanning tree algorithm by Masoume Jabbarifar (article on the subject not published yet) to automatically select the best reference trace</li>
-			<li>Instead of having the timestamp transforms per trace, have the timestamp transform as part of an experiment context, so that the trace's specific analysis, like the state system, are in the original trace, but are transformed only when needed for an experiment analysis.</li>
-			<li>Add more views to display the synchronization information (only textual statistics are available for now)</li>
-		</ul><hr class="navigation-separator"/>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<li>能够选择同步算法</li>
+			<li>实现Masoume Jabbarifar的最小生成树算法（关于尚未发布的主题的文章）以自动选择最佳参考跟踪</li>
+			<li>将时间戳变换作为实验上下文的一部分，而不是对每个跟踪进行时间戳转换，以便跟踪的特定分析（如状态系统）位于原始跟踪中，但仅在实验分析需要时进行转换。</li>
+			<li>添加更多视图以显示同步信息（目前只有文本统计信息可用）</li>
+		</ul><hr class="navigation-separator">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<td style="width: 20%" align="left">
+				<td align="left" style="width:20%">
 					<a href="CTF-Parser.html" title="CTF Parser">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center">
-					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
-						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+				<td align="center" style="width:60%">
+					<a href="Developer-Guide.html" title="Trace Compass开发人员指南">
+						<img alt="Trace Compass开发人员指南" border="0" src="images/home.gif">
 					</a>
 				</td>
-				<td style="width: 20%" align="right">
-					<a href="Analysis-Framework.html" title="Analysis Framework">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="right" style="width:20%">
+					<a href="Analysis-Framework.html" title="分析框架">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">CTF Parser</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Analysis Framework</td>
+				<td align="left" valign="top" style="width:20%">CTF Parser</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">分析框架</td>
 			</tr>
 		</table>
 	</body>

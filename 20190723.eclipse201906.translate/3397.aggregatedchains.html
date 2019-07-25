@@ -1,80 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"></meta>
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.6.1">
-<title>Aggregated Feature Chains</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
-<link rel="stylesheet" href="./asciidoctor.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
+<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<title>聚合特征链</title>
+<link rel="stylesheet" href="asset?aid=0"></link>
+<link rel="stylesheet" href="./asciidoctor.css"></link>
 </head>
-<body class="article">
+<body class="article" dir="ltr">
 <div id="header">
-<h1>Aggregated Feature Chains</h1>
+<h1>聚合特征链</h1>
 </div>
 <div id="content">
 <div class="paragraph">
-<p>Aggregating feature chains can result in surprising results, as multiple paths with the same start and end elements are merged together. This can be caused by (1) having multiple EObject instances reachable with the same checked attribute value (e.g. multiple machines with the same amount of RAM) or (2) reaching the same object in multiple paths. The duplicates can be correctly handled by making all objects through the path parameters, but the embedded aggregation syntax does not provide such support.</p>
+<p>聚合特征链可能导致令人惊讶的结果，因为具有相同开始和结束元素的多个路径被合并在一起。这可以由以下原因引起：（1）具有相同的已检查属性值的多个EObject实例（例如，具有相同RAM量的多台机器）或（2）在多个路径中到达相同对象。可以通过路径参数使所有对象正确处理重复项，但嵌入式聚合语法不提供此类支持。</p>
 </div>
 <div class="paragraph">
-<p>To demonstrate the issue, consider the following query (based on the CPS domain): we are interested in the total amount of RAM available in hosts of a dedicated host type. Naively, we could write the following query:</p>
+<p>要演示此问题，请考虑以下查询（基于CPS域）：我们感兴趣的是专用主机类型的主机中可用的RAM总量。天真地，我们可以编写以下查询：</p>
 </div>
 <div id="vql-embedded" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAMTotal_Wrong_Embedded(ht : HostType, total : java Integer) {
-	total == sum HostType.instances.totalRam(ht, #);
-}</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAMTotal_Wrong_Embedded（ht：HostType，total：java Integer）{total == sum HostType.instances.totalRam（ht，＃）; }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>However, this results in an incorrect match set if there are multiple host instances of the same host type that have the same value assigned to the total RAM attribute.</p>
+<p>但是，如果同一主机类型的多个主机实例具有分配给总RAM属性的相同值，则会导致匹配集不正确。</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="images/language/aggregated_chain_embedded_result.png" alt="Match set of the embedded subpattern">
+<img src="images/language/aggregated_chain_embedded_result.png" alt="匹配嵌入式子模式的集合">
 </div>
 </div>
 <div class="paragraph">
-<p>This embedded query is equivalent of the following version without embedded aggregation:</p>
+<p>此嵌入式查询等效于没有嵌入式聚合的以下版本：</p>
 </div>
 <div id="vql-incorrect" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAM_Simple(ht : HostType, ram : java Integer) {
-	HostType.instances.totalRam(ht, ram);
-}
-
-pattern hostTypeRAMTotal_Wrong(ht : HostType, total : java Integer) {
-	total == sum find hostTypeRAM_Simple(ht, #);
-}</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAM_Simple（ht：HostType，ram：java Integer）{HostType.instances.totalRam（ht，ram）; pattern hostTypeRAMTotal_Wrong（ht：HostType，total：java Integer）{total == sum find hostTypeRAM_Simple（ht，＃）; }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The problematic part is the hostTypeRAM_Simple pattern where the removal of the interim host instance variable results in multiple rows having the same value:</p>
+<p>有问题的部分是hostTypeRAM_Simple模式，其中删除临时主机实例变量导致多行具有相同的值：</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="images/language/aggregated_chain_result.png" alt="Match set with the helper pattern">
+<img src="images/language/aggregated_chain_result.png" alt="匹配与辅助模式设置">
 </div>
 </div>
 <div class="paragraph">
-<p>By modifying the called pattern not to remove the host instance variable, the result set becomes the expected one:</p>
+<p>通过修改被调用模式而不删除主机实例变量，结果集将成为预期的结果集：</p>
 </div>
 <div id="vql-correct" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAM(ht : HostType, hi : HostInstance, ram : java Integer) {
-	HostType.instances(ht, hi);
-	HostInstance.totalRam(hi, ram);
-}
-
-pattern hostTypeRAMTotal(ht : HostType, total : java Integer) {
-	total == sum find hostTypeRAM(ht, _, #);
-}</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern hostTypeRAM（ht：HostType，hi：HostInstance，ram：java Integer）{HostType.instances（ht，hi）; HostInstance.totalRam（hi，ram）; pattern hostTypeRAMTotal（ht：HostType，total：java Integer）{total == sum find hostTypeRAM（ht，_，＃）; }</code></pre>
 </div>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="images/language/aggregated_chain_correct_result.png" alt="Match set with the fixed pattern">
+<img src="images/language/aggregated_chain_correct_result.png" alt="与固定模式匹配">
 </div>
 </div>
 </div>

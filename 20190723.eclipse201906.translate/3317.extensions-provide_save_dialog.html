@@ -1,101 +1,35 @@
-<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>extensions-provide_save_dialog</title>
-		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css"/>
-		<link type="text/css" rel="stylesheet" href="../resources/custom.css"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<title>扩展 -  provide_save_dialog</title>
+		<link type="text/css" rel="stylesheet" href="../resources/bootstrap.css"></link>
+		<link type="text/css" rel="stylesheet" href="../resources/custom.css"></link>
 	</head>
-	<body>
-		<h1 id="SiriusProvidecustomsavedialog">Sirius &#8211; Provide custom save dialog</h1>
-		<h2 id="Goals">Goals</h2>
-		<p>Sirius uses the same 
-			<em>Save Dialog</em> for any operation that implies to the end-user whether changes made on session should be saved or discarded (when closing a session through the 
-			<code>CloseUISessionCommand</code>, when controlling resources...).
+	<body dir="ltr">
+		<h1 id="SiriusProvidecustomsavedialog">Sirius  - 提供自定义保存对话框</h1>
+		<h2 id="Goals">目标</h2>
+		<p>对于最终用户意味着是否应保存或丢弃对会话所做的更改（当通过<code>CloseUISessionCommand</code>关闭会话时，控制资源时...），Sirius使用相同的<em>保存对话框</em> 。
 		</p>
-		<p>Developer may need to extend this save dialog to propose other choices to the end-user.</p>
-		<h2 id="CustomizeSiriussavedialogs">Customize Sirius save dialogs</h2>
-		<h3 id="TheISaveDialogExtensioninterface">The 
-			<code>ISaveDialogExtension</code> interface
-		</h3>
-		<p>This interface allows to:</p>
+		<p>开发人员可能需要扩展此保存对话框以向最终用户提出其他选择。</p>
+		<h2 id="CustomizeSiriussavedialogs">自定义Sirius保存对话框</h2>
+		<h3 id="TheISaveDialogExtensioninterface"><code>ISaveDialogExtension</code>接口</h3>
+		<p>该界面允许：</p>
 		<ul>
-			<li>Customize the choices given to the end-user when a save dialog opens (for example default is 
-				<em>Save</em> and 
-				<em>Discard</em>)
-			</li>
-			<li>Add additional behavior according to the choice made by user.</li>
+			<li>在保存对话框打开时自定义给最终用户的选项（例如，默认为<em>保存</em>和<em>放弃</em> ）</li>
+			<li>根据用户的选择添加其他行为。</li>
 		</ul>
 		<ul>
 			<li>
-				<code>boolean isSaveDialogFor(Object objectToSave)</code> : allows to indicates whether this extension should be applied (condition on the Session for example)
-			</li>
+				<code>boolean isSaveDialogFor(Object objectToSave)</code> ：允许指示是否应该应用此扩展（例如，Session上的条件）</li>
 			<li>
-				<code>Collection&lt;String&gt; getButtons();</code> : returns a collection of String corresponding to the available choices for a save dialog (do no override CANCEL, this will be added automatically if possible)
-			</li>
+				<code>Collection&lt;String&gt; getButtons();</code> ：返回与保存对话框的可用选项对应的String集合（不要覆盖CANCEL，如果可能，将自动添加）</li>
 			<li>
-				<code>int reactToValue(Object objectToSave, int userChoice);</code> : defines the behavior to apply when faced to the given user choice.
+				<code>int reactToValue(Object objectToSave, int userChoice);</code> ：定义在面对给定用户选择时要应用的行为。
 			</li>
 		</ul>
-		<h3 id="ProvideyourISaveDialogExtensionusingtheorg.eclipse.sirius.common.ui.savedialogextensionextensionpoint">Provide your 
-			<code>ISaveDialogExtension</code> using the 
-			<code>org.eclipse.sirius.common.ui.savedialogextension</code> extension point
-		</h3>
-		<p>Please refer to this extension point documentation  for more details.</p>
-		<h2 id="Example">Example</h2>
-		<pre><code>package myPackage;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import org.eclipse.sirius.business.api.session.Session;
-import org.eclipse.ui.ISaveablePart2;
-
-public class CustomSaveDialogExtension {
-
-    public boolean isSaveDialogFor(Object objectToSave) {
-        // This save dialog is active if
-        // - the saved element is a session
-        return (objectToSave instanceof Session)
-        // - the session ID is "SaveSession"
-                &amp;&amp; "SaveSession".equals(((Session) objectToSave).getID());
-    }
-
-    public Collection&lt;String&gt; getButtons() {
-        return new ArrayList&lt;String&gt;(Arrays.asList("Save", "Make something special", "Discard"));
-    }
-
-    public int reactToValue(Object objectToSave, int temporaryResult) {
-        Session session = (Session) objectToSave;
-        int returnedValue = ISaveablePart2.YES;
-
-        switch (temporaryResult) {
-        // Case 0 : "Save"
-        case 0:
-            // we will return ISaveablePart2.YES =&gt; the session will be saved
-            // normally
-            break;
-        // Case 1 : "Make something special"
-        case 1:
-            makeSomethingSpecial(session);
-            // we will return CANCEL =&gt; nothing else willl be done
-            returnedValue = ISaveablePart2.CANCEL;
-            break;
-        // Case 2 : "Discard"
-        case 2:
-            // we return NO =&gt; changes will be discarded
-            returnedValue = ISaveablePart2.NO;
-            break;
-        // Default : "CANCEL" or any other
-        default:
-            returnedValue = ISaveablePart2.CANCEL;
-            break;
-
-        }
-        return returnedValue;
-    }
-}
-
-</code></pre>
+		<h3 id="ProvideyourISaveDialogExtensionusingtheorg.eclipse.sirius.common.ui.savedialogextensionextensionpoint">使用<code>org.eclipse.sirius.common.ui.savedialogextension</code>扩展点提供您的<code>ISaveDialogExtension</code></h3>
+		<p>有关更多详细信息，请参阅此扩展点文档。</p>
+		<h2 id="Example">例</h2>
+		<pre><code>包myPackage; import java.util。数组列表; import java.util。阵列; import java.util。采集; import org.eclipse.sirius.business.api.session。会议; import org.eclipse.ui。ISaveablePart2; public class CustomSaveDialogExtension {public boolean isSaveDialogFor（Object objectToSave）{//如果//保存的元素是会话返回（objectToSave instanceof Session）//此会话ID为“SaveSession”&amp;&amp;“SaveSession”，则此保存对话框处于活动状态。 equals（（（Session）objectToSave）.getID（））; public Collection &lt;String&gt; getButtons（）{return new ArrayList &lt;String&gt;（Arrays.asList（“Save”，“Make something special”，“Discard”））; public int reactToValue（Object objectToSave，int temporaryResult）{Session session =（Session）objectToSave; int returnedValue = ISaveablePart2。是; switch（temporaryResult）{//案例0：“保存”案例0：//我们将返回ISaveablePart2。是=&gt;会话将被保存//通常会中断; //案例1：“做一些特别的事”案例1：makeSomethingSpecial（session）; //我们将返回CANCEL =&gt;其他任何东西都不会返回returnValue = ISaveablePart2。取消;打破; //案例2：“丢弃”案例2：//我们返回NO =&gt;更改将被丢弃returnsValue = ISaveablePart2。没有;打破; //默认值：“CANCEL”或任何其他默认值：returnedValue = ISaveablePart2。取消;打破; } return returnedValue; }}</code></pre>
 	</body>
 </html>

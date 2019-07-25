@@ -1,91 +1,30 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  <title>Server Push</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+  <title>服务器推送</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"></link>
 </head>
-<body>
+<body dir="ltr">
 
-  <h1>Server Push</h1>
+  <h1>服务器推送</h1>
 
-  <p>
-    Sometimes it's necessary to “push” UI updates from the RAP server to the RAP client.
-    As an example, imagine a chat application that notifies the user of a chat request from a peer.
+  <p>有时需要将UI更新从RAP服务器“推送”到RAP客户端。例如，假设一个聊天应用程序通知用户来自对等方的聊天请求。
   </p>
-  <p>
-    HTTP is not designed to actively push data to the client.
-    A RAP server can only answer requests from a
-    <a href="client.html">client</a>, but it cannot actively send any message
-    to the client. In RAP the UI is typically updated
-    within a request caused by a user interaction, in which case this restriction is not an issue.
-    However, when the UI is <a href="threads.html#asyncexec">updated from a background thread</a>,
-    there's usually no request that could fetch the UI updates from the server.
-    In this case the UI changes would not be rendered until the next HTTP request is triggered.
+  <p>HTTP不是为主动将数据推送到客户端而设计的。RAP服务器只能回答来自<a href="client.html">客户端的</a>请求，但不能主动向客户端发送任何消息。在RAP中，UI通常在由用户交互引起的请求内更新，在这种情况下，这种限制不是问题。但是，当<a href="threads.html#asyncexec">从后台线程更新</a> UI时，通常没有可以从服务器获取UI更新的请求。在这种情况下，在触发下一个HTTP请求之前，不会呈现UI更改。
   </p>
 
-  <h2>The Solution</h2>
+  <h2>解决方案</h2>
 
-  <p>
-    Using the so-called Comet (or “long polling”) approach, the server is able to notify the client
-    <em>immediately</em>. The basic idea is that the client sends a request to the server that is
-    not answered until the server needs to notify the client of a change.
+  <p>使用所谓的Comet（或“长轮询”）方法，服务器能够<em>立即</em>通知客户端。基本思想是客户端向服务器发送未应答的请求，直到服务器需要通知客户端发生更改。
   </p>
-  <p>
-    RAP provides an implementation of this mechanism which can be used via the
-    <em><a href="../reference/api/org/eclipse/rap/rwt/service/ServerPushSession.html">ServerPushSession</a></em>
-    API.
-    <strong>Before</strong> starting a background task, create an instance of <em>ServerPushSession</em>
-    and call
-    <em><a href="../reference/api/org/eclipse/rap/rwt/service/ServerPushSession.html#start--">start</a></em>.
-    When the background task has completed and no longer needs the
-    server push mechanism, call
-    <em><a href="../reference/api/org/eclipse/rap/rwt/service/ServerPushSession.html#stop--">stop</a></em>.
-    Example:
+  <p>RAP提供了此机制的实现，可以通过<em><a href="../reference/api/org/eclipse/rap/rwt/service/ServerPushSession.html">ServerPushSession</a></em> API使用。 <strong>在</strong>开始后台任务<strong>之前</strong> ，请创建<em>ServerPushSession</em>的实例并调用<em><a href="../reference/api/org/eclipse/rap/rwt/service/ServerPushSession.html#start--">start</a></em> 。当后台任务完成且不再需要服务器推送机制时，请调用<em><a href="../reference/api/org/eclipse/rap/rwt/service/ServerPushSession.html#stop--">stop</a></em> 。例：</p>
+<pre class="lang-java">最终ServerPushSession pushSession = new ServerPushSession（）; Runnable bgRunnable = new Runnable（）{@Override public void run（）{//做一些后台工作......//安排UI更新display.asyncExec（new Runnable（）{@Override public void run（）{if（！）label.isDisposed（））{//更新UI label.setText（“updated”）; //完成pushSession.stop（）时关闭推送会话}}}; }}; pushSession.start（）;线程bgThread =新线程（bgRunnable）; bgThread.setDaemon（true）; bgThread.start（）;</pre>
+  <p>UI会话可以并行创建和启动任意数量的<em>ServerPushSession</em> 。只要有任何活动的推送会话，该框架将保持服务器推送。也就是说，对于多个推送会话，只需要一个请求。
   </p>
-<pre class="lang-java">
-final ServerPushSession pushSession = new ServerPushSession();
-Runnable bgRunnable = new Runnable() {
-  @Override
-  public void run() {
-    // do some background work ...
-    // schedule the UI update
-    display.asyncExec( new Runnable() {
-      @Override
-      public void run() {
-        if( !label.isDisposed() ) {
-          // update the UI
-          label.setText( "updated" );
-          // close push session when finished
-          pushSession.stop();
-        }
-      }
-    } );
-  }
-};
-pushSession.start();
-Thread bgThread = new Thread( bgRunnable );
-bgThread.setDaemon( true );
-bgThread.start();
-</pre>
-  <p>
-    A UI session may create and start any number of <em>ServerPushSession</em>s in parallel.
-    The framework will keep the server push enabled as long as there are any active push sessions.
-    That is, for multiple push sessions, there is only a single request needed.
+  <p>请注意，与<em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#asyncExec-java.lang.Runnable-">显示＃asyncExec（） ，</a></em> <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#timerExec-int, java.lang.Runnable-">显示＃timerExec（） ，</a></em> <em>并不</em>需要一个明确的<em>ServerPushSession，</em>如RAP在这种情况下会自动创建一个。
   </p>
-  <p>
-    Note that unlike
-    <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#asyncExec-java.lang.Runnable-">Display#asyncExec()</a></em>,
-    <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#timerExec-int, java.lang.Runnable-">Display#timerExec()</a></em>,
-    does <em>not</em> require an explicit <em>ServerPushSession</em>,
-    as RAP creates one automatically in this case.
-  </p>
-  <p>
-    More technical details of the ServerPush implementation can be found on the
-    <a href="http://wiki.eclipse.org/RAP/Server_Push" target="blank">RAP Wiki</a>.
+  <p>可以在<a href="http://wiki.eclipse.org/RAP/Server_Push" target="blank">RAP Wiki</a>上找到ServerPush实现的更多技术细节。
   </p>
 
 </body>

@@ -1,107 +1,38 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" dir="ltr">
 <head>
 
-<meta name="copyright"
-	content="Copyright (c) IBM Corporation and others 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
 
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<link REL="STYLESHEET" HREF="../../book.css" CHARSET="ISO-8859-1"
-	TYPE="text/css">
-<title>The dropins folder and supported file layouts</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"></meta>
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1"></link>
+<title>dropins文件夹和支持的文件布局</title>
 </head>
-<body>
-<h1>The dropins folder and supported file layouts</h1>
-<p>Provisioning operations should generally occur using the software updates dialog,
-or by invoking p2 tools or APIs. However, there are situations where
-scripts need to install plugins and features via file system operations,
-and have the new content dynamically discovered by the system either at
-startup, or while running. To support this kind of low-level
-manipulation of the system, p2 supports the notion of watched
-directories. A watched directory is a place where a user or script can
-drop files and have them discovered by p2. Various policies can be
-applied to watched directories to configure when they are checked for
-new content, and whether to eagerly install discovered content.</p>
+<body dir="ltr">
+<h1>dropins文件夹和支持的文件布局</h1>
+<p>配置操作通常应使用软件更新对话框或通过调用p2工具或API来进行。但是，有些情况下脚本需要通过文件系统操作来安装插件和功能，并且系统在启动时或运行时动态发现新内容。为了支持这种对系统的低级操作，p2支持监视目录的概念。监视目录是用户或脚本可以删除文件并通过p2发现它们的位置。可以对监视目录应用各种策略，以便在检查新内容时进行配置，以及是否急切地安装发现的内容。</p>
 
-<p>The Eclipse platform ships with a default watched directory
-called <code>dropins</code>. The dropins folder is configured to be scanned during
-startup. Thus the dropins folder can be used much like the plugins
-directory was used in the past. A subtle twist on old behavior here is
-that plug-ins and features added to the dropins folder are properly
-installed into the system rather than being forced in. This means p2 has
-an opportunity to confirm that the new plug-in doesn't conflict with
-other installed plug-ins, and it could even go out and fetch any missing
-prerequisites of the newly dropped in plug-ins. This also means you can
-later use the GUI to install extra functionality that depends on the
-plug-ins in the dropins folder, since p2 knows about them and can reason
-about their dependencies. In other words, new plug-ins installed via the
-dropins folder behave exactly like plug-ins installed via the user
-interface.</p>
+<p>Eclipse平台附带一个名为<code>dropins</code>的默认监视目录。dropins文件夹配置为在启动期间进行扫描。因此，dropins文件夹可以像过去使用的plugins目录一样使用。这里对旧行为的微妙改变是添加到dropins文件夹的插件和功能已正确安装到系统中而不是被强制插入。这意味着p2有机会确认新插件不会与其他已安装的插件发生冲突，甚至可能会出现并获取新插入插件的任何缺少的先决条件。这也意味着您以后可以使用GUI来安装依赖于dropins文件夹中的插件的额外功能，因为p2知道它们并且可以推断它们的依赖性。换句话说，通过dropins文件夹安装的新插件的行为与通过用户界面安装的插件完全相同。</p>
 
-<h2>Supported file layouts</h2>
-<p>The dropins folder supports a variety of layouts, depending on
-the scale of your application and the desired degree of separation of
-its parts. The simplest layout is to just drop plug-ins in either jar or
-directory format directly into the dropins folder:</p>
+<h2>支持的文件布局</h2>
+<p>dropins文件夹支持各种布局，具体取决于应用程序的规模和所需的部件分离程度。最简单的布局是将jar或目录格式的插件直接放入dropins文件夹：</p>
 <pre>
-<code>
- eclipse/
-   dropins/
-     org.eclipse.core.tools_1.4.0.200710121455.jar
-     org.eclipse.releng.tools_3.3.0.v20070412/
-       plugin.xml
-       tools.jar
-       ... etc ...
-   ...
+<code>eclipse / dropins / org.eclipse.core.tools_1.4.0.200710121455.jar org.eclipse.releng.tools_3.3.0.v20070412 / plugin.xml tools.jar ... etc ......
 </code>
 </pre>
-<p>You can also drop in the traditional Eclipse application or
-extension layout directly in the dropins folder:</p>
+<p>您还可以直接在dropins文件夹中插入传统的Eclipse应用程序或扩展布局：</p>
 <pre>
-<code>
- eclipse/
-   dropins/
-     eclipse/
-       features/
-       plugins/
+<code>eclipse / dropins / eclipse / features / plugins /</code>
+</pre>
+<p>如果您要删除各种不同的组件，并且希望将它们分开，则可以在包含传统Eclipse扩展的dropins文件夹下面添加一个额外的文件夹层：</p>
+<pre>
+<code>eclipse / dropins / emf / eclipse / features / plugins / gef / eclipse / features / plugins / ...等...
 </code>
 </pre>
-<p>If you have various different components being dropped in, and
-you want to keep them separate, you can add an additional layer of
-folders immediately below the dropins folder that contain traditional
-Eclipse extensions:</p>
-<pre>
-<code>
- eclipse/
-   dropins/
-     emf/
-       eclipse/
-         features/
-         plugins/
-     gef/
-       eclipse/
-         features/
-         plugins/
-     ... etc ...
-</code>
-</pre>
-<p>Finally, you can add link files as in the traditional Eclipse
-links folder. The link file format is the same as a <code>java.util.Properties</code> file
-with a key <code>path</code> pointing to the extension location. If the location is not an
-absolute path, then it is considered relative to the Eclipse install directory. The path can
-also start with a variable of the form %PROP% which will be replaced with the
-Java system property called PROP if defined.
+<p>最后，您可以像在传统的Eclipse链接文件夹中一样添加链接文件。链接文件格式与<code>java.util.相同<code>java.util.具有指向扩展位置的键<code>path</code> Properties</code>文件。如果该位置不是绝对路径，则认为它相对于Eclipse安装目录。该路径也可以以％PROP％形式的变量开头，该变量将被定义为名为PROP的Java系统属性替换。
 </p>
-<p>There is also 
-an optional key named <code>optional</code> whose boolean value indicates whether or not
-the repository is considered optional. A missing optional repository will suppress error messages
-from being printed in the log file.</p>
+<p>还有一个名为<code>optional</code>的可选键，其布尔值表示存储库是否被视为可选。缺少可选存储库将禁止在日志文件中打印错误消息。</p>
 <pre>
-<code>
- eclipse/
-   dropins/
-     emf.link
-</code>
+<code>eclipse / dropins / emf.link</code>
 </pre>
 
 </body>

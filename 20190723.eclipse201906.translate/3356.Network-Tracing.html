@@ -1,78 +1,75 @@
-<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Trace Compass Developer Guide - Network Tracing</title>
-		<link type="text/css" rel="stylesheet" href="book.css"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<title>Trace Compass开发人员指南 - 网络跟踪</title>
+		<link type="text/css" rel="stylesheet" href="book.css"></link>
 	</head>
-	<body>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+	<body dir="ltr">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<th style="width: 100%" align="center" colspan="3">Network Tracing</th>
+				<th align="center" colspan="3" style="width:100%">网络追踪</th>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left">
-					<a href="Performance-Tests.html" title="Performance Tests">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+				<td align="left" style="width:20%">
+					<a href="Performance-Tests.html" title="性能测试">
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right">
-					<a href="Markers.html" title="Markers">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="center" style="width:60%"></td>
+				<td align="right" style="width:20%">
+					<a href="Markers.html" title="标记">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Performance Tests</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Markers</td>
+				<td align="left" valign="top" style="width:20%">性能测试</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">标记</td>
 			</tr>
-		</table><hr class="navigation-separator"/>
-		<h1 id="Network_Tracing">Network Tracing</h1>
-		<h2 id="Adding_a_protocol">Adding a protocol</h2>
-		<p>Supporting a new network protocol in TMF is straightforward. Minimal effort is required to support new protocols. In this tutorial, the UDP protocol will be added to the list of supported protocols.</p>
-		<h3 id="Architecture">Architecture</h3>
-		<p>All the TMF pcap-related code is divided in three projects (not considering the tests plugins):</p>
+		</table><hr class="navigation-separator">
+		<h1 id="Network_Tracing">网络追踪</h1>
+		<h2 id="Adding_a_protocol">添加协议</h2>
+		<p>在TMF中支持新的网络协议非常简单。支持新协议需要很少的努力。在本教程中，UDP协议将添加到支持的协议列表中。</p>
+		<h3 id="Architecture">建筑</h3>
+		<p>所有与TMF pcap相关的代码分为三个项目（不考虑测试插件）：</p>
 		<ul>
 			<li>
-				<b>org.eclipse.tracecompass.pcap.core</b>, which contains the parser that will read pcap files and constructs the different packets from a ByteBuffer. It also contains means to build packet streams, which are conversation (list of packets) between two endpoints. To add a protocol, almost all of the work will be in that project.
+				<b>org.eclipse.tracecompass.pcap.core</b> ，它包含将读取pcap文件并从ByteBuffer构造不同数据包的解析器。它还包含构建数据包流的方法，数据包流是两个端点之间的会话（数据包列表）。要添加协议，几乎所有工作都将在该项目中。
 			</li>
 			<li>
-				<b>org.eclipse.tracecompass.tmf.pcap.core</b>, which contains TMF-specific concepts and act as a wrapper between TMF and the pcap parsing library. It only depends on org.eclipse.tracecompass.tmf.core and org.eclipse.tracecompass.pcap.core. To add a protocol, one file must be edited in this project.
+				<b>org.eclipse.tracecompass.tmf.pcap.core</b> ，它包含特定于TMF的概念，并充当TMF和pcap解析库之间的包装器。它只依赖于org.eclipse.tracecompass.tmf.core和org.eclipse.tracecompass.pcap.core。要添加协议，必须在此项目中编辑一个文件。
 			</li>
 			<li>
-				<b>org.eclipse.tracecompass.tmf.pcap.ui</b>, which contains all TMF pcap UI-specific concepts, such as the views and perspectives. No work is needed in that project.
+				<b>org.eclipse.tracecompass.tmf.pcap.ui</b> ，它包含所有TMF pcap UI特定的概念，例如视图和透视图。该项目不需要任何工作。
 			</li>
 		</ul>
-		<h3 id="UDP_Packet_Structure">UDP Packet Structure</h3>
-		<p>The UDP is a transport-layer protocol that does not guarantee message delivery nor in-order message reception. A UDP packet (datagram) has the following 
-			<a href="http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure">structure</a>:
-		</p>
-		<table class="wikitable" style="margin: 0 auto; text-align: center;">
+		<h3 id="UDP_Packet_Structure">UDP数据包结构</h3>
+		<p>UDP是传输层协议，不保证消息传递也不保证有序消息接收。UDP包（数据报）具有以下<a href="http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure">结构</a> ：</p>
+		<table class="wikitable" style="margin:0 auto;text-align:center">
 			<tr>
-				<th style="border-bottom:none; border-right:none;">
-					<i>Offsets</i>
+				<th style="border-bottom:none;border-right:none">
+					<i>偏置</i>
 				</th>
-				<th style="border-left:none;">Octet</th>
+				<th style="border-left:none">八重奏</th>
 				<th colspan="8">0</th>
 				<th colspan="8">1</th>
 				<th colspan="8">2</th>
 				<th colspan="8">3</th>
 			</tr>
 			<tr>
-				<th style="border-top: none">Octet</th>
-				<th><tt>Bit</tt></th>
-				<th><tt>&nbsp;0</tt></th>
-				<th><tt>&nbsp;1</tt></th>
-				<th><tt>&nbsp;2</tt></th>
-				<th><tt>&nbsp;3</tt></th>
-				<th><tt>&nbsp;4</tt></th>
-				<th><tt>&nbsp;5</tt></th>
-				<th><tt>&nbsp;6</tt></th>
-				<th><tt>&nbsp;7</tt></th>
-				<th><tt>&nbsp;8</tt></th>
-				<th><tt>&nbsp;9</tt></th>
+				<th style="border-top:none">八重奏</th>
+				<th><tt>位</tt></th>
+				<th><tt>0</tt></th>
+				<th><tt>1</tt></th>
+				<th><tt>2</tt></th>
+				<th><tt>3</tt></th>
+				<th><tt>4</tt></th>
+				<th><tt>五</tt></th>
+				<th><tt>6</tt></th>
+				<th><tt>7</tt></th>
+				<th><tt>8</tt></th>
+				<th><tt>9</tt></th>
 				<th><tt>10</tt></th>
 				<th><tt>11</tt></th>
 				<th><tt>12</tt></th>
@@ -93,696 +90,204 @@
 				<th><tt>27</tt></th>
 				<th><tt>28</tt></th>
 				<th><tt>29</tt></th>
-				<th><tt>30</tt></th>
+				<th><tt>三十</tt></th>
 				<th><tt>31</tt></th>
 			</tr>
 			<tr>
 				<th>0</th>
-				<th><tt> 0</tt></th>
-				<td style="background:#fdd;" colspan="16">Source port</td>
-				<td colspan="16">Destination port</td>
+				<th><tt>0</tt></th>
+				<td colspan="16" style="background:#fdd">源端口</td>
+				<td colspan="16">目的端口</td>
 			</tr>
 			<tr>
 				<th>4</th>
 				<th><tt>32</tt></th>
-				<td colspan="16">Length</td>
-				<td style="background:#fdd;" colspan="16">Checksum</td>
+				<td colspan="16">长度</td>
+				<td colspan="16" style="background:#fdd">校验</td>
 			</tr>
 		</table>
-		<p>Knowing that, we can define an UDPPacket class that contains those fields.</p>
-		<h3 id="Creating_the_UDPPacket">Creating the UDPPacket</h3>
-		<p>First, in org.eclipse.tracecompass.pcap.core, create a new package named 
-			<b>org.eclipse.tracecompass.pcap.core.protocol.name</b> with name being the name of the new protocol. In our case name is udp so we create the package 
-			<b>org.eclipse.tracecompass.pcap.core.protocol.udp</b>. All our work is going in this package.
+		<p>知道了，我们可以定义一个包含这些字段的UDPPacket类。</p>
+		<h3 id="Creating_the_UDPPacket">创建UDPPacket</h3>
+		<p>首先，在org.eclipse.tracecompass.pcap.core中，创建一个名为<b>org.eclipse.tracecompass.pcap.core.protocol.name</b>的新包，其名称是新协议的名称。在我们的例子中，name是udp，因此我们创建了包<b>org.eclipse.tracecompass.pcap.core.protocol.udp</b> 。我们所有的工作都在这个包中。
 		</p>
-		<p>In this package, we create a new class named UDPPacket that extends Packet. All new protocol must define a packet type that extends the abstract class Packet. We also add different fields:</p>
+		<p>在这个包中，我们创建了一个名为UDPPacket的新类，它扩展了Packet。所有新协议都必须定义扩展抽象类Packet的数据包类型。我们还添加了不同的字段：</p>
 		<ul>
 			<li>
-				<i>Packet</i> 
-				<b>fChildPacket</b>, which is the packet encapsulated by this UDP packet, if it exists. This field will be initialized by findChildPacket().
+				<i>数据包</i> <b>fChildPacket</b> ，它是由此UDP数据包封装的数据包（如果存在）。该字段将由findChildPacket（）初始化。
 			</li>
 			<li>
-				<i>ByteBuffer</i> 
-				<b>fPayload</b>, which is the payload of this packet. Basically, it is the UDP packet without its header.
+				<i>ByteBuffer</i> <b>fPayload</b> ，这是该数据包的有效负载。基本上，它是没有标头的UDP数据包。
 			</li>
 			<li>
-				<i>int</i> 
-				<b>fSourcePort</b>, which is an unsigned 16-bits field, that contains the source port of the packet (see packet structure).
+				<i>int</i> <b>fSourcePort</b> ，它是一个无符号的16位字段，包含数据包的源端口（请参阅数据包结构）。
 			</li>
 			<li>
-				<i>int</i> 
-				<b>fDestinationPort</b>, which is an unsigned 16-bits field, that contains the destination port of the packet (see packet structure).
+				<i>int</i> <b>fDestinationPort</b> ，它是一个无符号的16位字段，包含数据包的目标端口（请参阅数据包结构）。
 			</li>
 			<li>
-				<i>int</i> 
-				<b>fTotalLength</b>, which is an unsigned 16-bits field, that contains the total length (header + payload) of the packet.
+				<i>int</i> <b>fTotalLength</b> ，它是一个无符号的16位字段，包含数据包的总长度（标头+有效负载）。
 			</li>
 			<li>
-				<i>int</i> 
-				<b>fChecksum</b>, which is an unsigned 16-bits field, that contains a checksum to verify the integrity of the data.
+				<i>int</i> <b>fChecksum</b> ，一个无符号的16位字段，包含校验和以验证数据的完整性。
 			</li>
 			<li>
-				<i>UDPEndpoint</i> 
-				<b>fSourceEndpoint</b>, which contains the source endpoint of the UDPPacket. The UDPEndpoint class will be created later in this tutorial.
+				<i>UDPEndpoint</i> <b>fSourceEndpoint</b> ，包含<b>UDPPacket</b>的源端点。UDPEndpoint类将在本教程后面创建。
 			</li>
 			<li>
-				<i>UDPEndpoint</i> 
-				<b>fDestinationEndpoint</b>, which contains the destination endpoint of the UDPPacket.
+				<i>UDPEndpoint</i> <b>fDestinationEndpoint</b> ，包含<b>UDPPacket</b>的目标端点。
 			</li>
 			<li>
-				<i>ImmutableMap&lt;String, String&gt;</i> 
-				<b>fFields</b>, which is a map that contains all the packet fields (see in data structure) which assign a field name with its value. Those values will be displayed on the UI.
+				<i>ImmutableMap &lt;String，String&gt;</i> <b>fFields</b> ，它是一个包含所有数据包字段（参见数据结构）的映射，它为字段名称赋值。这些值将显示在UI上。</li>
+		</ul>
+		<p>我们还创建了UDPPacket（PcapFile文件，@ Nullable Packet父，ByteBuffer包）构造函数。参数是：</p>
+		<ul>
+			<li>
+				<i>PcapFile</i> <b>文件</b> ，该数据包所属的pcap文件。
+			</li>
+			<li>
+				<i>数据包</i> <b>父</b> ，即包含此UDPPacket的数据包</li>
+			<li>
+				<i>ByteBuffer</i> <b>数据包</b> ，它是一个ByteBuffer，包含初始化此UDPPacket字段所需的所有数据。我们将在对象构造期间从中检索字节。
 			</li>
 		</ul>
-		<p>We also create the UDPPacket(PcapFile file, @Nullable Packet parent, ByteBuffer packet) constructor. The parameters are:</p>
+		<p>获得以下课程：</p>
+		<pre>package org.eclipse.tracecompass.pcap.core.protocol.udp; import java.nio。字节缓冲区; import java.util。地图; import org.eclipse.tracecompass.internal.pcap.core.endpoint。ProtocolEndpoint; import org.eclipse.tracecompass.internal.pcap.core.packet。BadPacketException; import org.eclipse.tracecompass.internal.pcap.core.packet。包; public class UDPPacket扩展Packet {private final @Nullable Packet fChildPacket;私人决赛@Nullable ByteBuffer fPayload; private final int fSourcePort; private final int fDestinationPort; private final int fTotalLength;私人决赛int fChecksum; private @Nullable UDPEndpoint fSourceEndpoint; private @Nullable UDPEndpoint fDestinationEndpoint; private @Nullable ImmutableMap &lt;String，String&gt; fFields; / ** * UDP Packet类的构造函数。* * @param file *包含此数据包的文件。* @param parent *此数据包的父数据包（封装数据包）。* @param packet *整个数据包（标头和有效负载）。* @throws BadPacketException *在数据包错误时抛出。* / public UDPPacket（PcapFile文件，@ Nullable Packet parent，ByteBuffer数据包）抛出BadPacketException {super（文件，父，PcapProtocol。UDP）; // TODO自动生成的构造函数stub} @Override public Packet getChildPacket（）{// TODO自动生成的方法存根返回null; } @Override public ByteBuffer getPayload（）{// TODO自动生成的方法存根返回null; } @Override public boolean validate（）{// TODO自动生成的方法存根返回false; } @Override protected Packet findChildPacket（）抛出BadPacketException {// TODO自动生成的方法存根返回null; } @Override public ProtocolEndpoint getSourceEndpoint（）{// TODO自动生成的方法存根返回null; } @Override public ProtocolEndpoint getDestinationEndpoint（）{// TODO自动生成的方法存根返回null; } @Override public Map &lt;String，String&gt; getFields（）{// TODO自动生成的方法存根返回null; } @Override public String getLocalSummaryString（）{// TODO自动生成的方法存根返回null; } @Override protected String getSignificationString（）{// TODO自动生成的方法存根返回null; } @Override public boolean equals（Object obj）{// TODO自动生成的方法存根返回false; } @Override public int hashCode（）{// TODO自动生成的方法存根返回0; }}</pre>
+		<p>现在，我们实现构造函数。它分四步完成：</p>
+		<ul>
+			<li>我们将fSourceEndpoint，fDestinationEndpoint和fFields初始化为null，因为它们是延迟加载的。这允许更快地构造分组并因此更快地解析。</li>
+			<li>我们使用ByteBuffer包初始化fSourcePort，fDestinationPort，fTotalLength，fChecksum。由于数据包数据结构，我们可以简单地检索packet.getShort（）来获取值。由于Java中没有未签名，因此要特别注意避免负数。我们使用实用程序方法ConversionHelper.unsignedShortToInt（）将其转换为整数，并初始化字段。</li>
+			<li>既然已经解析了头部，我们将使剩余的ByteBuffer数据包初始化有效载荷（如果有的话）。为此，我们只需从当前位置开始生成一个新的ByteBuffer。</li>
+			<li>我们使用findChildPacket（）方法初始化字段fChildPacket</li>
+		</ul>
+		<p>获得以下构造函数：</p>
+		<pre>public UDPPacket（PcapFile文件，@ Nullable Packet parent，ByteBuffer数据包）抛出BadPacketException {super（文件，父，协议。UDP）; //端点和fField是延迟加载的。它们在get * Endpoint（）//方法中定义。fSourceEndpoint = null; fDestinationEndpoint = null; fFields = null; //初始化ByteBuffer packet.order中的字段（ByteOrder。BIG_ENDIAN）; packet.position（0）; fSourcePort = ConversionHelper.unsignedShortToInt（packet.getShort（））; fDestinationPort = ConversionHelper.unsignedShortToInt（packet.getShort（））; fTotalLength = ConversionHelper.unsignedShortToInt（packet.getShort（））; fChecksum = ConversionHelper.unsignedShortToInt（packet.getShort（））; //初始化有效负载if（packet.array（）。length  -  packet.position（）&gt; 0）{byte [] array = new byte [packet.array（）。length  -  packet.position（）]; packet.get（数组）; ByteBuffer payload = ByteBuffer.wrap（array）; payload.order（字节顺序。BIG_ENDIAN）; payload.position（0）; fPayload = payload; } else {fPayload = null; } //查找子fChildPacket = findChildPacket（）; }</pre>
+		<p>然后，我们实现以下方法：</p>
 		<ul>
 			<li>
-				<i>PcapFile</i> 
-				<b>file</b>, which is the pcap file to which this packet belongs.
+				<i>public Packet</i> <b>getChildPacket（）</b> ：fChildPacket的简单getter</li>
+			<li>
+				<i>public ByteBuffer</i> <b>getPayload（）</b> ：fPayload的简单getter</li>
+			<li>
+				<i>public boolean</i> <b>validate（）</b> ：检查数据包是否有效的方法。在我们的例子中，如果检索到的校验和fChecksum和真实校验和（我们可以使用UDPPacket的字段和有效负载计算）相同，则数据包有效。
 			</li>
 			<li>
-				<i>Packet</i> 
-				<b>parent</b>, which is the packet encasulating this UDPPacket
+				<i>protected Packet</i> <b>findChildPacket（）</b> ：如果找到封装协议，则创建新数据包的方法。例如，基于fDestinationPort，它可以确定封装协议是什么并创建新的数据包对象。
 			</li>
 			<li>
-				<i>ByteBuffer</i> 
-				<b>packet</b>, which is a ByteBuffer that contains all the data necessary to initialize the fields of this UDPPacket. We will retrieve bytes from it during object construction.
+				<i>public ProtocolEndpoint</i> <b>getSourceEndpoint（）</b> ：初始化并返回源端点的方法。
+			</li>
+			<li>
+				<i>public ProtocolEndpoint</i> <b>getDestinationEndpoint（）</b> ：初始化并返回目标端点的方法。
+			</li>
+			<li>
+				<i>public Map &lt;String，String&gt;</i> <b>getFields（）</b> ：初始化并返回包含与其值匹配的字段的映射的方法。
+			</li>
+			<li>
+				<i>public String</i> <b>getLocalSummaryString（）</b> ：返回总结数据包最重要字段的字符串的方法。无需列出所有字段，只需列出最重要的字段。这将显示在UI上。</li>
+			<li>
+				<i>protected String</i> <b>getSignificationString（）</b> ：返回描述数据包含义的字符串的方法。如果没有特殊含义，则可以返回getLocalSummaryString（）。
+			</li>
+			<li>public boolean''equals <b>（Object obj）</b> ：Object的equals方法。
+			</li>
+			<li>public <b>int''hashCode（）</b> ：Object的hashCode方法。
 			</li>
 		</ul>
-		<p>The following class is obtained:</p>
-		<pre>
-package org.eclipse.tracecompass.pcap.core.protocol.udp;
-
-import java.nio.ByteBuffer;
-import java.util.Map;
-
-import org.eclipse.tracecompass.internal.pcap.core.endpoint.ProtocolEndpoint;
-import org.eclipse.tracecompass.internal.pcap.core.packet.BadPacketException;
-import org.eclipse.tracecompass.internal.pcap.core.packet.Packet;
-
-public class UDPPacket extends Packet {
-
-    private final @Nullable Packet fChildPacket;
-    private final @Nullable ByteBuffer fPayload;
-
-    private final int fSourcePort;
-    private final int fDestinationPort;
-    private final int fTotalLength;
-    private final int fChecksum;
-
-    private @Nullable UDPEndpoint fSourceEndpoint;
-    private @Nullable UDPEndpoint fDestinationEndpoint;
-
-    private @Nullable ImmutableMap&lt;String, String&gt; fFields;
-
-    /**
-     * Constructor of the UDP Packet class.
-     *
-     * @param file
-     *            The file that contains this packet.
-     * @param parent
-     *            The parent packet of this packet (the encapsulating packet).
-     * @param packet
-     *            The entire packet (header and payload).
-     * @throws BadPacketException
-     *             Thrown when the packet is erroneous.
-     */
-    public UDPPacket(PcapFile file, @Nullable Packet parent, ByteBuffer packet) throws BadPacketException {
-        super(file, parent, PcapProtocol.UDP);
-        // TODO Auto-generated constructor stub
-    }
-
-
-    @Override
-    public Packet getChildPacket() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ByteBuffer getPayload() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean validate() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    protected Packet findChildPacket() throws BadPacketException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ProtocolEndpoint getSourceEndpoint() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public ProtocolEndpoint getDestinationEndpoint() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Map&lt;String, String&gt; getFields() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getLocalSummaryString() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    protected String getSignificationString() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-}
-</pre>
-		<p>Now, we implement the constructor. It is done in four steps:</p>
-		<ul>
-			<li>We initialize fSourceEndpoint, fDestinationEndpoint and fFields to null, since those are lazy-loaded. This allows faster construction of the packet and thus faster parsing.</li>
-			<li>We initialize fSourcePort, fDestinationPort, fTotalLength, fChecksum using ByteBuffer packet. Thanks to the packet data structure, we can simply retrieve packet.getShort() to get the value. Since there is no unsigned in Java, special care is taken to avoid negative number. We use the utility method ConversionHelper.unsignedShortToInt() to convert it to an integer, and initialize the fields.</li>
-			<li>Now that the header is parsed, we take the rest of the ByteBuffer packet to initialize the payload, if there is one. To do this, we simply generate a new ByteBuffer starting from the current position.</li>
-			<li>We initialize the field fChildPacket using the method findChildPacket()</li>
-		</ul>
-		<p>The following constructor is obtained:</p>
-		<pre>
-    public UDPPacket(PcapFile file, @Nullable Packet parent, ByteBuffer packet) throws BadPacketException {
-        super(file, parent, Protocol.UDP);
-
-        // The endpoints and fFields are lazy loaded. They are defined in the get*Endpoint()
-        // methods.
-        fSourceEndpoint = null;
-        fDestinationEndpoint = null;
-        fFields = null;
-
-        // Initialize the fields from the ByteBuffer
-        packet.order(ByteOrder.BIG_ENDIAN);
-        packet.position(0);
-
-        fSourcePort = ConversionHelper.unsignedShortToInt(packet.getShort());
-        fDestinationPort = ConversionHelper.unsignedShortToInt(packet.getShort());
-        fTotalLength = ConversionHelper.unsignedShortToInt(packet.getShort());
-        fChecksum = ConversionHelper.unsignedShortToInt(packet.getShort());
-
-        // Initialize the payload
-        if (packet.array().length - packet.position() &gt; 0) {
-            byte[] array = new byte[packet.array().length - packet.position()];
-            packet.get(array);
-
-            ByteBuffer payload = ByteBuffer.wrap(array);
-            payload.order(ByteOrder.BIG_ENDIAN);
-            payload.position(0);
-            fPayload = payload;
-        } else {
-            fPayload = null;
-        }
-
-        // Find child
-        fChildPacket = findChildPacket();
-
-    }
-</pre>
-		<p>Then, we implement the following methods:</p>
+		<p>我们得到以下代码：</p>
+		<pre>@Override public @Nullable Packet getChildPacket（）{return fChildPacket; } @Override public @Nullable ByteBuffer getPayload（）{return fPayload; } / ** *返回UDP源端口的Getter方法。* * @return源端口。* / public int getSourcePort（）{return fSourcePort; } / ** *返回UDP目标端口的Getter方法。* * @return目的地港口。* / public int getDestinationPort（）{return fDestinationPort; } / ** * {@inheritDoc} * *请参阅http://www.iana.org/assignments/service-names-port-numbers/service- * names-port-numbers.xhtml或* http：// en。 wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers * / @Override protected @Nullable数据包findChildPacket（）抛出BadPacketException {//当实现更多协议时，我们可以简单地在fDestinationPort字段上切换以查找子数据包。//例如，如果目标端口是80，则很可能封装了HTTP协议。我们可以创建一个新的HTTP //数据包（经过一些验证，它确实是HTTP协议）。ByteBuffer payload = fPayload; if（payload == null）{return null; } return new UnknownPacket（getPcapFile（），this，payload）; } @Override public boolean validate（）{//尚未实现。ATM，我们认为所有数据包都是有效的。// TODO实现它。我们可以计算真实的校验和并将其与fChecksum进行比较。返回true; } @Override public UDPEndpoint getSourceEndpoint（）{@ Nonvalable UDPEndpoint endpoint = fSourceEndpoint; if（endpoint == null）{endpoint = new UDPEndpoint（this，true）; } fSourceEndpoint = endpoint; return fSourceEndpoint; } @Override public UDPEndpoint getDestinationEndpoint（）{@ Nonvalable UDPEndpoint endpoint = fDestinationEndpoint; if（endpoint == null）{endpoint = new UDPEndpoint（this，false）; } fDestinationEndpoint = endpoint; return fDestinationEndpoint; } @Override public Map &lt;String，String&gt; getFields（）{ImmutableMap &lt;String，String&gt; map = fFields; if（map == null）{@SuppressWarnings（“null”）@NonNull ImmutableMap &lt;String，String&gt; newMap = ImmutableMap。&lt;String，String&gt; builder（）。output（“Source Port”，String.valueOf（fSourcePort）） // $ NON-NLS-1 $ .put（“Destination Port”，String.valueOf（fDestinationPort））// $ NON-NLS-1 $ .put（“Length”，String.valueOf（fTotalLength）+“bytes” ）// $ NON-NLS-1 $ // $ NON-NLS-2 $ .put（“Checksum”，String.format（“％s％04x”，“0x”，fChecksum））// $ NON-NLS -1 $ // $ NON-NLS-2 $ // $ NON-NLS-3 $ .build（）; fFields = newMap;返回newMap; } return map; } @Override public String getLocalSummaryString（）{return“Src Port：”+ fSourcePort +“，Dst Port：”+ fDestinationPort; // $ NON-NLS-1 $ // $ NON-NLS-2 $} @Override protected String getSignificationString（）{return“Source Port：”+ fSourcePort +“，Destination Port：”+ fDestinationPort; // $ NON-NLS-1 $ // $ NON-NLS-2 $} @Override public int hashCode（）{final int prime = 31; int result = 1; result = prime * result + fChecksum; final Packet child = fChildPacket;如果（孩子！= null）{result = prime * result + child.hashCode（）; } else {result = prime * result; } result = prime * result + fDestinationPort; final ByteBuffer payload = fPayload;如果（有效载荷！= null）{result = prime * result + payload.hashCode（）; } else {result = prime * result; } result = prime * result + fSourcePort; result = prime * result + fTotalLength;返回结果; } @Override public boolean equals（@Nullable Object obj）{if（this == obj）{return true; } if（obj == null）{return false; if（getClass（）！= obj.getClass（））{return false; UDPPacket other =（UDPPacket）obj;如果（fChecksum！= other.fChecksum）{return false; } final Packet child = fChildPacket;如果（孩子！= null）{if（！）child.equals（other.fChildPacket））{return false; } else {if（other.fChildPacket！= null）{return false; if（fDestinationPort！）= other.fDestinationPort）{return false; } final ByteBuffer payload = fPayload;如果（有效载荷！= null）{if（！）payload.equals（other.fPayload））{return false; } else {if（other.fPayload！= null）{return false; if（fSourcePort！= other.fSourcePort）{return false; } if（fTotalLength！= other.fTotalLength）{return false; } return true; }</pre>
+		<p>UDPPacket类已实现。我们现在定义了UDPEndpoint。</p>
+		<h3 id="Creating_the_UDPEndpoint">创建UDPEndpoint</h3>
+		<p>对于UDP协议，端点将是其源或其目标端口，具体取决于它是源端点还是目标端点。知道了，我们可以创建UDPEndpoint类。</p>
+		<p>我们在包中创建了一个名为UDPEndpoint的新类，它扩展了ProtocolEndpoint。我们还添加了一个字段：fPort，其中包含源或目标端口。我们最后添加一个构造函数public ExampleEndpoint（Packet packet，boolean isSourceEndpoint）：</p>
 		<ul>
 			<li>
-				<i>public Packet</i> 
-				<b>getChildPacket()</b>: simple getter of fChildPacket
+				<i>数据</i> <b>包</b> <i>数据</i> <b>包</b> ：构建端点的数据包。
 			</li>
 			<li>
-				<i>public ByteBuffer</i> 
-				<b>getPayload()</b>: simple getter of fPayload
-			</li>
-			<li>
-				<i>public boolean</i> 
-				<b>validate()</b>: method that checks if the packet is valid. In our case, the packet is valid if the retrieved checksum fChecksum and the real checksum (that we can compute using the fields and payload of UDPPacket) are the same.
-			</li>
-			<li>
-				<i>protected Packet</i> 
-				<b>findChildPacket()</b>: method that create a new packet if a encapsulated protocol is found. For instance, based on the fDestinationPort, it could determine what the encapsulated protocol is and creates a new packet object.
-			</li>
-			<li>
-				<i>public ProtocolEndpoint</i> 
-				<b>getSourceEndpoint()</b>: method that initializes and returns the source endpoint.
-			</li>
-			<li>
-				<i>public ProtocolEndpoint</i> 
-				<b>getDestinationEndpoint()</b>: method that initializes and returns the destination endpoint.
-			</li>
-			<li>
-				<i>public Map&lt;String, String&gt;</i> 
-				<b>getFields()</b>: method that initializes and returns the map containing the fields matched to their value.
-			</li>
-			<li>
-				<i>public String</i> 
-				<b>getLocalSummaryString()</b>: method that returns a string summarizing the most important fields of the packet. There is no need to list all the fields, just the most important one. This will be displayed on UI.
-			</li>
-			<li>
-				<i>protected String</i> 
-				<b>getSignificationString()</b>: method that returns a string describing the meaning of the packet. If there is no particular meaning, it is possible to return getLocalSummaryString().
-			</li>
-			<li>public boolean'' 
-				<b>equals(Object obj)</b>: Object's equals method.
-			</li>
-			<li>public int'' 
-				<b>hashCode()</b>: Object's hashCode method.
+				<i>boolean</i> <b>isSourceEndpoint</b> ：端点是源端点还是目标端点。
 			</li>
 		</ul>
-		<p>We get the following code:</p>
-		<pre>
-    @Override
-    public @Nullable Packet getChildPacket() {
-        return fChildPacket;
-    }
-
-    @Override
-    public @Nullable ByteBuffer getPayload() {
-        return fPayload;
-    }
-
-    /**
-     * Getter method that returns the UDP Source Port.
-     *
-     * @return The source Port.
-     */
-    public int getSourcePort() {
-        return fSourcePort;
-    }
-
-    /**
-     * Getter method that returns the UDP Destination Port.
-     *
-     * @return The destination Port.
-     */
-    public int getDestinationPort() {
-        return fDestinationPort;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * See http://www.iana.org/assignments/service-names-port-numbers/service-
-     * names-port-numbers.xhtml or
-     * http://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
-     */
-    @Override
-    protected @Nullable Packet findChildPacket() throws BadPacketException {
-        // When more protocols are implemented, we can simply do a switch on the fDestinationPort field to find the child packet.
-        // For instance, if the destination port is 80, then chances are the HTTP protocol is encapsulated. We can create a new HTTP
-        // packet (after some verification that it is indeed the HTTP protocol).
-        ByteBuffer payload = fPayload;
-        if (payload == null) {
-            return null;
-        }
-
-        return new UnknownPacket(getPcapFile(), this, payload);
-    }
-
-    @Override
-    public boolean validate() {
-        // Not yet implemented. ATM, we consider that all packets are valid.
-        // TODO Implement it. We can compute the real checksum and compare it to fChecksum.
-        return true;
-    }
-
-    @Override
-    public UDPEndpoint getSourceEndpoint() {
-        @Nullable
-        UDPEndpoint endpoint = fSourceEndpoint;
-        if (endpoint == null) {
-            endpoint = new UDPEndpoint(this, true);
-        }
-        fSourceEndpoint = endpoint;
-        return fSourceEndpoint;
-    }
-
-    @Override
-    public UDPEndpoint getDestinationEndpoint() {
-        @Nullable UDPEndpoint endpoint = fDestinationEndpoint;
-        if (endpoint == null) {
-            endpoint = new UDPEndpoint(this, false);
-        }
-        fDestinationEndpoint = endpoint;
-        return fDestinationEndpoint;
-    }
-
-    @Override
-    public Map&lt;String, String&gt; getFields() {
-        ImmutableMap&lt;String, String&gt; map = fFields;
-        if (map == null) {
-            @SuppressWarnings("null")
-            @NonNull ImmutableMap&lt;String, String&gt; newMap = ImmutableMap.&lt;String, String&gt; builder()
-                    .put("Source Port", String.valueOf(fSourcePort)) //$NON-NLS-1$
-                    .put("Destination Port", String.valueOf(fDestinationPort)) //$NON-NLS-1$
-                    .put("Length", String.valueOf(fTotalLength) + " bytes") //$NON-NLS-1$ //$NON-NLS-2$
-                    .put("Checksum", String.format("%s%04x", "0x", fChecksum)) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    .build();
-            fFields = newMap;
-            return newMap;
-        }
-        return map;
-    }
-
-    @Override
-    public String getLocalSummaryString() {
-        return "Src Port: " + fSourcePort + ", Dst Port: " + fDestinationPort; //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    @Override
-    protected String getSignificationString() {
-        return "Source Port: " + fSourcePort + ", Destination Port: " + fDestinationPort; //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + fChecksum;
-        final Packet child = fChildPacket;
-        if (child != null) {
-            result = prime * result + child.hashCode();
-        } else {
-            result = prime * result;
-        }
-        result = prime * result + fDestinationPort;
-        final ByteBuffer payload = fPayload;
-        if (payload != null) {
-            result = prime * result + payload.hashCode();
-        } else {
-            result = prime * result;
-        }
-        result = prime * result + fSourcePort;
-        result = prime * result + fTotalLength;
-        return result;
-    }
-
-    @Override
-    public boolean equals(@Nullable Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        UDPPacket other = (UDPPacket) obj;
-        if (fChecksum != other.fChecksum) {
-            return false;
-        }
-        final Packet child = fChildPacket;
-        if (child != null) {
-            if (!child.equals(other.fChildPacket)) {
-                return false;
-            }
-        } else {
-            if (other.fChildPacket != null) {
-                return false;
-            }
-        }
-        if (fDestinationPort != other.fDestinationPort) {
-            return false;
-        }
-        final ByteBuffer payload = fPayload;
-        if (payload != null) {
-            if (!payload.equals(other.fPayload)) {
-                return false;
-            }
-        } else {
-            if (other.fPayload != null) {
-                return false;
-            }
-        }
-        if (fSourcePort != other.fSourcePort) {
-            return false;
-        }
-        if (fTotalLength != other.fTotalLength) {
-            return false;
-        }
-        return true;
-    }
-</pre>
-		<p>The UDPPacket class is implemented. We now have the define the UDPEndpoint.</p>
-		<h3 id="Creating_the_UDPEndpoint">Creating the UDPEndpoint</h3>
-		<p>For the UDP protocol, an endpoint will be its source or its destination port, depending if it is the source endpoint or destination endpoint. Knowing that, we can create our UDPEndpoint class.</p>
-		<p>We create in our package a new class named UDPEndpoint that extends ProtocolEndpoint. We also add a field: fPort, which contains the source or destination port. We finally add a constructor public ExampleEndpoint(Packet packet, boolean isSourceEndpoint):</p>
+		<p>我们获得以下未实现的类：</p>
+		<pre>package org.eclipse.tracecompass.pcap.core.protocol.udp; import org.eclipse.tracecompass.internal.pcap.core.endpoint。ProtocolEndpoint; import org.eclipse.tracecompass.internal.pcap.core.packet。包;公共类UDPEndpoint扩展了ProtocolEndpoint {private final int fPort; public UDPEndpoint（Packet packet，boolean isSourceEndpoint）{super（packet，isSourceEndpoint）; // TODO自动生成的构造函数stub} @Override public int hashCode（）{// TODO自动生成的方法存根返回0; } @Override public boolean equals（Object obj）{// TODO自动生成的方法存根返回false; } @Override public String toString（）{// TODO自动生成的方法存根返回null; }}</pre>
+		<p>对于构造函数，我们只需初始化fPort。如果isSourceEndpoint为true，那么我们采用packet.getSourcePort（），否则我们采用packet.getDestinationPort（）。</p>
+		<pre>/ ** * {@link UDPEndpoint}类的构造函数。它需要一个数据包来获取其端点。由于每个数据包都有两个端点（源和*目标），因此isSourceEndpoint参数用于指定要采用的*端点。* * @param packet *包含端点的数据包。* @param isSourceEndpoint *是否获取*数据包的源端点或目标端点。* / public UDPEndpoint（UDPPacket packet，boolean isSourceEndpoint）{super（packet，isSourceEndpoint）; fPort = isSourceEndpoint？packet.getSourcePort（）：packet.getDestinationPort（）; }</pre>
+		<p>然后我们实现方法：</p>
 		<ul>
 			<li>
-				<i>Packet</i> 
-				<b>packet</b>: the packet to build the endpoint from.
+				<i>public int</i> <b>hashCode（）</b> ：基于字段值返回整数的方法。在我们的例子中，它将返回一个取决于fPort的整数，以及我们可以使用getParentEndpoint（）检索的父端点。
 			</li>
 			<li>
-				<i>boolean</i> 
-				<b>isSourceEndpoint</b>: whether the endpoint is the source endpoint or destination endpoint.
+				<i>public boolean</i> <b>equals（Object obj）</b> ：如果两个对象相等则返回true的方法。在我们的例子中，如果两个UDPEndpoints都具有相同的fPort并且具有我们可以使用getParentEndpoint（）检索的相同父端点，则它们是相等的。
+			</li>
+			<li>
+				<i>public String</i> <b>toString（）</b> ：将UDPEndpoint的描述作为字符串返回的方法。在我们的例子中，它将是父端点的字符串和作为字符串的fPort的串联。
 			</li>
 		</ul>
-		<p>We obtain the following unimplemented class:</p>
-		<pre>
-package org.eclipse.tracecompass.pcap.core.protocol.udp;
-
-import org.eclipse.tracecompass.internal.pcap.core.endpoint.ProtocolEndpoint;
-import org.eclipse.tracecompass.internal.pcap.core.packet.Packet;
-
-public class UDPEndpoint extends ProtocolEndpoint {
-
-    private final int fPort;
-
-    public UDPEndpoint(Packet packet, boolean isSourceEndpoint) {
-        super(packet, isSourceEndpoint);
-        // TODO Auto-generated constructor stub
-    }
-
-    @Override
-    public int hashCode() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-}
-</pre>
-		<p>For the constructor, we simply initialize fPort. If isSourceEndpoint is true, then we take packet.getSourcePort(), else we take packet.getDestinationPort().</p>
-		<pre>
-    /**
-     * Constructor of the {@link UDPEndpoint} class. It takes a packet to get
-     * its endpoint. Since every packet has two endpoints (source and
-     * destination), the isSourceEndpoint parameter is used to specify which
-     * endpoint to take.
-     *
-     * @param packet
-     *            The packet that contains the endpoints.
-     * @param isSourceEndpoint
-     *            Whether to take the source or the destination endpoint of the
-     *            packet.
-     */
-    public UDPEndpoint(UDPPacket packet, boolean isSourceEndpoint) {
-        super(packet, isSourceEndpoint);
-        fPort = isSourceEndpoint ? packet.getSourcePort() : packet.getDestinationPort();
-    }
-</pre>
-		<p>Then we implement the methods:</p>
+		<pre>@Override public int hashCode（）{final int prime = 31; int result = 1; ProtocolEndpoint endpoint = getParentEndpoint（）; if（endpoint == null）{result = 0; } else {result = endpoint.hashCode（）; } result = prime * result + fPort;返回结果; } @Override public boolean equals（@Nullable Object obj）{if（this == obj）{return true; if（！（obj instanceof UDPEndpoint））{return false; UDPEndpoint other =（UDPEndpoint）obj; //检查图层boolean localEquals =（fPort == other.fPort）;如果（！localEquals）{return false; } //检查上面的图层。ProtocolEndpoint endpoint = getParentEndpoint（）; if（端点！= null）{return endpoint.equals（other.getParentEndpoint（））; } return true; } @Override public String toString（）{ProtocolEndpoint endpoint = getParentEndpoint（）; if（endpoint == null）{@SuppressWarnings（“null”）@NonNull String ret = String.valueOf（fPort）;返回; } return endpoint.toString（）+'/'+ fPort; }</pre>
+		<h3 id="Registering_the_UDP_protocol">注册UDP协议</h3>
+		<p>最后一步是注册新协议。协议必须注册的地方有三个。首先，解析器必须知道已添加新协议。这在enum org.eclipse.tracecompass.internal.pcap.core.protocol中定义。PcapProtocol。只需在此处添加协议名称以及一些参数：</p>
 		<ul>
 			<li>
-				<i>public int</i> 
-				<b>hashCode()</b>: method that returns an integer based on the fields value. In our case, it will return an integer depending on fPort, and the parent endpoint that we can retrieve with getParentEndpoint().
+				<i>String</i> <b>longname</b> ，是协议名称的长版本。在我们的例子中，它是“用户数据报协议”。
 			</li>
 			<li>
-				<i>public boolean</i> 
-				<b>equals(Object obj)</b>: method that returns true if two objects are equals. In our case, two UDPEndpoints are equal if they both have the same fPort and have the same parent endpoint that we can retrieve with getParentEndpoint().
+				<i>String</i> <b>shortName</b> ，它是协议的缩写名称。在我们的例子中，它是“UDP”。
 			</li>
 			<li>
-				<i>public String</i> 
-				<b>toString()</b>: method that returns a description of the UDPEndpoint as a string. In our case, it will be a concatenation of the string of the parent endpoint and fPort as a string.
+				<i>层</i> <b>层</b> ，这是该协议在OSI模型中所属的层。在我们的例子中，这是第4层。
+			</li>
+			<li>
+				<i>boolean</i> <b>supportsStream</b> ，定义协议是否支持数据包流。在我们的例子中，这被设置为true。
 			</li>
 		</ul>
-		<pre>
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        ProtocolEndpoint endpoint = getParentEndpoint();
-        if (endpoint == null) {
-            result = 0;
-        } else {
-            result = endpoint.hashCode();
-        }
-        result = prime * result + fPort;
-        return result;
-    }
-
-    @Override
-    public boolean equals(@Nullable Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof UDPEndpoint)) {
-            return false;
-        }
-
-        UDPEndpoint other = (UDPEndpoint) obj;
-
-        // Check on layer
-        boolean localEquals = (fPort == other.fPort);
-        if (!localEquals) {
-            return false;
-        }
-
-        // Check above layers.
-        ProtocolEndpoint endpoint = getParentEndpoint();
-        if (endpoint != null) {
-            return endpoint.equals(other.getParentEndpoint());
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        ProtocolEndpoint endpoint = getParentEndpoint();
-        if (endpoint == null) {
-            @SuppressWarnings("null")
-            @NonNull String ret = String.valueOf(fPort);
-            return ret;
-        }
-        return endpoint.toString() + '/' + fPort;
-    }
-</pre>
-		<h3 id="Registering_the_UDP_protocol">Registering the UDP protocol</h3>
-		<p>The last step is to register the new protocol. There are three places where the protocol has to be registered. First, the parser has to know that a new protocol has been added. This is defined in the enum org.eclipse.tracecompass.internal.pcap.core.protocol.PcapProtocol. Simply add the protocol name here, along with a few arguments:</p>
+		<p>因此，在PcapProtocol枚举中添加以下行：</p>
+		<pre>UDP（“用户数据报协议”，“udp”，层。LAYER_4，真），</pre>
+		<p>此外，TMF必须了解新协议。这在org.eclipse.tracecompass.internal.tmf.pcap.core.protocol中定义。TmfPcapProtocol。我们只需添加它，并引用PcapProtocol中的相应协议。因此，在TmfPcapProtocol枚举中添加以下行：</p>
+		<pre>UDP（PcapProtocol。UDP），</pre>
+		<p>您还必须更新<i>ProtocolConversion</i>类以在switch语句中注册协议。因此，对于UDP，我们添加：</p>
+		<pre>case UDP：返回TmfPcapProtocol。UDP;</pre>
+		<p>和</p>
+		<pre>case UDP：返回PcapProtocol。UDP;</pre>
+		<p>最后，必须通知所有可能是新协议（在我们的例子中为IPv4和IPv6）的父协议的协议。这是通过修改这些协议的数据包类的findChildPacket（）方法来完成的。例如，在IPv4Packet中，如果协议号与网络层的UDP协议号匹配，我们在findChildPacket的switch语句中添加一个案例：</p>
+		<pre>@Override protected @Nullable数据包findChildPacket（）抛出BadPacketException {ByteBuffer payload = fPayload; if（payload == null）{return null; } switch（fIpDatagramProtocol）{case IPProtocolNumberHelper。PROTOCOL_NUMBER_TCP：返回新的TCPPacket（getPcapFile（），this，payload）; case IPProtocolNumberHelper。PROTOCOL_NUMBER_UDP：返回新的UDPPacket（getPcapFile（），this，payload）; default：return new UnknownPacket（getPcapFile（），this，payload）; }}</pre>
+		<p>新协议已被添加。运行TMF应该可以正常工作，现在可以识别新协议。</p>
+		<h2 id="Adding_stream-based_views">添加基于流的视图</h2>
+		<p>要添加基于流的视图，只需在视图中监视TmfPacketStreamSelectedSignal。它包含可以使用signal.getStream（）检索的新流。然后，您必须向当前跟踪发出事件请求以获取事件，并使用该流过滤感兴趣的事件。因此，您还必须监视TmfTraceOpenedSignal，TmfTraceClosedSignal和TmfTraceSelectedSignal。基于流的视图的示例包括将分组表示为序列图的视图，或者基于分组SYN / ACK / FIN / RST标记示出TCP连接状态的视图。可以在<a href="https://git.eclipse.org/r/#/c/31054/">https://git.eclipse.org/r/#/c/31054/</a>找到这种观点的（非常非常非常早期的）草案。</p>
+		<h2 id="TODO_2">去做</h2>
 		<ul>
-			<li>
-				<i>String</i> 
-				<b>longname</b>, which is the long version of name of the protocol. In our case, it is "User Datagram Protocol".
+			<li>添加更多协议。目前，仅支持四种协议。需要实现以下协议：ARP，SLL，WLAN，USB，IPv6，ICMP，ICMPv6，IGMP，IGMPv6，SCTP，DNS，FTP，HTTP，RTP，SIP，SSH和Telnet。其他VoIP协议会很好。</li>
+			<li>添加网络图表视图。生成对网络工程师有意义且可以使用的图表（例如用于演示目的）将是有用的。我们可以使用基于XML的分析来做到这一点！</li>
+			<li>添加流图视图。该视图将流表示为序列图。抛出TmfNewPacketStreamSignal时会更新它。很容易看到数据包交换和每个数据包之间的时间差。此外，在流图中选择数据包时，应在事件表中选择该数据包，其内容应显示在“属性”视图中。有关此类视图的草稿，请参见<a href="https://git.eclipse.org/r/#/c/31054/">https://git.eclipse.org/r/#/c/31054/</a> 。
 			</li>
-			<li>
-				<i>String</i> 
-				<b>shortName</b>, which is the shortened name of the protocol. In our case, it is "UDP".
+			<li>例如，通过扩展点使添加协议更多“plugin-ish”。这样可以更轻松地支持新协议，而无需修改源代码。</li>
+			<li>直接从eclipse控制dumpcap，类似于在Control View中控制LTTng的方式。</li>
+			<li>支持pcapng。有关文件格式，请参阅： <a href="http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html">http</a> ： <a href="http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html">//www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html</a> 。
 			</li>
-			<li>
-				<i>Layer</i> 
-				<b>layer</b>, which is the layer to which the protocol belongs in the OSI model. In our case, this is the layer 4.
-			</li>
-			<li>
-				<i>boolean</i> 
-				<b>supportsStream</b>, which defines whether or not the protocol supports packet streams. In our case, this is set to true.
-			</li>
-		</ul>
-		<p>Thus, the following line is added in the PcapProtocol enum:</p>
-		<pre>
-    UDP("User Datagram Protocol", "udp", Layer.LAYER_4, true),
-</pre>
-		<p>Also, TMF has to know about the new protocol. This is defined in org.eclipse.tracecompass.internal.tmf.pcap.core.protocol.TmfPcapProtocol. We simply add it, with a reference to the corresponding protocol in PcapProtocol. Thus, the following line is added in the TmfPcapProtocol enum:</p>
-		<pre>
-    UDP(PcapProtocol.UDP),
-</pre>
-		<p>You will also have to update the 
-			<i>ProtocolConversion</i> class to register the protocol in the switch statements. Thus, for UDP, we add:
-		</p>
-		<pre>
-    case UDP:
-        return TmfPcapProtocol.UDP;
-</pre>
-		<p>and</p>
-		<pre>
-    case UDP:
-        return PcapProtocol.UDP;
-</pre>
-		<p>Finally, all the protocols that could be the parent of the new protocol (in our case, IPv4 and IPv6) have to be notified of the new protocol. This is done by modifying the findChildPacket() method of the packet class of those protocols. For instance, in IPv4Packet, we add a case in the switch statement of findChildPacket, if the Protocol number matches UDP's protocol number at the network layer:</p>
-		<pre>
-    @Override
-    protected @Nullable Packet findChildPacket() throws BadPacketException {
-        ByteBuffer payload = fPayload;
-        if (payload == null) {
-            return null;
-        }
-
-        switch (fIpDatagramProtocol) {
-        case IPProtocolNumberHelper.PROTOCOL_NUMBER_TCP:
-            return new TCPPacket(getPcapFile(), this, payload);
-        case IPProtocolNumberHelper.PROTOCOL_NUMBER_UDP:
-            return new UDPPacket(getPcapFile(), this, payload);
-        default:
-            return new UnknownPacket(getPcapFile(), this, payload);
-        }
-    }
-</pre>
-		<p>The new protocol has been added. Running TMF should work just fine, and the new protocol is now recognized.</p>
-		<h2 id="Adding_stream-based_views">Adding stream-based views</h2>
-		<p>To add a stream-based View, simply monitor the TmfPacketStreamSelectedSignal in your view. It contains the new stream that you can retrieve with signal.getStream(). You must then make an event request to the current trace to get the events, and use the stream to filter the events of interest. Therefore, you must also monitor TmfTraceOpenedSignal, TmfTraceClosedSignal and TmfTraceSelectedSignal. Examples of stream-based views include a view that represents the packets as a sequence diagram, or that shows the TCP connection state based on the packets SYN/ACK/FIN/RST flags. A (very very very early) draft of such a view can be found at 
-			<a href="https://git.eclipse.org/r/#/c/31054/">https://git.eclipse.org/r/#/c/31054/</a>.
-		</p>
-		<h2 id="TODO_2">TODO</h2>
-		<ul>
-			<li>Add more protocols. At the moment, only four protocols are supported. The following protocols would need to be implemented: ARP, SLL, WLAN, USB, IPv6, ICMP, ICMPv6, IGMP, IGMPv6, SCTP, DNS, FTP, HTTP, RTP, SIP, SSH and Telnet. Other VoIP protocols would be nice.</li>
-			<li>Add a network graph view. It would be useful to produce graphs that are meaningful to network engineers, and that they could use (for presentation purpose, for instance). We could use the XML-based analysis to do that!</li>
-			<li>Add a Stream Diagram view. This view would represent a stream as a Sequence Diagram. It would be updated when a TmfNewPacketStreamSignal is thrown. It would be easy to see the packet exchange and the time delta between each packet. Also, when a packet is selected in the Stream Diagram, it should be selected in the event table and its content should be shown in the Properties View. See 
-				<a href="https://git.eclipse.org/r/#/c/31054/">https://git.eclipse.org/r/#/c/31054/</a> for a draft of such a view.
-			</li>
-			<li>Make adding protocol more "plugin-ish", via extension points for instance. This would make it easier to support new protocols, without modifying the source code.</li>
-			<li>Control dumpcap directly from eclipse, similar to how LTTng is controlled in the Control View.</li>
-			<li>Support pcapng. See: 
-				<a href="http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html">http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html</a> for the file format.
-			</li>
-			<li>Add SWTBOT tests to org.eclipse.tracecompass.tmf.pcap.ui</li>
-			<li>Add a Raw Viewer, similar to Wireshark. We could use the “Show Raw” in the event editor to do that.</li>
-			<li>Externalize strings in org.eclipse.tracecompass.pcap.core. At the moment, all the strings are hardcoded. It would be good to externalize them all.</li>
-		</ul><hr class="navigation-separator"/>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+			<li>将SWTBOT测试添加到org.eclipse.tracecompass.tmf.pcap.ui</li>
+			<li>添加Raw Viewer，类似于Wireshark。我们可以在事件编辑器中使用“Show Raw”来做到这一点。</li>
+			<li>在org.eclipse.tracecompass.pcap.core中外化字符串。目前，所有字符串都是硬编码的。将它们全部外化会很好。</li>
+		</ul><hr class="navigation-separator">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<td style="width: 20%" align="left">
-					<a href="Performance-Tests.html" title="Performance Tests">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+				<td align="left" style="width:20%">
+					<a href="Performance-Tests.html" title="性能测试">
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center">
-					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
-						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+				<td align="center" style="width:60%">
+					<a href="Developer-Guide.html" title="Trace Compass开发人员指南">
+						<img alt="Trace Compass开发人员指南" border="0" src="images/home.gif">
 					</a>
 				</td>
-				<td style="width: 20%" align="right">
-					<a href="Markers.html" title="Markers">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="right" style="width:20%">
+					<a href="Markers.html" title="标记">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">Performance Tests</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Markers</td>
+				<td align="left" valign="top" style="width:20%">性能测试</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">标记</td>
 			</tr>
 		</table>
 	</body>
