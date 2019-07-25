@@ -1,17 +1,17 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>启动时强制更新</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>启动时强制更新</h2>
 <p>有时最简单的UI不是UI。在高度管理的产品安装中，可能需要在每次启动时自动更新应用程序，而无需用户干预。在这种情况下，更新并非真正“无头”，因为在搜索更新时会显示进度指示器。用户可以取消更新，但不能干预更新。如果未找到更新，则通知用户。
 </p>
@@ -30,6 +30,37 @@
 </p>
 <p>更新检查方法本身相当简单，因为它不会尝试让用户参与对更新做出任何选择。它使用<b><a href="../reference/api/org/eclipse/equinox/p2/operations/package-summary.html">p2 Operations API</a></b> （Eclipse 3.6中的新增功能）来搜索更新并执行更新。
 </p>
-<pre>public class P2Util {// XXX检查此应用程序的更新并返回状态。static IStatus checkForUpdates（IProvisioningAgent agent，IProgressMonitor monitor）抛出OperationCanceledException {ProvisioningSession session = new ProvisioningSession（agent）; //默认更新操作使用默认配置文件根标记查找当前//正在运行的配置文件的更新。要更改//正在更新哪些可安装单元，请使用更详细的//构造函数。UpdateOperation操作= new UpdateOperation（session）; SubMonitor sub = SubMonitor.convert（monitor，“Checking for application updates ...”，200）; IStatus status = operation.resolveModal（sub.newChild（100））; if（status.getCode（）== UpdateOperation。STATUS_NOTHING_TO_UPDATE）{返回状态; } if（status.getSeverity（）== IStatus。CANCEL）抛出新的OperationCanceledException（）; if（status.getSeverity（）！= IStatus。错误）{//更复杂的状态处理可能包括向用户显示如果存在倍数，可以使用哪些更新//区分补丁与更新等等。//在此示例中，我们只是按操作建议进行更新。ProvisioningJob job = operation.getProvisioningJob（null）; status = job.runModal（sub.newChild（100））; if（status.getSeverity（）== IStatus。CANCEL）抛出新的OperationCanceledException（）;返回状态; }}</pre>
+<pre>
+public class P2Util {
+	// XXX Check for updates to this application and return a status.
+	static IStatus checkForUpdates(IProvisioningAgent agent, IProgressMonitor monitor) throws OperationCanceledException {
+		ProvisioningSession session = new ProvisioningSession(agent);
+		// the default update operation looks for updates to the currently
+		// running profile, using the default profile root marker. To change
+		// which installable units are being updated, use the more detailed
+		// constructors.
+		UpdateOperation operation = new UpdateOperation(session);
+		SubMonitor sub = SubMonitor.convert(monitor,
+				"Checking for application updates...", 200);
+		IStatus status = operation.resolveModal(sub.newChild(100));
+		if (status.getCode() == UpdateOperation.STATUS_NOTHING_TO_UPDATE) {
+			return status;
+		}
+		if (status.getSeverity() == IStatus.CANCEL)
+			throw new OperationCanceledException();
+		
+		if (status.getSeverity() != IStatus.ERROR) {
+			// More complex status handling might include showing the user what updates
+			// are available if there are multiples, differentiating patches vs. updates, etc.
+			// In this example, we simply update as suggested by the operation.
+			ProvisioningJob job = operation.getProvisioningJob(null);
+			status = job.runModal(sub.newChild(100));
+			if (status.getSeverity() == IStatus.CANCEL)
+				throw new OperationCanceledException();
+		}
+		return status;
+	}
+}
+</pre>
 </body>
 </html>

@@ -1,12 +1,12 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-  <meta name="copyright" content="Copyright (c) Sonatype Inc and others 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-  <meta http-equiv="Content-Style-Type" content="text/css"></meta>
-  <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+  <meta name="copyright" content="Copyright (c) Sonatype Inc and others 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
   <title>p2 API概述</title>
 </head>
-<body dir="ltr">
+<body >
 <h1>API概述</h1>
 <p>本节概述了p2 API，并介绍了与p2 API一起使用时应该理解的一些关键概念。API通常可以被认为是三层API。最顶层需要理解很少的概念，每个连续层提供更多的灵活性，但有点复杂。
 </p> 
@@ -28,7 +28,15 @@
 <p>客户端通过两次操作来处理操作。必须首先<b>解决</b>操作，这意味着计算需求和依赖关系以确定所需操作是否与系统中已安装的操作兼容。如果可以解决操作，则可以执行实际的供应工作（下载工件，更新系统）。操作的两次通过性质允许将解析状态报告给客户端以确定操作是否应该继续。例如，客户端可以确定分辨率是否可接受，或者检查需要安装的详细计划以继续操作。分辨率和供应阶段可以同步执行，也可以作为作业在后台执行。</p>
 <p>一个简单的例子可以帮助证明操作的简单性。许多应用程序中的常见操作是简单地更新应用程序以获取所有内容的最新版本。只需很少的代码即可实现。以下代码段显示了正在运行的应用程序中更新所有内容的顺序。
 </p>
-<code>//创建一个操作。我们已经有一个配置代理（稍后会解释）<br>UpdateOperation op = new UpdateOperation（new ProvisioningSession（agent））;<br>//解析操作以查看是否可以更新<br>IStatus result = op.resolveModal（new NullProgressMonitor（））;<br>if（result.isOK（））{<br>//获得一份能够完成实际工作并安排工作的工作<br>op.getProvisioningJob（监视器）.schedule（）;<br>}<br>
+<code>
+&nbsp;&nbsp;&nbsp;// create an operation.  We already have a provisioning agent (to be explained later)<br>
+&nbsp;&nbsp;&nbsp;UpdateOperation op = new UpdateOperation(new ProvisioningSession(agent)); <br>
+&nbsp;&nbsp;&nbsp;// resolve the operation to see if we can update<br>
+&nbsp;&nbsp;&nbsp;IStatus result = op.resolveModal(new NullProgressMonitor()); <br>
+&nbsp;&nbsp;&nbsp;if (result.isOK()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// get a job that will perform the actual work and schedule it<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;op.getProvisioningJob(monitor).schedule(); <br>
+&nbsp;&nbsp;&nbsp;}<br>
 </code>
 <p>如果解决操作时出现问题，或者客户端代码想要做稍微不同的事情，则可能需要更多代码。例如，可以将操作配置为更新不是正在运行的应用程序的应用程序，或者查询特定的软件存储库列表以进行更新。
 </p>
@@ -43,7 +51,13 @@
 </p>
 <p>使用IProvisioningAgentProvider获取配置代理。这通常在客户端代码中的一个位置完成，其余代码只是通过一些变量或帮助程序代码访问代理。以下代码段显示了如何获取配置代理。
 </p>
-<code>ServiceReference sr = Activator.getContext（）。getServiceReference（IProvisioningAgentProvider。服务名称）;<br>IProvisioningAgentProvider agentProvider = null;<br>if（sr == null）<br>返回;<br>agentProvider =（IProvisioningAgentProvider）Activator.getContext（）。getService（sr）;<br>IProvisioningAgent agent = agentProvider.createAgent（new URI（“file：/ Applications / eclipse36 / p2”））;<br>
+<code>
+&nbsp;&nbsp;&nbsp;ServiceReference sr = Activator.getContext().getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);<br>
+&nbsp;&nbsp;&nbsp;IProvisioningAgentProvider agentProvider = null;<br>
+&nbsp;&nbsp;&nbsp;if (sr == null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;agentProvider = (IProvisioningAgentProvider) Activator.getContext().getService(sr);<br>
+&nbsp;&nbsp;&nbsp;IProvisioningAgent agent = agentProvider.createAgent(new URI("file:/Applications/eclipse36/p2"));<br>
 </code>
 <p>通过代理访问所有p2服务允许在同一VM中隔离地运行多个p2实例。请注意，创建代理的客户端负责销毁它。
 </p>
@@ -55,7 +69,9 @@
 <h4>查询和Queriables</h4>
 <p>每个元数据源通常都是可查询的（请参阅<a href="../reference/api/org/eclipse/equinox/p2/query/IQueryable.html">org.eclipse.equinox.p2.query。IQueryable</a> ）。要发现IU，您可以针对元数据源执行查询（请参阅<a href="../reference/api/org/eclipse/equinox/p2/query/IQuery.html">IQuery</a> ）。查询的结果是满足查询条件的所有IU的集合。</p>
 <p>可以通过多种方式创建查询。最简单的方法是使用QueryUtil创建查询。以下代码段创建一个查询，搜索具有ID <tt>“org.eclipse.jdt”的</tt>所有IU：</p>
-<code>QueryUtil.createIUQuery（ “org.eclipse.jdt”）;</code>
+<code>
+&nbsp;&nbsp;&nbsp;QueryUtil.createIUQuery("org.eclipse.jdt");
+</code>
 <p>根据查询的特殊性，可能有一个或多个IU满足查询。例如，您可以查询特定IU的特定版本，或者可以使用通配符查询与特定模式匹配的IU。<a href="../reference/api/org/eclipse/equinox/p2/query/QueryUtil.html">QueryUtil</a>具有用于检索最常用查询的API。可以在包<a href="../reference/api/org/eclipse/equinox/p2/touchpoint/eclipse/query/package-summary.html">org.eclipse.equinox.p2.eclipse.touchpoint中</a>找到特定于OSGi的其他查询。最后，如果您需要编写更复杂的查询，p2会附带一个名为<a href="http://wiki.eclipse.org/Query_Language_for_p2">p2 QL</a>的查询语言
 </p>
 <h4>存储库和存储库管理器</h4>
@@ -65,7 +81,9 @@
 </p>
 <p>以下代码段显示了如何使用代理获取元数据存储库管理器，然后加载Helios存储库。
 </p>
-<code>IMetadataRepositoryManager manager =（IMetadataRepositoryManager）agent.getService（IMetadataRepositoryManager。服务名称）;<br>IMetadataRepository repository = manager.loadRepository（new URI（“http://download.eclipse.org/releases/helios”），new NullProgressMonitor（））;<br>
+<code>
+&nbsp;&nbsp;&nbsp;IMetadataRepositoryManager manager = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);<br>
+&nbsp;&nbsp;&nbsp;IMetadataRepository repository = manager.loadRepository(new URI("http://download.eclipse.org/releases/helios"), new NullProgressMonitor());<br>
 </code>
 <h4>个人资料和个人资料注册表</h4>
 <p>p2配置文件跟踪组成可执行应用程序的软件集。例如，Eclipse Install的配置文件包含构成Eclipse的所有IU。当您尝试安装新的IU时，p2会修改您当前的配置文件。如果新的IU与您现有的配置文件冲突（或无法解析依赖关系），则p2将报告错误，安装将不会继续。有关Profile API的完整列表，请参阅<a href="../reference/api/org/eclipse/equinox/p2/engine/IProfile.html">IProfile</a> javadoc。</p>
@@ -75,10 +93,33 @@
 <p>以下代码段演示了触发将IU安装到正在运行的应用程序中必须执行的所有操作。我们使用操作API来执行安装，因此我们不必使用配置文件，规划器或引擎子系统。但是，我们需要充分了解核心API以获取代理，并从存储库中获取一些IU。该操作管理其余细节。
 </p>
 <br>
-<code>//得到代理人<br>ServiceReference sr = Activator.getContext（）。getServiceReference（IProvisioningAgentProvider。服务名称）;<br>IProvisioningAgentProvider agentProvider = null;<br>if（sr == null）<br>返回;<br>agentProvider =（IProvisioningAgentProvider）Activator.getContext（）。getService（sr）;<br>IProvisioningAgent agent = agentProvider.createAgent（new URI（“file：/ Applications / eclipse36 / p2”））;<br>
-<br>//获取存储库管理器并定义我们的存储库<br>IMetadataRepositoryManager manager =（IMetadataRepositoryManager）agent.getService（IMetadataRepositoryManager。服务名称）;<br>IArtifactRepositoryManager artifactManager =（IArtifactRepositoryManager）agent.getService（IArtifactRepositoryManager。服务名称）;<br>manager.addRepository（新URI（“file：/ Users / Pascal / tmp / demo /”））;<br>artifactManager.addRepository（新URI（“file：/ Users / Pascal / tmp / demo /”））;<br>
-<br>//加载并查询元数据<br>IMetadataRepository metadataRepo = manager.loadRepository（新URI（“file：/ Users / Pascal / tmp / demo /”），new NullProgressMonitor（））;<br>集合toInstall = metadataRepo.query（QueryUtil.createIUQuery（“org.eclipse.equinox.p2.demo.feature.group”），new NullProgressMonitor（））。toUnmodifiableSet（）;<br>
-<br>//创建一个操作<br>InstallOperation installOperation = new InstallOperation（new ProvisioningSession（agent），toInstall）;<br>if（installOperation.resolveModal（new NullProgressMonitor（））。isOK（））{<br>Job job = installOperation.getProvisioningJob（new NullProgressMonitor（））;<br>job.addJobChangeListener（new JobChangeAdapter（）{<br>public void done（IJobChangeEvent event）{agent.stop（）}}）;<br>job.schedule（）;<br>}<br>
+<code>
+&nbsp;&nbsp;&nbsp;//get the agent<br>
+&nbsp;&nbsp;&nbsp;ServiceReference sr = Activator.getContext().getServiceReference(IProvisioningAgentProvider.SERVICE_NAME);<br>
+&nbsp;&nbsp;&nbsp;IProvisioningAgentProvider agentProvider = null;<br>
+&nbsp;&nbsp;&nbsp;if (sr == null)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;agentProvider = (IProvisioningAgentProvider) Activator.getContext().getService(sr);<br>
+&nbsp;&nbsp;&nbsp;IProvisioningAgent agent = agentProvider.createAgent(new URI("file:/Applications/eclipse36/p2"));<br>
+<br>
+&nbsp;&nbsp;&nbsp;//get the repository managers and define our repositories<br>
+&nbsp;&nbsp;&nbsp;IMetadataRepositoryManager manager = (IMetadataRepositoryManager) agent.getService(IMetadataRepositoryManager.SERVICE_NAME);<br>
+&nbsp;&nbsp;&nbsp;IArtifactRepositoryManager artifactManager = (IArtifactRepositoryManager) agent.getService(IArtifactRepositoryManager.SERVICE_NAME);<br>
+&nbsp;&nbsp;&nbsp;manager.addRepository(new URI("file:/Users/Pascal/tmp/demo/"));<br>
+&nbsp;&nbsp;&nbsp;artifactManager.addRepository(new URI("file:/Users/Pascal/tmp/demo/"));<br>
+<br>
+&nbsp;&nbsp;&nbsp;//Load and query the metadata<br>
+&nbsp;&nbsp;&nbsp;IMetadataRepository metadataRepo = manager.loadRepository(new URI("file:/Users/Pascal/tmp/demo/"), new NullProgressMonitor());<br>
+&nbsp;&nbsp;&nbsp;Collection toInstall = metadataRepo.query(QueryUtil.createIUQuery("org.eclipse.equinox.p2.demo.feature.group"), new NullProgressMonitor()).toUnmodifiableSet();<br>
+<br>
+&nbsp;&nbsp;&nbsp;//Creating an operation<br>
+&nbsp;&nbsp;&nbsp;InstallOperation installOperation = new InstallOperation(new ProvisioningSession(agent), toInstall);<br>
+&nbsp;&nbsp;&nbsp;if (installOperation.resolveModal(new NullProgressMonitor()).isOK()) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Job job = installOperation.getProvisioningJob(new NullProgressMonitor());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;job.addJobChangeListener(new JobChangeAdapter() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public void done(IJobChangeEvent event) {agent.stop()}});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;job.schedule();<br>
+&nbsp;&nbsp;&nbsp;}<br>
 </code>
 </body>
 </html>

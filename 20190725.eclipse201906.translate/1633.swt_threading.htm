@@ -1,17 +1,17 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>线程问题</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 
 <h2>线程问题</h2>
 
@@ -37,7 +37,20 @@
 
 <p>SWT应用程序的主线程（包括事件循环）具有以下结构：</p>
 
-<pre>public static void main（String [] args）{Display display = new Display（）; Shell shell = new Shell（显示）; shell.open（）; //启动事件循环。当用户完成//处理我们的窗口时，我们停止。而（！shell.isDisposed（））{if（！）display.readAndDispatch（））display.sleep（）; } display.dispose（）; }</pre>
+<pre>
+   public static void main (String [] args) {
+      Display display = new Display ();
+      Shell shell = new Shell (display);
+      shell.open ();
+      // start the event loop. We stop when the user has done
+      // something to dispose our window.
+      while (!shell.isDisposed ()) {
+         if (!display.readAndDispatch ())
+            display.sleep ();
+      }
+      display.dispose ();
+   }
+</pre>
 
 <p>创建窗口小部件并打开外壳后，应用程序将从操作系统队列中读取和分派事件，直到释放外壳窗口。如果队列中没有可用的事件，我们告诉显示器休眠，以便其他应用程序有机会运行。</p>
 
@@ -55,7 +68,19 @@
 
 <p>以下代码段演示了使用这些方法的模式：</p>
 
-<pre>//做时间密集的计算......//现在更新UI。我们不依赖于结果，//所以使用async。display.asyncExec（new Runnable（）{public void run（）{if（！myWindow.isDisposed（））myWindow.redraw（）; }}; //现在做更多的计算......
+<pre>
+   // do time-intensive computations
+   ...
+   // now update the UI. We don't depend on the result,
+   // so use async.
+   display.asyncExec (new Runnable () {
+      public void run () {
+         if (!myWindow.isDisposed())
+            myWindow.redraw ();
+      }
+   });
+   // now do more computations
+   ...
 </pre>
 
 <p>在使用asyncExec时，最好检查您的窗口小部件是否在runnable中处置。由于在调用<code>asyncExec</code>和执行runnable之间的UI线程中可能发生其他事情，因此在runnable执行时，您永远无法确定您的小部件处于什么状态。</p>

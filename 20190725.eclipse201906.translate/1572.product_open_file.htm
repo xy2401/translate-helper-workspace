@@ -1,17 +1,17 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>打开文件</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>关联和打开文件</h2>
 <p>基于Eclipse的<b>产品</b>是使用Eclipse平台构建的独立程序。在许多情况下，这样的程序希望与特定的文件类型或扩展相关联。例如，Eclipse IDE可以配置为打开所有Java文件。这将允许用户双击Java文件并在正在运行的Eclipse IDE实例中打开它，或者如果以前没有运行，则启动Eclipse IDE的新实例。为了支持这种协调，需要在Eclipse本机启动程序，SWT，工作台和RCP应用程序之间进行协调。
 </p>
@@ -25,16 +25,23 @@
 <p>openFile参数在Eclipse实例中打开指定的文件。如果实例尚未运行，则将启动新实例。
 </p>
 
-<pre>eclipse --launcher.openFile myFile.txt</pre>
+<pre>  eclipse --launcher.openFile myFile.txt</pre>
 
 <p>需要第二个选项来配置启动程序以自动执行打开文件请求，而无需用户始终指定--launcher.openFile。为了实现这一目的，引入了一个新的“默认动作”参数。此选项可以放在launcher.ini（eclipse.ini）文件中，值必须为“openFile”：</p>
 
-<pre>...-showsplash org.eclipse.platform --launcher.defaultAction openFile -vmargs -Xms256m -Xmx768m</pre>
+<pre>  ...
+  -showsplash
+  org.eclipse.platform
+  --launcher.defaultAction
+  openFile
+  -vmargs
+  -Xms256m
+  -Xmx768m</pre>
 
 <p>这告诉启动器，如果命令行参数都没有以“ - ”开头，则应将所有命令行参数视为遵循“--launcher.openFile”参数。
 </p>
 
-<pre>eclipse myFile.txt</pre>
+<pre>  eclipse myFile.txt</pre>
 
 <p>添加此选项是因为没有注册表更改，这是当您双击与eclipse关联的文件时，启动程序将在窗口上接收的命令行，或者您选择文件并选择“打开方式”或“发送到”Eclipse 。
 </p>
@@ -55,11 +62,66 @@
 </p>
 
 <p>以下是执行此操作的示例RCP应用程序。首先是IApplication实现：</p>
-<pre>public class Application实现IApplication {public Object start（IApplicationContext context）{OpenDocumentEventProcessor openDocProcessor = new OpenDocumentEventProcessor（）;显示display = PlatformUI.createDisplay（）; display.addListener（SWT.OpenDocument，openDocProcessor）; try {int returnCode = PlatformUI.createAndRunWorkbench（display，new ApplicationWorkbenchAdvisor（openDocProcessor））; if（returnCode == PlatformUI.RETURN_RESTART）{return IApplication。EXIT_RESTART;返回IApplication。EXIT_OK; } finally {display.dispose（）; } ...}</pre>
+<pre>public class Application implements IApplication {	
+
+	public Object start(IApplicationContext context) {
+		OpenDocumentEventProcessor openDocProcessor = 
+			new OpenDocumentEventProcessor();
+
+		Display display = PlatformUI.createDisplay();
+		display.addListener(SWT.OpenDocument, openDocProcessor);
+
+		try {
+			int returnCode = PlatformUI.createAndRunWorkbench(display, new 
+				ApplicationWorkbenchAdvisor(openDocProcessor));
+			if (returnCode == PlatformUI.RETURN_RESTART) {
+				return IApplication.EXIT_RESTART;
+			}
+			return IApplication.EXIT_OK;
+		} finally {
+			display.dispose();
+		}
+	}
+	...
+}</pre>
 
 <p>接下来是一个示例SWT Listener，它监听SWT.OpenDocument事件：</p>
-<pre>public class OpenDocumentEventProcessor实现Listener {private ArrayList &lt;String&gt; filesToOpen = new ArrayList &lt;String&gt;（1）; public void handleEvent（Event event）{if（event.text！= null）filesToOpen.add（event.text）; public void openFiles（）{if（filesToOpen.isEmpty（））return; String [] filePaths = filesToOpen.toArray（new String [filesToOpen.size（）]）; filesToOpen.clear（）; for（String path：filePaths）{//打开文件路径}}}</pre>
+<pre>public class OpenDocumentEventProcessor implements Listener {
+	private ArrayList&lt;String&gt; filesToOpen = new ArrayList&lt;String&gt;(1);
+	
+	public void handleEvent(Event event) {
+		if (event.text != null)
+			filesToOpen.add(event.text);
+	}
+
+	public void openFiles() {
+		if (filesToOpen.isEmpty())
+			return;
+
+		String[] filePaths = filesToOpen.toArray(
+			new String[filesToOpen.size()]);
+		filesToOpen.clear();
+		
+		for (String path : filePaths) {
+			// open the file path
+		}
+	}
+}</pre>
 <p>最后，我们需要一个WorkbenchAdvisor，它将在eventLoopIdle中打开文件：</p>
-<pre>公共类ApplicationWorkbenchAdvisor扩展了WorkbenchAdvisor {private OpenDocumentEventProcessor openDocProcessor; public ApplicationWorkbenchAdvisor（OpenDocumentEventProcessor openDocProcessor）{this.openDocProcessor = openDocProcessor; } ...public void eventLoopIdle（显示显示）{openDocProcessor.openFiles（）; super.eventLoopIdle（显示器）; }}</pre>
+<pre>public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
+	private OpenDocumentEventProcessor openDocProcessor;
+
+	public ApplicationWorkbenchAdvisor(
+			OpenDocumentEventProcessor openDocProcessor) {
+		this.openDocProcessor = openDocProcessor;
+	}
+
+	...
+
+	public void eventLoopIdle(Display display) {
+		openDocProcessor.openFiles();
+		super.eventLoopIdle(display);
+	}
+}</pre>
 </body>
 </html>

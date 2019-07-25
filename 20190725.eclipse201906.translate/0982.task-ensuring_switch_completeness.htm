@@ -1,22 +1,16 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta name="copyright" content="Copyright (c) GK Software AG and others 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
-<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
-<style type="text/css">div.recommendation {
-  margin-left: 10px;
-  margin-right: 10px;
-  background-color: #f0f0f0;
-  padding: 10px;
-}
-div.recommendation strong {
-  color: green;
-}
+<meta name="copyright" content="Copyright (c) GK Software AG and others 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1">
+<style type="text/css">
+	div.recommendation { margin-left:10px;margin-right:10px; background-color:#f0f0f0; padding:10px; }
+	div.recommendation strong { color:green; }
 </style>
 <title>确保switch语句的完整性</title>
 </head>
-<body dir="ltr">
+<body >
 <h1>确保switch语句的完整性</h1>
 <p>优良作法是确保每个<code>switch</code>语句都应该完整，因为运行时的每次执行都会找到合适的分支。考虑到以下所有因素，这实际上是一项非常重要的任务：</p>
 <ul>
@@ -24,7 +18,15 @@ div.recommendation strong {
 <li>根据具体情况，使用<b>默认</b>标签可能会出现不良或良好做法，甚至是强制性的。</li>
 <li>在某些情况下， <b>程序演变</b>应该通过将不一致的扩展标记为错误来安全地保护，而在其他情况下，需要更宽容的策略。</li>  
 </ul>
-<p>此外，JLS要求对枚举开关语句进行流分析，这可能导致意外的编译时错误：</p><pre id="missing_return">枚举颜色{RED，GREEN，BLUE}字符串colorString（颜色c）{switch（c）{case RED：return“red”;案例格林：返回“绿色”; case BLUE：返回“blue”; }}</pre>
+<p>此外，JLS要求对枚举开关语句进行流分析，这可能导致意外的编译时错误：</p><pre id="missing_return">    enum Colors { RED, GREEN, BLUE }
+    String colorString(Color c) {
+        switch(c) {
+            case RED: return "red";
+            case GREEN: return "green";
+            case BLUE: return "blue";
+        }
+    }
+</pre>
 <p>编译器将回答：</p>
 <blockquote>“此方法必须返回String类型的结果。请注意，有关在'switch'上缺少'default：'的问题已被抑制，这可能与此问题有关“。</blockquote>
 <p>此消息旨在提醒用户不同的完整性概念：JLS强制要求的流分析将<em>每个</em>枚举switch语句视为不完整的默认情况，即使它列出了所有（当前已知的）枚举常量。这涉及返回语句以及局部变量或空白最终字段的明确赋值。但是，如果您按照以下所有建议操作，则不会出现上述错误消息。
@@ -59,7 +61,15 @@ div.recommendation strong {
 </p>
 <div class="recommendation">
 	<strong>建议：</strong>如果某些switch语句需要上述警告，请考虑全局启用警告，并识别那些可以<em>省略</em>某些枚举常量的情况的switch语句，因为这些是由默认情况适当处理的。对于这些switch语句，请使用'// $ CASES-OMITTED $'标记注释来记录您的决定：</div>
-<pre>String colorString2（Color c）{switch（c）{case RED：return“red”;案例格林：返回“绿色”; // $ CASES-OMITTED $ default：返回“unknown color”; }}</pre>
+<pre>    String colorString2(Color c) {
+        switch(c) {
+        case RED: return "red";
+        case GREEN: return "green";
+            //$CASES-OMITTED$
+        default:
+        	return "unknown color";
+        }
+    }</pre>
 <p><strong>提示：</strong>如果编译器报告类似“枚举常量BLUE应该在此枚举开关上具有相应的案例标签”，则会提供快速修复以插入标记注释。
 </p>
 <h2>摘要</h2>

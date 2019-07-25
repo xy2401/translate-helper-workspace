@@ -1,24 +1,24 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>使用内容类型</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 
 <h2>使用内容类型</h2>
 <blockquote><i>注意：对于本次讨论，我们在讨论内容时特别避免使用word <b>文件</b> 。运行时内容引擎不假定内容包含在文件系统的文件中。但是，它确实包含允许内容类型与文件命名模式相关联的协议。实际上，这些文件名表示文件系统中的文件，但内容系统的实现中没有任何内容假定内容位于文件系统中。<a href="resInt_content.htm">文件编码和内容类型</a>讨论了由平台资源插件提供的面向文件的内容类型功能，对于有兴趣在该上下文中使用内容类型API的开发人员来说，这是必读的。</i></blockquote>
 <h3>了解内容类型</h3>
 <p>内容类型由<b><a href="../reference/api/org/eclipse/core/runtime/content/IContentType.html">IContentType</a></b>表示。此接口表示一种独特的内容类型，它知道如何读取数据流并解释特定于内容类型的信息。内容类型本质上是分层的。例如，XML数据的内容类型被视为文本内容类型的子类。这允许新内容类型利用更一般内容类型的属性或行为。</p>
 <p><b><a href="../reference/api/org/eclipse/core/runtime/content/IContentTypeManager.html">IContentTypeManager</a></b>是一个入口点，可以访问平台运行时提供的大多数与内容类型相关的API。要获取对平台<b><a href="../reference/api/org/eclipse/core/runtime/content/IContentTypeManager.html">IContentTypeManager</a></b>的引用，客户端可以使用<b><a href="../reference/api/org/eclipse/core/runtime/Platform.html">Platform</a></b> API：</p>
-<pre>IContentTypeManager contentTypeManager = Platform.getContentTypeManager（）;</pre>
+<pre>IContentTypeManager contentTypeManager = Platform.getContentTypeManager();</pre>
 <p>客户端可以使用平台<b><a href="../reference/api/org/eclipse/core/runtime/content/IContentTypeManager.html">IContentTypeManager</a></b>来查找系统中的内容类型。</p>
 <ul>
   <li><b>getAllContentTypes</b>允许客户端获取平台中定义的所有内容类型。</li>
@@ -26,11 +26,17 @@
 </ul>
 <h3>检测数据流的内容类型</h3>
 <p>给定一个字节流，可以通过调用<b><a href="../reference/api/org/eclipse/core/runtime/content/IContentTypeManager.html">IContentTypeManager</a></b> API来确定其内容类型，如下所示：</p>
-<pre>InputStream stream = ...; IContentType contentType = contentTypeManager.findContentTypeFor（stream，“file.xml”）; stream.close（）;</pre>
+<pre>
+InputStream stream = ...;
+IContentType contentType = contentTypeManager.findContentTypeFor(stream, &quot;file.xml&quot;);
+stream.close();
+</pre>
 <p>在给定输入的情况下，这将返回最合适的<a href="../reference/api/org/eclipse/core/runtime/content/IContentType.html"><strong>IContentType</strong></a> ，如果找不到，则返回<code>null</code> 。多种内容类型可能被认为适合于给定的数据流。在这种情况下，平台使用一些启发式方法来确定应该选择哪一个。文件名是选择内容类型的第一个标准。它可以省略，但这有两个问题：结果可能不正确，因为许多不相关的内容类型可能接受相同的输入;由于平台中的所有内容类型都必须有机会分析流，因此也会有很大的性能损失。因此，除非它不可用，否则客户端应始终提供文件名和流。</p>
 <h3>描述数据流</h3>
 <p>平台中内容类型支持的另一个有趣特性是能够<em>描述</em>二进制或字符流<em>的内容</em> 。以下代码段显示了如何执行此操作：</p>
-<pre>InputStream stream = ...; IContentDescription description = contentTypeManager.getDescriptionFor（stream，“file.xml”）; stream.close（）;</pre>
+<pre>InputStream stream = ...; 
+IContentDescription description = contentTypeManager.getDescriptionFor(stream, &quot;file.xml&quot;);
+stream.close();</pre>
 <p>返回的<strong><a href="../reference/api/org/eclipse/core/runtime/content/IContentDescription.html">IContentDescription</a></strong>实例描述了从提供的内容中提取的内容类型和其他相关信息。内容描述以键/值对的形式存储特定于内容的属性。平台本身能够描述诸如字符集和基于文本的流的字节顺序之类的属性，但是其他属性可以由内容类型提供者来定义。</p>
 <h3>提供内容敏感的功能</h3>
 <p>新内容类型通常被定义为现有内容类型的特化。此层次结构在派生内容类型与其基本类型之间建立“是”关系。插件开发人员在实现内容敏感功能时必须遵守此规定。如果给定的功能适用于给定的内容类型，则该功能也必须适用于任何派生的内容类型。<strong>IContentType.isKindOf（IContentType superType）</strong>方法允许确定两个<a href="../reference/api/org/eclipse/core/runtime/content/IContentType.html"><strong>IContentType</strong></a>是否相关。方法<strong>IContentType.getBaseType（）</strong>允许确定给定<a href="../reference/api/org/eclipse/core/runtime/content/IContentType.html"><strong>IContentType</strong></a>的基本类型。</p>

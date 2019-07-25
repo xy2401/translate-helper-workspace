@@ -1,27 +1,42 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>资源和文件系统</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>资源和文件系统</h2>
 <p>当平台运行且资源插件处于活动状态时，工作空间由<b><a href="../reference/api/org/eclipse/core/resources/IWorkspace.html">IWorkspace</a></b>实例表示，该实例提供用于访问其包含的资源的协议。<b><a href="../reference/api/org/eclipse/core/resources/IWorkspace.html">IWorkspace</a></b>实例表示一个或多个文件系统中的关联文件和目录集合。您可以从资源插件类（在<b><a href="../reference/api/org/eclipse/core/resources/package-summary.html">org.eclipse.core.resources中</a></b>定义）访问工作区。</p>
-<pre>IWorkspace workspace = ResourcesPlugin.getWorkspace（）;</pre>
+<pre>
+   IWorkspace workspace = ResourcesPlugin.getWorkspace(); 
+</pre>
 <p>当资源插件未运行时，工作空间仅存在于文件系统中，并由用户通过基于标准文件的工具进行查看或操作。我们来解释资源插件API时，让我们看看磁盘上的工作区是什么样的。</p>
 
 <h3>我们在磁盘上的示例树</h3>
 <p>启动平台SDK时，系统会提示您提供<b>工作空间</b>目录。这是各种插件存储对平台的特定实例唯一的有趣元数据的目录。默认情况下，资源插件将每个项目存储在工作空间目录的子目录中。在这些子目录中是每个项目包含的文件夹和文件。</p>
 <p>假设您为工作区选择了目录<b>c：\ MySDK \</b> workspace。在这个目录中，我们找到了以工作空间的项目<b>MyWeb</b>和<b>MyServlet</b>命名的子目录。这些被称为项目的内容目录。当用户创建项目时，内容目录由平台创建。</p>
 <p>在每个目录中，我们找到项目中的文件和文件夹，其布局与工作区资源树中的文件和文件夹完全相同。所有文件名都相同，无论是从文件系统还是从工作区访问，文件的内容都是相同的。唯一令人惊讶的是<b>.project</b>文件， <b>稍后</b>解释。</p>
-<pre>C：\ MySDK \ workspace（工作空间根目录）.metadata \（平台元数据目录MyWeb \（MyWeb的项目内容目录）.project index.html images \ logo.png MyServlet \（MyServlet的项目内容目录）.project src \ main .java bin \ main.class</pre>
+<pre>
+   C:\MySDK\workspace  (workspace root)
+      .metadata\ (platform metadata directory
+      MyWeb\ (project content directory for MyWeb)
+	 .project
+         index.html
+         images\
+            logo.png
+      MyServlet\ (project content directory for MyServlet)
+	 .project
+         src\
+            main.java
+         bin\
+            main.class</pre>
 <p>该平台有一个特殊的<b>.metadata</b>目录，用于保存平台内部信息。工作空间的<b>.metadata</b>目录被视为“黑匣子”。有关工作空间结构的重要信息（例如项目的引用或资源的属性）存储在工作空间的元数据部分中，并且只能通过平台API通过工具访问。永远不应使用通用文件系统API编辑或操作这些文件。</p>
 <p>此外，每个项目都有自己的<b>.project</b>文件，其中保留有关项目的元数据。该文件基本上是磁盘的等效于项目的<b><a href="../reference/api/org/eclipse/core/resources/IProjectDescription.html">IProjectDescription中的信息</a></b> 。</p>
 <p>除了<b>.metadata</b>目录和<b>.project</b>文件之外，工作空间目录中的文件夹和文件对于其他工具来说是公平的游戏。文件和文件夹可以由非集成工具操作，例如文本编辑器和文件系统实用程序。唯一的问题是用户在工作台和外部编辑这些文件时必须小心。（这与用户使用两个独立的独立工具编辑文件没什么不同。）工作台提供刷新操作以协调资源的工作空间视图与文件系统中的实际状态，并且可以选择根据文件系统的状态定期刷新工作空间。</p>
@@ -30,18 +45,49 @@
 <p>资源API允许我们在代码中操作此资源树。在这里，我们将看一些代码片段，以便快速了解资源API。资源API在<b><a href="../reference/api/org/eclipse/core/resources/package-summary.html">org.eclipse.core.resources</a></b>中的一系列接口中定义。还有所有的资源类型，如接口<b><a href="../reference/api/org/eclipse/core/resources/IProject.html">的IProject</a></b> ， <b><a href="../reference/api/org/eclipse/core/resources/IFolder.html">的iFolder</a></b>和<b><a href="../reference/api/org/eclipse/core/resources/IFile.html">的IFile</a></b> 。<b><a href="../reference/api/org/eclipse/core/resources/IResource.html">IResource中</a></b>定义了广泛的通用协议。我们还使用<b><a href="../reference/api/org/eclipse/core/runtime/package-summary.html">org.eclipse.core.runtime</a></b>接口<b><a href="../reference/api/org/eclipse/core/runtime/IPath.html">IPath</a></b> ，它表示分段路径，例如资源或文件系统路径。</p>
 <p>操作资源与使用<b>java.io操纵文件非常相似。档案</b> 。API基于<b>句柄</b> 。当您使用<b>getProject</b>或<b>getFolder之</b>类的API时，将返回资源的句柄。在您尝试使用句柄执行某些操作之前，无法保证或要求资源本身存在。如果您希望存在资源，则可以使用<b>exists</b>方法来确保这种情况。</p>
 <p>要从插件导航工作空间，我们必须首先获取<a href="../reference/api/org/eclipse/core/resources/IWorkspaceRoot.html"><b>IWorkspaceRoot</b></a> ，它表示工作空间中资源层次结构的顶部。</p>
-<pre>IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace（）。getRoot（）;</pre>
+<pre>
+   IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();</pre>
 <p>一旦我们有了工作区根目录，我们就可以访问工作区中的项目。</p>
-<pre>IProject myWebProject = myWorkspaceRoot.getProject（“MyWeb”）; //如果必要，打开（myWebProject.exists（）&amp;&amp;！myWebProject.isOpen（））myWebProject.open（null）;</pre>
+<pre>
+   IProject myWebProject = myWorkspaceRoot.getProject(&quot;MyWeb&quot;);
+   // open if necessary
+   if (myWebProject.exists() &amp;&amp; !myWebProject.isOpen())
+      myWebProject.open(null);
+</pre>
 <p>在我们操作项目之前，我们必须打开它。打开项目从磁盘读取项目的结构，并创建项目资源树的内存中对象表示。打开项目是一种显式操作，因为每个打开的项目消耗内存以在内部表示资源树，而打开的项目参与各种资源生命周期事件（例如构建），这可能很长。通常，无法访问已关闭的项目，即使资源仍存在于文件系统中，也会显示为空。</p>
 <p>您会注意到许多资源示例在操作资源时传递了<b>null</b>参数。许多资源操作可能足以保证进度报告和用户取消。如果您的代码具有用户界面，您通常会传递<b><a href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b> ，它允许资源插件在操作资源时报告进度，并允许用户在需要时取消操作。现在，我们只是传递<b>null</b> ，表示没有进度监视器。</p>
 <p>一旦我们有一个开放的项目，我们就可以访问它的文件夹和文件，以及创建其他文件。在以下示例中，我们根据位于工作区外部的文件内容创建文件资源。</p>
-<pre>IFolder imagesFolder = myWebProject.getFolder（“images”）; if（imagesFolder.exists（））{//创建一个新文件IFile newLogo = imagesFolder.getFile（“newLogo.png”）; FileInputStream fileStream = new FileInputStream（“c：/MyOtherData/newLogo.png”）; newLogo.create（fileStream，false，null）; // create关闭文件流，所以不用担心。}</pre>
+<pre>
+   IFolder imagesFolder = myWebProject.getFolder(&quot;images&quot;);
+   if (imagesFolder.exists()) {
+      // create a new file
+      IFile newLogo = imagesFolder.getFile(&quot;newLogo.png&quot;);
+      FileInputStream fileStream = new FileInputStream(
+         &quot;c:/MyOtherData/newLogo.png&quot;);
+      newLogo.create(fileStream, false, null);
+      // create closes the file stream, so no worries.   
+   }
+</pre>
 <p>在上面的示例中，第一行获取images文件夹的句柄。在我们可以做任何有趣的事情之前，我们必须检查文件夹是否<b>存在</b> 。同样，当我们获取文件<b>newLogo时</b> ，在我们在最后一行创建文件之前，句柄不代表真实文件。在此示例中，我们通过使用<b>logo.png</b>的内容填充文件来创建文件。</p>
 <p>下一个代码段与前一个代码段类似，不同之处在于它从原始徽标复制<b>newLogo</b>文件，而不是从其内容创建新徽标。</p>
-<pre>IFile logo = imagesFolder.getFile（“logo.png”）; if（logo.exists（））{IPath newLogoPath = new Path（“newLogo.png”）; logo.copy（newLogoPath，false，null）; IFile newLogo = imagesFolder.getFile（“newLogo.png”）; ...}</pre>
+<pre>
+   IFile logo = imagesFolder.getFile(&quot;logo.png&quot;);
+   if (logo.exists()) {
+      IPath newLogoPath = new Path(&quot;newLogo.png&quot;);
+      logo.copy(newLogoPath, false, null);
+      IFile newLogo = imagesFolder.getFile(&quot;newLogo.png&quot;);
+      ...
+   }
+</pre>
 <p>最后，我们将创建另一个图像文件夹并将新创建的文件移动到该文件夹。我们将文件重命名为移动文件的副作用。</p>
-<pre>...IFolder newImagesFolder = myWebProject.getFolder（“newimages”）; newImagesFolder.create（false，true，null）; IPath重命名为Path = newImagesFolder.getFullPath（）。append（“renamedLogo.png”）; newLogo.move（renamedPath，false，null）; IFile重命名为Logo = newImagesFolder.getFile（“renamedLogo.png”）;</pre>
+<pre>
+   ...
+   IFolder newImagesFolder = myWebProject.getFolder(&quot;newimages&quot;);
+   newImagesFolder.create(false, true, null);
+   IPath renamedPath = newImagesFolder.getFullPath().append(&quot;renamedLogo.png&quot;);
+   newLogo.move(renamedPath, false, null);
+   IFile renamedLogo = newImagesFolder.getFile(&quot;renamedLogo.png&quot;);
+</pre>
 
 <p>许多资源API方法都包含一个<b>强制</b>布尔标志，它指定是否会更新与文件系统中相应文件不同步的资源。有关更多信息，请参阅<a href="../reference/api/org/eclipse/core/resources/IResource.html"><b>IResource</b></a> 。您还可以使用<a href="../reference/api/org/eclipse/core/resources/IResource.html"><b>IResource</b></a> <b>.isSynchronized</b>来确定特定资源是否与文件系统同步。</p>
 

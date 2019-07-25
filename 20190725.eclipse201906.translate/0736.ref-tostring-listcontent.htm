@@ -1,12 +1,12 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
   <head>
-<meta name="copyright" content="Copyright (c) 2008, 2009 Mateusz Matela, IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"></meta>
-    <meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta name="copyright" content="Copyright (c) 2008, 2009 Mateusz Matela, IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <meta http-equiv="Content-Style-Type" content="text/css">
     <title>toString（）生成器：内容列表</title>
-    <link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+    <link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1">
   </head>
-  <body dir="ltr">
+  <body >
     <h1>toString（）生成器：内容列表</h1>
 <p>本主题讨论如何toString（）生成器列出数组的内容以及它如何限制<code>Collection</code>和<code>Map</code>列出的项目数。使用的方法不仅取决于成员类型，还取决于项目的选定JDK兼容性。</p>
 <h2>列出数组的内容</h2>
@@ -14,7 +14,23 @@
 <li><h3>不限制元素数量</h3>对于JDK1.5及更高版本，生成的方法使用<code>Arrays.toString()</code> 。由于此方法在JDK1.4中不可用， <code>Arrays.asList()</code>在这种情况下使用<code>Arrays.asList()</code> ，但仅适用于非原始数组。原始数组使用辅助方法处理，如下所示。</li>
 <li><h3>限制元素数量</h3>如果数组包含非基本类型，则所有版本的JDK使用相同的解决方案： <code>Arrays.asList()</code>和<code>List.subList()</code> 。例如，对于名为anArray的成员，生成的代码如下所示： <code>Arrays.asList(anArray).subList(0, Math.min(anArray.length, maxLen))</code><br>在原始数组的情况下，不能使用<code>Arrays.asList()</code>因此在JDK1.5或更低版本中使用辅助方法。在JDK1.6中还有另一个解决方案： <code>Arrays.toString(Arrays.copyOf(anArray, Math.min(anArray.length, maxLen))</code> 。虽然复制数组不是最佳解决方案，但复制的部分通常很小，效率不受影响。一件好事是可以避免使用辅助方法。</li>
 <li><h3>辅助方法</h3>辅助方法返回一个字符串，列出给定数组的项目，形式为<code>[1, 2, 3]</code> 。该方法遍历数组并使用<code>instanceof</code>确定其封闭类型。为了缩短代码，它只检查实际可以传递给它的类型。
-<pre>private String arrayToString（Object array，int len，int maxLen）{StringBuffer stringBuffer = new StringBuffer（）; len = Math.min（len，maxLen）;的StringBuffer.append（ “[”）; for（int i = 0; i &lt;len; i ++）{if（i&gt; 0）stringBuffer.append（“，”）; if（array instanceof float []）stringBuffer.append（（（float []）array）[i]）; if（array instanceof int []）stringBuffer.append（（（int []）array）[i]）; if（array instanceof Object []）stringBuffer.append（（（Object []）array）[i]）; } stringBuffer.append（“]”）; return stringBuffer.toString（）; }</pre>
+<pre>private String arrayToString(Object array, int len, int maxLen) {
+	StringBuffer stringBuffer = new StringBuffer();
+	len = Math.min(len, maxLen);
+	stringBuffer.append("[");
+	for (int i = 0; i &lt; len; i++) {
+		if (i &gt; 0)
+			stringBuffer.append(", ");
+		if (array instanceof float[])
+			stringBuffer.append(((float[]) array)[i]);
+		if (array instanceof int[])
+			stringBuffer.append(((int[]) array)[i]);
+		if (array instanceof Object[])
+			stringBuffer.append(((Object[]) array)[i]);
+	}
+	stringBuffer.append("]");
+	return stringBuffer.toString();
+}</pre>
 <b>笔记：</b><ul><li>每次生成器运行时都会覆盖此方法。</li>
 <li>如果项目数量不受限制，则该方法不采用<code>maxLen</code>参数，也不使用<code>Math.min()</code></li>
 <li>根据所选的JDK兼容性使用StringBuffer或StringBuilder</li>
@@ -26,7 +42,18 @@
 
 <h2>列出<code>Collection</code> s的有限内容（helper方法）</h2>
 <p>如果<code>Collection</code>没有复制其内容（假设它不是<code>List</code> ），则不能将<code>Collection</code>转换为<code>List</code> ，因此使用辅助方法迭代第一个<code>maxLen</code>元素并<code>maxLen</code>构建一个字符串：</p>
-<pre>private String toString（Collection collection，int maxLen）{StringBuffer stringBuffer = new StringBuffer（）;的StringBuffer.append（ “[”）; int i = 0; for（Iterator iterator = collection.iterator（）; iterator.hasNext（）&amp;&amp; i &lt;maxLen; i ++）{if（i&gt; 0）stringBuffer.append（“，”）;的StringBuffer.append（iterator.next（））; } stringBuffer.append（“]”）; return stringBuffer.toString（）; }</pre>
+<pre>private String toString(Collection collection, int maxLen) {
+	StringBuffer stringBuffer = new StringBuffer();
+	stringBuffer.append("[");
+	int i = 0;
+	for (Iterator iterator = collection.iterator(); iterator.hasNext() &amp;&amp; i &lt; maxLen; i++) {
+		if (i &gt; 0)
+			stringBuffer.append(", ");
+		stringBuffer.append(iterator.next());
+	}
+	stringBuffer.append("]");
+	return stringBuffer.toString();
+}</pre>
 <b>笔记：</b><ul><li>每次生成器运行时都不会覆盖此方法，因此可以轻松地手动定制。</li>
 <li>根据所选的JDK兼容性使用StringBuilder或StringBuffer</li>
 </ul>

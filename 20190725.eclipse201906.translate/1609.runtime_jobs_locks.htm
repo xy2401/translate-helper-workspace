@@ -1,28 +1,40 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>锁</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h3>锁</h3>
 <p>系统中的多个作业可能需要访问和操作同一个对象。
 <b><a href="../reference/api/org/eclipse/core/runtime/jobs/ILock.html">ILock</a></b>定义了用于授予对共享对象的独占访问权的协议。当作业需要访问共享对象时，它会<i>获取</i>该对象的锁定。当它完成操作对象时，它<i>会释放</i>锁定。
 </p>
 <p>通常在创建共享对象或首先由插件访问时创建锁。也就是说，具有对共享对象的引用的代码也具有对其锁的引用。我们首先创建一个锁， <b>myLock</b> ，用于控制对<b>myObject的</b>访问：</p>
-<pre>...myObject = initializeImportantObject（）; IJobManager jobMan = Job.getJobManager（）; <b>myLock = jobMan.newLock（）;</b> ...
+<pre>   ...
+   myObject = initializeImportantObject();
+   IJobManager jobMan = Job.getJobManager();
+   <b>myLock = jobMan.newLock();</b>
+   ...
 </pre>
 <p>平台提供了强大的<b><a href="../reference/api/org/eclipse/core/runtime/jobs/ILock.html">ILock</a></b>实现。作业管理器提供此锁的实例以供客户端使用。这些锁彼此了解并且可以避免循环死锁。（我们马上解释一下这个陈述。）
 </p>
 <p>每当作业中的代码需要访问<b>myObject时</b> ，它必须首先获取对它的锁定。以下代码段显示了使用锁的常用习惯用法：</p>
-<pre>...//我需要操作myObject，所以我先得到它的锁。试试{ <b>myLock.acquire（）;</b> updateState（myObject的）; //最终操纵对象} { <b>lock.release（）;</b> } ...
+<pre>...
+// I need to manipulate myObject, so I get its lock first.
+try {		
+	<b>myLock.acquire();</b>
+	updateState(myObject);  // manipulate the object
+} finally {
+	<b>lock.release();</b>
+}
+...
 </pre>
 <p>在调用作业可以被授予对锁的独占访问权限之前， <b>acquire（）</b>方法不会返回。换句话说，如果某个其他作业已获得锁定，则此代码将被阻止，直到锁定可用。请注意，获取锁并操作<b>myObject</b>的代码将包装在<tt>try</tt>块中，以便在使用对象时发生任何异常时可以释放锁。
 </p>

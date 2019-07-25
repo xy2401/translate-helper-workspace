@@ -1,17 +1,17 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>增量项目构建器</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>增量项目构建器</h2>
 <p><b>增量项目构建器</b>是以特定方式操纵项目中的资源的对象。增量项目构建器通常用于对资源应用转换以生成另一种资源或工件。构建器创建的资源通常标记为<a href="resAdv_derived.htm">派生资源</a> 。
 </p>
@@ -45,9 +45,34 @@
 <p>在自动构建期间，平台也会隐式调用增量项目构建器。如果启用，则每当更改工作空间时都会运行自动生成。</p>
 <h3>定义增量项目构建器</h3>
 <p><a href="../reference/extension-points/org_eclipse_core_resources_builders.html"><b>org.eclipse.core.resources.builders</b></a>扩展点用于向平台提供增量项目构建器。以下标记显示了假设的插件<b>com.example.builders</b>如何为增量项目构建器提供帮助。</p>
-<pre>&lt;extension id =“mybuilder”name =“My Sample Builder”point =“org.eclipse.core.resources.builders”&gt; &lt;builder &lt;run <b>class =“com.example.builders。BuilderExample“</b> &gt; &lt;parameter name =”optimize“value =”true“/&gt; &lt;parameter name =”comment“value =”Builder comment“/&gt; &lt;/ run&gt; &lt;/ builder&gt; &lt;/ extension&gt;</pre>
+<pre>
+   &lt;extension
+      id=&quot;mybuilder&quot; name=&quot;My Sample Builder&quot; point=&quot;org.eclipse.core.resources.builders&quot;&gt;
+      &lt;builder
+         &lt;run 
+            <b>class=&quot;com.example.builders.BuilderExample&quot;</b>&gt;
+            &lt;parameter name=&quot;optimize&quot; value=&quot;true&quot; /&gt;
+            &lt;parameter name=&quot;comment&quot; value=&quot;Builder comment&quot; /&gt;
+         &lt;/run&gt;
+      &lt;/builder&gt;
+   &lt;/extension&gt;
+</pre>
 <p>扩展点中标识的<b>类</b>必须扩展平台类<b><a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html">IncrementalProjectBuilder</a></b> 。</p>
-<pre>public class BuilderExample extends IncrementalProjectBuilder {IProject [] build（int kind，Map args，IProgressMonitor monitor）throws CoreException {//在这里添加你的构建逻辑返回null; } protected void startupOnInitialize（）{//在此添加构建器init逻辑} protected void clean（IProgressMonitor monitor）{//在此处添加构建器清理逻辑}}</pre>
+<pre>
+   public class BuilderExample extends IncrementalProjectBuilder {
+      IProject[] build(int kind, Map args, IProgressMonitor monitor)
+            throws CoreException {
+         // add your build logic here
+         return null;
+      }
+      protected void startupOnInitialize() {
+         // add builder init logic here
+      }
+      protected void clean(IProgressMonitor monitor) {
+         // add builder clean logic here
+      }
+   }
+</pre>
 <p>构建处理从<b>build（）</b>方法开始，该方法包括有关已请求的构建类型的信息。构建是以下值之一：</p>
 <ul>
 <li><b>FULL_BUILD</b>表示应该构建项目中的所有资源。没有delta可用。</li>
@@ -59,20 +84,54 @@
 
 <p>以下代码段进一步细化了<b>build（）</b>方法。
 </p>
-<pre>protected IProject [] build（int kind，Map args，IProgressMonitor monitor抛出CoreException {if（kind == IncrementalProjectBuilder。FULL_BUILD）{fullBuild（monitor）; } else {IResourceDelta delta = getDelta（getProject（））; if（delta == null）{fullBuild（monitor）; } else {incrementalBuild（delta，monitor）;返回null; }</pre>
+<pre>   protected IProject[] build(int kind, Map args, IProgressMonitor monitor
+         throws CoreException {
+      if (kind == IncrementalProjectBuilder.FULL_BUILD) {
+         fullBuild(monitor);
+      } else {
+         IResourceDelta delta = getDelta(getProject());
+         if (delta == null) {
+            fullBuild(monitor);
+         } else {
+            incrementalBuild(delta, monitor);
+         }
+      }
+      return null;
+   }
+</pre>
 
 <p>有时会发生在构建项目“X”时，构建器需要有关其他项目“Y”的更改的信息。 （例如，如果X中的Java类实现了Y中提供的接口。）构建X时，可以通过调用<b>getDelta（Y）</b>获得Y的delta。为了确保平台可以提供这样的增量，X的构建器必须通过从先前的<b>build（）</b>调用返回包含Y的数组来声明X和Y之间的依赖关系。如果构建器没有依赖项，则它只能返回null。有关详细信息，请参阅<b><a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html">IncrementalProjectBuilder</a></b> 。</p>
 
 <h4>完整的构建</h4>
 <p>处理完整构建请求所需的逻辑特定于插件。它可能涉及访问项目中的每个资源，甚至在项目之间存在依赖关系时检查其他项目。以下代码段建议如何实现完整版本。</p>
-<pre>protected void fullBuild（final IProgressMonitor monitor）抛出CoreException {try {getProject（）。accept（new MyBuildVisitor（））; } catch（CoreException e）{}}</pre>
+<pre>
+   protected void fullBuild(final IProgressMonitor monitor) throws CoreException {
+      try {
+         getProject().accept(new MyBuildVisitor());
+      } catch (CoreException e) { }
+   }
+</pre>
 <p>构建访问者将执行特定资源的构建（并且回答为true以继续访问所有子资源）。</p>
-<pre>class MyBuildVisitor实现IResourceVisitor {public boolean visit（IResource res）{//构建指定的资源。//返回true继续访问孩子。返回true; }}</pre>
+<pre>
+   class MyBuildVisitor implements IResourceVisitor {
+      public boolean visit(IResource res) {
+         //build the specified resource.
+         //return true to continue visiting children.
+         return true;
+      }
+   }
+</pre>
 <p>访问过程一直持续到完整的资源树已经遍历。</p>
 
 <h4>增量构建</h4>
 <p>执行增量构建时，构建器使用资源更改增量而不是完整资源树。</p>
-<pre>protected void incrementalBuild（IResourceDelta delta，IProgressMonitor monitor）抛出CoreException {//访问者完成工作。delta.accept（new MyBuildDeltaVisitor（））; }</pre>
+<pre>
+   protected void incrementalBuild(IResourceDelta delta, 
+         IProgressMonitor monitor) throws CoreException {
+      // the visitor does the work.
+      delta.accept(new MyBuildDeltaVisitor());
+   }
+</pre>
 <p>访问过程将继续，直到完成整个资源增量树。更改的特定性质与<a href="resAdv_events.htm#resAdv_events_listener" class="XRef">实现资源更改侦听器</a>中描述的类似。一个重要的区别是，对于增量项目构建器，您正在使用基于特定项目的资源增量，而不是整个工作区。</p>
 
 <h4>在构建之前清洁</h4>
@@ -83,17 +142,47 @@
 
 <p>默认情况下，构建器使用<a href="resAdv_batching.htm">Workspace Root调度规则运行</a> 。这可以防止其他线程在构建过程中修改Eclipse工作区。长时间运行的构建器或不关心资源树部分中的并发更改的构建器可能希望在构建正在进行时允许进行修改。构建器可以通过覆盖#getRule方法来放松其运行的调度规则：</p>
 
-<pre>public ISchedulingRule <a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html#getRule(int, java.util.Map)">getRule</a> （int kind，Map &lt;String，String&gt; args）{//允许任何资源与此buidler的调用同时修改。return null; }</pre>
+<pre>
+  public ISchedulingRule <a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html#getRule(int, java.util.Map)">getRule</a>(int kind, Map&lt;String,String&gt; args) {
+    // Allow any resource to be modified concurrently with this buidler's invocation.
+    return null;
+  }
+</pre>
 
 <h4>发现正在构建的内容</h4>建筑商有时会发现它的建造原因。构建者可以通过调用访问构建上下文<pre>
-<a href="../reference/api/org/eclipse/core/resources/IBuildContext.html">IBuildContext</a> buildContext = <a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html#getContext()">getContext</a> （）;</pre>在构建项目及其引用时，如果可以在用户请求构建的顶级项目的参考图中访问项目，则可以隐式构建项目。使用此API，构建器可以发现之前<a href="resAdv_buildconfigs.htm">构建的构建配置</a> （ <a href="../reference/api/org/eclipse/core/resources/IBuildContext.html#getAllReferencedBuildConfigs()">IBuildContext＃getAllReferencedBuildConfigs（）</a> ），将在它之后构建（ <a href="../reference/api/org/eclipse/core/resources/IBuildContext.html#getAllReferencingBuildConfigs()">IBuildContext＃getAllReferencingBuildConfigs（）</a> ），以及用户要求构建的构建配置（ <a href="../reference/api/org/eclipse/core/resources/IBuildContext.html#getRequestedConfigs()">IBuildContext） #getRequestedConfigs（）</a> ）。
+<a href="../reference/api/org/eclipse/core/resources/IBuildContext.html">IBuildContext</a> buildContext = <a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html#getContext()">getContext</a>();
+</pre>在构建项目及其引用时，如果可以在用户请求构建的顶级项目的参考图中访问项目，则可以隐式构建项目。使用此API，构建器可以发现之前<a href="resAdv_buildconfigs.htm">构建的构建配置</a> （ <a href="../reference/api/org/eclipse/core/resources/IBuildContext.html#getAllReferencedBuildConfigs()">IBuildContext＃getAllReferencedBuildConfigs（）</a> ），将在它之后构建（ <a href="../reference/api/org/eclipse/core/resources/IBuildContext.html#getAllReferencingBuildConfigs()">IBuildContext＃getAllReferencingBuildConfigs（）</a> ），以及用户要求构建的构建配置（ <a href="../reference/api/org/eclipse/core/resources/IBuildContext.html#getRequestedConfigs()">IBuildContext） #getRequestedConfigs（）</a> ）。
 
 <h3>将增量项目构建器与项目相关联</h3>
 <p>要使构建器可用于给定项目，它必须包含在项目的构建规范中。项目的构建规范是在构建项目时按顺序运行的命令列表。每个命令都命名一个增量项目构建器。</p>
 <p>
 <b>注意：</b>构建命令中的构建器名称是构建器扩展的完全限定ID。通过将插件标识与plugin.xml文件中的简单扩展标识组合来创建扩展的完全限定标识。例如，插件“com.example.builders”中具有简单扩展名“mybuilder”的构建器将具有名称“com.example.builders.mybuilder”</p>
 <p>以下代码段添加了一个新构建器作为现有构建器列表中的第一个构建器。</p>
-<pre>final String BUILDER_ID =“com.example.builders.mybuilder”; IProjectDescription desc = project.getDescription（）; ICommand [] commands = desc.getBuildSpec（）; boolean found = false; for（int i = 0; i &lt;commands.length; ++ i）{if（commands [i] .getBuilderName（）。equals（BUILDER_ID））{found = true;打破; if（！）发现）{//将构建器添加到项目ICommand command = desc.newCommand（）; command.setBuilderName（BUILDER_ID）; ICommand [] newCommands = new ICommand [commands.length + 1]; //在其他构建器之前添加它。System.arraycopy（commands，0，newCommands，1，commands.length）; newCommands [0] = command; desc.setBuildSpec（newCommands）; project.setDescription（desc，null）; }</pre>
+<pre>
+   final String BUILDER_ID = "com.example.builders.mybuilder";
+   IProjectDescription desc = project.getDescription();
+   ICommand[] commands = desc.getBuildSpec();
+   boolean found = false;
+
+   for (int i = 0; i &lt; commands.length; ++i) {
+      if (commands[i].getBuilderName().equals(BUILDER_ID)) {
+         found = true;
+         break;
+      }
+   }
+   if (!found) { 
+      //add builder to project
+      ICommand command = desc.newCommand();
+      command.setBuilderName(BUILDER_ID);
+      ICommand[] newCommands = new ICommand[commands.length + 1];
+
+      // Add it before other builders.
+      System.arraycopy(commands, 0, newCommands, 1, commands.length);
+      newCommands[0] = command;
+      desc.setBuildSpec(newCommands);
+      project.setDescription(desc, null);
+   }
+</pre>
 <p>配置项目的构建器只需执行一次，通常是在创建项目时。将构建器与项目关联的常用方法是配置<a href="resAdv_natures.htm">项目性质</a> 。
 </p>
 <h3><a name="advanced_build_kinds">高级构建种类</a></h3>
@@ -127,7 +216,8 @@
 
 <p>该平台提供API，用于配置构建器响应的构建<i>类型</i> 。如果构建器在其<a href="../reference/extension-points/org_eclipse_core_resources_builders.html">扩展点中</a>标记为“isConfigurable”，则可以在运行时配置它以响应或忽略某些构建<i>触发器</i> 。
 </p>例如，在工作区AUTO_BUILD期间不希望调用的长时间运行的构建器可以使用：<pre>
-  <a href="../reference/api/org/eclipse/core/resources/ICommand.html">ICommand</a> #setBuilding（AUTO_BUILD，false）;</pre>重要的是要注意：<ul>
+  <a href="../reference/api/org/eclipse/core/resources/ICommand.html">ICommand</a>#setBuilding(AUTO_BUILD, false);
+</pre>重要的是要注意：<ul>
 <li>如果INCREMENTAL_BUILD（或AUTO_BUILD）被提升为FULL_BUILD，将调用响应INCREMENTAL_BUILD（或AUTO_BUILD）的构建器，</li><li>如果INCREMENTAL_BUILD被提升为FULL_BUILD，将调用响应FULL_BUILD的构建器，</li><li>如果AUTO_BUILD被提升为FULL_BUILD，则<strong>只会</strong>调用响应AUTO_BUILD的构建器。这是为了让长时间运行的构建器完全忽略AUTO_BUILD请求。
 </li>
 </ul>

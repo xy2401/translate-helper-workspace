@@ -1,33 +1,108 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>调度规则</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h3>调度规则</h3>
 <p>作业<i>调度规则</i>可用于控制作业相对于其他作业的运行时间。特别是，调度规则允许您在并发可能导致结果不一致的情况下防止多个作业同时运行。它们还允许您保证一系列作业的执行顺序。通过示例可以最好地说明调度规则的强大功能。让我们首先定义两个用于同时打开和关闭灯开关的作业：</p>
-<pre>public class LightSwitch {private boolean isOn = false; public boolean isOn（）{return isOn; public void on（）{new LightOn（）。schedule（）; } public void off（）{new LightOff（）。schedule（）;类LightOn扩展Job {public LightOn（）{super（“打开灯”）; public IStatus run（IProgressMonitor monitor）{System.out.println（“打开灯”）; isOn = true;返回状态。OK_STATUS;类LightOff扩展Job {public LightOff（）{super（“关灯”）; public IStatus run（IProgressMonitor monitor）{System.out.println（“关灯”）; isOn = false;返回状态。OK_STATUS; }}}</pre>
+<pre>   public class LightSwitch {
+      private boolean isOn = false;
+      public boolean isOn() {
+         return isOn;
+      }
+      public void on() {
+         new LightOn().schedule();
+      }
+      public void off() {
+         new LightOff().schedule();
+      }
+      class LightOn extends Job {
+         public LightOn() {
+            super("Turning on the light");
+         }
+         public IStatus run(IProgressMonitor monitor) {
+            System.out.println("Turning the light on");
+            isOn = true;
+            return Status.OK_STATUS;
+         }
+      }
+      class LightOff extends Job {
+         public LightOff() {
+            super("Turning off the light");
+         }
+         public IStatus run(IProgressMonitor monitor) {
+            System.out.println("Turning the light off");
+            isOn = false;
+            return Status.OK_STATUS;
+         }
+      }
+   }
+</pre>
 <p>现在我们创建一个简单的程序，创建一个灯开关并再次打开和关闭它：</p>
-<pre>LightSwitch light = new LightSwitch（）;点亮（）; light.off（）; System.out.println（“灯亮了吗？“+ switch.isOn（））;</pre>
+<pre>   LightSwitch light = new LightSwitch();
+   light.on();
+   light.off();
+   System.out.println("The light is on? " + switch.isOn());
+</pre>
 <p>如果我们运行这个小程序足够多次，我们最终将获得以下输出：</p>
-<pre>关闭指示灯打开指示灯指示灯亮？真正</pre>
+<pre>   Turning the light off
+   Turning the light on
+   The light is on? true
+</pre>
 <p>怎么可能？我们告诉灯打开然后关闭，所以它的最终状态应该关闭！问题是，有没有办法来防止<tt>起燃</tt>的工作从在同一时间作为<tt>LightOn</tt>工作运行。因此，即使首先安排了“on”作业，它们的并发执行意味着无法预测两个并发作业的确切执行顺序。如果<tt>LightOn</tt>作业在<tt>LightOn</tt>作业之前运行， <tt>则会</tt>得到此无效结果。我们需要的是一种防止两个作业同时运行的方法，这就是调度规则的用武之地。</p>
 <p>我们可以通过创建一个充当<i>互斥锁</i> （也称为<i>二进制信号量</i> ）的简单调度规则来修复此示例：</p>
-<pre>class Mutex实现ISchedulingRule {public boolean isConflicting（ISchedulingRule rule）{return rule == this; public boolean contains（ISchedulingRule rule）{return rule == this; }}</pre>
+<pre>   class Mutex implements ISchedulingRule {
+      public boolean isConflicting(ISchedulingRule rule) {
+         return rule == this;
+      }
+      public boolean contains(ISchedulingRule rule) {
+         return rule == this;
+      }
+   }
+</pre>
 <p>然后将此规则添加到我们上一个示例中的两个灯光开关作业中：</p>
-<pre>公共类LightSwitch { <b>final MutextRule rule = new MutexRule（）;</b> ...class LightOn扩展Job {public LightOn（）{super（“打开灯”）; <b>setRule（规则）;</b> } ...}类LightOff扩展Job {public LightOff（）{super（“关灯”）; <b>setRule（规则）;</b> } ...}}</pre>
+<pre>   public class LightSwitch {
+      <b>final MutextRule rule = new MutexRule();</b>
+      ...
+      class LightOn extends Job {
+         public LightOn() {
+            super("Turning on the light");
+            <b>setRule(rule);</b>
+         }
+         ...
+      }
+      class LightOff extends Job {
+         public LightOff() {
+            super("Turning off the light");
+            <b>setRule(rule);</b>
+         }
+         ...
+      }
+   }
+</pre>
 <p>现在，当安排两个灯光切换作业时，作业基础结构将调用<tt>isConflicting</tt>方法来比较两个作业的调度规则。它会注意到这两个作业具有冲突的调度规则，并将确保它们以正确的顺序运行。它还将确保它们永远不会同时运行。现在，如果您运行示例程序一百万次，您将始终得到相同的结果：</p>
-<pre>打开灯关灯关灯指示灯亮？假</pre>
+<pre>   Turning the light on
+   Turning the light off
+   The light is on? false
+</pre>
 <p>规则也可以独立于作业使用，作为一般锁定机制。以下示例获取try / finally块中的规则，防止其他线程和作业在<tt>beginRule</tt>和<tt>endRule</tt>调用之间的持续时间内与该规则一起运行。</p>
-<pre>IJobManager manager = Job.getJobManager（）; try {manager.beginRule（rule，monitor）; ... 做一些工作 ...} finally {manager.endRule（rule）; }</pre>
+<pre>   IJobManager manager = Job.getJobManager();
+   try {
+      manager.beginRule(rule, monitor);
+      ... do some work ...
+   } finally {
+      manager.endRule(rule);
+   }
+</pre>
 <p>使用这种编码模式获取和释放调度规则时应格外小心。如果您未能结束已调用<tt>beginRule</tt>的规则，则您将永久锁定该规则。</p>
 <h3>制定自己的规则</h3>
 <p>虽然作业API定义了调度规则的契约，但它实际上并不提供任何调度规则实现。从本质上讲，通用基础架构无法知道可以同时运行哪些作业集。默认情况下，作业没有调度规则，并且可以创建计划作业的速度与创建运行它的线程一样快。</p> 
@@ -37,7 +112,34 @@
 <p>我们已经讨论了<tt>isConflicting</tt>方法<a href="../reference/api/org/eclipse/core/runtime/jobs/ISchedulingRule.html">ISchedulingRule</a> ，但迄今为止还没有提到的<tt>contains</tt>方法。此方法用于许多客户端不需要的调度规则的相当专业的应用程序。可以将调度规则逻辑地组合成层次结构，以控制对自然分层资源的访问。说明这个概念的最简单的例子是基于树的文件系统。如果应用程序想要获取目录上的独占锁，则通常意味着它还希望独占访问该目录中的文件和子目录。<tt>contains</tt>方法用于指定锁之间的层次关系。如果您不需要创建锁的层次结构，则可以实现<tt>contains</tt>方法来简单地调用<tt>isConflicting</tt> 。</p>
 <p>以下是用于控制对<tt>java.io的写访问的分层锁的示例。文件</tt>句柄。
 </p>
-<pre>公共类FileLock实现ISchedulingRule {private String path; public FileLock（java.io。文件文件）{this.path = file.getAbsolutePath（）; public boolean <b>contains</b> （ISchedulingRule rule）{if（this == rule）return true; if（rule instanceof FileLock）return（（FileLock）rule）.path.startsWith（path）; if（规则实例MultiRule）{MultiRule multi =（MultiRule）规则; ISchedulingRule [] children = multi.getChildren（）; for（int i = 0; i &lt;children.length; i ++）if（！）contains（children [i]））返回false;返回true; } return false; public boolean <b>isConflicting</b> （ISchedulingRule rule）{if（！（规则instanceof FileLock））返回false; String otherPath =（（FileLock）rule）.path; return path.startsWith（otherPath）|| otherPath.startsWith（路径）; }}</pre>
+<pre>   public class FileLock implements ISchedulingRule {
+      private String path;
+      public FileLock(java.io.File file) {
+         this.path = file.getAbsolutePath();
+      }
+      public boolean <b>contains</b>(ISchedulingRule rule) {
+         if (this == rule)
+            return true;
+         if (rule instanceof FileLock)
+            return ((FileLock)rule).path.startsWith(path);
+         if (rule instanceof MultiRule) {
+            MultiRule multi = (MultiRule) rule;
+            ISchedulingRule[] children = multi.getChildren();
+            for (int i = 0; i &lt; children.length; i++)
+               if (!contains(children[i]))
+                  return false;
+            return true;
+         }
+         return false;
+      }
+      public boolean <b>isConflicting</b>(ISchedulingRule rule) {
+         if (!(rule instanceof FileLock))
+            return false;
+         String otherPath = ((FileLock)rule).path;
+         return path.startsWith(otherPath) || otherPath.startsWith(path);
+      }
+   }
+</pre>
 <p>如果线程在已经拥有规则时尝试获取第二个规则，则<tt>contains</tt>方法起作用。为了避免死锁的可能性，任何给定的线程在任何给定时间只能拥有<em>一个</em>调度规则。如果一个线程在已经拥有规则时调用<tt>beginRule</tt> ，或者通过先前调用<tt>beginRule</tt>或者通过执行具有调度规则的作业，则查询<tt>contains</tt>方法以查看这两个规则是否相同。如果已拥有的规则的<tt>contains</tt>方法返回<tt>true</tt> ，则<tt>beginRule</tt>调用将成功。如果<tt>contains</tt>方法返回<tt>false</tt> ，则会发生错误。</p>
 <p><tt>换句话说</tt> ，一个线程拥有我们在“c：\ temp”目录下的示例<tt>FileLock</tt>规则。虽然它拥有此规则，但只允许修改该目录子树中的文件。如果它试图修改不在“c：\ temp”下的其他目录中的文件，它应该失败。因此，调度规则是允许或不允许作业或线程允许执行的具体规范。违反该规范将导致运行时异常。在并发文献中，这种技术称为<i>两阶段锁定</i> 。在两阶段锁定方案中，进程很多事先指定特定任务所需的所有锁，然后在操作期间不允许获取进一步的锁。两阶段锁定消除了保持和等待条件，这是循环等待死锁的先决条件。因此，仅使用调度规则作为锁定原语的系统不可能进入死锁。
 </p>

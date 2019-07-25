@@ -1,18 +1,18 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
-<script src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript" language="JavaScript"></script>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
 <title>其他文本编辑职责</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>其他文本编辑职责</h2>
 <p>Java示例编辑器从<a href="../reference/api/org/eclipse/ui/texteditor/AbstractTextEditor.html"><b>AbstractTextEditor</b></a>继承了许多有用的默认行为。文本编辑框架处理几个其他职责，您可以通过覆盖<a href="../reference/api/org/eclipse/ui/texteditor/AbstractTextEditor.html"><b>AbstractTextEditor中的</b></a>方法来自定义。浏览此类及其子类的实现，以了解如何在框架中自定义行为。</p>
 <p>以下是可以配置的一些有用的框架功能。</p>
@@ -20,18 +20,32 @@
 <p>文本编辑器通常提供用户首选项来控制编辑器的表示和行为。在文本框架中，每个文本编辑器实例都有一个关联的首选项存储，用于访问用户首选项。此首选项存储可以由编辑器设置，也可以从已在框架中使用的首选项存储继承。</p>
 <p>对于Java示例编辑器，它继承了<a href="../reference/api/org/eclipse/ui/editors/text/TextEditor.html"><b>TextEditor</b></a>初始化的首选项存储。这是工作台编辑器插件定义的首选项存储。</p>
 
-<pre>protected void initializeEditor（）{...setPreferenceStore（EditorsPlugin.getDefault（）getPreferenceStore（））; }</pre>编辑器插件首选项可以在中进行操作<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接"> <b>一般&gt;编辑</b></a>和<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接"> <b>常规&gt;编辑器&gt;文本编辑器</b></a>首选项页面。
+<pre>protected void initializeEditor() {
+	...
+	setPreferenceStore(EditorsPlugin.getDefault().getPreferenceStore());
+}</pre>编辑器插件首选项可以在中进行操作<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接"> <b>一般&gt;编辑</b></a>和<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接"> <b>常规&gt;编辑器&gt;文本编辑器</b></a>首选项页面。
 <p>如果您不想为编辑器使用标准工作台文本首选项，则可以设置其他首选项存储。这通常通过重写<b>initializeEditor</b>并设置您自己的首选项存储来完成。如果您确实使用自己的首选项存储，则还需要覆盖方法<b>handlePreferenceStoreChanged（）</b> ，该方法会在更新首选项时触发。</p>
 <h3>键绑定</h3>
 <p><a href="wrkAdv_keyBindings_contexts.htm">键绑定上下文</a>对于为键绑定建立查找顺序很有用。具有上下文密钥绑定减少了不同插件贡献冲突密钥序列的机会。默认情况下，工作台在通用上下文中运行，以便使用窗口或对话框。当文本编辑器变为活动状态时，它负责将上下文重置为文本编辑上下文，以便编辑器特定的键绑定将处于活动状态。</p>
 
 <p>在平台文本框架中，每个文本编辑器实例都有一个关联的绑定范围数组。它负责在活动时设置正确的范围。<a href="../reference/api/org/eclipse/ui/texteditor/AbstractDecoratedTextEditor.html"><b>AbstractDecoratedTextEditor</b></a>定义了此范围，并负责使其处于活动状态。范围在从构造函数调用的方法中分配：</p>
 
-<pre>protected void initializeKeyBindingScopes（）{setKeyBindingScopes（new String [] {“org.eclipse.ui.textEditorScope”}）; }</pre>
+<pre>protected void initializeKeyBindingScopes() {
+	setKeyBindingScopes(new String[] { &quot;org.eclipse.ui.textEditorScope&quot; });  
+}</pre>
 
 <p>该方法的参数是为上下文定义的id数组。如果希望编辑器定义自己的键绑定上下文，则可以在编辑器类中重写此方法，或使用<b>setKeybindingScopes</b>动态设置范围。</p>
 <p>必须使用<b><a href="../reference/extension-points/org_eclipse_ui_contexts.html">org.eclipse.ui.contexts</a></b>扩展点中的相应id定义上下文本身。以下是文本编辑上下文的定义。</p>
-<pre>&lt;extension point =“org.eclipse.ui.contexts”&gt; &lt;context name =“％context.editingText.name”description =“％context.editingText.description”id =“org.eclipse.ui.textEditorScope”parentId =“ org.eclipse.ui.contexts.window“&gt; &lt;/ context&gt; ...
+<pre>
+&lt;extension
+	point=&quot;org.eclipse.ui.contexts&quot;&gt;
+	&lt;context
+		name=&quot;%context.editingText.name&quot;
+		description=&quot;%context.editingText.description&quot;
+		id=&quot;org.eclipse.ui.textEditorScope&quot;
+		parentId=&quot;org.eclipse.ui.contexts.window&quot;&gt;
+	&lt;/context&gt;
+	...
 </pre>
 <p>（注意：我们在本讨论<b>中</b>可互换地使用术语<b>范围</b>和<b>上下文</b> 。文本类中的方法名称仍将键绑定上下文称为作用域。这些方法名称将上下文的原始实现反映为范围，并使用过时的术语。）</p>
 

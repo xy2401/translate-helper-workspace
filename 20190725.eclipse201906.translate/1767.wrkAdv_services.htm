@@ -1,20 +1,23 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>服务</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>服务</h2>
 <p>工作台定义了许多可以从<a href="../reference/api/org/eclipse/ui/services/IServiceLocator.html">org.eclipse.ui.services中检索的服务<a href="../reference/api/org/eclipse/ui/services/IServiceLocator.html">。IServiceLocator</a> 。服务为组件提供了一种检索有关工作台信息的方法，而无需始终转到全局单例： <code>PlatformUI.getWorkbench()</code> 。例如：</p>
-<pre>IHandlerService handlerService =（IHandlerService）getSite（）。getService（IHandlerService.class）;</pre>
+<pre>
+		IHandlerService handlerService = (IHandlerService) getSite()
+				.getService(IHandlerService.class);
+</pre>
 <p>有些服务提供2种可选功能，通常在服务接口javadoc中指定：</p>
 <ul>
 <li>支持侦听器的服务可以在组件的<a href="../reference/api/org/eclipse/ui/services/IServiceLocator.html">org.eclipse.ui.services时自动清理侦听器<a href="../reference/api/org/eclipse/ui/services/IServiceLocator.html">。IServiceLocator</a> （用于获取服务）被处置掉。</li>
@@ -141,7 +144,13 @@
 <h3>贡献服务</h3>
 <p>在eclipse中提供框架的插件开发人员也可能想要提供服务。这可以使用<a href="../reference/extension-points/org_eclipse_ui_services.html">org.eclipse.ui.services</a>扩展点来完成。基于<a href="../reference/api/org/eclipse/ui/services/AbstractServiceFactory.html">org.eclipse.ui.services定义服务工厂<a href="../reference/api/org/eclipse/ui/services/AbstractServiceFactory.html">。AbstractServiceFactory</a>然后指定工厂可以返回的服务。工厂可以创建多种类型的服务，但是多个工厂无法为相同的服务类型做出贡献。
 </p>
-<pre>&lt;serviceFactory factoryClass =“org.eclipse.ui.examples.contributions.model。PersonServiceFactory“&gt; &lt;service serviceClass =”org.eclipse.ui.examples.contributions.model。IPersonService“/&gt; &lt;/ serviceFactory&gt;</pre>
+<pre>
+      &lt;serviceFactory
+            factoryClass="org.eclipse.ui.examples.contributions.model.PersonServiceFactory"&gt;
+         &lt;service
+               serviceClass="org.eclipse.ui.examples.contributions.model.IPersonService"/&gt;
+      &lt;/serviceFactory&gt;
+</pre>
 <p><a href="../reference/api/org/eclipse/ui/services/AbstractServiceFactory.html">org.eclipse.ui.services的create方法<a href="../reference/api/org/eclipse/ui/services/AbstractServiceFactory.html">。AbstractServiceFactory</a>传入3个参数：</p>
 <ul>
 <li><code>serviceInterface</code> - 需要创建的接口类</li>
@@ -151,7 +160,36 @@
 <p>工作台服务是有组织的，因此有一个提供所需功能的全球服务，以及一系列儿童服务。子服务提供监听器清理以及本地化服务请求所需的任何数据。</p>
 <p>当<code>parentLocator</code>在请求<code>serviceInterface</code>时返回<code>null</code>时，服务工厂应该返回全局服务。全局服务可以是实现，也可以是插件提供的管理器或OSGi服务的代理。
 </p>
-<pre>Object parentService = parentLocator.getService（IPersonService.class）; if（parentService == null）{return new PersonService（locator）; } return new PersonServiceSlave（locator，（IPersonService）parentService）; // 要么 ...Object parentService = parentLocator.getService（IPersonService.class）; if（parentService == null）{return Activator.getDefault（）。getPersonManager（）; } return new PersonServiceSlave（locator，（IPersonService）parentService）; // //或作为OSGi服务的前端。Object parentService = parentLocator.getService（IPersonService.class）; if（parentService == null）{PersonServiceProxy proxy = new PersonServiceProxy（locator，Activator.getDefault（）。getBundle（）。getBundleContext（），0）; proxy.findService（）;返回代理; PersonServiceProxy proxy = new PersonServiceProxy（locator，Activator.getDefault（）。getBundle（）。getBundleContext（），（（PersonServiceProxy）parentService）.getLevel（）+ 1）; proxy.findService（）;返回代理;</pre>
+<pre>
+		Object parentService = parentLocator.getService(IPersonService.class);
+		if (parentService == null) {
+			return new PersonService(locator);
+		}
+		return new PersonServiceSlave(locator, (IPersonService) parentService);
+		
+		// or ...
+		Object parentService = parentLocator.getService(IPersonService.class);
+		if (parentService == null) {
+			return Activator.getDefault().getPersonManager();
+		}
+		return new PersonServiceSlave(locator, (IPersonService) parentService);
+		
+		//
+		// or as a front to an OSGi service.
+		Object parentService = parentLocator.getService(IPersonService.class);
+		if (parentService == null) {
+			PersonServiceProxy proxy = new PersonServiceProxy(locator,
+			        Activator.getDefault().getBundle().getBundleContext(),
+			        0);
+			proxy.findService();
+			return proxy;
+		}
+		PersonServiceProxy proxy = new PersonServiceProxy(locator,
+		     Activator.getDefault().getBundle().getBundleContext(),
+		     ((PersonServiceProxy)parentService).getLevel()+1);
+		proxy.findService();
+		return proxy;
+</pre>
 <p>在上面的OSGi服务片段中，不是让每个子<code>IPersonService</code>知道它的父级， <code>IPersonService</code>每个<code>IPersonService</code>直接与OSGi服务对话并使用父级来计算其“级别”，这允许它本地化它提供的任何功能。
 </p>
 

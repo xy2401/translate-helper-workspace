@@ -1,32 +1,61 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>文字和标尺悬停</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>文字和标尺悬停</h2>
 <p>平台文本框架中提供了悬停支持，允许您在编辑器中显示的文本和标尺上实现信息悬停（或infopops）。</p>
 <p>悬停支持是可选的。默认情况下， <b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewerConfiguration.html">SourceViewerConfiguration</a></b>不会安装悬停行为，因为没有可用的常规信息显示。为了提供文本或标尺悬停，必须<a href="editors_sourceviewers.htm">配置</a>编辑器的源查看器<a href="editors_sourceviewers.htm">配置</a>以定义可插入的悬停对象。</p>
 <p>让我们再看看<b>JavaSourceViewerConfiguration</b> ，看看哪些方法定义了悬停行为：</p>
 
-<pre>public ITextHover getTextHover（ISourceViewer sourceViewer，String contentType）{return new JavaTextHover（）; public IAnnotationHover getAnnotationHover（ISourceViewer sourceViewer）{return new JavaAnnotationHover（）; }</pre>
+<pre>public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
+	return new JavaTextHover();
+}
+public IAnnotationHover getAnnotationHover(ISourceViewer sourceViewer) {
+	return new JavaAnnotationHover();
+}
+</pre>
 <p>也可以使用<b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewer.html">SourceViewer</a></b>协议（ <b>setTextHover</b>和<b>setAnnotationHover</b> ）动态安装Hover帮助程序类。无论采用哪种方式，都没有特定的运行时优势，但是将所有可插入行为覆盖在<b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewerConfiguration.html">SourceViewerConfiguration</a></b>的子类中提供了在一个位置合并所有定义的优势。</p>
 <p>让我们来看看提供两种悬停的具体细节。</p>
 <h3>文字悬停</h3>
 <p>文本悬停允许您提供有关编辑器中显示的文本的信息文本。这是使用<b><a href="../reference/api/org/eclipse/jface/text/ITextHover.html">ITextHover</a></b>接口完成的。文本悬停负责计算应该用作悬停信息源的区域，给定文档中的偏移量。它还负责提供有关特定区域的信息文本。<b>JavaTextHover</b>非常简单。它检查所提供的悬停偏移量是否包含在文本选择内。如果是这样，它将选择范围作为悬停区域提供。</p>
 
-<pre>公共类JavaTextHover实现ITextHover {...public IRegion getHoverRegion（ITextViewer textViewer，int offset）{Point selection = textViewer.getSelectedRange（）; if（selection.x &lt;= offset &amp;&amp; offset &lt;selection.x + selection.y）返回新的Region（selection.x，selection.y）; return new Region（offset，0）; }}</pre>
+<pre>public class JavaTextHover implements ITextHover {
+
+	...
+	
+	public IRegion getHoverRegion(ITextViewer textViewer, int offset) {
+		Point selection= textViewer.getSelectedRange();
+		if (selection.x &lt;= offset &amp;&amp; offset &lt; selection.x + selection.y)
+			return new Region(selection.x, selection.y);
+		return new Region(offset, 0);
+	}
+}</pre>
 <p>给定其自己的计算悬停区域，它从其文档中获取所选文本并将其作为悬停信息返回。</p>
 
-<pre>公共类JavaTextHover实现ITextHover {public String getHoverInfo（ITextViewer textViewer，IRegion hoverRegion）{if（hoverRegion！= null）{try {if（hoverRegion.getLength（）&gt; -1）返回textViewer.getDocument（）。get（hoverRegion.getOffset（），hoverRegion.getLength（））; } catch（BadLocationException x）{}}返回JavaEditorMessages.getString（“JavaTextHover.emptySelection”）; } ...}</pre>
+<pre>public class JavaTextHover implements ITextHover {
+
+	public String getHoverInfo(ITextViewer textViewer, IRegion hoverRegion) {
+		if (hoverRegion != null) {
+			try {
+				if (hoverRegion.getLength() &gt; -1)
+					return textViewer.getDocument().get(hoverRegion.getOffset(), hoverRegion.getLength());
+			} catch (BadLocationException x) {
+			}
+		}
+		return JavaEditorMessages.getString(&quot;JavaTextHover.emptySelection&quot;); 
+	}
+	...
+}</pre>
 <p>果然，我们可以看到，如果我们将鼠标悬停在编辑器中的选区上，悬停文本会显示选择。</p>
 <p><img src="images/javatexthover.png" alt="悬停所选区域的信息" border="0"></p>
 <p>更复杂的上下文信息可用于计算有用的悬停信息。可以在使用JDT编辑器实现的<b>JavaTextHover中</b>找到此示例。</p>
@@ -34,7 +63,16 @@
 <p>将鼠标悬停在垂直标尺上对于显示显示面向行的信息非常有用。悬停类如上所述配置。<b><a href="../reference/api/org/eclipse/jface/text/source/IAnnotationHover.html">IAnnotationHover</a></b>是标尺悬停对象的接口。虽然名称暗示悬停是为标尺中的注释而设计的，但实际上由一个单独的编辑器决定什么是合适的。标尺悬停负责返回与特定行号关联的信息字符串，无论该行上是否存在标记。</p>
 <p>Java示例编辑器的<b>JavaAnnotationHover</b>为所有行实现悬停。它使用行号来获取悬停行上的所有文本并将其作为信息字符串返回。</p>
 
-<pre>public String getHoverInfo（ISourceViewer sourceViewer，int lineNumber）{IDocument document = sourceViewer.getDocument（）;尝试{IRegion info = document.getLineInformation（lineNumber）; return document.get（info.getOffset（），info.getLength（））; } catch（BadLocationException x）{}返回null; }</pre>
+<pre>public String getHoverInfo(ISourceViewer sourceViewer, int lineNumber) {
+	IDocument document= sourceViewer.getDocument();
+
+	try {
+		IRegion info= document.getLineInformation(lineNumber);
+		return document.get(info.getOffset(), info.getLength());
+	} catch (BadLocationException x) {
+	}
+	return null;
+}</pre>
 <p><img src="images/javarulerhover.png" alt="悬停有关标尺的信息" border="0"></p>
 <p>由于悬停可以访问文档和源查看器，因此它具有对应该显示的信息做出更复杂的上下文决策所需的所有上下文。例如，可以从源查看器中检索注释模型，以便为垂直标尺中显示的任何注释提供悬停信息。JDT编辑器提供的<b>JavaAnnotationHover</b>提供了此功能。
 </p>

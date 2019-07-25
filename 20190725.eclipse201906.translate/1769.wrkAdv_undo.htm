@@ -1,25 +1,70 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>无法撤消的操作</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>无法撤消的操作</h2>
 <p>我们已经研究了许多不同的方法来向工作台提供命令，但我们没有关注命令的<tt>execute（ExecutionEvent）</tt>方法的实现。该方法的机制取决于所讨论的特定命令，但是将代码构造为可撤销<b>操作</b>允许该命令参与平台撤销和重做支持。</p>
 <p>该平台在<b><a href="../reference/api/org/eclipse/core/commands/operations/package-summary.html">org.eclipse.core.commands.operations</a></b>包中提供了一个可<b>撤销的操作框架</b> 。通过在<tt>execute（ExecutionEvent）</tt>方法中实现代码来创建<a href="../reference/api/org/eclipse/core/commands/operations/IUndoableOperation.html"><b>IUndoableOperation</b></a> ，可以使操作可用于撤消和重做。除了实现撤消和重做行为本身之外，将命令或操作转换为使用操作很简单。</p>
 <h3>编写可撤销的操作</h3>
 <p>我们首先看一个非常简单的例子。回想一下<b>org.eclipse.ui.examples.contributions.editor中的简单示例<b>。DeltaInfoHandler</b> 。它构建一个字符串，然后打开一个对话框。</p>
-<pre>public Object execute（ExecutionEvent event）throws ExecutionException {//构建字符串缓冲区“buf”MessageDialog.openInformation（editor.getSite（）。getShell（），ContributionMessages。DeltaInfoHandler_shellTitle，buf .toString（））; return null; }</pre>使用操作，execute方法负责创建一个操作，该操作执行以前在execute方法中完成的工作，并请求<b>操作历史记录</b>执行操作，以便可以记住它以进行撤消和重做。
-<pre>public Object execute（ExecutionEvent event）抛出ExecutionException {IUndoableOperation operation = new DeltaInfoOperation（editor.getSite（）。getShell（））; operationHistory.execute（operation，null，null）; return null; }</pre>该操作封装了run方法的旧行为，以及操作的撤消和重做。
-<pre>类DeltaInfoOperation扩展AbstractOperation {Shell shell; public DeltaInfoOperation（Shell shell）{super（“Delta Operation”）; this.shell = shell; public IStatus execute（IProgressMonitor monitor，IAdaptable info）{//构建字符串缓冲区“buf”MessageDialog.openInformation（shell，ContributionMessages。DeltaInfoHandler_shellTitle，buf .toString（））;返回状态。OK_STATUS; public IStatus undo（IProgressMonitor monitor，IAdaptable info）{//构建字符串缓冲区“buf”MessageDialog.openInformation（shell，ContributionMessages。DeltaInfoHandler_shellTitle，“撤消增量计算”）;返回状态。OK_STATUS; public IStatus redo（IProgressMonitor monitor，IAdaptable info）{//构建字符串缓冲区“buf”//只需重新计算delta MessageDialog.openInformation（shell，ContributionMessages。DeltaInfoHandler_shellTitle，buf .toString（））;返回状态。OK_STATUS; }}</pre>
+<pre>
+public Object execute(ExecutionEvent event) throws ExecutionException {
+        // Build the string buffer "buf"
+        MessageDialog.openInformation(editor.getSite().getShell(),
+                        ContributionMessages.DeltaInfoHandler_shellTitle, buf
+                                        .toString());
+        return null;
+}
+</pre>使用操作，execute方法负责创建一个操作，该操作执行以前在execute方法中完成的工作，并请求<b>操作历史记录</b>执行操作，以便可以记住它以进行撤消和重做。
+<pre>
+public Object execute(ExecutionEvent event) throws ExecutionException {
+        IUndoableOperation operation = new DeltaInfoOperation(
+                        editor.getSite().getShell());
+        operationHistory.execute(operation, null, null);
+        return null;
+}
+</pre>该操作封装了run方法的旧行为，以及操作的撤消和重做。
+<pre>
+class DeltaInfoOperation extends AbstractOperation {
+	Shell shell;
+	public DeltaInfoOperation(Shell shell) {
+		super(&quot;Delta Operation&quot;);
+		this.shell = shell;
+	}
+	public IStatus execute(IProgressMonitor monitor, IAdaptable info) {
+        // Build the string buffer &quot;buf&quot;
+        MessageDialog.openInformation(shell,
+                        ContributionMessages.DeltaInfoHandler_shellTitle, buf
+                                        .toString());
+		return Status.OK_STATUS;
+	}
+	public IStatus undo(IProgressMonitor monitor, IAdaptable info) {
+        // Build the string buffer &quot;buf&quot;
+        MessageDialog.openInformation(shell,
+                        ContributionMessages.DeltaInfoHandler_shellTitle,
+                        &quot;Undoing delta calculation&quot;);
+		return Status.OK_STATUS;
+	}
+	public IStatus redo(IProgressMonitor monitor, IAdaptable info) {
+        // Build the string buffer &quot;buf&quot;
+        // simply re-calculate the delta
+        MessageDialog.openInformation(shell,
+                        ContributionMessages.DeltaInfoHandler_shellTitle, buf
+                                        .toString());
+		return Status.OK_STATUS;
+	}
+}
+</pre>
 
 <p>对于简单的命令，可以将所有螺母和螺栓工作移动到操作类中。在这种情况下，将以前的处理程序类折叠为参数化的单个处理程序类可能是适当的。处理程序将在执行时简单地执行提供的操作。这主要是应用程序设计决策。
 </p>
@@ -27,14 +72,26 @@
 </p>
 <h3>经营历史</h3>
 <p>到目前为止，我们已经使用了<b>操作历史</b>而没有真正解释它。让我们再看一下创建示例操作的代码。</p>
-<pre>public Object execute（ExecutionEvent event）抛出ExecutionException {IUndoableOperation operation = new DeltaInfoOperation（editor.getSite（）。getShell（））; ...operationHistory.execute（operation，null，null）; return null; }</pre><b>操作历史</b>到底是什么？
+<pre>
+public Object execute(ExecutionEvent event) throws ExecutionException {
+        IUndoableOperation operation = new DeltaInfoOperation(
+                        editor.getSite().getShell());
+        ...
+        operationHistory.execute(operation, null, null);
+        return null;
+}
+</pre><b>操作历史</b>到底是什么？
 <a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistory.html"><b>IOperationHistory</b></a>定义了跟踪所有可撤消操作的对象的接口。当操作历史执行操作时，它首先执行操作，然后将其添加到撤消历史。希望撤消和重做操作的客户端通过使用<a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistory.html"><b>IOperationHistory</b></a>协议来执行此操作。
 
 <p>可以通过多种方式检索应用程序使用的操作历史记录。最简单的方法是使用<a href="../reference/api/org/eclipse/core/commands/operations/OperationHistoryFactory.html"><b>OperationHistoryFactory</b></a> 。</p>
-<pre>IOperationHistory operationHistory = OperationHistoryFactory.getOperationHistory（）;</pre>
+<pre>IOperationHistory operationHistory = OperationHistoryFactory.getOperationHistory();
+</pre>
 
 <p>工作台还可用于检索操作历史记录。工作台配置默认操作历史记录，并提供访问它的协议。以下代码段演示了如何从工作台获取操作历史记录。</p>
-<pre>IWorkbench workbench = editor.getSite（）。getWorkbenchWindow（）。getWorkbench（）; IOperationHistory operationHistory = workbench.getOperationSupport（）。getOperationHistory（）;</pre>获取操作历史记录后，可以使用它来查询撤消或重做历史记录，找出撤消或重做的下一行操作，或撤消或重做特定操作。客户端可以添加<a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistoryListener.html"><b>IOperationHistoryListener</b></a> ，以便接收有关历史记录更改的通知。其他协议允许客户端对历史记录设置限制或通知侦听器有关特定操作的更改。在我们详细研究协议之前，我们需要了解<b>撤消上下文</b> 。
+<pre>
+IWorkbench workbench = editor.getSite().getWorkbenchWindow().getWorkbench();
+IOperationHistory operationHistory = workbench.getOperationSupport().getOperationHistory();
+</pre>获取操作历史记录后，可以使用它来查询撤消或重做历史记录，找出撤消或重做的下一行操作，或撤消或重做特定操作。客户端可以添加<a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistoryListener.html"><b>IOperationHistoryListener</b></a> ，以便接收有关历史记录更改的通知。其他协议允许客户端对历史记录设置限制或通知侦听器有关特定操作的更改。在我们详细研究协议之前，我们需要了解<b>撤消上下文</b> 。
 
 <h4>撤消上下文</h4>
 <p>创建操作时，会为其分配一个<b>撤消上下文</b> ，该上下文描述执行原始操作的用户上下文。撤消上下文通常取决于发起可撤销操作的视图或编辑器。例如，在编辑器中进行的更改通常是该编辑器的本地更改。在这种情况下，编辑器应创建自己的撤消上下文，并将该上下文分配给它添加到历史记录中的操作。这样，编辑器中执行的所有操作都被视为本地和半私有。在共享模型上运行的编辑器或视图通常使用与它们正在操作的模型相关的撤消上下文。通过使用更一般的撤销上下文，由一个视图或编辑器执行的操作可以在另一个视图或在同一模型上操作的编辑器中撤消。</p>
@@ -42,24 +99,69 @@
 </p>
 <p>撤消上下文可以由创建可撤销操作的插件创建，也可以通过API访问。例如，工作台提供对可用于工作台范围操作的撤消上下文的访问。无论如何获取它们，都应在创建操作时分配撤消上下文。以下代码段显示了<tt>execute</tt>方法如何为其操作分配工作台范围的上下文。
 </p>
-<pre>public Object execute（ExecutionEvent event）抛出ExecutionException {IUndoableOperation operation = new DeltaInfoOperation（editor.getSite（）。getShell（））; ...IWorkbench workbench = editor.getSite（）。getWorkbenchWindow（）。getWorkbench（）; IOperationHistory operationHistory = workbench.getOperationSupport（）。getOperationHistory（）; IUndoContext undoContext = workbench.getOperationSupport（）。getUndoContext（）; operation.addContext（undoContext）; operationHistory.execute（operation，null，null）; return null; }</pre>
+<pre>
+public Object execute(ExecutionEvent event) throws ExecutionException {
+        IUndoableOperation operation = new DeltaInfoOperation(
+                        editor.getSite().getShell());
+        ...
+        IWorkbench workbench = editor.getSite().getWorkbenchWindow().getWorkbench();
+        IOperationHistory operationHistory = workbench.getOperationSupport().getOperationHistory();
+        IUndoContext undoContext = workbench.getOperationSupport().getUndoContext();
+        operation.addContext(undoContext);
+        operationHistory.execute(operation, null, null);
+        return null;
+}
+</pre>
 <p>为什么要使用撤消上下文？为什么不为单独的视图和编辑器使用单独的操作历史记录？使用单独的操作历史记录假定任何特定视图或编辑器维护其自己的私有撤消历史记录，并且该撤消在应用程序中没有全局含义。这可能适用于某些应用程序，在这些情况下，每个视图或编辑器都应创建自己的单独撤消上下文。其他应用程序可能希望实现适用于所有用户操作的全局撤消，而不管它们来自哪个视图或编辑器。在这种情况下，所有插件都应该使用工作台上下文来为历史记录添加操作。</p>
 <p>在更复杂的应用程序中，撤销既不是严格本地的，也不是严格全局的相反，撤消上下文之间存在一些交叉。这可以通过为操作分配多个上下文来实现。例如，IDE工作台视图可以操纵整个工作空间，并将工作空间视为其撤消上下文。在工作空间中的特定资源上打开的编辑器可能认为其操作主要是本地的。但是，在编辑器内执行的操作实际上可能影响特定资源和整个工作空间。（这种情况的一个很好的例子是JDT重构支持，它允许在编辑源文件时对Java元素进行结构更改）。在这些情况下，能够将两个撤消上下文添加到操作中以便可以从编辑器本身以及操纵工作空间的那些视图执行撤消是有用的。
 </p>
 <p>现在我们了解了撤消上下文的作用，我们可以再次查看<a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistory.html"><b>IOperationHistory</b></a>的协议。以下代码段用于在某些上下文中执行撤消：</p>
-<pre>IOperationHistory operationHistory = workbench.getOperationSupport（）。getOperationHistory（）;尝试{IStatus status = operationHistory.undo（myContext，progressMonitor，someInfo）; } catch（ExecutionException e）{//处理异常}</pre>历史记录将获取具有给定上下文的最近执行的操作，并要求其自行撤消。其他协议可用于获取上下文的整个撤消或重做历史记录，或查找将在部分上下文中撤消或重做的操作。以下代码段获取将在特定上下文中撤消的操作的标签。
-<pre>IOperationHistory operationHistory = workbench.getOperationSupport（）。getOperationHistory（）; String label = history.getUndoOperation（myContext）.getLabel（）;</pre>
+<pre>IOperationHistory operationHistory = workbench.getOperationSupport().getOperationHistory();
+try {
+	IStatus status = operationHistory.undo(myContext, progressMonitor, someInfo);
+} catch (ExecutionException e) {
+	// handle the exception 
+}
+</pre>历史记录将获取具有给定上下文的最近执行的操作，并要求其自行撤消。其他协议可用于获取上下文的整个撤消或重做历史记录，或查找将在部分上下文中撤消或重做的操作。以下代码段获取将在特定上下文中撤消的操作的标签。
+<pre>
+IOperationHistory operationHistory = workbench.getOperationSupport().getOperationHistory();
+String label = history.getUndoOperation(myContext).getLabel();
+</pre>
 
 <p>全局撤消上下文， <b>IOperationHistory。GLOBAL_UNDO_CONTEXT</b>可用于指代全局撤消历史记录。也就是说，对于历史中的所有操作而言，无论其具体情况如何。以下代码段获取全局撤消历史记录。
 </p>
-<pre>IOperationHistory operationHistory = workbench.getOperationSupport（）。getOperationHistory（）; IUndoableOperation [] undoHistory = operationHistory.getUndoHistory（IOperationHistory。GLOBAL_UNDO_CONTEXT）;</pre>
+<pre>
+IOperationHistory operationHistory = workbench.getOperationSupport().getOperationHistory();
+IUndoableOperation [] undoHistory = operationHistory.getUndoHistory(IOperationHistory.GLOBAL_UNDO_CONTEXT);
+</pre>
 <p>无论何时使用操作历史协议执行，撤消或重做操作，客户端都可以提供进度监视器以及执行操作可能需要的任何其他UI信息。此信息将传递给操作本身。在我们的原始示例中， <tt>execute</tt>方法构造了一个带有shell参数的操作，该参数可用于打开对话框。更好的方法是将参数传递给execute，undo和redo方法，而不是将shell存储在操作中，这些方法提供运行操作所需的任何UI信息。这些参数将传递给操作本身。</p>
-<pre>public Object execute（ExecutionEvent event）抛出ExecutionException {IUndoableOperation operation = new DeltaInfoOperation（editor.getSite（）。getShell（））; ...
-        <b>operationHistory.execute（operation，null，infoAdapter）;</b> return null; }</pre><b>infoAdapter</b>是一个<a href="../reference/api/org/eclipse/core/runtime/IAdaptable.html"><b>IAdaptable</b></a> ，它最少可以提供在启动对话框时可以使用的<a href="../reference/api/org/eclipse/swt/widgets/Shell.html"><b>Shell</b></a> 。我们的示例操作将使用此参数，如下所示：<pre>public IStatus execute（IProgressMonitor monitor，IAdaptable info）{if（info！）= null）{Shell shell =（Shell）info.getAdapter（Shell.class）;如果（贝壳！= null）{//构建字符串缓冲区“buf”MessageDialog.openInformation（shell，ContributionMessages。DeltaInfoHandler_shellTitle，buf .toString（））;返回状态。OK_STATUS; }} //做别的事......}</pre> 
+<pre>public Object execute(ExecutionEvent event) throws ExecutionException {
+        IUndoableOperation operation = new DeltaInfoOperation(
+                        editor.getSite().getShell());
+        ...
+        <b>operationHistory.execute(operation, null, infoAdapter);</b>
+        return null;
+}
+</pre><b>infoAdapter</b>是一个<a href="../reference/api/org/eclipse/core/runtime/IAdaptable.html"><b>IAdaptable</b></a> ，它最少可以提供在启动对话框时可以使用的<a href="../reference/api/org/eclipse/swt/widgets/Shell.html"><b>Shell</b></a> 。我们的示例操作将使用此参数，如下所示：<pre>
+public IStatus execute(IProgressMonitor monitor, IAdaptable info) {
+	if (info != null) {
+		Shell shell = (Shell)info.getAdapter(Shell.class);
+		if (shell != null) {
+			// Build the string buffer &quot;buf&quot;
+			MessageDialog.openInformation(shell,
+					ContributionMessages.DeltaInfoHandler_shellTitle, buf
+							.toString());
+			return Status.OK_STATUS;
+		}
+	}
+	// do something else...
+}
+</pre> 
 
 <h3>撤消和重做动作处理程序（已弃用）</h3>
 <p>该平台提供标准的撤消和重做<b>可重定向动作处理程序</b> ，可由视图和编辑器配置，以便为其特定上下文提供撤消和重做支持。创建操作处理程序时，会为其分配上下文，以便以适合该特定视图的方式过滤操作历史记录。操作处理程序负责更新撤消和重做标签以显示当前有问题的操作，为操作历史记录提供适当的进度监视器和UI信息，并可选择在当前操作无效时修剪历史记录。为方便起见，提供了一个创建操作处理程序并将其分配给全局撤消和重做操作的操作组。</p>
-<pre>new UndoRedoActionGroup（this.getSite（），undoContext，true）;</pre>最后一个参数是一个布尔值，指示当前可用于撤消或重做的操作无效时是否应该处理指定上下文的撤消和重做历史记录。此参数的设置与提供的撤消上下文以及具有该上下文的操作使用的验证策略有关。
+<pre>new UndoRedoActionGroup(this.getSite(), undoContext, true);
+</pre>最后一个参数是一个布尔值，指示当前可用于撤消或重做的操作无效时是否应该处理指定上下文的撤消和重做历史记录。此参数的设置与提供的撤消上下文以及具有该上下文的操作使用的验证策略有关。
 
 <h3>应用撤消模型</h3>
 <p>之前我们研究了如何使用撤消上下文来实现不同类型的应用程序撤消模型。将一个或多个上下文分配给操作的能力允许应用程序实现对每个视图或编辑器严格本地化的撤销策略，严格地在所有插件中全局，或者介于两者之间的某些模型。涉及撤销和重做的另一个设计决策是任何操作是否可以在任何时间撤消或重做，或者模型是否严格是线性的，只有最近的操作被考虑用于撤销或重做。
@@ -68,10 +170,21 @@
 <a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistory.html"><b>IOperationHistory</b></a>定义了允许灵活撤销模型的协议，将其留给单独的实现来确定允许的内容。到目前为止我们看到的撤消和重做协议假定在特定的撤消上下文中只有一个隐含操作可用于撤消或重做。提供附加协议以允许客户端执行特定操作，而不管其在历史记录中的位置如何。可以配置操作历史，以便可以实现适合于应用程序的模型。这是通过一个接口完成的，该接口用于在撤消或重做操作之前预先批准任何撤消或重做请求。</p>
 <h4>运营审批人</h4>
 <a href="../reference/api/org/eclipse/core/commands/operations/IOperationApprover.html"><b>IOperationApprover</b></a>定义用于批准特定操作的撤消和重做的协议。操作批准者安装在操作历史记录上。特定操作批准者可以依次检查所有操作的有效性，仅检查某些上下文的操作，或者在操作中发现意外情况时提示用户。以下代码段显示了应用程序如何配置操作历史记录以强制执行所有操作的线性撤消模型。
-<pre>IOperationHistory history = OperationHistoryFactory.getOperationHistory（）; //在历史记录上设置批准者，该批准者将禁止任何不是最新操作历史记录的撤消.addOperationApprover（new LinearUndoEnforcer（））;</pre>
+<pre>
+IOperationHistory history = OperationHistoryFactory.getOperationHistory();
+
+// set an approver on the history that will disallow any undo that is not the most recent operation
+history.addOperationApprover(new LinearUndoEnforcer());
+
+</pre>
 <p>在这种情况下，框架提供的操作批准程序<a href="../reference/api/org/eclipse/core/commands/operations/LinearUndoEnforcer.html"><b>LinearUndoEnforcer</b></a>将安装在历史记录中，以防止在其所有撤消上下文中撤消或重做任何不是最近完成或撤消操作的操作。</p>
 <p>另一个操作批准者<a href="../reference/api/org/eclipse/ui/operations/LinearUndoViolationUserApprover.html"><b>LinearUndoViolationUserApprover</b></a>检测到相同的条件，并提示用户是否应该允许该操作继续。此操作批准者可以安装在特定的工作台部件上。</p>
-<pre>IOperationHistory history = OperationHistoryFactory.getOperationHistory（）; //在此部分设置一个批准者，当操作不是最新的时候会提示用户。IOperationApprover approver = new LinearUndoViolationUserApprover（myUndoContext，myWorkbenchPart）; history.addOperationApprover（批准）;</pre>
+<pre>IOperationHistory history = OperationHistoryFactory.getOperationHistory();
+
+// set an approver on this part that will prompt the user when the operation is not the most recent.
+IOperationApprover approver = new LinearUndoViolationUserApprover(myUndoContext, myWorkbenchPart);
+history.addOperationApprover(approver);
+</pre>
 
 <p>插件开发人员可以自由地开发和安装自己的操作批准者，以实现特定于应用程序的撤消模型和批准策略。在您的插件中，除了撤消和重做操作之外，可能适合寻求对操作的原始执行的批准。如果是这种情况，您的操作批准者还应实现<a href="../reference/api/org/eclipse/core/commands/operations/IOperationApprover2.html"><b>IOperationApprover2</b></a> ，它批准操作的执行。当要求执行操作时，平台操作历史记录将寻求实现此接口的任何操作批准者的批准。</p>
 </body>

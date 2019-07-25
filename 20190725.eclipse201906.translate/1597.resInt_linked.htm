@@ -1,17 +1,17 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>链接的资源</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>链接的资源</h2>
 <p>之前对资源和文件系统（将<a href="resInt_filesystem.htm#mapping">资源映射到磁盘位置）的讨论</a>假定项目中的所有资源都位于文件系统中的相同位置。这通常是正确的。但是，提供了工作台中<b>链接资源</b>的概念，以便项目内的文件和文件夹可以存储在项目位置之外的文件系统中。
 </p>
@@ -44,7 +44,16 @@
 <p>某些插件可能无法处理链接的资源，因此有许多机制可用于禁用它们。如果您正在编写一个绝对需要将项目的所有内容都放在项目默认位置的插件，则可以使用这些机制来阻止用户创建您不希望它们出现的链接资源。
 </p>
 <p>第一种机制称为<i>项目性质否决权</i> 。如果定义自己的<a href="resAdv_natures.htm">项目性质</a> ，则可以在自然定义中指定性质与链接资源不兼容。以下是使用自然否决权的自然定义的示例：</p>
-<pre>&lt;extension id =“myNature”name =“My Nature”point =“org.eclipse.core.resources.natures”&gt; &lt;runtime&gt; &lt;run class =“com.xyz。MyNature“/&gt; &lt;/ runtime&gt; &lt;options <b>allowLinking =”false“</b> /&gt; &lt;/ extension&gt;</pre>
+<pre>&lt;extension
+	id=&quot;myNature&quot;
+	name=&quot;My Nature&quot;
+	point=&quot;org.eclipse.core.resources.natures&quot;&gt;
+	&lt;runtime&gt;
+		&lt;run class=&quot;com.xyz.MyNature&quot;/&gt;
+	&lt;/runtime&gt;
+	&lt;options <b>allowLinking=&quot;false&quot;</b>/&gt;
+&lt;/extension&gt;
+</pre>
 <p>防止链接资源创建的第二种机制是<i>团队钩子</i> 。如果定义自己的存储库实现，则可以使用<b><a href="../reference/extension-points/org_eclipse_core_resources_teamHook.html">org.eclipse.core.resources.teamHook</a></b>扩展点来阻止在与存储库类型共享的项目中创建链接资源。默认情况下，库提供商<em>不允许</em>在连接到存储库项目链接的资源。
 </p>
 <p>如果存储库支持由不了解链接资源的旧插件提供，则您将无法在这些项目中创建链接资源。
@@ -54,11 +63,40 @@
 
 <h3>代码中的链接资源</h3>
 <p>我们来看一些在代码中使用链接资源的例子。我们首先定义一个路径变量：</p>
-<pre>IWorkspace workspace = ResourcesPlugin.getWorkspace（）; IPathVariableManager pathMan = workspace.getPathVariableManager（）; String name =“TEMP”; IPath值=新路径（“c：\\ temp”）; if（pathMan.validateName（name）.isOK（）&amp;&amp; pathMan.validateValue（value）.isOK（））{pathMan.setValue（name，value）; } else {//无效的名称或值，抛出异常或警告用户}</pre>
+<pre>   IWorkspace workspace = ResourcesPlugin.getWorkspace();
+   IPathVariableManager pathMan = workspace.getPathVariableManager();
+   String name = &quot;TEMP&quot;;
+   IPath value = new Path(&quot;c:\\temp&quot;);
+   if (pathMan.validateName(name).isOK() &amp;&amp; pathMan.validateValue(value).isOK()) {
+      pathMan.setValue(name, value);
+   } else {
+      //invalid name or value, throw an exception or warn user
+   }
+</pre>
 <p>现在我们可以创建相对于定义的路径变量的链接资源：</p>
-<pre>IProject project = workspace.getProject（“Project”）; //假设这存在IFolder link = project.getFolder（“Link”）; IPath location = new Path（“TEMP / folder”）; if（workspace.validateLinkLocation（location）.isOK（））{link.createLink（location，IResource。NONE，null）; } else {//无效的位置，抛出异常或警告用户}</pre>
+<pre>   IProject project = workspace.getProject(&quot;Project&quot;);//assume this exists
+   IFolder link = project.getFolder(&quot;Link&quot;);
+   IPath location = new Path(&quot;TEMP/folder&quot;);
+   if (workspace.validateLinkLocation(location).isOK()) {
+      link.createLink(location, IResource.NONE, null);
+   } else {
+      //invalid location, throw an exception or warn user
+   }
+</pre>
 <p>而已！您现在在工作区中有一个名为“链接”的链接文件夹，位于“c：\ temp \ folder”。</p>
 <p>让我们以此链接资源上的一些代码片段结束，以说明与链接资源相关的其他方法的行为：</p>
-<pre>link.getFullPath（）==&gt;“/ Project / Link”link.getLocation（）==&gt;“c：\ temp \ folder”link.getRawLocation（）==&gt;“TEMP / folder”link.isLinked（）== &gt;“true”IFile child = link.getFile（“abc.txt”）; child.create（...）; child.getFullPath（）==&gt;“/ Project / Link / abc.txt”child.getLocation（）==&gt;“c：\ temp \ folder \ abc.txt”child.getRawLocation（）==&gt;“c：\ temp \ folder \ abc.txt“child.isLinked（）==&gt;”false“</pre>
+<pre>
+   link.getFullPath() ==&gt; &quot;/Project/Link&quot;
+   link.getLocation() ==&gt; &quot;c:\temp\folder&quot;
+   link.getRawLocation() ==&gt; &quot;TEMP/folder&quot;
+   link.isLinked() ==&gt; &quot;true&quot;
+   
+   IFile child = link.getFile(&quot;abc.txt&quot;);
+   child.create(...);
+   child.getFullPath() ==&gt; &quot;/Project/Link/abc.txt&quot;
+   child.getLocation() ==&gt; &quot;c:\temp\folder\abc.txt&quot;
+   child.getRawLocation() ==&gt; &quot;c:\temp\folder\abc.txt&quot;
+   child.isLinked() ==&gt; &quot;false&quot;
+</pre>
 </body>
 </html>

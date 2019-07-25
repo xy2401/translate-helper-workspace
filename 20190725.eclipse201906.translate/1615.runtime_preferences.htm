@@ -1,17 +1,17 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>运行时首选项</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>运行时首选项</h2>
 <p><b><a href="../reference/api/org/eclipse/core/runtime/preferences/package-summary.html">org.eclipse.core.runtime.preferences</a></b>包提供了用于存储插件首选项的基础结构。首选项通常映射到用户在“ <b>首选项”</b>页面上控制的<b>设置</b> ，尽管底层基础结构不需要这样做。插件首选项是键/值对，其中键描述首选项的名称，值是几种不同类型之一（boolean，double，float，int，long或string）。平台可以从文件系统存储和检索首选项。保存的首选项的确切位置取决于首选项的<b>范围</b> 。</p>
 <h3>偏好范围</h3>偏好的<b>范围</b>与存储偏好的位置密切相关。插件开发人员可以决定哪些标准范围适用于他们的首选项，或者可以定义对其插件有意义的新范围。让我们首先看一下平台运行时定义的范围：<ul>
@@ -25,21 +25,46 @@
 </p>
 <p>使用<b><a href="../reference/api/org/eclipse/core/runtime/preferences/IPreferencesService.html">IPreferencesService</a></b>协议访问首选项。可以使用<b><a href="../reference/api/org/eclipse/core/runtime/Platform.html">Platform</a></b>类访问平台的默认首选项服务。
 </p>
-<pre>...IPreferencesService service = <b>Platform.getPreferencesService（）</b> ; ...
+<pre>
+	...
+	IPreferencesService service = <b>Platform.getPreferencesService()</b>;
+	...
 </pre>
 <p>获得首选项服务后，可以使用<b><a href="../reference/api/org/eclipse/core/runtime/preferences/IPreferencesService.html">IPreferencesService中</a></b>提供的任何<b>get ...</b>方法按名称查询首选项值。例如，以下代码段在插件“com.example.myplugin”中查询“MyPreference”首选项的值。
 </p>
-<pre>...IPreferencesService service = Platform.getPreferencesService（）; boolean value = service.getBoolean（“com.example.myplugin”，“MyPreference”，true， <b>null</b> ）; //用值做点什么...
+<pre>
+	...
+	IPreferencesService service = Platform.getPreferencesService();
+	boolean value = service.getBoolean(&quot;com.example.myplugin&quot;, &quot;MyPreference&quot;, true, <b>null</b>);
+	//do something with the value.
+	...
 </pre>
 <p>查询方法中的最后一个参数是搜索首选项节点时要使用的范围上下文数组。如果数组为<b>null</b> ，则平台假定应使用默认范围搜索顺序并猜测相应的首选项节点。如果传递了作用域上下文数组，则确定应该用于查找首选项节点的作用域查找顺序。如果使用指定的范围找不到节点，则始终参考默认范围查找顺序。
 </p>
 <h3>使用范围和节点</h3>
 <p>如果插件需要更好地控制范围搜索顺序，则可以使用表示范围的类来访问表示特定范围内的首选项的实际节点。通过这种方式，可以创建一个节点数组，指定所需的特定搜索顺序。以下代码段会针对上面使用的相同首选项查询首选项服务，但会在配置范围内搜索插件，然后搜索插件的实例范围。为搜索顺序指定节点时，不考虑默认范围。也就是说，平台将仅搜索已提供的确切节点。</p>
-<pre>...IPreferencesService service = Platform.getPreferencesService（）;首选项configurationNode = new ConfigurationScope（）。getNode（“com.example.myplugin”）;首选项instanceNode = new InstanceScope（）。getNode（“com.example.myplugin”）; Preferences [] nodes = new Preferences [] {configurationNode，instanceNode}; stringValue = service.get（“MyPreference”，“true”，节点）; //用值做点什么...
+<pre>
+	...
+	IPreferencesService service = Platform.getPreferencesService();
+	Preferences configurationNode = new ConfigurationScope().getNode(&quot;com.example.myplugin&quot;);
+	Preferences instanceNode = new InstanceScope().getNode(&quot;com.example.myplugin&quot;);
+	Preferences[] nodes = new Preferences[] {configurationNode, instanceNode};
+	stringValue = service.get(&quot;MyPreference&quot;, &quot;true&quot;, nodes);
+	//do something with the value.
+	...
 </pre>
 <p>插件还可以通过首选树节点实现其自己的遍历。可以从偏好服务获得偏好树的根节点。范围类可用于进一步遍历树。以下代码段遍历特定节点并从节点本身检索首选项值。
 </p>
-<pre>...IPreferencesService service = Platform.getPreferencesService（）;首选项root = service.getRootNode（）;首选项myInstanceNode = root.node（InstanceScope。SCOPE）.node（ “com.example.myplugin”）; if（myInstanceNode！= null）{value = node.getBoolean（“MyPreference”，“true”）; //用值做点什么} ...
+<pre>
+	...
+	IPreferencesService service = Platform.getPreferencesService();
+	Preferences root = service.getRootNode();
+	Preferences myInstanceNode = root.node(InstanceScope.SCOPE).node(&quot;com.example.myplugin&quot;);
+	if (myInstanceNode != null) {
+		value = node.getBoolean(&quot;MyPreference&quot;, &quot;true&quot;);
+		//do something with the value.
+	}
+	...
 </pre>
 <h3>扩展范围</h3>
 <p>插件可以使用<a href="../reference/extension-points/org_eclipse_core_runtime_preferences.html"><b>org.eclipse.core.runtime.preferences</b></a>扩展来定义自己的专用范围。在此扩展中，插件定义新作用域的名称，以及可以为新作用域创建首选节点的类。（可选）它可以指定初始化该范围内的默认首选项值的类的名称。当插件定义新范围时，由该插件实现相对于平台遍历顺序的任何新范围的遍历顺序。我们将使用<a href="resInt_preferences.htm">Project-scoped首选项</a>的具体示例更详细地查看此功能。

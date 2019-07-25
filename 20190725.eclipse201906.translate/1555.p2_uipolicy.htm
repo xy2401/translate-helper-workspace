@@ -1,20 +1,21 @@
-<html lang="zh-Hans" dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
   <head>
-    <meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
-    <meta http-equiv="Content-Style-Type" content="text/css"></meta>
-    <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+    <meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
     <title>配置UI策略</title>
-    <link rel="stylesheet" type="text/css" href="../book.css"></link>
+    <link rel="stylesheet" type="text/css" href="../book.css">
 
-    <style type="text/css">/*     3Cspan class=    22notranslate hidefromparserselfclosedtags    22 gtc:attrval=    22    26lt;![CDATA[ */
-body {
-  background-color: #ffffff;
-}
-/* ]]    26gt;    22    3EFORMAT_PLACEHOLDER_6    3C/span    3E */
-</style>
+    <style type="text/css">
+/*<![CDATA[*/
+    body {
+    background-color: #FFFFFF;
+    }
+    /*]]>*/
+    </style>
   </head>
-  <body dir="ltr">
+  <body >
     <h2>配置UI策略</h2>
     <p>p2 UI提供的内容及其行为的某些方面可使用<b><a href="../reference/api/org/eclipse/equinox/p2/ui/Policy.html">Policy</a></b>类进行配置。您可以配置此类（或子类）的实例，以便自定义应用程序的UI。此策略注册为OSGi服务，并由UI检索以便做出有关呈现的决策。
     </p>
@@ -42,24 +43,104 @@ body {
     </p>
     <p>我们将在现有RCP Mail捆绑类的启动代码中注册我们的策略。
     </p>
-    <pre>public void start（BundleContext context）抛出Exception {super.start（context）; plugin = this; // XXX注册p2 UI策略registerP2Policy（context）; 。getPreferenceStore（）addPropertyChangeListener（getPreferenceListener（））; }</pre>
+    <pre>
+ public void start(BundleContext context) throws Exception {
+  super.start(context);
+  plugin = this;
+  // XXX register the p2 UI policy
+  registerP2Policy(context);
+  getPreferenceStore().addPropertyChangeListener(getPreferenceListener());
+ }
+</pre>
     <p>注册方法创建默认策略实例，根据某些首选项值对其进行更新，并对其进行注册。
     </p>
 
-    <pre>private void registerP2Policy（BundleContext context）{policy = new CloudPolicy（）; policy.updateForPreferences（）; policyRegistration = context.registerService（Policy.class.getName（），policy，null）; }</pre>
+    <pre>
+ private void registerP2Policy(BundleContext context) {
+  policy = new CloudPolicy();
+  policy.updateForPreferences();
+  policyRegistration = context.registerService(Policy.class.getName(), policy, null);
+ }
+</pre>
     <p>在此示例中，我们希望初始化一个阻止用户操作存储库的策略实例。有几种方法可以解决这个问题。最直接的方式是该政策初始化其建设所需的价值。
     </p>
-    <pre>公共类CloudPolicy扩展策略{public CloudPolicy（）{// XXX用户对repos setRepositoriesVisible（false）没有可见性; }}</pre>
+    <pre>
+public class CloudPolicy extends Policy {
+ public CloudPolicy() {
+  // XXX User has no visibility for repos
+  setRepositoriesVisible(false);
+ }
+}
+</pre>
     <p>更通用的方法是策略从首选项设置中获取其值。这些首选项不会向最终用户公开，而是用于控制策略初始化的方式。这是云示例中采用的方法。这种方法的优点是可以通过更改应用程序的<b>plugin_customization.ini</b>文件中的首选项值来配置策略。
     </p>
 
     <p>策略代码只是读取首选项设置并相应地调整策略。
     </p>
-    <pre>public void updateForPreferences（）{IPreferenceStore prefs = Activator.getDefault（）。getPreferenceStore（）; setRepositoriesVisible（prefs .getBoolean（PreferenceConstants。REPOSITORIES_VISIBLE））; setRestartPolicy（prefs.getInt（PreferenceConstants的。RESTART_POLICY））; setShowLatestVersionsOnly（prefs .getBoolean（PreferenceConstants。SHOW_LATEST_VERSION_ONLY））; setGroupByCategory（prefs .getBoolean（PreferenceConstants。AVAILABLE_GROUP_BY_CATEGORY））; setShowDrilldownRequirements（prefs .getBoolean（PreferenceConstants。SHOW_DRILLDOWN_REQUIREMENTS））; if（prefs.getBoolean（PreferenceConstants。AVAILABLE_SHOW_ALL_BUNDLES））setVisibleAvailableIUQuery（QueryUtil。ALL_UNITS）; else setVisibleAvailableIUQuery（QueryUtil.createIUGroupQuery（））; if（prefs.getBoolean（PreferenceConstants。INSTALLED_SHOW_ALL_BUNDLES））setVisibleAvailableIUQuery（QueryUtil。ALL_UNITS）; else setVisibleAvailableIUQuery（new UserVisibleRootQuery（））; }</pre>
+    <pre>
+ public void updateForPreferences() {
+  IPreferenceStore prefs = Activator.getDefault().getPreferenceStore();
+  setRepositoriesVisible(prefs
+    .getBoolean(PreferenceConstants.REPOSITORIES_VISIBLE));
+  setRestartPolicy(prefs.getInt(PreferenceConstants.RESTART_POLICY));
+  setShowLatestVersionsOnly(prefs
+    .getBoolean(PreferenceConstants.SHOW_LATEST_VERSION_ONLY));
+  setGroupByCategory(prefs
+    .getBoolean(PreferenceConstants.AVAILABLE_GROUP_BY_CATEGORY));
+  setShowDrilldownRequirements(prefs
+    .getBoolean(PreferenceConstants.SHOW_DRILLDOWN_REQUIREMENTS));
+  if (prefs.getBoolean(PreferenceConstants.AVAILABLE_SHOW_ALL_BUNDLES))
+   setVisibleAvailableIUQuery(QueryUtil.ALL_UNITS);
+  else
+   setVisibleAvailableIUQuery(QueryUtil.createIUGroupQuery());
+  if (prefs.getBoolean(PreferenceConstants.INSTALLED_SHOW_ALL_BUNDLES))
+   setVisibleAvailableIUQuery(QueryUtil.ALL_UNITS);
+  else
+   setVisibleAvailableIUQuery(new UserVisibleRootQuery());
+
+ }
+</pre>
     <p>现在，可以根据所需的策略编辑<b>plugin_customization.ini</b>文件。示例中包含一个示例文件，其中说明了策略的所有可配置方面。它看起来像这样。
     </p>
 
-    <pre>＃我们可以使用应用程序首选项来配置更新UI，以初始化默认UI策略＃应该能够在安装向导中查看和操作存储库org.eclipse.equinox.p2.examples.rcp.cloud/repositoriesVisible=false#force在配置操作之后重新启动（请参阅org.eclipse.equinox.p2.ui中的可能值。Policy.restartPolicy（））org.eclipse.equinox.p2.examples.rcp.cloud/restartPolicy=1＃在浏览更新时仅显示最新版本org.eclipse.equinox.p2.examples.rcp.cloud/showLatestVersionOnly=true#默认情况下，软件应按类别进行分组org.eclipse.equinox.p2.examples.rcp.cloud/groupByCategory=true＃仅显示可用列表中的组（要素），而不是每个包org.eclipse.equinox.p2.examples。 rcp.cloud/showAllBundlesAvailable=false＃仅显示已安装软件列表中的安装根目录org.eclipse.equinox.p2.examples.rcp.cloud/showAllBundlesInstalled=false#不要深入了解向导中的要求，只显示高级别org.eclipse.equinox.p2.examples.rcp.cloud/showDrilldownRequirements=false自动更新选项在org.eclipse.equinox.p2.sdk.scheduler中定义。PreferenceConstants＃在启动时检查更新org.eclipse.equinox.p2.ui.sdk.scheduler / enabled = true org.eclipse.equinox.p2.ui.sdk.scheduler / schedule = on-startup＃每4小时提醒用户一次org.eclipse.equinox.p2.ui.sdk.scheduler / remindOnSchedule = true＃参见AutomaticUpdatesPopup，值可以是“30分钟”，“小时”，“4小时”org.eclipse.equinox.p2.ui.sdk.scheduler / remindElapsedTime = 4 Hours＃在通知用户之前下载更新org.eclipse.equinox.p2.ui.sdk.scheduler / download = true</pre>
+    <pre>
+# we can configure the update UI by using application preferences to initialize the default UI policy
+
+# should user be able to see and manipulate repositories in the install wizard
+org.eclipse.equinox.p2.examples.rcp.cloud/repositoriesVisible=false
+
+# force restart after a provisioning operation (see possible values in org.eclipse.equinox.p2.ui.Policy.restartPolicy())
+org.eclipse.equinox.p2.examples.rcp.cloud/restartPolicy=1
+
+# show only latest versions when browsing for updates
+org.eclipse.equinox.p2.examples.rcp.cloud/showLatestVersionOnly=true
+
+# software should be grouped by category by default
+org.eclipse.equinox.p2.examples.rcp.cloud/groupByCategory=true
+
+# show only groups (features) in the available list, not every bundle
+org.eclipse.equinox.p2.examples.rcp.cloud/showAllBundlesAvailable=false
+
+# show only the install roots in the installed software list
+org.eclipse.equinox.p2.examples.rcp.cloud/showAllBundlesInstalled=false
+
+# do not drilldown into requirements in the wizards, just show the high level things
+org.eclipse.equinox.p2.examples.rcp.cloud/showDrilldownRequirements=false
+
+# automatic update options are defined in org.eclipse.equinox.p2.sdk.scheduler.PreferenceConstants
+
+# check for updates on startup
+org.eclipse.equinox.p2.ui.sdk.scheduler/enabled=true
+org.eclipse.equinox.p2.ui.sdk.scheduler/schedule=on-startup
+
+# remind the user every 4 hours
+org.eclipse.equinox.p2.ui.sdk.scheduler/remindOnSchedule=true
+# see AutomaticUpdatesPopup, values can be "30 minutes", "Hour", "4 Hours"
+org.eclipse.equinox.p2.ui.sdk.scheduler/remindElapsedTime=4 Hours
+
+# download updates before notifying the user
+org.eclipse.equinox.p2.ui.sdk.scheduler/download=true
+</pre>
     <p>云示例中的其余UI代码基于<b>org.eclipse.equinox.p2.ui.sdk中的</b>代码。我们复制命令处理程序以进行安装和更新，并选择不使用任何首选项页面。还包括标准安装页面的<b>plugin.xml</b>贡献。页面实现包含在p2 UI包中，因此我们只需要定义页面的名称并指向现有的实现。
     </p>
     <p>最终结果是一个安装和更新UI看起来很熟悉的应用程序。最重要的变化是“ <b>安装新软件...”</b>向导不再提供对显示哪些站点的任何控制。仅显示产品中预配置的站点内容（使用我们示例中的<b>p2.inf</b>文件）。
@@ -88,7 +169,19 @@ body {
     </p>
     <p>构建贡献的步骤与上面的云示例类似。这次，策略类称为<b>AllIUsAreVisiblePolicy</b> 。
     </p>
-    <pre>public class AllIUsAreVisiblePolicy extends Policy {public AllIUsAreVisiblePolicy（）{// XXX使用基于pref的存储库操纵器setRepositoryPreferencePageId（PreferenceConstants。PREF_PAGE_SITES）; // XXX应显示所有可用的IU，而不仅仅是组/功能setVisibleAvailableIUQuery（InstallableUnitQuery。任何）; // XXX应显示所有已安装的IU，而不仅仅是用户安装的IU。setVisibleInstalledIUQuery（InstallableUnitQuery。任何）; }}</pre>
+    <pre>
+public class AllIUsAreVisiblePolicy extends Policy {
+ public AllIUsAreVisiblePolicy() {
+  // XXX Use the pref-based repository manipulator
+  setRepositoryPreferencePageId(PreferenceConstants.PREF_PAGE_SITES);
+  
+  // XXX All available IU's should be shown, not just groups/features
+  setVisibleAvailableIUQuery(InstallableUnitQuery.ANY);
+  // XXX All installed IU's should be shown, not just the user-installed.
+  setVisibleInstalledIUQuery(InstallableUnitQuery.ANY);
+ }
+}
+</pre>
     <p>检索检索可见可用软件的查询以及可见的已安装软件，以便显示所有可安装单元。
     </p>
 
@@ -97,7 +190,13 @@ body {
     <p>如前所述，Cloud示例首选项也可用于使UI中的所有内容都可见。这可以通过编辑示例中的<b>plugin_customization.ini</b>文件来完成。
     </p>
 
-    <pre>＃在可用列表中仅显示组（功能），而不是每个包org.eclipse.equinox.p2.examples.rcp.cloud/showAllBundlesAvailable=true＃仅显示已安装软件列表中的安装根目录org.eclipse.equinox.p2 .examples.rcp.cloud / showAllBundlesInstalled =真</pre>
+    <pre>
+# show only groups (features) in the available list, not every bundle
+org.eclipse.equinox.p2.examples.rcp.cloud/showAllBundlesAvailable=true
+
+# show only the install roots in the installed software list
+org.eclipse.equinox.p2.examples.rcp.cloud/showAllBundlesInstalled=true
+</pre>
     <h3>在重用p2 UI功能时修改p2 UI策略</h3>
     <p>由于p2 UI策略被定义为OSGi服务，因此未经修改的<b>org.eclipse.equinox.p2.user.ui</b>功能附带的产品仍可提供UI策略的替代实现。<b>org.eclipse.equinox.p2.ui.sdk</b>包使用默认排名值（0）声明服务。这意味着产品必须提供具有更高服务等级的策略实施。找到政策服务后，排名最高的政策将获胜。可以在<a href="http://git.eclipse.org/c/equinox/rt.equinox.p2.git/tree/examples/org.eclipse.equinox.p2.examples.rcp.sdkbundlevisibility/OSGI-INF/policy_component.xml">此处</a>找到声明排名为1000的策略的示例文件。
     </p>

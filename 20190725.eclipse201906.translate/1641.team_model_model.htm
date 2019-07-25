@@ -1,14 +1,14 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
-<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"></meta>
-<meta content="text/css" http-equiv="Content-Style-Type"></meta>
-<link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1"></link>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+<meta content="text/css" http-equiv="Content-Style-Type">
+<link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1">
 <title>逻辑模型集成的模型路线图</title>
-<link href="../book.css" type="text/css" rel="stylesheet"></link>
+<link href="../book.css" type="text/css" rel="stylesheet">
 </head>
 
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h1>逻辑模型集成的模型路线图</h1>
 
 <p>以下是模型提供程序可以执行的列表，以利用Team逻辑模型支持：</p>
@@ -54,9 +54,9 @@
 
 <p>如果对对象如何适应<code>ResourceMapping</code>的更丰富的描述是有益的，那么将其模型对象调整到<code>IResource</code>以便获得上下文菜单中显示的资源特定操作的插件现在可以适应<code>ResourceMapping</code> 。但是，如果没有任何好处，他们不需要这样做。例如，现在适应<code>IFile</code>的Java编译单元（即JDT视图中显示的* .java文件）不需要适应<code>ResourceMapping</code>因为没有获得任何东西。但是，Java包应该适应<code>ResourceMapping</code> ，以指示包只包含相应文件夹中的文件而不包含子文件夹。</p>
 <p>使模型元素适应资源映射的首选方法是使用适配器工厂。以下是用于在插件清单中提供适配器工厂的XML标记。</p>
-<pre style="background-color:rgb(204,204,255)">&lt;延伸<br>点= “org.eclipse.core.runtime.adapters”&gt;<br>&lt;工厂<br>类=“org.eclipse.example.library.logical。AdapterFactory”<br>adaptableType =“org.eclipse.example.library。图书“&gt;<br>&lt;adapter type =“org.eclipse.core.resources.mapping。ResourceMapping“/&gt;<br>&lt;/工厂&gt;<br>&lt;工厂<br>类=“org.eclipse.example.library.logical。AdapterFactory”<br>adaptableType =“org.eclipse.example.library。库“&gt;<br>&lt;adapter type =“org.eclipse.core.resources.mapping。ResourceMapping“/&gt;<br>&lt;/工厂&gt;<br>...<br>&lt;/分机&gt;</pre>
+<pre style="background-color: rgb(204, 204, 255);">   &lt;extension<br>         point="org.eclipse.core.runtime.adapters"&gt;<br>      &lt;factory<br>            class="org.eclipse.example.library.logical.AdapterFactory"<br>            adaptableType="org.eclipse.example.library.Book"&gt;<br>         &lt;adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/&gt;<br>      &lt;/factory&gt;<br>      &lt;factory<br>            class="org.eclipse.example.library.logical.AdapterFactory"<br>            adaptableType="org.eclipse.example.library.Library"&gt;<br>         &lt;adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/&gt;<br>      &lt;/factory&gt;<br>      ...<br>   &lt;/extension&gt;</pre>
 <p>适配器工厂实现看起来像这样：</p>
-<pre style="background-color:rgb(204,204,255)">公共类AdapterFactory实现IAdapterFactory {<br>public Object getAdapter（Object adaptableObject，Class adapterType）{<br>if（（adaptableObject instanceof EObject）&amp;&amp; adapterType == ResourceMapping.class）{<br>return new EObjectResourceMapping（（EObject）adaptableObject）;<br>}<br>return null;<br>}<br><br>public Class [] getAdapterList（）{<br>return new Class [] {ResourceMapping.class};<br>}<br>}</pre>
+<pre style="background-color: rgb(204, 204, 255);">public class AdapterFactory implements IAdapterFactory {<br>   public Object getAdapter(Object adaptableObject, Class adapterType) {<br>      if((adaptableObject instanceof EObject) &amp;&amp; adapterType == ResourceMapping.class) {<br>         return new EObjectResourceMapping((EObject)adaptableObject);<br>      }<br>      return null;<br>   }<br><br>   public Class[] getAdapterList() {<br>      return new Class[] {ResourceMapping.class};<br>   }<br>}</pre>
 <p>模型对象可以实现<code>IAdaptable</code>接口。当他们这样做时，他们必须确保咨询平台适配器管理器。这可以通过子类化<code>PlatformObject</code>或使用以下代码行来完成：</p>
 <blockquote>
 <p><code>Platform.getAdapterManager（）。getAdapter（Object，Class）</code></p>
@@ -64,7 +64,7 @@
 <p>以上是更好的方法。但是，模型对象可以实现IAdaptable接口并提供<code>getAdapter(Class)</code>实现，该实现在被要求时显式返回<code>ResourceMapping</code>的实例。这是一种更直接的方法，但由于模型必须具有对资源适应性的明确知识，因此最不可取。</p>
 <p>在某些情况下，逻辑模型的提供者可能不希望他们的模型在每个上下文中适应<code>IResource</code> ，或者可能希望对象对对象贡献的适应性不同于其他上下文。<code>IContributorResourceAdapter</code> ，工作台UI提供了一个特殊的中间适配器API <code>IContributorResourceAdapter</code> 。当在对象贡献的上下文中将对象调整为<code>IResource</code>时，工作台首先尝试在尝试直接适应<code>IResource</code>之前使资源适应<code>IContributorResourceAdapter</code> 。添加了此接口的新子接口<code>IContributorResourceAdapter2</code> ，它为<code>ResourceMapping</code>提供了相同的功能。唯一的区别是模型提供者应该为<code>IContributorResourceAdapter</code>注册一个工厂，因为Workbench会执行一个<em>instanceof</em>检查，看看贡献的适配器是否也是<code>IContributorResourceAdapter2</code>一个实例。</p>
 <p>Java包的<code>ResourceMapping</code>子类的实现看起来像这样。</p>
-<pre style="background-color:rgb(204,204,255)">公共类JavaPackageResourceMapping扩展ResourceMapping {<br>IPackageFragment包;<br>...<br>public getModelObject（）{<br>退货包裹;<br>}<br>public ResourceTraversals [] getTraversals（<br>ResourceMappingContext上下文，<br>IProgressMonitor监视器）{<br>返回新的ResourceTraversal [] {<br>新的ResourceTraversal（<br>new IResource [] {package.getCorrespondingResource（）}，<br>IResource接口。DEPTH_ONE，IResource。没有）<br>}<br>}<br>}</pre>
+<pre style="background-color: rgb(204, 204, 255);">public class JavaPackageResourceMapping extends ResourceMapping {<br>   IPackageFragment package;<br>   ...<br>   public getModelObject() {<br>      return package;<br>   }<br>   public ResourceTraversals[] getTraversals(<br>             ResourceMappingContext context, <br>             IProgressMonitor monitor) {<br>      return new ResourceTraversal[] { <br>         new ResourceTraversal(<br>            new IResource[] { package.getCorrespondingResource() },<br>            IResource.DEPTH_ONE, IResource.NONE)<br>      }<br>   }<br>}</pre>
 <p>这是一个相当简单的映射，因此实现并不复杂。当然，资源映射实现的复杂性因模型而异。</p>
 
 <h3><a name="ResourceMappingContext"></a>资源映射上下文</h3>
@@ -74,7 +74,7 @@
 <h4>ResourceMapping什么时候需要担心RemoteResourceMappingContext？</h4>
 <p>在构成模型的资源随时间变化的情况下， <code>ResourceMapping</code>只需要担心提供给<code>getTraversals</code>方法的上下文，并且模型和资源之间的关系不能通过保证包含这些资源的简单遍历来描述（和只构成模型的那些资源。例如，尽管Java包的资源可能随时间而变化，但是包可以被描述为深度为1的文件夹，因此java包的资源映射不需要利用资源映射上下文。</p>
 <p>作为一个更复杂的示例，请考虑包含多个图像的HTML文件。让我们假设来自HTML文件的任何图像引用都是该文件模型的一部分。从存储库更新HTML文件的本地内容时，用户会期望包含任何新图像。HTML文件模型的<code>ResourceMapping</code>的<code>getTraversals</code>方法如下所示：</p>
-<pre style="background-color:rgb(204,204,255)">公共类HTMLResourceMapping扩展ResourceMapping {<br>私有HTMLFile htmlFile;<br>public ResourceTraversal [] getTraversals（ResourceMappingContext context，<br>IProgressMonitor监视器）<br>IResource [] resources = htmlFile.getResources（）;<br>if（context instanceof RemoteResourceMappingContext）{<br>//在服务器上查找任何其他资源<br>RemoteResourceMappingContext remoteContext =（RemoteResourceMappingContext）context;<br>IFile file = htmlFile.getFile（）;<br>if（remoteContext.hasRemoteChange（file，monitor））{<br>IStorage storage = remoteContext.fetchRemoteContents（file，monitor）;<br>IResource [] additionalResources = getReferences（storage.getContents（））;<br>resources = combine（resources，additionalResources）;<br>}<br>if（remoteContext.isThreeWay（）&amp;&amp; remoteContext.hasLocalChange（file，monitor））{<br>IStorage storage = remoteContext.fetchBaseContents（file，monitor）;<br>IResource [] additionalResources = getReferences（storage.getContents（））;<br>resources = combine（resources，additionalResources）;<br>}<br>}<br>返回新的ResourceTraversal [] {<br>新的ResourceTraversal（资源，IResource。DEPTH_ZERO，IResource。没有）};<br>}<br>}</pre>
+<pre style="background-color: rgb(204, 204, 255);">public class HTMLResourceMapping extends ResourceMapping {<br>	   private HTMLFile htmlFile;<br>	   public ResourceTraversal[] getTraversals(ResourceMappingContext context, <br>              IProgressMonitor monitor)<br>	      IResource[] resources = htmlFile.getResources();<br>	      if (context instanceof RemoteResourceMappingContext) {<br>	         // Look for any additional resources on the server<br>	         RemoteResourceMappingContext remoteContext = (RemoteResourceMappingContext)context;<br>	         IFile file = htmlFile.getFile();<br>	         if (remoteContext.hasRemoteChange(file, monitor)) {<br>	        	 IStorage storage = remoteContext.fetchRemoteContents(file, monitor);<br>	        	 IResource[] additionalResources = getReferences(storage.getContents());<br>	        	 resources = combine(resources, additionalResources);<br>	         }<br>	         if (remoteContext.isThreeWay() &amp;&amp; remoteContext.hasLocalChange(file, monitor)) {<br>        		 IStorage storage = remoteContext.fetchBaseContents(file, monitor);<br> 	             IResource[] additionalResources = getReferences(storage.getContents());<br>	             resources = combine(resources, additionalResources);<br>	         }<br>	      }<br>	      return new ResourceTraversal[] { <br>            new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE)};<br>	   }<br>}</pre>
 <p>请注意，模型中包含两组资源：从工作空间中HTML文件的本地内容派生的资源以及从远程文件和基本文件的内容中获取的资源。在这两个集合中的任何一个中，可能存在工作空间中不存在的资源。例如，本地HTML文件可能包含工作空间中不存在的图像的相对链接。应包含此资源，以便在远程存在时获取该资源。对于远程文件，它可能包含一个新副本，该副本引用在下载新远程内容时应该获取的其他图像。</p>
 
 
@@ -87,14 +87,16 @@
 	<li>对于对一组资源的操作，资源更改验证器将查询模型提供者以确定是否存在用户应该知道的操作的任何潜在副作用。有关<a href="#ChangeValidation">更改验证</a>的单独部分对此进行了介绍。</li>
 </ol>
 <p>以下是modelProvider扩展定义的示例。</p>
-<pre style="background-color:rgb(204,204,255)">&lt;延伸<br>ID = “modelProvider”<br>name =“库示例”<br>点= “org.eclipse.core.resources.modelProviders”&gt;<br>&lt;modelProvider<br>类=“org.eclipse.team.examples.library.adapt。LibraryModelProvider”<br>name =“Library Example”/&gt;<br>&lt;extends-model id =“org.eclipse.core.resources.modelProvider”/&gt;<br>&lt;enablement&gt; &lt;test property =“org.eclipse.core.resources.projectNature”value =“org.eclipse.team.examples.library.view.nature”/&gt;<br>&lt;/启用&gt;<br>&lt;/分机&gt;<br></pre>
+<pre style="background-color: rgb(204, 204, 255);">   &lt;extension<br>         id="modelProvider"<br>         name="Library Example"<br>         point="org.eclipse.core.resources.modelProviders"&gt;<br>      &lt;modelProvider<br>            class="org.eclipse.team.examples.library.adapt.LibraryModelProvider"<br>            name="Library Example"/&gt;<br>      &lt;extends-model id="org.eclipse.core.resources.modelProvider"/&gt;<br>      &lt;enablement&gt;
+         &lt;test property="org.eclipse.core.resources.projectNature" 
+               value="org.eclipse.team.examples.library.view.nature" /&gt;<br>       &lt;/enablement&gt;<br>   &lt;/extension&gt;<br></pre>
 <p><code>LibraryModelProvider</code>是<code>ModelProvider</code>的子类。启用规则用于匹配Library模型在其模型中保留的资源。在上面的示例中，模型提供程序将匹配具有库特性的项目中的任何资源。</p>
 <p>定义模型提供程序后，应重写<code>ResourceMapping#getModelProviderId()</code>方法以返回模型提供程序的id。</p>
-<pre style="background-color:rgb(204,204,255)">public String getModelProviderId（）{<br>return“org.eclipse.team.examples.library.adapt.modelProvider”;<br>}<br></pre>
+<pre style="background-color: rgb(204, 204, 255);">   public String getModelProviderId() {<br>      return "org.eclipse.team.examples.library.adapt.modelProvider";<br>   }<br></pre>
 <p>要获得与您的提供程序的启用规则匹配的资源的资源到资源映射的正确反向映射，您还应该覆盖一个或两个<code>getMapping</code>方法。您需要覆盖的方法取决于您的模型是否包含包含多个资源的元素。如果模型元素映射到单个资源，则可以覆盖接受单个<code>IResource</code>参数的方法。否则，您将需要覆盖接受资源数组的方法。这是使用单一资源案例的示例。</p>
 <p>以下示例方法将库模型文件包装在适当的资源映射中。它还包含包含模型提供程序感兴趣的文件的文件夹。<br>
 </p>
-<pre style="background-color:rgb(204,204,255)">public class LibraryModelProvider扩展ModelProvider {<br>public ResourceMapping [] getMappings（IResource资源，<br>ResourceMappingContext context，IProgressMonitor monitor）{<br>if（isModelFile（resource））{<br>//返回文件的资源映射<br>返回new LibraryResourceMapping（resource）;<br>} if（containsModelFiles（resource））{<br>//在容器上创建深层资源映射<br>返回新的LibraryContainerResourceMapping（资源）;<br>}<br>//此模型提供程序不关心该资源<br>return null;<br>}<br>}</pre>
+<pre style="background-color: rgb(204, 204, 255);">public class LibraryModelProvider extends ModelProvider {<br>	   public ResourceMapping[] getMappings(IResource resource, <br>              ResourceMappingContext context, IProgressMonitor monitor) {<br>          if (isModelFile(resource)) {<br>              // Return a resource mapping on the file<br>              return new LibraryResourceMapping(resource);<br>          } if (containsModelFiles(resource)) {<br>              // Create a deep resource mapping on the container<br>              return new LibraryContainerResourceMapping(resource);<br>          }<br>          // The resource is not of interest to this model provider<br>          return null;<br>	   }<br>}</pre>
 <p>然后，客户端可以访问模型提供者以确定模型提供者是否关心将要操作的资源。下一节将介绍将提供给团队操作的API，这些团队操作使用模型提供程序API来确定在对一组选定资源或模型元素执行团队操作时要操作的完整资源映射集。</p>
 
 

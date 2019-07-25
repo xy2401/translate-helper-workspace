@@ -1,15 +1,15 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"></meta>
-<meta content="text/css" http-equiv="Content-Style-Type"></meta>
-<link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1"></link>
+<meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+<meta content="text/css" http-equiv="Content-Style-Type">
+<link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1">
 <title>同步支持 - 本地历史示例</title>
-<link href="../book.css" type="text/css" rel="stylesheet"></link>
+<link href="../book.css" type="text/css" rel="stylesheet">
 </head>
-<body dir="ltr" style="background-color:rgb(255,255,255)">
+<body  style="background-color:rgb(255,255,255)">
 <h2>本地历史示例</h2>
 <p>理解Synchronize API的最佳方法是创建一个实际可行的简单示例。在此示例中，我们将在Synchronize View中创建一个页面，该页面将显示工作空间中所有文件的最新本地历史记录状态。当对工作空间进行更改时，本地历史记录同步将自动更新，并且比较编辑器可以打开以进行浏览，合并，然后更改。我们还将添加一个自定义装饰器来显示本地历史元素的最后一个时间戳，以及一个将工作区文件还原到其最新保存的本地历史状态的操作。这是一个很好的例子，因为我们已经有了一个可用的资源变量存储，我们不必管理它。</p>
 <p>对于本示例的其余部分，我们将使用一个运行示例。很多（但不是全部）源代码将包含在此页面中。完整的源代码可以在<a href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>插件的本地历史记录包中找到。您可以从Git存储库中检查项目，并在阅读本教程时将其用作参考。<em>免责声明</em> ：示例插件中的源代码可能会随时间而变化。要获得与此示例中使用的副本匹配的副本，您可以使用3.3.2版本标记（最有可能是R3_3_2）或2007年6月10日的日期标记来检出项目。<br>
@@ -19,57 +19,208 @@
 <h3>定义本地历史的变体</h3>
 <p>第一步是定义一个变体来表示本地历史中的元素。这将允许同步API访问本地历史记录中的内容，以便可以将其与当前内容进行比较并显示给用户。</p>
 
-<pre><span style="color:rgb(68,68,204)">public class LocalHistoryVariant实现IResourceVariant {private final IFileState state; public LocalHistoryVariant（IFileState state）{this.state = state; public String getName（）{return state.getName（）; public boolean isContainer（）{return false; public IStorage getStorage（IProgressMonitor monitor）抛出TeamException {return state; public String getContentIdentifier（）{return DateFormat.getDateTimeInstance（）。format（new Date（state.getModificationTime（）））; public byte [] asBytes（）{return null; public IFileState getFileState（）{return state; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+public class LocalHistoryVariant implements IResourceVariant {
+  private final IFileState state;
+  public LocalHistoryVariant(IFileState state) {
+    this.state = state;
+  }
+  public String getName() {
+    return state.getName();
+  }
+  public boolean isContainer() {
+    return false;
+  }
+  public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
+    return state;
+  }
+  public String getContentIdentifier() {
+    return DateFormat.getDateTimeInstance().format(new Date(state.getModificationTime()));
+  }
+  public byte[] asBytes() {
+    return null;
+  }
+  public IFileState getFileState() {
+    return state;
+  }
+}
+</span></pre>
  
 <p>由于IFileState接口已经提供了从本地历史记录（即实现IStorage接口）访问文件内容的权限，因此这很容易。通常，在创建变体时，您必须提供访问内容的方式，将向用户显示以识别此变体的内容标识符以及名称。仅当在会话之间保留变量时，才需要asBytes（）方法。<br>
   <br>接下来，让我们创建一个变量比较器，它允许SyncInfo计算将本地资源与其变体进行比较。同样，这很容易，因为本地历史状态的存在意味着本地历史状态的内容不同于文件的当前内容。这是因为本地历史记录规范表明如果文件没有更改，它将不会创建本地历史状态。</p>
 
-<pre><span style="color:rgb(68,68,204)">public class LocalHistoryVariantComparator实现IResourceVariantComparator {public boolean compare（IResource local，IResourceVariant remote）{return false; public boolean compare（IResourceVariant base，IResourceVariant remote）{return false; public boolean isThreeWay（）{return false; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+public class LocalHistoryVariantComparator implements IResourceVariantComparator {
+  public boolean compare(IResource local, IResourceVariant remote) {
+    return false;
+  }
+  public boolean compare(IResourceVariant base, IResourceVariant remote) {
+    return false;
+  }
+  public boolean isThreeWay() {
+    return false;
+  }
+}
+</span></pre>
  
 <p>因为我们知道本地历史状态的存在意味着它与本地不同，所以在将文件与其本地历史状态进行比较时，我们可以简单地返回<strong>false</strong> 。此外，与本地历史记录的同步只是双向的，因为我们无法访问基本资源，因此不使用比较两种资源变体的方法。</p>
 <p>请注意，如果变量不存在（即为null），则同步计算不会调用比较器的比较方法。只有当两个元素都存在时才会调用它。在我们的示例中，对于没有本地历史记录的文件和所有文件夹（从不具有本地历史记录）都会发生这种情况。为了解决这个问题，我们需要定义自己的SyncInfo子类，以便修改这些情况的计算同步状态。</p>
   
-<pre><span style="color:rgb(68,68,204)">public class LocalHistorySyncInfo扩展了SyncInfo {public LocalHistorySyncInfo（IResource local，IResourceVariant remote，IResourceVariantComparator comparator）{super（local，null，remote，comparator）; } protected int calculateKind（）throws TeamException {if（getRemote（）== null）返回IN_SYNC; else返回super.calculateKind（）; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+public class LocalHistorySyncInfo extends SyncInfo {
+  public LocalHistorySyncInfo(IResource local, IResourceVariant remote, IResourceVariantComparator comparator) {
+    super(local, null, remote, comparator);
+  }
+  protected int calculateKind() throws TeamException {
+    if (getRemote() == null)
+      return IN_SYNC;
+    else
+      return super.calculateKind();
+  }
+}
+</span></pre>
 
 <p>我们已经重写了构造函数以始终提供一个<em>null</em>的基数（因为我们只使用双向比较）并且我们修改了同步种类计算以在没有远程时返回<em>IN_SYNC</em> （因为我们只关心那里的情况）是本地历史记录中的本地文件和文件状态。</p>
 <h3>创建订阅者</h3>
 <p>现在，我们将创建一个订阅服务器，该订阅服务器将提供对本地历史记录中的资源变体的访问。由于可以为工作空间中的任何文件保存本地历史记录，因此本地历史记录订阅者将监督每个资源，而根集合将是工作空间中的所有项目。此外，不需要提供刷新订户的能力，因为仅当本地文件的内容改变时本地历史才改变。因此，我们可以在资源增量发生时更新我们的状态。这在我们的本地历史订阅者身上只留下了两个有趣的方法：获取SyncInfo并遍历工作空间。</p>
 
-<pre><span style="color:rgb(68,68,204)">public SyncInfo getSyncInfo（IResource resource）抛出TeamException {try {IResourceVariant variant = null; if（resource.getType（）== IResource。FILE）{IFile file =（IFile）资源; IFileState [] states = file.getHistory（null）; if（states.length&gt; 0）{// last state only variant = new LocalHistoryVariant（states [0]）; SyncInfo info = new LocalHistorySyncInfo（resource，variant，comparator）; info.init（）;返回信息; } catch（CoreException e）{throw TeamException.asTeamException（e）; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+public SyncInfo getSyncInfo(IResource resource) throws TeamException {
+  try {
+    IResourceVariant variant = null;
+    if(resource.getType() == IResource.FILE) {
+      IFile file = (IFile)resource;
+      IFileState[] states = file.getHistory(null);
+      if(states.length &gt; 0) {
+        // last state only
+        variant = new LocalHistoryVariant(states[0]);
+      } 
+    }
+    SyncInfo info = new LocalHistorySyncInfo(resource, variant, comparator);
+    info.init();
+    return info;
+  } catch (CoreException e) {
+    throw TeamException.asTeamException(e);
+  }
+}
+</span></pre>
 
 <p>订阅服务器将返回一个新的SyncInfo实例，该实例将包含本地历史记录中文件的最新状态。使用远程元素的本地历史变体创建SyncInfo。对于没有本地历史记录的项目，文件夹和文件，不提供远程资源变体，这将导致由于LocalHistorySyncInfo中的<em>calculateKind</em>方法而将资源视为同步。</p>
 <p>本地历史订阅者中的其余代码是<em>成员</em>方法的实现：</p>
 
-<pre><span style="color:rgb(68,68,204)">public IResource [] members（IResource resource）抛出TeamException {try {if（resource.getType（）== IResource。FILE）返回新的IResource [0]; IContainer容器=（IContainer）资源;列出existingChildren = new ArrayList（Arrays.asList（container.members（）））; existingChildren.addAll（Arrays.asList（container.findDeletedMembersWithHistory（IResource接口。DEPTH_INFINITE，null）））; return（IResource []）existingChildren.toArray（new IResource [existingChildren.size（）]）; } catch（CoreException e）{throw TeamException.asTeamException（e）; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+public IResource[] members(IResource resource) throws TeamException {
+    try {
+      if(resource.getType() == IResource.FILE)
+        return new IResource[0];
+      IContainer container = (IContainer)resource;
+      List existingChildren = new ArrayList(Arrays.asList(container.members()));
+      existingChildren.addAll(Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
+      return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
+    } catch (CoreException e) {
+      throw TeamException.asTeamException(e);
+    }
+}
+</span></pre>
 
 <p>此方法的有趣细节是，如果已删除的资源具有本地历史记录，则它将返回不存在的子项。这将允许我们的订阅者为仅存在于本地历史记录中且不再位于工作空间中的元素返回SyncInfo。</p>
 <h3>添加本地历史记录同步参与者</h3>
 <p>到目前为止，我们已经创建了一些类，这些类为本地历史中的元素提供了对SyncInfo的访问。接下来，我们将创建UI元素，使我们能够在Synchronize View中创建一个页面，以显示本地历史记录中每个元素的上一个历史状态。由于我们有一个订阅服务器，因此将其添加到Synchronize View很容易。让我们从添加同步参与者扩展点开始：</p>
 
-<pre><span style="color:rgb(68,68,204)">&lt;extension point =“org.eclipse.team.ui.synchronizeParticipants”&gt; &lt;participant persistent =“false”icon =“icons / full / wizards / synced.gif”class =“org.eclipse.team.examples.localhistory。LocalHistoryParticipant“name =”来自本地历史的最新内容“id =”org.eclipse.team.synchronize.example“/&gt; &lt;/ extension&gt;</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+&lt;extension
+  point="org.eclipse.team.ui.synchronizeParticipants"&gt;
+  &lt;participant
+      persistent="false"
+      icon="icons/full/wizards/synced.gif"
+      class="org.eclipse.team.examples.localhistory.LocalHistoryParticipant"
+      name="Latest From Local History"
+      id="org.eclipse.team.synchronize.example"/&gt;
+&lt;/extension&gt;
+</span></pre>
  
 <p>接下来，我们必须实现LocalHistoryParticipant。它将子类SubscriberParticipant，它将提供从订阅者收集SyncInfo的所有默认行为，并在发生工作空间更改时更新同步状态。此外，我们还将添加一个操作，将工作区资源恢复到本地历史记录中的最新状态。</p>
 <p>首先，我们将了解如何向参与者添加自定义操作。</p>
 
-<pre><span style="color:rgb(68,68,204)">public static final String CONTEXT_MENU_CONTRIBUTION_GROUP =“context_group_1”; // $ NON-NLS-1 $私有类LocalHistoryActionContribution扩展SynchronizePageActionGroup {public void initialize（ISynchronizePageConfiguration configuration）{super.initialize（configuration）; appendToGroup（ISynchronizePageConfiguration。P_CONTEXT_MENU，CONTEXT_MENU_CONTRIBUTION_GROUP，新的SynchronizeModelAction（“恢复到本地历史记录中的最新版本”，配置）{// $ NON-NLS-1 $ protected SynchronizeModelOperation getSubscriberOperation（ISynchronizePageConfiguration configuration，IDiffElement [] elements）{return new RevertAllOperation（configuration，elements）; }}; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+public static final String CONTEXT_MENU_CONTRIBUTION_GROUP = "context_group_1"; //$NON-NLS-1$
+  
+private class LocalHistoryActionContribution extends SynchronizePageActionGroup {
+  public void initialize(ISynchronizePageConfiguration configuration) {
+    super.initialize(configuration);
+    appendToGroup(
+      ISynchronizePageConfiguration.P_CONTEXT_MENU, CONTEXT_MENU_CONTRIBUTION_GROUP, 
+      new SynchronizeModelAction("Revert to latest in local history", configuration) { //$NON-NLS-1$
+        protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+          return new RevertAllOperation(configuration, elements);
+        }
+      });
+  }
+}
+</span></pre>
 
 <p>这里我们添加一个特定的SynchronizeMoidelAction和操作。我们在这里免费获得的行为是能够在后台运行并显示正在处理的节点的繁忙状态。该操作会将工作空间中的所有资源恢复为本地历史记录中的最新状态。通过向参与者配置添加操作贡献来添加操作。该配置用于描述用于构建将显示实际同步UI的参与者页面的属性。</p>
 <p>参与者将按如下方式初始化配置，以便将本地历史记录操作组添加到上下文菜单：</p>
   
-<pre><span style="color:rgb(68,68,204)">protected void initializeConfiguration（ISynchronizePageConfiguration configuration）{super.initializeConfiguration（configuration）; configuration.addMenuGroup（ISynchronizePageConfiguration。P_CONTEXT_MENU，CONTEXT_MENU_CONTRIBUTION_GROUP）; configuration.addActionContribution（new LocalHistoryActionContribution（））; configuration.addLabelDecorator（new LocalHistoryDecorator（））; }</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+  super.initializeConfiguration(configuration);
+  configuration.addMenuGroup(
+    ISynchronizePageConfiguration.P_CONTEXT_MENU, 
+    CONTEXT_MENU_CONTRIBUTION_GROUP);
+  configuration.addActionContribution(new LocalHistoryActionContribution());
+  configuration.addLabelDecorator(new LocalHistoryDecorator());	
+}
+</span></pre>
  
 <p>现在让我们来看看我们如何提供自定义装饰。上述方法的最后一行使用页面配置注册以下装饰器。</p>
 
-<pre><span style="color:rgb(68,68,204)">私有类LocalHistoryDecorator扩展LabelProvider实现ILabelDecorator {public String decorateText（String text，Object element）{if（element instanceof ISynchronizeModelElement）{ISynchronizeModelElement node =（ISynchronizeModelElement）element; if（node instanceof IAdaptable）{SyncInfo info =（SyncInfo）（（IAdaptable）node）.getAdapter（SyncInfo.class）;如果（信息！= null）{LocalHistoryVariant state =（LocalHistoryVariant）info.getRemote（）; return text +“（”+ state.getContentIdentifier（）+“）”;返回文字; public Image decorateImage（Image image，Object element）{return null; }}</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+private class LocalHistoryDecorator extends LabelProvider implements ILabelDecorator {
+  public String decorateText(String text, Object element) {
+    if(element instanceof ISynchronizeModelElement) {
+      ISynchronizeModelElement node = (ISynchronizeModelElement)element;
+      if(node instanceof IAdaptable) {
+        SyncInfo info = (SyncInfo)((IAdaptable)node).getAdapter(SyncInfo.class);
+        if(info != null) {
+          LocalHistoryVariant state = (LocalHistoryVariant)info.getRemote();
+          return text+ " ("+ state.getContentIdentifier() + ")";
+        }
+      }
+    }
+    return text;
+  }
+		
+  public Image decorateImage(Image image, Object element) {
+    return null;
+  }
+}
+</span></pre>
 
 <p>装饰器从同步视图中显示的模型元素中提取资源，并将本地历史资源变量的内容标识符附加到视图中显示的文本标签。</p>
 <p>最后一件也是最后一件是提供一个创建本地历史参与者的向导。Team Synchronizing透视图定义了一个全局同步操作，允许用户快速创建同步。此外，还可以从“同步”视图工具栏中创建可用的同步。首先，创建一个synchronizeWizards扩展点：</p>
 
-<pre><span style="color:rgb(68,68,204)">&lt;extension point =“org.eclipse.team.ui.synchronizeWizards”&gt; &lt;wizard class =“org.eclipse.team.examples.localhistory。LocalHistorySynchronizeWizard“icon =”icons / full / wizards / synced.gif“description =”将资源与其在本地历史记录中的先前内容同步“name =”与最新的本地历史记录同步“id =”ExampleSynchronizeSupport.wizard1“/&gt; &lt;/扩展&gt;</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+&lt;extension
+  point="org.eclipse.team.ui.synchronizeWizards"&gt;
+  &lt;wizard
+    class="org.eclipse.team.examples.localhistory.LocalHistorySynchronizeWizard"
+    icon="icons/full/wizards/synced.gif"
+    description="Synchronize resources with their previous contents in the local history"
+    name="Synchronize with Latest From Local History"
+    id="ExampleSynchronizeSupport.wizard1"/&gt;
+&lt;/extension&gt;
+</span></pre>
  
 <p>这会将我们的向导添加到列表中，在向导的performFinish（）方法中，我们将简单地创建我们的参与者并将其添加到同步管理器中。</p>
 
-<pre><span style="color:rgb(68,68,204)">LocalHistoryParticipant participant = new LocalHistoryParticipant（）; ISynchronizeManager manager = TeamUI.getSynchronizeManager（）; manager.addSynchronizeParticipants（new ISynchronizeParticipant [] {participant}）; ISynchronizeView view = manager.showSynchronizeViewInActivePage（）; view.display（参加者）;</span></pre>
+<pre><span style="color: rgb(68, 68, 204);">
+LocalHistoryParticipant participant = new LocalHistoryParticipant();
+ISynchronizeManager manager = TeamUI.getSynchronizeManager();
+manager.addSynchronizeParticipants(new ISynchronizeParticipant[] {participant});
+ISynchronizeView view = manager.showSynchronizeViewInActivePage();
+view.display(participant);
+</span></pre>
 
 <h3>结论</h3>
 <p>这是使用同步API的一个简单示例，我们已经掩盖了一些细节，以使示例更容易理解。编写响应和准确的同步支持并非易事，最难的部分是同步信息的管理和同步状态更改的通知。用户界面（如果与SubscriberParticipants关联的用户界面足够）是订阅服务器实现完成后的简单部分。有关更多示例，请参阅org.eclipse.team.example.filesystem插件并浏览Subscriber和ISynchronizeParticipant工作空间中的子类。<br>

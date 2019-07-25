@@ -1,30 +1,67 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>并发基础设施</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>并发基础设施</h2>
 <p>复杂系统的主要挑战之一是在执行任务时保持响应。在可扩展系统中，当未设计为一起运行的组件共享相同资源时，这一挑战甚至更大。<b><a href="../reference/api/org/eclipse/core/runtime/jobs/package-summary.html">org.eclipse.core.runtime.jobs</a></b>包通过提供用于调度，执行和管理并发运行操作的基础结构来解决这一挑战。此基础结构基于使用<i>作业</i>来表示可以异步运行的工作单元。</p>
-<h3>工作</h3><b><a href="../reference/api/org/eclipse/core/runtime/jobs/Job.html">Job</a></b>类表示与其他作业同时运行的异步工作单元。要执行任务，插件会创建一个作业，然后对其进行<i>计划</i> 。计划作业后，会将其添加到平台管理的作业队列中。该平台使用后台调度线程来管理所有挂起的作业。当正在运行的作业完成时，它将从队列中删除，平台将决定下一个要运行的作业。当作业变为活动状态时，平台将调用其<b>run（）</b>方法。通过一个简单的例子最好地展示了工作：<pre>class TrivialJob扩展了Job {public TrivialJob（）{super（“Trivial Job”）; public IStatus run（IProgressMonitor monitor）{System.out.println（“这是一份工作”）;返回状态。OK_STATUS; }}</pre>该作业已在以下代码段中创建和计划：<pre>TrivialJob job = new TrivialJob（）; System.out.println（“关于安排工作”）; job.schedule（）; System.out.println（“完成工作安排”）;</pre>该程序的输出取决于时间。也就是说，无法确定作业的<b>run</b>方法何时会针对创建作业并安排作业的线程执行。输出将是：<pre>即将安排工作这是一项工作完成安排工作</pre>要么：<pre>即将安排工作完成安排工作这是一份工作</pre>
+<h3>工作</h3><b><a href="../reference/api/org/eclipse/core/runtime/jobs/Job.html">Job</a></b>类表示与其他作业同时运行的异步工作单元。要执行任务，插件会创建一个作业，然后对其进行<i>计划</i> 。计划作业后，会将其添加到平台管理的作业队列中。该平台使用后台调度线程来管理所有挂起的作业。当正在运行的作业完成时，它将从队列中删除，平台将决定下一个要运行的作业。当作业变为活动状态时，平台将调用其<b>run（）</b>方法。通过一个简单的例子最好地展示了工作：<pre>
+   class TrivialJob extends Job {
+      public TrivialJob() {
+         super("Trivial Job");
+      }
+      public IStatus run(IProgressMonitor monitor) {
+         System.out.println("This is a job");
+         return Status.OK_STATUS;
+      }
+   }
+</pre>该作业已在以下代码段中创建和计划：<pre>
+   TrivialJob job = new TrivialJob();
+   System.out.println("About to schedule a job");
+   job.schedule();
+   System.out.println("Finished scheduling a job");
+</pre>该程序的输出取决于时间。也就是说，无法确定作业的<b>run</b>方法何时会针对创建作业并安排作业的线程执行。输出将是：<pre>
+   About to schedule a job
+   This is a job
+   Finished scheduling a job
+</pre>要么：<pre>
+   About to schedule a job
+   Finished scheduling a job
+   This is a job
+</pre>
 
 <p>如果要在继续之前确定作业已完成，则可以使用<b>join（）</b>方法。此方法将阻止调用方，直到作业完成，或直到调用线程被中断。让我们以更确定的方式从上面重写我们的片段：</p>
-<pre>TrivialJob job = new TrivialJob（）; System.out.println（“关于安排工作”）; job.schedule（）; job.join（）; if（job.getResult（）。isOk（））System.out.println（“作业成功完成”）; else System.out.println（“作业未成功完成”）;</pre>假设<b>join（）</b>调用未中断，则保证此方法返回以下结果：<pre>即将安排工作这是一份工作，工作顺利完成</pre>
+<pre>   TrivialJob job = new TrivialJob();
+   System.out.println("About to schedule a job");
+   job.schedule();
+   job.join();
+   if (job.getResult().isOk())
+      System.out.println("Job completed with success");
+   else
+      System.out.println("Job did not complete successfully");
+</pre>假设<b>join（）</b>调用未中断，则保证此方法返回以下结果：<pre>
+   About to schedule a job
+   This is a job
+   Job completed with success
+</pre>
 <p>当然，在调度之后立即加入作业通常没有用，因为这样做不会获得并发性。在这种情况下，您可以直接在调用线程中从作业的run方法中完成工作。稍后我们将看一些使用join更有意义的示例。
 </p>
 <p>最后一个片段也使用了作业<b>结果</b> 。结果是从作业的<b>run（）</b>方法返回的<b><a href="../reference/api/org/eclipse/core/runtime/IStatus.html">IStatus</a></b>对象。您可以使用此结果从作业的run方法中传回任何必要的对象。结果也可用于指示失败（通过返回<b><a href="../reference/api/org/eclipse/core/runtime/IStatus.html">IStatus</a></b>的严重性为<b>IStatus。错误</b> ）或取消（ <b>IStatus。取消</b> ）。
 </p>
 <h3>常见的工作操作</h3>
 <p>我们已经看到如何安排工作并等待工作完成，但还有许多其他有趣的事情可以做。如果您安排作业但后来确定不再需要它，则可以使用<b>cancel（）</b>方法停止作业。如果作业在取消时尚未开始运行，则作业将立即被丢弃并且不会运行。另一方面，如果作业已经开始运行，那么它是否能够响应取消是由工作决定的。当您尝试取消作业时，使用<b>join（）</b>方法等待它会派上用场。以下是取消作业的常用习惯用法，等到作业完成后再继续：</p>
-<pre>如果（！job.cancel（））job.join（）;</pre>
+<pre>   if (!job.cancel())
+      job.join();
+</pre>
 <p>如果取消没有立即生效，则<b>cancel（）</b>将返回false，调用者将使用<b>join（）</b>等待作业成功取消。
 </p>
 <p><b>sleep（）</b>方法稍微不如取消那么激烈。同样，如果作业尚未开始运行，则此方法将导致作业无限期暂停。该作业仍然会被平台记住，并且<b>wakeUp（）</b>调用将导致作业被添加到最终将被执行的等待队列中。
@@ -59,13 +96,27 @@
 <h3>工作经理</h3>
 <p>
 <b><a href="../reference/api/org/eclipse/core/runtime/jobs/IJobManager.html">IJobManager</a></b>定义了用于处理系统中所有作业的协议。显示进度或以其他方式使用作业基础结构的插件可以使用<b><a href="../reference/api/org/eclipse/core/runtime/jobs/IJobManager.html">IJobManager</a></b>执行诸如暂停系统中的所有作业，找出正在运行的作业或接收有关特定作业的进度反馈等任务。可以使用<b><a href="../reference/api/org/eclipse/core/runtime/jobs/Job.html">Job</a></b> API获取平台的作业管理器：</p>
-<pre>IJobManager jobMan = Job.getJobManager（）;</pre>
+<pre>   IJobManager jobMan = Job.getJobManager();
+</pre>
 <p>对系统中所有作业的状态感兴趣的插件可以在作业管理器上注册作业更改侦听器，而不是在许多单独的作业上注册侦听器。
 </p>
 <h3>工作家庭</h3>
 <p>插件有时更容易将一组相关作业作为一个单元使用。这可以使用<i>工作家庭</i>来完成。作业通过覆盖<b>belongsTo</b>方法声明它属于某个系列：</p>
-<pre>public static final String MY_FAMILY =“myJobFamily”; ...class FamilyJob扩展Job {...public boolean belongsTo（Object family）{return family == MY_FAMILY; }}</pre>
-<b><a href="../reference/api/org/eclipse/core/runtime/jobs/IJobManager.html">IJobManager</a></b>协议可用于取消，加入，睡眠或查找系列中的所有作业：<pre>IJobManager jobMan = Job.getJobManager（）; jobMan.cancel（MY_FAMILY）; jobMan.join（MY_FAMILY，null）;</pre>
+<pre>
+   public static final String MY_FAMILY = "myJobFamily";
+   ...
+   class FamilyJob extends Job {
+      ...
+      public boolean belongsTo(Object family) {
+         return family == MY_FAMILY;
+      }
+   }
+</pre>
+<b><a href="../reference/api/org/eclipse/core/runtime/jobs/IJobManager.html">IJobManager</a></b>协议可用于取消，加入，睡眠或查找系列中的所有作业：<pre>
+   IJobManager jobMan = Job.getJobManager();
+   jobMan.cancel(MY_FAMILY);
+   jobMan.join(MY_FAMILY, null);
+</pre>
 <p>由于作业系列是使用任意对象表示的，因此您可以在作业系列本身中存储有趣的状态，并且作业可以根据需要动态构建族对象。使用相当独特的族对象非常重要，以避免与其他插件创建的族进行意外交互。
 </p>
 <p>家庭也是找到工作组的便捷方式。方法<b>IJobManager.find（Object family）</b>可用于在任何给定时间定位所有正在运行，等待和休眠的作业的实例。

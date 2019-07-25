@@ -1,23 +1,28 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
 <title>语法着色</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>语法着色</h2>
 <p>使用损坏，修复和协调模型在平台文本框架中提供语法着色。对于应用于文档的每个更改，演示文稿协调程序确定应该使视觉呈现的哪个区域无效以及如何修复它。不同的策略可以用于文档中的不同内容类型。</p>
 <p>实现语法着色（并使用表示协调程序执行此操作）是可选的。默认情况下， <b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewerConfiguration.html">SourceViewerConfiguration</a></b>不会安装演示文稿协调程序，因为它不知道用于特定编辑器的文档模型，并且没有语法突出显示的通用行为。</p>
 <p>为了使用协调类来实现语法突出显示，必须<a href="editors_sourceviewers.htm">配置</a>编辑器的源查看器<a href="editors_sourceviewers.htm">配置</a>以定义表示协调程序。我们再次从<b>JavaSourceViewerConfiguration</b>开始，了解如何为编辑器定义演示文稿协调程序。</p>
 
-<pre>public IPresentationReconciler getPresentationReconciler（ISourceViewer sourceViewer）{PresentationReconciler reconciler = new PresentationReconciler（）; ...回归协调; }</pre>
+<pre>public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
+
+	PresentationReconciler reconciler= new PresentationReconciler();
+	...
+	return reconciler;
+}</pre>
 <p>要了解演示文稿协调程序的作用，我们必须首先查看损坏，修复和协调的概念。</p>
 <h3>损坏，修复和调和</h3>
 <p>当用户在编辑器中修改文本时，必须重新显示编辑器的某些部分以显示更改。计算必须重新显示的文本称为计算<b>损坏</b> 。当涉及语法着色时，由编辑操作引起的损坏量变得更加广泛，因为单个字符的存在或不存在可能改变其周围文本的着色。</p>
@@ -28,7 +33,24 @@
 <h4>基于规则的协调</h4>
 <p>现在我们有足够的背景来详细查看示例演示文稿协调程序的创建。回想一下，Java编辑器示例实现了一个<b>JavaPartitionScanner</b> ，它将文档分成表示javadoc，多行注释和其他所有内容的内容类型。</p>
 <p>对于每种内容类型，必须指定损坏者/修复者对。下面使用<b><a href="../reference/api/org/eclipse/jface/text/presentation/PresentationReconciler.html">PresentationReconciler</a></b>和<b><a href="../reference/api/org/eclipse/jface/text/rules/DefaultDamagerRepairer.html">DefaultDamagerRepairer</a></b>完成此操作。</p>
-<pre>JavaColorProvider provider = JavaEditorEnvironment.getJavaColorProvider（）; PresentationReconciler reconciler = new PresentationReconciler（）; DefaultDamagerRepairer dr = new DefaultDamagerRepairer（JavaEditorEnvironment.getJavaCodeScanner（））; reconciler.setDamager（博士，IDocument。DEFAULT_CONTENT_TYPE）; reconciler.setRepairer（博士，IDocument。DEFAULT_CONTENT_TYPE）; dr = new DefaultDamagerRepairer（new SingleTokenScanner（new TextAttribute（provider.getColor）（JavaColorProvider。JAVADOC_DEFAULT））））; reconciler.setDamager（dr，JavaPartitionScanner。JAVA_DOC）; reconciler.setRepairer（dr，JavaPartitionScanner。JAVA_DOC）; dr = new DefaultDamagerRepairer（new SingleTokenScanner（new TextAttribute（provider.getColor）（JavaColorProvider。MULTI_LINE_COMMENT））））; reconciler.setDamager（dr，JavaPartitionScanner。JAVA_MULTILINE_COMMENT）; reconciler.setRepairer（dr，JavaPartitionScanner。JAVA_MULTILINE_COMMENT）;回归协调;</pre>
+<pre>
+	JavaColorProvider provider= JavaEditorEnvironment.getJavaColorProvider();
+	PresentationReconciler reconciler= new PresentationReconciler();
+		
+	DefaultDamagerRepairer dr= new DefaultDamagerRepairer(JavaEditorEnvironment.getJavaCodeScanner());
+	reconciler.setDamager(dr, IDocument.DEFAULT_CONTENT_TYPE);
+	reconciler.setRepairer(dr, IDocument.DEFAULT_CONTENT_TYPE);
+
+	dr= new DefaultDamagerRepairer(new SingleTokenScanner(new TextAttribute(provider.getColor(JavaColorProvider.JAVADOC_DEFAULT))));
+	reconciler.setDamager(dr, JavaPartitionScanner.JAVA_DOC);
+	reconciler.setRepairer(dr, JavaPartitionScanner.JAVA_DOC);
+
+	dr= new DefaultDamagerRepairer(new SingleTokenScanner(new TextAttribute(provider.getColor(JavaColorProvider.MULTI_LINE_COMMENT))));
+	reconciler.setDamager(dr, JavaPartitionScanner.JAVA_MULTILINE_COMMENT);
+	reconciler.setRepairer(dr, JavaPartitionScanner.JAVA_MULTILINE_COMMENT);
+
+	return reconciler;
+</pre>
 <p>请注意，该示例为每种内容类型提供扫描程序。</p>
 <p>使用<b>JavaCodeScanner</b>设置默认内容类型，以便可以检测和着色关键字。<b>JavaCodeScanner</b>构建用于检测不同类型标记的规则，例如单行注释，空格和单词。它描述了应该用于不同令牌类型的单词的颜色。</p>
 <p>其他内容类型使用<b>SingleTokenScanner</b>进行设置，并为这些内容类型中的标记指定颜色。</p>

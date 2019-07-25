@@ -1,25 +1,32 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"></meta>
-<meta http-equiv="Content-Style-Type" content="text/css"></meta>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
 
-<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1"></link>
-<script src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript" language="JavaScript"></script>
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
 <title>源查看器和注释</title>
 
-<link rel="stylesheet" type="text/css" href="../book.css"></link>
+<link rel="stylesheet" type="text/css" href="../book.css">
 </head>
-<body bgcolor="#ffffff" dir="ltr">
+<body bgcolor="#ffffff" >
 <h2>源查看器和注释</h2>
 <p>编辑器及其相应的文本查看器主要负责文档演示的实现以及任何所需帮助程序类的配置。（如果您不熟悉观看者的概念，请参阅<a href="jface_viewers.htm">观看</a>者。）</p>
 <p><b><a href="../reference/api/org/eclipse/jface/text/TextViewer.html">TextViewer</a></b>处理将文档模型及其分区映射到用户看到的彩色和格式化文本的所有低级细节。对于源代码样式编辑器，提供了<b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewer.html">SourceViewer</a></b> 。源查看器引入了源代码注释的概念。这些注释可以在文本左侧的垂直标尺中显示，文本右侧显示概述标尺，或者在文本下方显示为彩色波浪形。</p>
 <p><b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewer.html">SourceViewer</a></b>及其辅助类在整个<a href="../reference/api/org/eclipse/ui/texteditor/AbstractTextEditor.html"><b>AbstractTextEditor</b></a>层次结构中使用。包<b><a href="../reference/api/org/eclipse/jface/text/source/package-summary.html">org.eclipse.jface.text.source</a></b>定义了此查看器以及支持注释表示的其他类。</p>
 <h3>注释和统治者</h3>
 <p>注释（如分区）在很大程度上取决于正在编辑的文档类型。文档的<a href="../reference/api/org/eclipse/jface/text/source/IAnnotationModel.html"><b>IAnnotationModel</b></a>包含注释，根据请求枚举它们，并侦听文本更改以使注释与文本保持<a href="../reference/api/org/eclipse/jface/text/source/IAnnotationModel.html"><b>同步</b></a> 。注释模型在<b><a href="../reference/extension-points/org_eclipse_core_filebuffers_annotationModelCreation.html">org.eclipse.core.filebuffers.annotationModelCreation</a></b>扩展中注册。此扩展点允许插件注册一个类，该类将创建适合给定文件扩展名的注释模型。Java编辑器示例不使用此扩展点，因此它继承了平台定义的注释模型。</p>
-<pre>&lt;extension point =“org.eclipse.core.filebuffers.annotationModelCreation”&gt; &lt;factory extensions =“*” <b>class =“org.eclipse.ui.texteditor。ResourceMarkerAnnotationModelFactory“</b> &gt; &lt;/ factory&gt; &lt;/ extension&gt;</pre>
+<pre>&lt;extension
+	point="org.eclipse.core.filebuffers.annotationModelCreation"&gt;
+	&lt;factory
+		extensions="*"
+		<b>class="org.eclipse.ui.texteditor.ResourceMarkerAnnotationModelFactory"</b>&gt;
+	&lt;/factory&gt;
+&lt;/extension&gt;
+</pre>
 <p>提供的工厂类将为具有任何扩展名的文件创建<b><a href="../reference/api/org/eclipse/ui/texteditor/ResourceMarkerAnnotationModel.html">ResourceMarkerAnnotationModel</a></b> 。此类显示表示工作空间中资源上的标记的注释。（有关<a href="resAdv_markers.htm">标记</a>的更多信息，请参阅<a href="resAdv_markers.htm">资源</a>标记。）它为每个标记分配图像和描述，并监视其资源以查找标记的变化。</p>
 <p>要了解如何在文本编辑器中显示注释模型，我们将检查平台文本编辑器及其对标尺和注释的使用。标尺和文本中显示不同注释的具体细节可以由用户控制<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接"> <b>常规&gt;编辑器&gt;文本编辑器&gt;注释</b></a>首选项。</p>
 <h4>垂直标尺</h4>
@@ -29,16 +36,36 @@
 
 <p>这些注释在提供的<b><a href="../reference/api/org/eclipse/ui/texteditor/ResourceMarkerAnnotationModel.html">ResourceMarkerAnnotationModel</a></b>中描述。当编辑器初始化源查看器时，此模型将设置到<b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewer.html">SourceViewer中</a></b> 。<a href="../reference/api/org/eclipse/ui/texteditor/AbstractTextEditor.html"><b>AbstractTextEditor</b></a>的以下片段显示了文档和注释模型如何与查看器关联。</p>
 
-<pre>private void initializeSourceViewer（IEditorInput input）{IAnnotationModel model = getDocumentProvider（）。getAnnotationModel（input）; IDocument document = getDocumentProvider（）。getDocument（input）;如果（文件！= null）{ <b>fSourceViewer.setDocument（document，model）</b> ; ...</pre>
+<pre>private void initializeSourceViewer(IEditorInput input) {
+		
+	IAnnotationModel model= getDocumentProvider().getAnnotationModel(input);
+	IDocument document= getDocumentProvider().getDocument(input);
+		
+	if (document != null) {
+		<b>fSourceViewer.setDocument(document, model)</b>;
+		...</pre>
 <p>一旦源查看器配置了适当的文档和注释模型，它就有足够的信息来呈现文档，并确保在左侧的垂直标尺中显示正确的注释。设置文档时，模型与标尺关联。以下代码段显示了将文档设置到源查看器时会发生什么。为清楚起见，它已从<b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewer.html">SourceViewer中</a></b>的实际代码简化：</p>
 
-<pre>public void setDocument（IDocument document，IAnnotationModel annotationModel）{...//从提供的模型创建视觉注释模型并在fVisualAnnotationModel中存储// ...if（fVerticalRuler！= null） <b>fVerticalRuler.setModel（fVisualAnnotationModel）</b> ;</pre>
+<pre>public void setDocument(IDocument document, IAnnotationModel annotationModel) {
+	...
+	// create visual annotation model from the supplied model and store 
+	// in fVisualAnnotationModel
+	...
+	if (fVerticalRuler != null)
+		<b>fVerticalRuler.setModel(fVisualAnnotationModel)</b>;
+</pre>
 
 <p>以这种方式，标尺与适当的注释模型相关联。</p>
 
 <p>让我们来看看统治者本身。它由文本编辑器创建，然后与编辑器的查看器连接。由于Java编辑器示例没有为标尺定义任何特殊行为，因此它继承了<a href="../reference/api/org/eclipse/ui/editors/text/TextEditor.html"><b>TextEditor中</b></a>定义的标尺。</p>
 
-<pre>protected IVerticalRuler createVerticalRuler（）{CompositeRuler ruler = new CompositeRuler（）; ruler.addDecorator（0，new AnnotationRulerColumn（VERTICAL_RULER_WIDTH））; if（isLineNumberRulerVisible（））ruler.addDecorator（1，createLineNumberRulerColumn（））;回归统治者; }</pre>
+<pre>protected IVerticalRuler createVerticalRuler() {
+	CompositeRuler ruler= new CompositeRuler();
+	ruler.addDecorator(0, new AnnotationRulerColumn(VERTICAL_RULER_WIDTH));
+	if (isLineNumberRulerVisible())
+		ruler.addDecorator(1, createLineNumberRulerColumn());
+	return ruler;
+}</pre>
 <p>文本编辑器使用CompositeRuler。这个标尺没有自己的视觉表现。演示文稿由装饰器列表提供，这些装饰器在标尺中显示列（ <b><a href="../reference/api/org/eclipse/jface/text/source/IVerticalRulerColumn.html">IVerticalRulerColumn</a></b> ）。在此示例中，始终添加显示注释的标尺列（ <b><a href="../reference/api/org/eclipse/jface/text/source/AnnotationRulerColumn.html">AnnotationRulerColumn</a></b> ），并根据用户首选项添加行号标尺列。注释标尺列处理在适当位置显示注释图像的细节。</p>
 <p>尽管所有类都涉及显示标尺，但请注意，示例编辑器只需要子类化框架类以获得标尺行为。<b>JavaDocumentProvider</b>继承适当的标记注释模型<b><a href="../reference/api/org/eclipse/ui/editors/text/FileDocumentProvider.html">FileDocumentProvider</a></b> 。JavaTextEditor从<a href="../reference/api/org/eclipse/ui/editors/text/TextEditor.html"><b>TextEditor</b></a>继承标尺表示。</p>
 <h4>统治者概述</h4>
@@ -48,22 +75,45 @@
 <p>用户可以通过单击注释本身导航到代码中注释的位置。</p>
 <p>概览标尺中显示的注释类型是通过向标尺添加注释类型来确定的。在<a href="../reference/api/org/eclipse/ui/texteditor/SourceViewerDecorationSupport.html"><b>SourceViewerDecorationSupport</b></a>的以下代码段中，注释类型会动态添加到标尺中。（有关<a href="../reference/api/org/eclipse/ui/texteditor/SourceViewerDecorationSupport.html"><b>SourceViewerDecorationSupport的</b></a>更多信息，请参阅下一节。）</p>
 
-<pre>private void showAnnotationOverview（Object annotationType）{<br>if（fOverviewRuler！= null）{Color c = getAnnotationTypeColor（annotationType）;<br>fOverviewRuler.setAnnotationTypeColor（annotationType，c）; int l = getAnnotationTypeLayer（annotationType）;<br>fOverviewRuler.setAnnotationTypeLayer（annotationType，l）;<br>fOverviewRuler.addAnnotationType（annotationType）;<br>fOverviewRuler.update（）;<br>}}</pre>
+<pre>private void showAnnotationOverview(Object annotationType) {<br>	if (fOverviewRuler != null) {
+		Color c= getAnnotationTypeColor(annotationType);<br>		fOverviewRuler.setAnnotationTypeColor(annotationType, c);
+		int l= getAnnotationTypeLayer(annotationType);<br>		fOverviewRuler.setAnnotationTypeLayer(annotationType, l);<br>		fOverviewRuler.addAnnotationType(annotationType);<br>		fOverviewRuler.update();<br>	}
+}</pre>
 <p>概述标尺还提供了<b><a href="../reference/api/org/eclipse/jface/text/source/IAnnotationAccess.html">IAnnotationAccess</a></b> ，用于提供有关特定注释的信息，例如其类型及其显示方式。<a href="../reference/api/org/eclipse/ui/editors/text/TextEditor.html"><b>TextEditor</b></a>使用<a href="../reference/api/org/eclipse/ui/texteditor/DefaultMarkerAnnotationAccess.html"><b>DefaultMarkerAnnotationAccess</b></a> ，它根据标记类型解释注释，并参考用户首选项以查看应在概览标尺中显示哪些标记类型。</p>
 
-<pre>protected IAnnotationAccess createAnnotationAccess（）{return new DefaultMarkerAnnotationAccess（fAnnotationPreferences）; }</pre>
+<pre>protected IAnnotationAccess createAnnotationAccess() {
+	return new DefaultMarkerAnnotationAccess(fAnnotationPreferences);
+}</pre>
 <p>有关在概述标尺中显示标记的更多详细信息，请参阅<a href="../reference/api/org/eclipse/ui/texteditor/DefaultMarkerAnnotationAccess.html"><b>DefaultMarkerAnnotationAccess</b></a>和<a href="../reference/api/org/eclipse/ui/texteditor/MarkerAnnotation.html"><b>MarkerAnnotation</b></a>的实现。</p>
 <h4>文字注释</h4>
 <p>除了在标尺中显示注释之外，源查看器还可以在文本中将注释显示为彩色波浪形标记。</p>
 <p><img src="images/javaeditorsquiggly.png" alt="Java编辑器中的Squiggly标记" border="0"></p>
 <p>我们将再次关注<a href="../reference/api/org/eclipse/ui/texteditor/AbstractDecoratedTextEditor.html"><b>AbstractDecoratedTextEditor中</b></a>源查看器的创建。</p>
 
-<pre>protected ISourceViewer createSourceViewer（复合父级，IVerticalRuler标尺，int样式）{...ISourceViewer sourceViewer = new SourceViewer（parent，ruler，fOverviewRuler，isOverviewRulerVisible（），styles）; <b>fSourceViewerDecorationSupport = new SourceViewerDecorationSupport（sourceViewer，fOverviewRuler，fAnnotationAccess，sharedColors）; configureSourceViewerDecorationSupport（）;</b> return sourceViewer; }</pre>
+<pre>protected ISourceViewer createSourceViewer(Composite parent, IVerticalRuler ruler, int styles) {
+		
+	... 
+	ISourceViewer sourceViewer= new SourceViewer(parent, ruler, fOverviewRuler, isOverviewRulerVisible(), styles);
+	<b>fSourceViewerDecorationSupport= new SourceViewerDecorationSupport(sourceViewer, fOverviewRuler, fAnnotationAccess, sharedColors);
+	configureSourceViewerDecorationSupport();</b>
+		
+	return sourceViewer;
+}</pre>
 <p><a href="../reference/api/org/eclipse/ui/texteditor/SourceViewerDecorationSupport.html"><b>SourceViewerDecorationSupport</b></a>类处理源查看器中显示的许多装饰，包括文本注释，彩色边距，彩色光标线等。它配置了用户首选项，以便它可以响应用户首选项更改的动态更新。大多数编辑都不必关心如何绘制这些装饰的细节。（如果必须，请参阅<a href="../reference/api/org/eclipse/ui/texteditor/SourceViewerDecorationSupport.html"><b>SourceViewerDecorationSupport</b></a>和相关类，如<a href="../reference/api/org/eclipse/jface/text/source/AnnotationPainter.html"><b>AnnotationPainter</b></a> ！）。重要的是要知道哪些装饰可用，以便正确配置<b><a href="../reference/api/org/eclipse/jface/text/source/SourceViewer.html">SourceViewer</a></b>及其支持的<a href="../reference/api/org/eclipse/ui/texteditor/SourceViewerDecorationSupport.html"><b>SourceViewerDecorationSupport</b></a> 。</p>
 <h4>配置SourceViewerDecorationSupport</h4>
 <p>让我们看一下<a href="../reference/api/org/eclipse/ui/texteditor/AbstractDecoratedTextEditor.html"><b>AbstractDecoratedTextEditor</b></a>用于装饰支持的配置。</p>
 
-<pre>protected void configureSourceViewerDecorationSupport（）{ <b>Iterator e = fAnnotationPreferences.getAnnotationPreferences（）。iterator（）; while（e.hasNext（））fSourceViewerDecorationSupport.setAnnotationPreference（（AnnotationPreference）e.next（））;</b> fSourceViewerDecorationSupport.setAnnotationPainterPreferenceKeys（DefaultMarkerAnnotationAccess。UNKNOWN，UNKNOWN_INDICATION_COLOR，UNKNOWN_INDICATION，UNKNOWN_INDICATION_IN_OVERVIEW_RULER，0）; fSourceViewerDecorationSupport.setCursorLinePainterPreferenceKeys（CURRENT_LINE，CURRENT_LINE_COLOR）; fSourceViewerDecorationSupport.setMarginPainterPreferenceKeys（PRINT_MARGIN，PRINT_MARGIN_COLOR，PRINT_MARGIN_COLUMN）; fSourceViewerDecorationSupport.setSymbolicFontName（getFontPropertyPreferenceKey（））; }</pre>
+<pre>protected void configureSourceViewerDecorationSupport() {
+
+	<b>Iterator e= fAnnotationPreferences.getAnnotationPreferences().iterator();
+	while (e.hasNext())
+		fSourceViewerDecorationSupport.setAnnotationPreference((AnnotationPreference) e.next());</b>
+	fSourceViewerDecorationSupport.setAnnotationPainterPreferenceKeys(DefaultMarkerAnnotationAccess.UNKNOWN, UNKNOWN_INDICATION_COLOR, UNKNOWN_INDICATION, UNKNOWN_INDICATION_IN_OVERVIEW_RULER, 0);
+		
+	fSourceViewerDecorationSupport.setCursorLinePainterPreferenceKeys(CURRENT_LINE, CURRENT_LINE_COLOR);
+	fSourceViewerDecorationSupport.setMarginPainterPreferenceKeys(PRINT_MARGIN, PRINT_MARGIN_COLOR, PRINT_MARGIN_COLUMN);
+	fSourceViewerDecorationSupport.setSymbolicFontName(getFontPropertyPreferenceKey());
+}</pre>
 <p>请注意，注释首选项用于定义用户首选项中显示的所有注释的注释类型。这包括由任何插件提供的注释，并且不限于工作台提供的注释。如果您不希望在编辑器中显示所有可用的注释，则应覆盖此方法并将<a href="../reference/api/org/eclipse/ui/texteditor/SourceViewerDecorationSupport.html"><b>SourceViewerDecorationSupport</b></a>设置为仅显示您要显示的类型。</p>
 
 

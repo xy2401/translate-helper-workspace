@@ -1,40 +1,73 @@
-<html lang="zh-Hans" dir="ltr">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."></meta>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"></meta>
-  <meta content="text/css" http-equiv="Content-Style-Type"></meta>
-  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1"></link>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+  <meta content="text/css" http-equiv="Content-Style-Type">
+  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1">
   <title>实现存储库提供程序</title>
-  <link href="../book.css" type="text/css" rel="stylesheet"></link>
+  <link href="../book.css" type="text/css" rel="stylesheet">
 </head>
-<body dir="ltr" style="background-color:rgb(255,255,255)">
+<body  style="background-color:rgb(255,255,255)">
 <h2>存储库提供商</h2>
 <p>存储库提供程序（ <b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b> ）是存储库实现的中心类。此类负责为存储库管理配置项目并为资源修改提供必要的挂钩。使用<a href="resInt_properties.htm">项目持久属性</a>将提供程序映射到项目。将提供程序映射到项目的机制不是团队API的核心，但在过滤UI中的资源时，您需要了解它。在大多数情况下，您将使用团队API来处理项目并将它们与您的提供商相关联。
 </p>
 <p>要实现提供程序，必须使用<a href="../reference/extension-points/org_eclipse_team_core_repository.html"><b>org.eclipse.team.core.repository</b></a>定义存储库，并提供从<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b>派生的类。我们将以CVS客户端为例来了解其工作原理。</p>
 <h3><a name="repository_pt"></a>延伸点</h3>
 <p><a href="../reference/extension-points/org_eclipse_team_core_repository.html"><b>org.eclipse.team.core.repository</b></a>扩展点用于添加存储库定义。这是CVS客户端的标记。</p>
-<pre>&lt;extension point =“org.eclipse.team.core.repository”&gt; &lt;repository class =“org.eclipse.team.internal.ccvs.core。CVSTeamProvider“id =”org.eclipse.team.cvs.core.cvsprovider“&gt; &lt;/ repository&gt; &lt;/ extension&gt;</pre>
+<pre>
+&lt;extension
+	point="org.eclipse.team.core.repository"&gt;	
+	&lt;repository
+		class="org.eclipse.team.internal.ccvs.core.CVSTeamProvider"
+		id="org.eclipse.team.cvs.core.cvsprovider"&gt;	
+	&lt;/repository&gt;
+&lt;/extension&gt;
+</pre>
 <p>这会向团队提供者注册团队支持插件，并分配在您的提供者与项目关联时应使用的ID。存储库的指定<b>类</b>必须扩展<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b> 。
 </p>
 <h3><a name="repo_impl"></a>实现RepositoryProvider</h3>
 <p>扩展中标识的类必须是<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b>的子类。它的主要职责是为存储库支持配置和解除配置项目，并提供任何必要的资源修改挂钩。CVS客户端就是一个很好的例子。它的存储库提供程序是<b>CVSTeamProvider</b> 。</p>
 
-<pre>公共类CVSTeamProvider扩展了RepositoryProvider {<br>...<br>	</pre>
+<pre>public class CVSTeamProvider extends RepositoryProvider {<br>...<br>	</pre>
 <p> <b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b>定义了两个抽象方法， <b>configureProject</b>和<b>deconfigure</b> 。所有提供商都必须实施这些方法</p>
 <p>项目首次与特定存储库提供程序关联时进行配置。当用户选择项目并使用团队向导将项目与您的存储库相关联时，通常会发生这种情况。无论操作是如何触发的，这都是计算或缓存有关项目的任何数据的适当时间，您需要提供存储库功能。（假设已将项目映射到您的提供者。您将在配置向导中处理此问题。）</p>
 <p>CVS提供程序只是广播已配置项目的事实：</p>
-<pre>public void configureProject（）抛出CoreException {CVSProviderPlugin.broadcastProjectConfigured（getProject（））; }</pre>
+<pre>
+public void configureProject() throws CoreException {
+	CVSProviderPlugin.broadcastProjectConfigured(getProject());
+}
+</pre>
 <p>我们不会遵循插件广播机制的实现。可以说，任何需要计算或初始化项目特定数据的各方此时都可以这样做。</p>
 <p>当用户不再希望将团队提供者与项目关联时，将取消配置项目。由您的插件来实现导致这种情况发生的用户操作（并且将从您的团队提供者处取消映射项目）。<b>解除配置</b>方法是删除任何项目相关缓存或删除UI中对项目的任何引用的适当时间。 CVS提供程序刷新其视图中保存的项目相关缓存，并广播项目已取消配置的事实。</p>
-<pre>public void deconfigure（）抛出CoreException {...try {EclipseSynchronizer.getInstance（）。flush（getProject（），true，true / * flush deep * /，null）; } catch（CVSException e）{throw new CoreException（e.getStatus（））; } finally {CVSProviderPlugin.broadcastProjectDeconfigured（getProject（））; }}</pre>
+<pre>
+public void deconfigure() throws CoreException {
+	...	
+	try {
+		EclipseSynchronizer.getInstance().flush(getProject(), true, true /*flush deep*/, null);
+	} catch(CVSException e) {
+		throw new CoreException(e.getStatus());
+	} finally {
+		CVSProviderPlugin.broadcastProjectDeconfigured(getProject());
+	}
+}
+</pre>
 <h3> <a name="ui_conf"></a>配置项目</h3>
 <p>通常，构建团队UI的第一步是实现向导页面，允许用户为插件的团队支持配置项目。这是您的团队提供者的id将被添加到项目属性的位置。您可以通过贡献<a href="../reference/extension-points/org_eclipse_team_ui_configurationWizards.html"><b>org.eclipse.team.ui.configurationWizards</b></a>扩展点来参与项目配置。当用户选择<b>Team&gt; Share Project ...</b>时，将显示该向导。
 </p>
 <p>我们将在CVS客户端实现的上下文中看到这一点。以下是其配置向导的CVS UI标记：</p>
-<pre>&lt;extension point =“org.eclipse.team.ui.configurationWizards”&gt; &lt;wizard name =“％SharingWizard.name”icon =“icons / full / wizards / newconnect_wiz.png”class =“org.eclipse.team.internal。 ccvs.ui.wizards。SharingWizard“id =”org.eclipse.team.ccvs.ui。SharingWizard“&gt; &lt;/ wizard&gt; &lt;/ extension&gt;</pre>
+<pre>
+&lt;extension
+	point="org.eclipse.team.ui.configurationWizards"&gt;
+	&lt;wizard
+		name="%SharingWizard.name"
+		icon="icons/full/wizards/newconnect_wiz.png"	
+		class="org.eclipse.team.internal.ccvs.ui.wizards.SharingWizard"
+		id="org.eclipse.team.ccvs.ui.SharingWizard"&gt;
+	&lt;/wizard&gt;
+&lt;/extension&gt;
+</pre>
 <p>像往常一样，插件提供了一个实现扩展的<b>类</b>和一个唯一的<b>ID</b>来标识它们的扩展。如果有多个提供程序可供选择，则<b>名称</b>和<b>图标</b>将显示在项目配置向导的第一页中。
 </p>
 <p>用户选择提供程序后，下一页将显示提供程序的特定配置信息。（如果您的提供程序是唯一安装的团队提供程序插件，则向导会直接跳到您的页面。）您的向导必须实现<a href="../reference/api/org/eclipse/team/ui/IConfigurationWizard.html"><b>IConfigurationWizard</b></a> ，它初始化指定工作台和项目的向导。其余的实现取决于向导的设计。您必须收集将项目与团队支持相关联所需的任何信息。
@@ -42,7 +75,17 @@
 <p>向导完成后，您必须使用<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html#map(org.eclipse.core.resources.IProject, java.lang.String)">RepositoryProvider.map（IProject，String）</a></b>将团队提供程序映射到项目。映射处理将正确的项目持久属性分配给项目。
 </p>
 <p>CVS客户端在其提供程序的<b>setSharing</b>方法中执行此操作，该方法在向导完成时调用：</p>
-<pre>public void setSharing（IProject项目，FolderSyncInfo信息，IProgressMonitor监视器）抛出TeamException {//确保提供的信息与项目的信息匹配...//确保管理提供的位置...//使用Team <b>RepositoryProvider.map</b>注册项目<b>（project，CVSProviderPlugin.getTypeId（））;</b> }</pre>
+<pre>
+public void setSharing(IProject project, FolderSyncInfo info, IProgressMonitor monitor) throws TeamException {
+
+	// Ensure provided info matches that of the project
+	...
+	// Ensure that the provided location is managed
+	...
+	// Register the project with Team
+	<b>	RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());</b>
+}
+</pre>
 <h3>寻找提供者</h3>
 <p><b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider中的</a></b>静态方法使客户端可以轻松地将项目映射到提供程序并查找与给定项目关联的提供程序。</p>
 <ul>
@@ -55,10 +98,20 @@
 <p>如果产品选择将Repository插件添加到功能，则应将该功能绑定到存储库ID。以下是将RepositoryProvider作为功能启用的两个步骤：</p>
 <ol>
 <li>将功能绑定到存储库提供程序ID。这允许Team插件基于存储库提供程序ID激活/禁用。<br>
-<pre>&lt;activityPatternBinding activityId =“org.eclipse.team.cvs”pattern =“org \ .eclipse \ .team \ .cvs \ .core /.* cvsnature”&gt; &lt;/ activityPatternBinding&gt;</pre>
+<pre>
+&lt;activityPatternBinding
+	activityId="org.eclipse.team.cvs"
+	pattern="org\.eclipse\.team\.cvs\.core/.*cvsnature"&gt;
+&lt;/activityPatternBinding&gt;
+</pre>
 </li>
 <li>接下来将功能绑定到提供程序的所有UI包：<br>
-<pre>&lt;activityPatternBinding activityId =“org.eclipse.team.cvs”pattern =“org \ .eclipse \ .team \ .cvs \ .ui /.*”&gt; &lt;/ activityPatternBinding&gt;</pre>
+<pre>
+&lt;activityPatternBinding
+	activityId="org.eclipse.team.cvs"
+	pattern="org\.eclipse\.team\.cvs\.ui/.*"&gt;
+&lt;/activityPatternBinding&gt;
+</pre>
 </li>
 </ol>
 <p>Team插件定义了两个功能触发点。第一个是<span style="font-weight:bold">Team&gt; Share Project ...</span>向导，它允许根据工作台功能的启用/禁用状态过滤存储库提供程序，另一个是Team插件自动启用触发器。</p>
