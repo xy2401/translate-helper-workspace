@@ -1,0 +1,259 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <meta name="copyright" content="Copyright (c) IBM Corporation and others 2006, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
+    <title>重新打包Eclipse组件</title>
+    <style type="text/css">
+/*<![CDATA[*/
+    table.c4 {width: 90%; text-align: left; margin-left: 40px;}
+    td.c3 {vertical-align: top;}
+    div.c2 {text-align: center;}
+    span.c1 {font-weight: bold;}
+    /*]]>*/
+    </style>
+
+  </head>
+  <body >
+    <h1>打包Eclipse组件<br>
+    </h1>
+    <p>Eclipse组件作为归档文件提供。每个存档都包含一组功能和插件。通常，归档包含特定组件必须提供的所有功能。通常情况下，消费者要么需要一个以上的组件和/或只需要一些组件的一部分。如果没有帮助，消费者将不得不手动获取包含所需功能超集的存档，然后手动提取所需的功能和插件。这可能是一个费力且容易出错的过程。
+    </p>
+    <p>幸运的是，PDE包含一个面向批处理的机制，即<em>打包器</em> ，它可以提供帮助。简而言之，打包器将包含功能和一系列有趣功能的存档列表作为输入。然后它获取拉链，提取功能（及其插件）并将它们重新打包成输出zip。
+    </p>
+    <h2>快速开始<br>
+    </h2>
+    <p>以下是开始使用打包器的一系列基本步骤。建议您在* nix机器上构建* nix软件包，以确保保留文件权限。<br>
+
+    </p>
+    <ol>
+      <li>创建一个打包配置目录，并从org.eclipse.pde.build/templates/packager复制模板文件（packager.properties，packaging.properties和customTargets.xml）。
+      </li>
+      <li>编辑复制的packager.properties文件并设置以下属性：<ul>
+          <li>
+            <span class="c1">baseDirectory</span> ：进行实际打包工作的目录。
+               <br>
+
+          </li>
+          <li>
+            <span class="c1">featureList</span> ：您希望包含在归档中的以逗号分隔的要素ID列表。<br>
+          </li>
+          <li>
+            <span class="c1">componentFilter</span> ：以逗号分隔的组件列表，可在其中找到您的功能。指定这将避免不必要的下载。如果您不知道组件，请使用*。（请参阅下面的<a href="pde_packager.htm#Packager_Map_File_Format">Packager Map File Format</a>中的componentName）。<br>
+
+          </li>
+          <li>
+            <span class="c1">contentFilter</span> ：您感兴趣的以逗号分隔的内容类型列表。常见内容类型是<tt>运行时</tt>或<tt>sdk</tt> 。这用于优化档案的下载。将此处留空以不过滤内容类型。（请参阅下面的<a href="#Packager_Map_File_Format">Packager Map文件格式</a>中的contentDescription）。
+          </li>
+
+          <li>
+            <span class="c1">config</span> ：要打包的配置。这是一个以逗号分隔的操作系统，窗口系统和体系结构三元组的“＆”分隔列表（例如<tt>win32，win32，x86和linux，gtk，ppc</tt> ）</li>
+        </ul>
+      </li>
+
+      <li>获取打包程序映射文件。以下属性控制下载地图文件：<br>
+        <ul>
+          <li>
+            <span class="c1">localMaps</span> ：如果您在本地拥有映射文件，请设置此属性，将映射文件放在<tt>$ {downloadDirectory}中</tt> （默认情况下为<tt>$ {baseDirectory} / toPackage</tt> ）。注释掉此属性以自动下载地图文件。
+          </li>
+
+          <li>
+            <span class="c1">packagerMapURL</span> ：从中下载地图文件的URL。
+          </li>
+        </ul>打包器脚本将连接<tt>$ {downloadDirectory}中的</tt>所有* .map文件。要下载多个映射文件，或从CVS中获取它们，请编辑customTargets.xml文件并更改getMapFiles目标。
+      </li>
+      <li>使用以下命令运行打包程序：<pre>
+java -jar &lt;eclipse install&gt;/plugins/org.eclipse.equinox.launcher_&lt;version&gt;.jar -application org.eclipse.ant.core.antRunner <br />    -buildfile &lt;&lt;eclipse install&gt;/plugins/org.eclipse.pde.build_&lt;version&gt;/scripts/package.xml&gt; <br />    -DpackagingInfo=&lt;path to your packaging configuration directory&gt;<br />
+
+</pre>
+      </li>
+    </ol>
+    <h2>
+      <a name="Packager_Map_File_Format" id="Packager_Map_File_Format"></a>打包器地图文件格式</h2>打包程序映射文件用于描述各种存档，其内容以及可从中下载的位置。它们类似于构建过程中用于从存储库获取包的映射文件。打包程序映射文件条目的格式如下：<br>
+    <div class="c2">
+
+      <tt>archiveName = <span class="c1">url</span> | [ <span class="c1">configList</span> ] | [ <span class="c1">目录</span> ] | <span class="c1">contentDescription</span> | <span class="c1">组件名称</span></tt><br>
+    </div>
+    <ul>
+
+      <li>
+        <span class="c1">archiveName</span> ：这是存档的名称<br>
+      </li>
+      <li>
+        <span class="c1">url</span> ：这是可以找到存档的URL。url和archiveName的串联应指向要下载的存档。
+      </li>
+
+      <li>
+        <span class="c1">configList</span> ：这是此归档包含的“＆”分隔的配置列表。（例如： <tt>win32，win32，x86和linux，gtk，x86</tt> ）。如果没有给出值，则归档被认为是独立于平台的。
+      </li>
+
+      <li>
+        <span class="c1">directory</span> ：相对于标准eclipse安装应提取存档内容的目录。如果未指定任何值，则表示存档在其根目录中包含eclipse安装目录。<br>
+      </li>
+      <li>
+        <span class="c1">contentDescription</span> ：指示此归档中内容类型的内容标志。通常这类似于<tt>运行时</tt> ， <tt>sdk</tt> ， <tt>源</tt> ， <tt>doc</tt>等。</li>
+      <li>
+        <span class="c1">componentName</span> ：此归档所用<span class="c1">组件</span>的规范名称。例如eclipse，jdt，cdt，gef，emf等。<br>
+
+      </li>
+    </ul><br>请注意，configList和目录是可选的，重要的是适当的数字“|”仍然使用分隔符。<br>例子：<br>
+    <pre>
+eclipse-SDK-3.1-win32.zip=http://download.eclipse.org/downloads/drops/R-3.1-200506271435/ | win32,win32,x86 | | sdk | eclipse<br />eclipse-PDE-3.1.zip=http://download.eclipse.org/downloads/drops/R-3.1-200506271435/ | | | runtime | pde<br />
+</pre>
+    <h2>打包程序配置属性</h2>可以在packager配置packager.properties文件中设置以下属性：<br>
+    <table class="c4" border="1" cellpadding="2" cellspacing="0">
+      <tbody>
+        <tr>
+          <td class="c3">baseDirectory<br>
+          </td>
+
+          <td class="c3">将进行所有打包的目录<br>
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">workingDirectory<br>
+          </td>
+
+          <td class="c3">将生成脚本的目录。模板中的值是<tt>$ {baseDirectory} / workingPlace</tt><br>
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">downloadDirectory<br>
+
+          </td>
+          <td class="c3">将下载存档的文件夹。模板中的值是<tt>$ {baseDirectory} / toPackage</tt><br>
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">tempDirectory<br>
+          </td>
+          <td class="c3">将归档文件夹提取到的文件夹。模板中的值是<tt>$ {baseDirectory} / temp</tt><br>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="c3">featurePaths<br>
+          </td>
+          <td class="c3">已下载档案的根目录的名称。模板中的值是<tt>eclipse</tt> 。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">featureList<br>
+          </td>
+          <td class="c3">您希望重新打包的以逗号分隔的要素ID列表。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">componentFilter<br>
+          </td>
+          <td class="c3">逗号分隔的组件列表，可以从中找到featureList中的功能。这会过滤可用的存档，并允许打包程序优化下载的文件集。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">contentFilter<br>
+          </td>
+          <td class="c3">要获取的逗号分隔的内容类型列表。这会过滤可用存档集，并允许打包程序优化下载的文件集。<br>
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">配置<br>
+          </td>
+          <td class="c3">一个“＆”分隔的配置列表（以逗号分隔的操作系统，窗口系统，架构三元组）重新打包。 （例如： <tt>win32，win32，x86和linux，gtk，x86</tt> ）</td>
+        </tr>
+        <tr>
+          <td class="c3">archivesFormat<br>
+
+          </td>
+          <td class="c3">档案的格式。一个“＆”分隔的配置列表 - 格式。 （例如： <tt>win32，win32，x86  -  antZip＆linux，gtk，ppc  -  tar</tt> ）。如果没有为给定配置指定存档格式，则默认格式为antZip。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">zipargs<br>
+          </td>
+          <td class="c3">要传递给zip的额外参数<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">unzipargs<br>
+          </td>
+          <td class="c3">要传递给解压缩的额外参数<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">archivePrefix<br>
+          </td>
+          <td class="c3">生成的归档的前缀<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">collectingFolder<br>
+          </td>
+          <td class="c3">生成的存档的根文件夹的名称。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">buildId<br>
+          </td>
+          <td class="c3">控制存档的默认名称中的构建ID。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">buildType<br>
+          </td>
+          <td class="c3">构建的类型，用于命名构建输出。通常是I，N，M，S中的一个......<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">buildLabel<br>
+          </td>
+          <td class="c3">构建标签。模板值为<tt>$ {buildType}。$ {buildId}</tt><br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">archiveNamePrefix<br>
+          </td>
+          <td class="c3">控制生成的存档的名称。默认值为<tt>$ {buildId}</tt><br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">packagingProperties<br>
+          </td>
+          <td class="c3">包含属性打包根文件的文件的相对路径..默认情况下，这指向packaging.properties。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">deltaPack<br>
+          </td>
+          <td class="c3">是否生成增量包。这将排除平台独立部分，并将所有配置分组到一个存档中。<br>
+
+          </td>
+        </tr>
+        <tr>
+          <td class="c3">unzipOrder<br>
+          </td>
+          <td class="c3">以逗号分隔的存档名称前缀列表，用于设置应提取存档的顺序。<br>
+
+          </td>
+        </tr>
+      </tbody>
+    </table><br>
+    <h2>打包根文件</h2>在packager配置packager.properties文件中，属性packagingProperties指向属性文件，该文件指定需要打包的根文件。默认情况下，这是文件packaging.properties。<br>
+
+    <br>此属性文件应包含指定所需根文件的属性。有关根属性的详细信息，请参阅<a href="../reference/pde_feature_generating_build.htm#Feature_specific_properties">功能特定属性</a>页面。<br>
+    <br>
+  </body>
+</html>

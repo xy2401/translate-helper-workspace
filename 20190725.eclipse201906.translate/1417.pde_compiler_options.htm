@@ -1,0 +1,52 @@
+<html lang="zh-Hans" >
+<head>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2010, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
+  <title>指定编译器选项</title>
+</head>
+<body >
+<h1>编译器选项</h1>
+<p>PDE / Build支持许多选项来控制各个插件的编译器。有关源和目标级别以及bootclasspath的<a href="pde_compilation_env.htm">设置</a> ，请参阅<a href="pde_compilation_env.htm">“设置编译环境”</a> 。
+</p>
+
+<h2>警告和错误</h2>
+<p>PDE / Build允许在build.properties文件中指定自定义编译警告和错误。这些可以使用<b>javacWarnings。&lt;library&gt;</b>和<b>javacErrors。&lt;library&gt;</b>选项在每个库的基础上设置（单个插件可以包含多个jar库）。这些属性的值在<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_batch_compiler.htm#warn">使用批处理编译器</a>页面（来自Java开发用户指南）的“-warn：...”部分中给出。</p>例：<pre>		javacErrors.. = forbidden,discouraged,
+		javacWarnings.library.jar = deprecation,nullDereference
+</pre>
+
+<h3>项目首选项中的警告和错误</h3>现在也可以在PDE / Build期间使用JDT项目首选项。PDE / Build本身无法读取首选项文件，但它能够将它们传递给理解它们的JDT编译器。要使用它，插件应在其build.properties文件中指定<b>javacProjectSettings</b>属性。值应为：<ul>
+<li><tt><b>javacProjectSettings = true</b></tt> ：使用默认<tt>.settings / org.eclipse.jdt.core.prefs</tt>首选项文件中指定的项目设置。</li>
+<li><tt><b>javacProjectSettings = path / to / jdt.prefs</b></tt> ：使用指定的首选项文件。</li>
+</ul>与版本构建相比，某些项目可能希望在工作区中使用不同的警告和错误设置。与“javacWarnings。&lt;library&gt;”属性相比，这允许更方便的方法来指定这些设置。
+
+<h2>文件编码</h2>PDE / Build可以在每个库，文件夹或文件的基础上接受自定义文件编码。
+<ul>
+  <li><span style="font-weight:bold">javacDefaultEncoding。&lt;library&gt;</span> - 设置编译给定库时要使用的默认编码。</li>
+  <li><span style="font-weight:bold">javacCustomEncodings。&lt;library&gt;</span> - 编译给定库时要使用的逗号分隔的路径和编码列表。指定文件夹时，编码用于该文件夹中包含的所有内容。指定文件时，编码仅用于该文件。例：<br>
+    <div style="text-align:center">
+    <pre>javacCustomEncodings.library.jar = src/org/foo[US-ASCII], src/org/foo/bar.java[ISO-8859-1]</pre>
+    </div>
+  </li>
+</ul>
+<h2>自定义编译器参数</h2>现在可以使用bundle的build.properties文件中的<b>compilerArg</b>属性为每个bundle指定自定义编译器参数。此属性类似于构建器配置中的<a href="../reference/pde_builder_config.htm">compilerArg</a>属性，只是它仅影响单个插件而不影响所有插件。这里的具体参数取决于所使用的编译器。<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_batch_compiler.htm">这里</a>列出<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_batch_compiler.htm">了</a> JDT编译器参数。
+
+<h2>编译器选项优先级</h2>指定不同的编译器选项有许多不同的方法。作为一般规则，选项优先级如下：<ul>
+<li>javacDefaultEncoding。&lt;library&gt;优先于自定义<b>编码</b>命令行选项。</li>
+<li>对于常规选项，稍后出现在编译器命令行上的选项会覆盖先前指定的选项。这些选项按以下顺序提供给JDT：<ol> 
+<li>构建器配置中的<b>compilerArg</b>属性。（影响所有捆绑包）。</li>
+<li>来自此插件的build.properties的<b>compilerArg</b>属性。</li>
+<li>使用<b>javacProjectSettings</b>指定的编译器首选项文件。</li>
+<li>生成的编译器参数文件（javaCompiler。&lt;library&gt; .args）包含文件编码， <b>javacWarnings</b> ， <b>javacErrors</b>和访问规则。</li> 
+</ol>
+</li>
+</ul>
+
+<h2>使用自定义编译器</h2>现在，bundle可以通过设置<b>compilerAdapter</b>属性来使用自定义编译<b>器</b> 。指定的编译器适配器必须在ant环境中可用。默认情况下使用的JDT编译器适配器是<b>org.eclipse.jdt.core。JDTCompilerAdapter</b> 。指定备用编译器的一个特殊原因是Aspect J或Groovy包。指定自定义编译器适配器的Bundle可能还需要指定以下某些属性：<ul>
+<li><b>sourceFileExtensions</b> ：应视为源的扩展列表。 （例如* .java，* .aj，* .groovy）。</li>
+<li><b>compilerAdapter.useLog</b> ：是否将“-log”参数传递给编译器</li>
+<li><b>compilerAdapter.useArgFile</b> ：是否传递生成的javaCompiler。&lt;library&gt; .args参数文件。（包含访问规则，文件编码和警告/错误级别）。</li>
+</ul>
+</body>
+</html>

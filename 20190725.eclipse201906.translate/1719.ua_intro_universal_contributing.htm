@@ -1,0 +1,110 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
+<title>有助于普遍介绍</title>
+</head>
+<body >
+
+<h2>有助于普遍介绍</h2>
+
+<p>为了引入通用介绍，开发人员应该有一个基于产品的eclipse应用程序。这需要使用<code><b>org.eclipse.runtime.products</b></code>扩展点（假设产品已经定义）：</p>
+
+<pre>   &lt;extension
+         id="foo"
+         point="org.eclipse.core.runtime.products"&gt;
+      &lt;product
+            application="org.eclipse.ui.ide.workbench"
+            description="Product Foo to use for testing the universal intro"
+            name="Product Foo"&gt;
+      &lt;/product&gt;
+   &lt;/extension&gt;
+</pre>
+
+<p>对于此示例，假设扩展名是在<code><b>com.example.intro</b></code>插件的<code>plugin.xml</code>文件中定义的。eclipse intro支持的一个长期特征是使用产品介绍绑定来挂钩产品和介绍的能力：</p>
+
+<pre>   &lt;extension
+         point="org.eclipse.ui.intro"&gt;
+      &lt;introProductBinding
+            introId="org.eclipse.ui.intro.universal"
+            productId="com.example.intro.foo"/&gt;
+   &lt;/extension&gt;
+</pre>
+
+<p>上面的扩展名绑定了通用的介绍实现（ <b>org.eclipse.ui.intro.universal</b> ）和我们的产品ID。
+</p>
+
+<p>通用介绍自定义分为产品品牌属性和首选项。产品品牌属性由产品设置，不能修改。它们包括产品标题，品牌形象和品牌形象文字：</p>
+
+<pre>   &lt;product
+         application="org.eclipse.ui.ide.workbench"
+         description="Product Foo to use for testing the universal intro"
+         name="Product Foo"&gt;
+      &lt;property
+            name="introTitle"
+            value="Welcome to Product Bar"/&gt;
+      &lt;property
+            name="introBrandingImage"
+            value="product:eclipse.png"/&gt;
+      &lt;property
+            name="introBrandingImageText"
+            value="XYZ Company"/&gt;
+   &lt;/product&gt;
+</pre>
+
+<p>其值代表相对于产品包的文件名的产品属性必须使用'product：'前缀进行限定。支持以下属性：</p>
+
+<ul>
+  <li>
+    <b>introTitle</b> - 属性的值将在根页面的顶部使用（假设当前的演示主题选择显示根页面标题）</li>
+  <li>
+    <b>introBrandingImage</b> - 属性的值表示要用作根页面品牌标记的图像的文件名。理想情况下，图像应为带有alpha混合的PNG，但其他格式也有效。相对于产品包的图像文件名必须具有“product：”前缀。
+  </li>
+  <li>
+    <b>introBrandingImageText</b> - 用于品牌形象的替代文本。
+  </li>
+  <li>
+    <b>introDescription- &lt;pageId&gt;</b> - 显示在每个部分标题下方的选项说明文本，其中pageId是下面列出的值之一（例如introDescription-overview，introDescription-samples等）。该值应该在plugin.properties文件中翻译。
+  </li>
+</ul>
+<p>从版本4.6开始，通用介绍支持使用特定于主题的替代替换基于文件的属性（如<b>introBrandingImage）</b> 。例如，产品可能<b>会将introBrandingImage</b>作为<code>"product:gizmo.png"</code> ，但此图像与<code>com.acme.theme</code>主题不匹配。可以在<code>com.acme.theme/gizmo.png</code>中的产品包中放置更合适的图像。如果未找到替换图像，则解析程序将回<code>gizmo.png</code>在产品包的根目录中找到的常规图像<code>gizmo.png</code>图像。
+</p>
+
+<p>通用变量的后半部分可作为首选项访问。分割是由于这些变量可以由用户配置并在新的“欢迎”首选项页面中公开。这些首选项的初始值应放在从产品扩展引用的“plugin_customization.ini”文件中。这些偏好是：</p>
+
+<ul>
+  <li>
+    <b>org.eclipse.ui.intro.universal / INTRO_ROOT_PAGES</b> - 以逗号分隔的根页标识符列表，应在主页中显示。有效值为：<ul>
+      <li><b>概观</b></li>
+      <li><b>第一步</b></li>
+      <li><b>教程</b></li>
+      <li><b>样本</b></li>
+      <li><b>什么是新的</b></li>
+      <li><b>迁移</b></li>
+      <li><b>webresources</b></li>
+    </ul>
+  </li>
+  <li>
+    <b>org.eclipse.ui.intro.universal / INTRO_DATA</b> - 指向具有页面布局设置的XML文件的文件名（请参阅下面的详细信息）。相对于产品包的文件名必须具有“product：”前缀。
+  </li>
+  <li>
+    <b>org.eclipse.ui.intro / INTRO_THEME</b> - 要用于此产品的<a href="ua_intro_ext_theme.htm">演示文稿主题</a>的唯一标识符。<b>请注意，此首选项来自“org.eclipse.ui.intro插件”，</b>因为活动主题选择是在框架级别执行的。
+  </li>
+  <li>
+    <b>org.eclipse.ui.intro / INTRO_START_PAGE</b> -  Eclipse首次启动时将显示的页面的ID。
+  </li>
+  <li>
+    <b>org.eclipse.ui.intro / INTRO_HOME_PAGE</b> - 按下主页按钮时显示的页面ID。
+  </li>
+  <li>
+    <b>org.eclipse.ui.intro / INTRO_STANDBY_PAGE</b> - 欢迎以非最大化形式显示时将显示的页面ID。</li>
+  <li>使用通用介绍时，三个页面相关属性的有效值包括<b>root，overview，firststeps，tutorials，samples，whatsnew，migrate</b>或<b>webresources</b>或使用config扩展名贡献的页面名称。</li>
+</ul>
+
+<p> </p>
+
+</body>
+</html>

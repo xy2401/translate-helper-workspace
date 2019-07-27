@@ -1,0 +1,92 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>产品安装指南</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>产品安装指南</h2>
+<p>该平台提供用于更新和扩展产品的标准工具。为了参与更新和扩展产品的平台机制，您的打包产品应遵循以下准则。这将使您的产品与其他基于Eclipse的产品和平共存，甚至增强。</p>
+<p>再次考虑acmeweb产品的示例目录结构：</p>
+<pre>acmeweb/
+	acmeweb.exe
+	eclipse/	
+		.eclipseproduct
+		artifacts.xml	
+		eclipse.exe	
+		install.ini	
+		.config/	
+			platform.cfg
+		jre/
+		dropins/
+		features/	
+			com.example.acme.acmefeature_1.0.0/
+				feature.xml
+			...
+		plugins/
+			com.example.acme.acmefeature_1.0.0/
+				plugin.xml
+				about.ini
+				about.html
+				about.mappings
+				about.properties
+				acme.png
+				plugin_customization.ini
+				splash.bmp
+				welcome.xml
+			com.example.acme.acmewebsupport_1.0.0/
+			...
+		links/
+			...
+		p2/
+			...</pre>			
+
+<p>这些文件来自哪里？让我们从开发团队的角度来看产品内容。已安装的文件可分为五大类：</p>
+<ul>
+  <li>顶级产品文件（例如acmeweb.exe）</li>
+  <li>产品功能和插件</li>
+  <li>Eclipse平台本身（包括p2和配置文件夹的内容）</li>
+  <li>Java运行时环境（JRE）</li>
+  <li>安装过程本身生成的文件</li>
+</ul>
+<p>正确的安装脚本将通过执行以下操作生成相应的目录结构：</p>
+<ul>
+  <li>允许用户指定安装的顶级目录（例如<b>c：\ acmeweb。
+    </b>我们将其称为<b>acmeweb，</b>用于其余步骤。）</li>
+  <li>确保产品尚未安装在该位置</li>
+  <li>复制文件如下：<ul>
+      <li>顶级产品文件将复制到<b>acmeweb</b></li>
+      <li>使用预期的功能和插件目录结构将Eclipse文件复制到<b>acmeweb / eclipse</b></li>
+      <li>JRE文件被复制到<b>acmeweb / eclipse / jre</b> 。如果JRE已经位于其他位置，那么应该设置应用程序快捷方式以使用<b>-vm</b>命令行参数调用eclipse，以便平台知道JRE的位置</li>
+      <li>产品功能和插件被复制到<b>acmeweb / eclipse / features</b>和<b>acmeweb / eclipse / plugins</b></li>
+      <li>平台配置信息将复制到<b>acmeweb / eclipse / configuration</b></li>
+      <li>平台更新支持信息被复制到<b>acmeweb / eclipse / p2</b></li>      
+    </ul>
+  </li>
+  <li>在<b>acmeweb / eclipse中</b>创建一个标记文件<b>.eclipseproduct</b> 。标记文件是<b>java.util。属性</b>格式文件，指示产品的名称，ID和版本。</li>
+  <li>存储将在<b>acmeweb / eclipse / plugins / com.example.acmefeature_1.0.0 / about.mappings</b>中的about对话框中显示的任何必要的安装信息（用户，许可证，日期）</li>
+  <li>如果主要功能机制（前R3.0）用于定义产品，请将<b>acmeweb / eclipse / install.ini</b>替换为将属性<b>feature.default.id</b>设置为产品主要功能的机制。</li>
+  <li>使用<b>-initialize</b>选项调用产品可执行文件。这使得平台安静地执行所有耗时的首次处理并缓存结果，以便当用户启动产品时，它立即以开放营业状态出现。</li>
+</ul>
+<h3>多用户问题</h3>
+<p>安装产品的目的是在多个用户之间共享安装时，必须注意将各个用户的数据（例如<b>工作区</b>目录）与共享产品安装目录分开。</p>
+<h3>卸载问题</h3>
+<p>卸载产品时，以下概念很重要。</p>
+<ul>
+  <li>应删除<b>eclipse / features</b>和<b>eclipse / plugins</b>目录中的<b>所有</b>文件，即使它们最初并非由安装程序安装。这可确保在删除产品时删除平台安装程序添加的文件。</li>
+  <li>除上述要点外， <b>只</b>应删除安装程序在其他目录中安装的那些文件。保留任何重要数据（例如<b>工作空间</b>目录）非常重要，以便在卸载后重新安装产品将产生预期结果。</li>
+</ul>
+<h3>重新安装产品</h3>
+<p>安装产品后，安装程序应允许服务更新或升级（如果有）。可以通过查找<b>acmeweb / eclipse / .eclipseproduct</b>来确认产品的存在。此标记文件中的信息可用于与用户确认正在更新正确的产品。可以使用针对功能名称的模式匹配来确认更新的可用性。例如， <b>acmeweb / eclipse / plugins / com.example.acmefeature_1.0.1</b>的存在表明1.0.1版本更新已应用于产品。</p>
+<p>一旦建立了重新安装的有效性，安装程序应根据需要复制或替换文件。如果底层Eclipse平台的版本没有更改，则很有可能忽略完整的目录。附加到平台功能和插件的版本号可用于确定是否需要在插件或功能目录下进行任何更改。</p>
+<p>有关安装产品的更多信息，请参见<a href="../reference/misc/eclipse-install.html">如何编写Eclipse安装程序</a> 。</p>
+
+</body>
+</html>

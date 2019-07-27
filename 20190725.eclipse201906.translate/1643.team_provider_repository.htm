@@ -1,0 +1,135 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2008. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+  <meta content="text/css" http-equiv="Content-Style-Type">
+  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1">
+  <title>实现存储库提供程序</title>
+  <link href="../book.css" type="text/css" rel="stylesheet">
+</head>
+<body  style="background-color:rgb(255,255,255)">
+<h2>存储库提供商</h2>
+<p>存储库提供程序（ <b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b> ）是存储库实现的中心类。此类负责为存储库管理配置项目并为资源修改提供必要的挂钩。使用<a href="resInt_properties.htm">项目持久属性</a>将提供程序映射到项目。将提供程序映射到项目的机制不是团队API的核心，但在过滤UI中的资源时，您需要了解它。在大多数情况下，您将使用团队API来处理项目并将它们与您的提供商相关联。
+</p>
+<p>要实现提供程序，必须使用<a href="../reference/extension-points/org_eclipse_team_core_repository.html"><b>org.eclipse.team.core.repository</b></a>定义存储库，并提供从<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b>派生的类。我们将以CVS客户端为例来了解其工作原理。</p>
+<h3><a name="repository_pt"></a>延伸点</h3>
+<p><a href="../reference/extension-points/org_eclipse_team_core_repository.html"><b>org.eclipse.team.core.repository</b></a>扩展点用于添加存储库定义。这是CVS客户端的标记。</p>
+<pre>
+&lt;extension
+	point="org.eclipse.team.core.repository"&gt;	
+	&lt;repository
+		class="org.eclipse.team.internal.ccvs.core.CVSTeamProvider"
+		id="org.eclipse.team.cvs.core.cvsprovider"&gt;	
+	&lt;/repository&gt;
+&lt;/extension&gt;
+</pre>
+<p>这会向团队提供者注册团队支持插件，并分配在您的提供者与项目关联时应使用的ID。存储库的指定<b>类</b>必须扩展<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b> 。
+</p>
+<h3><a name="repo_impl"></a>实现RepositoryProvider</h3>
+<p>扩展中标识的类必须是<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b>的子类。它的主要职责是为存储库支持配置和解除配置项目，并提供任何必要的资源修改挂钩。CVS客户端就是一个很好的例子。它的存储库提供程序是<b>CVSTeamProvider</b> 。</p>
+
+<pre>public class CVSTeamProvider extends RepositoryProvider {<br>...<br>	</pre>
+<p> <b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a></b>定义了两个抽象方法， <b>configureProject</b>和<b>deconfigure</b> 。所有提供商都必须实施这些方法</p>
+<p>项目首次与特定存储库提供程序关联时进行配置。当用户选择项目并使用团队向导将项目与您的存储库相关联时，通常会发生这种情况。无论操作是如何触发的，这都是计算或缓存有关项目的任何数据的适当时间，您需要提供存储库功能。（假设已将项目映射到您的提供者。您将在配置向导中处理此问题。）</p>
+<p>CVS提供程序只是广播已配置项目的事实：</p>
+<pre>
+public void configureProject() throws CoreException {
+	CVSProviderPlugin.broadcastProjectConfigured(getProject());
+}
+</pre>
+<p>我们不会遵循插件广播机制的实现。可以说，任何需要计算或初始化项目特定数据的各方此时都可以这样做。</p>
+<p>当用户不再希望将团队提供者与项目关联时，将取消配置项目。由您的插件来实现导致这种情况发生的用户操作（并且将从您的团队提供者处取消映射项目）。<b>解除配置</b>方法是删除任何项目相关缓存或删除UI中对项目的任何引用的适当时间。 CVS提供程序刷新其视图中保存的项目相关缓存，并广播项目已取消配置的事实。</p>
+<pre>
+public void deconfigure() throws CoreException {
+	...	
+	try {
+		EclipseSynchronizer.getInstance().flush(getProject(), true, true /*flush deep*/, null);
+	} catch(CVSException e) {
+		throw new CoreException(e.getStatus());
+	} finally {
+		CVSProviderPlugin.broadcastProjectDeconfigured(getProject());
+	}
+}
+</pre>
+<h3> <a name="ui_conf"></a>配置项目</h3>
+<p>通常，构建团队UI的第一步是实现向导页面，允许用户为插件的团队支持配置项目。这是您的团队提供者的id将被添加到项目属性的位置。您可以通过贡献<a href="../reference/extension-points/org_eclipse_team_ui_configurationWizards.html"><b>org.eclipse.team.ui.configurationWizards</b></a>扩展点来参与项目配置。当用户选择<b>Team&gt; Share Project ...</b>时，将显示该向导。
+</p>
+<p>我们将在CVS客户端实现的上下文中看到这一点。以下是其配置向导的CVS UI标记：</p>
+<pre>
+&lt;extension
+	point="org.eclipse.team.ui.configurationWizards"&gt;
+	&lt;wizard
+		name="%SharingWizard.name"
+		icon="icons/full/wizards/newconnect_wiz.png"	
+		class="org.eclipse.team.internal.ccvs.ui.wizards.SharingWizard"
+		id="org.eclipse.team.ccvs.ui.SharingWizard"&gt;
+	&lt;/wizard&gt;
+&lt;/extension&gt;
+</pre>
+<p>像往常一样，插件提供了一个实现扩展的<b>类</b>和一个唯一的<b>ID</b>来标识它们的扩展。如果有多个提供程序可供选择，则<b>名称</b>和<b>图标</b>将显示在项目配置向导的第一页中。
+</p>
+<p>用户选择提供程序后，下一页将显示提供程序的特定配置信息。（如果您的提供程序是唯一安装的团队提供程序插件，则向导会直接跳到您的页面。）您的向导必须实现<a href="../reference/api/org/eclipse/team/ui/IConfigurationWizard.html"><b>IConfigurationWizard</b></a> ，它初始化指定工作台和项目的向导。其余的实现取决于向导的设计。您必须收集将项目与团队支持相关联所需的任何信息。
+</p>
+<p>向导完成后，您必须使用<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html#map(org.eclipse.core.resources.IProject, java.lang.String)">RepositoryProvider.map（IProject，String）</a></b>将团队提供程序映射到项目。映射处理将正确的项目持久属性分配给项目。
+</p>
+<p>CVS客户端在其提供程序的<b>setSharing</b>方法中执行此操作，该方法在向导完成时调用：</p>
+<pre>
+public void setSharing(IProject project, FolderSyncInfo info, IProgressMonitor monitor) throws TeamException {
+
+	// Ensure provided info matches that of the project
+	...
+	// Ensure that the provided location is managed
+	...
+	// Register the project with Team
+	<b>	RepositoryProvider.map(project, CVSProviderPlugin.getTypeId());</b>
+}
+</pre>
+<h3>寻找提供者</h3>
+<p><b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider中的</a></b>静态方法使客户端可以轻松地将项目映射到提供程序并查找与给定项目关联的提供程序。</p>
+<ul>
+  <li><b>map（IProject，String）</b> - 实例化指定提供者标识的提供者并将指定的项目映射到它。此调用在项目上设置正确的项目持久属性。</li>
+  <li><b>unmap（IProject，String）</b> - 从指定的项目中删除指定的提供者ID的关联。使项目与任何团队提供商无关。</li>
+  <li><b>getProvider（IProject）</b> - 回答给定项目的提供者。可用于查找项目的任何团队提供者。</li>
+  <li><b>getProvider（IProject，String）</b> - 使用指定的提供者ID回答给定项目的提供者。可用于检查特定团队提供者类型是否与给定项目相关联。提供商通常使用它来快速检查给定项目是否在他们的关注之下。此调用对客户端更安全，因为它不会返回与客户端ID不匹配的提供程序。</li>
+</ul>
+<h3>存储库提供程序和功能</h3>
+<p>如果产品选择将Repository插件添加到功能，则应将该功能绑定到存储库ID。以下是将RepositoryProvider作为功能启用的两个步骤：</p>
+<ol>
+<li>将功能绑定到存储库提供程序ID。这允许Team插件基于存储库提供程序ID激活/禁用。<br>
+<pre>
+&lt;activityPatternBinding
+	activityId="org.eclipse.team.cvs"
+	pattern="org\.eclipse\.team\.cvs\.core/.*cvsnature"&gt;
+&lt;/activityPatternBinding&gt;
+</pre>
+</li>
+<li>接下来将功能绑定到提供程序的所有UI包：<br>
+<pre>
+&lt;activityPatternBinding
+	activityId="org.eclipse.team.cvs"
+	pattern="org\.eclipse\.team\.cvs\.ui/.*"&gt;
+&lt;/activityPatternBinding&gt;
+</pre>
+</li>
+</ol>
+<p>Team插件定义了两个功能触发点。第一个是<span style="font-weight:bold">Team&gt; Share Project ...</span>向导，它允许根据工作台功能的启用/禁用状态过滤存储库提供程序，另一个是Team插件自动启用触发器。</p>
+<h3>资源修改挂钩<a name="hooks"></a></h3>
+<p>与存储库提供程序关联的大多数有趣功能都发生在用户使用为提供程序配置的项目中的资源时。为了了解用户对资源所做的更改，提供程序可以实现<a href="resAdv_hooks.htm">资源修改挂钩</a> 。资源插件提供这些挂钩作为扩展点。<a href="../reference/api/org/eclipse/core/resources/team/IMoveDeleteHook.html"><b>IMoveDeleteHook</b></a> ， <a href="../reference/api/org/eclipse/core/resources/team/FileModificationValidator.html"><b>FileModificationValidator</b></a>和<a href="../reference/api/org/eclipse/core/resources/team/ResourceRuleFactory.html"><strong>ResourceRuleFactory</strong></a>的文档描述了实现这些钩子的细节。</p>
+<p>团队插件通过向资源插件注册通用挂钩来优化和简化挂钩与适当资源的关联。这些通用挂钩只是查找给定资源的存储库提供程序并获取其挂钩。这样做的好处是只调用一个提供程序挂钩，而不是让每个提供程序实现注册一个必须首先检查资源是否由提供程序管理的挂钩。</p>
+<p>这对您的插件意味着您通过重写<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider中的</a></b>方法提供任何必要的挂钩。这些方法的默认实现回答null，表示不需要挂钩（资源规则工厂除外，如下所述）：</p>
+<ul>
+  <li><b>getMoveDeleteHook</b> - 回答适合提供者的<a href="../reference/api/org/eclipse/core/resources/team/IMoveDeleteHook.html"><b>IMoveDeleteHook</b></a> 。此挂钩允许提供程序控制移动和删除的发生方式，并包括防止它们发生的能力。实现者可以提供移动或删除文件，文件夹和项目的替代实现。CVS客户端使用此挂钩来监视文件夹删除，并确保记住已删除文件夹中包含的所有文件，以便以后可以根据需要从存储库中删除它们。</li>
+  <li><b>getFileModificationValidator2</b> - 回答适合提供者的<a href="../reference/api/org/eclipse/core/resources/team/FileModificationValidator.html"><b>FileModificationValidator</b></a> 。此挂钩允许提供程序预先检查对文件的任何修改或保存。当存储库提供程序想要实现<b>悲观版本控制</b>时，通常需要此挂钩。在悲观版本控制中，必须在修改文件之前检出文件，并且只有一个客户端可以在任何给定时间检出文件。可以通过在编辑文件时签出文件（如果尚未检出）并在保存文件时检入文件来实现悲观版本控制。使用监视/编辑模式时，CVS使用此挂钩，但默认情况下，CVS使用不需要此挂钩的乐观版本控制方案。</li>
+  <li><strong>getRuleFactory</strong> - 回答适合提供者的资源规则工厂。由于出于向后兼容性原因，提供者应始终覆盖此方法，因为默认工厂会锁定所有操作的工作空间。提供应该子类<a href="../reference/api/org/eclipse/core/resources/team/ResourceRuleFactory.html"><strong>ResourceRuleFactory</strong></a>并覆盖那些确保为调用移动/删除挂钩和文件修改验证器的操作获取正确规则所需的规则。存储库提供程序特别感兴趣的规则方法是：<ul>
+      <li><em>deleteRule</em> - 移动/删除钩子</li>
+      <li><em>moveRule -move</em> / delete hook</li>
+      <li><em>validateEditRule</em> - 文件修改验证器validateEdit</li>
+      <li><em>modifyRule</em> - 文件修改验证器validateSave</li>
+    </ul>
+  </li>
+</ul>
+
+</body>
+</html>

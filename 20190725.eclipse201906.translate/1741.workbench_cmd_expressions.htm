@@ -1,0 +1,843 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2006, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
+<title>Workbench核心表达式</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h1>Workbench核心表达式</h1>
+
+<p>工作台使用核心表达式（请参阅<a href="../reference/extension-points/org_eclipse_core_expressions_definitions.html">org.eclipse.core.expressions.definitions</a>以获取描述）for <code>enabledWhen</code>和<code>activeWhen</code>用于处理程序，编程激活上下文，以及<code>visibleWhen</code>用于菜单贡献。核心表达式还使用<code>enablement</code>元素作为某些属性页面贡献和对象贡献表达式的条件。在大多数情况下，工作台提供<a href="../reference/api/org/eclipse/core/expressions/IEvaluationContext.html">IEvaluationContext</a> ，命令核心表达式将被评估。
+</p>
+
+<p><a href="../reference/api/org/eclipse/ui/services/IEvaluationService.html">IEvaluationService</a>提供了允许其他客户端和扩展点构建器挂接到工作台核心表达式的方法。
+</p>
+
+<h2>在Workbench中使用Core Expressions</h2>
+
+<p>核心表达式在plugin.xml文件中以声明方式使用，并以编程方式使用工作台中提供的一些服务。
+</p>
+
+<p>注意：使用核心表达式的工作台扩展点中的元素（如<code>enabledWhen</code> ）采用一个子核心表达式元素。他们没有<b>和</b>他们的元素在一起。
+</p>
+
+<h3>声明性表达示例</h3>
+
+<ol>
+<li><a href="#ex1">基本的IStructuredSelection</a></li>
+<li><a href="#ex2">IResources和Package或Project Explorer</a></li>
+<li><a href="#ex3">积极的上下文</a></li>
+<li><a href="#ex4">活动视图和编辑器</a></li>
+<li><a href="#ex5">ActionSets和上下文</a></li>
+</ol>
+
+<a name="ex1"></a><h4>基本的IStructuredSelection</h4>
+
+<p>大多数树或表像查看器返回<a href="../reference/api/org/eclipse/jface/viewers/IStructuredSelection.html">IStructuredSelection</a> 。例如，Project Explorer和Package Explorer。
+</p>
+
+<p>使用默认变量时，必须将其视为<code>java.util.Collection</code> 。这意味着使用&lt;count&gt;或&lt;iterate&gt;。如果所有选定项都是<code>Person</code> ，则下面的表达式返回true。
+</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;iterate ifEmpty="false"&gt;
+        &lt;instanceof value="org.eclipse.ui.examples.contributions.model.Person"/&gt;
+    &lt;/iterate&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+<p>这相当于：</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;with variable="selection"&gt;
+        &lt;iterate ifEmpty="false"&gt;
+            &lt;instanceof value="org.eclipse.ui.examples.contributions.model.Person"/&gt;
+        &lt;/iterate&gt;
+    &lt;/with&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+<p><code>iterate</code>的行为是：</p>
+
+<ul>
+<li>除非设置<code>operator</code>属性，否则<code>iterate</code> <b>和</b>计算集合中每个元素的子表达式的结果。</li>
+<li><code>iterate</code>与其子<code>iterate</code>的语义与&lt;和&gt;相同</li>
+<li>使用运算符<code>iterate</code> <b>并</b>在集合为空时返回true，除非您设置了<code>ifEmpty</code>属性。</li>
+</ul>
+
+
+<p>如果要在仅选择一个Person时启用，则可以包含<code>count</code>元素。
+</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;with variable="selection"&gt;
+        &lt;count value="1"/&gt;
+        &lt;iterate ifEmpty="false"&gt;
+            &lt;instanceof value="org.eclipse.ui.examples.contributions.model.Person"/&gt;
+        &lt;/iterate&gt;
+    &lt;/with&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+<p>使用默认变量的相同表达式：</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;and&gt;
+        &lt;count value="1"/&gt;
+        &lt;iterate ifEmpty="false"&gt;
+            &lt;instanceof value="org.eclipse.ui.examples.contributions.model.Person"/&gt;
+        &lt;/iterate&gt;
+    &lt;/and&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+
+
+<a name="ex2"></a><h4>IResources和Package或Project Explorer</h4>
+
+<p>Package Explorer是<a href="../reference/api/org/eclipse/core/resources/IResource.html">org.eclipse.core.resources的混合体<a href="../reference/api/org/eclipse/core/resources/IResource.html">。IResource</a> ， <code>org.eclipse.jdt.core.IJavaElement</code>和其他类。如果您要查找所有“* .java”文件，则需要：</p>
+<ol>
+<li>迭代默认变量。</li>
+<li>使选择元素适应您的类，在本例中为<a href="../reference/api/org/eclipse/core/resources/IResource.html">org.eclipse.core.resources。IResource</a> 。</li>
+<li>使用org.eclipse.core.resources属性测试程序之一来测试<a href="../reference/api/org/eclipse/core/resources/IResource.html">org.eclipse.core.resources。IResource</a>属性。</li>
+</ol> 
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;with variable="selection"&gt;
+        &lt;iterate ifEmpty="false"&gt;
+            &lt;adapt type="org.eclipse.core.resources.IResource"&gt;
+                &lt;test property="org.eclipse.core.resources.name"
+                         value="*.java"/&gt;
+            &lt;/adapt&gt;
+        &lt;/iterate&gt;
+    &lt;/with&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+<p>在使用当前选择和属性测试器时，使用<code>adapt</code>并不总是有意义的。在这些情况下，最好检查被测对象是否为该属性测试器的有效类型：</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;with variable="selection"&gt;
+        &lt;iterate ifEmpty="false"&gt;
+            &lt;instanceof type="org.eclipse.core.resources.IResource"/&gt;
+            &lt;test property="org.eclipse.core.resources.name"
+                     value="*.java"/&gt;
+        &lt;/iterate&gt;
+    &lt;/with&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+
+<a name="ex3"></a><h4>积极的上下文</h4>
+
+<p>如果在视图或编辑器激活上下文时应启用处理程序，则可以使用<code>activeContexts</code>变量。上下文在<a href="../reference/extension-points/org_eclipse_ui_contexts.html">org.eclipse.ui.contexts</a>扩展点中定义，并使用<a href="../reference/api/org/eclipse/ui/contexts/IContextService.html">org.eclipse.ui.contexts以编程方式激活<a href="../reference/api/org/eclipse/ui/contexts/IContextService.html">。IContextService</a> 。
+</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;with variable="activeContexts"&gt;
+        &lt;iterate ifEmpty="false" operator="or"&gt;
+            &lt;equals value="org.example.view.context"/&gt;
+        &lt;/iterate&gt;
+    &lt;/with&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+<a name="ex4"></a><h4>活动视图和编辑器</h4>
+
+<p>对于要提供给特定视图或编辑器的处理程序，可以在<code>activeWhen</code>子句中使用<code>activeEditorId</code>和<code>activePartId</code> 。这是应该在文本编辑器中处于活动状态的处理程序的示例：</p>
+
+<pre>
+&lt;activeWhen&gt;
+    &lt;with variable="activeEditorId"&gt;
+        &lt;equals value="org.eclipse.ui.DefaultTextEditor"/&gt;
+    &lt;/with&gt;
+&lt;/activeWhen&gt;
+</pre>
+
+<p>以下子句适用于在Project Explorer中处于活动状态的处理程序：</p>
+
+<pre>
+&lt;activeWhen&gt;
+    &lt;with variable="activePartId"&gt;
+        &lt;equals value="org.eclipse.ui.navigator.ProjectExplorer"/&gt;
+    &lt;/with&gt;
+&lt;/activeWhen&gt;
+</pre>
+
+<a name="ex5"></a><h4>ActionSets和上下文</h4>
+
+<p>从3.3开始，所有<a href="../reference/extension-points/org_eclipse_ui_actionSets.html">org.eclipse.ui.actionSets</a> <b>（Deprecated）都会</b>生成一个父级为<code>org.eclipse.ui.contexts.actionSet</code>的上下文。与此父级的上下文将从中过滤掉<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接，键首选项页面"> <b>常规&gt;键</b></a>首选项页面。
+</p>
+
+<p>显示actionSet会激活匹配的上下文。这允许提供的命令“加入”actionSets，如调试启动actionSet。
+</p>
+
+<pre>
+&lt;enabledWhen&gt;
+    &lt;with variable="activeContexts"&gt;
+        &lt;iterate ifEmpty="false" operator="or"&gt;
+            &lt;equals value="org.eclipse.debug.ui.launchActionSet"/&gt;
+        &lt;/iterate&gt;
+    &lt;/with&gt;
+&lt;/enabledWhen&gt;
+</pre>
+
+<p>注意：使用actionSets启用或显示的命令当前未显示在“ <b>自定义透视”对话框中</b> 。
+</p>
+
+<h3>工作台中提供的变量</h3>
+
+<p><a href="../reference/api/org/eclipse/ui/services/IEvaluationService.html">IEvaluationService</a>提供全局选择作为默认变量（在<code>java.util.Collection</code> ）用于表达评估。它可以是空的，有一个条目（如果<a href="../reference/api/org/eclipse/jface/viewers/ISelection.html">ISelection</a>类似于<a href="../reference/api/org/eclipse/jface/text/ITextSelection.html">ITextSelection</a> ），或者具有<a href="../reference/api/org/eclipse/jface/viewers/IStructuredSelection.html">IStructuredSelection</a>的内容。
+</p>
+
+<p>工作台在<a href="../reference/api/org/eclipse/ui/ISources.html">ISources</a>中发布可以在&lt;with /&gt;元素中使用的变量，并且可以从<a href="../reference/api/org/eclipse/core/expressions/IEvaluationContext.html">IEvaluationContext中</a>检索。某些变量可能未设置，具体取决于评估它们时的当前应用程序上下文。下表解释了一些比较常用的方法：</p>
+
+<table border="1">
+<tr>
+<th>名称</th>
+<th>类型</th>
+<th>描述</th>
+
+<th>以来</th>
+</tr>
+
+<tr>
+<td>activeContexts</td>
+<td>一个<code>java.util.<code>java.lang. Collection</code> <code>java.lang.串</code></td>
+<td>
+<p>这是活动上下文ID的集合，作为字符串。最常用的是带有<code>org.eclipse.core.expressions. &lt;iterate /&gt;，&lt;count /&gt;和&lt;test /&gt; <code>org.eclipse.core.expressions.PropertyTester</code> 。在<b>3.3中，</b>操作集由父级为<code>org.eclipse.ui.actionSet</code>的上下文镜像，活动操作集显示在活动上下文列表中。
+
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeShell</td>
+<td><code><a href="../reference/api/org/eclipse/swt/widgets/Shell.html">是org.eclipse.swt.widgets。贝壳</a></code></td>
+<td>
+<p>目前活跃的shell。它可以是对话框或工作台窗口shell。
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeWorkbenchWindowShell</td>
+<td><code><a href="../reference/api/org/eclipse/swt/widgets/Shell.html">是org.eclipse.swt.widgets。贝壳</a></code></td>
+<td>
+<p>活动工作台窗口shell。
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeWorkbenchWindow</td>
+
+<td><code><a href="../reference/api/org/eclipse/ui/IWorkbenchWindow.html">org.eclipse.ui。IWorkbenchWindow</a></code></td>
+<td>
+<p>活动工作台窗口。
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeWorkbenchWindow.isCoolbarVisible</td>
+<td><code>java.lang中。布尔</code></td>
+<td>
+<p>报告当前活动工作台窗口的冷却栏可见性。
+
+</p>
+</td>
+<td>3.3</td>
+</tr>
+
+<tr>
+<td>activeWorkbenchWindow.isPerspectiveBarVisible</td>
+<td><code>java.lang中。布尔</code></td>
+<td>
+<p>报告当前活动工作台窗口的透视栏可见性。
+</p>
+</td>
+<td>3.3</td>
+
+</tr>
+
+<tr>
+<td>activeWorkbenchWindow.activePerspective</td>
+<td><code>java.lang中。串</code></td>
+<td>
+<p>报告活动工作台窗口的当前透视图的名称。
+</p>
+</td>
+<td>3.4</td>
+</tr>
+
+<tr>
+<td>activeEditor</td>
+
+<td><code><a href="../reference/api/org/eclipse/ui/IEditorPart.html">org.eclipse.ui。IEditorPart</a></code></td>
+<td>
+<p>当前活动的编辑器。即使编辑器不是当前活动的部分，也会记住这一点。
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeEditorId</td>
+<td><code>java.lang中。串</code></td>
+<td>
+<p>当前活动编辑器的ID。这可以用于编辑器类型的表达式。
+
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeEditorInput</td>
+<td><code><a href="../reference/api/org/eclipse/ui/IEditorInput.html">org.eclipse.ui。IEditorInput</a></code></td>
+<td>
+<p>当前活动编辑器的输入。这对房产测试人员很有用。
+
+</p>
+</td>
+<td>3.5</td>
+</tr>
+
+
+
+<tr>
+<td>activePart</td>
+<td><code><a href="../reference/api/org/eclipse/ui/IWorkbenchPart.html">org.eclipse.ui。IWorkbenchPart</a></code></td>
+<td>
+<p>活动部分，可以与活动编辑器相同。
+</p>
+</td>
+<td>3.2</td>
+
+</tr>
+
+<tr>
+<td>activePartId</td>
+<td><code>java.lang中。串</code></td>
+<td>
+<p>当前活动部分的ID。
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeSite</td>
+
+<td><code><a href="../reference/api/org/eclipse/ui/IWorkbenchPartSite.html">org.eclipse.ui。IWorkbenchPartSite</a></code></td>
+<td>
+<p>当前活动部分的站点。
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>选择</td>
+<td><code><a href="../reference/api/org/eclipse/jface/viewers/ISelection.html">org.eclipse.jface.viewers。■选型</a></code></td>
+<td>
+<p>目前的全球选择。它通常与<code>org.eclipse.core.expressions. &lt;test /&gt;元素一起使用<code>org.eclipse.core.expressions.PropertyTester</code> ，程序化核心表达式， <b>3.3中</b>带有&lt;iterate /&gt;和&lt;count /&gt;元素。
+
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeMenu</td>
+<td>一个<code>java.util.<code>java.lang. Collection</code> <code>java.lang.串</code></td>
+<td>
+<p>这是显示上下文菜单的ID列表。示例类似于#TextEditorRuler或部件ID。最常用的是带有<code>org.eclipse.core.expressions. &lt;iterate /&gt;，&lt;count /&gt;和&lt;test /&gt; <code>org.eclipse.core.expressions.PropertyTester</code> 。
+
+</p>
+</td>
+<td>3.2</td>
+</tr>
+
+<tr>
+<td>activeMenuSelection</td>
+<td><code><a href="../reference/api/org/eclipse/jface/viewers/ISelection.html">org.eclipse.jface.viewers。■选型</a></code></td>
+<td>
+<p>这是在显示上下文菜单时可用的选项。它是用于注册上下文菜单的选择提供程序的选择，通常来自<a href="../reference/api/org/eclipse/ui/IWorkbenchPartSite.html#registerContextMenu(org.eclipse.jface.action.MenuManager, org.eclipse.jface.viewers.ISelectionProvider)">getSite（）。registerContextMenu（*）</a> 。它通常与<code>selection</code>变量相同，但并非总是如此。
+</p>
+</td>
+<td>3.3</td>
+</tr>
+
+<tr>
+<td>activeMenuEditorInput</td>
+<td><code><a href="../reference/api/org/eclipse/jface/viewers/ISelection.html">org.eclipse.jface.viewers。■选型</a></code></td>
+<td>
+<p>这是在显示上下文菜单时可用的选项。它是编辑器输入的选择，通常是在<code>getEditorSite().registerContextMenu(*)</code>期间将<code>getEditorSite().registerContextMenu(*)</code>设置为<code>true</code> 。
+
+</p>
+</td>
+<td>3.3</td>
+</tr>
+
+<tr>
+<td>activeFocusControl</td>
+<td><code><a href="../reference/api/org/eclipse/swt/widgets/Control.html">是org.eclipse.swt.widgets。控制</a></code></td>
+<td>
+<p>具有焦点并已在<a href="../reference/api/org/eclipse/ui/swt/IFocusService.html">IFocusService中</a>注册的控件。
+</p>
+</td>
+
+<td>3.3</td>
+</tr>
+
+<tr>
+<td>activeFocusControlId</td>
+<td><code>java.lang中。串</code></td>
+<td>
+<p>具有焦点并已在<a href="../reference/api/org/eclipse/ui/swt/IFocusService.html">IFocusService中</a>注册的控件的ID。
+</p>
+</td>
+<td>3.3</td>
+
+</tr>
+
+<tr>
+<td>org.eclipse.core.runtime。平台</td>
+<td><code><a href="../reference/api/org/eclipse/core/runtime/Platform.html">org.eclipse.core.runtime。平台</a></code></td>
+<td>
+<p>运行时Platform类可用于与<code>org.eclipse.core.runtime.isBundleInstalled</code>和<code>org.eclipse.core.runtime.product</code>等属性测试器一起使用。
+</p>
+</td>
+<td>3.3</td>
+
+</tr>
+
+</table>
+
+
+<h3>工作台中提供的物业测试人员</h3>
+
+
+<p>工作台提供了几个可用于核心表达式的属性测试器。该表达式定义了一个属性属性，然后将'args'和'value'组合在一起，该值依赖于测试器实现。property属性是命名空间和属性名称的组合。例如，要测试IResource名称，该属性将为<code>org.eclipse.core.resources.name</code> 。
+</p>
+
+<table border="1">
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+</tr>
+
+<tr>
+<td>org.eclipse.core.runtime</td>
+<td>
+<p><code>org.eclipse.core.runtime。平台</code>
+
+</p>
+</td>
+<td>
+<code>org.eclipse.core.internal.expressions.propertytester。PlatformPropertyTester</code>
+</td>
+</tr>
+
+
+<tr>
+<th>属性</th>
+<th colspan="2">描述</th>
+</tr>
+
+<tr>
+<td>
+<p>产品</p>
+</td>
+<td colspan="2">
+<p>测试当前活动产品的ID。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>isBundleInstalled</p>
+</td>
+<td colspan="2">
+
+<p>测试是否在运行环境中安装了给定的bundle。使用'args'属性传递包ID。</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>bundleState</p>
+</td>
+<td colspan="2">
+
+<p>在运行环境中测试捆绑包的状态。使用'args'属性传递bundle ID和'value'属性以传递<a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle中</a>定义的状态，例如“ACTIVE”。
+</p>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" bgcolor="#000000" height="3"></td>
+</tr>
+
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+</tr>
+
+<tr>
+<td>org.eclipse.core.resources</td>
+<td>
+<p><code>org.eclipse.core.resources。的IResource</code>
+</p>
+</td>
+<td>
+<code>org.eclipse.core.internal.propertytester。ResourcePropertyTester</code>
+</td>
+</tr>
+
+
+<tr>
+<th>属性</th>
+<th colspan="2">描述</th>
+</tr>
+
+
+
+<tr>
+<td>
+<p>名称</p>
+</td>
+<td colspan="2">
+<p>指示文件名的属性（值<code>"name"</code> ）。 “*”和“？“支持通配符。
+
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>路径</p>
+</td>
+<td colspan="2">
+<p>指示文件路径的属性（值<code>"path"</code> ）。 “*”和“？“支持通配符。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>延期</p>
+</td>
+<td colspan="2">
+<p>指示文件扩展名的属性（值<code>"extension"</code> ）。 “*”和“？“支持通配符。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>只读</p>
+
+</td>
+<td colspan="2">
+<p>指示文件是否为只读的属性（值<code>"readOnly"</code> ）。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>projectNature</p>
+</td>
+<td colspan="2">
+<p>指示项目性质的属性（值<code>"projectNature"</code> ）。
+
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>persistentProperty</p>
+</td>
+<td colspan="2">
+<p>指示所选资源上的持久属性的属性（值<code>"persistentProperty"</code> ）。如果给出了两个参数，则将第一个视为属性名称，将第二个视为期望的属性值。如果只给出一个参数（或只是期望值），则将其视为属性名称，并简单地测试资源上是否存在属性。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>projectPersistentProperty</p>
+</td>
+<td colspan="2">
+<p>一个属性，指示所选资源项目的持久属性。（值<code>"projectPersistentProperty"</code> ）。如果给出了两个参数，则将第一个视为属性名称，将第二个视为期望的属性值。如果只给出一个参数（或只是期望值），则将其视为属性名称，并简单地测试资源上是否存在属性。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>sessionProperty</p>
+
+</td>
+<td colspan="2">
+<p>指示所选资源上的会话属性的属性（值<code>"sessionProperty"</code> ）。如果给出了两个参数，则将第一个视为属性名称，将第二个视为期望的属性值。如果只给出一个参数（或只是期望值），则将其视为属性名称，并简单地测试资源上是否存在属性。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>projectSessionProperty</p>
+</td>
+<td colspan="2">
+<p>一个属性，指示所选资源项目的会话属性。（值<code>"projectSessionProperty"</code> ）。如果给出了两个参数，则将第一个视为属性名称，将第二个视为期望的属性值。如果只给出一个参数（或只是期望值），则将其视为属性名称，并简单地测试资源上是否存在属性。
+
+</p>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" bgcolor="#000000" height="3"></td>
+</tr>
+
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+</tr>
+
+<tr>
+<td>org.eclipse.core.resources</td>
+<td>
+<p><code>org.eclipse.core.resources。的IFile</code>
+</p>
+</td>
+<td>
+<code>org.eclipse.core.internal.propertytester。FilePropertyTester</code>
+</td>
+</tr>
+
+
+<tr>
+
+<th>属性</th>
+<th colspan="2">描述</th>
+</tr>
+
+
+
+<tr>
+<td>
+<p>contentTypeId</p>
+</td>
+<td colspan="2">
+<p>一个属性，指示我们要查看文件是否与匹配给定标识符的内容类型匹配。标识符作为预期值提供。
+</p>
+</td>
+
+</tr>
+
+<tr>
+<td colspan="3" bgcolor="#000000" height="3"></td>
+</tr>
+
+
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+</tr>
+
+<tr>
+
+<td>org.eclipse.core.resources</td>
+<td>
+<p><code>org.eclipse.core.resources。为IProject</code>
+</p>
+</td>
+<td>
+<code>org.eclipse.core.internal.propertytester。ProjectPropertyTester</code>
+</td>
+</tr>
+
+
+<tr>
+<th>属性</th>
+
+<th colspan="2">描述</th>
+</tr>
+
+<tr>
+<td>
+<p>打开</p>
+</td>
+<td colspan="2">
+<p>指示项目是否已打开的属性（值<code>"open"</code> ）。
+</p>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" bgcolor="#000000" height="3"></td>
+</tr>
+
+
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+</tr>
+
+<tr>
+<td>org.eclipse.core.resources</td>
+
+<td>
+<p><code>org.eclipse.core.resources.mapping。ResourceMapping</code>
+</p>
+</td>
+<td>
+<code>org.eclipse.core.internal.propertytester。ResourceMappingPropertyTester</code>
+</td>
+</tr>
+
+
+<tr>
+<th>属性</th>
+<th colspan="2">描述</th>
+
+</tr>
+
+<tr>
+<td>
+<p>projectPersistentProperty</p>
+</td>
+<td colspan="2">
+<p>一个属性，指示所选资源项目的持久属性。（值<code>"projectPersistentProperty"</code> ）。如果给出了两个参数，则将第一个视为属性名称，将第二个视为期望的属性值。如果只给出一个参数（或只是期望值），则将其视为属性名称，并简单地测试资源上是否存在属性。
+</p>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" bgcolor="#000000" height="3"></td>
+
+</tr>
+
+
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+</tr>
+
+<tr>
+<td>org.eclipse.ui</td>
+<td>
+<p><code>org.eclipse.ui。IWorkbench（目前不提供）</code>
+
+</p>
+</td>
+<td>
+<code>org.eclipse.ui.internal.activities。ActivityPropertyTester</code>
+</td>
+</tr>
+
+
+<tr>
+<th>属性</th>
+<th colspan="2">描述</th>
+</tr>
+
+<tr>
+<td>
+<p>isActivityEnabled</p>
+</td>
+<td colspan="2">
+<p>测试是否启用了'args'中的活动。
+</p>
+</td>
+</tr>
+
+<tr>
+<td>
+<p>isCategoryEnabled</p>
+</td>
+
+<td colspan="2">
+<p>测试是否启用了'args'中的类别。
+</p>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" bgcolor="#000000" height="3"></td>
+</tr>
+
+
+<tr>
+<th>命名空间</th>
+<th>类型</th>
+<th>履行</th>
+
+</tr>
+
+<tr>
+<td>org.eclipse.ui.workbenchWindow</td>
+<td>
+<p><code>org.eclipse.ui。IWorkbenchWindow</code>
+</p>
+</td>
+<td>
+<code>org.eclipse.ui.internal。OpenPerspectivePropertyTester</code>
+</td>
+</tr>
+
+<tr>
+<th>属性</th>
+<th colspan="2">描述</th>
+</tr>
+
+<tr>
+<td>
+<p>isPerspectiveOpen</p>
+</td>
+<td colspan="2">
+<p>测试是否有任何透视图。
+</p>
+</td>
+
+</tr>
+
+</table>
+
+
+
+
+
+</body>
+</html>

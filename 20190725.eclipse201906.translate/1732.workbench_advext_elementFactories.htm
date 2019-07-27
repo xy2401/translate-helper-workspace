@@ -1,0 +1,77 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>元素工厂</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+
+<h3>元素工厂</h3>
+<p>元素工厂用于从工作台关闭期间保存的数据重新创建工作台模型对象。</p>
+<p>在仔细研究元素工厂扩展之前，我们需要回顾一下在整个平台中使用的一般技术，以将插件特定行为添加到通用平台模型对象。</p>
+
+<h4>
+<a name="workbench_advext_adaptables">IAdaptables和工作台适配器</a></h4>
+<p>浏览各种工作台类时，您会注意到许多工作台接口扩展了<b><a href="../reference/api/org/eclipse/core/runtime/IAdaptable.html">IAdaptable</a></b>接口。</p>
+<p>插件使用适配器将特定行为添加到系统中的预先存在的类型。例如，工作台可能需要资源来回答标签和图像以用于显示目的。我们知道向低级对象添加UI特定行为并不是一个好的设计，那么我们如何才能将这种行为添加到资源类型中呢？</p>
+<p>插件可以注册将行为添加到预先存在的类型的适配器。然后，应用程序代码可以查询特定适配器的对象。如果有一个注册的应用程序，应用程序可以获取适配器并使用适配器中定义的新行为。</p>
+<p>通过提供动态查询对象的适配器的工具，我们可以在系统发展过程中提高系统的灵活性。可以通过新插件为平台类型注册新适配器，而无需更改原始类型的定义。向对象询问特定适配器的模式如下：</p>
+<pre>
+   //given an object o, we want to do &quot;workbench&quot; things with it.
+   if (!(o instanceof IAdaptable)) {
+      return null;
+   }
+   IWorkbenchAdapter adapter = (IWorkbenchAdapter)o.getAdapter(IWorkbenchAdapter.class);
+   if (adapter == null)
+      return null;
+   // now I can treat o as an IWorkbenchAdapter
+   ...
+</pre>
+<p>如果没有为该对象注册适配器，则将返回null作为适配器。客户必须准备好处理这种情况。有时可能尚未注册预期的适配器。</p>
+<p>工作台使用适配器从基础平台类型（例如<b><a href="../reference/api/org/eclipse/core/resources/IResource.html">IResource）</a></b>获取UI信息。适配器保护基本类型不受特定于UI的知识的影响，并允许工作台在不改变基础定义的情况下发展其接口。</p>
+<p>如果没有适配器，任何可能在工作台API中传递的类都必须实现UI接口，这会增加类定义的数量，引入紧密耦合，并在核心类和UI类之间创建循环依赖。使用适配器，每个类都实现<b><a href="../reference/api/org/eclipse/core/runtime/IAdaptable.html">IAdaptable</a></b>并使用适配器注册表来允许插件扩展基类型的行为。</p>
+<p>在整个工作台代码中，您将看到为适配器查询平台核心类型的情况。该查询用于获取知道如何回答关于类型的面向UI的信息的对象。</p>
+
+
+<h4>元素工厂</h4>
+<p>当用户关闭工作台时，它必须保存工作台中显示的<b><a href="../reference/api/org/eclipse/core/runtime/IAdaptable.html">IAdaptable</a></b>对象的当前状态。通过以特殊格式<a href="../reference/api/org/eclipse/ui/IMemento.html"><b>IMemento</b></a>保存对象的原始数据参数来存储对象的状态。还可以存储可以从<a href="../reference/api/org/eclipse/ui/IMemento.html"><b>IMemento</b></a>重新创建对象的工厂的ID，并将数据保存在文件系统中。</p>
+<p>重新启动平台后，工作台会找到与<a href="../reference/api/org/eclipse/ui/IMemento.html"><b>IMemento</b></a>工厂ID关联的元素工厂。它通过检查插件注册表以查找对<a href="../reference/extension-points/org_eclipse_ui_elementFactories.html"><b>org.eclipse.ui.elementFactories</b></a>扩展的贡献来查找工厂。</p>
+<p>标记非常简单。我们只需要指定工厂的id和实现工厂的相应类。</p>
+<p>以下代码段来自workbench <b>plugin.xml</b> 。</p>
+<pre>
+&lt;extension
+         point=&quot;org.eclipse.ui.elementFactories&quot;&gt;
+      &lt;factory
+            class=&quot;org.eclipse.ui.internal.model.ResourceFactory&quot;
+            id=&quot;org.eclipse.ui.internal.model.ResourceFactory&quot;&gt;
+      &lt;/factory&gt;
+      &lt;factory
+            class=&quot;org.eclipse.ui.internal.model.WorkspaceFactory&quot;
+            id=&quot;org.eclipse.ui.internal.model.WorkspaceFactory&quot;&gt;
+      &lt;/factory&gt;
+      &lt;factory
+            class=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot;
+            id=&quot;org.eclipse.ui.part.FileEditorInputFactory&quot;&gt;
+      &lt;/factory&gt;
+      &lt;factory
+            class=&quot;org.eclipse.ui.internal.dialogs.WelcomeEditorInputFactory&quot;
+            id=&quot;org.eclipse.ui.internal.dialogs.WelcomeEditorInputFactory&quot;&gt;
+      &lt;/factory&gt;
+      &lt;factory
+            class=&quot;org.eclipse.ui.internal.WorkingSetFactory&quot;
+            id=&quot;org.eclipse.ui.internal.WorkingSetFactory&quot;&gt;
+      &lt;/factory&gt;
+&lt;/extension&gt;
+
+</pre>
+
+</body>
+</html>

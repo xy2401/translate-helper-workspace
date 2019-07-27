@@ -1,0 +1,103 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) Oakland Software and others 2008, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>配置Common Navigator</title>
+</head>
+<body bgcolor="#ffffff" >
+
+<h1>配置Common Navigator</h1>
+
+<p>本节定义概念级别的配置;为了清晰和简洁，省略了某种程度的细节。有关完整的详细信息，请参阅扩展点文档或“ <a href="cnf_operation.htm">操作主题”</a>部分。</p>
+<ul>
+	<li><b><a href="../reference/extension-points/org_eclipse_ui_navigator_viewer.html">org.eclipse.ui.navigator.viewer</a></b></li>
+	<li><b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent</a></b></li>
+	<li><b><a href="../reference/extension-points/org_eclipse_ui_navigator_linkHelper.html">org.eclipse.ui.navigator.linkHelper</a></b></li>
+</ul>
+
+
+<h2>查看器配置</h2>
+
+<p>由于CommonNavigator是View，因此使用<b><a href="../reference/extension-points/org_eclipse_ui_views.html">org.eclipse.ui.views</a></b>扩展点添加它。视图实例的CNF配置方面使用相应的<b><a href="../reference/extension-points/org_eclipse_ui_navigator_viewer.html">org.eclipse.ui.navigator.viewer</a></b>扩展点指定。</p>
+
+<p>可以将CNF工具用于任意TreeViewer（???这可能是任何StructuredViewer）。在这种情况下，您仍然需要使用此扩展点，但它仅用于将CNF视图信息与NCE绑定。然后以编程方式（???如何将您的Viewer与NavigatorContentService绑定。</p>
+<p>该视图可能与<b><a href="#contentExtension">导航器内容扩展</a></b>相关联， <b><a href="#contentExtension">导航内容扩展</a></b>定义了如何找到和呈现其内容。这里的条目用于查找NCE，常用过滤器和常用向导。</p>
+
+<p>该视图还可以与<b><a href="#actionProviders">动作提供者</a></b>相关联， <b><a href="#actionProviders">动作提供者</a></b>定义用于程序化更新和提供动作或可重定向动作的代码。此处的条目用于查找操作提供程序。</p>
+
+<p>视图还可以与<b><a href="#linkHelpers">Link Helpers</a></b>相关联， <b><a href="#linkHelpers">Link Helpers</a></b>定义视图中的选择与活动编辑器之间的关系。</p>
+
+<p>内容扩展，常见向导，通用过滤器，操作提供程序和链接帮助程序使用包含/排除机制和模式匹配功能绑定到视图。这允许以粒度方式指定实际内容扩展（下面定义），使得视图可以仅选择他们实际需要的那些。机制的排除部分的要点是排除include语句中指定的不需要的项。例如，include语句可以指定“com.mycompany.content。*”，而exclude可以通过说“com.mycompany.content.test。*”来删除测试内容扩展。</p>
+
+<p>视图始终与弹出菜单相关联。此级别弹出菜单配置的一个重要部分是插入点，即根据菜单显示的时间和位置添加菜单项的位置。默认情况下，提供一组标准插入点（在扩展点文档中进行了描述）。但是，您可以使用<b>popupMenus</b>直接定义插入点。
+</p>
+
+<p>您还可以使用<b>popupMenuId</b>指示视图使用id的特定弹出菜单，并且可以指示是否忽略对菜单的平台操作贡献。</p>
+
+<p>在启动的情况下，有必要在视图树的根节点上调用一些内容扩展，以获取初始子集。通过在viewerContentBinding上设置isRoot（）属性来指定这组内容扩展。</p>
+
+
+<p>这定义：</p>
+<ol>
+	<li><b>viewerContentBinding</b> - 绑定使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / navigatorContent</a></b>扩展点指定的Content Extension或Common Filter;</li>
+	<li><b>viewerActionBinding</b> - 绑定使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / actionProvider</a></b>扩展点指定的操作提供程序;</li>
+	<li><b>popupMenus</b> - 为与查看器关联的弹出菜单定义插入点（可添加菜单项的标准位置）。与popupMenuId互斥。</li>
+	<li><b>popupMenuId</b> - 使视图使用<b><a href="../reference/extension-points/org_eclipse_ui_popupMenus.html">org.eclipse.ui.popupMenus</a></b>扩展点定义的菜单。与popupMenus互斥。</li>
+	<li><b>dragAssistent</b> - 指向可能提供从查看器开始拖动时要使用的额外传输类型的代码。</li>
+	<li><b>options</b> - 指定用于控制视图表示的选项。例如，这些允许隐藏视图顶部显示的菜单和按钮。这些选项由<b><a href="../reference/api/org/eclipse/ui/navigator/INavigatorViewerDescriptor.html">INavigatorViewerDescriptor</a></b>定义</li>
+</ol>
+
+<a name="contentExtension"></a>
+<h2>导航内容扩展（NCE）</h2>
+
+<p>使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / navigatorContent</a></b>指定的导航器内容扩展定义了在特定条件下启用的命名的属性集合（内容提供程序类，标签提供程序类，图标等）（通常是响应于导航员）。内容扩展的示例是针对资源的示例。内容扩展对于描述可能包含在视图中的其他模型对象很有用。</p>
+
+<p>内容扩展的定义与它们与特定视图实例的关联分开，允许它们被共享和重用。每个内容扩展具有id，其用于将其与视图绑定，以及显示给用户的显示名称，以允许由与每个视图相关联的用户界面激活或停用内容扩展。</p>
+
+<p>内容扩展可能有效或无效。这可以由用户使用导航器的“过滤器和自定义”菜单项进行控制。处理视图时不考虑非活动内容扩展。</p>
+
+<p>内容扩展定义了以下内容：</p>
+<ol>
+	<li><b>triggerPoints</b> - 指定基于给定对象启用此内容扩展的条件。您可以在应为其启用内容扩展的对象上指定具有核心表达式的测试。</li>
+	<li><b>possibleChildren</b> - 类似于triggerPoints，但用于已知所需内容扩展的父级的情况，例如我们需要确定哪个内容扩展需要根据作为父级的drop target来处理drop的情况。将添加到树中的最终对象。</li>
+	<li><b>enablement</b> - 指定同时为<b>triggerPoints</b>和<b>possibleChildren</b>的启用。</li>
+	<li><b>labelProvider</b> - <b><a href="../reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a></b>提供要在视图中显示的文本。</li>
+	<li><b>contentProvider</b> - <b><a href="../reference/api/org/eclipse/jface/viewers/ITreeContentProvider.html">ITreeContentProvider</a></b>提供获取查看器的父对象和子对象的方法。其他接口也是可能的，请参阅这些扩展点文档。</li>
+	<li><b>descriptionProvider</b> - <b><a href="../reference/api/org/eclipse/ui/navigator/IDescriptionProvider.html">IDescriptionProvider</a></b>提供状态栏中显示的描述。</li>
+	<li><b>activeByDefault</b> - 表示此内容扩展应在工作台的默认配置中激活（例如，新工作区）。</li>
+	<li><b>priority</b> - 用于确定在启用多个扩展的情况下使用哪个内容扩展（基于其启用条件）。</li>
+	<li><b>icon</b> - 用于将对象与特定图标相关联。</li>
+	<li><b>providesSavables</b> -表示内容提供商提供saveables。如果为true，则内容提供者必须适应SavablesProvider。</li>
+</ol>
+
+<h3>普通过滤器</h3>
+
+<p>使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / commonFilter</a></b>指定的公共过滤器定义了一个可由用户在视图中控制的过滤器。过滤器定义包含id，描述过滤器的描述，描述过滤掉内容的描述，以及标识过滤器抑制的对象的条件（使用核心表达式）。</p>
+<p>使用查看器配置的<b>viewerContentBinding</b>元素将公共过滤器绑定到视图。</p>
+
+<h3>共同向导</h3>
+
+<p>使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / commonWizard</a></b>指定的常用过滤器定义了要在新的，导入或导出菜单中显示的向导。</p>
+<p>使用查看器配置的<b>viewerContentBinding</b>元素将公共向导绑定到视图。</p>
+
+<h3>行动提供者</h3>
+<a name="actionProviders"></a>
+
+<p>使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / actionProvider</a></b>指定的操作提供程序允许您指定一个类，子类化<b><a href="../reference/api/org/eclipse/ui/navigator/CommonActionProvider.html">org.eclipse.ui.navigator。右键单击和选择时调用的CommonActionProvider</a></b> ，允许您为弹出菜单或操作栏添加内容。</p>
+
+<p>可以在扩展点的顶级定义动作提供者，而不与任何内容扩展相关联。这些操作提供程序已命名，然后使用<b>org.eclipse.ui.navigator.viewer / viewerActionBinding</b>绑定到CommonViewer。</p>
+
+<p>动作提供者还可以与内容扩展相关联，在这种情况下，它们对内容扩展是活动的。这是通过在<b>org.eclipse.ui.navigator.navigatorContent / navigatorContent</b>扩展点中包含操作提供程序来完成的。</p>
+
+<h3>链接助手</h3>
+<a name="linkHelpers"></a>
+
+<p>使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_linkHelper.html">org.eclipse.ui.navigator.linkHelper</a></b>指定的链接助手允许您控制“使用编辑器链接”与导航器中的选择与编辑器匹配的方式，并将活动编辑器与导航器中的选择进行匹配。</p>
+
+</body>
+</html>

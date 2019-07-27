@@ -1,0 +1,58 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>撤消和IDE Workbench</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>撤消和IDE Workbench</h3>
+<p>我们已经看到使用workbench协议访问操作历史和工作台撤消上下文的代码片段。这是使用<a href="../reference/api/org/eclipse/ui/operations/IWorkbenchOperationSupport.html"><b>IWorkbenchOperationSupport</b></a>实现的，可以从工作台获得。工作台范围内的撤销上下文的概念相当普遍。工作台应用程序可以确定工作台撤消上下文隐含的特定范围，以及在提供撤消支持时哪些视图或编辑器使用工作台上下文。
+</p>
+<p>对于Eclipse IDE工作台，应将工作台撤消上下文分配给影响IDE工作空间的任何操作。操作工作空间的视图（例如Resource Navigator）使用此上下文。IDE工作台在<a href="../reference/api/org/eclipse/core/commands/operations/IUndoContext.html"><b>IUndoContext</b></a>的工作空间上安装适配器，该适配器返回工作台撤消上下文。这种基于模型的注册允许操纵工作空间的插件获得适当的撤消上下文，即使它们是无头的并且不引用任何工作台类。</p>
+<pre>// get the operation history
+IOperationHistory history = OperationHistoryFactory.getOperationHistory();
+
+// obtain the appropriate undo context for my model
+IUndoContext workspaceContext = (IUndoContext)ResourcesPlugin.getWorkspace().getAdapter(IUndoContext.class);
+if (workspaceContext != null) {
+	// create an operation and assign it the context
+}
+
+</pre>鼓励其他插件使用相同的技术来注册基于模型的撤消上下文。
+<h3>可撤销的工作区操作</h3>
+<p>IDE插件提供了可撤消的操作，允许您执行，撤消和重做常见的工作区操作。提供了用于创建，移动，复制和删除项目，文件夹和文件的操作。IDE插件使用这些操作在Resource Navigator中提供撤消支持。客户也可以使用这些类。它们在<a href="../reference/api/org/eclipse/ui/ide/undo/package-summary.html"><b>org.eclipse.ui.ide.undo</b></a>包中提供。
+ </p>
+<p>使用工作空间可撤消操作类似于使用任何<a href="../reference/api/org/eclipse/core/commands/operations/IUndoableOperation.html"><b>IUndoableOperation</b></a>所示的示例。主要区别在于某些细节（例如分配适当的撤消上下文）由操作在内部处理。以下代码段显示了如何使用可撤消操作来创建新文件。
+</p>
+<pre>
+IFile newFileHandle = IDEWorkbenchPlugin.getPluginWorkspace().getRoot().
+	getFile(myNewFilePath);
+CreateFileOperation op = new CreateFileOperation(newFileHandle, null,
+	initialContentStream, "Create New File");
+</pre>
+<p>该操作配置有要创建的文件的文件句柄，具有初始内容的输入流以及描述该操作的标签。在内部，操作将分配工作空间撤消上下文并处理其他详细信息，例如跟踪操作操作的资源。要执行该操作，调用者使用标准的<a href="../reference/api/org/eclipse/core/commands/operations/IOperationHistory.html"><b>IOperationHistory</b></a>协议。
+</p>
+<pre>
+try {
+	PlatformUI.getWorkbench().getOperationSupport().getOperationHistory()
+		.execute(op, myProgressMonitor, 
+			WorkspaceUndoUtil.getUIInfoAdapter(getShell()));
+} catch (final ExecutionException e) {
+	// handle exceptions
+}
+</pre>
+<p>请注意，调用者负责提供进度监视器（如果需要），以及<a href="../reference/api/org/eclipse/core/runtime/IAdaptable.html"><b>IAdaptable</b></a> ，它可以提供应该用于任何提示的shell。实用程序类<a href="../reference/api/org/eclipse/ui/ide/undo/WorkspaceUndoUtil.html"><b>WorkspaceUndoUtil</b></a>提供了一种实用程序方法，用于从shell创建必要的适配器。
+</p>
+<p>调用者还负责确定是在UI线程，后台还是工作台作业中执行操作。如果操作应该在后台执行，那么调用者应该创建适当的进度监视器并在适当的runnable中运行上面显示的代码片段。
+</p>
+<p>当用户启动撤消或重做时，撤消和重做操作将由撤消和重做操作处理程序执行。标准工作台操作处理程序使用<a href="../reference/api/org/eclipse/core/commands/operations/IAdvancedUndoableOperation2.html"><b>IAdvancedUndoableOperation2</b></a>协议来确定如何执行撤消和重做操作。所有工作空间操作都实现协议，指示客户端在可能的情况下在后台运行撤消或重做操作。
+</p>
+</body>
+</html>

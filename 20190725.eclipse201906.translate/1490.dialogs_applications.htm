@@ -1,0 +1,95 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+<title>应用程序对话框</title>
+
+</head>
+<body bgcolor="#ffffff" >
+
+
+<h2>应用程序对话框</h2>
+<p>当标准对话框对于插件而言过于简单时，您可以使用<a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html"><b>Dialog</b></a>类构建自己的<a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html"><b>对话框</b></a> 。之前，我们看到自述文件工具如何在动作集中提供“Open Readme Browser”操作。此操作集显示在工作台工具栏和<b>Window-&gt;自述文件编辑器</b>菜单中。</p>
+
+<p>现在我们准备在自述文件工具的<b>WindowActionDelegate中</b>查看此操作的<b>实现</b> 。</p>
+
+<pre>
+   public void run(IAction action) {
+      SectionsDialog dialog = new SectionsDialog(window.getShell(),
+         ReadmeModelFactory.getInstance().getSections(selection));
+      dialog.open();
+   }
+</pre>
+
+<p>操作集的窗口操作委托使用资源导航器视图（ <b>.readme</b>文件）中的当前选择来获取自述文件中的部分列表。此列表和工作台窗口的shell将传递给<b>SectionsDialog</b> 。</p>
+
+<p>当用户选择操作时，将打开<b>SectionsDialog</b> 。</p>
+
+<img src="images/readmedialog.png" alt="" border="0">
+
+
+<p><b>SectionsDialog</b>通过在<b><a href="../reference/api/org/eclipse/jface/dialogs/package-summary.html">org.eclipse.jface.dialogs</a>包</b>中<b><a href="../reference/api/org/eclipse/jface/dialogs/package-summary.html">继承</a></b> <b><a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html">Dialog</a></b>类在readme工具插件中实现<b>。</b></p>
+<p><a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html"><b>Dialog</b></a>类为构建对话框shell窗口，创建公共对话框按钮和启动对话框提供基本支持。子类负责处理对话框本身的内容：</p>
+<ul>
+  <li><b>createDialogArea</b>创建表示对话框内容的SWT控件。这类似于为视图或编辑器创建控件。
+<p><b>SectionsDialog</b>创建一个SWT列表以显示部分列表。它使用JFace查看器来填充列表。（我们将着眼于JFace的观众<a href="jface_viewers.htm" class="XRef">观众</a> 。）请注意，我们的对话框不必为对话框创建任何按钮，因为这是由我们的超类完成的。</p>
+<pre>
+   protected Control createDialogArea(Composite parent) {
+      Composite composite = (Composite)super.createDialogArea(parent);
+      List list = new List(composite, SWT.BORDER);
+      ...
+      ListViewer viewer = new ListViewer(list);
+      ...
+      return composite;
+   }
+</pre>
+<br>
+  </li>
+  <li>重写<b>configureShell</b>以为shell窗口设置适当的标题。
+<pre>
+   protected void configureShell(Shell newShell) {
+      super.configureShell(newShell);
+      newShell.setText(MessageUtil.getString(&quot;Readme Sections&quot;));
+      ...
+   }
+</pre>
+<br>
+  </li>
+  <li>
+当用户按下OK按钮时，将覆盖<b>okButtonPressed</b>以执行任何必要的操作。（您还可以覆盖<b>cancelButtonPressed</b>或<b>buttonPressed（int），</b>具体取决于对话框的设计。）
+  </li>
+</ul>
+<b>SectionsDialog</b>没有实现<b>okButtonPressed</b>方法。它继承了<a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html"><b>Dialog</b></a>的“do-nothing”实现。这不典型。对话框通常会执行一些处理以响应按下的其中一个对话框按钮。
+<p>对话可以根据需要简单或复杂。实现对话框时，大多数对话框代码都与创建表示其内容区域的SWT控件以及在对话框启动时处理所需的任何事件有关。一旦用户按下按钮，对话框就可以查询构成对话框的各种控件（或查看者）的状态以确定要执行的操作。</p>
+
+<h3>弹出对话框</h3>
+<p>在某些情况下，您可能希望在对话框中显示有关某些内容的信息，但其方式比启动常规对话框更“轻量级”。例如，对话框可能旨在提供可以轻松解除的瞬态信息，而无需将注意力从用户的工作中移开。如果是这种情况，您可以使用<a href="../reference/api/org/eclipse/jface/dialogs/PopupDialog.html"><b>PopupDialog</b></a>类来实现该对话框。<a href="../reference/api/org/eclipse/jface/dialogs/PopupDialog.html"><b>PopupDialog</b></a>的外观和感觉在几个方面与常规<a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html"><b>Dialog</b></a>不同。它底部没有任何按钮，它没有标准的窗口标题栏，它的边框，间距和字体更小，更紧凑。
+</p>
+<p>虽然<a href="../reference/api/org/eclipse/jface/dialogs/PopupDialog.html"><b>PopupDialog</b></a>看起来与常规对话框非常不同，但是插件子类中定义对话框内容的代码几乎相同。您仍然实现<b>createDialogArea</b>方法来为对话框创建SWT控件。应用程序代码的主要区别在于创建对话框的构造函数比常规<a href="../reference/api/org/eclipse/jface/dialogs/Dialog.html"><b>Dialog</b></a>类具有更多参数。例如，只需更改对话框的超类并在构造函数中配置对话框，就可以将<b>SectionsDialog</b>转换为<a href="../reference/api/org/eclipse/jface/dialogs/PopupDialog.html"><b>PopupDialog</b></a> ：</p>
+<pre>
+   public class SectionsDialog extends <b>PopupDialog</b> {
+      protected IAdaptable input;
+
+      /**
+      * Creates a new SectionsDialog.
+      */
+      public SectionsDialog(Shell parentShell, IAdaptable input) {
+        <b>super(parentShell, SWT.DEFAULT, false, // do not take focus when opened
+        	false, // do not persist the bounds
+        	false, // do not show a resize menu
+        	false, // do not show a menu item for persisting bounds
+        	null, //  no title
+        	null); // no info text</b>
+        this.input = input;
+      }
+      ...
+</pre>
+
+
+</body>
+</html>

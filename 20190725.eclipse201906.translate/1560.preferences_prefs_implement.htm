@@ -1,0 +1,117 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2013. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>实现首选项页面</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>实现首选项页面</h3>
+
+<h4>定义页面</h4>
+<p>JFace插件提供了用于实现向导，首选项页面和对话框的框架。这些对话框的实现遵循一个共同的模式。通过实现<b>createContents</b>方法来定义页面或对话框的内容，该方法创建表示页面内容的SWT控件。此方法还应为任何感兴趣的事件添加侦听器。该页面负责创建和返回将合成页面中所有控件的组合。以下代码段显示了亮点：</p>
+<pre>
+protected Control createContents(Composite parent)
+{
+	...
+	//composite_textField &lt;&lt; parent
+	Composite composite_textField = createComposite(parent, 2);
+	Label label_textField = createLabel(composite_textField, MessageUtil.getString(&quot;Text_Field&quot;));	 
+	textField = createTextField(composite_textField);
+	pushButton_textField = createPushButton(composite_textField, MessageUtil.getString(&quot;Change&quot;)); 
+
+	//composite_tab &lt;&lt; parent
+	Composite composite_tab = createComposite(parent, 2);
+	Label label1 = createLabel(composite_tab, MessageUtil.getString(&quot;Radio_Button_Options&quot;)); 
+
+	//
+	tabForward(composite_tab);
+	//radio button composite &lt;&lt; tab composite
+	Composite composite_radioButton = createComposite(composite_tab, 1);
+	radioButton1 = createRadioButton(composite_radioButton, MessageUtil.getString(&quot;Radio_button_1&quot;)); 
+	radioButton2 = createRadioButton(composite_radioButton, MessageUtil.getString(&quot;Radio_button_2&quot;)); 
+	radioButton3 = createRadioButton(composite_radioButton, MessageUtil.getString(&quot;Radio_button_3&quot;)); 
+
+
+	//composite_tab2 &lt;&lt; parent
+	Composite composite_tab2 = createComposite(parent, 2);
+	Label label2 = createLabel(composite_tab2, MessageUtil.getString(&quot;Check_Box_Options&quot;)); //$NON-NLS-1$
+
+	//
+	tabForward(composite_tab2);
+	//composite_checkBox &lt;&lt; composite_tab2
+	Composite composite_checkBox = createComposite(composite_tab2, 1);
+	checkBox1 = createCheckBox(composite_checkBox, MessageUtil.getString(&quot;Check_box_1&quot;)); 
+	checkBox2 = createCheckBox(composite_checkBox, MessageUtil.getString(&quot;Check_box_2&quot;)); 
+	checkBox3 = createCheckBox(composite_checkBox, MessageUtil.getString(&quot;Check_box_3&quot;)); 
+
+	initializeValues();
+
+	return new Composite(parent, SWT.NULL);
+}</pre>
+<p>此方法中的大多数代码都与创建和布局控件有关，因此我们不会在此处进行剖析。以下是相应页面的外观：</p>
+<p>
+<img src="images/readmepreferences.png" alt="自述文件工具首选项页面" border="0"></p>
+<p>首选项页面的另一个主要职责是对<b>performOk</b>消息做出反应。通常，此方法更新并存储用户首选项，并在必要时更新任何其他插件对象以反映首选项的更改。<b>performDefaults</b>方法用于在用户按下<b>恢复默认值</b>时将首选项恢复为其默认状态。</p>
+<p>如果在用户选择“ <b>应用”</b>时进行了其他处理，则可以覆盖<b>performApply</b> 。默认实现是调用<b>performOk</b> 。</p>
+<p>首选项页面应覆盖<b>doGetPreferenceStore（）</b>方法，以返回用于存储其值的首选项存储。</p>
+
+
+<h4>插件首选项存储</h4>
+<p>首选项存储是用于在插件类中访问和存储首选项值的便利机制。它们提供对使用运行时首选项服务实际存储的首选项的插件级访问。<a href="../reference/api/org/eclipse/ui/plugin/AbstractUIPlugin.html"><b>AbstractUIPlugin</b></a>定义了插件广泛的首选项存储，该存储在插件的生命周期内维护。您的插件可以向此首选项存储添加条目，并在用户更改首选项页面中的设置时更新值。由于首选项存储使用平台首选项服务，因此它们将负责在适当的范围和位置保存首选项值，并使用适当的机制初始化首选项存储。</p>
+<p>在<b>ReadmePreferencePage</b>下面的代码获得用于<b>ReadmePlugin</b>首选项存储。</p>
+<pre>
+   protected IPreferenceStore doGetPreferenceStore() {
+      return ReadmePlugin.getDefault().getPreferenceStore();
+   }
+</pre>
+<blockquote><i>注意：如果插件的任何位置都没有保存首选项，则插件将获得一个空的首选项存储。</i></blockquote>
+<p>首选项存储在<b>ReadmePreferenceInitializer中</b>使用默认值初始化。使用<b>org.eclipse.core.runtime.preferences</b>扩展点将首选项初始化程序提供给首选项服务。这些值在首次显示首选项页面时或用户在首选项页面中按<b>“恢复默认值”</b>时使用。</p>
+<pre>
+public void initializeDefaultPreferences() {
+	// These settings will show up when the Readme preference page
+	// is shown for the first time.
+	store.setDefault(IReadmeConstants.PRE_CHECK1, true);
+	store.setDefault(IReadmeConstants.PRE_CHECK2, true);
+	store.setDefault(IReadmeConstants.PRE_CHECK3, false);
+	store.setDefault(IReadmeConstants.PRE_RADIO_CHOICE, 2);
+	store.setDefault(IReadmeConstants.PRE_TEXT, MessageUtil.getString(&quot;Default_text&quot;)); //$NON-NLS-1$
+}</pre>
+
+<h4>检索和保存首选项</h4>
+<p>将插件的首选项存储与首选项页面关联后，可以实现检索和保存首选项的逻辑。</p>
+<p>首选项页面负责使用首选项存储中的首选项设置初始化其控件的值。此过程类似于从对话框设置初始化对话框控件值。<b>ReadmePreferencePage</b>在一个方法<b>initializeValues中初始化</b>其所有控件，该方法是从其<b>createContents</b>方法调用的。</p>
+<pre>private void initializeValues() {
+	IPreferenceStore store = getPreferenceStore();
+	checkBox1.setSelection(store.getBoolean(IReadmeConstants.PRE_CHECK1));
+	checkBox2.setSelection(store.getBoolean(IReadmeConstants.PRE_CHECK2));
+	checkBox3.setSelection(store.getBoolean(IReadmeConstants.PRE_CHECK3));
+	...
+}</pre>
+<p>按下“ <b>确定”</b>或“ <b>应用”</b>时，首选项页面上控件的当前值应存储回首选项存储。所述<b>ReadmePreferencePage</b>实现在一个单独的方法<b>，storeValues</b>此逻辑。</p>
+<pre>
+private void storeValues() {
+	IPreferenceStore store = getPreferenceStore();
+	store.setValue(IReadmeConstants.PRE_CHECK1, checkBox1.getSelection());
+	store.setValue(IReadmeConstants.PRE_CHECK2, checkBox2.getSelection());
+	store.setValue(IReadmeConstants.PRE_CHECK3, checkBox3.getSelection());
+	...
+}</pre>
+<p>当用户按下<b>恢复默认值时</b> ，首选项页面上控件的当前值应重置为首选项存储中的默认值。使用首选项初始化程序<b>ReadmePreferenceInitializer</b>定义默认值。<b>ReadmePreferencePage</b>在一个单独的方法<b>initializeDefaults中</b>实现了这个逻辑。</p>
+<pre>
+   private void initializeDefaults() {
+      IPreferenceStore store = getPreferenceStore();
+      checkBox1.setSelection(store.getDefaultBoolean(IReadmeConstants.PRE_CHECK1));
+      checkBox2.setSelection(store.getDefaultBoolean(IReadmeConstants.PRE_CHECK2));
+      checkBox3.setSelection(store.getDefaultBoolean(IReadmeConstants.PRE_CHECK3));
+      ...
+   }</pre>
+
+</body>
+</html>

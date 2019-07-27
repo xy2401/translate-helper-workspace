@@ -1,0 +1,196 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>使用Java搜索引擎</title>
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body >
+<h2>使用Java搜索引擎</h2>
+<p>您的插件可以使用JDT API在工作空间中搜索Java元素的Java项目，例如方法引用，字段声明，接口的实现者等。</p>
+
+<p>Java搜索的入口点是<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html">SearchEngine</a></b>类。您可以在Java元素中搜索特定模式，并将搜索范围限定为特定元素。可以使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#createPattern(org.eclipse.jdt.core.IJavaElement, int)">createPattern</a></b>创建搜索模式。使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html#createJavaSearchScope(org.eclipse.jdt.core.IJavaElement[])">createJavaSearchScope确定</a></b>模式的范围。定义模式和范围后，将使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html#search(org.eclipse.jdt.core.search.SearchPattern, org.eclipse.jdt.core.search.SearchParticipant[], org.eclipse.jdt.core.search.IJavaSearchScope, org.eclipse.jdt.core.search.SearchRequestor, org.eclipse.core.runtime.IProgressMonitor)">搜索</a></b>方法收集结果。</p>
+
+<p>搜索结果将报告给<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchRequestor.html">SearchRequestor</a></b> ，您必须对其进行扩展才能访问结果。</p>
+<h3>准备搜索</h3>
+<p>搜索操作将使用用于描述搜索性质的模式和用于限制调查范围的范围。</p>
+<h4>创建Java搜索模式</h4>
+<p>搜索模式定义了搜索结果的查找方式。您可以从Java元素（请参阅<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#createPattern(org.eclipse.jdt.core.IJavaElement, int)">createPatternPattern（IJavaElement element，int limitTo）</a></b> ）或字符串创建搜索模式（请参阅<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#createPattern(java.lang.String, int, int, int)">createPattern（String，int，int，int）</a></b> 。）最后一种方法支持通配符（即'*'），可用于扩展搜索结果。</p>
+
+<p>例如，创建搜索模式以搜索对给定方法的引用，如下所示：</p>
+<pre class="color1">
+
+    // Get the method
+    IMethod method = ...;
+    
+    // Create search pattern
+    SearchPattern pattern = SearchPattern.createPattern(method, IJavaSearchConstants.REFERENCES);
+</pre>
+<p>或者创建搜索模式以搜索以“Obj”开头的所有类型的声明：</p>
+<pre class="color1">
+
+    // Create search pattern
+    SearchPattern pattern = SearchPattern.createPattern("Obj*", IJavaSearchConstants.TYPE, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_PATTERN_MATCH | SearchPattern.R_CASE_SENSITIVE);
+</pre>
+<p>支持以下搜索模式：</p>
+<ul>
+
+<li>包装声明</li>
+<li>输入声明</li>
+<li>现场声明</li>
+<li>方法（和构造函数）声明</li>
+<li>包参考</li>
+<li>输入参考</li>
+<li>接口实现者</li>
+<li>现场参考</li>
+<li>字段写入访问</li>
+<li>模块声明</li>
+<li>模块参考</li>
+
+<li>字段读取访问</li>
+<li>方法（和构造函数）引用</li>
+<li>使用OR模式组合上述模式（请参阅<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#createOrPattern(org.eclipse.jdt.core.search.SearchPattern, org.eclipse.jdt.core.search.SearchPattern)">createOrPattern</a></b> ）</li>
+</ul>
+<p>请注意，这些模式是使用以下可能的规则创建的：</p>
+<ul>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_EXACT_MATCH">R_EXACT_MATCH</a></b></li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_PREFIX_MATCH">R_PREFIX_MATCH</a></b></li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_PATTERN_MATCH">R_PATTERN_MATCH</a></b></li>
+
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_REGEXP_MATCH">R_REGEXP_MATCH</a></b></li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_CAMELCASE_MATCH">R_CAMELCASE_MATCH</a></b></li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_CAMELCASE_SAME_PART_COUNT_MATCH">R_CAMELCASE_SAME_PART_COUNT_MATCH</a></b></li>
+</ul>也可以与以下标志之一结合使用：<ul>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_CASE_SENSITIVE">R_CASE_SENSITIVE</a></b></li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_ERASURE_MATCH">R_ERASURE_MATCH</a></b></li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/SearchPattern.html#R_EQUIVALENT_MATCH">R_EQUIVALENT_MATCH</a></b></li>
+</ul>
+<p>例如，</p>
+
+<pre class="color1">
+
+    // a case insensitive prefix match is requested
+    SearchPattern pattern1 = SearchPattern.createPattern("Hash", IJavaSearchConstants.TYPE, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_PREFIX_MATCH);
+
+    // a camel case match is requested
+    SearchPattern pattern2 = SearchPattern.createPattern("HM", IJavaSearchConstants.TYPE, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMEL_CASE_MATCH);
+
+    // a camel case with a strict expected number of parts match is requested
+    SearchPattern pattern3 = SearchPattern.createPattern("HM", IJavaSearchConstants.TYPE, IJavaSearchConstants.DECLARATIONS, SearchPattern.R_CAMELCASE_SAME_PART_COUNT_MATCH);
+</pre>
+<p>请注意，使用上面创建的模式可以减少可能的结果数量：</p>
+<ul>
+<li>pattern1： <code>Hashtable</code> ， <code>HashMap</code> ， <code>HashMapEntry</code>等。</li>
+<li>pattern2： <code>HashMap</code> ， <code>HashMapEntry</code>等</li>
+
+<li><code>HashMapEntry</code> ： <code>HashMapEntry</code>等</li>
+</ul>
+<h4>在Java搜索模式中使用<i>细粒度</i>标记</h4>
+<p>可以通过向<code>limitTo</code>参数添加一个或多个<i>细粒度</i>标记来改进某些引用模式。</p>
+
+<p>例如，只有强制转换表达式中使用的类型引用将匹配创建的模式，如下所示：</p>
+<pre class="color1">
+
+    // Get the type
+    IType type = ...;
+    
+    // Create search pattern
+    SearchPattern pattern = SearchPattern.createPattern(type, IJavaSearchConstants.REFERENCES | IJavaSearchConstants.CAST_TYPE_REFERENCE);
+</pre>
+<p>请注意，细粒度标记可以组合在一起，但仅适用于相同类型的搜索（例如，如果<code>searchFor</code>参数设置为<a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#TYPE">TYPE，</a>则只有<strong>类型</strong>引用的标志组合才有意义）。</p>
+
+<p>类型引用的标志：</p>
+<ul>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#FIELD_DECLARATION_TYPE_REFERENCE">FIELD_DECLARATION_TYPE_REFERENCE</a></b> ：类型引用，用作字段声明的类型。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#LOCAL_VARIABLE_DECLARATION_TYPE_REFERENCE">LOCAL_VARIABLE_DECLARATION_TYPE_REFERENCE</a></b> ：类型引用，用作局部变量声明的类型。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#PARAMETER_DECLARATION_TYPE_REFERENCE">PARAMETER_DECLARATION_TYPE_REFERENCE</a></b> ：类型引用，用作方法参数的类型。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#SUPERTYPE_TYPE_REFERENCE">SUPERTYPE_TYPE_REFERENCE</a></b> ：用作超类型或超级接口的类型引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#THROWS_CLAUSE_TYPE_REFERENCE">THROWS_CLAUSE_TYPE_REFERENCE</a></b> ：在throws子句中使用的类型引用。</li>
+
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#CAST_TYPE_REFERENCE">CAST_TYPE_REFERENCE</a></b> ：类型化转换表达式中使用的引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#CATCH_TYPE_REFERENCE">CATCH_TYPE_REFERENCE</a></b> ：在catch标头中使用的类型引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#CLASS_INSTANCE_CREATION_TYPE_REFERENCE">CLASS_INSTANCE_CREATION_TYPE_REFERENCE</a></b> ：类实例创建中使用的类型引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#RETURN_TYPE_REFERENCE">RETURN_TYPE_REFERENCE</a></b> ：键入用作方法返回类型的引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#IMPORT_DECLARATION_TYPE_REFERENCE">IMPORT_DECLARATION_TYPE_REFERENCE</a></b> ：输入导入声明中使用的引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#ANNOTATION_TYPE_REFERENCE">ANNOTATION_TYPE_REFERENCE</a></b> ：用作注释的类型引用。</li>
+
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#TYPE_ARGUMENT_TYPE_REFERENCE">TYPE_ARGUMENT_TYPE_REFERENCE</a></b> ：在参数化类型或参数化方法中键入用作类型参数的引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#TYPE_VARIABLE_BOUND_TYPE_REFERENCE">TYPE_VARIABLE_BOUND_TYPE_REFERENCE</a></b> ：用作类型变量绑定的类型引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#WILDCARD_BOUND_TYPE_REFERENCE">WILDCARD_BOUND_TYPE_REFERENCE</a></b> ：键入用作通配符绑定的引用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#INSTANCEOF_TYPE_REFERENCE">INSTANCEOF_TYPE_REFERENCE</a></b> ：在条件<code>instance of</code>使用的类型引用。</li>
+</ul>
+<p>字段或方法引用的标志：</p>
+
+<ul>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#SUPER_REFERENCE">SUPER_REFERENCE</a></b> ：超级域访问或超级方法调用（例如，使用<code>super</code>限定符）。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#QUALIFIED_REFERENCE">QUALIFIED_REFERENCE</a></b> ：限定的字段访问或限定的方法调用。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#THIS_REFERENCE">THIS_REFERENCE</a></b> ：主要字段访问或主要方法调用（例如，使用<code>this</code>限定符）。</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/search/IJavaSearchConstants.html#IMPLICIT_THIS_REFERENCE">IMPLICIT_THIS_REFERENCE</a></b> ：没有任何限定的字段访问或方法调用。</li>
+
+</ul>
+<h4>创建Java搜索范围</h4>
+<p>如果您对给定项目或甚至给定包中的搜索结果感兴趣，或者您知道搜索结果只能在给定类型的层次结构中找到，则可以使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html#createJavaSearchScope(org.eclipse.jdt.core.IJavaElement[])">createJavaSearchScope（IJavaElement []</a></b>创建相应的搜索范围。 <b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html#createJavaSearchScope(org.eclipse.jdt.core.IJavaElement[])">）</a></b>或<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html#createHierarchyScope(org.eclipse.jdt.core.IType)">createHierarchyScope（IType）</a></b> 。</p>
+<p>例如，在给定包上创建搜索范围如下：</p>
+<pre class="color1">
+
+    // Get the package
+    IPackageFragment pkg = ...;
+
+    // Create search scope
+    IJavaSearchScope scope = SearchEngine.createJavaSearchScope(new IJavaElement[] {pkg});
+</pre>
+
+<p>或者在给定类型的层次结构上创建搜索范围是：</p>
+<pre class="color1">
+
+    // Get the type
+    IType type = ...;
+
+    // Create search scope
+    IJavaSearchScope scope = SearchEngine.createHierarchyScope(type);
+</pre>
+<p>最后，您可以使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchEngine.html#createWorkspaceScope()">createWorkspaceScope</a></b>创建包含整个工作区的搜索范围：</p>
+<pre class="color1">
+
+    // Create search scope
+    IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
+</pre>
+<h3>搜索</h3>
+
+<p>创建搜索模式和搜索范围后，如果已扩展<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchRequestor.html">SearchRequestor</a></b> ，则可以按如下方式启动搜索查询：</p>
+<pre class="color1">
+
+    // Get the search pattern
+    SearchPattern pattern = ...;
+
+    // Get the search scope
+    IJavaSearchScope scope = ...;
+
+    // Get the search requestor
+    SearchRequestor requestor = ...;
+
+    // Search
+    SearchEngine searchEngine = new SearchEngine();
+    searchEngine.search(pattern, new SearchParticipant[] {SearchEngine.getDefaultSearchParticipant()}, scope, requestor, null);
+</pre>
+<p>搜索开始的通知将使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchRequestor.html#beginReporting()">beginReporting</a></b>方法发送到您的搜索请求者。然后，使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchRequestor.html#acceptSearchMatch(org.eclipse.jdt.core.search.SearchMatch)">acceptSearchMatch</a></b>方法报告每个搜索结果。最后<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchRequestor.html#endReporting()">endReporting</a></b>表示搜索已结束。</p>
+
+<h3>收集搜索结果</h3>
+<p>使用<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchRequestor.html#acceptSearchMatch(org.eclipse.jdt.core.search.SearchMatch)">acceptSearchMatch（SearchMatch）</a></b>方法报告搜索结果。下面的段落突出显示了<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchMatch.html">SearchMatch的</a></b>一些功能。</p>
+<h4>资源和Java元素</h4>
+<p>搜索结果可以对应于Java元素（例如，类型声明），或者它可以包含在Java元素中（例如，对方法内部类型的引用）。搜索引擎总是试图找到对应于或包含搜索结果的最里面的Java元素。例如，搜索对方法的引用可以在初始化程序中找到这样的引用。包含此方法引用的初始值设定项是搜索匹配的元素。</p>
+<p>搜索引擎还尝试查找包含Java元素的资源。如果Java元素包含在编译单元或类文件中，则该资源是相应的<a href="../../org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/resources/IFile.html"><b>IFile</b></a> 。如果Java元素包含在.jar文件中，则返回的资源是.jar文件（如果它在工作空间中），否则为<b>null</b> 。</p>
+
+<h4>来源位置</h4>
+<p>源位置<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchMatch.html#getOffset()">getOffset</a></b>和<b><a href="../reference/api/org/eclipse/jdt/core/search/SearchMatch.html#getLength()">getLength</a></b>是相对于包含搜索结果的编译单元给出的。如果搜索结果包含在.jar文件中，则源位置相对于附加的源。如果没有源附加到.jar文件，它们是（-1，-1）。</p>
+<h4>准确与不准确的搜索结果</h4>
+<p>在大多数情况下，搜索结果是准确的，这意味着搜索引擎能够确定给定的匹配是要求的。但是在某些情况下搜索引擎无法这样做，在这种情况下匹配是不准确的。匹配可能不准确的一些可能原因是：</p>
+<ul>
+<li>包含结果的项目上的类路径未正确设置。例如，它指的是一个无法访问的项目，类路径上的jar需要另一个不在类路径上的jar等。</li>
+
+<li>用户代码无法编译。例如，它指的是尚未定义的类。</li>
+</ul>
+</body>
+</html>

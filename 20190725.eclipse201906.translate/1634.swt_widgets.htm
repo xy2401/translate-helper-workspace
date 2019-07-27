@@ -1,0 +1,106 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>小工具</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+<h2>小工具</h2>
+
+<p>SWT包含许多丰富的功能，但是系统核心的基本知识 - <em>小部件</em> ， <em>布局</em>和<em>事件</em> - 是实现有用且强大的应用程序所需的全部内容。</p>
+
+
+<h3>小部件应用程序结构</h3>
+
+<p>当您使用平台工作台扩展提供UI元素时，工作台会为您处理启动SWT的机制。</p>
+
+<p>如果您在工作台之外从头开始编写SWT应用程序，则必须了解有关SWT应用程序结构的更多信息。</p>
+
+<p>典型的独立SWT应用程序具有以下结构：</p>
+
+<ul>
+  <li>创建表示SWT会话的<strong><a href="../reference/api/org/eclipse/swt/widgets/Display.html">显示</a></strong> 。</li>
+  <li>创建一个或多个<strong><a href="../reference/api/org/eclipse/swt/widgets/Shell.html">Shell</a></strong>作为应用程序的主窗口。</li>
+  <li>在shell中创建所需的任何其他小部件。</li>
+  <li>初始化窗口小部件的大小和其他必要状态。注册需要处理的窗口小部件事件的侦听器。</li>
+  <li>打开shell窗口。</li>
+  <li>运行事件调度循环，直到出现退出条件，这通常是用户关闭主shell窗口时。</li>
+  <li>处理显示器。</li>
+</ul>
+
+<p>以下代码片段改编自<strong><a href="../samples/org.eclipse.swt.examples/doc-html/swt_helloworld_ex.html">org.eclipse.swt.examples.helloworld。HelloWorld2</a></strong>应用程序。由于应用程序仅显示字符串“Hello World”，因此无需注册任何窗口小部件事件。</p>
+
+<pre>
+   public static void main (String [] args) {
+      Display display = new Display ();
+      Shell shell = new Shell (display);
+      Label label = new Label (shell, SWT.CENTER);
+      label.setText (&quot;Hello_world&quot;);
+      label.setBounds (shell.getClientArea ());
+      shell.open ();
+      while (!shell.isDisposed ()) {
+         if (!display.readAndDispatch ()) display.sleep ();
+      }
+      display.dispose ();
+   }
+</pre>
+
+
+<h4>显示</h4>
+
+<p><strong><a href="../reference/api/org/eclipse/swt/widgets/Display.html">Display</a></strong>表示SWT与底层平台的GUI系统之间的连接。显示主要用于管理平台事件循环并控制UI线程与其他线程之间的通信。（有关UI线程问题的完整讨论，请参阅<a href="swt_threading.htm" class="XRef">面向客户</a>的线程问题。）</p>
+
+<p>对于大多数应用程序，您可以遵循上面使用的模式。您必须在创建任何窗口之前创建显示，并且必须在关闭shell时丢弃显示。除非您正在设计多线程应用程序，否则无需更多地考虑显示。</p>
+
+
+<h4>贝壳</h4>
+
+<p><strong><a href="../reference/api/org/eclipse/swt/widgets/Shell.html">Shell</a></strong>是由OS平台窗口管理器管理的“窗口”。顶级shell是作为显示的子级创建的shell。这些窗口是用户在使用应用程序时移动，调整大小，最小化和最大化的窗口。辅助shell是作为另一个shell的子级创建的shell。这些窗口通常用作对话窗口或仅存在于另一个窗口的上下文中的其他瞬态窗口。</p>
+
+
+<h4>父母和孩子</h4>
+
+<p>所有不是顶级shell的小部件都必须具有父级。顶级shell没有父级，但它们是与特定的<strong><a href="../reference/api/org/eclipse/swt/widgets/Display.html">显示</a></strong>关联创建的。您可以使用<strong>getDisplay（）</strong>访问此显示。所有其他小部件都是作为顶级shell的后代（直接或间接）创建的。</p>
+
+<p><strong><a href="../reference/api/org/eclipse/swt/widgets/Composite.html">复合</a></strong>小部件是可以有子节点的小部件。</p>
+
+<p>当您看到应用程序窗口时，您可以将其视为窗口小部件树或层次结构，其根是shell。根据应用程序的复杂程度，可能只有shell的一个子项，多个子项或带子项的复合嵌套层。</p>
+
+
+<h4>风格位</h4>
+
+<p>某些窗口小部件属性必须在创建窗口小部件时设置，并且不能随后更改。例如，列表可以是单选或多选，并且可以具有或不具有滚动条。</p>
+
+<p>这些属性称为<em>样式</em> ，在构造函数中设置。所有窗口小部件构造函数都采用<strong>int</strong>参数，该参数指定所有所需样式的按位<strong>OR</strong> 。在某些情况下，特定样式被视为提示，这意味着它可能并非在所有平台上都可用，但在不支持它的平台上会被优雅地忽略。</p>
+
+<p>样式常量作为公共静态字段位于<strong><a href="../reference/api/org/eclipse/swt/SWT.html">SWT</a></strong>类中。每个窗口小部件类的适用常量列表包含在<strong><a href="../reference/api/org/eclipse/swt/SWT.html">SWT</a></strong>的API参考中。</p>
+
+
+<h4>资源处置</h4>
+
+<p>SWT下的平台需要显式分配和释放OS资源。为了与在widget工具箱中反映平台应用程序结构的SWT设计理念保持一致，SWT要求您明确释放已分配的任何OS资源。在SWT中， <strong>Widget.dispose（）</strong>方法用于释放与特定工具箱对象关联的资源。</p>
+
+<p>经验法则是，如果您创建对象，则必须将其丢弃。以下是进一步解释这一理念的一些具体基本规则：</p>
+
+<ul>
+  <li>如果使用构造函数创建图形对象或窗口小部件，则在使用完成后必须明确处置它。</li>
+  <li>当处理<a href="../reference/api/org/eclipse/swt/widgets/Composite.html"><strong>Composite时</strong></a> ，复合及其所有子窗口小部件以递归方式处理。在这种情况下，您不需要自行处理小部件。但是，您必须释放与这些小部件一起分配的任何图形资源。</li>
+  <li>如果您在不使用构造函数（例如Control.getBackground（））的情况下获得图形对象或窗口小部件，请不要处置它，因为您没有分配它。</li>
+  <li>如果将对窗口小部件或图形对象的引用传递给另一个对象，则必须注意不要在仍在使用它时将其丢弃。（类似于<a href="jface_resources.htm#jface_resources_patterns" class="XRef">使用图像的插件模式中</a>描述的规则。）</li>
+  <li>如果创建要在其中一个窗口小部件的生命周期内使用的图形对象，则必须在放置窗口小部件时丢弃图形对象。这可以通过为您的窗口小部件注册dispose侦听器并在收到<strong>dispose</strong>事件时释放图形对象来完成。</li>
+</ul>
+
+<p>这些规则有一个例外。简单数据对象（如<strong><a href="../reference/api/org/eclipse/swt/graphics/Rectangle.html">Rectangle</a></strong>和<strong><a href="../reference/api/org/eclipse/swt/graphics/Point.html">Point</a></strong> ）不使用操作系统资源。它们没有<strong>dispose（）</strong>方法，您不必释放它们。如有疑问，请检查特定类的javadoc。</p>
+
+<p>有关此主题的进一步讨论，请参阅<a href="http://www.eclipse.org/articles/swt-design-2/swt-design-2.html">管理操作资源</a> 。</p>
+
+</body>
+</html>

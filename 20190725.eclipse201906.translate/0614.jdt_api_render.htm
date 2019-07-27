@@ -1,0 +1,58 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>在JFace查看器中呈现Java元素</title>
+
+</head>
+<body >
+<h2>在JFace查看器中呈现Java元素</h2>
+<p>JDT UI API提供的类允许您在标准JFace查看器中呈现Java模型或其中的一部分。此功能主要由以下人员提供：</p>
+
+<ul>
+<li><a href="../reference/api/org/eclipse/jdt/ui/StandardJavaElementContentProvider.html"><b>StandardJavaElementContentProvider</b></a> - 将Java元素层次结构转换为可由树，表或列表查看器访问的数据结构</li>
+<li><a href="../reference/api/org/eclipse/jdt/ui/JavaElementLabelProvider.html"><b>JavaElementLabelProvider</b></a> - 为标准JFace查看器提供相应的图像和标签</li>
+<li><a href="../reference/api/org/eclipse/jdt/ui/JavaElementLabels.html"><b>JavaElementLabels</b></a> - 为Java元素提供相应的文本标签</li>
+</ul>
+<p>对于JFace的观众内容和标签供应商进行了详细描述<a href="../../org.eclipse.platform.doc.isv/guide/jface_viewers.htm" class="XRef">JFace的观众</a> 。</p>如果您了解基本平台机制，那么将Java内容和标签提供程序放在一起非常简单：<pre class="color1">
+    ...
+    TreeViewer viewer= new TreeViewer(parent);
+    // Provide members of a compilation unit or class file
+    ITreeContentProvider contentProvider= new StandardJavaElementContentProvider(true);
+    viewer.setContentProvider(contentProvider);
+    // There are more flags defined in class JavaElementLabelProvider
+    ILabelProvider labelProvider= new JavaElementLabelProvider(
+        JavaElementLabelProvider.SHOW_DEFAULT |
+        JavaElementLabelProvider.SHOW_QUALIFIED |
+        JavaElementLabelProvider.SHOW_ROOT);
+    viewer.setLabelProvider(labelProvider);
+    // Using the Java model as the viewers input present Java projects on the first level.
+    viewer.setInput(JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()));
+    ...
+</pre>
+<p>上面的示例使用Java模型（ <a href="../reference/api/org/eclipse/jdt/core/IJavaModel.html"><b>IJavaModel</b></a> ）作为查看器的输入元素。<a href="../reference/api/org/eclipse/jdt/ui/StandardJavaElementContentProvider.html"><b>StandardJavaElementContentProvider</b></a>还支持<a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html"><b>IJavaProject</b></a> ， <a href="../reference/api/org/eclipse/jdt/core/IPackageFragmentRoot.html"><b>IPackageFragmentRoot</b></a> ， <a href="../reference/api/org/eclipse/jdt/core/IPackageFragment.html"><b>IPackageFragment</b></a>和<b>IFolder</b>作为输入元素：</p>
+<h3>使用Java信息覆盖图像</h3>
+<p><a href="../reference/api/org/eclipse/jdt/ui/JavaElementImageDescriptor.html"><b>JavaElementImageDescriptor</b></a>可用于基于任意基本图像描述符和一组标志创建图像，这些标志指定哪些Java特定装饰（例如静态，最终，同步，......）将叠加在图像上。</p>
+<h3>添加问题并覆盖装饰器</h3>当观察者应该包括问题注释时，使用JFace <b>DecoratingLabelProvider</b>和<a href="../reference/api/org/eclipse/jdt/ui/ProblemsLabelDecorator.html"><b>ProblemsLabelDecorator</b></a> 。下面的代码段说明了问题标签装饰器的使用。
+<pre class="color1">
+    ...
+    DecoratingLabelProvider decorator= new DecoratingLabelProvider(labelProvider, new ProblemsLabelDecorator());
+    viewer.setLabelProvider(decorator);
+    ...
+</pre>
+<p>以同样的方式，可以使用<a href="../reference/api/org/eclipse/jdt/ui/OverrideIndicatorLabelDecorator.html"><b>OverrideIndicatorLabelDecorator</b></a>来装饰普通标签提供程序，以显示方法的实现和覆盖指示符。</p>
+<h3>更新模型更改的演示文稿</h3>
+<p><a href="../reference/api/org/eclipse/jdt/ui/OverrideIndicatorLabelDecorator.html"><b>OverrideIndicatorLabelDecorator</b></a>和<a href="../reference/api/org/eclipse/jdt/ui/ProblemsLabelDecorator.html"><b>ProblemsLabelDecorator</b></a>都不会监听模型更改。因此，如果Java或资源标记模型改变，则查看器不更新其呈现。将更新推送到这些类的客户端的原因是，还没有一个通用实现可以满足所有性能问题。在每个标签装饰器或提供者中处理Java模型增量检查和查看器刷新将导致多个增量检查和不必要的查看器更新。</p>
+<p>那么客户需要做些什么来更新他们的观众呢？</p>
+<ul>
+<li><a href="../reference/api/org/eclipse/jdt/ui/OverrideIndicatorLabelDecorator.html"><b>OverrideIndicatorLabelDecorator</b></a> ：客户端必须侦听Java模型更改（请参阅<a href="jdt_api_manip.htm#javadeltas">响应Java元素中</a>的更改）并确定delta描述的更改是否使查看器中显示的元素的覆盖指示符无效。如果是这样，检查delta的类应该使用标准JFace查看器API触发相应Java元素的重新绘制（请参阅StructuredViewer上的更新方法）。</li>
+<li><a href="../reference/api/org/eclipse/jdt/ui/ProblemsLabelDecorator.html"><b>ProblemsLabelDecorator</b></a> ：客户端应该通过<a href="../reference/api/org/eclipse/jdt/ui/ProblemsLabelDecorator.ProblemsLabelChangedEvent.html"><b>ProblemsLabelChangedEvent</b></a>监听装饰器通知的更改（另请参阅<a href="../reference/api/org/eclipse/jdt/ui/ProblemsLabelDecorator.html#addListener(org.eclipse.jface.viewers.ILabelProviderListener)"><b>ProblemsLabelDecorator.addListener</b></a> ）。由于标记模型是基于资源的，因此侦听器必须将资源通知映射到其基础数据模型。有关如何为呈现Java元素的查看者执行此操作的示例，请参阅内部类<code>ProblemTreeViewer.handleLabelProviderChanged.</code></li>
+</ul>
+<p>出于与标签装饰器枚举相同的原因， <a href="../reference/api/org/eclipse/jdt/ui/StandardJavaElementContentProvider.html"><b>StandardJavaElementContentProvider</b></a>不会侦听模型更改。如果查看者需要根据Java模型更改更新其表示，则客户端应该向JavaCore添加相应的侦听器。如果delta描述的更改使查看器中显示的元素的结构无效，则客户端应使用标准JFace API更新查看器（请参阅StructuredViewer上的刷新方法，以及TableViewer和AbstractTreeViewer上的添加和删除方法）。</p>
+<h3>对观众进行排序</h3>
+<p>可以将<a href="../reference/api/org/eclipse/jdt/ui/JavaElementSorter.html"><b>JavaElementSorter</b></a>插入JFace查看器，以根据Java UI排序样式对Java元素进行排序。</p>
+
+</body>
+</html>

@@ -1,0 +1,212 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2009, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="stylesheet" href="../../../apache_style.css" type="text/css">
+<title>API使用Ant任务</title>
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"> </script>
+</head>
+<body >
+<h1>API使用Ant任务</h1>
+<h2>目的</h2>
+<p>此任务运行对给定基线的完整搜索，以创建API使用情况的报告。</p>
+<p>分析不包括未启用API工具的捆绑包。</p>
+
+<h2>用法</h2>
+<h3>描述</h3>
+<p>Ant任务的名称是： <code>apitooling.apiuse</code> 。要使用，jar文件<code>apitooling-ant.jar</code>必须位于Ant类路径上。</p>
+<pre class="c3">
+<b><font color="#0000ff">&lt;apitooling.apiuse
+	location=<font color="#008000">"..."</font>
+	scopepattern=<font color="#008000">"..."</font>
+	referencepattern=<font color="#008000">"..."</font>
+	report=<font color="#008000">"..."</font>
+	considerinternal=<font color="#008000">"..."</font>
+	considerapi=<font color="#008000">"..."</font>
+	considerillegaluse=<font color="#008000">"..."</font>
+	apipatterns=<font color="#008000">"..."</font>
+	internalpatterns=<font color="#008000">"..."</font>
+	archivepatterns=<font color="#008000">"..."</font>
+	excludelist=<font color="#008000">"..."</font>
+	includelist=<font color="#008000">"..."</font>
+	filters=<font color="#008000">"..."</font>
+	debug=<font color="#008000">"..."</font>
+/&gt;</font></b>
+</pre>
+<h3>参数</h3>
+<table border="1" cellpadding="2" cellspacing="0">
+<tr>
+  <td valign="top"><b>属性</b></td>
+  <td valign="top"><b>描述</b></td>
+  <td align="center" valign="top"><b>需要</b></td>
+</tr>
+<tr>
+	<td valign="top">地点</td>
+	<td valign="top">此属性指定要搜索API使用情况的当前产品的位置。
+		<br><br>它可以是.zip，.jar，.tgz，.tar.gz文件，也可以是包含产品或捆绑集合的目录。
+		<br><br>使用绝对路径指定位置。</td>
+	<td align="center" valign="top">是</td>
+</tr>
+<tr>
+	<td valign="top">scopepattern</td>
+	<td valign="top">此属性指定用于选择将搜索位置中的哪些包的正则表达式模式。
+		
+		<br><br>例如，以下内容仅扫描Eclipse包中的API使用情况：<pre>org.eclipse.*</pre>该模式必须是如上所定义的格式良好的正则表达式<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/regex/Pattern.html">这里</a> 。
+	</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">referencepattern</td>
+	<td valign="top">此属性指定用于过滤搜索结果的正则表达式模式。仅报告引用与过滤器匹配的捆绑包的API用法。
+		<br><br>例如，以下内容仅报告引用JDT中代码的用法：<pre>org.eclipse.jdt.*</pre>该模式必须是如上所定义的格式良好的正则表达式<a href="https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/regex/Pattern.html">这里</a> 。
+	 	</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">报告</td>
+	<td valign="top">设置生成报告的输出位置。
+		<br><br>任务完成后，使用分层结构在此目录中提供报告。为每个具有引用它的另一个包的组件创建一个子文件夹。每个子文件夹都包含一个名为“[bundlename] .xml”的文件。在此文件夹中是另一个子文件夹（名为“[引用包名称] .xml”），用于引用包含文件夹包的每个包。引用包文件夹内是三个子文件夹（API，PRIVATE或OTHER）之一，包含该类型的类型，方法或字段引用。
+		<br><br>其他三个特殊文件写入报告目录，即“counts.xml”，“not_searched.xml”和“no_apidescription.xml”，它们包含有关找到的引用数的信息，来自基线的未搜索的捆绑包使用信息和那些没有.api_description文件的信息。
+		<br><br>使用绝对路径指定位置。
+		<br><br>例如：<pre>
+  root
+   |
+   +-- "not_searched.xml"
+   +-- "no_apidescription.xml"
+   +-- "counts.xml"
+   +-- bundle name with usage
+   		|
+   		+--referencing bundle name
+   			|
+   			+-- [API or PRIVATE or OTHER]
+   				|
+   				+--[type_ or method_ or field_]references.xml
+</pre>
+		</td>
+	<td align="center" valign="top">是</td>
+</tr>
+<tr>
+	<td valign="top">considerinternal</td>
+	<td valign="top">如果在搜索期间应考虑内部引用。
+		<br><br>默认值为<code>false</code> 。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">considerapi</td>
+	<td valign="top">如果在搜索期间应考虑API引用。
+		<br><br>默认值为<code>false</code> 。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">considerillegaluse</td>
+	<td valign="top">如果在搜索期间应考虑非法的API使用引用。
+		<br><br>默认值为<code>false</code> 。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">apipatterns</td>
+	<td valign="top">以逗号分隔的包名称模式列表（正则表达式），将其视为API包。
+		<br><br>默认情况下，扫描包中使用API描述，但这可用于覆盖或添加API包。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">internalpatterns</td>
+	<td valign="top">以逗号分隔的包名称模式列表（正则表达式），以视为私有包。
+		<br><br>默认情况下，扫描包中使用API描述，但这可用于覆盖或添加私有包。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">archivepatterns</td>
+	<td valign="top">要在扫描期间忽略的逗号分隔的归档标识符列表。
+		<br><br>存档标识符的格式为： <code>[bundle id]:[path to archive]</code> 。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">excludelist</td>
+	<td valign="top">设置排除列表位置。
+<br><br>排除列表位置指定列出要从分析中排除的包的文本文件。默认情况下，将分析配置文件中的所有捆绑包。包含和排除列表属性可用于有选择地包括和排除包。包含列表对要分析的包集合进行种子处理（省略时，包括所有包），然后应用排除列表。该文件的每一行指定以下之一：<ul>
+<li>特定的包名称</li>
+<li>一个正则表达式，以匹配包名称（行与“R：”）</li>
+<li>评论（带有'＃'的行）</li>
+</ul>
+<br>使用绝对路径指定位置。
+<br>以下是排除列表的示例：<pre>
+# EXCLUDED BUNDLES
+R:org\.eclipse\..*\.doc\..*
+...
+</pre></td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">includelist</td>
+	<td valign="top">设置包含列表位置。
+<br><br>包含列表位置指定列出要包括在分析中的包的文本文件。默认情况下，将分析配置文件中的所有捆绑包。包含和排除列表属性可用于有选择地包括和排除包。包含列表对要分析的包集合进行种子处理（省略时，包括所有包），然后应用排除列表。该文件的每一行指定以下之一：<ul>
+<li>特定的包名称</li>
+<li>一个正则表达式，以匹配包名称（行与“R：”）</li>
+<li>评论（带有'＃'的行）</li>
+</ul>
+<br>使用绝对路径指定位置。
+<br>以下是包含列表的示例：<pre>
+# INCLUDED BUNDLES
+R:org\.eclipse\..*
+...
+</pre>
+</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+<td valign="top">过滤器</td>
+<td valign="top">设置在使用扫描期间使用的API过滤器的根目录。
+<br><br>参数是.api_filters文件的根目录，应该用于过滤引用。
+<br><br>.api_filters文件指定在api分析期间要忽略的特定问题。在使用扫描期间，问题过滤器将转换为将从使用扫描结果中过滤的引用列表。
+<br>
+<br>使用绝对路径指定根。
+<br>根需要包含以下结构：<pre>
+ root
+  |
+  +-- component name (i.e. org.eclipse.jface)
+         |
+         +--- .api_filters
+</pre>
+</td>
+<td align="center" valign="top">没有</td>
+</tr>
+<tr>
+	<td valign="top">调试</td>
+	<td valign="top">设置调试值。
+		<br><br>可能的值为： <code>true</code> ， <code>false</code>
+		<br>默认值为<code>false</code> 。</td>
+	<td align="center" valign="top">没有</td>
+</tr>
+</table>
+
+<h3>例子</h3>
+<pre>
+	<b><font color="#0000ff">&lt;apitooling.apiuse
+		location=<font color="#008000">"/eclipse/eclipse.tar.gz"</font>
+		scopepattern=<font color="#008000">".*"</font>
+		referencepattern=<font color="#008000">"org\.eclipse.*"</font>
+		report=<font color="#008000">"/eclipse/apiuse-both/XML"</font>
+		considerinternal=<font color="#008000">"true"</font>
+		considerapi=<font color="#008000">"true"</font>
+		considerillegaluse=<font color="#008000">"true"</font>
+		archivepatterns=<font color="#008000">"org.eclipse.test.bundle:/libs/contributed.jar"</font>
+		excludelist=<font color="#008000">"D:\exclude_list_external.txt"</font>
+		debug=<font color="#008000">"true"</font>
+	/&gt;</font></b>
+</pre>
+<p>这将在文件夹<code>*.xml</code>运行创建<code>/eclipse/apiuse-both/XML</code>文件的任务。该任务将搜索产品位置中的所有包 - 由正则表达式定义<code>.*</code> - 搜索对标识符以org.eclipse开头的任何包的所有引用（由<code>org\.eclipse.*</code>正则表达式定义）。它将使用位于<code>D:\exclude_list_external.txt</code>的排除列表文件来减少要报告的问题数。</p>
+<p>扫描时，将忽略org.eclipse.test.bundle中/libs/contributed.jar存档中找到的任何类文件。</p>
+<p>如果启用了调试，则会在Ant控制台中显示某些调试跟踪。</p>
+
+<h3 class="related">相关参考</h3>
+<a href="apifreeze-ant-task.htm">API冻结Ant任务</a>
+<br><a href="filegeneration-ant-task.htm">文件生成Ant任务</a>
+<br><a href="analysis-reportconversion-ant-task.htm">分析报告转换Ant任务</a>
+<br><a href="apifreeze-reportconversion-ant-task.htm">API冻结报告转换Ant任务</a>
+<br><a href="deprecation-ant-task.htm">API弃用Ant任务</a>
+<br><a href="deprecation-reportconversion-ant-task.htm">API弃用报告转换Ant任务</a>
+<br><a href="apiuse-reportconversion-ant-task.htm">API使用报告转换Ant任务</a>
+</body>
+</html>

@@ -1,397 +1,389 @@
-<?xml version='1.0' encoding='utf-8' ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-		<title>Trace Compass Developer Guide - Component Interaction</title>
-		<link type="text/css" rel="stylesheet" href="book.css"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Trace Compass开发人员指南 - 组件交互</title>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+	<body >
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<th style="width: 100%" align="center" colspan="3">Component Interaction</th>
+				<th align="center" colspan="3" style="width:100%">组件交互</th>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left">
-					<a href="View-Tutorial.html" title="View Tutorial">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+				<td align="left" style="width:20%">
+					<a href="View-Tutorial.html" title="查看教程">
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right">
-					<a href="Generic-State-System.html" title="Generic State System">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="center" style="width:60%"></td>
+				<td align="right" style="width:20%">
+					<a href="Generic-State-System.html" title="通用国家制度">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">View Tutorial</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Generic State System</td>
+				<td align="left" valign="top" style="width:20%">查看教程</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">通用国家制度</td>
 			</tr>
-		</table><hr class="navigation-separator"/>
-		<h1 id="Component_Interaction">Component Interaction</h1>
-		<p>TMF provides a mechanism for different components to interact with each other using signals. The signals can carry information that is specific to each signal.</p>
-		<p>The TMF Signal Manager handles registration of components and the broadcasting of signals to their intended receivers.</p>
-		<p>Components can register as VIP receivers which will ensure they will receive the signal before non-VIP receivers.</p>
-		<h2 id="Sending_Signals">Sending Signals</h2>
-		<p>In order to send a signal, an instance of the signal must be created and passed as argument to the signal manager to be dispatched. Every component that can handle the signal will receive it. The receivers do not need to be known by the sender.</p>
+		</table><hr class="navigation-separator">
+		<h1 id="Component_Interaction">组件交互</h1>
+		<p>TMF为不同组件提供了使用信号相互交互的机制。信号可以携带特定于每个信号的信息。</p>
+		<p>TMF信号管理器处理组件的注册和向其预期接收器广播信号。</p>
+		<p>组件可以注册为VIP接收器，这将确保他们将在非VIP接收器之前接收信号。</p>
+		<h2 id="Sending_Signals">发送信号</h2>
+		<p>为了发送信号，必须创建信号的实例并将其作为参数传递给要分派的信号管理器。每个可以处理信号的组件都会收到它。发送者不需要知道接收者。</p>
 		<pre>
 TmfExampleSignal signal = new TmfExampleSignal(this, ...);
 TmfSignalManager.dispatchSignal(signal);
 </pre>
-		<p>If the sender is an instance of the class TmfComponent, the broadcast method can be used:</p>
+		<p>如果发送方是类TmfComponent的实例，则可以使用广播方法：</p>
 		<pre>
 TmfExampleSignal signal = new TmfExampleSignal(this, ...);
 broadcast(signal);
 </pre>
-		<h2 id="Receiving_Signals">Receiving Signals</h2>
-		<p>In order to receive any signal, the receiver must first be registered with the signal manager. The receiver can register as a normal or VIP receiver.</p>
+		<h2 id="Receiving_Signals">接收信号</h2>
+		<p>为了接收任何信号，接收器必须首先向信号管理器注册。接收器可以注册为普通接收器或VIP接收器。</p>
 		<pre>
 TmfSignalManager.register(this);
 TmfSignalManager.registerVIP(this);
 </pre>
-		<p>If the receiver is an instance of the class TmfComponent, it is automatically registered as a normal receiver in the constructor.</p>
-		<p>When the receiver is destroyed or disposed, it should deregister itself from the signal manager.</p>
+		<p>如果接收器是类TmfComponent的实例，它将自动注册为构造函数中的普通接收器。</p>
+		<p>当接收器被销毁或丢弃时，它应该从信号管理器中注销自己。</p>
 		<pre>
 TmfSignalManager.deregister(this);
 </pre>
-		<p>To actually receive and handle any specific signal, the receiver must use the @TmfSignalHandler annotation and implement a method that will be called when the signal is broadcast. The name of the method is irrelevant.</p>
+		<p>为了实际接收和处理任何特定信号，接收器必须使用@TmfSignalHandler注释并实现在广播信号时将被调用的方法。方法的名称无关紧要。</p>
 		<pre>
 @TmfSignalHandler
 public void example(TmfExampleSignal signal) {
     ...
 }
 </pre>
-		<p>The source of the signal can be used, if necessary, by a component to filter out and ignore a signal that was broadcast by itself when the component is also a receiver of the signal but only needs to handle it when it was sent by another component or another instance of the component.</p>
-		<h2 id="Signal_Throttling">Signal Throttling</h2>
-		<p>It is possible for a TmfComponent instance to buffer the dispatching of signals so that only the last signal queued after a specified delay without any other signal queued is sent to the receivers. All signals that are preempted by a newer signal within the delay are discarded.</p>
-		<p>The signal throttler must first be initialized:</p>
+		<p>如果需要，信号源可以被一个组件用来过滤掉并忽略当组件也是信号接收器时自己广播的信号，但只有当它被另一个组件发送时才需要处理它。或组件的另一个实例。</p>
+		<h2 id="Signal_Throttling">信号限制</h2>
+		<p>TmfComponent实例可以缓冲信号的调度，以便只有在指定的延迟之后排队的最后一个信号没有任何其他信号排队被发送到接收器。被延迟内的较新信号抢占的所有信号都被丢弃。</p>
+		<p>必须首先初始化信号调节器：</p>
 		<pre>
 final int delay = 100; // in ms
 TmfSignalThrottler throttler = new TmfSignalThrottler(this, delay);
 </pre>
-		<p>Then the sending of signals should be queued through the throttler:</p>
+		<p>然后发送信号应该通过节流器排队：</p>
 		<pre>
 TmfExampleSignal signal = new TmfExampleSignal(this, ...);
 throttler.queue(signal);
 </pre>
-		<p>When the throttler is no longer needed, it should be disposed:</p>
+		<p>当不再需要节流器时，应该处理掉：</p>
 		<pre>
 throttler.dispose();
 </pre>
-		<h2 id="Ignoring_inbound.2Foutbound_signals">Ignoring inbound/outbound signals</h2>
-		<p>It is possible to stop certain signals from being sent or received.</p>
-		<p>To block all incoming signals to an object:</p>
+		<h2 id="Ignoring_inbound.2Foutbound_signals">忽略入站/出站信号</h2>
+		<p>可以阻止发送或接收某些信号。</p>
+		<p>阻止所有传入信号到对象：</p>
 		<pre>
     TmfSignalManager.addIgnoredInboundSignal(objectInstance, TmfSignal.class);
 </pre>
-		<p>To block all outgoing signals originating from an object:</p>
+		<p>阻止源自对象的所有传出信号：</p>
 		<pre>
     TmfSignalManager.addIgnoredOutboundSignal(objectInstance, TmfSignal.class);
 </pre>
-		<p>The blocked signal filtering is based on type hierarchy. Blocking <code>TmfSignal.class</code> will result in blocking all signals derived from TmfSignal. Blocking <code>TmfTraceSelectedSignal</code> will block all signals of this type and derived signals from <code>TmfTraceSelectedSignal</code></p>
-		<p>To remove an ignore rule or clear them all:</p>
+		<p>阻塞信号过滤基于类型层次结构。阻止<code>TmfSignal.class</code>将阻止从TmfSignal派生的所有信号。阻塞<code>TmfTraceSelectedSignal</code>将阻止此类型的所有信号以及来自<code>TmfTraceSelectedSignal</code>派生信号</p>
+		<p>删除忽略规则或全部清除它们：</p>
 		<pre>
     TmfSignalManager.removeIgnoredOutboundSignal(Object source, Class&lt;? extends TmfSignal&gt; signal)
     TmfSignalManager.removeIgnoredInboundSignal(Object listener, Class&lt;? extends TmfSignal&gt; signal)
     TmfSignalManager.clearIgnoredOutboundSignalList(Object source)
     TmfSignalManager.clearIgnoredInboundSignalList(Object listener)
 </pre>
-		<h2 id="Signal_Reference">Signal Reference</h2>
-		<p>The following is a list of built-in signals defined in the framework.</p>
+		<h2 id="Signal_Reference">信号参考</h2>
+		<p>以下是框架中定义的内置信号列表。</p>
 		<h3 id="TmfStartSynchSignal">TmfStartSynchSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate the start of broadcasting of a signal. Internally, the data provider will not fire event requests until the corresponding TmfEndSynchSignal signal is received. This allows coalescing of requests triggered by multiple receivers of the broadcast signal.</p>
+		<p>该信号用于指示信号广播的开始。在内部，数据提供程序在收到相应的TmfEndSynchSignal信号之前不会触发事件请求。这允许合并由广播信号的多个接收器触发的请求。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfSignalManager before dispatching a signal to all receivers.</p>
+		<p>在将信号发送到所有接收器之前由TmfSignalManager发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by TmfDataProvider.</p>
+		<p>由TmfDataProvider收到。</p>
 		<h3 id="TmfEndSynchSignal">TmfEndSynchSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate the end of broadcasting of a signal. Internally, the data provider fire all pending event requests that were received and buffered since the corresponding TmfStartSynchSignal signal was received. This allows coalescing of requests triggered by multiple receivers of the broadcast signal.</p>
+		<p>该信号用于指示信号广播的结束。在内部，数据提供程序触发自收到相应的TmfStartSynchSignal信号以来接收和缓冲的所有待处理事件请求。这允许合并由广播信号的多个接收器触发的请求。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfSignalManager after dispatching a signal to all receivers.</p>
+		<p>在向所有接收器发送信号后由TmfSignalManager发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by TmfDataProvider.</p>
+		<p>由TmfDataProvider收到。</p>
 		<h3 id="TmfTraceOpenedSignal">TmfTraceOpenedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a trace has been opened in an editor.</p>
+		<p>此信号用于指示已在编辑器中打开跟踪。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by a TmfEventsEditor instance when it is created.</p>
+		<p>创建时由TmfEventsEditor实例发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by TmfTrace, TmfExperiment, TmfTraceManager and every view that shows trace data. Components that show trace data should handle this signal.</p>
+		<p>由TmfTrace，TmfExperiment，TmfTraceManager和每个显示跟踪数据的视图接收。显示跟踪数据的组件应处理此信号。</p>
 		<h3 id="TmfTraceSelectedSignal">TmfTraceSelectedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a trace has become the currently selected trace.</p>
+		<p>该信号用于指示迹线已成为当前选定的迹线。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by a TmfEventsEditor instance when it receives focus. Components can send this signal to make a trace editor be brought to front.</p>
+		<p>收到焦点时由TmfEventsEditor实例发送。组件可以发送此信号以使跟踪编辑器显示在前面。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by TmfTraceManager and every view that shows trace data. Components that show trace data should handle this signal.</p>
+		<p>由TmfTraceManager和每个显示跟踪数据的视图接收。显示跟踪数据的组件应处理此信号。</p>
 		<h3 id="TmfTraceClosedSignal">TmfTraceClosedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a trace editor has been closed.</p>
+		<p>此信号用于指示跟踪编辑器已关闭。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by a TmfEventsEditor instance when it is disposed.</p>
+		<p>处理时由TmfEventsEditor实例发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by TmfTraceManager and every view that shows trace data. Components that show trace data should handle this signal.</p>
+		<p>由TmfTraceManager和每个显示跟踪数据的视图接收。显示跟踪数据的组件应处理此信号。</p>
 		<h3 id="TmfTraceRangeUpdatedSignal">TmfTraceRangeUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the valid time range of a trace has been updated. This triggers indexing of the trace up to the end of the range. In the context of streaming, this end time is considered a safe time up to which all events are guaranteed to have been completely received. For non-streaming traces, the end time is set to infinity indicating that all events can be read immediately. Any processing of trace events that wants to take advantage of request coalescing should be triggered by this signal.</p>
+		<p>此信号用于指示已更新跟踪的有效时间范围。这会触发跟踪索引到范围的结尾。在流式传输的上下文中，该结束时间被认为是保证完全接收所有事件的安全时间。对于非流式跟踪，结束时间设置为无穷大，表示可以立即读取所有事件。此信号应触发任何希望利用请求合并的跟踪事件处理。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfExperiment and non-streaming TmfTrace. Streaming traces should send this signal in the TmfTrace subclass when a new safe time is determined by a specific implementation.</p>
+		<p>由TmfExperiment和非流式TmfTrace发送。当特定实现确定新的安全时间时，流跟踪应在TmfTrace子类中发送此信号。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by TmfTrace, TmfExperiment and components that process trace events. Components that need to process trace events should handle this signal.</p>
+		<p>由TmfTrace，TmfExperiment和处理跟踪事件的组件接收。需要处理跟踪事件的组件应该处理此信号。</p>
 		<h3 id="TmfTraceUpdatedSignal">TmfTraceUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that new events have been indexed for a trace.</p>
+		<p>此信号用于指示已为跟踪索引新事件。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfCheckpointIndexer when new events have been indexed and the number of events has changed.</p>
+		<p>当新事件被编入索引并且事件数已更改时，由TmfCheckpointIndexer发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by components that need to be notified of a new trace event count.</p>
+		<p>由需要通知新跟踪事件计数的组件接收。</p>
 		<h3 id="TmfSelectionRangeUpdatedSignal">TmfSelectionRangeUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a new time or time range has been
-			selected. It contains a begin and end time. If a single time is selected then
-			the begin and end time are the same.</p>
+		<p>该信号用于指示已选择新的时间或时间范围。它包含开始和结束时间。如果选择单个时间，则开始和结束时间相同。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by any component that allows the user to select a time or time range.</p>
+		<p>由允许用户选择时间或时间范围的任何组件发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that needs to be notified of the currently selected time or time range.</p>
+		<p>由需要通知当前所选时间或时间范围的任何组件接收。</p>
 		<h3 id="TmfWindowRangeUpdatedSignal">TmfWindowRangeUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a new time range window has been set.</p>
+		<p>该信号用于指示已设置新的时间范围窗口。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by any component that allows the user to set a time range window.</p>
+		<p>由允许用户设置时间范围窗口的任何组件发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that needs to be notified of the current visible time range window.</p>
+		<p>由需要通知当前可见时间范围窗口的任何组件接收。</p>
 		<h3 id="TmfEventFilterAppliedSignal">TmfEventFilterAppliedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a filter has been applied to a trace.</p>
+		<p>该信号用于指示过滤器已应用于迹线。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfEventsTable when a filter is applied.</p>
+		<p>应用过滤器时由TmfEventsTable发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that shows trace data and needs to be notified of applied filters.</p>
+		<p>由显示跟踪数据且需要通知应用过滤器的任何组件接收。</p>
 		<h3 id="TmfEventSearchAppliedSignal">TmfEventSearchAppliedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a search has been applied to a trace.</p>
+		<p>该信号用于指示搜索已应用于跟踪。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfEventsTable when a search is applied.</p>
+		<p>应用搜索时由TmfEventsTable发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that shows trace data and needs to be notified of applied searches.</p>
+		<p>由显示跟踪数据且需要通知应用搜索的任何组件接收。</p>
 		<h3 id="TmfTimestampFormatUpdateSignal">TmfTimestampFormatUpdateSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the timestamp format preference has been updated.</p>
+		<p>此信号用于指示时间戳格式首选项已更新。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by TmfTimestampFormat when the default timestamp format preference is changed.</p>
+		<p>更改默认时间戳格式首选项时由TmfTimestampFormat发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that needs to refresh its display for the new timestamp format.</p>
+		<p>由需要刷新其新时间戳格式的显示的任何组件接收。</p>
 		<h3 id="TmfStatsUpdatedSignal">TmfStatsUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the statistics data model has been updated.</p>
+		<p>该信号用于指示统计数据模型已更新。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by statistic providers when new statistics data has been processed.</p>
+		<p>处理新统计数据时由统计提供程序发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by statistics viewers and any component that needs to be notified of a statistics update.</p>
+		<p>由统计信息查看者和需要通知统计信息更新的任何组件接收。</p>
 		<h3 id="TmfPacketStreamSelected">TmfPacketStreamSelected</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the user has selected a packet stream to analyze.</p>
+		<p>该信号用于指示用户已选择要分析的分组流。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by the Stream List View when the user selects a new packet stream.</p>
+		<p>当用户选择新的数据包流时，由流列表视图发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by views that analyze packet streams.</p>
+		<p>由分析数据包流的视图接收。</p>
 		<h3 id="TmfStartAnalysisSignal">TmfStartAnalysisSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that an analysis has started.</p>
+		<p>此信号用于指示分析已开始。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by an analysis module when it starts to execute the analyis.</p>
+		<p>当分析模块开始执行分析时由分析模块发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by components that need to be notified of the start of an analysis
-			or that need to receive the analysis module.</p>
+		<p>由需要通知分析开始或需要接收分析模块的组件接收。</p>
 		<h3 id="TmfCpuSelectedSignal">TmfCpuSelectedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the user has selected a CPU core.</p>
+		<p>该信号用于指示用户已选择CPU核心。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by any component that allows the user to select a CPU.</p>
+		<p>由允许用户选择CPU的任何组件发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by viewers that show information specific to a selected CPU.</p>
+		<p>由显示特定于所选CPU的信息的查看者接收。</p>
 		<h3 id="TmfThreadSelectedSignal">TmfThreadSelectedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the user has selected a thread.</p>
+		<p>该信号用于指示用户已选择线程。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by any component that allows the user to select a thread.</p>
+		<p>由允许用户选择线程的任何组件发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by viewers that show information specific to a selected thread.</p>
+		<p>由显示特定于所选线程的信息的查看者接收。</p>
 		<h3 id="TmfSymbolProviderUpdatedSignal">TmfSymbolProviderUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that the user has updated the symbol mapping.</p>
+		<p>该信号用于指示用户已更新符号映射。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by symbol providers or managers when more information is available.</p>
+		<p>当有更多信息时，由符号提供者或管理者发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by viewers that show information specific to mapped symbol, typically a function call.</p>
+		<p>由显示特定于映射符号的信息的查看者接收，通常是函数调用。</p>
 		<h3 id="TmfTraceSynchronizedSignal">TmfTraceSynchronizedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that trace synchronization has been completed.</p>
+		<p>该信号用于指示跟踪同步已完成。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by the experiment after trace synchronization.</p>
+		<p>跟踪同步后通过实验发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that needs to be notified of trace synchronization.</p>
+		<p>由需要通知跟踪同步的任何组件接收。</p>
 		<h3 id="TmfMarkerEventSourceUpdatedSignal">TmfMarkerEventSourceUpdatedSignal</h3>
 		<p>
-			<i>Purpose</i>
+			<i>目的</i>
 		</p>
-		<p>This signal is used to indicate that a marker event source has been updated.</p>
+		<p>此信号用于指示标记事件源已更新。</p>
 		<p>
-			<i>Senders</i>
+			<i>发件人</i>
 		</p>
-		<p>Sent by a component that has triggered a change in a marker event source.</p>
+		<p>由触发标记事件源更改的组件发送。</p>
 		<p>
-			<i>Receivers</i>
+			<i>接收器</i>
 		</p>
-		<p>Received by any component that needs to refresh the markers due to the change in marker event source.</p>
-		<h2 id="Debugging">Debugging</h2>
-		<p>TMF has built-in Eclipse tracing support for the debugging of signal interaction between components. To enable it, open the 
-			<b>Run/Debug Configuration...</b> dialog, select a configuration, click the 
-			<b>Tracing</b> tab, select the plug-in 
-			<b>org.eclipse.tracecompass.tmf.core</b>, and check the 
-			<b>signal</b> item.
+		<p>由于标记事件源的更改而需要刷新标记的任何组件接收。</p>
+		<h2 id="Debugging">调试</h2>
+		<p>TMF具有内置的Eclipse跟踪支持，用于调试组件之间的信号交互。要启用它，请打开“ <b>运行/调试配置...”</b>对话框，选择配置，单击“ <b>跟踪”</b>选项卡，选择插件<b>org.eclipse.tracecompass.tmf.core</b> ，然后检查<b>信号</b>项。
 		</p>
-		<p>All signals sent and received will be logged to the file TmfTrace.log located in the Eclipse home directory.</p><hr class="navigation-separator"/>
-		<table class="navigation" style="width: 100%;" border="0" summary="navigation">
+		<p>发送和接收的所有信号都将记录到Eclipse主目录中的文件TmfTrace.log中。</p><hr class="navigation-separator">
+		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
-				<td style="width: 20%" align="left">
-					<a href="View-Tutorial.html" title="View Tutorial">
-						<img alt="Previous" border="0" src="images/prev.gif"/>
+				<td align="left" style="width:20%">
+					<a href="View-Tutorial.html" title="查看教程">
+						<img alt="以前" border="0" src="images/prev.gif">
 					</a>
 				</td>
-				<td style="width: 60%" align="center">
-					<a href="Developer-Guide.html" title="Trace Compass Developer Guide">
-						<img alt="Trace Compass Developer Guide" border="0" src="images/home.gif"/>
+				<td align="center" style="width:60%">
+					<a href="Developer-Guide.html" title="Trace Compass开发人员指南">
+						<img alt="Trace Compass开发人员指南" border="0" src="images/home.gif">
 					</a>
 				</td>
-				<td style="width: 20%" align="right">
-					<a href="Generic-State-System.html" title="Generic State System">
-						<img alt="Next" border="0" src="images/next.gif"/>
+				<td align="right" style="width:20%">
+					<a href="Generic-State-System.html" title="通用国家制度">
+						<img alt="下一个" border="0" src="images/next.gif">
 					</a>
 				</td>
 			</tr>
 			<tr>
-				<td style="width: 20%" align="left" valign="top">View Tutorial</td>
-				<td style="width: 60%" align="center"></td>
-				<td style="width: 20%" align="right" valign="top">Generic State System</td>
+				<td align="left" valign="top" style="width:20%">查看教程</td>
+				<td align="center" style="width:60%"></td>
+				<td align="right" valign="top" style="width:20%">通用国家制度</td>
 			</tr>
 		</table>
 	</body>

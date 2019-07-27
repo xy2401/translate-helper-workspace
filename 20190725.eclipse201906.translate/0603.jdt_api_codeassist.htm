@@ -1,0 +1,89 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>对Java代码执行代码辅助</title>
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body >
+<h2>对Java代码执行代码辅助</h2>
+<p>JDT API允许其他插件在某些Java元素上执行代码辅助或代码选择。允许此操作的元素应实现<b><a href="../reference/api/org/eclipse/jdt/core/ICodeAssist.html">ICodeAssist</a></b> 。</p>
+
+<p>操纵有两种：</p>
+<ul>
+<li>代码完成 - 计算Java令牌的完成。</li>
+<li>代码选择 - 回答给定偏移量和长度的选定文本所指示的Java元素。</li>
+</ul>
+<p>在Java模型中，有两个实现此接口的元素： <b><a href="../reference/api/org/eclipse/jdt/core/IClassFile.html">IClassFile</a></b>和<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html">ICompilationUnit</a></b> 。代码完成和代码选择仅在类文件附加源时才回答类文件的结果。</p>
+
+<h3>代码完成</h3>
+<h4>执行代码完成</h4>
+<p>以编程方式执行代码完成的一种方法是调用<b><a href="../reference/api/org/eclipse/jdt/core/ICodeAssist.html#codeComplete(int, org.eclipse.jdt.core.CompletionRequestor)">ICodeAssist.codeComplete</a></b> 。您可以在编译单元中指定偏移量，之后需要完成代码。您还必须提供<b><a href="../reference/api/org/eclipse/jdt/core/CompletionRequestor.html">CompletionRequestor</a></b>实例以接受可能的完成。</p>
+<p><b><a href="../reference/api/org/eclipse/jdt/core/CompletionRequestor.html#accept(org.eclipse.jdt.core.CompletionProposal)">CompletionRequestor.accept（CompletionProposal）中</a></b>的方法接受所有类型的代码完成提议。<b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html">CompletionProposal</a></b>的方法提供了描述所提议元素（其名称，声明类型等）的信息，其在编译单元中插入的建议位置及其相关性。</p>
+
+<p>完成请求者可以接受许多不同类型的完成。这种类型由<b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#getKind()">CompletionProposal.getKind提供</a></b> 。</p>
+<p>一些可能的完成类型（可在<b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html">CompletionProposal</a></b>上看到完整的完成类型列表）：</p>
+<ul>
+<li>注释属性 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#ANNOTATION_ATTRIBUTE_REF">ANNOTATION_ATTRIBUTE_REF</a></b></li>
+<li>匿名类型 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#ANONYMOUS_CLASS_DECLARATION">ANONYMOUS_CLASS_DECLARATION</a></b></li>
+<li>类型引用 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#TYPE_REF">TYPE_REF</a></b></li>
+
+<li>字段引用 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#FIELD_REF">FIELD_REF</a></b></li>
+<li>关键字 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#KEYWORD">KEYWORD</a></b></li>
+<li>标签参考 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#LABEL_REF">LABEL_REF</a></b></li>
+<li>局部变量引用 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#LOCAL_VARIABLE_REF">LOCAL_VARIABLE_REF</a></b></li>
+<li>方法参考 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#METHOD_REF">METHOD_REF</a></b></li>
+<li>方法声明 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#METHOD_DECLARATION">METHOD_DECLARATION</a></b></li>
+
+<li>包导入或引用 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#PACKAGE_REF">PACKAGE_REF</a></b></li>
+<li>变量名称 - <b><a href="../reference/api/org/eclipse/jdt/core/CompletionProposal.html#VARIABLE_DECLARATION">VARIABLE_DECLARATION</a></b></li>
+</ul>
+<p>完成请求者还必须能够接受编译错误。</p>
+<h4>完成相关性</h4>
+<p>由于可能存在许多不同的可能完成，因此使用相关概念来比较建议完成与其他提议的相关性。相关性由正整数表示。除了相对于其他提案的值使用之外，该值没有隐含含义。代码完成候选的相关性可能受表达式的预期类型的影响，因为它与周围代码中的类型有关，例如变量类型，强制类型，返回类型等。完成中存在预期的前缀或后缀也会影响其相关性。</p>
+
+<h4>完成背景</h4>
+<p><b><a href="../reference/api/org/eclipse/jdt/core/CompletionRequestor.html">CompletionRequestor</a></b>的实例也可以接受完成上下文。此上下文由方法<b><a href="../reference/api/org/eclipse/jdt/core/CompletionRequestor.html#acceptContext(org.eclipse.jdt.core.CompletionContext)">CompletionRequestor.acceptContext（CompletionContext）给出</a></b> ，并且不依赖于特定的完成提议。<b><a href="../reference/api/org/eclipse/jdt/core/CompletionContext.html">CompletionContext</a></b>的方法提供了描述一般上下文的信息，如完成偏移，完成的令牌，完成的令牌种类（名称或字符串文字）及其位置。<br></p>
+<p><b><a href="../reference/api/org/eclipse/jdt/core/CompletionContext.html">CompletionContext</a></b>还可以提供与完成位置相关的元素（ <b><a href="../reference/api/org/eclipse/jdt/core/IJavaElement.html">IJavaElement</a></b> ）的一些信息。这些元素基于已完成的编译单元缓冲区的内容，而不是上次协调操作的结果。<br></p>
+
+<p>其中一些方法是：</p>
+<ul>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/CompletionContext.html#getEnclosingElement()">getEnclosingElement（）</a></b> - 此方法返回包含完成位置的最内层封闭元素</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/CompletionContext.html#getVisibleElements(java.lang.String)">getVisibleElements（String）</a></b> - 此方法返回从完成位置可见的元素，这些元素可以分配给给定的类型</li>
+</ul>
+<h4>代码完成选项</h4>
+<p>JDT Core插件定义了控制代码完成行为的选项。其他插件可以更改这些选项。</p>
+
+<ul>
+<li>激活可见性敏感完成<br>当此选项处于活动状态时，代码完成将不会回答当前上下文中不可见的元素。（例如，它不会回答超类的私有方法。）</li>
+<li>隐性成员的自动资格认证<br>当此选项处于活动状态时，完成会自动限定隐式字段引用和消息表达式的完成。</li>
+</ul>
+<p>其他选项允许您为字段，静态字段，局部变量和方法参数的建议完成名称指定前缀和后缀。</p>
+<p>有关代码帮助选项及其默认值的详细信息，请参阅<a href="jdt_api_options.htm#codeassist">JDT核心代码辅助选项</a> 。</p>
+
+<h3>代码选择</h3>
+<h4>执行代码选择</h4>
+<p>代码选择用于在编译单元中查找由一系列文本（通常是所选文本）表示的Java元素。要以编程方式执行代码选择，您必须调用<b><a href="../reference/api/org/eclipse/jdt/core/ICodeAssist.html#codeSelect(int, int)">ICodeAssist.codeSelect</a></b> 。您必须提供选择的起始索引位置及其长度。结果是一系列Java元素。大多数情况下，数组中只有一个元素，但如果选择不明确，则返回所有可能的元素。</p>
+<p>在以下示例中，将为编译单元调用代码选择。</p>
+<pre class="color1">
+   // Get the compilation unit
+   ICompilationUnit unit = ...;
+   
+   // Get the offset and length
+   int offset = ...;
+   int length = ...;
+   
+   // perform selection
+   IJavaElement[] elements = unit.codeSelect(offset, length);
+   System.out.println("the selected element is " + element[0].getElementName());
+</pre>
+<h4>在光标位置选择</h4>
+
+<p>当选择长度指定为0时，将通过查找包含指定偏移量的完整标记来计算选择。请考虑以下示例方法：</p>
+<p><code>&nbsp;&nbsp; public void fooMethod(Object) {<br />
+&nbsp;&nbsp; }<br /></code></p>如果在<i>fooMethod</i>的第一个字符后指定偏移量，并指定长度为0，则将计算选择以包括整个标记<i>fooMethod</i> 。相反，如果指定长度为5，则选择将被视为<i>ooMet</i> 。
+
+</body>
+</html>

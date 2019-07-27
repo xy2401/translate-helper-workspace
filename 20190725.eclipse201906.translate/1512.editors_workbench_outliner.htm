@@ -1,0 +1,111 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>内容大纲</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+
+<h2>内容大纲</h2>
+<p>编辑器通常具有相应的<b>内容概述器</b> ，其提供编辑器内容的结构化视图并帮助用户浏览编辑器的内容。</p>
+<p>工作台为此提供了标准的<b>Outline</b>视图。工作台用户使用“ <b>窗口”&gt;“显示视图”</b>菜单控制何时显示此视图。</p>
+<p>由于通用<a href="../reference/api/org/eclipse/ui/editors/text/TextEditor.html"><b>TextEditor</b></a>对其文本结构一无所知，因此无法为有趣的大纲视图提供行为。因此，下面显示的默认<b>大纲</b>视图不会做太多。</p>
+<p><img src="images/genericoutliner.png" alt="默认内容大纲" border="0"></p>
+<p> </p>
+<p>文本框架中的编辑器可以将自己的内容大纲页面提供给大纲视图。当工作台请求类型为<b><a href="../reference/api/org/eclipse/ui/views/contentoutline/IContentOutlinePage.html">IContentOutlinePage</a></b>的适配器时，将指定编辑器的大纲。</p>
+<pre>
+public Object getAdapter(Class required) {
+	if (IContentOutlinePage.class.equals(required)) {
+		if (fOutlinePage == null) {
+			fOutlinePage= new <b>JavaContentOutlinePage</b>(getDocumentProvider(), this);
+			if (getEditorInput() != null)
+				fOutlinePage.setInput(getEditorInput());
+		}
+		return fOutlinePage;
+	}
+	return super.getAdapter(required);
+}
+</pre>
+
+
+<p>内容大纲页面必须实现<b><a href="../reference/api/org/eclipse/ui/views/contentoutline/IContentOutlinePage.html">IContentOutlinePage</a></b> 。此接口结合了将选择更改侦听器（ <a href="../reference/api/org/eclipse/jface/viewers/ISelectionProvider.html"><b>ISelectionProvider</b></a> ）通知为视图中的页面（ <a href="../reference/api/org/eclipse/ui/part/IPage.html"><b>IPage</b></a> ）的行为的<a href="../reference/api/org/eclipse/ui/part/IPage.html"><b>能力</b></a> 。内容大纲通常使用JFace查看器实现。内容大纲（ <b><a href="../reference/api/org/eclipse/ui/views/contentoutline/ContentOutlinePage.html">ContentOutlinePage</a></b> ）的默认实现使用JFace树查看器来显示大纲的层次结构表示。此表示适用于许多结构化的大纲，包括<b>JavaContentOutlinePage</b> 。</p>
+
+
+<p>我们来看看页面的实现。当大纲页面由上面代码段中的编辑器创建时，其输入元素将设置为编辑器的输入元素。此输入通常可以直接传递到大纲页面的查看器，如下所示。</p>
+
+
+<pre>
+public void createControl(Composite parent) {
+
+	super.createControl(parent);
+
+	TreeViewer viewer= getTreeViewer();
+	viewer.setContentProvider(new ContentProvider());
+	viewer.setLabelProvider(new LabelProvider());
+	viewer.addSelectionChangedListener(this);
+
+	if (fInput != null)
+		viewer.setInput(fInput);
+}
+</pre>
+
+
+<p>树查看器创建继承自<b><a href="../reference/api/org/eclipse/ui/views/contentoutline/ContentOutlinePage.html">ContentOutlinePage</a></b> 。使用标准标签提供程序。内容提供程序在<b>JavaContentOutlinePage中</b>提供，负责在编辑器输入发生变化时将其解析为各个段。</p>
+
+
+<pre>
+		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+			...
+			if (newInput != null) {
+				IDocument document= fDocumentProvider.getDocument(newInput);
+				if (document != null) {
+					document.addPositionCategory(SEGMENTS);
+					document.addPositionUpdater(fPositionUpdater);
+					parse(document);
+				}
+			}
+		}
+</pre>
+
+
+<p>文本被解析为文档中的范围，称为段。这些段在大纲视图中按名称显示。</p>
+
+
+<p><img src="images/javacontentoutline.png" alt="Java示例大纲" border="0"></p>
+
+
+<p>选择更改时，将检索选定的段。其偏移量用于在编辑器中设置高亮范围。</p>
+
+
+<pre>
+public void selectionChanged(SelectionChangedEvent event) {
+
+	super.selectionChanged(event);
+
+	ISelection selection= event.getSelection();
+	if (selection.isEmpty())
+		fTextEditor.resetHighlightRange();
+	else {
+		Segment segment= (Segment) ((IStructuredSelection) selection).getFirstElement();
+		int start= segment.position.getOffset();
+		int length= segment.position.getLength();
+		try {
+			fTextEditor.setHighlightRange(start, length, true);
+		} catch (IllegalArgumentException x) {
+			fTextEditor.resetHighlightRange();
+		}
+	}
+}
+</pre>
+
+
+</body>
+</html>

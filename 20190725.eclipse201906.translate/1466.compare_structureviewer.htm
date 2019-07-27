@@ -1,0 +1,58 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>实现结构查看器</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>实现结构查看器</h2>
+<p>结构合并查看器对其输入执行双向或三向比较，在分层视图中显示结果，并允许用户在输入之间进行合并。结构合并查看器对于工作空间资源或存档文件的成员是通用的。</p>
+<h3>树状结构观众</h3>
+<p>由于许多结构比较查看器的实现基于树，因此比较插件提供了基于树的通用<a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureDiffViewer.html"><b>StructureDiffViewer</b></a> 。您的插件负责提供将单个输入对象分解为层次结构的<b>结构创建者</b> 。<a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureDiffViewer.html"><b>StructureDiffViewer</b></a>对生成的<a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureDiffViewer.html"><b>结构</b></a>执行比较，并将结果显示为树。</p>
+<p>您可以使用<a href="../reference/extension-points/org_eclipse_compare_structureCreators.html"><b>org.eclipse.compare.structureCreators</b></a>扩展名为插件指定结构创建者。与内容查看器非常相似，可以为一组文件<b>扩展名</b>指定结构创建者，或者可以使用<b>contentTypeBinding</b>将<a href="runtime_content.htm">内容类型</a>与特定结构创建者相关联。我们不会在这里审查标记，因为它与内容查看者非常相似。JDT插件为<a href="../reference/extension-points/org_eclipse_compare_structureCreators.html"><b>org.eclipse.compare.structureCreators</b></a>定义了几个贡献。</p>
+
+<h3>其他分层结构查看器</h3>
+<p>在某些情况下，基于树的<a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureDiffViewer.html"><b>StructureDiffViewer</b></a>可能不适合您的插件。<a href="../reference/extension-points/org_eclipse_compare_structureMergeViewers.html"><b>org.eclipse.compare.structureMergeViewers</b></a>扩展点允许您为结构合并查看器定义自己的实现。可以为文件<b>扩展</b>指定结构合并查看器，或者可以使用<b>contentTypeBinding</b>将<a href="runtime_content.htm">内容类型</a>与特定结构合并查看器相关联。有关<a href="../reference/extension-points/org_eclipse_compare_structureMergeViewers.html"><b>org.eclipse.compare.structureMergeViewers</b></a>贡献的示例，请参阅JDT插件。</p>
+
+<h4>差分器</h4>
+
+
+<p>
+<a href="../reference/api/org/eclipse/compare/structuremergeviewer/Differencer.html"><b>差异器</b></a>是用于分层结构化数据的差分引擎。它需要两到三个输入，并对它们进行双向或三向比较。</p>
+
+
+<p>如果差异引擎的输入元素实现<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IStructureComparator.html"><b>IStructureComparator</b></a>接口，则引擎递归地将其自身应用于input元素的子元素。Leaf元素必须实现<a href="../reference/api/org/eclipse/compare/IStreamContentAccessor.html"><b>IStreamContentAccessor</b></a>接口，以便差异器可以对其内容执行字节比较。</p><p>平台实现中包含了几个差异器的好例子：</p>
+<ul>
+  <li>
+<a href="../reference/api/org/eclipse/compare/ResourceNode.html"><b>ResourceNode</b></a>为平台工作空间资源（ <a href="../reference/api/org/eclipse/core/resources/IResource.html"><b>org.eclipse.core.resources ）实现两个接口（以及更多） <a href="../reference/api/org/eclipse/core/resources/IResource.html"><b>。IResource</b></a> ）。</li>
+  <li>
+<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DocumentRangeNode.html"><b>DocumentRangeNode</b></a>用于比较叠加在文档上的层次结构。节点和叶子对应于文档中的范围（ <a href="../reference/api/org/eclipse/compare/contentmergeviewer/IDocumentRange.html"><b>IDocumentRange</b></a> ）。通常， <a href="../reference/api/org/eclipse/compare/structuremergeviewer/DocumentRangeNode.html"><b>DocumentRangeNode</b></a>是在解析文档时创建的，它们代表文档的语义实体（例如Java类，方法或字段）。两个子类<b>JavaNode</b> （在<b>org.eclipse.jdt.internal.ui.compare中</b> ）和<b>PropertyNode</b> （在<b>org.eclipse.jdt.internal.ui.compare中</b> ）就是很好的例子。</li>
+</ul>
+<p>默认情况下，差异引擎将比较操作的结果作为<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffNode.html"><b>DiffNode</b></a>对象树<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffNode.html"><b>返回</b></a> 。<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffNode.html"><b>DiffNode</b></a>描述两个或三个输入之间的变化。可以通过覆盖引擎的单个方法来更改结果节点的类型。</p>
+<h4>差异观众</h4>
+<p><a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffNode.html"><b>DiffNode</b></a>树可以在<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffTreeViewer.html"><b>DiffTreeViewer中</b></a>显示。<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffTreeViewer.html"><b>DiffTreeViewer</b></a>要求树的内部节点实现<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IDiffContainer.html"><b>IDiffContainer</b></a>接口并离开实现<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IDiffElement.html"><b>IDiffElement</b></a>接口。</p>
+<p>比较分层结构数据和显示差异的典型步骤如下：</p>
+<ol>
+<li>将输入数据映射到实现<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IStructureComparator.html"><b>IStructureComparator</b></a>和<a href="../reference/api/org/eclipse/compare/IStreamContentAccessor.html"><b>IStreamContentAccessor</b></a>接口的对象树中</li>
+
+<li>通过<a href="../reference/api/org/eclipse/compare/structuremergeviewer/Differencer.html"><b>差分器</b></a>执行比较操作</li>
+
+<li>将差异结果输入<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffTreeViewer.html"><b>DiffTreeViewer</b></a></li>
+
+</ol>
+<p><a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureDiffViewer.html"><b>StructureDiffViewer</b></a>是一个专门的<a href="../reference/api/org/eclipse/compare/structuremergeviewer/DiffTreeViewer.html"><b>DiffTreeViewer</b></a> ，可以自动完成上面的三个步骤。它需要一个<a href="../reference/api/org/eclipse/compare/structuremergeviewer/ICompareInput.html"><b>ICompareInput</b></a>类型的单个输入对象，它从中检索要比较的两个或三个输入元素。它使用<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IStructureCreator.html"><b>IStructureCreator</b></a>从中提取包含<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IStructureComparator.html"><b>IStructureComparator</b></a>和<a href="../reference/api/org/eclipse/compare/IStreamContentAccessor.html"><b>IStreamContentAccessor</b></a>对象的树。然后将这些树与差分引擎进行比较，结果显示在树查看器中。
+</p>
+<p><a href="../reference/api/org/eclipse/compare/ZipFileStructureCreator.html"><b>ZipFileStructureCreator</b></a>是<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IStructureCreator.html"><b>IStructureCreator</b></a>接口的一个实现，它使zip存档的内容可用作<a href="../reference/api/org/eclipse/compare/structuremergeviewer/IStructureComparator.html"><b>IStructureComparator</b></a>的层次结构，可以通过差分引擎（ <a href="../reference/api/org/eclipse/compare/structuremergeviewer/Differencer.html"><b>差异器</b></a> ）轻松进行比较。这是如何使结构化文件可用于比较插件的分层比较功能的一个很好的示例。</p>
+
+<a name="Text"></a>
+<p>对于基于文本的输入，客户端应该是<a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureCreator.html"><b>StructureCreator</b></a>类的子类。这将允许在同一文件上打开的多个编辑器之间使用共享文档。提供语法突出显示的StructureCreator子类必须同时实现<code>getDocumentPartitioner()</code>和<code>getDocumentPartitioning90</code>方法以支持共享文档。
+</p>
+</body>
+</html>

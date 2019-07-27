@@ -1,0 +1,47 @@
+<html lang="zh-Hans" >
+<head>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+  <title>重用元数据</title>
+</head>
+<body >
+<h1>重用p2元数据</h1>
+<p>给定功能或包的元数据可能会有所不同，具体取决于它的生成方式。特别是在<a href="../../org.eclipse.platform.doc.isv/guide/p2_customizing_metadata.html">自定义元数据时</a> ，或者在功能提供<a href="pde_p2_featuremetadata.htm">根文件时</a> 。</p>
+<p>因此，在可能的情况下重用元数据总是一个好主意，而不是基于您可能不拥有的二进制功能和捆绑包重新生成元数据。</p>
+
+<h3>repo2runnable任务</h3>
+<p>有一个Ant任务<a href="../../org.eclipse.platform.doc.isv/guide/p2_repositorytasks.htm#p2_repo2runnable"><tt>&lt;p2.repo2runnable&gt;</tt></a> ，它将功能和包工件转换为已安装的形式。一般来说，如果我们希望能够针对它们进行编译，这就是我们需要插件的形状。此任务允许我们轻松地从我们自己的构建中的其他项目重建存储库。PDE / Build通过以下属性与此任务进行内置集成：</p>
+<table border="5" cellspacing="0" cellpadding="2">
+	<tr><td><tt>repoBaseLocation</tt></td><td>包含要转换的存储库的文件夹。此文件夹可以包含压缩存储库以及作为存储库的子文件夹。</td></tr>
+	<tr><td><tt>transformedRepoLocation</tt></td><td>将放置已转换工件的文件夹。然后，此文件夹将成为p2存储库本身。</td></tr>
+</table>
+<br>3.5中的新内容是<a href="pde_customization.htm#custom_targets">自定义目标</a> <tt>preProcessRepos</tt>和<tt>postProcessRepos</tt> ，它们发生在PDE / Build调用<tt>&lt;p2.repo2runnable&gt;</tt>之前和之后。这允许自动镜像或下载压缩存储库：<pre>
+<b>build.properties:</b>
+	repoBaseLocation=${buildDirectory}/inputRepositories
+	transformedRepoLocation=${buildDirectory}/transformedRepo
+	
+<b>customTargets.xml:</b>
+&lt;target name="preProcessRepos"&gt;
+   &lt;p2.mirror source="http://download.eclipse.org/releases/galileo" destination="file:${repoBaseLocation}/mirrored"&gt;
+      &lt;iu id="org.eclipse.equinox.p2.user.ui.feature.group" /&gt;
+      &lt;iu id="org.eclipse.cdt.feature.group"/&gt;
+   &lt;/p2.mirror&gt;
+   &lt;property name="RCP.Repo-3.5RC3" value="http://download.eclipse.org/eclipse/downloads/drops/S-3.5RC3-200905282000/org.eclipse.rcp-p2repo-3.5RC3.zip" /&gt;
+   &lt;property name="Equinox.Repo-3.5RC3" value="http://download.eclipse.org/equinox/drops/S-3.5RC3-200905282000/equinox-SDK-3.5RC3.zip" /&gt;
+   &lt;get src="${RCP.Repo-3.5RC3" dest="${repoBaseLocation}/org.eclipse.rcp-p2repo-3.5RC3.zip" /&gt;
+   &lt;get src="${Equinox.Repo-3.5RC3" dest=""${repoBaseLocation}/eclipse-equinox-3.5RC3.zip" /&gt;
+&lt;/target&gt;
+</pre>
+<i>（在撰写本文时，3.5最终拉链的位置尚不清楚，此处的URL仅作为示例，可能在以后的日期不存在。）</i>
+<p>PDE / Build将首先调用<tt>preProcessRepos</tt>自定义目标，然后它将调用repo2runnable ant任务将这些下载的存储库转换为可由构建重用的表单。</p>
+<p>定义此转换输出位置的<tt>transformedRepoLocation</tt>属性也可用作<b>上下文存储库</b> 。</p>
+
+<h3>上下文存储库</h3>
+<p>属性<tt><b>p2.context.repos</b></tt>是以逗号分隔的存储库列表，用作构建的<i>上下文</i> 。</p>
+<p>生成元数据时，构建将首先查询上下文存储库，以查看是否已存在该功能或插件的元数据。如果元数据已存在，则它将被复制到构建本地存储库（ <tt>$ {p2.build.repo}</tt> ），而不是生成新的元数据。
+</p>
+<p>同样，如果功能，捆绑或产品已<a href="../../org.eclipse.platform.doc.isv/guide/p2_customizing_metadata.html">定制</a>其元数据以依赖于未包含在构建中的内容，则PDE / Build将从上下文存储库执行<a href="../../org.eclipse.platform.doc.isv/guide/p2_repositorytasks.htm#p2_mirror">镜像</a> 。此镜像操作将包括添加到功能或插件元数据的任何IU。</p>
+</body>
+</html>

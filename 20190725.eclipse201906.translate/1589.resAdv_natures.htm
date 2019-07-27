@@ -1,0 +1,125 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>项目性质</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>项目性质</h2>
+<p>项目性质允许插件将项目标记为特定类型的项目。例如，Java开发工具（JDT）使用“Java性质”向项目添加特定于Java的行为。项目性质由插件定义，并且通常在用户执行插件定义的某些操作时按项目添加或删除。</p>
+<p>一个项目可以有多种性质。但是，在定义项目性质时，可以为自然定义特殊约束：</p>
+<ul>
+  <li><b>one-of-nature</b> - 指定自然是命名集之一。集合中的自然是相互排斥的;也就是说，项目中只能存在属于该集合的一种性质。</li>
+  <li><b>requires-nature</b> - 指定性质取决于另一种性质，并且只能添加到已具有所需性质的项目中。</li>
+</ul>
+<p>要实现自己的本性，您需要定义扩展并提供实现<b><a href="../reference/api/org/eclipse/core/resources/IProjectNature.html">IProjectNature</a></b>的类。</p>
+
+<h3>定义自然</h3>
+<p><a href="../reference/extension-points/org_eclipse_core_resources_natures.html"><b>org.eclipse.core.resources.natures</b></a>扩展点用于添加项目自然定义。以下标记为假设的<b>com.example.natures</b>插件添加了一个特性。</p>
+<pre>
+   &lt;extension
+      point=&quot;org.eclipse.core.resources.natures&quot;
+      id=&quot;mynature&quot;
+      name=&quot;My Nature&quot;&gt;
+      &lt;runtime&gt;
+         &lt;run class=&quot;com.example.natures.MyNature&quot;&gt;
+         &lt;/run&gt;
+      &lt;/runtime&gt;
+   &lt;/extension&gt;
+</pre>
+<p>扩展中标识的类必须实现平台接口<b><a href="../reference/api/org/eclipse/core/resources/IProjectNature.html">IProjectNature</a></b> 。此类实现特定于插件的行为，以便在配置特性时将特定于自然的信息与项目相关联。</p>
+<pre>
+   public class MyNature implements IProjectNature {
+
+      private IProject project;
+
+      public void configure() throws CoreException {
+         // Add nature-specific information
+         // for the project, such as adding a builder
+         // to a project's build spec.
+      }
+      public void deconfigure() throws CoreException {
+         // Remove the nature-specific information here.
+      }
+      public IProject getProject() {
+         return project;
+      }
+      public void setProject(IProject value) {
+         project = value;
+      }
+   }
+</pre>
+<p>当从项目中添加和删除性质时，平台会发送<b>configure（）</b>和<b>deconfigure（）</b>方法。您可以实现<b>configure（）</b>方法以将构建器添加到项目中，如<a href="resAdv_builders.htm" class="XRef">Builders中所述</a> 。</p>
+
+
+<h3>将性质与项目联系起来</h3>
+<p>定义性质不足以将其与项目相关联。您必须通过更新项目的描述来包含您的性质，从而为项目指定性质。当用户使用专门的新项目向导创建一个新项目时，通常会发生这种情况。以下代码段显示了如何将新特性分配给给定项目。</p>
+<pre>
+   try {
+      IProjectDescription description = project.getDescription();
+      String[] natures = description.getNatureIds();
+      String[] newNatures = new String[natures.length + 1];
+      System.arraycopy(natures, 0, newNatures, 0, natures.length);
+      newNatures[natures.length] = &quot;com.example.natures.mynature&quot;;
+      description.setNatureIds(newNatures);
+      project.setDescription(description, null);
+   } catch (CoreException e) {
+      // Something went wrong
+   }
+</pre>
+<p>
+<b>注意：</b> nature id是自然扩展的完全限定id。通过将插件标识与plugin.xml文件中的简单扩展标识组合来创建扩展的完全限定标识。例如，插件“com.example.natures”中具有简单扩展名“mynature”的性质将具有名称“com.example.natures.mynature”</p>
+<p>在将项目描述设置为项目之前，实际上不会为项目分配（和配置）性质。另请注意，用于性质的标识符是自然扩展的完全限定名称（插件ID +扩展ID）。</p>
+<p>如果已使用约束定义了本质，则可以使用工作空间API来验证新特性。例如，假设使用先决条件定义了性质：</p>
+<pre>   &lt;extension
+      point=&quot;org.eclipse.core.resources.natures&quot;
+      <b>id=&quot;myOtherNature&quot;</b>
+      name=&quot;My Other Nature&quot;&gt;
+      &lt;runtime&gt;
+         &lt;run class=&quot;com.example.natures.MyOtherNature&quot;&gt;
+         &lt;/run&gt;
+      &lt;/runtime&gt;
+<b>   &lt;requires-nature id=&quot;com.example.natures.mynature&quot;/&gt;
+</b>   &lt;/extension&gt;
+</pre>
+<p>除非项目存在第一个性质，否则新的性质无效。根据插件的设计，您可能需要检查是否已安装先决条件性质，或者您可能希望自己添加先决条件性质。无论哪种方式，您都可以使用工作空间API检查项目性质的建议组合的有效性。</p>
+
+<pre>   try {
+      IProjectDescription description = project.getDescription();
+      String[] natures = description.getNatureIds();
+      String[] newNatures = new String[natures.length + 1];
+      System.arraycopy(natures, 0, newNatures, 0, natures.length);
+<b>      newNatures[natures.length] = &quot;com.example.natures.myOtherNature&quot;;
+</b>      IStatus status = <b>workspace.validateNatureSet(newNatures);
+</b>
+      // check the status and decide what to do
+      if (status.getCode() == IStatus.OK) {
+      	description.setNatureIds(newNatures);
+      	project.setDescription(description, null);
+      } else {
+      	// raise a user error
+	...
+      }
+   } catch (CoreException e) {
+      // Something went wrong
+   }
+</pre>
+
+
+<h3>自然描述符</h3>
+<p>除了通过id处理natures之外，您还可以获取描述性质，其约束和标签的描述符（ <a href="../reference/api/org/eclipse/core/resources/IProjectNatureDescriptor.html"><b>IProjectNatureDescriptor</b></a> ）。您可以查询其描述符的特定属性，或从工作区获取描述符。以下代码段为我们的新性质获取项目性质描述符：</p>
+<pre>      IProjectNatureDescriptor descriptor = workspace.getNatureDescriptor(&quot;com.example.natures.myOtherNature&quot;);
+</pre>
+<p>您还可以获取所有已安装属性的描述符数组：</p>
+<pre>      IProjectNatureDescriptor[] descriptors = workspace.getNatureDescriptors();
+</pre>
+
+</body>
+</html>

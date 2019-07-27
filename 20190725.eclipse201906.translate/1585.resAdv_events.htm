@@ -1,0 +1,207 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2006. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>跟踪资源变化</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>跟踪资源变化</h3>
+<p>我们刚刚看到了如何在可运行的<a href="resAdv_batching.htm">批处理中更改资源</a> （ <a href="resAdv_batching.htm">批处理资源更改</a> ）。让我们看一下硬币的另一面。如果要跟踪插件运行时发生的工作区的所有更改，该怎么办？您可以在工作区中注册<b><a href="../reference/api/org/eclipse/core/resources/IResourceChangeListener.html">IResourceChangeListener</a></b> 。将通过<b><a href="../reference/api/org/eclipse/core/resources/IResourceChangeEvent.html">IResourceChangeEvent</a></b>对象通知您的侦听器，该对象描述了更改。
+</p>
+<h4>注册一个监听器</h4>
+
+<p>首先，您必须在工作区中注册资源更改侦听器。
+</p>
+<pre>   IResourceChangeListener listener = new MyResourceChangeReporter();
+   ResourcesPlugin.getWorkspace().addResourceChangeListener(
+      listener, IResourceChangeEvent.POST_CHANGE);
+</pre>
+
+<p>在对工作空间资源进行修改后，将通知您的侦听器。修改资源的资源API方法会触发这些事件，作为其记录行为的一部分。资源API方法的方法注释明确指出它是否触发资源更改事件。例如，以下内容包含在<b>IFile.setContents（）</b>注释中：</p>
+<pre>   This method changes resources; these changes will be reported in a subsequent
+   resource change event, including an indication that this file's content have
+   been changed.
+</pre>
+
+<p>创建，删除或更改资源的方法通常会触发这些事件。读取但不写入资源的方法通常不会触发这些事件。
+</p>
+<h4>资源变化事件</h4>
+
+<p>资源更改事件描述工作空间中发生的更改（或更改集）的细节。该事件包含描述更改的<i>净</i>影响的<b>资源增量</b> 。例如，如果添加资源并稍后在一批更改期间将其删除，则资源将不会显示在增量中。
+</p>
+<p>资源增量结构为以工作空间根为根的树。资源增量树描述了这些类型的更改：</p>
+<ul>
+  <li>已创建，删除或更改的资源。如果已删除（或添加）文件夹，则资源增量将包括文件夹和文件夹中包含的所有文件。</li>
+  <li>使用<b>IResource.move（）</b> API移动或重命名的资源。</li>
+  <li>已添加，删除或更改的标记。标记修改被认为是工作空间修改操作。</li>
+  <li>已修改的文件。更改的文件在资源增量中标识，但您无权访问资源增量中文件的先前内容。</li>
+</ul>
+<p>要遍历资源增量树，您可以使用<b>IResource.getAffectedChildren</b>实现<b><a href="../reference/api/org/eclipse/core/resources/IResourceDeltaVisitor.html">IResourceDeltaVisitor</a></b>接口或显式遍历树。资源增量访问者实现一种<b>访问</b>方法，该方法由资源增量调用，因为它枚举了树中的每个更改。
+</p>
+<blockquote><i>注意：资源增量中未标识对资源会话属性或资源持久性属性所做的更改。</i></blockquote>
+<p>每当对工作空间进行更改（或批量更改）时，都会发送资源更改事件。此外，还会为某些特定的工作区操作发送资源更改事件。下表总结了资源更改事件的类型以及报告的时间。
+</p>
+<table border="1">
+<tr>
+<th rowspan="1" colspan="1">
+<p class="CellHeading">事件类型</p>
+</th>
+<th rowspan="1" colspan="1">
+<p class="CellHeading">描述</p>
+</th>
+</tr>
+<tr>
+<td>
+<p class="CellBody">
+<b>PRE_CLOSE</b></p>
+</td>
+<td>
+<p class="CellBody">通知侦听器项目即将关闭。此事件可用于在项目关闭之前从项目的内存中表示（例如，会话属性）中提取和保存必要信息。（当项目关闭时，将处理内存中的表示）。在此事件期间，工作空间已锁定（无资源可更新）。该事件包含正在关闭的项目。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="CellBody">
+<b>PRE_DELETE</b></p>
+</td>
+<td>
+<p class="CellBody">通知侦听器项目即将被删除。此事件可用于执行清理操作，例如从插件的目录中删除与项目相关的任何已保存状态。在此事件期间，工作空间已锁定（无资源可更新）。该事件包含正在删除的项目。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="CellBody"><b>PRE_BUILD</b></p>
+</td>
+<td>
+<p class="CellBody">在任何建筑物发生之前通知听众。当请求显式构建时，或者当平台检测到构建需要发生时，无论是否实际启用了自动构建，都会广播此事件。在此事件期间<b>未</b>锁定工作空间（可以更新资源）。该事件包含一个资源增量，描述自上一次<b>POST_BUILD</b>事件结束以来发生的更改。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="CellBody">
+<b>POST_BUILD</b></p>
+</td>
+<td>
+<p class="CellBody">任何建筑物发生后通知听众。在请求显式构建之后，或者当平台检测到需要进行构建时，无论是否实际启用了自动构建，都会广播此事件。在此事件期间<b>未</b>锁定工作空间（可以更新资源）。该事件包含一个资源增量，描述自上一次<b>POST_BUILD</b>事件结束以来发生的更改。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p class="CellBody">
+<b>POST_CHANGE</b></p>
+</td>
+<td>
+<p class="CellBody">描述自上次<b>POST_CHANGE</b>事件报告以来工作空间发生的一组更改。在单独使用资源更改API或在批处理的工作区更改集中使用后触发。在任何<b>PRE_BUILD</b>之前和任何<b>POST_BUILD</b>通知完成之后<b>也会</b>触发。该事件包含一个资源增量，描述自上次<b>POST_CHANGE</b>事件以来的净更改。在此事件期间，工作空间已锁定（无资源可更新）。</p>
+</td>
+</tr>
+</table>
+
+<h4><a name="resAdv_events_listener">实现资源更改侦听器</a></h4>
+
+<p>以下示例实现基于控制台的资源更改侦听器。为特定类型的事件注册资源更改侦听器，并将有关这些事件的信息打印到控制台：</p>
+<pre>   IResourceChangeListener listener = new MyResourceChangeReporter();
+   ResourcesPlugin.getWorkspace().addResourceChangeListener(listener,
+      IResourceChangeEvent.PRE_CLOSE
+      | IResourceChangeEvent.PRE_DELETE
+      | IResourceChangeEvent.PRE_BUILD
+      | IResourceChangeEvent.POST_BUILD
+      | IResourceChangeEvent.POST_CHANGE);
+</pre>
+<p>侦听器检查每个事件类型，并报告有关已更改的资源和发生的更改类型的信息。虽然此示例旨在显示处理所有类型的资源事件的一般侦听器，但典型的侦听器将仅注册一种类型的事件。
+</p>
+<p><b>POST_CHANGE</b>的实现使用另一个类，可用于访问资源增量中的更改。
+</p>
+<pre>   import org.eclipse.resources.*;
+   import org.eclipse.runtime.*;
+
+   public class MyResourceChangeReporter implements IResourceChangeListener {
+      public void resourceChanged(IResourceChangeEvent event) {
+         IResource res = event.getResource();
+         switch (event.getType()) {
+            case IResourceChangeEvent.PRE_CLOSE:
+               System.out.print(&quot;Project &quot;);
+               System.out.print(res.getFullPath());
+               System.out.println(&quot; is about to close.&quot;);
+               break;
+            case IResourceChangeEvent.PRE_DELETE:
+               System.out.print(&quot;Project &quot;);
+               System.out.print(res.getFullPath());
+               System.out.println(&quot; is about to be deleted.&quot;);
+               break;
+            case IResourceChangeEvent.POST_CHANGE:
+               System.out.println(&quot;Resources have changed.&quot;);
+               event.getDelta().accept(new DeltaPrinter());
+               break;
+            case IResourceChangeEvent.PRE_BUILD:
+               System.out.println(&quot;Build about to run.&quot;);
+               event.getDelta().accept(new DeltaPrinter());
+               break;
+            case IResourceChangeEvent.POST_BUILD:
+               System.out.println(&quot;Build complete.&quot;);
+               event.getDelta().accept(new DeltaPrinter());
+               break;
+         }
+      }
+   }
+</pre>
+<p><b>DeltaPrinter</b>类实现<b><a href="../reference/api/org/eclipse/core/resources/IResourceDeltaVisitor.html">IResourceDeltaVisitor</a></b>接口以询问资源增量。为资源增量中的每个资源更改调用<b>visit（）</b>方法。访问者使用返回值来指示是否应访问子资源的增量。
+</p>
+<pre>   class DeltaPrinter implements IResourceDeltaVisitor {
+      public boolean visit(IResourceDelta delta) {
+         IResource res = delta.getResource();
+         switch (delta.getKind()) {
+            case IResourceDelta.ADDED:
+               System.out.print(&quot;Resource &quot;);
+               System.out.print(res.getFullPath());
+               System.out.println(&quot; was added.&quot;);
+               break;
+            case IResourceDelta.REMOVED:
+               System.out.print(&quot;Resource &quot;);
+               System.out.print(res.getFullPath());
+               System.out.println(&quot; was removed.&quot;);
+               break;
+            case IResourceDelta.CHANGED:
+               System.out.print(&quot;Resource &quot;);
+               System.out.print(res.getFullPath());
+               System.out.println(&quot; has changed.&quot;);
+               break;
+         }
+         return true; // visit the children
+      }
+   }
+</pre>
+<p>可以从提供的资源增量获得进一步的信息。以下代码段显示了<b>IResourceDelta的方式。可以实施CHANGED</b>案例以进一步描述资源变化。
+</p>
+<pre>   ...
+   case IResourceDelta.CHANGED:
+      System.out.print(&quot;Resource &quot;);
+      System.out.print(delta.getFullPath());
+      System.out.println(&quot; has changed.&quot;);
+      int flags = delta.getFlags();
+      if ((flags &amp; IResourceDelta.CONTENT) != 0) {
+            System.out.println(&quot;--&gt; Content Change&quot;);
+      }
+      if ((flags &amp; IResourceDelta.REPLACED) != 0) {
+            System.out.println(&quot;--&gt; Content Replaced&quot;);
+      }
+      if ((flags &amp; IResourceDelta.MARKERS) != 0) {
+            System.out.println(&quot;--&gt; Marker Change&quot;);
+            IMarkerDelta[] markers = delta.getMarkerDeltas();
+            // if interested in markers, check these deltas
+      }
+      break;
+   ...
+</pre>
+<p>有关资源增量，访问者和标记增量的完整说明，请参阅<b><a href="../reference/api/org/eclipse/core/resources/IResourceDelta.html">IResourceDelta</a></b> ， <b><a href="../reference/api/org/eclipse/core/resources/IResourceDeltaVisitor.html">IResourceDeltaVisitor</a></b>和<b><a href="../reference/api/org/eclipse/core/resources/IMarkerDelta.html">IMarkerDelta</a></b>的API规范。</p>
+<blockquote><i>注意：资源更改侦听器对于跟踪激活插件时资源发生的更改非常有用。如果您的插件在其启动代码期间注册了资源更改侦听器，则可能在激活插件之前触发了许多资源更改事件。插件收到的第一个资源更改事件中包含的资源增量将不包含自上次激活插件以来所做的所有更改。如果需要跟踪插件激活之间的更改，则应使用为工作空间保存提供的支持。这在<a href="resAdv_saving.htm" class="XRef">Workspace save participation中</a>有所描述。</i></blockquote>
+<blockquote><i>注意：在后台线程中发生的处理期间会触发某些资源更改事件。资源更改侦听器应该是线程安全的。有关使用UI的线程安全性的讨论，请参阅<a href="swt_threading.htm">线程问题</a> 。</i></blockquote>
+
+</body>
+</html>

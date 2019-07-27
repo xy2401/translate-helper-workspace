@@ -1,0 +1,50 @@
+<html lang="zh-Hans" >
+<head>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+  <title>特征元数据的布局</title>
+</head>
+<body >
+<h1>特征元数据的布局</h1>
+<p>PDE Build一直使用功能作为一种分组机制，指定应该构建什么。使用p2，这个功能作为一个组的想法已经扩展，导致每个功能生成一个以上的可安装单元（IU）。</p>从构建的角度来看，一个功能有三个方面：<ul>
+<li>一组嵌套功能和插件。</li>
+<li>（可选）功能jar本身包含feature.xml，许可证文件等。</li>
+<li>将<a href="pde_rootfiles.htm">根文件提供</a>给安装的机制。</li>
+</ul>
+
+<p>当使用3.4中引入的<a href="pde_p2_integration.htm">元数据生成器时</a> ，我们最终得到以下结构“ <tt>org.example.platform</tt> ”：</p>
+	<table border="5" cellspacing="0" cellpadding="1" width="95%" align="center">
+		<tr>
+			<td width="320"><tt>org.example.platform.feature.group</tt></td>
+			<td>这是该功能的顶级分组IU，它将对feature.xml包含和要求的所有功能和插件有要求。它还包括对嵌套的<tt>org.example.platform.feature.jar</tt>的要求</td>
+		</tr>
+		<tr><th colspan="2">
+		<table border="1" cellspacing="0" align="right" style="width:98%">
+		<tr><td width="300"><tt>org.example.platform.feature.jar</tt></td>
+			<td>这是表示功能jar本身的IU。它有一个LDAP过滤器<div align="center">“ <tt>（org.eclipse.update.install.features = true）</tt> ”</div>这导致只有在配置文件定义该属性时才安装功能jar。此IU还需要实际的<tt>org.example.platform_1.0.0.jar</tt>工件。
+				<p>如果该功能未在其build.properties文件中定义“ <tt>bin.includes</tt> ”，则不会生成此功能jar IU。</p></td></tr>
+		</table>
+		</th></tr>
+	</table>
+	
+<p>请注意，此IU结构不包含该功能提供的根文件的任何内容。相反，使用元数据生成的构建将所有根文件放在一起形成单个IU和工件。</p>
+<p>3.5的新功能是<a href="pde_p2_builds.htm">p2发布者</a> 。如果我们使用PDE Build的<a href="pde_p2_buildtasks.htm"><tt>eclipse.gatherFeature</tt></a>任务从源代码发布功能，我们会获得与贡献它们的功能相对应的根文件IU。在这种情况下，我们最终得到如下元数据：</p>
+<table border="5" cellspacing="0" cellpadding="1" width="95%" align="center">
+		<tr>
+			<td width="370"><tt>org.example.platform.feature.group</tt></td><td>该功能的顶级分组IU</td>
+		</tr>
+		<tr><th colspan="2">
+		<table border="1" cellspacing="0" align="right" style="width:98%">
+		<tr><td width="350"><tt>org.example.platform.feature.jar</tt></td><td>功能jar IU。</td></tr>
+		<tr><td><tt>org.example.platform_root</tt><br>
+		       <tt>org.example.platform_root &lt;WS&gt;。&lt;OS&gt; &lt;拱&gt;</tt></td>
+		    <td>这些是根文件IU。feature.group将包含每个平台的根IU，该功能为该功能提供文件。根IU本身对来自包含文件的p2工件库（例如<tt>binary / org.example.platform_root.gtk.linux.x86_1.0.0</tt> ）的实际二进制工件有要求。</td></tr>
+		</table>
+		</th></tr>
+	</table>
+
+<p>使用新的p2发布者而不是旧的元数据生成器可以更精细地控制产品的根文件传递方式。</p>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>区域设置特定文件</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>区域设置特定文件</h2>
+<p>片段是打包国家语言翻译的便捷方式。让我们更仔细地看一下用于安装特定于语言环境的翻译文件的目录结构。无论翻译的文件是打包在片段中还是在原始插件中提供，都使用此目录结构。</p>
+<p>有三种机制可以在插件中查找特定于语言环境的文件。</p>
+<ul>
+  <li><b>平台核心机制</b> （平台的运行时特定于区域设置的子目录搜索）</li>
+  <li><b>Java资源包</b> （java.util。资源包）</li>
+  <li><b>plugin.properties机制</b> （从plugin.xml文件翻译值）</li>
+</ul>
+<p>重要的是要了解哪个机制用于访问必须翻译的任何给定文件，以便您知道该文件的名称以及将其放在文件系统中相对于插件的位置。</p>
+<h4><a name="platform">平台核心机制</a></h4>
+<p>平台核心定义了一个目录结构，该结构使用特定于语言环境的子目录来处理因语言环境而异的文件。翻译的文件放在插件下名为<b>nl</b>的目录中。例如，以下安装树显示了一个简单（无代码）插件，其中包含其<b>about.properties</b>文件的特定于语言环境的转换。各种翻译显示为来自插件片段而不是插件本身。这是与基础分开发送翻译的典型情况，但您也可以将<b>nl</b>子目录放在插件本身下。</p>
+<pre>acmeweb/
+  eclipse/
+    plugins/
+      com.example.acme.acmewebsupport_1.0.0/
+        plugin.xml
+        about.properties    <i>(default locale)</i>
+      com.example.acme.fragmentofacmewebsupport_1.0.0/
+        fragment.xml   <i>(a fragment of com.example.acme.acmewebsupport 1.0.0)</i>
+        nl/
+          fr/
+            about.properties  <i>(French locale)</i>
+            CA/
+              about.properties  <i>(French Canadian locale)</i>
+            FR/
+              EURO/
+                about.properties <i>(French France Euros)</i>
+          en/
+            about.properties  <i>(English locale)</i>
+            CA/
+              about.properties  <i>(English Canadian locale)</i>
+            US/
+              about.properties <i>(English US locale)</i>
+         de/
+            about.properties <i>(German locale)</i> </pre>
+<p>要翻译的文件不包含在JAR文件中。每个文件应具有完全相同的文件名，但应位于片段（或插件）根目录下<b>nl</b>子目录下的子目录中。</p>
+<p>在运行时仅访问最具体的文件。搜索文件路径是<a href="../reference/api/org/eclipse/core/runtime/Platform.html"><b>Platform.find</b></a> ， <a href="../reference/api/org/eclipse/core/runtime/IPluginDescriptor.html"><b>IPluginDescriptor.find</b></a>和<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin.find</a></b>机制的一部分。例如，假设默认语言环境是<b>en_CA</b> ，并且插件搜索<b>about.properties</b> ，如下所示：</p>
+<pre>somePlugin.find(&quot;$nl$/about.properties&quot;);</pre>
+<p>该方法将返回对应于第一个地址的URL。根据以下顺序找到<b>.properties</b> ：</p>
+<pre>com.example.acme.acmewebsupport_1.0.0/nl/en/CA/about.properties
+com.example.acme.fragmentofacmewebsupport_1.0.0/nl/en/CA/about.properties
+ ...  		&lt;any other fragments&gt;
+com.example.acme.acmewebsupport_1.0.0/nl/en/about.properties
+com.example.acme.fragmentofacmewebsupport_1.0.0/nl/en/about.properties
+ ...
+com.example.acme.acmewebsupport_1.0.0/about.properties
+com.example.acme.fragmentofacmewebsupport_1.0.0/about.properties</pre>
+<p>插件使用此机制在其他插件中搜索众所周知的文件名。这包括以下众所周知的文件名：</p>
+<ul>
+  <li><b>preferences.properties</b> （插件特定首<b>选项的</b>外部化字符串默认覆盖）</li>
+  <li><b>about.properties</b> （用于“关于”信息的特征的外部化字符串）</li>
+  <li><b>plugin_customization.properties</b> （用于特定于产品的首选项的外部化字符串默认覆盖）</li>
+  <li><b>splash.bmp</b> （特定于产品的启动画面）</li>
+</ul>
+<blockquote>
+  <p><i>（注意：此列表中明显缺少<b>plugin.properties</b>和<b>fragment.properties</b> 。它们的处理方式与下面描述的方式不同。）</i></p>
+</blockquote>
+<h4>Java资源包</h4>
+<p>属性资源包的标准Java处理用于其他文件。翻译文件包含在JAR文件中，每个属性文件都具有特定于语言环境的名称，例如“ <b>message_en_CA.properties</b> ”。这些文件位于特定于包的子目录中，可能出现在插件本身或其中一个片段中。每个翻译的属性文件可以是部分的，因为键的查找访问明确定义的属性文件链。</p>
+
+<h4>plugin.properties机制</h4>用于转换plugin.properties文件的机制使用Java资源包命名约定。但是，文件必须位于插件的根目录中或此插件的片段的根目录中。同样的规则适用于MANIFEST.MF的翻译。<h3>定义NL片段</h3>
+<p>自2.1起，NL片段的形状略有变化。以前所有的翻译文件（包括plugin.properties）都是在jar中提供的。这是不一致的，因为plugin.properties文件是在插件的根目录下提供的。
+<br>要使NL片段适应新模型，请从jar中删除plugin.properties转换文件，并将它们作为fragment.xml的兄弟放在片段的根目录下。例如，org.eclipse.ui.workbench的NL片段的新形状如下：</p>
+<pre>  org.eclipse.ui.workbench.nl/
+     fragment.xml
+     plugin_fr.properties
+     plugin_pt_BR.properties
+     ...
+     nl1.jar</pre>
+
+</body>
+</html>

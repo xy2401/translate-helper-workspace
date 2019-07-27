@@ -1,0 +1,70 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../guide/book.css" type="text/css">
+<title>生成ANT脚本</title>
+</head>
+
+<body >
+
+<h1>生成Ant脚本</h1>
+
+<p> <b>Ant</b>是一个简单的开源脚本引擎，能够运行以XML格式编写的脚本。Ant非常适合执行自动构建中常见的任务。</p>
+
+<p>插件，片段或功能<b>build.properties中</b>设置的变量将用于为Ant生成脚本。PDE生成用于创建单个插件和片段构建文件的Ant脚本以及用于构建功能JAR的一个总体脚本。这个“主”脚本还负责以正确的顺序运行单个脚本文件（由插件依赖链定义）。每个构建文件具有相同的名称（ <b>build.xml</b> ），并作为相应项目中清单文件的兄弟创建。</p>
+
+<p>由于Ant脚本在<b>build.properties中</b>使用替换变量，因此通常可以“按原样”使用它们，而无需修改生成的脚本。如果您确实修改了它们，则每次要重建组件时都不能重新创建脚本。</p>
+
+<p>要创建脚本，只需在Navigator或Package Explorer视图中选择合适的清单文件（plugin.xml，fragment.xml或feature.xml）时选择<b>Create Ant Build File</b>即可。该命令将生成构建脚本。在选择新生成的脚本文件时，从弹出菜单中选择<b>Run Ant ...</b>后，将打开以下向导：</p>
+
+<p>
+<img src="../guide/images/tasks/feature-jar.png" alt="Ant执行向导显示可用目标" border="0"></p>
+
+<p>标准Ant向导允许以两种方式进行自定义：提供执行参数和选择一个或多个构建目标。</p>
+
+<h4>属性</h4>
+<p>Ant参数通常用于提供覆盖默认值并控制构建过程的属性值。使用“-Dproperty = value”设置参数。识别以下属性：</p>
+
+<ul>
+  <li>
+    <p><b>bootclasspath</b> - 如果设置，它将替换默认的引导类路径。在编译跨平台插件时使用（例如，使用Linux为Windows构建UI插件）</p></li>
+  <li><b>build.result.folder</b> - 应该放置更新JAR创建的临时文件。这些文件通常是插件库JAR。</li>
+  <li><b>plugin.destination</b> - 应该放置插件和片段更新JAR。这些JAR以适合在安装/更新服务器上发布并通过功能引用的格式表示整个插件和片段。Update站点的典型布局是将所有插件和片段JAR放在一个位置，将所有功能放在另一个位置。在将功能推送到远程服务器之前，此参数对于将插件和片段直接放入所需目录（或本地计算机上的暂存位置）非常有用。</li>
+  <li><b>feature.destination</b> - 应该放置功能更新JAR。</li>
+</ul>
+<p>要调整编译器的行为，可以识别以下属性：</p>
+<ul>
+	<li><b>javacFailOnError</b> - 设置为true时发生错误时停止构建。默认值为false。</li>
+	<li><b>javacDebugInfo</b> - 设置为true时，使用调试信息编译源代码。默认为true。</li>
+	<li><b>javacVerbose</b> - 设置为true时生成详细输出。默认为true。</li>
+	<li><b>javacSource</b> -  -source命令行开关的值。</li>
+	<li><b>javacTarget</b> - 为特定VM版本生成类文件。</li>
+	<li><b>compilerArg</b> - <b>编译器的</b>附加命令行参数。</li>
+</ul>
+
+<h4>目标</h4>
+
+<p>执行功能构建脚本时，以下目标用于调用插件或片段的各个目标。为了指定要执行的<b>目标，</b>应该设置属性<b>目标</b> （例如-Dtarget = refresh）。<b>所有。*</b>目标中的一个用作迭代器，而要执行的实际目标是通过属性<b>目标</b>指定的。</p>
+<ul>
+  <li><b>all.plugins</b> - 适用于所有列出的插件</li>
+  <li><b>all.fragments</b> - 用于所有列出的片段</li>
+  <li><b>all.children</b> - 用于所有列出的插件和片段</li>
+  <li><b>build.jars</b> - 为所有特征子项构建JAR;</li>
+  <li><b>build.sources</b> - 为所有功能子项构建源代码;</li>
+  <li><b>build.update.jar</b> - 以安装/更新机制使用的格式生成功能JAR。上面提到的属性<b>feature.destination</b>可以用来定义放置JAR的位置;</li>
+  <li><b>zip.distribution</b> - 创建一个zip文件，其中的功能及其插件和片段采用类似SDK的结构，但不包含源代码;</li>
+  <li><b>zip.sources</b> - 创建一个zip文件，其中包含该功能及其插件和片段，类似于SDK的结构，仅包含源代码;</li>
+  <li><b>clean</b> - 删除通过运行任何目标生成的所有内容;</li>
+  <li><b>refresh</b> - 在当前项目中执行“刷新”操作，从而使新生成的资源在Navigator或Package Explorer中可见。</li>
+  <li><b>zip.plugin</b> - 使用以下结构创建一个包含插件的二进制和源内容的zip文件：<blockquote>id_version /<br>内容</blockquote>其中'id'是插件唯一标识符，'version'是插件版本。此zip文件可以作为快速手动部署的形式直接解压缩到Eclipse安装目录中。</li>
+</ul>
+
+
+
+
+
+</body>
+
+</html>

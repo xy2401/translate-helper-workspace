@@ -1,0 +1,77 @@
+<html lang="zh-Hans" >
+<head>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2009. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
+  <title>定制无头构建</title>
+</head>
+<body >
+<h1>定制无头构建</h1>
+<p>有多种方法可以自定义无头构建：</p>
+<ul>
+<li>使用customTargets.xml文件</li>
+<li>使用allElements.xml文件</li>
+<li>使用customAssembly.xml文件</li>
+<li>使用功能或插件自定义回调。（请参阅<a href="pde_custom_callbacks.htm">自定义功能和插件版本</a> ）</li>
+</ul>
+<p>这些文件内容的确切格式都相互依赖。因此，在使用customTargets，allElements或customAssembly自定义时，建议确保用于这些文件的模板都来自相同版本的PDE / Build。新版本的PDE / Build向后兼容这些自定义脚本的旧版本。</p>
+<p>这些脚本的模板版本可在<tt>templates / headless-build</tt>文件夹下的<tt>org.eclipse.pde.build</tt>插件中找到。要使用自定义，只需将模板复制到构建配置目录中并编辑相应的目标。</p>
+
+<h2><a name="custom_targets">customTargets.xml</a></h2>
+<p>customTargets.xml脚本用于构建过程的顶级自定义。它提供了在构建的主要阶段之间调用的ant目标。围绕以下每个构建步骤都有可用的前后目标：</p>
+<ul>
+<li>处理p2存储库</li>
+<li>获取地图文件</li>
+<li>获取源</li>
+<li>生成构建脚本</li>
+<li>处理并运行构建脚本</li>
+<li>汇编已编译的插件和功能</li>
+<li>打包预编译的二进制插件和功能</li>
+</ul>
+<p>要使用customTargets.xml脚本，只需将其从PDE / Build模板目录复制到构建配置目录中，然后编辑相应的ant目标。该脚本将由无头构建自动检测和使用。</p>
+<p>customTargets.xml脚本还为每个构建阶段的allElements.xml脚本提供委派。</p>
+
+<h2>allElements.xml</h2>
+<p>allElements.xml脚本是一种委托脚本，用于在给定元素（通常是特征）上运行各种构建步骤。与customTargets.xml一样，要使用这些自定义步骤，请将模板从PDE / Build复制到构建配置目录中。在Eclipse 3.4中，可以使用属性<tt>topLevelElementType</tt>和<tt>topLevelElementId</tt>在顶级构建配置build.properties文件中指定将构建的目标元素。elementType应设置为<tt>feature</tt> ，elementId应设置为您要构建的feature-id。</p>
+<pre>
+ 	&lt;target name="allElementsDelegator"&gt;
+ 		&lt;ant antfile="${genericTargets}" target="${target}"&gt;
+	 		&lt;property name="type" value="${topLevelElementType}" /&gt;
+	 		&lt;property name="id" value="${topLevelElementId}" /&gt;
+ 		&lt;/ant&gt;
+ 	&lt;/target&gt;
+</pre>
+<p>allElements.xml还提供在构建的组装和打包阶段使用的目标。将调用<tt>defaultAssemble</tt>目标来汇编所有平台的归档。如果需要，可以为各个平台定义自定义目标。</p>
+<p>要为给定平台使用自定义目标，请定义属性“ <tt>assemble。&lt;element-id&gt; [。&lt;config&gt;]</tt>和相应的目标。该属性告诉PDE / Build使用此自定义目标而不是默认目标。然后，可以使用此自定义目标为存档提供自定义名称，或对存档执行预处理或后处理。</p>
+<p><b>例：</b></p>
+<pre>
+	&lt;property name="assemble.org.foo.feature.id.linux.gtk.x86" value="true" /&gt;
+ 	&lt;target name="assemble.org.foo.feature.id.linux.gtk.x86"&gt;
+ 		&lt;property name="archiveName" value="acme-RCP-${buildId}-linux.gtk.x86.tar.gz" /&gt;
+ 		&lt;-- custom pre assemble steps for linux.gtk.x86--&gt;
+ 		&lt;ant antfile="${assembleScriptName}" dir="${buildDirectory}"/&gt;
+ 		&lt;-- custom post assemble steps for linux.gtk.x86--&gt;
+ 	&lt;/target&gt;
+</pre>
+
+<h2>customAssembly.xml</h2>
+<p>customAssembly.xml脚本是3.4中的新增功能。它提供了将在构建的组装和打包阶段调用的自定义点。与customTargets.xml和allElements.xml一样，要使用这些自定义，请将模板从PDE / Build复制到构建配置目录中。</p>
+<p>PDE / Build生成的汇编和打包脚本执行以下操作：</p>
+<ul>
+<li>在生成的build.xml中调用gather.bin.parts目标，以获取正在构建的所有功能和插件。</li>
+<li>备份（并选择签名）任何未作为文件夹提供的插件和功能</li>
+<li>将最终结果复制到临时区域并创建最终存档</li>
+</ul>
+<p>汇编脚本处理收集在构建期间编译的功能和插件，并且包脚本处理收集任何预编译的二进制功能和插件。customAssembly.xml脚本在上述每个步骤之前或之后提供以下目标：</p>
+<ul>
+<li>gather.bin.parts：在各个插件和功能上每次调用gather.bin.parts目标后调用。</li>
+<li>post.gather.bin.parts：调用所有插件和功能的gather.bin.parts目标后调用。结果以文件夹形式存在，尚未受到影响。</li>
+<li>pre.jarsigning：在签署jar之前调用。</li>
+<li>post.jarup：在所有插件和功能受到震动（并可能签名）后调用。</li>
+<li>pre.archive：在构建归档文件之前调用</li>
+</ul>
+
+
+</body>
+</html>

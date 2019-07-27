@@ -1,57 +1,39 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" gtc:encodedoriginal="PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwvL0VOIj4=">
+<html lang="zh-Hans" >
 <head>
-<meta name="copyright" content="Copyright (c) 2015, 2016 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) 2015, 2016 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="STYLESHEET" href="../../book.css" charset="ISO-8859-1" type="text/css">
-<title>Adopting Neon (4.6) mechanisms and APIs</title>
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
+<title>采用Neon（4.6）机制和API</title>
 </head>
 
-<body>
+<body >
 
-<h1>Adopting Neon (4.6) mechanisms and APIs</h1>
+<h1>采用Neon（4.6）机制和API</h1>
 
-<p>
-  This section describes changes that are required if you are trying to change 
-  your 4.5 plug-in to adopt the 4.6 mechanisms and APIs.
-</p>
+<p>本节介绍了在尝试更改4.5插件以采用4.6机制和API时所需的更改。</p>
 
 <ol>
-	<li><a href="#progress_convention">The calling conventions have changed for methods which receive a progress monitor</a></li>
-	<li><a href="#SubProgressMonitor">The class SubProgressMonitor has been deprecated and replaced by the class SubMonitor</a></li>
-	<li><a href="#ListenerList">ListenerList has been generified</a></li>
-	<li><a href="#FullScreen">Toggling Full-Screen</a></li>
-	<li><a href="#HighDPI">High-DPI icons</a></li>
+	<li><a href="#progress_convention">对于接收进度监视器的方法，调用约定已更改</a></li>
+	<li><a href="#SubProgressMonitor">SubProgressMonitor类已被弃用，并由SubMonitor类替换</a></li>
+	<li><a href="#ListenerList">ListenerList已被广泛化</a></li>
+	<li><a href="#FullScreen">切换全屏</a></li>
+	<li><a href="#HighDPI">高DPI图标</a></li>
 </ol>
 
 <hr>
 
 <!-- ############################################## -->
-<h2><a name="progress_convention">1. New calling convention for progress monitors</a></h2>
+<h2><a name="progress_convention">1。进度监视器的新调用约定</a></h2>
 
-<p><strong>What is affected:</strong>
-<p> All methods which receive an IProgressMonitor and all of their callers.</p>
+<p><strong>受影响的是什么：</strong>
+</p><p>接收IProgressMonitor及其所有呼叫者的所有方法。</p>
 
-<p><strong>Description:</strong>
-<p>
-In order to reduce boilerplate, Eclipse 4.7 will introduce a new calling convention for
-methods which receive an IProgressMonitor as a parameter. In Eclipse 4.7 it will be the
-caller's responsibility to invoke <code>done()</code> on IProgressMonitor rather than the
-receiver. Callers can choose to use SubMonitor, which doesn't required the use of
-<code>done()</code>. This means that - in practice - most
-invocations of <code>done()</code> will be deleted along with their surrounding try/catch blocks.
-<p>
-Clients should not remove the boilerplate yet. For now, any method that previously
-received an IProgressMonitor and invoked done() on it should continue to do so.
-<p>
-Methods which obtain their own top-level progress monitors rather than receiving one as a
-parameter are now responsible for invoking done() on those monitors. Technically, they were
-always responsible for doing this, but some of them didn't do so because any method they
-passed it to would have invoked done() on their behalf. Now this will matter and the methods
-will need to be changed. For example:
-
-<pre>
+<p><strong>描述：</strong>
+</p><p>为了减少样板，Eclipse 4.7将为接收IProgressMonitor作为参数的方法引入新的调用约定。在Eclipse 4.7中，调用者有责任在IProgressMonitor而不是接收者上调用<code>done()</code> 。调用者可以选择使用SubMonitor，它不需要使用<code>done()</code> 。这意味着 - 在实践中 - 大多数<code>done()</code>调用将与其周围的try / catch块一起被删除。
+</p><p>客户不应该删除样板。现在，以前收到IProgressMonitor并在其上调用done（）的任何方法都应该继续这样做。
+</p><p>获取自己的顶级进度监视器而不是接收一个作为参数的方法现在负责在这些监视器上调用done（）。从技术上讲，他们总是负责这样做，但有些人并没有这样做，因为他们传递给它的任何方法都会代表他们调用done（）。现在这很重要，需要改变方法。例如：</p><pre>
 // Before:
 public void doSaveAs() {
   IProgressMonitor monitor= getProgressMonitor();
@@ -71,53 +53,35 @@ public void doSaveAs() {
 }
 </pre>
 
-<p>
-Fortunately there are few of these methods and they are easy to find.
-<p>
-<strong>Action required:</strong>
-<ul>
-<li>Open the call hierarchy view on StatusLineManager#getProgressMonitor().</li>
-<li>Ensure that all callers of these methods contain a finally block that 
-    invokes done (as in the doSaveAs() example, above).</li>
-<li>Open the type hierarchy of IProgressMonitor. Look for progress monitors which do something in
-    their done() method besides reporting work, setting a task name, or calling done on another
-    monitor. SubMonitor can be ignored. Monitors which set a control's visibility or deallocate a
-    resource in their done() method must not be ignored.</li>
-<li>Use the call hierarchy view to locate every place that instantiates or accesses an instance of
-    one of those classes. Ensure that those access points contain a try/finally block that invokes done().</li>
+<p>幸运的是，这些方法很少，很容易找到。
+</p><p>
+<strong>需要采取的行动：</strong>
+</p><ul>
+<li>在StatusLineManager＃getProgressMonitor（）上打开调用层次结构视图。</li>
+<li>确保这些方法的所有调用者都包含一个调用done的finally块（如上面的doSaveAs（）示例）。</li>
+<li>打开IProgressMonitor的类型层次结构。查找进度监视器，除了报告工作，设置任务名称或在另一台监视器上调用done之外，还在其done（）方法中执行某些操作。SubMonitor可以忽略。不得忽略在其done（）方法中设置控件可见性或取消分配资源的监视器。</li>
+<li>使用调用层次结构视图来定位实例化或访问其中一个类的实例的每个位置。确保这些访问点包含调用done（）的try / finally块。</li>
 </ul>
 
-<p><strong>More Information:</strong>
-<p>
-See <a href="https://eclipse.org/articles/Article-Progress-Monitors/article.html" target="_blank">this article</a> for
-more examples of how to use progress monitors with the new calling convention. Background and discussion
-about this change <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=487372" target="_blank">can be found here.</a>
+<p><strong>更多信息：</strong>
+</p><p>有关如何将进度监视器与新调用约定一起使用的更多示例，请参阅<a href="https://eclipse.org/articles/Article-Progress-Monitors/article.html" target="_blank">此文章</a> 。关于这种变化的背景和讨论<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=487372" target="_blank">可以在这里找到。</a>
 
 <!-- ############################################## -->
-<h2>2. <a name="SubProgressMonitor">SubProgressMonitor has been deprecated</a></h2>
-<p><strong>What is affected:</strong> Clients that refer to <code>org.eclipse.core.runtime.SubProgressMonitor</code>.</p>
-<p><strong>Description:</strong>
-<code>org.eclipse.core.runtime.SubProgressMonitor</code> has been deprecated and replaced by
-<code>org.eclipse.core.runtime.SubMonitor</code>.</p>
-<p><strong>Action required:</strong></p>
+</p><h2>2。<a name="SubProgressMonitor">SubProgressMonitor已被弃用</a></h2>
+<p><strong>受影响的内容：</strong>引用<code>org.eclipse.core.runtime.SubProgressMonitor</code> 。</p>
+<p><strong>描述：</strong> <code>org.eclipse.core.runtime.SubProgressMonitor</code>已被弃用，并由<code>org.eclipse.core.runtime.SubMonitor</code> 。</p>
+<p><strong>需要采取的行动：</strong></p>
 <ul>
-<li>Calls to IProgressMonitor.beginTask on the root monitor should be replaced by a call to
-SubMonitor.convert.</li>
-<li>Keep the returned SubMonitor around as a local variable and refer to it instead of the
-root monitor for the remainder of the method.</li>
-<li>All calls to SubProgressMonitor(IProgressMonitor, int) should be replaced by calls to
-SubMonitor.split(int).</li>
-<li>If a SubProgressMonitor is constructed using the SUPPRESS_SUBTASK_LABEL flag, replace it
-with the two-argument version of SubMonitor.split(int, int) using SubMonitor.SUPPRESS_SUBTASK
-as the second argument.</li>
-<li>It is not necessary to call done on an instance of SubMonitor.</li>
+<li>应该通过调用SubMonitor.convert来替换对根监视器上的IProgressMonitor.beginTask的调用。</li>
+<li>将返回的SubMonitor作为局部变量保留，并在方法的其余部分引用它而不是根监视器。</li>
+<li>所有对SubProgressMonitor（IProgressMonitor，int）的调用都应该被对SubMonitor.split（int）的调用所取代。</li>
+<li>如果使用SUPPRESS_SUBTASK_LABEL标志构造SubProgressMonitor，则使用SubMonitor将其替换为SubMonitor.split（int，int）的双参数版本。SUPPRESS_SUBTASK作为第二个参数。</li>
+<li>没有必要在SubMonitor的实例上调用done。</li>
 </ul>
 
-<p><strong>Example:</strong>
+<p><strong>例：</strong>
 
-</p>
-Consider the following example:
-<pre>
+</p>请考虑以下示例：<pre>
      void someMethod(IProgressMonitor pm) {
         pm.beginTask("Main Task", 100);
         SubProgressMonitor subMonitor1= new SubProgressMonitor(pm, 60);
@@ -133,9 +97,7 @@ Consider the following example:
            subMonitor2.done();
         }
      }
-</pre>
-The above code should be refactored to this:
-<pre>
+</pre>上面的代码应该重构为：<pre>
      void someMethod(IProgressMonitor pm) {
         SubMonitor subMonitor = SubMonitor.convert(pm, "Main Task", 100);
         doSomeWork(subMonitor.split(60));
@@ -144,73 +106,37 @@ The above code should be refactored to this:
 </pre>
 
 <!-- ############################################## -->
-<h2>3. <a name="ListenerList">ListenerList has been generified</a></h2>
-<p><strong>What is affected:</strong> Clients that refer to <code>org.eclipse.core.runtime.ListenerList</code>.
+<h2>3。<a name="ListenerList">ListenerList已被广泛化</a></h2>
+<p><strong>受影响的内容：</strong>引用<code>org.eclipse.core.runtime.ListenerList</code> 。
 </p>
-<p><strong>Description:</strong>
-<code>org.eclipse.core.runtime.ListenerList</code> has been generified to offer compile-time type
-safety, to simplify client code, and to avoid giving clients access to an internal array.
-<code>ListenerList&lt;E&gt;</code> now implements <code>Iterable&lt;E&gt;</code>.
+<p><strong>描述：</strong> <code>org.eclipse.core.runtime.ListenerList</code>已经过一般化，可以提供编译时类型安全性，简化客户端代码，并避免让客户端访问内部数组。
+<code>ListenerList&lt;E&gt;</code>现在实现了<code>Iterable&lt;E&gt;</code> 。
 </p>
-<p><strong>Action required:</strong>
-Clients should:
-</p>
+<p><strong>需要采取的行动：</strong>客户应：</p>
 <ul>
-<li>add type arguments to their references to ListenerList</li>
-<li>convert usages of <code>#getListeners()</code> to an enhanced 'for' loop,
-thereby taking advantage of the type-safe <code>#iterator()</code>.</li>
+<li>将类型参数添加到对ListenerList的引用中</li>
+<li>将<code>#getListeners()</code>用法转换为增强的'for'循环，从而利用类型安全的<code>#iterator()</code> 。</li>
 </ul>
 
 <!-- ############################################## -->
-<h2>4. <a name="FullScreen">Toggling Full-Screen command</a></h2>
-<p><strong>What is affected:</strong> Any code using the OS&nbsp;X-specific
-<code>org.eclipse.ui.cocoa.fullscreenWindow</code> command.
+<h2>4。<a name="FullScreen">切换全屏命令</a></h2>
+<p><strong>受影响的是：</strong>使用OS X特定的<code>org.eclipse.ui.cocoa.fullscreenWindow</code>命令的任何代码。
 
-<p><strong>Description:</strong> Eclipse Platform 4.2 introduced
-an OS&nbsp;X-specific command to toggle full-screen mode for the
-current window called <code>org.eclipse.ui.cocoa.fullscreenWindow</code>,
-bound to Command-Ctrl-F.  In 4.6 we introduced a cross-platform
-command to toggle full-screen called
-<code>org.eclipse.ui.window.fullscreenmode</code> (bugs <a
-href="https://bugs.eclipse.org/489087" target="_blank">489087</a>, <a
-href="https://bugs.eclipse.org/491572" target="_blank">491572</a>).  As a result,
-we have two "Toggle Full Screen" commands on OS&nbsp;X, and both
-appear in the <em>Quick Access</em>.  The use of
-<code>org.eclipse.ui.cocoa.fullscreenWindow</code> is now deprecated,
-and developers should use the
-<code>org.eclipse.ui.window.fullscreenmode</code> command instead.
+</p><p><strong>描述：</strong> Eclipse Platform 4.2引入了一个特定于OS X的命令，用于切换当前窗口的全屏模式，名为<code>org.eclipse.ui.cocoa.fullscreenWindow</code> ，绑定到Command-Ctrl-F。在4.6我们推出了跨平台的命令来切换全屏称为<code>org.eclipse.ui.window.fullscreenmode</code> （错误<a href="https://bugs.eclipse.org/489087" target="_blank">489087</a> ， <a href="https://bugs.eclipse.org/491572" target="_blank">491572</a> ）。因此，我们在OS X上有两个“Toggle Full Screen”命令，并且都出现在<em>快速访问中</em> 。现在不推荐使用<code>org.eclipse.ui.cocoa.fullscreenWindow</code> ，开发人员应该使用<code>org.eclipse.ui.window.fullscreenmode</code>命令。
 </p>
 
-<p><strong>Action required:</strong>
-Clients should convert usages to the
-<code>org.eclipse.ui.window.fullscreenmode</code> command.</p>
+<p><strong>需要采取的措施：</strong>客户端应将用法转换为<code>org.eclipse.ui.window.fullscreenmode</code>命令。</p>
 
 <!-- ############################################## -->
-<h2>5. <a name="HighDPI">High-DPI icons</a></h2>
-<p><strong>What is affected:</strong> Products that use bitmap images.
+<h2>5。<a name="HighDPI">高DPI图标</a></h2>
+<p><strong>受影响的内容：</strong>使用位图图像的产品。
 
-<p><strong>Description:</strong> On high-DPI screens, SWT now automatically
-scales images that have been created by one of the traditional constructors
-of <code>org.eclipse.swt.graphics.Image</code>. To avoid blurry images,
-clients can use one of these constructors:
-<ul><li><code>Image(Device, ImageFileNameProvider)</code></li>
+</p><p><strong>描述：</strong>在高DPI屏幕上，SWT现在自动缩放由<code>org.eclipse.swt.graphics.Image</code>为避免模糊图像，客户端可以使用以下构造函数之一：</p><ul><li><code>Image(Device, ImageFileNameProvider)</code></li>
     <li><code>Image(Device, ImageDataProvider)</code></li>
 </ul>
-<p>
-JFace-based applications that use the standard<br>
-<code>org.eclipse.jface.resource.ImageDescriptor#createFromURL(URL)</code><br>
-API to create icon images already support high-DPI icons out of the box:
-<p>
-Just append "@2x" to the file name and place the high-DPI icons
-into the same folder as the original icon. If you use OSGi bundles, you can also put the icons into a fragment
-that contains the same folder structure.
-<p>
-Example:<br>
-100%: newclass_wiz.png<br>
-200%: newclass_wiz@2x.png
-
-<p><strong>Action required:</strong>
-In JFace applications, add "@2x" icons. In SWT applications, use the new Image constructors.</p>
+<p>使用该标准的基于JFace的应用程序<br>
+<code>org.eclipse.jface.resource.ImageDescriptor#createFromURL(URL)</code><br>用于创建图标图像的API已经支持开箱即用的高DPI图标：</p><p>只需将“@ 2x”附加到文件名，然后将高DPI图标放在与原始图标相同的文件夹中。如果使用OSGi包，则还可以将图标放入包含相同文件夹结构的片段中。
+</p><p>例：<br>100％：newclass_wiz.png<br>200％：newclass_wiz@2x.png</p><p><strong>需要采取的措施：</strong>在JFace应用程序中，添加“@ 2x”图标。在SWT应用程序中，使用新的Image构造函数。</p>
 
 </body>
 </html>

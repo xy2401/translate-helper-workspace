@@ -1,0 +1,80 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>命令</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>命令</h3>
+
+<p>请参阅<a href="workbench_cmd_commands.htm" class="XRef">org.eclipse.ui.commands</a>部分以创建命令定义，使用键绑定将它们连接起来，然后将它们放在菜单中。
+</p>
+
+<h4>将遗留操作与命令相关联</h4>
+
+
+<p>当仍然使用旧的旧操作扩展点时，操作可以与代码中的命令或操作集的<b>plugin.xml中</b>的命令相关联。您的选择取决于操作的定义位置。</p>
+
+<p>您应该更喜欢激活<a href="../reference/api/org/eclipse/core/commands/AbstractHandler.html"><b>AbstractHandler，</b></a>而不是使用<b>IAction</b> 。
+</p>
+<pre>
+    // IWorkbench, IWorkbenchWindow, and IWorkbenchPartSite are all IServiceLocators
+    IHandlerService handlerService = (IHandlerService) locator.getService(IHandlerService.class);
+    handlerService.activateHandler(org.eclipse.ui.IWorkbenchCommandConstants.FILE_SAVE, new MySaveHandler());
+</pre>
+
+
+
+<p>但是在处理动作时，在代码中实例化的动作也可以使用<a href="../reference/api/org/eclipse/jface/action/IAction.html"><b>IAction</b></a>协议与动作定义相关联。这通常在创建操作时完成。<b>SaveAction</b>在初始化时使用此技术。</p>
+
+
+<pre>
+public SaveAction(IWorkbenchWindow window) {
+	...
+	setText...
+	setToolTipText...
+	setImageDescriptor...
+	<b>setActionDefinitionId(&quot;org.eclipse.ui.file.save&quot;)</b>; 
+}
+</pre>
+
+<p>（注意：方法名称<b>setActionDefinitionID</b>可以更恰当地命名为<b>setCommandID</b> 。方法名称反映了键绑定的原始实现，并使用了过时的术语。）</p>
+
+
+<p>通过调用<b>setActionDefinitionID</b> ，实现操作（ <b>SaveAction</b> ）与命令定义标记中使用的命令ID相关联。最好为操作定义定义常量，以便在代码中轻松引用它们。</p>
+
+
+<p>如果在操作集中定义操作，则通常不需要自己实例化操作。当用户从菜单或键盘调用您的操作时，工作台将为您执行此操作。在这种情况下，您可以将操作与XML标记中的命令ID相关联。以下显示了操作集的假设标记：</p>
+
+<pre>
+&lt;extension point = &quot;org.eclipse.ui.actionSets&quot;&gt;
+	   &lt;actionSet id=&quot;com.example.actions.actionSet&quot;
+		   label=&quot;Example Actions&quot;
+		   visible=&quot;true&quot;&gt;
+		   &lt;action id=&quot;com.example.actions.action1&quot;
+			   menubarPath=&quot;additions&quot;
+			   label=&quot;Example Save Action&quot;
+			   class=&quot;org.example.actions.ExampleActionDelegate&quot;
+			   <b>definitionId=&quot;org.eclipse.ui.file.save&quot;</b>&gt;
+		   &lt;/action&gt;
+		   ...
+	   &lt;/actionSet&gt;
+   &lt;/extension&gt;</pre>
+<p><b>definitionId</b>属性用于声明操作的命令ID。</p>
+
+
+<p>使用这两种技术，将操作与命令ID相关联会导致为命令<b>org.eclipse.ui.file.save</b>定义的任何键绑定在适当时调用您的操作。</p>
+
+
+<p>现在让我们看看如何定义这些键绑定。</p>
+
+
+</body>
+</html>

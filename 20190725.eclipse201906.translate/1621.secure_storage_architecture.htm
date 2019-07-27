@@ -1,0 +1,55 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>安全存储架构</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+<h2>安全存储架构</h2>
+
+
+<p>从逻辑角度来看，安全存储代表了OSGi的首选项和密钥环的混合体。</p>
+
+<p>前端的建模方式与<a href="https://osgi.org/javadoc/r4v42/org/osgi/service/prefs/Preferences.html" title="org.osgi.service.prefs中的首选项规范"><b>OSGi首选项服务规范</b></a>非常相似。安全存储表示为节点树。节点提供上下文。例如，bundle <i>“com.abc”</i>可以在根节点下的节点<i>“com”</i>下使用节点<i>“abc”</i> 。与在Preference中一样，这种节点的路径可以描述为<i>“/ com / abc”</i> 。</p>
+
+<p align="center"><img alt="安全存储中的数据逻辑组织" src="images/equinox_secure_storage_data.png">
+</p>
+<p align="center"><b>图片1。数据如何组织。</b></p>
+
+<p>数据作为键值对存储在节点下。数据可以加密形式或明文形式存储。提供存储明文数据的能力，以便可以使用相同的机制存储逻辑相关的信息（例如未加密的用户名和加密的密码）。</p>
+
+<p>存储与“com.abc”关联的密码的代码可能如下所示：</p>
+<pre>
+	...
+	ISecurePreferences root = SecurePreferencesFactory.getDefault();
+	ISecurePreferences node = root.node(&quot;/com/abc&quot;);
+	node.put(&quot;password&quot;, &quot;12345&quot;, true /*encrypt*/);
+	...
+</pre>
+<p>然后检索数据：</p>
+<pre>
+	...
+	String password = node.get(&quot;password&quot;, null /*default*/);
+	...
+</pre>
+
+<p>如果修改了安全存储，则会在应用程序关闭时保存。或者，可以通过调用<a href="../reference/api/org/eclipse/equinox/security/storage/ISecurePreferences.html#flush()"><b>ISecurePreferences＃flush（）</b></a>以编程方式触发保存。</p>
+
+<p>在后端，安全存储可以被认为是密钥环。每个条目都与密码提供者相关联;将来只能使用此密码提供程序来解密条目。</p> 
+
+<p align="center"><img alt="安全存储条目和密码提供商" src="images/equinox_secure_storage_prov.png">
+</p>
+<p align="center"><b>图2。条目和密码提供者之间的关系。</b></p>
+
+<p>安全存储可以从密码提供商描述的各种来源获取主密码。对于开发人员来说，更重要的是，密码提供商的集合是开放的，可以轻松定制。</p>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) Broadcom Corporation and others 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>项目构建配置</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>项目构建配置</h2>
+<p>该平台提供<b>构建配置</b> ，允许集成以多种正交方式构建项目。每个Build Configuration都提供了为<a href="resAdv_builders.htm">Incremental Project Builder</a>提供的所有功能。
+</p>
+<p>当项目的文件可以以多种方式构建时，构建配置非常有用。例如，在静态编译的C / C ++中，预处理器用于将单个源文件重写或有条件地编译为多个目标文件。用户可以在“调试”配置中构建项目：包括断言，调试信息等;或者在编译时优化的“发布”配置中。构建这两个（或更多）配置时，项目构建器需要知道自上次在特定配置上调用以来哪些源文件已更改。
+</p>
+<p>构建配置提供了一种表示构建的不同变体的机制。构建命令以项目上定义的顺序运行，构建资源增量在配置的构建之间维护。构建配置允许增量项目构建器仅在构建调用构建器时构建需要构建的内容（基于增量）。
+</p>
+<p>不关心构建配置的构建器像以前一样工作。
+</p>
+<p>构建配置只是一个元组:( <i><a href="../reference/api/org/eclipse/core/resources/IBuildConfiguration.html#getProject()">项目</a></i> ， <i><a href="../reference/api/org/eclipse/core/resources/IBuildConfiguration.html#getName()">构建配置名称</a></i> ）。名称是域/应用程序特定的字符串。它们应该是人类可读的，因为它们可以由UI显示，例如：“ <i>Debug</i> ”。集成应尊重其他平台集成创建的配置。默认情况下，每个项目都有一个构建配置
+</p>
+<p>有关更多信息，请参阅<a href="../reference/api/org/eclipse/core/resources/IBuildConfiguration.html">IBuildConfiguration</a> 。
+</p>
+<p>
+<b>API提供：</b></p>
+<ul>
+<li>在项目上创建构建配置</li>
+<li>在项目上设置活动配置</li>
+<li>构建特定的构建配置</li>
+<li>在构建配置之间创建引用</li>
+<li>使构建器能够发现当前正在构建的构建配置</li>
+</ul>
+<p>我们区分客户端API和构建器API。</p> 
+
+<h3>客户端API</h3>
+
+<h4>创建和设置构建配置</h4>
+
+<p>每个项目都有一个<i>默认</i>构建配置，其名称等于空字符串。构建配置在项目描述中设置：</p>
+<pre>
+  <a href="../reference/api/org/eclipse/core/resources/IProject.html">IProject</a> project = ...
+  <a href="../reference/api/org/eclipse/core/resources/IProjectDescription.html">IProjectDescription</a> projDesc = project.getDescription();
+
+  // Get the build configurations for a project
+  <a href="../reference/api/org/eclipse/core/resources/IBuildConfiguration.html">IBuildConfiguration</a>[] buildConfigs = project.<a href="../reference/api/org/eclipse/core/resources/IProject.html#getBuildConfigs()">getBuildConfigs</a>();
+  
+  ... 
+  // Creating a build configuration
+  <a href="../reference/api/org/eclipse/core/resources/IWorkspace.html#newBuildConfig(java.lang.String, java.lang.String)">ResourcesPlugin().getWorkspace().newBuildConfig</a>(project.getName(), "myNewBuildConfig");
+  ...
+  // Set new build configurations on a project
+  projDesc.<a href="../reference/api/org/eclipse/core/resources/IProjectDescription.html#setBuildConfigs(java.lang.String[])">setBuildConfigs</a>(buildConfigs);
+
+  // Set the description
+  project.setDescription(projDesc, null);
+</pre>
+<p>由于每个项目必须至少具有一个构建配置，因此无法从项目中删除所有配置。这样做会自动重新添加<i><a href="../reference/api/org/eclipse/core/resources/IBuildConfiguration.html#DEFAULT_CONFIG_NAME">默认的</a></i>构建配置，名称为“”。
+</p>
+<h4>主动配置</h4>
+<p>默认情况下，项目上的一个配置定义为“ <b>活动</b> ”。活动配置是在未指定构建配置时构建的配置（例如，在项目中调用<a href="../reference/api/org/eclipse/core/resources/IProject.html#build(int, org.eclipse.core.runtime.IProgressMonitor)">IProject＃build（kind，monitor）时</a> ）。要设置活动的构建配置：</p>
+
+<pre>
+   projDesc.<a href="../reference/api/org/eclipse/core/resources/IProjectDescription.html#setActiveBuildConfig(java.lang.String)">setActiveBuildConfig</a>(String buildConfigName);
+</pre>
+
+<h4>在构建配置之间创建引用</h4>
+<p>构建配置可以相互引用。与项目级别引用非常相似，这可用于确保在引用构建配置之前构建先决条件构建配置。
+</p>
+
+<pre>
+  projDesc.<a href="../reference/api/org/eclipse/core/resources/IProjectDescription.html#setBuildConfigReferences(java.lang.String,%20org.eclipse.core.resources.IBuildConfiguration[])">setBuildConfigReferences</a>(String configName, IBuildConfiguration[] references);
+</pre>
+
+<p>导致命名的构建配置引用传入的构建配置。</p>
+
+<p>
+<b>注意：</b>引用的构建配置可能具有<i>空</i>名称。在构建项目时，此类引用映射到引用项目的<i>活动</i>构建配置。因此，可以将项目级别引用视为对活动构建配置的构建配置引用。
+</p>
+
+
+<h4>构建项目构建配置</h4>工作空间中存在新API，以允许构建构建配置及其引用（如果需要）：<pre>
+  ResourcesPlugin.getWorkspace().<a href="../reference/api/org/eclipse/core/resources/IWorkspace.html#build(org.eclipse.core.resources.IBuildConfiguration[],%20int,%20boolean,%20org.eclipse.core.runtime.IProgressMonitor)">build</a>(IBuildConfiguration[] buildConfigs, int kind, boolean buildReferences, IProgressMonitor monitor);
+</pre>IProject上还存在API以构建特定的构建配置：<pre>
+  project.<a href="../reference/api/org/eclipse/core/resources/IProject.html#build(org.eclipse.core.resources.IBuildConfiguration,%20int,%20org.eclipse.core.runtime.IProgressMonitor)">build</a>(IBuildConfiguration config, int kind, IProgressMonitor monitor);
+</pre>
+
+<h3>Builder API</h3>
+
+<p>从<a href="resAdv_builders.htm">增量项目构建器</a>的角度来看，平台现在构建构建配置，而不是项目。在简单的情况下，构建配置将是默认配置，项目将只有一个配置。
+</p>
+
+<h4>正在构建哪个构建配置</h4>
+
+<p>构建器可以通过以下方式发现正在构建的配置：</p>
+<pre>
+  	protected IProject[] build(int kind, Map&lt;String,String&gt; args, IProgressMonitor monitor) throws CoreException {
+  	    IBuildConfiguration thisBuildConfig = <a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html#getBuildConfig()">getBuildConfig</a>();
+  	    ...
+  	}
+</pre>
+
+<p>注意构建器不一定需要关心构建配置。自上次为当前构建配置运行构建器以来，IncrementalProjectBuilder＃ <a href="../reference/api/org/eclipse/core/resources/IncrementalProjectBuilder.html#getDelta(org.eclipse.core.resources.IProject)">getDelta</a> （IProject）将继续返回资源更改。
+</p>
+
+</body>
+</html>

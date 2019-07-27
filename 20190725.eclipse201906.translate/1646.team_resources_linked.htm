@@ -1,0 +1,39 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>团队和链接的资源</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>团队和链接的资源</h3>
+<p>项目可能包含不在本地文件系统的项目目录中的资源。这些资源称为<a href="resInt_linked.htm">链接资源</a> 。</p>
+<h4>存储库提供商的后果</h4>
+<p>链接的资源可能对直接针对文件系统运行的存储库提供程序构成特殊挑战。这是因为文件系统中的直接项目目录树中不存在按设计链接的资源。</p>
+<p>具有以下特征的提供商可能会受到链接资源的影响：</p>
+<ol>
+  <li>那些调用外部程序然后直接对文件系统操作的程序。</li>
+  <li>那些根据IResource实现但假设项目中的所有文件/文件夹都作为该单个根目录树的直接后代存在的那些。</li>
+</ol>
+<p>在第一种情况下，假设用户选择链接的资源并尝试对其执行提供程序操作。由于提供程序调用命令行客户端，我们可以假设提供程序执行的操作等同于首先调用<a href="../reference/api/org/eclipse/core/resources/IResource.html"><b>IResource</b></a> .getLocation（）。toOSString（），将生成的文件系统位置作为参数提供给命令行程序。如果有问题的资源是链接资源，这将产生项目目录树之外的文件/文件夹。并非所有命令行客户端都期望并且能够处理这种情况。简而言之，如果您的提供者获得资源的文件系统位置，则可能需要额外的工作来处理链接的资源。
+</p>
+<p>第二种情况非常相似，因为隐含的假设是项目资源的结构与文件系统文件/文件夹的结构是1：1。通常，如果提供者混合使用IResource和java.io，则可能会遇到麻烦。文件操作。例如，对于链接， <a href="../reference/api/org/eclipse/core/resources/IFile.html"><b>IFile</b></a>的父级与<a href="../reference/api/org/eclipse/core/resources/IFile.html"><b>java.io</b></a>不同。文件的父代和代码假定它们相同将失败。
+</p>
+<h4>向后兼容性</h4>
+<p>重要的是引入链接资源不会无意中破坏现有提供商。具体而言，关注的是供应商合理地假设本地文件系统结构镜像了项目结构。因此，默认情况下，链接的资源无法添加到映射到此类提供程序的项目中。此外，默认情况下，不能与该提供程序共享包含链接资源的项目。</p>
+<h4>处理链接资源的策略</h4>
+<p>为了使“链接友好”，提供者应允许具有链接资源的项目受版本控制，但可以禁止对链接资源本身进行版本控制。</p>
+<p>一个相当复杂的解决方案是允许对实际链接资源进行版本控制，但是这应该是不鼓励的，因为它带来了复杂的场景（例如，文件可能已经由另一个提供者在不同的项目树下进行版本控制）。因此，我们的建议是支持包含非版本控制的链接资源的版本控制项目。</p>
+<h4>“链接友好”的技术细节</h4>
+<p>可以通过重写<b><a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a> .canHandleLinkedResourceURI（）</b>方法来升级存储库提供程序实现以支持链接资源，以返回<strong>true</strong> 。完成此操作后，将允许链接的资源存在于与该存储库提供程序共享的项目中。但是，存储库提供程序必须采取措施以确保正确处理链接的资源。如上所述，强烈建议存储库提供程序忽略所有链接的资源。这意味着应该从存储库提供程序支持的操作中排除链接的资源（及其子项）。此外，如果存储库提供程序实现覆盖默认的<a href="../reference/api/org/eclipse/core/resources/team/IMoveDeleteHook.html"><b>IMoveDeleteHook</b></a> ，则存储库提供程序应使用链接资源的默认移动和删除行为。</p>
+<p>团队提供者可以使用<a href="../reference/api/org/eclipse/core/resources/IResource.html"><b>IResource</b></a> 。 <b>isLinked（IResource接口。CHECK_ANCESTORS）</b>确定资源是链接还是链接的后代。</p>
+<p>存储库提供程序应忽略上述代码评估为<strong>true的</strong>任何资源。</p>
+
+</body>
+</html>

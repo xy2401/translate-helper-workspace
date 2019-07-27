@@ -1,0 +1,60 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>获取程序的源代码</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+<h4>获取程序的源代码</h4>
+<p>对于某些类型的启动模式，获取与代码中当前执行点对应的源代码可能很重要。在调试或分析程序时，这通常很重要。调试插件提供了几个不同的扩展点，允许插件注册可以帮助定位源代码的类。</p>
+<h5>来源定位器</h5>
+<p>
+<a href="../reference/api/org/eclipse/debug/core/model/ISourceLocator.html"><b>ISourceLocator</b></a>和<a href="../reference/api/org/eclipse/debug/core/model/IPersistableSourceLocator.html"><b>IPersistableSourceLocator</b></a>定义用于从执行程序映射回源代码的接口。</p>
+<p>源定位器通常用于处理相应的启动配置和启动配置委托。可以在定义启动配置类型时指定源定位符标识，也可以使用<b>ILaunchConfiguration以编程方式将其与启动配置<b>关联。ATTR_SOURCE_LOCATOR_ID</b>属性。在任何一种情况下，在某些时候，必须将配置的源定位器的id解析为实际实现<a href="../reference/api/org/eclipse/debug/core/model/IPersistableSourceLocator.html"><b>IPersistableSourceLocator</b></a>的类。使用<a href="../reference/extension-points/org_eclipse_debug_core_sourceLocators.html"><b>org.eclipse.debug.core.sourceLocators</b></a>扩展点建立源定位器标识与其类之间的关联。</p>
+<p>以下标记来自Java工具：</p>
+<pre>
+&lt;extension point=&quot;org.eclipse.debug.core.sourceLocators&quot;&gt;
+    &lt;sourceLocator
+        name=&quot;%javaSourceLocatorName&quot;
+        class=&quot;org.eclipse.jdt.launching.sourcelookup.JavaSourceLocator&quot;
+        id=&quot;org.eclipse.jdt.launching.javaSourceLocator&quot;&gt;
+    &lt;/sourceLocator&gt;
+&lt;/extension&gt;
+</pre>
+<p>由于可以保留启动配置，因此源定位器ID可能与启动配置一起存储。在实例化源定位器时，调试插件会查找源定位器id属性并实例化与该id相关联的类。</p>
+<p>源查找的实现必然取决于正在启动的程序的类型。但是，该平台为源定位器定义了一个抽象实现，该定位器在给定路径上查找源文件，包括目录，zip文件，jar文件等。要利用此实现，您的插件可以扩展<a href="../reference/api/org/eclipse/debug/core/sourcelookup/AbstractSourceLookupDirector.html"><b>AbstractSourceLookupDirector</b></a> 。具体实现所需要的只是能够提供适当的<a href="../reference/api/org/eclipse/debug/core/sourcelookup/ISourceLookupParticipant.html"><b>ISourceLookupParticipant</b></a> ，它可以将堆栈帧映射到文件名。请参阅<a href="../reference/api/org/eclipse/debug/core/sourcelookup/AbstractSourceLookupDirector.html"><b>AbstractSourceLookupDirector</b></a>的扩展程序。举些例子。</p>
+<h5>源路径计算机</h5>
+<p><a href="../reference/api/org/eclipse/debug/core/sourcelookup/AbstractSourceLookupDirector.html"><b>AbstractSourceLookupDirector</b></a>根据特定的源代码查找路径搜索源文件。此路径表示为<a href="../reference/api/org/eclipse/debug/core/sourcelookup/ISourceContainer.html"><b>ISourceContainer</b></a>的数组。应搜索源的源容器通常根据正在启动的源配置的细节来计算。<a href="../reference/api/org/eclipse/debug/core/sourcelookup/ISourcePathComputer.html"><b>ISourcePathComputer</b></a>定义一个对象的接口，该对象计算启动配置的适当源路径。源路径计算机（与源定位器非常相似）由id指定，可以在扩展定义中为启动配置类型指定，也可以通过设置<b>ISourceLocator以编程方式关联<b>。启动配置的ATTR_SOURCE_PATH_COMPUTER_ID</b>属性。源路径计算机的id与<a href="../reference/extension-points/org_eclipse_debug_core_sourcePathComputers.html"><b>org.eclipse.debug.core.sourcePathComputers</b></a>扩展点中的实现类相关联。以下标记显示JDT用于其Java源路径计算机的定义：</p>
+<pre>
+&lt;extension point=&quot;org.eclipse.debug.core.sourcePathComputers&quot;&gt;
+	&lt;sourcePathComputer
+		id=&quot;org.eclipse.jdt.launching.sourceLookup.javaSourcePathComputer&quot;
+		class=&quot;org.eclipse.jdt.launching.sourcelookup.containers.JavaSourcePathComputer&quot;&gt;
+ 	&lt;/sourcePathComputer&gt;
+ 	...
+</pre>
+<p>源路径计算机负责计算表示源查找路径的<a href="../reference/api/org/eclipse/debug/core/sourcelookup/ISourceContainer.html"><b>ISourceContainer</b></a>数组。例如，Java源路径计算机在构建路径时会考虑类路径。
+</p>
+<h5>源容器类型</h5>
+<p>指定为源查找路径的一部分的容器必须实现<a href="../reference/api/org/eclipse/debug/core/sourcelookup/ISourceContainer.html"><b>ISourceContainer</b></a> ，它可以搜索为命名源元素表示的容器。可能需要不同种类的源容器来表示存储源代码的不同种类的位置。例如，JDT定义了表示Java项目中的源，类路径上的源和包片段中的源的源容器。用于启动配置的源容器可以通过id存储在启动配置中。由于可以持久保存启动配置，因此必须有一种方法将源容器的id与其实现类相关联。这是使用<a href="../reference/extension-points/org_eclipse_debug_core_sourceContainerTypes.html"><b>org.eclipse.debug.core.sourceContainerTypes</b></a>扩展点完成的。以下示例来自JDT：</p>
+<pre>
+&lt;extension point=&quot;org.eclipse.debug.core.sourceContainerTypes&quot;&gt;
+	&lt;sourceContainerType
+		id=&quot;org.eclipse.jdt.launching.sourceContainer.javaProject&quot;
+		name=&quot;%javaProjectSourceContainerType.name&quot;
+		description=&quot;%javaProjectSourceContainerType.description&quot;
+		class=&quot;org.eclipse.jdt.internal.launching.JavaProjectSourceContainerTypeDelegate&quot;&gt;
+	&lt;/sourceContainerType&gt; 
+	...
+</pre>
+
+</body>
+</html>

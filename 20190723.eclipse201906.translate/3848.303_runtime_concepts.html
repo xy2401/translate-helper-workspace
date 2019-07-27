@@ -1,12 +1,12 @@
-﻿<html dir="ltr">
+﻿<html >
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>语言实施</title>
-	<link href="book.css" rel="stylesheet" type="text/css"></link>
-	<link href="code.css" rel="stylesheet" type="text/css"></link>
-	<link rel="home" href="index.html" title=""></link>
+	<link href="book.css" rel="stylesheet" type="text/css">
+	<link href="code.css" rel="stylesheet" type="text/css">
+	<link rel="home" href="index.html" title="">
 </head>
-<body dir="ltr">
+<body >
 
 <h1 id="runtime-concepts">语言实施</h1>
 
@@ -32,7 +32,18 @@
 
 <p>用于<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.xtext.ui.examples/projects/fowlerdsl/org.eclipse.xtext.example.fowlerdsl/src/org/eclipse/xtext/example/fowlerdsl/Statemachine.xtext">状态机示例</a>的代码生成器的非常简单的实现可以是：</p>
 
-<pre><code class="language-xtend">class StatemachineGenerator扩展AbstractGenerator {覆盖doGenerate（资源资源，IFileSystemAccess2 fsa，IGeneratorContext上下文）{fsa.generateFile（“relative / path / AllTheStates.txt”，'''«FOR state：resource.allContents.filter（State）.toIterable»州«state.name»«ENDFOR»'''）}}</code></pre>
+<pre><code class="language-xtend">class StatemachineGenerator extends AbstractGenerator {
+    
+    override doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
+        fsa.generateFile("relative/path/AllTheStates.txt", '''
+            «FOR state : resource.allContents.filter(State).toIterable»
+                State «state.name»
+            «ENDFOR»
+        ''')
+    }
+    
+}
+</code></pre>
 
 <h3 id="output-configurations">输出配置</h3>
 
@@ -66,7 +77,9 @@
 
 <p>例：</p>
 
-<pre><code class="language-xtext">MyRule：（{MySubRule}“sub”）？（strVal + = ID intVal + = INT）*;</code></pre>
+<pre><code class="language-xtext">MyRule:
+    ({MySubRule} "sub")? (strVal+=ID intVal+=INT)*;
+</code></pre>
 
 <p>这意味着几个限制：</p>
 
@@ -82,14 +95,18 @@
 <p>具体的语法验证器有一些限制，因为它将语法视为声明，这是解析器并不总是这样做的。</p>
 
 <ul>
-  <li>包含已分配操作的语法规则（例如<code>{MyType.myFeature=current}</code> ）被忽略。未分配的行动（例如<code>{但是，支持MyType}</code> ）。</li>
+  <li>包含已分配操作的语法规则（例如<code>{MyType.myFeature=current}</code> ）被忽略。未分配的行动（例如<code>{MyType}</code> ）。</li>
   <li>通过未分配的规则调用委托给包含已分配操作的一个或多个规则的语法规则将被忽略。</li>
   <li>列表功能中的订单无法验证。例如<code>Rule: (foo+=R1 foo+=R2)*</code>意味着<em>foo</em>应该以交替的顺序包含<em>R1</em>和<em>R2的</em>实例。</li>
 </ul>
 
 <p>要使用具体的语法验证，您可以让Guice注入一个<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/IConcreteSyntaxValidator.java">IConcreteSyntaxValidator</a>实例并直接使用它。此外，还有一个<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/impl/ConcreteSyntaxEValidator.java">适配器</a>允许使用具体的语法验证器作为<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EValidator.java">EValidator</a> 。例如，您可以通过添加以下内容在运行时模块中启用它：</p>
 
-<pre><code class="language-xtend">@SingletonBinding（eager = true）def Class &lt;？extends ConcreteSyntaxEValidator&gt; bindConcreteSyntaxEValidator（）{return ConcreteSyntaxEValidator}</code></pre>
+<pre><code class="language-xtend">@SingletonBinding(eager = true)
+def Class&lt;? extends ConcreteSyntaxEValidator&gt; bindConcreteSyntaxEValidator() {
+    return ConcreteSyntaxEValidator
+}
+</code></pre>
 
 <p>要自定义错误消息，请参阅<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/IConcreteSyntaxDiagnosticProvider.java">IConcreteSyntaxDiagnosticProvider</a>和子类<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/impl/ConcreteSyntaxDiagnosticProvider.java">ConcreteSyntaxDiagnosticProvider</a> 。</p>
 
@@ -103,11 +120,35 @@
 
 <p>总而言之，这与JUnit的工作方式非常相似。这是一个用Xtend编写的例子：</p>
 
-<pre><code class="language-xtend">class DomainmodelValidator扩展AbstractDomainmodelValidator {@Check def void checkNameStartsWithCapital（Entity entity）{if（！Character.isUpperCase（entity.name.charAt（0）））{warning（“名称应以大写字母开头”，DomainmodelPackage。文字。TYPE__NAME）}}}</code></pre>
+<pre><code class="language-xtend">class DomainmodelValidator extends AbstractDomainmodelValidator {
+    
+    @Check
+    def void checkNameStartsWithCapital(Entity entity) {
+        if (!Character.isUpperCase(entity.name.charAt(0))) {
+            warning("Name should start with a capital", 
+                DomainmodelPackage.Literals.TYPE__NAME)
+        }
+    }
+}
+</code></pre>
 
 <p>您可以使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/validation/IResourceValidator.java">IResourceValidator</a>以编程方式验证给定资源。例：</p>
 
-<pre><code class="language-xtend">@Inject IResourceValidator resourceValidator def void checkResource（Resource resource）{val issues = resourceValidator.validate（resource，CheckMode。ALL，CancelIndicator。NullImpl）for（issue：issues）{switch issue.severity {case ERROR：println（“ERROR：”+ issue.message）case警告：println（“警告：”+ issue.message）}}}</code></pre>
+<pre><code class="language-xtend">@Inject IResourceValidator resourceValidator
+
+def void checkResource(Resource resource) {
+    val issues = resourceValidator.validate(resource,
+            CheckMode.ALL, CancelIndicator.NullImpl)
+    for (issue: issues) {
+        switch issue.severity {
+            case ERROR:
+                println("ERROR: " + issue.message)
+            case WARNING:
+                println("WARNING: " + issue.message)
+        }
+    }
+}
+</code></pre>
 
 <p>您还可以针对个别验证错误和警告实施快速修复。有关详细信息，请参阅<a href="310_eclipse_support.html#quick-fixes">快速修复部分</a> 。</p>
 
@@ -136,27 +177,79 @@
 
 <p>使用作用域API，可以定义哪个元素可以通过给定的引用引用。例如，使用实体示例，功能包含对类型的交叉引用：</p>
 
-<pre><code class="language-domainexample">数据类型字符串实体HasAuthor {author：String}</code></pre>
+<pre><code class="language-domainexample">datatype String
+
+entity HasAuthor {
+    author: String
+}
+</code></pre>
 
 <p>功能的语法规则如下所示：</p>
 
-<pre><code class="language-xtext">特点:(很多？= '多'）？name = ID'：'type = [Type];</code></pre>
+<pre><code class="language-xtext">Feature:
+    (many?='many')? name=ID ':' type=[Type];
+</code></pre>
 
 <p>语法声明对于引用<em>类型，</em>只允许类型为<em>Type的</em>实例。但是，这个简单的声明并没有说明在哪里找到类型。这是范围的责任。</p>
 
 <p>一个<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScopeProvider.java">IScopeProvider</a>负责提供<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScope.java">的iScope</a>给定上下文<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EObject.java">EObject</a>和<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EReference.java">的EReference</a> 。返回的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScope.java">IScope</a>应包含给定对象和交叉引用的所有目标候选者。</p>
 
-<pre><code class="language-java">public interface IScopeProvider {/ ** *返回给定上下文的范围。范围*提供对给定引用的兼容可见EObject *的访问。* * @param context元素应该被引用的元素* @param引用用于过滤*元素的引用。* @return {@link IScope}代表传递的上下文和引用的最内部* {@link IScope}。*实现者注意事项：结果可能不是* &lt;code&gt; null &lt;/ code&gt;。返回* &lt;code&gt; IScope。NULLSCOPE &lt;/ code&gt;而不是。* / IScope getScope（EObject context，EReference reference）; }</code></pre>
+<pre><code class="language-java">public interface IScopeProvider {
+
+    /**
+     * Returns a scope for the given context. The scope
+     * provides access to the compatible visible EObjects
+     * for a given reference.
+     *
+     * @param context the element from which an element shall be
+     *        referenced
+     * @param reference the reference to be used to filter the
+     *        elements.
+     * @return {@link IScope} representing the inner most
+     *         {@link IScope} for the passed context and reference.
+     *         Note for implementors: The result may not be
+     *         &lt;code&gt;null&lt;/code&gt;. Return
+     *         &lt;code&gt;IScope.NULLSCOPE&lt;/code&gt; instead.
+     */
+    IScope getScope(EObject context, EReference reference);
+
+}
+</code></pre>
 
 <p>单个<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/IScope.java">IScope</a>表示范围链接列表的元素。这意味着范围可以嵌套在外部范围内。每个范围的工作方式类似于符号表或映射，其中键是字符串，值是所谓的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IEObjectDescription.java">IEObjectDescription</a> ，它实际上是真实EObject的抽象描述。为了为模型元素创建IEObjectDescriptions，类<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/Scopes.java">Scopes</a>非常有用。</p>
 
 <p>举一个具体的例子，让我们来处理以下简单的语法。</p>
 
-<pre><code class="language-xtext">语法org.xtext.example.mydsl。带有org.eclipse.xtext.common的MyScopingDsl。终端生成myDsl“http://www.xtext.org/example/mydsl/MyScopingDsl”Root：elements + = Element;元素：'element'name = ID（'extends'superElement = [Element]）？;</code></pre>
+<pre><code class="language-xtext">grammar org.xtext.example.mydsl.MyScopingDsl with
+                                      org.eclipse.xtext.common.Terminals
+
+generate myDsl "http://www.xtext.org/example/mydsl/MyScopingDsl"
+
+Root:
+    elements+=Element;
+
+Element:
+    'element' name=ID ('extends' superElement=[Element])?;
+
+</code></pre>
 
 <p>如果要定义<em>superElement</em>交叉引用的范围，则以下Xtend代码是一种方法。</p>
 
-<pre><code class="language-xtend">override getScope（EObject context，EReference reference）{//我们想要定义Element的superElement交叉引用的范围if（context instanceof Element &amp;&amp; reference == MyDslPackage。文字。ELEMENT__SUPER_ELEMENT）{//通过模型收集候选列表// EcoreUtil2提供了有用的功能//例如，搜索根对象树中的所有元素val valElement = EcoreUtil2.getRootContainer（context）val candidates = EcoreUtil2 .getAllContentsOfType（rootElement，Element）//创建IEObjectDescriptions并将它们放入一个IScope实例中返回Scopes.scopeFor（candidate）} return super.getScope（context，reference）; }</code></pre>
+<pre><code class="language-xtend">override getScope(EObject context, EReference reference) {
+    // We want to define the Scope for the Element's superElement cross-reference
+    if (context instanceof Element
+            &amp;&amp; reference == MyDslPackage.Literals.ELEMENT__SUPER_ELEMENT) {
+        // Collect a list of candidates by going through the model
+        // EcoreUtil2 provides useful functionality to do that
+        // For example searching for all elements within the root Object's tree
+        val rootElement = EcoreUtil2.getRootContainer(context)
+        val candidates = EcoreUtil2.getAllContentsOfType(rootElement, Element)
+        // Create IEObjectDescriptions and puts them into an IScope instance
+        return Scopes.scopeFor(candidates)
+    }
+    return super.getScope(context, reference);
+}
+</code></pre>
 
 <p>Xtext附带的IScope有不同的有用实现。我们想在这里只提一些。</p>
 
@@ -164,7 +257,18 @@
 
 <p>回到我们的例子，FilteringScope的一个可能的场景可能是从候选列表中排除context元素，因为它不应该是它自身的超级元素。</p>
 
-<pre><code class="language-xtend">override getScope（EObject context，EReference reference）{if（context instanceof Element &amp;&amp; reference == MyDslPackage。文字。ELEMENT__SUPER_ELEMENT）{val rootElement = EcoreUtil2.getRootContainer（context）val candidates = EcoreUtil2.getAllContentsOfType（rootElement，Element）val existingScope = Scopes.scopeFor（candidate）//从候选列表中筛选出context元素的范围返回新的FilteringScope（existingScope ，[getEObjectOrProxy！= context]）} return super.getScope（context，reference）; }</code></pre>
+<pre><code class="language-xtend">override getScope(EObject context, EReference reference) {
+    if (context instanceof Element
+            &amp;&amp; reference == MyDslPackage.Literals.ELEMENT__SUPER_ELEMENT) {
+        val rootElement = EcoreUtil2.getRootContainer(context)
+        val candidates = EcoreUtil2.getAllContentsOfType(rootElement, Element)
+        val existingScope = Scopes.scopeFor(candidates)
+        // Scope that filters out the context element from the candidates list
+        return new FilteringScope(existingScope, [getEObjectOrProxy != context])
+    }
+    return super.getScope(context, reference);
+}
+</code></pre>
 
 <h3 id="global-scopes">全球范围和资源描述</h3>
 
@@ -192,7 +296,18 @@
 
 <p>如上所述，为了计算资源的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription</a> ，框架会询问<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription。管理</a>委托给IDefaultResourceDescriptionStrategy。要在<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/naming/QualifiedName.java">QualifiedName</a>及其String表示形式之间进行转换，可以使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/naming/IQualifiedNameConverter.java">IQualifiedNameConverter</a> 。这是一些Xtend代码，展示了如何做到这一点：</p>
 
-<pre><code class="language-xtend">@Inject IResourceServiceProvider。注册表rspr @Inject IQualifiedNameConverter转换器def void printExportedObjects（资源资源）{val resServiceProvider = rspr.getResourceServiceProvider（resource。URI）val manager = resServiceProvider.getResourceDescriptionManager（）val description = manager.getResourceDescription（resource）for（eod：description.exportedObjects）{println（converter.toString（eod.qualifiedName））}}</code></pre>
+<pre><code class="language-xtend">@Inject IResourceServiceProvider.Registry rspr
+@Inject IQualifiedNameConverter converter
+
+def void printExportedObjects(Resource resource) {
+    val resServiceProvider = rspr.getResourceServiceProvider(resource.URI)
+    val manager = resServiceProvider.getResourceDescriptionManager()
+    val description = manager.getResourceDescription(resource)
+    for (eod : description.exportedObjects) {
+        println(converter.toString(eod.qualifiedName))
+    }
+}
+</code></pre>
 
 <p>为了获得<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">管理器</a> ，最好询问相应的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceServiceProvider.java">IResourceServiceProvider，</a>如上所示。这是因为每种语言可能具有完全不同的实现，并且您可能会从一种语言引用另一种语言，因此您无法重用第一语言的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">管理器</a> 。</p>
 
@@ -216,7 +331,17 @@
 
 <p>因此，资源所属容器的信息取决于引用上下文。因此， <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceServiceProvider.java">IResourceServiceProvider</a>提供了另一个有趣的服务，称为<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IContainer.java">IContainer。经理</a>对于给定的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescription</a> ，Manager会为您提供<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IContainer.java">IContainer</a>以及从那里可见的所有IContainer的列表。请注意， <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescriptions.java">索引</a>是在所有语言之间全局共享的，而添加容器语义的Manager可能会因语言而异。下面的方法列出了从给定可见的所有资源<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/resource/Resource.java">的资源</a> ：</p>
 
-<pre><code class="language-xtend">@Inject IContainer。经理管理员def void printVisibleResources（资源资源，IResourceDescriptions索引）{val descr = index.getResourceDescription（资源。URI）for（visibleContainer：manager.getVisibleContainers（descr，index））{for（visibleResourceDesc：visibleContainer.resourceDescriptions）{println（visibleResourceDesc。URI）}}}</code></pre>
+<pre><code class="language-xtend">@Inject IContainer.Manager manager
+ 
+def void printVisibleResources(Resource resource, IResourceDescriptions index) {
+    val descr = index.getResourceDescription(resource.URI)
+    for (visibleContainer : manager.getVisibleContainers(descr, index)) {
+        for (visibleResourceDesc : visibleContainer.resourceDescriptions) {
+            println(visibleResourceDesc.URI)
+        }
+    }
+}
+</code></pre>
 
 <p>Xtext提供了两个<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IContainer.java">IContainer实现<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IContainer.java">。与Guice绑定的Manager</a> ：默认绑定是<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/impl/SimpleResourceDescriptionsBasedContainerManager.java">SimpleResourceDescriptionsBasedContainerManager</a> ，它假定所有<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/IResourceDescription.java">IResourceDescriptions</a>都在一个公共容器中。如果你不关心容器支持，你可以使用这个。或者，您可以绑定<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/containers/StateBasedContainerManager.java">StateBasedContainerManager</a>和另一个<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/containers/IAllContainersState.java">IAllContainersState</a> ，它跟踪可用容器集及其可见性关系。</p>
 
@@ -239,11 +364,17 @@
 
 <p>由于这个策略允许重用许多不错的Java东西，如jar，OSGi，maven等，它是默认的一部分：你不必重新配置任何东西以使其工作。然而，如果你搞砸了什么，请确保你绑定</p>
 
-<pre><code class="language-xtend">def类&lt;？扩展IContainer。Manager&gt; bindIContainer $ Manager（）{return StateBasedContainerManager}</code></pre>
+<pre><code class="language-xtend">def Class&lt;? extends IContainer.Manager&gt; bindIContainer$Manager() {
+    return StateBasedContainerManager
+}
+</code></pre>
 
 <p>在运行时模块和</p>
 
-<pre><code class="language-xtend">def Provider &lt;IAllContainersState&gt; provideIAllContainersState（）{return org.eclipse.xtext.ui.shared。Access.getJavaProjectsState（）}</code></pre>
+<pre><code class="language-xtend">def Provider&lt;IAllContainersState&gt; provideIAllContainersState() {
+    return org.eclipse.xtext.ui.shared.Access.getJavaProjectsState()
+}
+</code></pre>
 
 <p>在引用语言的Eclipse UI模块中。后者看起来比普通绑定更困难，因为我们必须将全局单例绑定到Guice提供者。<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/containers/StrictJavaProjectsState.java">StrictJavaProjectsState</a>要求所有元素都在类路径上，而默认的<a href="https://github.com/eclipse/xtext-eclipse/blob/master/org.eclipse.xtext.ui/src/org/eclipse/xtext/ui/containers/JavaProjectsState.java">JavaProjectsState</a>也允许非源文件夹中的模型。</p>
 
@@ -253,7 +384,10 @@
 
 <p>在这种情况下，运行时模块应该使用如上所示的StateBasedContainerManager，Eclipse UI模块应该绑定</p>
 
-<pre><code class="language-xtend">def Provider &lt;IAllContainersState&gt; provideIAllContainersState（）{return org.eclipse.xtext.ui.shared。Access.getWorkspaceProjectsState（）}</code></pre>
+<pre><code class="language-xtend">def Provider&lt;IAllContainersState&gt; provideIAllContainersState() {
+    return org.eclipse.xtext.ui.shared.Access.getWorkspaceProjectsState()
+}
+</code></pre>
 
 <h5 id="resource-set-containers">基于资源集的容器</h5>
 
@@ -265,11 +399,40 @@
 
 <p>为了说明这一点，让我们来看看Java：Java定义了多种范围（对象范围，类型范围等）。对于Java，可以创建范围层次结构，如以下示例中所述：</p>
 
-<pre><code class="language-java">//文件内容范围导入静态我的。常量。静态的; public class ScopeExample {// class body scope private Object field = STATIC; private void method（String param）{//方法体范围String localVar =“bar”; innerBlock：{//块作用域String innerScopeVar =“foo”; Object field = innerScopeVar; //此时的范围层次结构如下所示：// blockScope {field，innerScopeVar}  - &gt; // methodScope {localVar，param}  - &gt; // classScope {field}  - &gt;（'field'被遮蔽）// fileScope {STATIC}  - &gt; // classpathScope {//'可访问静态字段的所有限定名称'}  - &gt; // NULLSCOPE {} //} field.add（localVar）; }}</code></pre>
+<pre><code class="language-java">// file contents scope
+import static my.Constants.STATIC;
+
+public class ScopeExample { // class body scope
+  private Object field = STATIC;
+
+  private void method(String param) { // method body scope
+    String localVar = "bar";
+    innerBlock: { // block scope
+      String innerScopeVar = "foo";
+      Object field = innerScopeVar;
+      // the scope hierarchy at this point would look like this:
+      //  blockScope{field,innerScopeVar}-&gt;
+      //  methodScope{localVar, param}-&gt;
+      //  classScope{field}-&gt; ('field' is shadowed)
+      //  fileScope{STATIC}-&gt;
+      //  classpathScope{
+      //      'all qualified names of accessible static fields'} -&gt;
+      //  NULLSCOPE{}
+      //
+    }
+    field.add(localVar);
+  }
+}
+</code></pre>
 
 <p>实际上，类路径范围也应该反映类路径条目的顺序。例如：</p>
 
-<pre><code class="language-java">classpathScope {来自bin /}的东西 - &gt; classpathScope {来自foo.jar /}的东西 - &gt; ...- &gt; classpathScope {来自JRE系统库的东西}  - &gt; NULLSCOPE {}</code></pre>
+<pre><code class="language-java">classpathScope{stuff from bin/}
+-&gt; classpathScope{stuff from foo.jar/}
+-&gt; ...
+-&gt; classpathScope{stuff from JRE System Library}
+-&gt; NULLSCOPE{}
+</code></pre>
 
 <p>请在<a href="http://blog.efftinge.de/2009/01/xtext-scopes-and-emf-index.html">此博客文章中</a>找到此背后的动机和一些其他详细信息。</p>
 
@@ -281,25 +444,61 @@
 
 <p><a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/scoping/impl/ImportedNamespaceAwareLocalScopeProvider.java">ImportedNamespaceAwareLocalScopeProvider</a>使用名称<em>importedNamespace</em>查找<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EAttribute.java">EAttributes</a>并将它们解释为import语句。</p>
 
-<pre><code class="language-xtext">PackageDeclaration：'package'name = QualifiedName'{'（elements + = AbstractElement）*'}'; AbstractElement：PackageDeclaration |输入|进口; QualifiedName：ID（'。' ID）*;导入：'import'importNameName = QualifiedNameWithWildcard; QualifiedNameWithWildcard：QualifiedName'。*“？;</code></pre>
+<pre><code class="language-xtext">PackageDeclaration:
+    'package' name=QualifiedName '{'
+        (elements+=AbstractElement)*
+    '}';
+
+AbstractElement:
+    PackageDeclaration | Type | Import;
+
+QualifiedName:
+    ID ('.' ID)*;
+
+Import:
+    'import' importedNamespace=QualifiedNameWithWildcard;
+  
+QualifiedNameWithWildcard:
+    QualifiedName '.*'?;
+</code></pre>
 
 <p>支持末尾带或不带通配符的限定名称。对于导入限定名称，可以使用简单名称，例如Java，其中<code>import java.util.Set</code>可以引用<a href="http://docs.oracle.com/javase/8/docs/api/java/util/Set.html">java.util。设置</a>被其简单的名称<em>设置</em> 。与Java相反，导入对于整个文件不是活动的，而是仅针对其声明的命名空间及其子命名空间。这就是为什么你可以在示例DSL中编写以下内容：</p>
 
-<pre><code class="language-domainexample">package foo {import bar。Foo实体Bar扩展了Foo {}}包bar {entity Foo {}}</code></pre>
+<pre><code class="language-domainexample">package foo {
+    import bar.Foo
+    entity Bar extends Foo {
+    }
+}
+
+package bar {
+    entity Foo {}
+}
+</code></pre>
 
 <p>当然，包中声明的元素也可以通过简单的名称引用：</p>
 
-<pre><code class="language-domainexample">包条{entity Bar extends Foo {} entity Foo {}}</code></pre>
+<pre><code class="language-domainexample">package bar {
+    entity Bar extends Foo {}
+    entity Foo {}
+}
+</code></pre>
 
 <h2 id="value-converter">价值转换器</h2>
 
 <p>注册值转换器以将解析的文本转换为数据类型实例，反之亦然。主挂钩是<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/conversion/IValueConverterService.java">IValueConverterService</a> ，具体实现可以通过运行时<a href="302_configuration.html#guicemodules">Guice模块</a>注册。只需覆盖运行时模块中的相应绑定，如下例所示：</p>
 
-<pre><code class="language-xtend">覆盖类&lt;？extends IValueConverterService&gt; bindIValueConverterService（）{return MySpecialValueConverterService}</code></pre>
+<pre><code class="language-xtend">override Class&lt;? extends IValueConverterService&gt; bindIValueConverterService() {
+    return MySpecialValueConverterService
+}
+</code></pre>
 
 <p>注册附加值转换器的最简单方法是使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/conversion/impl/AbstractDeclarativeValueConverterService.java">AbstractDeclarativeValueConverterService</a> ，它允许通过带注释的方法声明性地注册<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/conversion/IValueConverter.java">IValueConverter</a> 。</p>
 
-<pre><code class="language-xtend">@ValueConverter（rule =“MyRuleName”）def IValueConverter &lt;MyDataType&gt; getMyRuleNameConverter（）{return new MyValueConverterImplementation（）}</code></pre>
+<pre><code class="language-xtend">@ValueConverter(rule = "MyRuleName")
+def IValueConverter&lt;MyDataType&gt; getMyRuleNameConverter() {
+    return new MyValueConverterImplementation()
+}
+</code></pre>
 
 <p>如果使用公共终端语法<code>org.eclipse.xtext.common.Terminals</code>应扩展<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/common/services/DefaultTerminalConverters.java">DefaultTerminalConverters</a>并通过添加相应的方法来覆盖或添加值转换器。除了默认实现中明确定义的转换器之外，还为每个可用的<a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EDataType.java">EDataType</a>注册了委派转换器。委托转换器重用相应的EMF <a href="https://github.com/eclipse/emf/blob/R2_9_0/plugins/org.eclipse.emf.ecore/src/org/eclipse/emf/ecore/EFactory.java">EFactory</a>的功能。</p>
 
@@ -328,7 +527,9 @@
 
 <p>序列化合同表示将一个模型保存（序列化）到其文本表示然后再加载（解析），产生一个等于原始模型的新模型。请注意，这<em>并不</em>意味着加载文本表示和序列化回产生相同的文本表示。但是，序列化算法尝试尽可能多地恢复信息。也就是说，如果解析的模型未在内存中修改，则序列化输出通常将等于先前的输入。不幸的是，对于每一个案例都无法确保这一点。以下示例中显示了几乎不可能的用例：</p>
 
-<pre><code class="language-xtext">MyRule :( xval + = ID | yval + = INT）*;</code></pre>
+<pre><code class="language-xtext">MyRule:
+  (xval+=ID | yval+=INT)*;
+</code></pre>
 
 <p>给定的<em>MyRule</em>读取<em>ID</em> - 和<em>INT  -</em>元素，它们可能在文本表示中以任意顺序出现。但是，在序列化模型时，将首先写入所有<em>ID</em>元素，然后写入所有<em>INT</em>元素。如果顺序很重要，可以通过将所有元素存储在同一列表中来保存 - 这可能需要将<em>ID</em>包装 - 和<em>INT</em> -elements存储到其他对象中。</p>
 
@@ -397,7 +598,7 @@
 
 <h3 id="transient-values">瞬态值</h3>
 
-<p>瞬态值是不持久的值或模型元素（写入序列化阶段的文本表示）。如果模型包含无法使用当前语法序列化的模型元素，则使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/ITransientValueService.java">ITransientValueService</a>将其标记为瞬态<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/ITransientValueService.java">至关重要</a> ，否则序列化将失败。默认实现将所有模型元素标记为瞬态，即<code>eStructuralFeature.isTransient()</code>或不是<code>eObject.eIsSet(eStructuralFeature)</code> 。默认情况下，如果值等于默认值，EMF将为<code>eIsSet(..)</code>返回<code>false</code> 。</p>
+<p>瞬态值是不持久的值或模型元素（写入序列化阶段的文本表示）。如果模型包含无法使用当前语法序列化的模型元素，则使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/ITransientValueService.java">ITransientValueService</a>将其标记为瞬态<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/ITransientValueService.java">至关重要</a> ，否则序列化将失败。默认实现将所有模型元素标记为瞬态，即<code>eStructuralFeature.isTransient()</code>或不是<code>eObject.eIsSet(eStructuralFeature)</code> 。默认情况下，如果值等于默认值，EMF将为<code>false</code>返回<code>eIsSet(..)</code> 。</p>
 
 <h3 id="unassigned-text">未分配的文本</h3>
 
@@ -405,7 +606,12 @@
 
 <p>例：</p>
 
-<pre><code class="language-xtext">PluralRule：'内容：'count = INT Plural;终端复数：'item'| “项目”;</code></pre>
+<pre><code class="language-xtext">PluralRule:
+  'contents:' count=INT Plural;
+
+terminal Plural:
+  'item' | 'items';
+</code></pre>
 
 <p>此示例的有效模型是<code>contents 1 item</code>或<code>contents 5 items</code> 。但是，它没有存储在语义模型的关键字<em>的</em> <em>项目</em>或<em>项目</em>是否已被解析。这是因为规则调用<em>Plural</em>未分配。但是， <a href="#parse-tree-constructor">解析树构造函数</a>需要决定在序列化期间写入哪个值。可以通过自定义<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/ITokenSerializer.java">IValueSerializer.serializeUnassignedValue（EObject，RuleCall，INode）</a>来做出此决定。</p>
 
@@ -423,7 +629,13 @@
 
 <p><a href="#parse-tree-constructor">解析树构造函数</a>和<a href="#formatting">格式化程序</a>使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/ITokenStream.java">ITokenStream</a>作为输出，后者也使用它作为输入。这允许链接两个组件。令牌流可以使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/impl/TokenStringBuffer.java">TokenStringBuffer</a>转换为<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/String.html">String，</a>使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parsetree/reconstr/impl/WriterTokenStream.java">WriterTokenStream</a>转换为<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Writer.html">Writer</a> 。</p>
 
-<pre><code class="language-java">public interface ITokenStream {void flush（）抛出IOException; void writeHidden（EObject grammarElement，String value）; void writeSemantic（EObject grammarElement，String value）; }</code></pre>
+<pre><code class="language-java">public interface ITokenStream {
+
+  void flush() throws IOException;
+  void writeHidden(EObject grammarElement, String value);
+  void writeSemantic(EObject grammarElement, String value);
+}
+</code></pre>
 
 <h2 id="formatting">格式化</h2>
 
@@ -437,7 +649,19 @@
 
 <p>以下示例说明了该模式。PackageDeclaration的实例与当前的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/formatting2/IFormattableDocument.java">formattable文档</a>一起传递给format方法。在这种情况下，包名称由单个空格包围，花括号后跟一个新行和增加的缩进等。该包中的所有元素也应该被格式化，因此<code>format(..)</code>在这些上被调用为好。</p>
 
-<pre><code class="language-xtend">def dispatch void format（PackageDeclaration p，extension IFormattableDocument doc）{p.regionFor.feature（PACKAGE_DECLARATION__NAME）.surround [oneSpace] interior（p.regionFor.keyword（'{'）。append [newLine]，p.regionFor.keyword（ '}'），[indent]）for（element：p.elements）{format（element，doc）element.append [setNewLines（1,1,2）]}}</code></pre>
+<pre><code class="language-xtend">def dispatch void format(PackageDeclaration p, extension IFormattableDocument doc) {
+    p.regionFor.feature(PACKAGE_DECLARATION__NAME).surround[oneSpace]
+    interior(
+        p.regionFor.keyword('{').append[newLine],
+        p.regionFor.keyword('}'),
+        [indent]
+    )
+    for (element : p.elements) {
+        format(element, doc)
+        element.append[setNewLines(1, 1, 2)]
+    }
+}
+</code></pre>
 
 <p>API的设计方式允许通过调用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/formatting2/IHiddenRegionFormatter.java">IHiddenRegionFormatter</a>上的方法以声明方式描述格式，该方法在<code>prepend</code> ， <code>surround</code>或<code>append</code>调用中可用，以指定格式规则。这可以按任意顺序完成 - 基础结构将重新排序所有配置，以便从文档的顶部到底部执行它们。如果基于配置的方法不足以满足特定用例，则该<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/formatting2/IFormattableDocument.java">文档</a>还接受与给定范围相关联的命令性逻辑。可以直接添加到文档的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/formatting2/ITextReplacer.java">ITextReplacer</a>允许对与其关联的区域中的文本执行各种修改。</p>
 
@@ -459,7 +683,12 @@
 
 <p>默认情况下， <em>New Xtext Project</em>向导创建的插件以工作空间标准编码进行编码。对于Xtext在那里生成的所有文件也是如此。如果您想更改它，例如因为您的语法使用/允许特殊字符，您应该在创建后手动设置这些项目的属性中的编码。在为语法添加特殊字符之前执行此操作，或者至少确保在编码更改后正确读取语法。要告诉Xtext生成器以相同的编码生成文件，请在工作流中设置encoding属性，例如</p>
 
-<pre><code class="language-mwe2">component = XtextGenerator {configuration = {code = {encoding =“UTF-8”} ...
+<pre><code class="language-mwe2">component = XtextGenerator {
+    configuration = {
+        code = {
+            encoding = "UTF-8"
+        }
+    ...
 </code></pre>
 
 <h3 id="encoding-at-language-runtime">语言运行时编码</h3>
@@ -470,7 +699,12 @@
 
 <p>除非您想为所有语言模型强制执行统一编码，否则我们建议仅覆盖运行时服务。它使用绑定注释<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/service/DispatchingProvider.java">@Runtime</a>绑定在运行时模块中：</p>
 
-<pre><code class="language-xtend">override configureRuntimeEncodingProvider（Binder binder）{binder.bind（IEncodingProvider）.annotatedWith（DispatchingProvider。运行时）.to（MyEncodingProvider）}</code></pre>
+<pre><code class="language-xtend">override configureRuntimeEncodingProvider(Binder binder) {
+    binder.bind(IEncodingProvider)
+          .annotatedWith(DispatchingProvider.Runtime)
+          .to(MyEncodingProvider)
+}
+</code></pre>
 
 <p>对于统一编码，将普通<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parser/IEncodingProvider.java">IEncodingProvider</a>绑定到所有模块中的相同实现。在Eclipse UI模块中，您可以使用与上面类似的代码，但使用<em>DispatchingProvider。Ui</em>而不是<em>Runtime</em> 。</p>
 
@@ -478,11 +712,13 @@
 
 <p>默认情况下， <a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/resource/XtextResource.java">XtextResource</a>使用您的语言的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext/src/org/eclipse/xtext/parser/IEncodingProvider.java">IEncodingProvider</a> 。您可以通过在加载和保存时传递选项来覆盖它，例如</p>
 
-<pre><code class="language-xtend">myXtextResource.load（＃{XtextResource。OPTION_ENCODING  - &gt;“UTF-8”}）</code></pre>
+<pre><code class="language-xtend">myXtextResource.load(#{XtextResource.OPTION_ENCODING -&gt; "UTF-8"})
+</code></pre>
 
 <p>要么</p>
 
-<pre><code class="language-xtend">myXtextResource.save（＃{XtextResource。OPTION_ENCODING  - &gt;“ISO-8859-1”}）</code></pre>
+<pre><code class="language-xtend">myXtextResource.save(#{XtextResource.OPTION_ENCODING -&gt; "ISO-8859-1"})
+</code></pre>
 
 <h2 id="testing">单元测试</h2>
 
@@ -492,25 +728,79 @@
 
 <p>JUnit 4的测试基础架构的核心是<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/XtextRunner.java">XtextRunner</a>和特定于语言的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/IInjectorProvider.java">IInjectorProvider</a> 。两者都必须通过类注释来提供。您的测试用例应使用<a href="https://github.com/junit-team/junit4/blob/master/src/main/java/org/junit/Test.java">org.junit进行注释<a href="https://github.com/junit-team/junit4/blob/master/src/main/java/org/junit/Test.java">。测试</a>静态导入<a href="https://github.com/junit-team/junit4/blob/master/src/main/java/org/junit/Assert.java">org.junit。断言</a>使您的测试更具可读性。</p>
 
-<pre><code class="language-xtend">import org.eclipse.xtext.testing。InjectWith导入org.eclipse.xtext.testing。XtextRunner导入org.junit.runner。RunWith导入org.junit。测试导入静态org.junit。断言。* import org.example.domainmodel。DomainmodelInjectorProvider @InjectWith（DomainmodelInjectorProvider）@RunWith（XtextRunner）类ParserTest {@Test void simple（）{assertTrue（true）}}</code></pre>
+<pre><code class="language-xtend">import org.eclipse.xtext.testing.InjectWith
+import org.eclipse.xtext.testing.XtextRunner
+import org.junit.runner.RunWith
+import org.junit.Test
+import static org.junit.Assert.*
+import org.example.domainmodel.DomainmodelInjectorProvider
+
+@InjectWith(DomainmodelInjectorProvider)
+@RunWith(XtextRunner)
+class ParserTest {
+    @Test void simple() {
+        assertTrue(true)
+    }
+}
+</code></pre>
 
 <p>此配置将确保您可以在测试类中使用依赖项注入，并且在每次测试之前正确填充全局EMF注册表并进行清理。</p>
 
 <p>JUnit 5的测试类看起来非常相似。而不是跑步者JUnit 5有一个<a href="https://junit.org/junit5/docs/current/user-guide/#extensions">扩展</a>的概念。虽然JUnit 4每个测试类只能有一个运行器，但JUnit 5可能有多个扩展。XtextRunner的替代品是新的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/extensions/InjectionExtension.java">InjectionExtension</a> 。仍然需要特定于语言的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/IInjectorProvider.java">IInjectorProvider</a> 。而不是<code>org.junit.Test</code>你必须用<a href="https://github.com/junit-team/junit5/blob/master/junit-jupiter-api/src/main/java/org/junit/jupiter/api/Test.java">org.junit.jupiter.api注释你的案例<a href="https://github.com/junit-team/junit5/blob/master/junit-jupiter-api/src/main/java/org/junit/jupiter/api/Test.java">。测试</a>并从<a href="https://github.com/junit-team/junit5/blob/master/junit-jupiter-api/src/main/java/org/junit/jupiter/api/Assertions.java">org.junit.jupiter.api导入方法<a href="https://github.com/junit-team/junit5/blob/master/junit-jupiter-api/src/main/java/org/junit/jupiter/api/Assertions.java">。断言</a> 。JUnit 5的简单测试类将如下所示：</p>
 
-<pre><code class="language-xtend">import org.eclipse.xtext.testing。InjectWith导入org.eclipse.xtext.testing.extensions。InjectionExtension导入org.junit.jupiter.api.extension。ExtendWith导入org.junit.jupiter.api。测试导入静态org.junit.jupiter.api。断言。* import org.example.domainmodel。DomainmodelInjectorProvider @InjectWith（DomainmodelInjectorProvider）@ExtendWith（InjectionExtension）类ParserTest {@Test void simple（）{assertTrue（true）}}</code></pre>
+<pre><code class="language-xtend">import org.eclipse.xtext.testing.InjectWith
+import org.eclipse.xtext.testing.extensions.InjectionExtension
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.Test
+import static org.junit.jupiter.api.Assertions.*
+import org.example.domainmodel.DomainmodelInjectorProvider
+
+@InjectWith(DomainmodelInjectorProvider)
+@ExtendWith(InjectionExtension)
+class ParserTest {
+    @Test void simple() {
+        assertTrue(true)
+    }
+}
+</code></pre>
 
 <h3 id="testing-the-parser">测试解析器</h3>
 
 <p><a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/util/ParseHelper.java">ParseHelper</a>类允许将任意字符串解析为AST模型。之后可以遍历和检查AST模型本身。</p>
 
-<pre><code class="language-xtend">import org.eclipse.xtext.testing.util。ParseHelper ......@Inject ParseHelper &lt;Domainmodel&gt; parser @Test def void parseDomainmodel（）{val model = parser.parse（'''entity MyEntity {parent：MyEntity}'''）val entity = model.elements.head as Entity assertSame（entity， entity.features.head.type）}</code></pre>
+<pre><code class="language-xtend">import org.eclipse.xtext.testing.util.ParseHelper
+...
+
+@Inject ParseHelper&lt;Domainmodel&gt; parser
+
+@Test
+def void parseDomainmodel() {
+    val model = parser.parse('''
+        entity MyEntity {
+            parent: MyEntity
+        }
+    ''')
+    val entity = model.elements.head as Entity
+    assertSame(entity, entity.features.head.type)
+}
+</code></pre>
 
 <h3 id="test-validators">测试验证器</h3>
 
 <p>使用<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/validation/ValidationTestHelper.java">ValidationTestHelper</a>测试验证非常简单：</p>
 
-<pre><code class="language-xtend">...@Inject扩展名ParseHelper @Inject扩展名ValidationTestHelper @Test def void testLowercaseName（）{val model =“entity foo {}”。parse model.assertWarning（DomainmodelPackage。文字。ENTITY，null，“名称应以大写字母开头”）}</code></pre>
+<pre><code class="language-xtend">...
+ 
+@Inject extension ParseHelper
+@Inject extension ValidationTestHelper
+
+@Test
+def void testLowercaseName() {
+    val model = "entity foo {}".parse
+    model.assertWarning(DomainmodelPackage.Literals.ENTITY, null,
+            "Name should start with a capital")
+}
+</code></pre>
 
 <p>请参阅该助手类中的各种<em>断言</em>方法以探索测试功能。您可以断言给定模型具有上述示例中的特定问题，或断言它没有问题。</p>
 
@@ -520,13 +810,35 @@
 
 <p>由于您的主要语言（例如DomainmodelInjectorProvider）的默认生成的<a href="https://github.com/eclipse/xtext-core/blob/master/org.eclipse.xtext.testing/src/org/eclipse/xtext/testing/IInjectorProvider.java">IInjectorProvider</a>不知道任何其他依赖语言，因此必须明确初始化它们。建议的模式是在<em>* .test</em>项目中创建生成的<em>MyLanguageInjectorProvider</em>的新子类，并确保依赖语言正确地进行了非正式化。然后你可以在测试的<em>@InjectWith中</em>使用这个新的注入器提供器而不是原来的注入器提供器：</p>
 
-<pre><code class="language-xtend">class MyLanguageWithDependenciesInjectorProvider extends MyLanguageInjectorProvider {override internalCreateInjector（）{MyOtherLangLanguageStandaloneSetup.doSetup return super.internalCreateInjector}} // @RunWith（XtextRunner）// JUnit 4 @ExtendWith（InjectionExtension）// JUnit 5 @InjectWith（MyLanguageWithDependenciesInjectorProvider）class YourTest {...}</code></pre>
+<pre><code class="language-xtend">class MyLanguageWithDependenciesInjectorProvider extends MyLanguageInjectorProvider {
+    override internalCreateInjector() {
+        MyOtherLangLanguageStandaloneSetup.doSetup
+        return super.internalCreateInjector
+    }
+}
+
+// @RunWith(XtextRunner) // JUnit 4
+@ExtendWith(InjectionExtension) // JUnit 5
+@InjectWith(MyLanguageWithDependenciesInjectorProvider)
+class YourTest {
+    ...
+}
+</code></pre>
 
 <p>您不应在独立设置中为引用语言创建注入器。请注意，对于无头代码生成用例，Maven插件配置了多个设置，因此通常没有问题。</p>
 
 <p>您可能还需要初始化不是由Xtext语言生成的导入的ecore模型。这应该通过使用显式<em>MyModelPackage.eINSTANCE.getName（）;</em>在各自语言的StandaloneSetup类的<em>doSetup（）</em>方法中。请注意，强烈建议您遵循此模式，而不是仅在* Test类中使用<em>@Before</em>方法，因为内部技术原因只要您有一个以上的<em>@Test</em>就不再有效。</p>
 
-<pre><code class="language-xtend">class MyLanguageStandaloneSetup扩展MyLanguageStandaloneSetupGenerated {def static void doSetup（）{if（！EPackage。注册。INSTANCE.containsKey（MyPackage.eNS_URI））EPackage。注册。INSTANCE.put（MyPackage.eNS_URI，MyPackage.eINSTANCE）; new MyLanguageStandaloneSetup（）。createInjectorAndDoEMFRegistration}}</code></pre>
+<pre><code class="language-xtend">class MyLanguageStandaloneSetup extends MyLanguageStandaloneSetupGenerated {
+
+    def static void doSetup() {
+        if (!EPackage.Registry.INSTANCE.containsKey(MyPackage.eNS_URI))
+            EPackage.Registry.INSTANCE.put(MyPackage.eNS_URI, MyPackage.eINSTANCE);
+        new MyLanguageStandaloneSetup().createInjectorAndDoEMFRegistration
+    }
+
+}
+</code></pre>
 
 <p>这仅适用于引用依赖于导入的Ecore模型和基于它们的语言，这些模型和语言可以在测试中使用。来自混合语法的继承依赖项已经自动列在生成的超类中，并且不需要为这些进行任何操作。</p>
 

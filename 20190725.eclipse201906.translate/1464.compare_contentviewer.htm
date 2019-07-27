@@ -1,0 +1,101 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>实现内容查看器</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>实现内容查看器</h2>
+
+
+<p>比较插件允许您提供专门的查看器，以查看和合并非结构化元素之间的内容差异。</p>
+
+
+<h3>简单的内容观众</h3>
+
+
+<p><b>内容查看器</b>用于只有单个输入可用的地方，因此无需进行比较。一个典型的例子是“ <b>从本地历史记录恢复</b> ”功能。<a href="../reference/extension-points/org_eclipse_compare_contentViewers.html"><b>org.eclipse.compare.contentViewers</b></a>扩展点允许您定义不比较其输入的专用内容查看器。</p>
+<pre>&lt;extension
+	point="org.eclipse.compare.contentViewers"&gt;
+	&lt;viewer
+		extensions="java,java2"
+		class="org.eclipse.jdt.internal.ui.compare.JavaTextViewerCreator"
+		id="org.eclipse.jdt.internal.ui.compare.JavaTextViewerCreator"&gt;
+	&lt;/viewer&gt;
+	&lt;contentTypeBinding
+		contentTypeId="org.eclipse.jdt.core.javaSource"
+		contentViewerId="org.eclipse.jdt.internal.ui.compare.JavaTextViewerCreator"&gt;
+	&lt;/contentTypeBinding&gt;
+&lt;/extension&gt;
+</pre>
+<p>由插件提供的专业观众在<b>viewer</b>元素中指定。您必须指定查看器的<b>ID</b>和创建它的<b>类</b> 。您还可以指定应使用内容查看器的任何文件<b>扩展名</b> 。</p>
+<p>您还可以使用<b>contentTypeBinding</b>元素将<a href="runtime_content.htm">内容类型</a>与内容查看器相关联。
+</p>
+<h3>内容合并查看器</h3>
+<p><b>内容合并查看器</b>对其输入执行双向或三向比较，并以并排或以任何其他合适的方式呈现结果。查看器允许用户在输入之间进行合并。内容合并查看器对于文本或图像是常见的。</p>
+<p>如果标准合并查看器不适合您的插件功能，您可以选择实现自己的内容合并查看器。您的内容合并查看器应使用<a href="../reference/extension-points/org_eclipse_compare_contentMergeViewers.html"><b>org.eclipse.compare.contentMergeViewers</b></a>扩展点在平台中注册。以下标记显示了用于在Java IDE中查看Java文件和属性文件的专用内容合并查看器的定义：</p>
+<pre>&lt;extension
+      point="org.eclipse.compare.contentMergeViewers"&gt;
+      &lt;viewer
+            extensions="java,java2"
+            class="org.eclipse.jdt.internal.ui.compare.JavaContentViewerCreator"
+            id="org.eclipse.jdt.internal.ui.compare.JavaContentViewerCreator"&gt;
+      &lt;/viewer&gt;
+      &lt;contentTypeBinding
+            contentTypeId="org.eclipse.jdt.core.javaSource"
+            contentMergeViewerId="org.eclipse.jdt.internal.ui.compare.JavaContentViewerCreator"&gt;
+	  &lt;/contentTypeBinding&gt;
+&lt;/extension&gt;
+&lt;extension
+      point="org.eclipse.compare.contentMergeViewers"&gt;
+      &lt;viewer
+            extensions="properties,properties2"
+            class="org.eclipse.jdt.internal.ui.compare.PropertiesFileMergeViewerCreator"
+            id="org.eclipse.jdt.internal.ui.compare.PropertiesFileMergeViewerCreator"&gt;
+      &lt;/viewer&gt;
+      &lt;contentTypeBinding
+            contentTypeId="org.eclipse.jdt.core.javaProperties"
+            contentMergeViewerId="org.eclipse.jdt.internal.ui.compare.PropertiesFileMergeViewerCreator"&gt;
+	  &lt;/contentTypeBinding&gt;
+&lt;/extension&gt;
+</pre>
+<p>与内容查看器类似，插件提供的专用合并查看<b>器</b>在<b>viewer</b>元素中指定。您必须指定查看器的<b>ID</b>和创建它的<b>类</b> 。您还可以指定应使用内容合并查看器的任何文件<b>扩展名</b> 。
+</p>
+<p>与内容查看器类似，您可以使用<b>contentTypeBinding</b>将<a href="runtime_content.htm">内容类型</a>与合并查看器相关联。JDT插件将内容合并查看器绑定到两种不同的内容类型：Java源和Java属性文件。
+</p>
+
+
+<p> <a href="../reference/api/org/eclipse/compare/contentmergeviewer/ContentMergeViewer.html"><b>ContentMergeViewer</b></a>是一个抽象的比较和合并查看器，具有两个并排的内容区域和一个共同祖先的可选内容区域（用于三向比较）。因为实现不对内容类型做出假设，所以子类负责处理特定的内容类型。</p>
+
+
+<p> <b>org.eclipse.compare.internal</b>中的<b>ImageMergeViewer</b>显示了如何使用<a href="../reference/api/org/eclipse/compare/contentmergeviewer/ContentMergeViewer.html"><b>ContentMergeViewer</b></a>为图像实现简单的合并查看器。<a href="../reference/api/org/eclipse/compare/contentmergeviewer/ContentMergeViewer.html"><b>ContentMergeViewer</b></a>通过必须实现<a href="../reference/api/org/eclipse/compare/contentmergeviewer/IMergeViewerContentProvider.html"><b>IMergeViewerContentProvider</b></a>接口的内容提供程序访问其模型。</p>
+
+
+<h4><a name="Text">文字合并</a></h4>
+
+
+<p>如果您的查看器使用文本，则可以使用比较和合并文本内容的其他类。</p>
+<p>
+<a href="../reference/api/org/eclipse/compare/contentmergeviewer/TextMergeViewer.html"><b>TextMergeViewer</b></a>是<a href="../reference/api/org/eclipse/compare/contentmergeviewer/ContentMergeViewer.html"><b>ContentMergeViewer</b></a>的具体子类，用于比较和合并文本内容。文本合并查看器使用<a href="../reference/api/org/eclipse/compare/rangedifferencer/RangeDifferencer.html"><b>RangeDifferencer</b></a>对两个（或三个）输入文档执行文本的逐行比较。</p>
+<p>对于不同的文本行， <a href="../reference/api/org/eclipse/compare/contentmergeviewer/TextMergeViewer.html"><b>TextMergeViewer</b></a>使用<a href="../reference/api/org/eclipse/compare/contentmergeviewer/ITokenComparator.html"><b>ITokenComparator</b></a>查找匹配和非匹配标记的最长序列。<a href="../reference/api/org/eclipse/compare/contentmergeviewer/TextMergeViewer.html"><b>TextMergeViewer</b></a>的默认令牌比较适用于由空格分隔的字符。如果需要不同的策略（例如，Java感知的合并查看器中的Java令牌），客户端可以通过实现<a href="../reference/api/org/eclipse/compare/contentmergeviewer/ITokenComparator.html"><b>ITokenComparator</b></a>接口来创建自己的令牌比较器。</p>
+<p>
+ <a href="../reference/api/org/eclipse/compare/contentmergeviewer/TextMergeViewer.html"><b>TextMergeViewer</b></a>适用于整个文档和子文档范围。对于部分文档，查看者的输入必须适应<a href="../reference/api/org/eclipse/compare/contentmergeviewer/IDocumentRange.html"><b>IDocumentRange</b></a>而不是<a href="../reference/api/org/eclipse/jface/text/IDocument.html"><b>IDocument</b></a> 。</p>
+
+<p>当输入适应<a href="../reference/api/org/eclipse/compare/ISharedDocumentAdapter.html"><b>ISharedDocumentAdapter</b></a>时， <a href="../reference/api/org/eclipse/compare/contentmergeviewer/TextMergeViewer.html"><b>TextMergeViewer</b></a>还支持使用共享文档（即由多个打开的编辑器共享的文档）。提供语法突出显示的TextMergeViewer子类必须同时实现<code>getDocumentPartitioner()</code>和<code>getDocumentPartitioning()</code>方法以支持共享文档。</p>
+
+<h4>范围差分</h4>
+<p> 
+<a href="../reference/api/org/eclipse/compare/rangedifferencer/RangeDifferencer.html"><b>RangeDifferencer</b></a>在文本内容中查找匹配和不匹配的可比较实体的最长序列。客户端必须向实现<a href="../reference/api/org/eclipse/compare/rangedifferencer/IRangeComparator.html"><b>IRangeComparator</b></a>接口的差异器提供输入。
+<a href="../reference/api/org/eclipse/compare/rangedifferencer/IRangeComparator.html"><b>IRangeComparator</b></a>将输入数据分解为一系列实体，并提供一种方法，用于将一个实体与另一个<a href="../reference/api/org/eclipse/compare/rangedifferencer/IRangeComparator.html"><b>IRangeComparator中</b></a>的实体进行比较。
+</p><p>例如，为了比较两个文本文档并找到匹配和非匹配行的最长公共序列， <a href="../reference/api/org/eclipse/compare/rangedifferencer/IRangeComparator.html"><b>IRangeComparator</b></a>的实现必须将文档分成行并提供一种方法来测试两行是否被认为是相等的。请参阅<b>org.eclipse.compare.internal。DocLineComparator</b>提供了如何完成此操作的示例。</p>
+<p>差异器将这些序列之间的差异作为<a href="../reference/api/org/eclipse/compare/rangedifferencer/RangeDifference.html"><b>RangeDifference</b></a>对象的数组<a href="../reference/api/org/eclipse/compare/rangedifferencer/RangeDifference.html"><b>返回</b></a> 。每个<a href="../reference/api/org/eclipse/compare/rangedifferencer/RangeDifference.html"><b>RangeDifference都</b></a>描述了两种或三种输入中的差异类型（无变化，更改，添加，删除）和基础可比实体的相应范围。
+</p>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2015. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
+<title>独立的帮助</title>
+</head>
+<body >
+
+<h2>独立的帮助</h2>
+
+<p>如果要创建不基于Eclipse框架的应用程序，仍可以使用Eclipse帮助系统。您的应用程序可以打包和安装独立帮助系统，这是一个非常小的Eclipse版本，除了帮助系统之外，它还包含所有内容。然后，您的应用程序可以通过其“帮助”菜单或UI对象进行API调用，以启动帮助浏览器。独立帮助系统具有集成帮助系统的所有功能，除了工作台集成的上下文帮助，帮助视图和主动帮助。当应用程序不是基于Java的，或者在应用程序未运行时需要帮助时，可以使用系统shell，shell脚本或桌面快捷方式的独立帮助，并提供命令行选项而不是调用Java API 。</p>
+<p>独立帮助系统允许传递多个选项，这些选项可用于自定义帮助系统的各个方面。支持以下选项：</p><ul>
+	<li><b>-eclipsehome</b> <i>eclipseInstallPath</i> - 指定Eclipse安装目录。该目录是“plugins”目录和eclipse可执行文件的父目录。当启动信息中心的当前目录与Eclipse安装目录不同时，必须提供该选项。</li>
+	<li><b>-host</b> <i>helpServerHost</i> - 指定帮助服务器将使用的接口的主机名。它会覆盖指定应用程序服务器插件首选项的主机名。</li>
+	<li><b>-data</b> <i>instanceArea</i> - 指定Eclipse可用于编写实例数据的路径。该值可以是目录的绝对路径，也可以是相对于Eclipse安装目录的路径。当Eclipse安装在只读位置时，或者已经自定义以覆盖osgi.instance.area或osgi.instance.area.default属性时，必须提供该选项。</li>
+	<li><b>-port</b> <i>helpServerPort</i> - 指定帮助服务器将使用的端口号。它会覆盖指定应用程序服务器插件首选项的端口号。</li>
+	<li><b>-dir ltr</b>或<b>-dir rtl</b> - 在浏览器中设置帮助UI的从左到右或从右到左的渲染方向。</li>
+	<li>此外， <a href="../../org.eclipse.platform.doc.user/tasks/running_eclipse.htm">Eclipse可执行文件接受的</a>大多数<a href="../../org.eclipse.platform.doc.user/tasks/running_eclipse.htm">选项</a>都可以传递。它们在调试和将定制应用于Eclipse时特别有用。例如，传递一个选项<PRE><EM><SPAN style="font-style: normal">-nl fr_FR</SPAN></EM> </PRE>将使用法语启动帮助系统，而不是机器的语言环境指定的语言。</li>
+</ul>
+
+<h3>安装/包装</h3>这些步骤适用于帮助系统集成商，并非旨在解决所有可能的情况。假设您的所有文档都是作为eclipse插件提供的，一般来说，您熟悉eclipse帮助系统。
+<ol>
+  <li>从<a href="http://eclipse.org/downloads/" target="_blank">eclipse.org</a>下载eclipse Platform Runtime Binary驱动程序。</li>
+  <li>在应用程序目录下安装（解压缩）驱动程序，例如<var>d:\myApp</var> 。这将创建一个eclipse子目录，d：\ myApp \ eclipse，其中包含eclipse平台所需的代码（包括帮助系统）。</li>
+</ol>
+
+<h3>如何从Java调用帮助类</h3>
+
+<ol>
+  <li>确保<code>d:\myApp\eclipse\plugins\org.eclipse.help.base_[version].jar</code>在您的类路径中，其中<code>[version]</code>是您正在使用的插件的版本（例如<code>org.eclipse.help.base_3.2.0.jar</code> ）。用于启动，启动和关闭帮助系统的类是<code>org.eclipse.help.standalone.Help</code> 。
+  </li>
+  <li>创建一个<code>String</code>对象数组，其中包含要传递的选项以帮助系统支持。通常，需要<code>eclipsehome</code>选项。
+    
+  <pre>String[] options = new String[] { &quot;-eclipsehome&quot;, &quot;d:\\myApp\\eclipse&quot; };</pre>
+  
+  </li>
+	<li>在您的应用程序中，通过传入选项来创建<code>Help</code>类的实例。应该保留此对象直到应用程序结束。
+	<pre>Help helpSystem = new Help(options);</pre>
+	</li>
+	<li>要启动帮助系统：<pre><em><span style="font-style: normal">helpSystem.start();</span></em> </pre>
+  </li>
+  <li>在需要时调用帮助：<pre><em><span style="font-style: normal">helpSystem.displayHelp();</span></em> </pre>
+  <p>您还可以调用特定主要TOC文件或主题的帮助：</p>
+  <pre>helpSystem.displayHelp(&quot;/com.mycompany.mytool.doc/toc.xml&quot;);
+helpSystem.displayHelp(&quot;/com.mycompany.mytool.doc/tasks/task1.htm&quot;);</pre>
+  </li>
+  <li>要启动上下文相关帮助，请调用helpSystem.displayContext（contextId，x，y），其中contextId是完全限定的上下文ID。屏幕坐标x和y当前未使用。
+  </li>
+	<li>
+	<p>在应用程序结束时，要关闭帮助系统：</p>
+	<PRE><EM><SPAN style="font-style: normal">helpSystem.shutdown();</SPAN></EM> </PRE></li>
+</ol>
+
+<h3>如何从命令行调用帮助</h3>
+
+<p><code>org.eclipse.help.standalone.Help</code>类有一个main方法，可用于从命令行启动独立帮助。命令行参数语法是：</p>
+<pre><em><span style="font-style: normal">-command start | shutdown | ((displayHelp | displayHelpWindow) [href]) [-eclipsehome eclipseInstallPath] [-data instanceArea] [-host helpServerHost] [-port helpServerPort] [-dir rtl] [platform options] [-vmargs JavaVMarguments]</span></em></pre>
+<p>命令<code>start</code>启动无头帮助服务器。 <code>shutdown</code>关闭服务器。命令<code>displayHelp</code>启动服务器并使帮助UI显示在Eclipse shell中。
+<code>displayHelpWindow</code>类似于<code>displayHelp</code> ，区别在于shell关闭时帮助服务器将关闭。</p><p>
+</p><p>显示帮助的一种简单方法是调用</p>
+<pre>java -classpath d:\myApp\eclipse\plugins\org.eclipse.help.base_[version].jar org.eclipse.help.standalone.Help -command displayHelp</pre><p>来自d：\ myApp \ eclipse目录，其中<code>version</code>是插件的版本。显示特定的TOC文件或主题使用</p>
+<PRE>java -classpath d:\myApp\eclipse\plugins\org.eclipse.help.base_[version].jar org.eclipse.help.standalone.Help -command displayHelp /com.mycompany.mytool.doc/tasks/task1.htm</PRE>
+<p>上面显示帮助的调用将使帮助系统启动，显示帮助并继续运行以允许用户在执行命令后继续浏览帮助。要控制帮助系统的生命周期，除了displayHelp命令外，还要使用start和shutdown命令。例如，你可以打电话</p>
+<PRE>java -classpath d:\myApp\eclipse\plugins\org.eclipse.help.base_[version].jar org.eclipse.help.standalone.Help -command start</PRE>
+
+<h3>[可选]安装最小的独立帮助系统</h3>
+
+<p>独立帮助不需要整个eclipse Platform包。可以仅使用org.eclipse.help功能中的插件来运行独立帮助。为此，请执行以下步骤。</p>
+
+<ol>
+  <li>下载eclipse SDK构建并将其上传到两个不同的位置，&lt;location1&gt;和&lt;location1&gt;</li>
+  <li>从location1中删除eclipse插件目录</li>
+  <li>在location2中启动Eclipse并使用File / Import / Plug-in Development / Features将org.eclipse.help和org.eclipse.rcp功能导入工作区</li>
+  <li>使用文件/导出/插件开发/可部署功能将帮助和rcp功能及其插件导出到新创建的目录location3。</li>
+  <li>将location1 / eclipse目录下的插件和功能目录替换为location3中的目录。</li>
+  <li>将org.eclipse.equinox.launcher。*从location2 / eclipse / plugins复制到location1 / eclipse / plugins。</li>
+  <li>从location1开始，从命令行启动独立帮助，如上一节中所述。</li>
+</ol>
+
+<p>某些文档插件可能依赖于其他插件，通常是通过在其清单中指定所需的插件。还需要安装相关插件。
+</p>
+
+<p>有关<a href="ua_help_setup_preferences.htm">自</a>定义帮助系统的更多信息，请参阅<a href="ua_help_setup_preferences.htm">产品自</a>定义。</p>
+
+</body>
+</html>

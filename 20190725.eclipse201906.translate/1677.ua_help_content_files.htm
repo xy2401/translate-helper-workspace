@@ -1,0 +1,66 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
+<title>帮助服务器和文件位置</title>
+</head>
+<body >
+
+<h2>帮助服务器和文件位置</h2>
+
+<p>该平台利用自己的文档服务器为插件的文档提供实际的网页。自定义服务器允许平台以独立于浏览器的方式处理HTML内容，并提供插件感知支持。作为插件开发人员，您的主要区别在于，您在构建文件和指定链接方面具有更大的灵活性。</p>
+<p>文档插件可以在安装期间从jar文件运行或解压缩到插件目录中。当在元素<a href="../reference/misc/feature_manifest.html">清单</a>中将<code>plugin</code>元素的<code>unpack</code>属性值指定为true时， <code>plugin</code>存档jar不会扩展到插件目录中。在这样的插件中，文档在插件的jar中与其他插件文件一起压缩。</p>
+<p>在运行解压缩的插件中，文档可以以zip文件的形式提供，从而避免在插件目录中存在大量文件时可能导致的问题。在我们的示例插件中，我们创建了一个名为<b>html</b>的子目录。或者，我们可以将我们的html文件放入名为<b>doc.zip</b>的zip文件中。此zip文件必须模仿插件目录下的文件结构。在我们的情况下，它必须包含子目录<b>html</b>和所有<b>的HTML</b>下面的内容。</p>
+<p>请注意，对于从jar运行的插件，doc.zip中不需要另外包含文档，并且帮助系统不支持在未爆炸的插件jar中设置doc.zip</p>
+<p>解析运行解压缩的插件中的文件名时，帮助服务器会在<b>doc.zip</b>文件中查找文档，然后再查看插件目录本身。当用作链接时，假定<b>href中</b>的参数与当前插件相关。请考虑以下链接：</p>
+
+
+<pre>   &lt;topic label=&quot;Ref1&quot; href=&quot;html/ref/ref1.html&quot;/&gt;</pre>
+
+
+<p>帮助插件将查找此文件，如下所示：</p>
+
+
+<ul>
+  <li>在<b>doc.zip中</b>查找文件<b>/html/ref/ref1.html</b></li>
+  <li>在插件目录下的<b>/ html / ref</b>子目录结构中查找文件<b>ref1.html</b> 。</li>
+</ul>
+<p>完全限定的链接可用于指代Web上的任何内容。</p>
+
+
+<pre >   &lt;topic label=&quot;Ref1&quot; href=&quot;http://www.example.com/myReference.html&quot;/&gt;</pre>
+
+
+<h4>国家语言和翻译文件</h4>
+
+
+<p>平台帮助系统使用与平台其余部分相同的国家语言目录查找方案来查找已翻译的文件。（有关此目录结构的说明，请参阅<a href="product_def_nl.htm#platform">特定</a>于<a href="product_def_nl.htm#platform">语言环境的文件</a> 。）如果您使用的是<b>doc.zip</b>文件，则应为<b>每个</b>语言环境生成<b>doc.zip</b>文件，并将其放在正确的语言环境目录中。（您不应该在doc.zip文件中复制<b>nl</b>语言环境目录结构。）</p>
+<p>除了特定于语言环境的目录外，帮助系统还会在查找帮助资源时检查窗口系统和操作系统目录。查找按以下顺序执行： <strong>ws</strong> ， <strong>os</strong> ， <strong>nl</strong>子目录，然后是插件的根目录，直到找到资源。文档和其他资源（如系统之间不同的图像）应放在特定平台的ws或os目录下。</p>
+  
+<h4><a name="help_plugin_files_xref">交叉插件引用</a></h4>
+
+<p><b>href</b>参数还可以引用来自另一个插件的内容。这是通过使用由帮助服务器解析的特殊交叉插件引用表示法来完成的：</p>
+
+<pre >   &lt;topic label=&quot;Ref1&quot; href=&quot;<b>PLUGINS_ROOT/another_plugin_id</b>/ref/ref1.html&quot;/&gt;</pre>
+
+<p>这里<code><b>PLUGINS_ROOT</b></code>将在运行时解析，并替换为插件的根目录。您可以为<code><b>another_plugin_id</b></code>指定自己的插件ID。例如，您可以使用以下主题链接到程序员指南的这一章：</p>
+
+<pre >   &lt;topic label=&quot;Help Chapter in Platform Doc&quot; href=&quot;<b>PLUGINS_ROOT/org.eclipse.platform.doc.isv/guide/help.html</b>&quot;/&gt;</pre>
+
+<p>在3.2之前，使用'..对其他插件中的文档的引用。'进入插件级别，然后引用插件ID，然后将HREF引用到插件内的主题。现在推荐的方法是使用<code>PLUGINS_ROOT</code>而不是'..”。使用此变量可避免引用中的这些上/下行程，并可用于帮助文档中的所有资源URL（图像，链接，CSS文件，Java脚本文件等）
+</p>
+
+<p class="Note">注意：引用其他插件中的内容时，请确保使用插件的<b>id</b> ，如其<b>plugin.xml</b>文件中声明的，而不是其目录名。虽然这些在实践中通常是相同的，但检查您使用的是ID而不是目录名是很重要的。</p>
+
+<h4>引用产品插件。</h4>
+
+<p>品牌信息通常放在定义产品的插件中，如<a href="product_def.htm">定义产品中所述</a> 。可以使用插件ID的特殊标识符<code><b>PRODUCT_PLUGIN</b></code>从目录或主题中引用产品插件中的帮助资源。例如，</p>
+<pre >   href=&quot;PLUGINS_ROOT/<b>PRODUCT_PLUGIN</b>/book.css&quot;</pre>
+<p>指的是驻留在当前运行产品的插件中的样式表。
+  </p>
+
+</body>
+</html>

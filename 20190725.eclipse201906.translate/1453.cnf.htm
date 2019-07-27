@@ -1,0 +1,109 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) Oakland Software and others 2008, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>通用导航框架</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h1>通用导航框架</h1>
+
+<p>JFace Viewer使用单个内容提供者，标签提供者，分类器和过滤器为用户提供对象视图。Common Navigator Framework（CNF）通过允许单个视图动态使用多个和不相关的内容提供者，标签提供者，分类器和过滤器集来扩展这一想法。这些可以在视图中激活，具体取决于声明性表达式或使用API调用。CNF由<b><a href="../reference/api/org/eclipse/ui/navigator/package-summary.html">org.eclipse.ui.navigator</a></b>插件实现。</p>
+
+<p>CNF使用<i>Navigator Content Extensions</i> （NCE）的概念，它可以引用内容提供者，标签提供者，分类器或拖动适配器（请注意，过滤器是单独配置的）。NCE具有关联的表达式，用于表示它何时处于活动状态。NCE也在视图上下文菜单中呈现给用户，以便用户可以打开或关闭它们以便以不同方式显示视图。NCE的示例是控制资源呈现方式的资源内容扩展和显示Java项目的Java内容扩展。在IDE的Project Explorer中，您可以关闭Java内容扩展，获取工作区的纯资源视图。</p>
+
+<p>通过使用NCE，可以在视图中直接包含不同的<i>模型对象</i> 。这些模型对象可能以级联方式相关。例如，资源对象（ <code>IFile</code> ）可能引用Java类对象。通过定义NCE，可以在视图中直接显示此Java类对象。 Java类对象可以有子项（表示方法，字段等），所有子项都出现在视图中。然后，您可以添加另一个NCE以显示与显示与Java Server Page对象相关的内容的Java（或资源对象）相关的模型对象。这可以在没有“较低级别”NCE（资源，Java）意识到“外部”NCE（JSP）的存在的情况下完成。此外，外部NCE可以通过根据其要求抑制与较低级别NCE相关联的处理来覆盖。更进一步，可以（使用流水线机制）在这个级联的NCE集中平均水平，根据其规格排列对象的呈现，根据需要移动，添加或抑制对象。</p>
+
+<p>CNF仅依赖于<code>org.eclipse.ui</code> ，因此适合在IDE和RCP应用程序中使用。</p>
+
+<p>CNF具有高度可配置性，其许多组件可以单独使用（尽管这不是典型情况）。例如，可以使用管理内容扩展的服务，使用标准<code>CommonViewer</code>以外的查看器。</p>
+
+<p>CNF文档包含以下部分：</p>
+<ul>
+	<li><a href="cnf_config.htm">配置概述</a> - 对配置的高级别讨论。</li>
+	<li><a href="cnf_operation.htm">操作主题</a> - 详细讨论CNF运作中的各种主题</li>
+	<li><a href="cnf_steps.htm">分步说明</a> - 提供各种方案的配置说明。</li>
+	
+	<!--
+	<li><a href="cnf_examples.htm">Examples</a> - Describes the
+	example projects for the CNF.</li>
+	-->
+
+	<li><a href="cnf_troubleshooting.htm">故障排除</a> - 一些<a href="cnf_troubleshooting.htm">故障排除</a>建议。</li>
+</ul>
+
+<h2>Common Navigator Framework的主要组件</h2>
+
+<p>CNF有以下主要部分：</p>
+<ol>
+	<li><b>查看部件</b> - <b><a href="../reference/api/org/eclipse/ui/navigator/CommonNavigator.html">CommonNavigator</a></b> 。</li>
+
+	<li><b>Viewer</b> - <b><a href="../reference/api/org/eclipse/ui/navigator/CommonViewer.html">CommonViewer</a></b>包含在上面视图部分中的查看器的实现。您还可以将CNF与您自己的查看器一起使用，以便在任何地方显示。</li>
+
+	<li><b>导航器内容扩展</b> - <b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent</a></b>此扩展点是您配置要使其可见的内容集合的位置。</li>
+
+	<li><b>Navigator Viewer</b> - <b><a href="../reference/extension-points/org_eclipse_ui_navigator_viewer.html">org.eclipse.ui.navigator.navigatorContent</a></b>此扩展点用于声明NCE与特定查看器之间的关系。这里可以使用正则表达式来允许观看者动态地检测它事先不知道的NCE。可见。</li>
+
+	<li><b>资源支持</b> - <b><a href="../guide/resInt.htm">资源</a></b>是CNF管理的主要对象类型之一。为了支持这一点， <b><a href="../reference/api/org/eclipse/ui/navigator/resources/package-summary.html">org.eclipse.ui.navigator.resources</a></b>插件提供了所有必要的定义。使用这些定义配置Project Explorer。</li>
+
+</ol>
+
+<h2>导航员 -  CNF适合的地方</h2>
+
+<p>Eclipse IDE中目前有3个主要的导航器。</p>
+<ol>
+	<li><b>Project Explorer</b> - 这是<b><a href="../reference/api/org/eclipse/ui/navigator/resources/package-summary.html">org.eclipse.ui.navigator.resources</a></b>插件提供的CommonNavigator的一个实例。它提供了工作区的视图，并且有大量的NCE为资源，Java，C，Web工具，数据工具，PHP等做出了贡献。</li>
+	<li><b>Package Explorer</b> - 由Java Development Tools（JDT）UI项目提供，它提供了工作区的Java类视图。一般来说，Package Explorer和Project Explorer for Java对象的表示基本相似。JDT不用于Java之外的项目。</li>
+	<li><b>Navigator</b> - 此视图是<code>org.eclipse.ui.ide</code>插件中提供的现已弃用（自3.5版） <b><a href="../reference/api/org/eclipse/ui/views/navigator/package-summary.html">org.eclipse.ui.views.navigator</a> ResourceNavigator</b>类的实现。它仅显示工作区资源，不支持显示其他内容的可扩展性。在将来的版本中，Navigator视图将由CommonNavigator的实现提供。
+	<p>我们还提供<a href="cnf_steps_rn_migration.htm">指令</a>从ResourceNavigator到CNF迁移。</p>
+	</li>
+</ol>
+
+<p>用于通用客户端的唯一导航器，如果是CNF，可以通过在Project Explorer中添加可见的NCE（如果开发IDE插件），或者使用CommonNavigator的单独实例作为视图来使用。</p>
+
+<h2>导航器内容扩展（NCE）</h2>
+
+<p>CNF允许您不仅包括资源，还包括任何类型的对象。一个典型的用例是资源（例如，考虑一个Java文件），它有几个从属对象，表示为表示类的各个方面的树节点，如导入，方法等.CommonViewer（Common Navigator的一部分）将包括IResource对象表示Java文件，然后作为其子节点，为每个导入，方法等对象。定义它的机制是<b><a href="cnf_config.htm#contentExtension">导航器内容扩展</a></b> 。</p>
+
+<p>每个内容扩展还提供了一种将对象与适当的图标，标签和菜单项相关联的方法。</p>
+
+<p>基于使用扩展点中的核心表达式定义的启用表达式来调用内容扩展。启用表达式通常通过感知对象的类来定义。</p>
+
+<p>优先级可以与内容扩展相关联，该内容扩展有助于确定NCE的调用顺序。对于给定的对象和情况，可能可以启用多个内容扩展。优先级用“高”或“正常”等词来定义。高优先级将与定义用于频繁操作对象的主UI的扩展相关联。对于相对不频繁的实用程序类型的UI，将给予低优先级。</p>
+
+<p>可以使用与视图部分相关联的标题菜单中的<b>过滤器和定制</b>菜单项，为UI中的给定视图部件激活和停用内容扩展。也可以以相同的方式激活和停用公共过滤器。</p>
+
+<h2>常见过滤器</h2>
+
+<p>过滤器允许用户指定要排除的资源或对象。与内容扩展一样，过滤器可以集中指定和共享。
+</p>
+
+<h2>常见的向导</h2>
+
+<p>可以定义对新/导入/导出的向导的引用。这些都包含在基于启用的相应弹出菜单中。</p>
+
+<h2>行动提供者</h2>
+
+<p>尽管CNF提供了一种处理操作的机制，但建议您改为使用<b><a href="../guide/workbench_cmd.htm">Workbench命令</a></b>而不是操作。
+</p>
+
+<p>操作提供程序提供了一种配置可重定向操作的方法，并以编程方式配置CNF查看器中的弹出菜单。当您必须执行计算以确定将哪些项添加到菜单或调整可重定向操作以确保正确处理用户击键（如剪切/复制/粘贴）时，这些功能非常有用。</p>
+
+<h2>拖放支持</h2>
+
+<p>丢弃助手可以与内容扩展相关联，以提供对附加（非标准）传输类型的处理或在丢弃的情况下的验证。</p>
+
+<h2>与编辑支持链接</h2>
+
+<p>链接助手扩展点提供了一种灵活的机制，可在激活编辑器时确定导航器中的相应选择。相反，它还提供了在选择更改时激活的相应编辑器。</p>
+
+
+
+</body>
+</html>

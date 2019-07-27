@@ -1,42 +1,32 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" >
 
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2014. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="STYLESHEET" href="../../book.css" charset="ISO-8859-1" type="text/css">
-<title>Eclipse JDT 3.3 Plug-in Migration FAQ</title>
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
+<title>Eclipse JDT 3.3插件迁移常见问题解答</title>
 </head>
 
-<body>
+<body >
 
-<h1>Eclipse JDT 3.3 Plug-in Migration FAQ</h1>
+<h1>Eclipse JDT 3.3插件迁移常见问题解答</h1>
 <ol>
-	<li><a href="#deprecatedWorkingCopyMethods">How can I remove deprecation warning I get on <code>*WorkingCopy(...IProblemRequestor...)</code> methods and keep same behavior?</a></li>
+	<li><a href="#deprecatedWorkingCopyMethods">我怎样才能删除弃用警告<code>*WorkingCopy(...IProblemRequestor...)</code>方法并保持相同的行为？</a></li>
 </ol>
-<h2><a name="deprecatedWorkingCopyMethods">How can I remove deprecation warning I get on <code>*WorkingCopy(...IProblemRequestor...)</code> methods and keep same behavior?</a></h2>
-<p>
-While implementing bug <a href="http://bugs.eclipse.org/bugs/show_bug.cgi?id=175243" target="_blank">175243</a>, following methods
-have been deprecated:</p>
+<h2><a name="deprecatedWorkingCopyMethods">我怎样才能删除弃用警告<code>*WorkingCopy(...IProblemRequestor...)</code>方法并保持相同的行为？</a></h2>
+<p>在实现错误<a href="http://bugs.eclipse.org/bugs/show_bug.cgi?id=175243" target="_blank">175243时</a> ，不推荐使用以下方法：</p>
 <ol>
 <li><code>ICompilationUnit#becomeWorkingCopy(IProblemRequestor, IProgressMonitor)</code></li>
 <li><code>ICompilationUnit#getWorkingCopy(WorkingCopyOwner, IProblemRequestor, IProgressMonitor)</code></li>
 <li><code>IClassFile#becomeWorkingCopy(IProblemRequestor, WorkingCopyOwner, IProgressMonitor)</code></li>
 <li><code>WorkingCopyOwner#newWorkingCopy(String, IClasspathEntry[], IProblemRequestor, IProgressMonitor)</code></li>
-</ol>
-This answer gives some advice to use new API corresponding methods without changing
-the behavior of the existing code.
-How to re-write the code depends on the fact that given problem requestor was null or not
-(i.e. if the client code was interested in reporting problems of the working copy):
-<ol>
-	<li><strong>Problem requestor was null</strong>
-	<p>
-	There's no specific migration issue when the given requestor was null.
-	</p><p>
-	So, following snippet warned for calls to deprecated methods...:</p>
+</ol>这个答案提供了一些使用新API相应方法的建议，而不改变现有代码的行为。如何重写代码取决于给定的问题请求者是否为空（即，如果客户端代码有兴趣报告工作副本的问题）：<ol>
+	<li><strong>问题请求者为空</strong>
+	<p>当给定的请求者为空时，没有特定的迁移问题。
+	</p><p>因此，以下代码段警告调用已弃用的方法......：</p>
 	<pre>
 	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
 	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
@@ -49,8 +39,7 @@ How to re-write the code depends on the fact that given problem requestor was nu
 	ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy(null, null);
 	ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy(new Path("FAQ/test/Z.java"), entries, null, null);
 	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(null, owner, null);</b>
-	</pre><p>
-	... can now be easily rewritten as follow due to the fact that default owner's problem requestor is null:</p>
+	</pre><p>...由于默认所有者的问题请求者为空，现在可以轻松地重写如下：</p>
 	<pre>
 	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
 	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
@@ -66,13 +55,9 @@ How to re-write the code depends on the fact that given problem requestor was nu
 	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(null, owner, null);</b>
 	</pre>
 	</li>
-	<li><strong>Problem requestor was not null</strong>
-	<p>
-	In this case, client must ensure that the working copy owner requestor is the same than
-	the one given as parameter to the deprecated method. The simplest way to this is to make
-	the working copy owner returning this requestor.
-	</p><p>
-	So, following snippet warned for calls to deprecated methods...:</p>
+	<li><strong>问题请求者不是null</strong>
+	<p>在这种情况下，客户端必须确保工作副本所有者请求者与作为已弃用方法的参数给出的请求者相同。最简单的方法是让工作副本所有者返回此请求者。
+	</p><p>因此，以下代码段警告调用已弃用的方法......：</p>
 	<pre>
 	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
 	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);
@@ -93,8 +78,7 @@ How to re-write the code depends on the fact that given problem requestor was nu
 	ICompilationUnit newWorkingCopy = compilationUnit.becomeWorkingCopy(requestor, null);
 	ICompilationUnit newWorkingCopy2 = owner.newWorkingCopy(new Path("FAQ/test/Z.java"), entries, requestor, null);
 	ICompilationUnit classWorkingCopy = classFile.becomeWorkingCopy(requestor, owner, null);</b>
-	</pre><p>
-	... needs to be rewritten as follow to keep the same behavior:</p>
+	</pre><p>...需要重写如下以保持相同的行为：</p>
 	<pre>
 	IFile file = getWorkspaceRoot().getFile(new Path("FAQ/pack/X.java"));
 	ICompilationUnit compilationUnit = (ICompilationUnit)JavaCore.create(file);

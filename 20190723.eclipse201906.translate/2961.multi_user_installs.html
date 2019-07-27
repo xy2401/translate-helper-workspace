@@ -1,140 +1,54 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html lang="en">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" gtc:encodedoriginal="PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMDEgVHJhbnNpdGlvbmFsLy9FTiI-">
+<html lang="zh-Hans" >
 <head>
 
-<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 
-<meta http-equiv="Content-Language" content="en-us">
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<link REL="STYLESHEET" HREF="../../book.css" CHARSET="ISO-8859-1" TYPE="text/css">
-<title>Eclipse Multi-user Installs</title>
+<meta http-equiv="Content-Language" content="zh-Hans">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
+<title>Eclipse多用户安装</title>
 </head>
-<body text="#000000" bgcolor="#ffffff">
-<h1>Eclipse multi-user installs</h1>
-<p> 
-  Eclipse provides a number of strategies for supporting multi-user installs. 
-  Each strategy satisfies a specific scenario. This document covers these strategies, 
-  describing when each one should be used. The intended readers are product engineers 
-  configuring an Eclipse-based product for distribution, system administrators 
-  setting up Eclipse-based products to be used through a network and developers 
-  interested in creating plug-ins that are good citizens in such setups.</p>
-<p>Last Modified: June 17th, 2005</p>
-<h2>Basic concepts</h2>
-<h3>Locations</h3>
-<p>As described in the <a href="runtime-options.html#locations">Eclipse Runtime 
-  options</a> article, there are three different locations that are important 
-  in the context of deploying Eclipse in a multi-user setup:</p>
+<body bgcolor="#ffffff"  text="#000000">
+<h1>Eclipse多用户安装</h1>
+<p>Eclipse提供了许多支持多用户安装的策略。每种策略都满足特定的情况。本文档介绍了这些策略，描述了何时应该使用这些策略。目标读者是产品工程师配置基于Eclipse的产品以进行分发，系统管理员设置基于Eclipse的产品以通过网络使用，开发人员有兴趣创建插件，这些插件在此类设置中是很好的公民。</p>
+<p>最后修改日期：2005年6月17日</p>
+<h2>基本概念</h2>
+<h3>地点</h3>
+<p>如<a href="runtime-options.html#locations">Eclipse Runtime选项</a>文章中所述，在多用户设置中部署Eclipse的上下文中有三个不同的位置：</p>
 <ul>
-  <li> <strong>install area</strong> - the location where the Eclipse Platform 
-    is installed. This location can be read-only, since neither the Eclipse runtime 
-    nor plug-ins are supposed to write there. However, in a single user scenario, 
-    the configuration area, which is typically writable, defaults to a directory 
-    called &quot;configuration&quot; stored under the install area.</li>
-  <li> <strong>configuration area</strong> - the location where Eclipse stores 
-    essential runtime metadata (such as information about the set of plug-ins 
-    installed and the dependencies between them) and cached data in general. Eclipse 
-    cannot run without a configuration area. Plug-ins may choose to store data 
-    here that should be available regardless the workspace in use (for instance, 
-    help index files). User settings shared across workspaces are also stored 
-    under this location.</li>
-  <li><strong>instance area</strong> - the location where user files are stored, 
-    commonly called the <em>workspace</em>. It is optional, however most Eclipse-based 
-    products require an instance area to work. The instance area cannot be shared, 
-    although a single user might maintain multiple instance areas. Inside the 
-    instance area there is a special directory called .metadata, where plug-ins 
-    store their own workspace-specific metadata and user settings.</li>
+  <li> <strong>安装区域</strong> -  Eclipse平台的安装位置。这个位置可以是只读的，因为Eclipse运行时和插件都不应该写在那里。但是，在单个用户场景中，配置区域（通常是可写的）默认为存储在安装区域下的名为“configuration”的目录。</li>
+  <li> <strong>配置区域</strong> -  Eclipse存储基本运行时元数据的位置（例如有关安装的插件集和它们之间的依赖关系的信息）和一般的缓存数据。没有配置区域，Eclipse无法运行。插件可以选择在此处存储应该可用的数据，而不管使用的工作空间（例如，帮助索引文件）。跨工作区共享的用户设置也存储在此位置下。</li>
+  <li><strong>实例区域</strong> - 存储用户文件的位置，通常称为<em>工作区</em> 。它是可选的，但是大多数基于Eclipse的产品都需要一个实例区域才能工作。虽然单个用户可能维护多个实例区域，但无法共享实例区域。在实例区域内有一个名为.metadata的特殊目录，其中插件存储自己的工作区特定元数据和用户设置。</li>
 </ul>
-<h3>Configuration initialization</h3>
-<p>Before Eclipse has been run for the first time, the configuration area is basically 
-  an empty directory. This location is gradually populated by the Eclipse runtime, 
-  and other plug-ins, across Eclipse sessions. Most of the metadata kept by the 
-  Eclipse runtime (e.g. plug-in dependencies, the extension registry) is written 
-  during the shutdown of the first session. If no changes are made to the set 
-  of installed plug-ins, no data has to be written during subsequent sessions. 
-  We say the configuration is <em>initialized</em>. When the configuration is 
-  in this state, it is even possible to make the configuration area read-only. 
-  Making the configuration area read-only is useful in scenarios such as shared 
-  configurations (more on this later).</p>
-<p>The <code>-initialize</code> command-line option allows one to initialize the 
-  configuration area without requiring an Eclipse application to run. The initialization 
-  procedure forces the creation of any metadata that is written out to the configuration 
-  location during the first Eclipse session. However, there are other files kept 
-  in the configuration area that are created only when needed. Examples are:</p>
+<h3>配置初始化</h3>
+<p>在Eclipse第一次运行之前，配置区域基本上是一个空目录。Eclipse会话中的Eclipse运行时和其他插件逐渐填充此位置。Eclipse运行时保留的大多数元数据（例如，插件依赖项，扩展注册表）是在第一个会话关闭期间写入的。如果未对已安装的插件集进行任何更改，则在后续会话期间不必写入任何数据。我们说配置已<em>初始化</em> 。当配置处于此状态时，甚至可以使配置区域为只读。使配置区域为只读在共享配置等场景中非常有用（稍后将详细介绍）。</p>
+<p><code>-initialize</code>命令行选项允许初始化配置区域，而无需运行Eclipse应用程序。初始化过程强制创建在第一个Eclipse会话期间写入配置位置的任何元数据。但是，配置区域中还保留了仅在需要时创建的其他文件。例如：</p>
 <ul>
-  <li>Help indexes - only created for the first time the Eclipse Help system is 
-    opened. After it is created, provided the user locale does not change, no 
-    files are ever written again.</li>
-  <li>files extracted out of plug-in JARs - plug-ins shipped as JARs often need 
-    to access embedded files as plain files on the file system. For that, plug-ins 
-    call the Eclipse Runtime API <code><a href="../api/org/eclipse/core/runtime/Platform.html#asLocalURL(java.net.URL)">
-	Platform.asLocalURL(URL)</a></code>. The result is that 
-    if the URL refers to a file inside a JAR, that file will be extracted to the 
-    file system under the configuration area. Once a file is extracted, subsequent 
-    calls to <code>Platform.asLocalURL()</code> will be able to find it, so no additional extractions 
-    will occur <em>for that file</em>. A similar (actually, the original) scenario 
-    where <code>Platform.asLocalURL</code> is used that has the same consequences relates to 
-    making sure remote contents (for instance, a file accessible via a http URL) 
-    are available locally.</li>
+  <li>帮助索引 - 仅在第一次打开Eclipse帮助系统时创建。创建后，如果用户区域设置没有更改，则不会再次写入任何文件。</li>
+  <li>从插件JAR中提取的文件 - 作为JAR提供的插件通常需要访问嵌入文件作为文件系统上的普通文件。为此，插件调用Eclipse Runtime API <code><a href="../api/org/eclipse/core/runtime/Platform.html#asLocalURL(java.net.URL)">
+	Platform.asLocalURL(URL)</a></code> 。结果是，如果URL引用JAR内的文件，则该文件将被提取到配置区域下的文件系统。提取文件后，对<code>Platform.asLocalURL()</code>后续调用将能够找到它，因此不会<em>对该文件进行</em>额外的提取。使用具有相同结果的<code>Platform.asLocalURL</code>的类似（实际上是原始）场景涉及确保远程内容（例如，可通过http URL访问的文件）在本地可用。</li>
 </ul>
-<p>For these cases (and others that 3rd-party plug-ins might introduce), the initialization 
-  procedure is not sufficient to fully initialize the configuration area. There 
-  will still be need to write to the configuration area although this need tends 
-  to disappear as all the execution paths in the application that cause files 
-  to be created in the configuration area are visited. Only after that it can 
-  be said the configuration area is fully initialized and no write access to it 
-  will ever be required in order for Eclipse to run.</p>
-<h2>Scenario #1 - private install</h2>
-<p>This is actually a single-user scenario. The Eclipse install is used by a single 
-  user, and the user has full access privileges to it. The configuration area 
-  location defaults to the configuration directory under the install location.</p>
-<p>The procedure to set up this scenario requires just making sure the user has 
-  full rights to the install location.</p>
-<h2>Scenario #2 - shared install</h2>
-<p>In this scenario, a single install area is shared by many users. The &quot;configuration&quot; 
-  directory under the install area is home only to the config.ini as shipped with 
-  the product (it is not initialized). Every user has their own local standalone 
-  configuration location.</p>
-<p>The set up for this scenario requires making the install area read-only for 
-  regular users. When users start Eclipse, this causes the configuration area 
-  to automatically default to a directory under the user home dir. If this measure 
-  is not taken, all users will end up using the same location for their configuration 
-  area, which is not supported.</p>
-<h2>Scenario #3 - shared configuration</h2>
-<p>Here users share not only an install area but also a master configuration area. 
-  Users still have, by default, their own private writable configuration areas. 
-  A user's private configuration area is cascaded to the master configuration 
-  and will not contain any interesting data if the master configuration has been 
-  fully initialized and no changes to the set of plug-ins to be installed has 
-  occurred.</p>
-<p>In this scenario, the system administrator initializes the master configuration 
-  (typically under the install location), and ensures the whole install and configuration 
-  areas are read-only to users. When users run the Eclipse-based product from 
-  the shared install location, since they do not have write access privileges 
-  to the configuration area under the install area, a local configuration area 
-  will be automatically computed and initialized.</p>
-<p>The more fully initialized the shared configuration is, the less need there 
-  is for files to be created under the local configuration.</p>
-<h3>Setting the private configuration area location</h3>
-<p>The default location for a private configuration area is:</p>
+<p>对于这些情况（以及第三方插件可能引入的其他情况），初始化过程不足以完全初始化配置区域。仍然需要写入配置区域，尽管这种需求趋于消失，因为应用程序中导致在配置区域中创建文件的所有执行路径都被访问。只有在那之后，可以说配置区域已完全初始化，并且不需要对它进行写访问才能运行Eclipse。</p>
+<h2>场景＃1  - 私有安装</h2>
+<p>这实际上是一个单用户场景。Eclipse安装由单个用户使用，用户具有对其的完全访问权限。配置区域位置默认为安装位置下的配置目录。</p>
+<p>设置此方案的过程只需确保用户具有安装位置的完全权限。</p>
+<h2>场景＃2  - 共享安装</h2>
+<p>在这种情况下，许多用户共享一个安装区域。安装区域下的“配置”目录仅限于产品附带的config.ini（它未初始化）。每个用户都有自己的本地独立配置位置。</p>
+<p>针对此方案的设置要求将常规用户的安装区域设置为只读。当用户启动Eclipse时，这会导致配置区域自动默认为用户主目录下的目录。如果不采取此措施，则所有用户最终将使用相同位置的配置区域，这是不受支持的。</p>
+<h2>场景＃3  - 共享配置</h2>
+<p>在这里，用户不仅共享安装区域，还共享主配置区域。默认情况下，用户仍拥有自己的专用可写配置区域。用户的专用配置区域级联到主配置，如果主配置已完全初始化且未对要安装的插件集进行任何更改，则不会包含任何有趣的数据。</p>
+<p>在此方案中，系统管理员初始化主配置（通常在安装位置下），并确保整个安装和配置区域对用户是只读的。当用户从共享安装位置运行基于Eclipse的产品时，由于他们对安装区域下的配置区域没有写访问权限，因此将自动计算并初始化本地配置区域。</p>
+<p>共享配置的初始化程度越高，在本地配置下创建文件的需求就越少。</p>
+<h3>设置专用配置区域位置</h3>
+<p>私有配置区域的默认位置是：</p>
 <p><code>&lt;user-home-dir&gt;/.eclipse/&lt;product-id&gt;_&lt;product-version&gt;/configuration</code></p>
-<p>The user home dir is determined by the <code>user.home</code> Java system property. 
-  The product id and version are obtained from the product marker file <code>.eclipseproduct</code> 
-  under the Eclipse install.</p>
-<p>A non-default configuration area can be defined by setting the <a href="runtime-options.html#osgiconfigurationarea"><code>osgi.configuration.area</code></a> 
-  system property. This property can be set by the end user, but it is more convenient 
-  to set it either in the <a href="runtime-options.html#launcher">launcher .ini 
-  file</a> or in the config.ini file at the base configuration location.</p>
-<h3>Updating</h3>
-<h4>Shared configuration</h4>
-<p>Plug-ins can be installed in/removed from the shared configuration. Users will 
-  catch up with those changes the next time Eclipse runs. It is necessary to make 
-  sure users having the shared configuration as their master configuration are 
-  not running Eclipse.</p>
-<h4>Private configuration</h4>
-<p>Users can modify their local configuration areas by installing additional plug-ins. 
-  This does not cause any changes to the shared configuration, so other users 
-  will not see the changes. Note that plug-ins configured at the shared configuration 
-  <em>cannot</em> be removed. If they are, they will be reinstalled the next time 
-  the platform starts.</p>
+<p>用户主目录由<code>user.home</code> Java系统属性确定。产品ID和版本是从Eclipse安装下的产品标记文件<code>.eclipseproduct</code>获得的。</p>
+<p>可以通过设置<a href="runtime-options.html#osgiconfigurationarea"><code>osgi.configuration.area</code></a>系统属性来定义非默认配置区域。此属性可以由最终用户设置，但在<a href="runtime-options.html#launcher">启动器.ini文件</a>或基本配置位置的config.ini文件中设置它更方便。</p>
+<h3>更新</h3>
+<h4>共享配置</h4>
+<p>可以在共享配置中安装插件或从中删除插件。用户将在下次Eclipse运行时赶上这些更改。有必要确保具有共享配置作为其主配置的用户不运行Eclipse。</p>
+<h4>私人配置</h4>
+<p>用户可以通过安装其他插件来修改其本地配置区域。这不会导致共享配置发生任何更改，因此其他用户将看不到更改。请注意， <em>无法</em>删除在共享配置中配置的插件。如果是，则在下次平台启动时重新安装。</p>
 </body>
 </html>

@@ -1,14 +1,14 @@
-﻿<html dir="ltr">
+﻿<html >
 <head>
 <title>Stdlib扩展</title>
-<link href="book.css" rel="stylesheet" type="text/css"></link>
-<meta name="generator" content="DocBook XSL Stylesheets V1.75.1"></meta>
-<link rel="home" href="index.html" title="Xpand Documentation"></link>
-<link rel="up" href="stdlib_reference.html" title="Stdlib"></link>
-<link rel="prev" href="stdlib_reference.html" title="Stdlib"></link>
-<link rel="next" href="ch04s03.html" title="Stdlib workflow components"></link>
+<link href="book.css" rel="stylesheet" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.1">
+<link rel="home" href="index.html" title="Xpand Documentation">
+<link rel="up" href="stdlib_reference.html" title="Stdlib">
+<link rel="prev" href="stdlib_reference.html" title="Stdlib">
+<link rel="next" href="ch04s03.html" title="Stdlib workflow components">
 </head>
-<body bgcolor="white" dir="ltr" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<body bgcolor="white"  text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <h1 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">Stdlib扩展</h1>
 <div class="section" title="Stdlib扩展">
 <div class="titlepage">
@@ -273,17 +273,40 @@
 </div>
 </div>
 </div>
-<pre class="programlisting">进口数据;扩展名org.eclipse.xtend.util.stdlib :: io;创建DataModel这个重复（DataModel s）：entity.addAll（s.entity.duplicate（）） - &gt; setName（s.name）;创建实体此副本（实体旧）:( old.name +“has”+ old.reference.size +“references”）。info（） - &gt; old.reference.name.info（） - &gt;</pre>
+<pre class="programlisting">import data; 
+extension org.eclipse.xtend.util.stdlib::io; 
+create DataModel this duplicate(DataModel s): 
+  entity.addAll( s.entity.duplicate() ) -&gt; 
+  setName(s.name); 
+  
+create Entity this duplicate(Entity old): 
+  (old.name+" has "+old.reference.size+" references").info() -&gt; 
+  old.reference.name.info() -&gt; 
+        </pre>
 <p>这导致控制台上的以下输出：</p>
-<pre class="programlisting">922 INFO  - 人有1个引用923 INFO  -  [autos] 926 INFO  -  Vehicle有0个引用926 INFO  -  []</pre>
+<pre class="programlisting">922  INFO  - Person has 1 references 
+923  INFO  - [autos] 
+926  INFO  - Vehicle has 0 references 
+926  INFO  - []
+        </pre>
 <p>当然IO扩展函数也可以在Xpand中使用，但是如果用于记录目的，你必须处理一个副作用：因为函数返回传递的对象（表达式的结果，在最简单的情况下只是一个字符串）和Xpand将表达式结果打印到打开的文件，消息将显示在控制台上，但也可以在结果文件中。这可能是你想要避免的，所以你可以使用一个小技巧：在调用日志函数之后使用链接运算符并让表达式的结果为空字符串：</p>
-<pre class="programlisting">«EXTENSION org :: eclipse :: xtend :: util :: stdlib :: io»...«DEFINE javaClass FOR Entity»«REM»以下表达式将转储功能名称而不产生输出作为副作用«ENDREM»«features.name.info（） - &gt;“”»</pre>
+<pre class="programlisting">«EXTENSION org::eclipse::xtend::util::stdlib::io» 
+... 
+«DEFINE javaClass FOR Entity» 
+  «REM»The following expression will dump the feature names without producing output 
+  as side effect«ENDREM» 
+  «features.name.info() -&gt; ""»</pre>
 <p>这将在控制台上产生此输出：</p>
-<pre class="programlisting">1122 INFO IOExtensions  -  [姓名，年龄，地址] 1740 INFO IOExtensions  -  [街道，邮编，城市]</pre>
+<pre class="programlisting">1122 INFO  IOExtensions       - [name, age, address] 
+1740 INFO  IOExtensions       - [street, zip, city]</pre>
 <p>每个函数都返回调用它们的对象，因此您可以构建链表达式。或者，换句话说，如果你有一些表达式</p>
-<pre class="programlisting">element.xyzselect（T | t.someProp）.A</pre>
+<pre class="programlisting">element.x.y.z.select(t|t.someProp).a</pre>
 <p>你总是可以在任何地方嵌入其中一个io功能</p>
-<pre class="programlisting">element.x。<span class="emphasis"><em>syserr（）。</em></span> yzselect（t | t.someProp.info <span class="emphasis"><em>（）</em></span> ）。a</pre>
+<pre class="programlisting">element.x.<span class="emphasis">
+<em>syserr()</em>
+</span>.y.z.select(t|t.someProp.<span class="emphasis">
+<em>info()</em>
+</span>).a</pre>
 </div>
 <div class="section" title="控制日志级别">
 <div class="titlepage">
@@ -297,7 +320,13 @@
 <p>您可能希望控制通过日志记录工具打印的消息的日志记录级别。具体配置方式取决于底层日志框架。Xpand使用Apache Commons Logging库，它可以调度到另一个日志框架，主要是Log4J。</p>
 <p>要精确控制IO扩展的日志记录级别，您必须知道消息所记录的类别。通常使用使用记录器的类的类名。对于IO扩展，此类是<code class="classname">org.eclipse.xtend.util.stdlib.IOExtensions</code> 。</p>
 <p>以下示例显示了一个Log4J配置文件，该文件将禁用低于警告的日志级别。只有在类路径的开头找到属性文件时，此示例才有效。确保在类路径上的任何其他Log4J配置之前找到该文件。该文件必须命名为<code class="filename">log4j.properties</code> 。</p>
-<pre class="programlisting">log4j.appender。CONSOLE = org.apache.log4j。ConsoleAppender log4j.appender。CONSOLE.layout = org.apache.log4j。PatternLayout log4j.appender。CONSOLE.layout。ConversionPattern =％p％C {1}％m％n log4j.rootLogger = INFO，CONSOLE＃抑制来自IOExtensions的信息消息log4j.logger.org.eclipse.xtend.util.stdlib。IOExtensions = WARN，CONSOLE log4j.additivity.org.eclipse.xtend.util.stdlib。IOExtensions = FALSE</pre>
+<pre class="programlisting">log4j.appender.CONSOLE = org.apache.log4j.ConsoleAppender 
+log4j.appender.CONSOLE.layout = org.apache.log4j.PatternLayout 
+log4j.appender.CONSOLE.layout.ConversionPattern = %p %C{1} %m %n 
+log4j.rootLogger = INFO, CONSOLE 
+# suppress info messages from IOExtensions 
+log4j.logger.org.eclipse.xtend.util.stdlib.IOExtensions=WARN, CONSOLE 
+log4j.additivity.org.eclipse.xtend.util.stdlib.IOExtensions=false</pre>
 </div>
 </div>
 <div class="section" title="柜台扩展">
@@ -422,9 +451,40 @@
 </div>
 </div>
 </div>
-<pre class="programlisting">«DEFINE CounterExtensionsDemo FOR Object»«FILE“CounterExtensions.txt”»第一个计数器：get：«counterGet（）»inc：«counterInc（）»inc：«counterInc（）»inc：«counterInc（）»dec：«counterDec（ ）»第二个（命名）计数器：inc：«counterInc（“idx”）»inc：«counterInc（“idx”）»inc：«counterInc（“idx”）»reset：«counterReset（“idx”）»inc： «counterInc（“idx”）»第一个计数器：inc：«counterInc（）»«ENDFILE»«ENDDEFINE»</pre>
+<pre class="programlisting">«DEFINE CounterExtensionsDemo FOR Object» 
+«FILE "CounterExtensions.txt"» 
+  First counter: 
+  get         : «counterGet()» 
+  inc         : «counterInc()» 
+  inc         : «counterInc()» 
+  inc         : «counterInc()» 
+  dec         : «counterDec()» 
+  Second (named) counter: 
+  inc         : «counterInc("idx")» 
+  inc         : «counterInc("idx")» 
+  inc         : «counterInc("idx")» 
+  reset       : «counterReset("idx")» 
+  inc         : «counterInc("idx")» 
+  First counter: 
+  inc         : «counterInc()» 
+  
+«ENDFILE» 
+«ENDDEFINE»</pre>
 <p>此示例将创建以下输出：</p>
-<pre class="programlisting">第一个计数器：get：0 inc：1 inc：2 inc：3 dec：2 Second（named）counter：inc：1 inc：2 inc：3 reset：0 inc：1 First counter：inc：3</pre>
+<pre class="programlisting">  First counter: 
+  get         : 0 
+  inc         : 1 
+  inc         : 2 
+  inc         : 3 
+  dec         : 2 
+  Second (named) counter: 
+  inc         : 1 
+  inc         : 2 
+  inc         : 3 
+  reset       : 0 
+  inc         : 1 
+  First counter: 
+  inc         : 3 </pre>
 </div>
 </div>
 <div class="section" title="属性扩展">
@@ -519,12 +579,17 @@
 </div>
 </div>
 <p>工作流程配置：</p>
-<pre class="programlisting">&lt;component class =“org.eclipse.xtend.util.stdlib。PropertiesReader“&gt; &lt;propertiesFile value =”src / config1.properties“/&gt; &lt;propertiesFile value =”src / config2.properties“/&gt; &lt;/ component&gt;</pre>
+<pre class="programlisting">&lt;component class="org.eclipse.xtend.util.stdlib.PropertiesReader"&gt; 
+  &lt;propertiesFile value="src/config1.properties"/&gt; 
+  &lt;propertiesFile value="src/config2.properties"/&gt; 
+&lt;/component&gt; </pre>
 <p>
 <code class="filename">config1.properties</code> ：</p>
-<pre class="programlisting">shapes = box，polygon，ellipse，point</pre>
+<pre class="programlisting">shapes = box,polygon,ellipse,point</pre>
 <p>扩展中的用法：</p>
-<pre class="programlisting">扩展org :: eclipse :: xtend :: util :: stdlib :: properties;缓存List [String] SHAPES（）：getProperty（“shapes”）。split（“，”）。trim（）;</pre>
+<pre class="programlisting">extension org::eclipse::xtend::util::stdlib::properties;
+
+cached List[String] SHAPES () : getProperty("shapes").split(",").trim();</pre>
 </div>
 </div>
 <div class="section" title="元素属性扩展">
@@ -741,7 +806,7 @@
 </div>
 </div>
 </div>
-<p>问题扩展需要工作流组件<code class="classname">org.eclipse.xtend.util.stdlib.在调用扩展之前，在工作流中配置ExtIssueReporter</code> 。此组件的目的是使工作流的“问题”实例可用于扩展。</p>
+<p>问题扩展需要工作流组件<code class="classname">org.eclipse.xtend.util.stdlib.ExtIssueReporter</code> 。此组件的目的是使工作流的“问题”实例可用于扩展。</p>
 <p><code class="classname">ExtIssueReporter</code>组件没有任何属性。</p>
 </div>
 <div class="section" title="例">
@@ -754,11 +819,28 @@
 </div>
 </div>
 <p>工作流程配置：</p>
-<pre class="programlisting">&lt;？xml版本=“1.0”？&gt; &lt;工作流程&gt; ......&lt;component class =“xpand.util.stdlib。ExtIssueReporter“/&gt;</pre>
+<pre class="programlisting">&lt;?xml version="1.0"?&gt; 
+&lt;workflow&gt; 
+  ... 
+  &lt;component class="xpand.util.stdlib.ExtIssueReporter"/&gt;</pre>
 <p>从Xtend使用：</p>
-<pre class="programlisting">导入元模型;扩展org :: eclipse :: xtend :: util :: stdlib :: issues; demo（Model this）：issuesExtensionsDemo（）; issuesExtensionsDemo（）：reportWarning（“报告从Xtend到工作流的警告消息”）;</pre>
+<pre class="programlisting">import metamodel; 
+extension org::eclipse::xtend::util::stdlib::issues;
+
+demo (Model this) : 
+  issuesExtensionsDemo() 
+  ; 
+
+issuesExtensionsDemo () : 
+  reportWarning("Reporting a warn message from Xtend to the workflow");</pre>
 <p>控制台输出：</p>
-<pre class="programlisting">INFO WorkflowRunner运行工作流程：workflow / generator.mwe ......INFO CompositeComponent ExtIssueReporter：从.ext和.xpt文件中设置问题日志记录INFO WorkflowRunner工作流程在1101ms完成！WARN WorkflowRunner报告从Xtend到工作流的警告消息</pre>
+<pre class="programlisting">INFO WorkflowRunner running workflow: workflow/generator.mwe 
+... 
+... 
+INFO CompositeComponent ExtIssueReporter: setting up issue logging from 
+   within .ext and .xpt files 
+INFO WorkflowRunner workflow completed in 1101ms! 
+WARN WorkflowRunner Reporting a warn message from Xtend to the workflow</pre>
 </div>
 </div>
 <div class="section" title="命名扩展">
@@ -773,7 +855,8 @@
 <p>命名扩展仅适用于EMF模型。这个有助于名称，限定名称和命名空间。限定名称定义为元素的包含层次结构的原始名称的seuqence，由点分隔（例如java.lang。串）。为了使其工作，模型元素应具有EString类型的name属性。 <sup>[ <a href="#ftn.N1262F" name="N1262F" class="footnote">9</a> ]</sup>
 </p>
 <p>
-<span class="emphasis"><em>扩展名：</em></span> <code class="classname">org::eclipse::xtend::util::stdlib::naming</code>
+<span class="emphasis"><em>扩展名：</em></span> <code class="classname">org::eclipse::xtend::util::stdlib::naming
+      </code>
 </p>
 <div class="section" title="String namespace（Object this）">
 <div class="titlepage">
@@ -895,7 +978,8 @@
 </div>
 <p>有时您可能希望在转换过程中共享信息。一种替代方法是使用GLOBALVAR表达式，但这需要在工作流中配置变量。Globalvar扩展有助于在转换过程中存储和检索对象。</p>
 <p>
-<span class="emphasis"><em>扩展名：</em></span> <code class="classname">org::eclipse::xtend::util::stdlib::globalvar</code>
+<span class="emphasis"><em>扩展名：</em></span> <code class="classname">
+      org::eclipse::xtend::util::stdlib::globalvar</code>
 </p>
 <div class="section" title="例">
 <div class="titlepage">
@@ -907,9 +991,24 @@
 </div>
 </div>
 <p>在Xtend中的用法：</p>
-<pre class="programlisting">导入元模型;扩展org :: eclipse :: xtend :: util :: stdlib :: io;扩展org :: eclipse :: xtend :: util :: stdlib :: globalvar; demo（Model this）：globalvarExtensionsDemo1（） - &gt; globalvarExtensionsDemo2（）; globalvarExtensionsDemo1（）：“存储全局变量...”。info（） - &gt; storeGlobalVar（“msg”，“Xpand很酷！“）; globalvarExtensionsDemo2（）:(”从全局变量获取消息：“+ getGlobalVar（”msg“））。info（）;</pre>
+<pre class="programlisting">import metamodel; 
+extension org::eclipse::xtend::util::stdlib::io; 
+extension org::eclipse::xtend::util::stdlib::globalvar;
+
+demo (Model this) : 
+  globalvarExtensionsDemo1() -&gt; 
+  globalvarExtensionsDemo2() 
+;
+
+globalvarExtensionsDemo1 () : 
+    "Storing global var...".info() -&gt; 
+    storeGlobalVar("msg", "Xpand is cool stuff!"); 
+    
+globalvarExtensionsDemo2 () : 
+    ("Getting message from global var: "+getGlobalVar("msg")).info();</pre>
 <p>控制台输出：</p>
-<pre class="programlisting">INFO IOExtensions存储全局变量...INFO IOExtensions从全局var：Xpand获取消息是很酷的东西！</pre>
+<pre class="programlisting">INFO IOExtensions Storing global var...
+INFO IOExtensions Getting message from global var: Xpand is cool stuff!</pre>
 <p>这是一个存储字符串的简单示例，但当然您可以通过这种方式存储任何表达式的结果。</p>
 </div>
 </div>
@@ -1044,9 +1143,18 @@
 </div>
 </div>
 <p>在Xtend中的用法：</p>
-<pre class="programlisting">扩展org :: eclipse :: xtend :: util :: stdlib :: crossref; crossRefDemo（Model this）：eAllContents.typeSelect（Datatype）.dumpCrossReferences（）; dumpCrossReferences（datatype this）:(“对数据类型的交叉引用数”+ name +“：”+ getReferencingObjects（）。size）.info（）;</pre>
+<pre class="programlisting">extension org::eclipse::xtend::util::stdlib::crossref; 
+crossRefDemo (Model this) : 
+    eAllContents.typeSelect(Datatype).dumpCrossReferences(); 
+    
+dumpCrossReferences (Datatype this) : 
+    ("Number of cross references to datatype "+name+":" 
+    + getReferencingObjects().size) 
+    .info() 
+    ;</pre>
 <p>控制台输出：</p>
-<pre class="programlisting">INFO IOExtensions数据类型的交叉引用数Integer：1 INFO IOExtensions数据类型的交叉引用数字符串：4</pre>
+<pre class="programlisting">INFO IOExtensions Number of cross references to datatype Integer:1 
+INFO IOExtensions Number of cross references to datatype String:4</pre>
 </div>
 </div>
 <div class="section" title="UID扩展">

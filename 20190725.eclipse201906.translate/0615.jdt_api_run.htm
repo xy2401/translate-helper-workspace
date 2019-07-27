@@ -1,0 +1,47 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>运行Java程序</title>
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body >
+<h2>运行Java程序</h2>
+<p>JDT Debug组件包括使用当前由用户为Java项目配置的VM安装来启动Java程序的工具。</p>
+
+<h3>启动已编译的Java程序</h3>
+<p>可以通过为Java项目获取适当的<a href="../reference/api/org/eclipse/jdt/launching/IVMRunner.html"><b>IVMRunner并按</b></a>名称运行类来运行已在Java项目中编译的Java程序。以下代码片段显示了如何启动<b>myJavaProject中</b>的类<b>MyClass</b> 。</p>
+<pre class="color1">
+   IVMInstall vmInstall = JavaRuntime.getVMInstall(myJavaProject);
+   if (vmInstall == null)
+      vmInstall = JavaRuntime.getDefaultVMInstall();
+   if (vmInstall != null) {
+      IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.RUN_MODE);
+      if (vmRunner != null) {
+         String[] classPath = null;
+         try {
+            classPath = JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject);
+         } catch (CoreException e) { }
+         if (classPath != null) {
+            VMRunnerConfiguration vmConfig = 
+               new VMRunnerConfiguration("MyClass", classPath);
+            ILaunch launch = new Launch(null, ILaunchManager.RUN_MODE, null);
+            vmRunner.run(vmConfig, launch, null);
+         }
+      }
+   }
+</pre>
+<p>启动Java程序的另一种方法是创建<b>Java应用程序</b>启动配置并启动它。以下代码段显示了如何使用简单的启动配置启动<b>myJavaProject中</b>的类<b>MyClass</b> 。默认情况下，生成的正在运行的应用程序使用与<b>myJavaProject</b>关联的JRE和类路径。</p>
+<pre class="color1">
+   ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+   ILaunchConfigurationType type = manager.getLaunchConfigurationType(IJavaLaunchConfigurationConstants.ID_JAVA_APPLICATION);
+   ILaunchConfigurationWorkingCopy wc = type.newInstance(null, "SampleConfig");
+   wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "myJavaProject");
+   wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "myClass");
+   ILaunchConfiguration config = wc.doSave(); 
+   config.launch(ILaunchManager.RUN_MODE, null);
+</pre>
+</body>
+</html>

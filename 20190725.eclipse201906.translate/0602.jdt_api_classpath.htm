@@ -1,0 +1,145 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>设置Java构建路径</title>
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body >
+<h2>设置Java构建路径</h2>
+<p>本节介绍如何设置Java构建路径。构建路径是用于构建Java项目（ <b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html">IJavaProject</a></b> ）的类路径。</p>
+
+<p>类路径只是一个类路径条目数组（ <b><a href="../reference/api/org/eclipse/jdt/core/IClasspathEntry.html">IClasspathEntry</a></b> ），用于描述可用的类型。类型可以以源或二进制形式出现，路径上条目的顺序定义了在构建期间解析类型的查找顺序。</p>
+<p>Java构建路径反映在Java项目元素的结构中。您可以在项目中查询其包片段根（ <b><a href="../reference/api/org/eclipse/jdt/core/IPackageFragmentRoot.html">IPackageFragmentRoot</a></b> ）。每个类路径条目映射到一个或多个包片段根，每个包还包含一组包片段。</p>
+<p>对构建路径的讨论不涉及Java运行时路径，该路径可以与构建路径分开定义。（有关<b><a href="../guide/jdt_api_run.htm">运行</a></b>时类路径的讨论，请参阅<b><a href="../guide/jdt_api_run.htm">运行Java代码</a></b> 。）</p>
+
+<h3>更改构建路径</h3>
+<p>您可以使用相应项目的Java元素上的<b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#setRawClasspath(org.eclipse.jdt.core.IClasspathEntry[], org.eclipse.core.runtime.IProgressMonitor)">setRawClasspath</a></b>以编程方式更改项目的构建路径。以下代码设置项目资源的类路径：</p>
+<pre class="color1">
+
+ IProject project = ... // get some project resource
+ IJavaProject javaProject = JavaCore.create(project);
+ IClasspathEntry[] newClasspath = ...;
+ javaProject.setRawClasspath(newClasspath, someProgressMonitor);
+ 
+</pre>
+<p>（注意：使用术语“原始”类路径用于强调用于描述条目位置的任何变量尚未解决的事实。）</p>
+
+<p>Java构建路径持久存储在项目文件结构中名为“.classpath”的文件中。此文件的目的是提供一种通过某些源代码存储库与其他人共享Java构建路径设置的方法。特别是，不应手动编辑此文件，因为它可能会损坏。</p>
+<h3>类路径条目</h3>
+<p>可以使用<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html">JavaCore</a></b>上定义的工厂方法定义类路径条目。类路径条目可以引用以下任何一项：</p>
+<ul>
+<li><b>源文件夹</b> - 包含在其相应的包目录结构下组织的源编译单元的文件夹。源文件夹用于更好地构建大型项目中的源文件，并且只能在包含项目中引用。相应的工厂方法是<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#newSourceEntry(org.eclipse.core.runtime.IPath)">newSourceEntry</a></b> 。在给定的源文件夹中，每个编译单元应根据其package语句嵌套在适当的文件夹结构中。例如，包'p1'中的编译单元'X.java'必须位于源文件夹的子文件夹'p1'中。可以使用多个源文件夹，只要它们不重叠即可。可以为源文件夹分配其自己的输出位置，该输出位置确定应该放置生成的类文件的位置。如果未指定，则类文件将放置在包含项目的输出位置（请参阅<b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#setOutputLocation(org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IProgressMonitor)">IJavaProject.setOutputLocation</a></b> ）。
+<p>以下是一个示例类路径条目，表示项目'MyProject'的源文件夹'src'：</p>
+<pre class="color1">
+   IClasspathEntry srcEntry = JavaCore.newSourceEntry(new Path("/MyProject/src"));
+</pre></li>
+<li><b>二进制库</b> - 类文件文件夹（包含在工作空间内部或外部）或类文件存档文件（包含在工作空间内部或外部）。归档库可以具有附加的源归档，在向类文件元素请求其源（ <b><a href="../reference/api/org/eclipse/jdt/core/ISourceReference.html#getSource()">getSource</a></b> ）时将其提取。库的工厂方法是<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#newLibraryEntry(org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IPath, boolean)">newLibraryEntry</a></b> 。
+<p>以下是一个示例类路径条目，表示“MyProject”的类文件夹'lib'：</p>
+<pre class="color1">
+
+  IClasspathEntry libEntry = JavaCore.newLibraryEntry(
+    new Path("/MyProject/lib"), 
+    null, // no source
+    null, // no source
+    false); // not exported
+ 
+</pre>
+<p>以下类路径条目具有源附件：</p>
+<pre class="color1">
+
+  IClasspathEntry libEntry = JavaCore.newLibraryEntry(
+    new Path("d:/lib/foo.jar"), // library location
+    new Path("d:/lib/foo_src.zip"), // source archive location
+    new Path("src"), // source archive root path
+    true); // exported
+ 
+</pre>
+<p>源存档根路径描述源存档中根的位置。如果设置为null，则将动态推断归档的根。</p>
+<br></li>
+<li><b>一个先决条件项目</b> - 另一个Java项目。先决条件项目始终将其源文件夹提供给依赖项目。它还可以选择性地提供任何标记为导出的类路径条目（请参阅支持额外布尔参数'isExported'的工厂方法）。这意味着除了将其源提供给其依赖项之外，项目还将导出标记为此类的所有类路径条目。这允许先决条件项目更好地隐藏自己的结构更改。例如，给定项目可以选择从使用源文件夹切换到导出库。这可以在不要求其依赖项目更改其类路径的情况下完成。项目先决条件的工厂方法是<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#newProjectEntry(org.eclipse.core.runtime.IPath, boolean)">newProjectEntry</a></b> 。
+
+<p>以下类路径条目表示先决条件项目“MyFramework”。</p>
+<pre class="color1">
+
+  IClasspathEntry prjEntry = JavaCore.newProjectEntry(new Path("/MyFramework"), true); // exported
+ 
+</pre></li>
+<li><b>使用某个类路径变量</b>对项目或库<b>的间接引用</b> - 可以相对于类路径变量动态解析项目或库的位置，该类路径变量被指定为条目路径的第一个段。然后将输入路径的其余部分附加到已解析的变量路径。类路径变量的工厂方法是<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#newVariableEntry(org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IPath)">newVariableEntry</a></b> 。类路径变量是工作空间的全局变量，可以通过JavaCore方法<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#getClasspathVariable(java.lang.String)">getClasspathVariable</a></b>和<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#setClasspathVariable(java.lang.String, org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IProgressMonitor)">setClasspathVariable</a></b>进行操作。
+<p>可以注册一个自动<b><a href="../reference/api/org/eclipse/jdt/core/ClasspathVariableInitializer.html">类路径变量初始化程序</a></b> ，它在工作空间启动时通过扩展点<b><a href="../reference/extension-points/org_eclipse_jdt_core_classpathVariableInitializer.html">org.eclipse.jdt.core.classpathVariableInitializer</a></b>调用。</p>
+<p>以下类路径条目表示一个库，其位置保存在变量“HOME”中。使用变量'SRC_HOME'和'SRC_ROOT'定义源附件：</p>
+
+<pre class="color1">
+
+  IClasspathEntry varEntry = JavaCore.newVariableEntry(
+    new Path("HOME/foo.jar"), // library location
+    new Path("SRC_HOME/foo_src.zip"), // source archive location
+    new Path("SRC_ROOT"), // source archive root path
+    true); // exported 
+  JavaCore.setClasspathVariable("HOME", new Path("d:/myInstall"), null); // no progress monitor
+ 
+</pre></li>
+<li><b>表示类路径容器的条目</b> - 对结构化项目集或库的间接引用。类路径容器用于引用一组描述复杂库结构的类路径条目。与类路径变量一样，动态解析类路径容器<b><a href="../reference/api/org/eclipse/jdt/core/IClasspathContainer.html">（IClasspathContainer）</a></b> 。类路径容器可以由不同的项目使用，导致它们的路径条目解析为每个项目的不同值。它们还提供有关它们所代表的库的元信息（名称，种类，库的描述。）类路径变量的工厂方法是<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#newContainerEntry(org.eclipse.core.runtime.IPath, boolean)">newContainerEntry</a></b> 。可以通过JavaCore方法<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#getClasspathContainer(org.eclipse.core.runtime.IPath, org.eclipse.jdt.core.IJavaProject)">getClasspathContainer</a></b>和<b><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#setClasspathContainer(org.eclipse.core.runtime.IPath, org.eclipse.jdt.core.IJavaProject[], org.eclipse.jdt.core.IClasspathContainer[], org.eclipse.core.runtime.IProgressMonitor)">setClasspathContainer</a></b>来操作类路径容器。
+<p>可以注册一个自动<b><a href="../reference/api/org/eclipse/jdt/core/ClasspathContainerInitializer.html">类路径容器初始化程序</a></b> ，当需要绑定容器时，它会通过扩展点<b><a href="../reference/extension-points/org_eclipse_jdt_core_classpathContainerInitializer.html">org.eclipse.jdt.core.classpathContainerInitializer</a></b>懒惰地调用。</p>
+
+<p>以下类路径条目表示系统类库容器：</p>
+<pre class="color1">
+
+  IClasspathEntry varEntry = JavaCore.newContainerEntry(
+    new Path("JDKLIB/default"), // container 'JDKLIB' + hint 'default'
+    false); // not exported 
+
+  JavaCore.setClasspathContainer(
+    new Path("JDKLIB/default"), 
+    new IJavaProject[]{ myProject }, // value for 'myProject'
+    new IClasspathContainer[] {
+      new IClasspathContainer() {
+        public IClasspathEntry[] getClasspathEntries() {
+          return new IClasspathEntry[]{ 
+            JavaCore.newLibraryEntry(new Path("d:/rt.jar"), null, null, false);
+          }; 
+        }
+        public String getDescription() { return "Basic JDK library container"; }
+        public int getKind() { return IClasspathContainer.K_SYSTEM; }
+        public IPath getPath() { return new Path("JDKLIB/basic"); }
+      }
+    }, 
+    null);
+</pre></li>
+</ul>
+<h3>排除模式</h3>
+<p>可以为类路径源条目分配排除模式，这可以防止源文件夹中的某些资源在类路径中可见。使用模式允许过滤掉资源树的指定部分。每个排除模式路径都相对于类路径条目，并使用类似于Ant的模式机制。只要外部模式排除内部模式，排除模式就可用于指定嵌套的源文件夹。</p>
+
+<p>有关排除模式的更多详细信息，请参阅<b><a href="../reference/api/org/eclipse/jdt/core/IClasspathEntry.html#getExclusionPatterns()">getExclusionPatterns</a></b> 。</p>
+<p>Java项目API <b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#isOnClasspath(org.eclipse.core.resources.IResource)">isOnClasspath</a></b>在确定特定资源是否在类路径上之前检查包含和排除模式。</p>
+<p>备注：</p>
+<ul>
+<li>排除模式优先于包含模式;换句话说，排除模式可以从要包含的文件中删除文件，而不是相反。</li>
+<li>可以将从构建路径中排除的嵌套源文件夹设置为输出位置。以下是一个示例类路径条目，表示项目'MyProject'的源文件夹'src'，其中排除的嵌套源文件夹用作输出位置：<pre class="color1">
+
+  IPath sourceFolder = new Path("/MyProject/src");
+  IPath outputLocation = sourceFolder.append("bin");
+  IClasspathEntry srcEntry = JavaCore.newSourceEntry(
+    sourceFolder, // source folder location
+    new Path[] { outputLocation }, // excluded nested folder
+    outputLocation); // output location
+    
+</pre></li>
+</ul>
+<h3>包容模式</h3>
+<p>还可以为类路径源条目分配包含模式，该包含模式明确定义在类路径上可见的资源。如果未指定包含模式，则源条目包括以此源条目的路径为根的资源树中的所有相关文件。指定一个或多个包含模式意味着仅包括资源树的指定部分。指定的每个路径必须是相对路径，并将相对于此源条目的路径进行解释。文件模式区分大小写。由一个或多个这些模式匹配的文件包含在相应的包片段根中，除非它被一个或多个此条目的排除模式排除。</p>
+<p>有关路径模式的语法和语义的讨论，请参阅<b><a href="../reference/api/org/eclipse/jdt/core/IClasspathEntry.html#getExclusionPatterns()">getExclusionPatterns</a></b> 。没有任何包含模式在语义上等同于显式包含模式<code>**</code> 。</p>
+
+<p>Java项目API <b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#isOnClasspath(org.eclipse.core.resources.IResource)">isOnClasspath</a></b>在确定特定资源是否在类路径上之前检查包含和排除模式。</p>
+<p>例子：</p>
+<ul>
+<li>包含模式<code>src/**</code>本身包括名为<code>src</code>的根文件夹下的所有文件。</li>
+<li>包含模式<code>src/**</code>和<code>tests/**</code>包括名为<code>src</code>和<code>tests</code>的根文件夹下的所有文件。</li>
+
+<li>包含模式<code>src/**</code>和排除模式<code>src/**/Foo.java</code>包含名为<code>src</code>的根文件夹下的所有文件，但名为<code>Foo.java</code>文件除外。</li>
+</ul>
+<h2>类路径解析</h2>由于类路径变量和容器允许您定义动态绑定的类路径条目，因此类路径API可区分原始路径和已解析的类路径。原始类路径是最初设置使用Java项目中的一个<b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#setRawClasspath(org.eclipse.jdt.core.IClasspathEntry[], org.eclipse.core.runtime.IProgressMonitor)">setRawClasspath</a></b> ，并且可以通过询问该项目进一步查询<b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#getRawClasspath()">getRawClasspath</a></b> 。可以使用<b><a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#getResolvedClasspath(boolean)">getResolvedClasspath</a></b>查询已解析的类路径。此操作会触发解析类路径所需的任何变量和容器的初始化。许多Java模型操作隐式地导致解析Java构建路径。例如，计算项目的包片段根目录需要解析构建路径。
+</body>
+</html>

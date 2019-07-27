@@ -1,0 +1,97 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2010. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>装饰</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+<h3>装饰</h3>
+
+<p>您的插件可以使用<b>装饰器</b>为图像注释资源以及工作台视图中显示的其他对象。当插件为现有资源类型添加功能时，装饰器非常有用。许多标准工作台视图都参与展示装饰。</p>
+
+
+<p>例如，PDE提供了装饰器，允许您区分二进制和源项目。</p>
+
+
+<p><img src="images/workbenchdecorators.png" alt="使用PDE装饰器的Package Explorer视图" border="0"></p>
+
+
+<p><b>com.example.helloworld</b>项目是包浏览器中显示的唯一源项目。请注意所有其他二进制项目如何在Java项目图标的左上角显示二进制装饰器。这个装饰器由PDE使用<a href="../reference/extension-points/org_eclipse_ui_decorators.html"><b>org.eclipse.ui.decorators</b></a>扩展点提供。</p>
+
+
+<pre>&lt;extension
+         point=&quot;org.eclipse.ui.decorators&quot;&gt;
+      &lt;decorator
+            <b>lightweight=&quot;true&quot;
+</b>            <b>quadrant=&quot;TOP_LEFT&quot;</b>
+            adaptable=&quot;true&quot;
+            label=&quot;%decorator.label&quot;
+            <b>icon=&quot;icons/full/ovr16/binary_co.png&quot;</b>
+            state=&quot;false&quot;
+            id=&quot;org.eclipse.pde.ui.binaryProjectDecorator&quot;&gt;
+         &lt;description&gt;
+            %decorator.desc
+         &lt;/description&gt;
+         &lt;enablement&gt;
+            ...
+         &lt;/enablement&gt;
+      &lt;/decorator&gt;
+ &lt;/extension&gt;</pre>
+
+
+<p>提供装饰器实现有几种不同的方法。此标记使用最简单的方法，称为<b>声明性</b> <b>轻量级</b>装饰器。当定义声明性轻量级装饰器时，标记包含装饰器的图标，放置和启用条件的完整描述。当仅使用图标来装饰标签时，声明性装饰器很有用。插件只需要指定装饰器应该叠加在常规图标上的<b>象限</b>和叠加<b>图标</b> 。如图所示，PDE二进制图标覆盖在包图标的左上象限中。</p>
+
+
+<p>如果您的插件除了图标之外还需要操作标签文本，或者动态确定图标类型，您可以使用非声明性的<b>轻量级</b>装饰器。在这种情况下，必须定义实现<a href="../reference/api/org/eclipse/jface/viewers/ILightweightLabelDecorator.html"><b>ILightweightLabelDecorator</b></a>的实现<strong>类</strong> 。指定的类负责在运行时提供应用于标签的前缀，后缀和叠加图像。将前缀和后缀与标签文本连接并执行叠加的机制由后台线程中的工作台代码处理。因此，插件在其<a href="../reference/api/org/eclipse/jface/viewers/ILightweightLabelDecorator.html"><b>ILightweightLabelDecorator</b></a>实现中执行的任何工作都必须是UI线程安全的。（有关更多详细信息，请参阅<a href="swt_threading.htm#syncExec">从非UI线程执行代码</a> 。）</p>
+
+
+<p>以下标记显示了CVS客户端如何使用此技术定义其装饰器：</p>
+
+
+<pre>&lt;extension
+         point=&quot;org.eclipse.ui.decorators&quot;&gt;
+    &lt;decorator
+            objectClass=&quot;org.eclipse.core.resources.IResource&quot;
+            adaptable=&quot;true&quot;
+            label=&quot;%DecoratorStandard.name&quot;
+            state=&quot;false&quot;
+            <b>lightweight= &quot;true&quot;</b>
+            <b>quadrant = &quot;BOTTOM_RIGHT&quot;</b>
+            <b>class=&quot;org.eclipse.team.internal.ccvs.ui.CVSLightweightDecorator&quot;</b>
+            id=&quot;org.eclipse.team.cvs.ui.decorator&quot;&gt;
+         &lt;description&gt;
+            %DecoratorStandard.desc
+         &lt;/description&gt;
+    &lt;/decorator&gt;
+&lt;/extension&gt;</pre>
+
+
+<p>装饰器最终由用户通过工作台<b>标签装饰</b>首选项页面进行控制。可以打开和关闭各个装饰器。即便如此，设计装饰器也是一个好主意，这样它们就不会与现有的平台SDK装饰器重叠或冲突。如果多个插件为同一象限提供轻量级装饰器，则会以非确定性方式解决冲突。</p>
+
+
+<p>您的插件也可以执行所有图像和标签管理。在这种情况下， <b>轻量</b>属性应设置为false， <b>类</b>属性应命名实现<a href="../reference/api/org/eclipse/jface/viewers/ILabelDecorator.html"><b>ILabelDecorator</b></a>的类。此类允许您使用自己的注释装饰原始标签的图像和文本。它提供了更大的灵活性，因为您不仅限于前缀，后缀和简单的象限叠加。</p>
+
+
+<p>装饰器的其他属性独立于特定的实现样式。<b>label</b>和<b>description</b>属性指定用于在首选项对话框中命名和描述装饰器的文本。<b>objectClass</b>命名应该应用装饰器的对象类。<b>enablement</b>属性允许您描述对象应该被装饰的条件。<b>adaptable</b>标志指示是否也应该修饰适应<b><a href="../reference/api/org/eclipse/core/resources/IResource.html">IResource的</a></b>对象。<b>状态</b>标志控制装饰器是否在默认情况下可见。</p>
+
+
+<p>如果您的装饰者包含计算成本高或可能分散注意力的信息，您可能希望提供自己的首选项，以允许用户在装饰器打开后进一步微调装饰器。CVS客户端使用此技术。</p>
+
+
+<p><img src="images/cvsdecorators.png" alt="CVS装饰器首选项页面" border="0"></p>
+
+
+<p> </p>
+<p><strong>装饰者更新周期</strong></p>
+<p>通过刷新使用DecoratorManager提供装饰的标签提供程序来启动装饰。由于装饰处理在后台完成，因此在请求标签和触发labelProviderChanged事件之间会有一段时间，该事件将由装饰计算占用。在此期间，对象的装饰将仅出于效率原因计算一次。如果装饰器在此期间发生变化，则可能会广播过时的结果，因为第二次和后续的装饰元素的调用将被忽略。</p>
+<p>装饰者贡献者应避免在装饰发生时更换装饰器。如果这不可能，则需要在处理labelProviderChanged之后再次调用元素。</p>
+</body>
+</html>

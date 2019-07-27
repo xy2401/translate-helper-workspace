@@ -1,0 +1,57 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>org.Eclipse.ui.editors的</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>org.Eclipse.ui.editors的</h3>
+
+<p>编辑器是一个工作台部件，允许用户编辑对象（通常是文件）。编辑器以类似于文件系统编辑工具的方式运行，除了它们紧密集成到平台工作台UI中。编辑器始终与输入对象（ <a href="../reference/api/org/eclipse/ui/IEditorInput.html"><b>IEditorInput</b></a> ）相关联。您可以将输入对象视为正在编辑的文档或文件。在用户保存之前，不会提交在编辑器中进行的更改。</p>
+<p>对于工作台页面中的任何特定编辑器输入，只能打开一个编辑器。例如，如果用户正在工作台中编辑<b>readme.txt</b> ，则以相同的透视图再次打开它将激活相同的编辑器。（您可以从不同的工作台窗口或透视图在同一文件上打开另一个编辑器）。但是，与视图不同，相同的编辑器类型（如文本编辑器）可以在一个工作台页面中多次打开以用于不同的输入。编辑器输入也可以是内存模型的路径，如InfoEditor示例中所示。</p>
+<p>插件使用工作台扩展点<b><a href="../reference/extension-points/org_eclipse_ui_editors.html">org.eclipse.ui.editors</a></b>将编辑器添加到工作台。提供编辑器的插件必须在<b>plugin.xml</b>文件中注册编辑器扩展，以及编辑器的配置信息。某些编辑器信息（例如实现<b>类</b>以及要在工作台菜单和标签中使用的<b>名称</b>和<b>图标</b> ）与视图信息类似。此外，编辑器扩展指定编辑器理解的文件类型的文件扩展名或文件名模式。当编辑器处于活动状态时，编辑器还使用<a href="workbench_cmd_commands.htm" class="XRef">org.eclipse.ui.commands</a>和<a href="workbench_cmd_menus.htm" class="XRef">org.eclipse.ui.menus</a>为工作台菜单和工具栏做出贡献。</p>
+<p>编辑器的界面在<b><a href="../reference/api/org/eclipse/ui/IEditorPart.html">IEditorPart中</a></b>定义，但插件可以选择扩展<b><a href="../reference/api/org/eclipse/ui/part/EditorPart.html">EditorPart</a></b>类，而不是从头开始实现<b><a href="../reference/api/org/eclipse/ui/IEditorPart.html">IEditorPart</a></b> 。</p>
+<blockquote><i>注意：编辑器扩展也可以配置为启动外部程序或调用预先存在的Java代码。在本次讨论中，我们将重点关注那些与工作台实际紧密集成并使用<b><a href="../reference/api/org/eclipse/ui/IEditorPart.html">IEditorPart</a></b>实现的<b><a href="../reference/api/org/eclipse/ui/IEditorPart.html">编辑器</a></b> 。</i></blockquote> 
+<p>编辑器可以将自己的内容大纲页面提供给工作台大纲视图。</p>
+<p>编辑器扩展的配置定义如下。</p>
+<pre>
+&lt;extension
+    point = &quot;org.eclipse.ui.editors&quot;&gt;
+      &lt;editor
+            class="org.eclipse.ui.examples.contributions.editor.InfoEditor"
+            icon="icons/editor.gif"
+            id="org.eclipse.ui.examples.contributions.editor"
+            name="%contributions.editor.name"&gt;
+      &lt;/editor&gt;
+&lt;/extension&gt;</pre>
+<p>我们看到了<b>id</b> ， <b>name</b> ， <b>icon</b> （必须在指定<b>类</b>时指定）和<b>类</b>的熟悉配置标记。您可以使用<b>extensions</b>属性描述编辑器理解的文件类型，例如<b>extensions =“person”</b> ，尽管此示例不需要它。（如果需要更具体，也可以指定<b>文件名</b> 。）<b>该类</b>实现了编辑器。</p>
+
+<p>编辑器菜单和编辑器工具栏位于主菜单和主工具栏中。有关如何使用<b>locationURI</b>正确放置命令的信息，请参阅<a href="workbench_cmd_menus.htm" class="XRef">org.eclipse.ui.menus</a> 。</p>
+<img src="images/contributions_global.png" alt="显示全局菜单添加" border="0">
+<p>仅当编辑器使用核心表达式处于活动状态时，才能显示这些菜单和工具栏项。要为编辑器定义可重用的核心表达式，请使用<b><a href="../reference/extension-points/org_eclipse_core_expressions_definitions.html">org.eclipse.core.expressions.definitions</a></b></p>
+<pre>
+&lt;extension
+    point = &quot;org.eclipse.core.expressions.definitions&quot;&gt;
+      &lt;definition id="org.eclipse.ui.examples.contributions.view.activeEditor"&gt;    
+         &lt;with variable="activeEditorId"&gt;
+            &lt;equals value="org.eclipse.ui.examples.contributions.editor"/&gt;
+         &lt;/with&gt;
+      &lt;/definition&gt;
+&lt;/extension&gt;</pre>
+
+<h4>编辑和内容大纲</h4>
+<p>虽然信息编辑器没有，编辑器通常有相应的内容大纲，提供编辑器内容的结构化视图，并帮助用户浏览编辑器的内容。有关详细信息，请参阅<a href="editors_workbench_outliner.htm">内容概述</a> 。</p>
+
+
+<p>我们将在<a href="editors_jface.htm">Text编辑器和平台文本中</a>查看文本编辑器的实现。</p>
+
+
+</body>
+</html>

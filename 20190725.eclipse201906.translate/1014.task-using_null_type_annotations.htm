@@ -1,0 +1,313 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) GK Software AG and others 2014, 2015. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>使用null类型注释</title>
+</head>
+<body >
+<h1>使用null类型注释</h1>
+<p>从Java 8开始，可以以新的更强大的方式使用null注释，因为“类型注释”（JSR 308）的新概念支持使用注释作为类型系统的扩展。
+</p>
+<p>从技术上讲，这是由枚举<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/ElementType.html"><code>java.lang.annotation.中的两个新元素决定的<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/ElementType.html"><code>java.lang.annotation.ElementType</code></a> ： <code>TYPE_USE</code>和<code>TYPE_PARAMETER</code> 。值得注意的是，当说<code>@Target(ElementType.TYPE_USE)</code>这样标记的注释基本上可以附加到一个类型的所有用法。
+</p>
+<p>通过将null注释解释为类型系统的一部分，我们将系统中的每个类或接口<code>Cn</code>解释为引入两种不同的类型：“ <code>@NonNull Cn</code> ”和“ <code>@Nullable Cn</code> ”。前一种类型包含<code>Cn</code>所有实例，而后一种类型另外包含值<code>null</code> 。这意味着<code>@NonNull Cn</code>是<code>@NonNull Cn</code>的子类型，具有关于可<code>@Nullable Cn</code>所有常规后果。理想情况下，对于程序中的每个值，我们都知道它是否可以为null（并且必须在取消引用之前进行检查）。未注释的类型将被视为遗留类型，就像原始类型是遗留类型一样，因为引入了泛型：与旧代码接口的方式，标记有关未经检查的转换的警告。如果我们系统地避免这种遗留类型，那么编译器可以严格标记<em>每个</em>不安全的用法。
+</p>
+<p>为了实现空分析的完整性，有关空类型注释的检查已与编译器的所有类型检查任务集成（如果启用了空注释，则为活动状态）。
+</p>
+<p>建议用户从先前版本中的空注释<em>迁移</em>到Java-8样式的空类型注释，以查看有关<a href="#compatibility">兼容性</a>的部分。
+</p>
+<p>请注意，null类型注释的实际限定名称是可<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#null_annotation_names">配置的</a> ，但默认情况下使用此处显示的名称（来自包<code>org.eclipse.jdt.annotation</code> ）。使用第三方null注释类型时，请确保使用至少<code>@Target</code>元注释正确定义<code>@Target</code> ，因为否则编译器无法区分声明注释（Java 5）和类型注释（Java 8）。此外，使用第三方注释类型时，不支持<a href="#compatibility_semantics"><code>@NonNullByDefault</code></a>某些<a href="#compatibility_semantics">详细信息</a> 。
+</p>
+
+
+<h2 id="generics">泛型</h2>也许用于空分析的类型注释的主要优点是能够注释泛型类和接口的参数和参数。只<em>使用</em>泛型类的程序员可以直接跳到关于<a href="#typeArguments">类型参数</a>的部分，但泛型类的设计者应该花时间来理解注释这些元素的不同含义：<ul>
+<li><a href="#typeParameters">类型参数</a></li>
+<li><a href="#typeVariables">类型变量</a></li>
+<li><a href="#typeArguments">类型参数</a></li>
+</ul>
+<h3 id="typeParameters">输入参数</h3>
+<p>泛型类，接口或方法可以<em>声明</em>一个或多个类型参数。从技术上讲，这些是声明，因此仅仅是在Java 5中无法注释的疏忽。在Java 8中，注释可以声明<code>@Target(ElementType.TYPE_PARAMETER)</code>适用于此职位。JDT的null类型注释<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNull.html"><code>@NonNull</code></a>和<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/Nullable.html"><code>@Nullable</code></a>使用<code>@Target({ TYPE_USE })</code>声明，其中包括对类型参数声明的使用。
+</p>
+<p>对于null类型注释，可以在以下级别之一指定每个类型参数：</p>
+<dl>
+<dt><strong>不受约束</strong></dt>
+<dd>type参数不会对客户端替换type参数的参数施加任何nullness约束。</dd>
+<dt><strong>受上限约束</strong></dt>
+<dd>type参数有一个<code>extends</code>子句，它指定客户端提供的类型参数的最小nullness要求</dd>
+<dt><strong>完全指定</strong></dt>
+<dd>type参数将使用限制为恰好一个特定null的类型</dd>
+</dl>
+<p>通过<strong>上限</strong>约束类型参数依赖于每个类型' <code>@NonNull Cn</code> '是相应类型' <code>@Nullable Cn</code> '的子类型的<code>@Nullable Cn</code> 。因此， <code>@Nullable</code>上限不会施加任何限制，而<code>@NonNull</code>上限禁止通过<code>@Nullable</code>类型参数进行替换：</p><pre>    // declarations:
+    class C0&lt;T0 extends @Nullable Object&gt; {} // meaningless, no constraint imposed
+    class C1&lt;T1 extends @NonNull Object&gt; {}
+    ...
+    // usage:
+    C1&lt;@NonNull String&gt; c1String;  // legal
+    C1&lt;@Nullable String&gt; c1String; // illegal
+</pre>
+<p>对于<strong>精确的规范，</strong>可以将null注释附加到类型参数声明本身，其被解释为定义上限和下限。换句话说，只有具有完全相同的null类型注释的类型才是合法的类型参数：</p>
+<pre>    // declaration:
+    class C2&lt;@Nullable T2&gt; {}
+    ...
+    // usage:
+    C2&lt;@NonNull String&gt; c2String;  // illegal
+    C2&lt;@Nullable String&gt; c2String; // legal
+</pre>
+<p>鉴于不对称性，在Java中，类型参数可以仅声明上限而不是下限，可以推荐以下三种样式：</p><ul>
+<li>使用<code>@NonNull</code>上限来约束<code>@NonNull</code>类型的类型参数。</li>
+<li>直接将类型参数指定为<code>@Nullable</code>以将类型参数约束为可空类型。</li>
+<li>使用无约束类型参数来支持nullness的类型参数。</li>
+</ul>
+<h3 id="typeVariables">输入变量</h3>
+<p>在泛型声明（类，接口或方法）的范围内，类型参数的名称可以用作<em>类型变量</em> ，即此时未知的类型的占位符。
+</p>
+<p>通常在没有（进一步）null注释的情况下使用类型变量，这意味着类型参数声明中的注释将如下所述应用。但是，在某些情况下，注释单个类型变量的使用是很有用的。作为示例，请考虑库方法<code>java.util.Map.get(Object)</code> ，实际应该注释如下：</p>
+<pre>    @Nullable V get(Object key)</pre>
+<p>通过这个声明，我们将指出返回类型是<strong>V可能代表的任何类型的可空变体</strong> 。换句话说，使用类型变量的空注释<em>会覆盖</em>否则将应用于此类型的任何其他空信息。特别是对应的类型参数声明（或其边界）上的任何空注释都会被此位置的空注释覆盖。
+</p>
+<p>另一方面，当使用没有立即空注释的类型变量时，以下规则适用，具体取决于相应类型参数的声明：</p>
+<p>对应于具有<strong><code>@NonNull</code>上限</strong>的类型参数的类型变量表示<em>已知</em> <strong><code>@NonNull</code></strong>的类型。
+</p>
+<pre>    class C1&lt;T1 extends @NonNull Number&gt; {
+        int consume(T1 t) {
+            return t.intValue(); // OK since T1 is known to be nonnull
+        }
+        T1 provide() {
+            return null;         // NOT OK since T1 requires nonnull
+        }
+    }
+</pre>
+<p>对应于<strong>指定为<code>@Nullable</code></strong>的类型参数的类型变量表示<em>已知可为空</em>的类型。
+</p>
+<pre>    class C2&lt;@Nullable T2 extends Number&gt; {
+        int consume(T2 t) {
+            return t.intValue(); // NOT OK since T2 is known to be nullable
+        }
+        T2 provide() {
+            return null;         // OK: returning null is legal
+        }
+    }
+</pre>
+<p id="pessimistic_analysis">对应于<strong>无约束</strong>类型参数的类型变量需要<strong>悲观检查</strong>以确保所有合法替换的安全性：此类型既不能被认为是可空的也不是非空的。
+</p>
+<pre>    class C&lt;T extends Number&gt; {
+        int consume(T t) {
+            return t.intValue(); // NOT OK since T could be nullable
+        }
+        T provide() {
+            return null;         // NOT OK since T could require nonnull
+        }
+    }
+</pre>
+<p>最后一点可能看起来令人惊讶，但请注意，无约束类型参数意味着我们可能不会假设任何关于由相应类型变量表示的类型的null。更重要的是：我们必须积极支持可空<em>和</em>非空类型。另一方面，这只是扩展了现有规则，即与无界类型变量兼容的唯一类型是类型变量本身。要在null分析的上下文中解释这种情况，编译器将针对<code>provide()</code>中的返回引发以下错误：</p>
+<blockquote>空类型不匹配（类型注释）：'null'与自由类型变量'T'不兼容</blockquote>
+<p>此悲观分析检测到的问题严重程度由专用<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#pessimistic_analysis">偏好选项控制</a> 。
+</p><p>通过对无约束类型参数实施这种防御策略，我们获得了允许客户自由选择特定通用实例化规则的好处，如下所示。
+</p>
+<h3 id="typeArguments">输入参数</h3>
+<p>在实例化泛型类型或调用泛型方法时，必须遵守type参数提出的约束。因此，当泛型类型或方法的提供者指定了所需的null时，必须遵守此规则，并且编译器将标记任何违规。
+</p>
+<p>另一方面，当类型参数没有施加任何限制时，客户端可以自由选择其类型参数的null：</p><pre>
+    int processWithoutNulls (@NonNull List&lt;<strong>@NonNull Integer</strong>&gt; ints) {
+        int result = 0;
+        for (int i = 0; i &lt; ints.size(); i++) {
+            Integer element = ints.get(i);
+            result += element.intValue(); // OK: list element is known to be nonnull
+            ints.set(i, null);            // NOT OK: list does not accept null value
+        }
+        return result;
+    }
+    int processWithNulls (@NonNull List&lt;<strong>@Nullable Integer</strong>&gt; ints) {
+        int result = 0;
+        for (int i = 0; i &lt; ints.size(); i++) {
+            Integer element = ints.get(i);
+            result += element.intValue(); // NOT OK: list element can be null
+            ints.set(i, null);            // OK: list accepts null value
+        }
+        return result;
+    }
+</pre>
+<h3 id="substitution">代换</h3>
+<p>将null类型注释与泛型相结合的目的是将为类型参数定义的约束传播到相应类型变量的所有实例中。例如，如果声明<code>List&lt;@NonNull String&gt;</code>类型的变量并在此变量上调用<code>List&lt;T&gt;</code>任何方法，则所有方法签名都将看到由<code>@NonNull String</code>替换的类型<code>T</code>这就是如何将<code>null</code>值插入此列表是不可能的，并允许安全地将从此列表中提取的元素视为非<code>null</code> 。上一节给出了这个想法的例子。
+</p>
+<p>不幸的是，当应用于<em>未考虑空注释的</em>通用库类时，这个想法引入了新的风险<em>。</em>一个突出的例子是方法<code>java.util.Map.get(K)</code> ，声明返回<code>V</code>在这种特殊情况下，所述方法的javadoc明确指出<code>null</code>是一个可能的返回值，这与用任何非<code>null</code>类型替换<code>V</code>相冲突。因此，如果在<code>Map&lt;Y,@NonNull X&gt;</code>类型的变量上调用此特定方法<code>get()</code> ，则假定返回值为非<code>Map&lt;Y,@NonNull X&gt;</code>是<em>不安全的</em> 。这种困境是两个因素的结合：</p>
+<ol>
+<li>该库缺少空注释（在空注释方面应该被视为“遗留”）</li>
+<li>编译器无法通过意图（支持任意替换）或不安全的遗漏（遗留）来知道未注释的类型变量。
+</li></ol>
+<p>要提醒用户注意此风险，编译器会引发特定警告：</p>
+<blockquote>基于接收器类型“Map &lt;Y，@ NonNull X&gt;”，方法返回类型的不安全解释为“@NonNull X”。类型“地图”似乎没有考虑到空类型注释</blockquote> 
+<p>此问题的严重性由专用<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#unsafe_interpretation_generic_legacy">首选项选项控制</a> 。
+</p><p>为了响应这一警告，解决困境的方法是将空注释添加到相关的泛型类中。对于当前用户不是旧库的所有者的可能情况，应使用<a href="task-using_external_null_annotations.htm">外部空注释</a> 。然后有两个选择：</p>
+<ol>
+<li>对于给定的示例，应声明方法<code>get(K)</code>以返回<code>@Nullable V</code></li>
+<li>对于<code>List.get()</code>所示的相反情况，返回类型应保持未注释。为了向编译器发出信号，表明类型<em>未按意图</em>注释，应创建存根外部注释文件（.eea），而不插入实际的外部注释。这将告诉编译器该类不再被视为遗留，因此应根据上面给出的规则逐字解释此类的所有签名（必须注意这对于该类中的所有方法都是安全的） 。
+	</li>
+</ol>
+<p>如果找到外部注释文件，则不会发出有关不安全解释的特定警告。最后，如果项目尚未配置为使用给定库的外部注释，则问题将软化为“信息”严重性。
+</p> 
+
+<h2 id="inference">推理</h2>
+<p>对于影响类型参数的空类型注释，该语言具有一个适合推理的位置：在调用泛型方法（lambda表达式等）的类型推断期间，类型推断羞涩地尝试也推断出适当的空类型注释。例：</p>
+<pre>    &lt;T&gt; T check(T in) { return in; }
+    void test(@NonNull List&lt;@Nullable String&gt; someStrings) {
+        @NonNull List&lt;@Nullable String&gt; checked;
+        checked = check(someStrings); // inferring types for this invocation
+        ...
+    }
+</pre>
+<p>在这个简单的例子中，推理确实会将泛型参数<code>&lt;T&gt;</code>实例<code>@NonNull List&lt;@Nullable String&gt;</code> 。还推断出更复杂的场景，但不保证能够始终找到可能的解决方案。如果推断无法推断出合适的空类型注释，则建议用户恢复以显式指定类型参数，即使是泛型方法调用也是如此。
+</p>
+
+<h2 id="more_locations">更多地点</h2>
+<h3>演员和实例</h3>
+<p>从语法上讲，类型注释也可以用于强制转换和instanceof表达式。但是，对于null注释，这具有有限的价值。
+</p>
+<p>
+<strong>转换</strong>为空注释类型始终是<em>未经检查的转换，</em>因为不允许编译器插入将使转换有意义的运行时检查。如果需要运行时检查，请考虑使用小辅助函数，如：</p>
+<pre>    static @NonNull &lt;T&gt; T castToNonNull(@Nullable T value, @Nullable String msg) {
+        if (value == null) throw new NullPointerException(msg);
+        return value;
+    }
+</pre>
+<p>由于擦除，影响泛型类型的类型参数的转换将始终是未选中的转换。
+</p>
+<p>
+带有null类型注释的<strong>instanceof</strong>检查没有意义。因此，编译器将此标记为非类型注释的非法使用。
+</p>
+<h3>根据定义非空的位置</h3>
+<p>在语法上，类型注释也可用于</p>
+<ul>
+<li>分配表达式</li>
+<li>方法接收器（通过<strong>此</strong>名称伪参数）</li>
+<li>捕获参数</li>
+</ul>
+<p>在每个构造中，根据定义，类型是非空的。因此，其中一个位置的空类型注释被标记为非法使用。但是，这并不限制在给定类型的类型参数上使用null类型注释。
+</p>
+
+<h2 id="compatibility">兼容性</h2>
+<p>从声明注释迁移到类型注释有一些不可避免的含义，涉及语法，关于项目配置和语义。
+</p>
+<h3 id="compatibility_syntax">句法</h3>
+<p>对于两个构造，JLS引入了语法更改：</p>
+<table border="1" cellspacing="0" cellpadding="5" summary="Syntax Changes">
+<tr><th>声明注释（Java 7或更低版本）</th><th>类型注释（Java 8）</th></tr>
+<tr><td><code>@NonNull String []</code></td><td><code>String @NonNull []</code></td></tr>
+<tr><td><code>@NonNull java.lang。串</code></td><td><code>java.lang中。@NonNull字符串</code></td></tr>
+</table>
+<p>在这两种情况下，都引入了新语法以提供更多选项。
+</p>
+<p>对于<strong>数组</strong> ，叶元素类型之前的类型注释现在将表示其单个单元格具有给定空值的数组 - 此处：单元格不能为空。在Java 7及更低版本中，相同的语法表示相应变量的属性，因此捕获了数组本身的null。使用Java-8类型注释来表达相同的内容，即。数组本身可以是或不可以为null，类型注释放在方括号表示数组维度之前。这意味着旧语法仍然有效，但其含义已更改：</p>
+<pre>
+    // annotated leaf type:
+    @NonNull Object [] o1;
+    o1 = null;          // OK
+    o1 = new Object[1];
+    o1[0] = null;       // NOT OK
+    ...
+    // annotated array type:
+    Object @NonNull[] o2;
+    o2 = null;          // NOT OK
+    o2 = new Object[1];
+    o2[0] = null;       // OK
+    ...
+    // multi-dimensional array:
+    Object @NonNull[] @Nullable[] o3;
+    o3 = null;          // NOT OK, outer array is nonnull
+    o3 = new Object[1] @Nullable[];
+    o3[0] = null;       // OK, inner array is nullable
+</pre>
+<p>不幸的是，检查具有非空内容的数组的正确初始化超出了JDT静态分析的能力。
+</p>
+<p>对于<strong>限定类型名称</strong> ，类型注释必须直接放在实际类型名称之前。这样就可以为<code>org.project.内部类及其封闭提供不同的类型注释<code>org.project.@Immutable外面。@Nullable Inner</code> 。但是，这种区别对于空注释没有用，因为根据定义，非静态内部类的封闭始终是非空的。null类型注释的用户只需要了解这种情况的旧语法对于类型注释是非法的，以及如何将其转换为合法的Java 8代码（参见上表）。
+</p>
+<h3 id="compatibility_configuration">项目配置</h3>
+<p>可以通过查看它们的<code>@Target</code>声明来区分正确设计的注释类型（不鼓励使用缺少<code>@Target</code>声明的空注释）。为了支持两种注释样式，JDT发布了注释包<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/package-summary.html"><code>org.eclipse.jdt.annotation</code></a>的主要更新：版本1.1.x是旧样式声明注释;版本2.0.0及更高版本是类型注释。通过增加主要版本，可以发出不兼容的信号。建议用户使用显式版本范围引用此库， <code>[1.1.0,2.0.0)</code>用于声明注释，或者<code>[2.0.0,3.0.0)</code>用于类型注释。
+</p>
+<p>确切的配置当然取决于项目的风格：</p><dl>
+<dt>普通的Java</dt>
+<dd>JDT继续提供将注释库复制到项目中的quickfix。版本将由项目的合规性设置决定。</dd>
+<dt>Maven的</dt>
+<dd>注释包的两个版本都将发布到<code>repo.eclipse.org</code> ，从那里可以使用常规maven机制使用它们：确保指定正确的版本;建议为此依赖项指定<code>&lt;scope&gt;compile&lt;/scope&gt;</code> 。</dd>
+<dt>OSGi / Eclipse</dt>
+<dd>在开发OSGi bundle / Eclipse插件时，应该如上所述指定版本范围。不幸的是，OSGi不支持编译时依赖性的概念。文件<code>build.properties</code>的PDE特定机制存在问题，因为它不支持指定版本范围。因此，所需语义的最佳近似是使用<code>Require-Bundle</code>依赖。使用<code>resolution:=optional</code>限定，以避免强制对运行时的依赖：<pre>
+Require-Bundle: ...,
+ org.eclipse.jdt.annotation;bundle-version="[2.0.0,3.0.0)";resolution:=optional
+</pre></dd>
+</dl>
+<h3 id="compatibility_semantics">语义 -  NonNullByDefault</h3>
+<p>虽然null注释的基本语义保持不变，但注释<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html"><code>@NonNullByDefault</code></a>略有改变：</p>
+<ul>
+<li>此注释现在可以影响更多位置。</li>
+<li>可以使用注释的<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html#value--"><code>value</code></a>属性微调受影响的位置（另请参见枚举<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/DefaultLocation.html"><code>DefaultLocation</code></a> ）。</li>
+<li>因此，取消外部作用域的默认值的注释也已更改：<table border="1" cellspacing="0" cellpadding="5" summary="Cancelling a default">
+<tr><th>声明注释（Java 7或更低版本）</th><th>类型注释（Java 8）</th></tr>
+<tr><td><code>@NonNullByDefault（假）</code></td><td><code>@NonNullByDefault（{}）</code></td></tr>
+</table>
+</li>
+</ul>
+<p>请注意，仅在使用注释类型<code>org.eclipse.jdt.annotation.时才支持此处描述的<code>value</code>属性<code>org.eclipse.jdt.annotation.Eclipse提供的NonNullByDefault</code> 。
+</p>
+<p>虽然<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html"><code>@NonNullByDefault</code></a>的Java 8变<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html"><code>@NonNullByDefault</code></a>影响更多位置，但存在两个值得注意的异常（如<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/DefaultLocation.html"><code>DefaultLocation</code></a>所指定）：</p><blockquote>
+	<strong>始终从<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html"><code>@NonNullByDefault</code></a>排除通配符和类型变量的使用。
+	</strong>
+</blockquote>
+<p>根据此规则，类型变量和通配符在nullness方面也保留其预期属性为“未知数”，即使它们出现在<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html"><code>@NonNullByDefault</code></a>的上下文中也是<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.isv/reference/api/org/eclipse/jdt/annotation/NonNullByDefault.html"><code>@NonNullByDefault</code></a> 。
+</p>
+
+<h2 id="compiler_messages_explained">编译器消息解释</h2>
+<p>除了<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_null_annotations.htm#compiler_messages_explained">以前版本</a>的<a href="PLUGINS_ROOT/org.eclipse.jdt.doc.user/tasks/task-using_null_annotations.htm#compiler_messages_explained">编译器消息</a>之外，如果启用了空类型注释以进行分析，则可能会发出以下消息：</p>
+
+<h3>一般null类型不匹配</h3>
+<dl>
+<dt><font color="SaddleBrown">空类型不匹配（类型注释）：需要'X'但此表达式的类型为'Y'</font></dt>
+<dd>在赋值上下文中，null类型注释不匹配。请注意，不匹配可能与类型的任何细节（类型参数，数组元素）有关，而不一定与主类型有关。</dd>
+</dl>
+<p>基于类型注释检测到的所有不匹配都以“ <code>Null type mismatch (type annotations)</code> ”为前缀。
+</p>
+	
+<h3>各种表达</h3>
+<dl>
+<dt><font color="SaddleBrown">潜在的空指针访问：数组元素可以为null</font></dt>
+<dd>取消引用数组元素，其中数组类型将其元素声明为<code>@Nullable</code> 。</dd>
+<dt><font color="SaddleBrown">潜在的空指针访问：此表达式具有“@Nullable”类型</font></dt>
+<dd>点左侧的任何表达式都具有声明为可为空的类型。</dd>
+<dt><font color="SaddleBrown">冗余空检查：将'@NonNull X'与null进行比较</font></dt>
+<dd>已知具有@NonNull类型的任意表达式不必要地与null进行比较。</dd>
+</dl>
+
+<h3>未经检查的转化</h3>
+<dl>
+<dt><font color="SaddleBrown">空类型安全（类型注释）：类型'X'的表达式需要未经检查的转换以符合'@NonNull X'</font></dt>
+<dd>未注释类型的值被分配给注释类型的变量。请注意，不匹配可能与类型的任何细节（类型参数，数组元素）有关，而不一定与主类型有关。</dd>
+<dt><font color="SaddleBrown">空类型安全：未经检查从X投射到'@N Y'</font></dt>
+<dd>值被转换为空注释类型，其中在运行时不会通过强制转换检查空值。</dd>
+</dl>
+
+<h3>泛型特有的问题</h3>
+<dl>
+<dt><font color="SaddleBrown">空约束不匹配：类型'X'不是类型参数'T'的有效替代</font></dt>
+<dd>这里所述类型参数<code>&lt;T&gt;</code>具有在所提到的形式之一的约束<a href="#typeParameters">以上</a> 。但是，实际的类型参数<code>X</code>不符合此约束。</dd>
+<dt><font color="SaddleBrown">此nullness注释与'@N'注释冲突，该注释对同一类型参数有效</font></dt>
+<dd>类型参数的边界上的空注释与另一个边界上的另一个空注释或类型参数本身冲突。</dd>
+<dt><font color="SaddleBrown">矛盾的零注释：方法被推断为'T foo（X）'，但只有'@NonNull'和'@Nullable'中的一个可以在任何位置有效</font></dt>
+<dd>泛型方法调用的类型推断产生了一个签名，其中相互矛盾的空注释在同一元素上发生冲突。</dd><dd>
+</dd><dt><font color="SaddleBrown">空类型不匹配（类型注释）：'null'与自由类型变量'T'不兼容</font></dt>
+<dt><font color="SaddleBrown">空类型不匹配（类型注释）：必需'T'但此表达式的类型为'@Nullable T'，其中'T'是自由类型变量</font></dt>
+<dt><font color="SaddleBrown">空类型安全：需要'@NonNull'但这个表达式有'T'类型，一个可以代表'@Nullable'类型的自由类型变量</font></dt>
+<dt><font color="SaddleBrown">字段'f'可能尚未初始化，而其类型'T'是一个自由类型变量，可能代表'@NonNull'类型</font></dt>
+<dt><font color="SaddleBrown">潜在的空指针访问：此表达式具有类型“T”，一个可以表示“@Nullable”类型的自由类型变量</font></dt>
+<dd>通过<a href="#pessimistic_analysis">对自由类型变量的悲观分析来</a>具体检测这些问题。</dd>
+<dt><font color="SaddleBrown">基于接收器类型“Map &lt;Y，@ NonNull X&gt;”，方法返回类型的不安全解释为“@NonNull X”。类型“地图”似乎没有考虑到空类型注释</font></dt>
+<dt><font color="SaddleBrown">基于替换'V = @NonNull X'，方法返回类型的不安全解释为'@NonNull X'。声明类型“Map &lt;K，V&gt;”似乎没有考虑到null类型注释</font></dt>
+<dd>这标志着<a href="#substitution">从遗留库中替换类型变量</a>的特殊困境。
+</dd></dl>
+
+
+<h3>Lambda表达式和方法引用</h3>对于影响lambda表达式或方法引用的null注释中的任何不匹配，提到了相应的“描述符”（由lambda /方法引用实现的单个抽象方法）。这对于查找在当前表达式中不明确的null注释的原点很有用。
+
+
+</body>
+</html>

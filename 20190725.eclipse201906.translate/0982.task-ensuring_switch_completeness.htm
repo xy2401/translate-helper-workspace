@@ -1,0 +1,83 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) GK Software AG and others 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1">
+<style type="text/css">
+	div.recommendation { margin-left:10px;margin-right:10px; background-color:#f0f0f0; padding:10px; }
+	div.recommendation strong { color:green; }
+</style>
+<title>确保switch语句的完整性</title>
+</head>
+<body >
+<h1>确保switch语句的完整性</h1>
+<p>优良作法是确保每个<code>switch</code>语句都应该完整，因为运行时的每次执行都会找到合适的分支。考虑到以下所有因素，这实际上是一项非常重要的任务：</p>
+<ul>
+<li>不同的规则适用于<b>枚举</b>值与int或甚至String的切换。</li>
+<li>根据具体情况，使用<b>默认</b>标签可能会出现不良或良好做法，甚至是强制性的。</li>
+<li>在某些情况下， <b>程序演变</b>应该通过将不一致的扩展标记为错误来安全地保护，而在其他情况下，需要更宽容的策略。</li>  
+</ul>
+<p>此外，JLS要求对枚举开关语句进行流分析，这可能导致意外的编译时错误：</p><pre id="missing_return">    enum Colors { RED, GREEN, BLUE }
+    String colorString(Color c) {
+        switch(c) {
+            case RED: return "red";
+            case GREEN: return "green";
+            case BLUE: return "blue";
+        }
+    }
+</pre>
+<p>编译器将回答：</p>
+<blockquote>“此方法必须返回String类型的结果。请注意，有关在'switch'上缺少'default：'的问题已被抑制，这可能与此问题有关“。</blockquote>
+<p>此消息旨在提醒用户不同的完整性概念：JLS强制要求的流分析将<em>每个</em>枚举switch语句视为不完整的默认情况，即使它列出了所有（当前已知的）枚举常量。这涉及返回语句以及局部变量或空白最终字段的明确赋值。但是，如果您按照以下所有建议操作，则不会出现上述错误消息。
+</p>
+<p>有关报告各种不完整程度的各个配置选项，请参阅<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#switch">编译器首</a>选项。在续集中，我们将讨论不同的设计目标和策略，以及如何使用Eclipse Java编译器检查它们。
+</p>
+<h2>使用“默认：”</h2>
+<p>最理想的是，每个switch语句都应该有一个<b>有意义的默认分支</b> ，它处理所有未使用“始终合理”策略明确列出的情况。显然，在许多情况下，这样的策略很难甚至不可能找到，但如果你能找到一个有意义的默认实现，那肯定是最好的解决方案。
+</p>
+<div class="recommendation">
+	<strong>建议：</strong>通过让编译器警告您缺少默认情况的每个switch语句，系统会提醒您为每个switch语句搜索一个良好的默认实现。
+</div>
+<p>如果编译器警告你缺少默认情况，但默认情况下合理的事情就是<b>什么都不做</b> ，这也许值得记录。
+</p>
+<div class="recommendation">
+	<strong>建议：</strong>如果“什么都不做”是一个合理的默认策略，你应该添加一个<code>default:</code>标签，其行为只是一个注释，解释了（以及为什么）在此开关中什么也不做。通过这样做，您还告诉编译器您不会<em>忘记</em>默认情况。
+</div>
+<p>如果肯定没有找到合理的默认实现，作为<b>最后的手段，</b>您可能希望防止意外值成为下游其他错误的根本原因，即您可能希望在运行时<b>提前失败</b> 。
+</p>
+<div class="recommendation">
+	<strong>建议：</strong>如果既没有找到合理的默认实现也没有“什么也不做”似乎是一个好策略，那么添加一个<code>default:</code>情况：抛出异常和/或记录问题的情况。
+</div>
+<p>每个switch语句都应该可以分配给上述三个类别之一。这意味着让编译器<b>警告您每个缺少的默认情况</b>是一种普遍有效的策略。
+</p>
+<h2>处理所有枚举常量</h2>
+<p>当对枚举值执行切换时，可能希望通过相应的case语句显式地覆盖每个枚举常量。
+</p>
+<div class="recommendation">
+	<strong>建议：</strong>如果您想要注意缺少任何枚举常量的case语句的enum switch语句，请考虑启用选项<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#missing_case_despite_default">Signal即使存在“default”情况</a> 。
+</div>
+<p>如果您不喜欢<em>所有</em>枚举开关都应该提及所有枚举常量的选项，但仍希望获得有关<em>某些</em>枚举开关语句的缺少案例标签的警告，则需要为每个单独的枚举开关语句选择策略。
+</p>
+<div class="recommendation">
+	<strong>建议：</strong>如果某些switch语句需要上述警告，请考虑全局启用警告，并识别那些可以<em>省略</em>某些枚举常量的情况的switch语句，因为这些是由默认情况适当处理的。对于这些switch语句，请使用'// $ CASES-OMITTED $'标记注释来记录您的决定：</div>
+<pre>    String colorString2(Color c) {
+        switch(c) {
+        case RED: return "red";
+        case GREEN: return "green";
+            //$CASES-OMITTED$
+        default:
+        	return "unknown color";
+        }
+    }</pre>
+<p><strong>提示：</strong>如果编译器报告类似“枚举常量BLUE应该在此枚举开关上具有相应的案例标签”，则会提供快速修复以插入标记注释。
+</p>
+<h2>摘要</h2>
+<p>上面的注意事项表明，如果<b>启用</b>有关不完整switch语句的<b>所有可选警告</b> ，并且使用空的文档化默认情况和<code>//$CASES-OMITTED$</code> tag注释来标记那些不完整性<code>//$CASES-OMITTED$</code> switch语句，则可以从编译器获得大部分帮助。设计。如果您遵循这些建议，当意外省略分支时，您将获得所有相关警告（如果您愿意，则会出现错误），包括延迟添加一个或多个枚举常量的情况。此最大完整性的所有异常都将记录在代码中，不再标记警告。
+</p>
+<p>编译器仍然无法阻止在运行时使用不一致的类版本，因此可以针对枚举类型的旧版本编译类，但是在运行的应用程序中，枚举类型可能具有更多的枚举常量。对于这些和类似的情况，适当的“全部捕获”默认实现可以引发运行时异常以警告这种不一致性并防止错误进一步传播到应用程序中。
+</p>
+<p>作为上面推荐的严格编译器设置的附加值，将不再出现<a href="#missing_return">上面</a>显示的关于缺少返回语句的可疑错误消息（或关于未初始化变量的类似消息）。
+</p>
+</body>
+</html>

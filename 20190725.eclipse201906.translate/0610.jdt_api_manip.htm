@@ -1,0 +1,381 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>操纵Java代码</title>
+<link rel="stylesheet" type="text/css" href="../book.css">
+
+</head>
+<body >
+<h2>操纵Java代码</h2>
+<p>您的插件可以使用JDT API创建类或接口，向现有类型添加方法或更改类型的方法。</p>
+
+<p>更改Java对象的最简单方法是使用Java元素API。可以使用更一般的技术来处理Java元素的原始源代码。</p>
+<h3>使用Java元素修改代码</h3>
+<h4>生成编译单元</h4>
+<p>以编程方式生成编译单元的最简单方法是使用<b><a href="../reference/api/org/eclipse/jdt/core/IPackageFragment.html#createCompilationUnit(java.lang.String, java.lang.String, boolean, org.eclipse.core.runtime.IProgressMonitor)">IPackageFragment.createCompilationUnit</a></b> 。您指定编译单元的名称和内容。编译单元在包内创建，并返回新的<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html">ICompilationUnit</a></b> 。</p>
+<p>通过在与包目录对应的适当文件夹中创建扩展名为“ <b>.java”</b>的文件资源，可以一般地创建编译单元。使用通用资源API是Java工具的后门，因此在通知通用资源更改侦听器并且JDT侦听器使用新编译单元更新Java模型之前，不会更新Java模型。</p>
+
+<h4>修改编译单元</h4>
+<p>可以使用Java元素API完成Java源代码的大多数简单修改。</p>
+<p>例如，您可以从编译单元查询类型。获得<a href="../reference/api/org/eclipse/jdt/core/IType.html"><b>IType后</b></a> ，可以使用<a href="../reference/api/org/eclipse/jdt/core/IType.html#createField(java.lang.String, org.eclipse.jdt.core.IJavaElement, boolean, org.eclipse.core.runtime.IProgressMonitor)"><b>createField</b></a> ， <a href="../reference/api/org/eclipse/jdt/core/IType.html#createInitializer(java.lang.String, org.eclipse.jdt.core.IJavaElement, org.eclipse.core.runtime.IProgressMonitor)"><b>createInitializer</b></a> ， <a href="../reference/api/org/eclipse/jdt/core/IType.html#createMethod(java.lang.String, org.eclipse.jdt.core.IJavaElement, boolean, org.eclipse.core.runtime.IProgressMonitor)"><b>createMethod</b></a>或<a href="../reference/api/org/eclipse/jdt/core/IType.html#createType(java.lang.String, org.eclipse.jdt.core.IJavaElement, boolean, org.eclipse.core.runtime.IProgressMonitor)"><b>createType</b></a>等协议将源代码成员添加到该类型中。这些方法提供了源代码和有关成员位置的信息。</p>
+<p><b><a href="../reference/api/org/eclipse/jdt/core/ISourceManipulation.html">ISourceManipulation</a></b>接口定义Java元素的常见源操作。这包括重命名，移动，复制或删除类型成员的方法。</p>
+<h4>工作副本</h4>
+<p>可以通过操作编译单元（因此修改底层<a href="../../org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/resources/IFile.html"><b>IFile</b></a> ）来修改代码，或者可以修改称为工作副本的编译单元的内存中副本。</p>
+<p>使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#getWorkingCopy(org.eclipse.core.runtime.IProgressMonitor)">getWorkingCopy</a></b>方法从编译单元获取工作副本。（请注意，编译单元不需要存在于Java模型中，以便创建工作副本。）创建此类工作副本的人员有责任在不再需要使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#discardWorkingCopy()">discardWorkingCopy</a></b>方法时将其丢弃。</p>
+<p>工作副本修改内存缓冲区。<b>getWorkingCopy（）</b>方法创建一个默认缓冲区，但客户端可以使用<b><a href="../reference/api/org/eclipse/jdt/core/ITypeRoot.html#getWorkingCopy(org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">getWorkingCopy（WorkingCopyOwner，IProgressMonitor）</a></b>方法提供自己的缓冲区实现。客户端可以直接操作此缓冲区的文本。如果他们这样做，他们必须使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">reconcile（int，boolean，WorkingCopyOwner，IProgressMonitor）</a></b>方法不时地同步工作副本和缓冲区。</p>
+<p>最后，可以使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#commitWorkingCopy(boolean, org.eclipse.core.runtime.IProgressMonitor)">commitWorkingCopy</a></b>方法将工作副本保存到磁盘（替换原始编译单元）。</p>
+<p>例如，以下代码段使用自定义工作副本所有者在编译单元上创建工作副本。代码段修改缓冲区，协调更改，将更改提交到磁盘，最后丢弃工作副本。</p>
+<pre class="color1">
+    // Get original compilation unit
+    ICompilationUnit originalUnit = ...;
+    
+    // Get working copy owner
+    WorkingCopyOwner owner = ...;
+    
+    // Create working copy
+    ICompilationUnit workingCopy = originalUnit.getWorkingCopy(owner, null);
+    
+    // Modify buffer and reconcile
+    IBuffer buffer = ((IOpenable)workingCopy).getBuffer();
+    buffer.append("class X {}");
+    workingCopy.reconcile(ICompilationUnit.NO_AST, false, null, null);
+    
+    // Commit changes
+    workingCopy.commitWorkingCopy(false, null);
+    
+    // Destroy working copy
+    workingCopy.discardWorkingCopy();
+</pre>
+<p>还可以使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#applyTextEdit(org.eclipse.text.edits.TextEdit, org.eclipse.core.runtime.IProgressMonitor)">ICompilationUnit.applyTextEdit</a></b>方法修改编译单元的缓冲区。</p>
+<pre class="color1">
+    // Get original compilation unit
+    ICompilationUnit originalUnit = ...;
+    
+    // Get working copy owner
+    WorkingCopyOwner owner = ...;
+    
+    // Create working copy
+    ICompilationUnit workingCopy = originalUnit.getWorkingCopy(owner, null);
+    
+    // Get text edits
+    TextEdit edit = ...;
+    
+    // Modify buffer and reconcile
+    workingCopy.applyTextEdit(edit, null);
+    workingCopy.reconcile(ICompilationUnit.NO_AST, false, null, null);
+    
+    // Commit changes
+    workingCopy.commitWorkingCopy(false, null);
+    
+    // Destroy working copy
+    workingCopy.discardWorkingCopy();
+</pre>
+<p>使用工作副本所有者的多个客户端也可以共享工作副本。稍后可以使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#findWorkingCopy(org.eclipse.jdt.core.WorkingCopyOwner)">findWorkingCopy</a></b>方法检索工作副本。因此，共享工作副本在原始编译单元和工作副本所有者上键入。</p>
+
+<p>下面显示客户端1如何创建共享工作副本，客户端2检索此工作副本，客户端1丢弃工作副本，客户端2尝试检索共享工作副本通知它不再存在：</p>
+<pre class="color1">
+    // Client 1 &amp; 2: Get original compilation unit
+    ICompilationUnit originalUnit = ...;
+    
+    // Client 1 &amp; 2: Get working copy owner
+    WorkingCopyOwner owner = ...;
+    
+    // Client 1: Create shared working copy
+    ICompilationUnit workingCopyForClient1 = originalUnit.getWorkingCopy(owner, null);
+    
+    // Client 2: Retrieve shared working copy
+    ICompilationUnit workingCopyForClient2 = originalUnit.findWorkingCopy(owner);
+     
+    // This is the same working copy
+    assert workingCopyForClient1 == workingCopyForClient2;
+    
+    // Client 1: Discard shared working copy
+    workingCopyForClient1.discardWorkingCopy();
+    
+    // Client 2: Attempt to retrieve shared working copy and find out it's null
+    workingCopyForClient2 = originalUnit.findWorkingCopy(owner);
+    assert workingCopyForClient2 == null;
+</pre>
+<h3>使用DOM / AST API进行代码修改</h3>有三种方法可以创建<b><a href="../reference/api/org/eclipse/jdt/core/dom/CompilationUnit.html">CompilationUnit</a></b> 。第一个是使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html">ASTParser</a></b> 。第二种是使用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">ICompilationUnit＃reconcile（...）</a></b> 。第三种是使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/AST.html">AST</a></b> （抽象语法树）上的工厂方法从头开始。
+<h4>从现有源代码创建AST</h4>实例<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html">ASTParser</a></b>必须创建<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#newParser(int)">ASTParser.newParser（INT） 。</a></b><br>
+
+<br>源代码使用以下方法之一提供给<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html">ASTParser</a></b> ：<ul>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#setSource(char[])">setSource（char []）</a></b> ：从源代码创建AST</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#setSource(org.eclipse.jdt.core.IClassFile)">setSource（IClassFile）</a></b> ：从类文件创建AST</li>
+<li><b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#setSource(org.eclipse.jdt.core.ICompilationUnit)">setSource（ICompilationUnit）</a></b> ：从编译单元创建AST</li>
+</ul>然后通过调用<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#createAST(org.eclipse.core.runtime.IProgressMonitor)">createAST（IProgressMonitor）</a></b>创建AST。<br>
+<br>结果是AST具有每个节点的正确源位置。必须在使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#setResolveBindings(boolean)">setResolveBindings（boolean）</a></b>创建树之前请求绑定的解析。解决绑定是一项代价高昂的操作，只应在必要时进行。一旦树被修改，所有位置和绑定都将丢失。<br>请注意，在此解决过程中也可以使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/ASTParser.html#setBindingsRecovery(boolean)">setBindingsRecovery（boolean）</a></b>完成一些绑定恢复。使用此恢复，一些绑定（ <i>通常缺少类型</i> ）将不再为<code>null</code> ，从而提高使用AST树的任何客户端的弹性。
+
+<h4>通过协调工作副本来创建AST</h4>如果工作副本不一致（已修改），则可以通过调用方法<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">reconcile（int，boolean，WorkingCopyOwner，IProgressMonitor）</a></b>来创建AST。要请求AST创建，请使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/AST.html#JLS3">AST.JLS3</a></b>作为第一个参数调用<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">reconcile（...）</a></b>方法。<br>
+<br>仅当问题请求者处于活动状态或强制进行问题检测时，才会计算其绑定。解决绑定是一项代价高昂的操作，只应在必要时进行。一旦树被修改，所有位置和绑定都将丢失。<br>请注意，通过使用方法<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, int, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">reconcile（int，int，WorkingCopyOwner，IProgressMonitor）</a></b>和第二个参数上设置的标志<b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#ENABLE_BINDINGS_RECOVERY">ENABLE_BINDINGS_RECOVERY</a></b> <b><a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, int, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)">，</a></b>也可以在此解决过程中完成一些绑定恢复。使用此恢复，一些绑定（ <i>通常缺少类型</i> ）将不再为<code>null</code> ，从而提高使用AST树的任何客户端的弹性。
+<h4>从头开始</h4>
+<p>可以使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/AST.html">AST</a></b>上的工厂方法从头开始创建<b><a href="../reference/api/org/eclipse/jdt/core/dom/CompilationUnit.html">CompilationUnit</a></b> 。这些方法名称以<b>new ...</b>开头。以下是创建<b>HelloWorld</b>类的示例。</p>
+<p>第一个片段是生成的输出：</p>
+<pre class="color1">
+ package example;
+ import java.util.*;
+ public class HelloWorld {
+  public static void main(String[] args) {
+   System.out.println("Hello" + " world");
+  }
+ }
+</pre>
+<p>以下代码段是生成输出的相应代码。</p>
+<pre class="color1">
+
+  AST ast = AST.newAST(AST.JLS3);
+  CompilationUnit unit = ast.newCompilationUnit();
+  PackageDeclaration packageDeclaration = ast.newPackageDeclaration();
+  packageDeclaration.setName(ast.newSimpleName("example"));
+  unit.setPackage(packageDeclaration);
+  ImportDeclaration importDeclaration = ast.newImportDeclaration();
+  QualifiedName name = 
+   ast.newQualifiedName(
+    ast.newSimpleName("java"),
+    ast.newSimpleName("util"));
+  importDeclaration.setName(name);
+  importDeclaration.setOnDemand(true);
+  unit.imports().add(importDeclaration);
+  TypeDeclaration type = ast.newTypeDeclaration();
+  type.setInterface(false);
+  type.modifiers().add(ast.newModifier(Modifier.ModifierKeyword.PUBLIC_KEYWORD));
+  type.setName(ast.newSimpleName("HelloWorld"));
+  MethodDeclaration methodDeclaration = ast.newMethodDeclaration();
+  methodDeclaration.setConstructor(false);
+  List modifiers = methodDeclaration.modifiers();
+  modifiers.add(ast.newModifier(Modifier.ModifierKeyword.PUBLIC_KEYWORD));
+  modifiers.add(ast.newModifier(Modifier.ModifierKeyword.STATIC_KEYWORD));
+  methodDeclaration.setName(ast.newSimpleName("main"));
+  methodDeclaration.setReturnType2(ast.newPrimitiveType(PrimitiveType.VOID));
+  SingleVariableDeclaration variableDeclaration = ast.newSingleVariableDeclaration();
+  variableDeclaration.setType(ast.newArrayType(ast.newSimpleType(ast.newSimpleName("String"))));
+  variableDeclaration.setName(ast.newSimpleName("args"));
+  methodDeclaration.parameters().add(variableDeclaration);
+  org.eclipse.jdt.core.dom.Block block = ast.newBlock();
+  MethodInvocation methodInvocation = ast.newMethodInvocation();
+  name = 
+   ast.newQualifiedName(
+    ast.newSimpleName("System"),
+    ast.newSimpleName("out"));
+  methodInvocation.setExpression(name);
+  methodInvocation.setName(ast.newSimpleName("println")); 
+  InfixExpression infixExpression = ast.newInfixExpression();
+  infixExpression.setOperator(InfixExpression.Operator.PLUS);
+  StringLiteral literal = ast.newStringLiteral();
+  literal.setLiteralValue("Hello");
+  infixExpression.setLeftOperand(literal);
+  literal = ast.newStringLiteral();
+  literal.setLiteralValue(" world");
+  infixExpression.setRightOperand(literal);
+  methodInvocation.arguments().add(infixExpression);
+  ExpressionStatement expressionStatement = ast.newExpressionStatement(methodInvocation);
+  block.statements().add(expressionStatement);
+  methodDeclaration.setBody(block);
+  type.bodyDeclarations().add(methodDeclaration);
+  unit.types().add(type);
+</pre>
+<h4>检索额外的位置</h4>
+<p>DOM / AST节点仅包含一对位置（节点的起始位置和长度）。这并不总是足够的。为了检索中间位置，应使用<b><a href="../reference/api/org/eclipse/jdt/core/compiler/IScanner.html">IScanner</a></b> API。例如，我们有一个<b><a href="../reference/api/org/eclipse/jdt/core/dom/InstanceofExpression.html">InstanceofExpression</a></b> ，我们想要知道<i>instanceof</i>运算符的位置。我们可以编写以下方法来实现这个目的：</p>
+
+<pre class="color1">
+
+ private int[] getOperatorPosition(Expression expression, char[] source) {
+  if (expression instanceof InstanceofExpression) {
+   IScanner scanner = ToolFactory.createScanner(false, false, false, false);
+   scanner.setSource(source);
+   int start = expression.getStartPosition();
+   int end = start + expression.getLength();
+   scanner.resetTo(start, end);
+   int token;
+   try {
+    while ((token = scanner.getNextToken()) != ITerminalSymbols.TokenNameEOF) {
+     switch(token) {
+      case ITerminalSymbols.TokenNameinstanceof:
+       return new int[] {scanner.getCurrentTokenStartPosition(), scanner.getCurrentTokenEndPosition()};
+     }
+    }
+   } catch (InvalidInputException e) {
+   }
+  }
+  return null;
+ }
+</pre>
+<p><b><a href="../reference/api/org/eclipse/jdt/core/compiler/IScanner.html">IScanner</a></b>用于将输入源分为令牌。每个令牌都具有在<b><a href="../reference/api/org/eclipse/jdt/core/compiler/ITerminalSymbols.html">ITerminalSymbols</a></b>界面中定义的特定值。迭代和检索正确的令牌相当简单。如果要在<b><a href="../reference/api/org/eclipse/jdt/core/dom/SuperMethodInvocation.html">SuperMethodInvocation中</a></b>查找<i>super</i>关键字的位置，我们还建议您使用扫描仪。</p>
+
+<h4>源代码修改</h4>
+<p>某些源代码修改不是通过Java元素API提供的。编辑源代码（例如更改现有元素的源代码）的更通用方法是使用编译单元的原始源代码和DOM / AST的重写API来完成的。</p>
+<p>要执行DOM / AST重写，有两组API：描述性重写和修改重写。</p>
+<p>描述性API不会修改AST，而是使用<b><a href="../reference/api/org/eclipse/jdt/core/dom/rewrite/ASTRewrite.html">ASTRewrite</a></b> API生成修改说明。AST重写器收集对节点的修改的描述，并将这些描述转换为文本编辑，然后可以将其应用于原始源。</p>
+<pre class="color1">
+
+   // creation of a Document
+   ICompilationUnit cu = ... ; // content is "public class X {\n}"
+   String source = cu.getSource();
+   Document document= new Document(source);
+
+   // creation of DOM/AST from a ICompilationUnit
+   ASTParser parser = ASTParser.newParser(AST.JLS3);
+   parser.setSource(cu);
+   CompilationUnit astRoot = (CompilationUnit) parser.createAST(null);
+
+   // creation of ASTRewrite
+   ASTRewrite rewrite = ASTRewrite.create(astRoot.getAST());
+
+   // description of the change
+   SimpleName oldName = ((TypeDeclaration)astRoot.types().get(0)).getName();
+   SimpleName newName = astRoot.getAST().newSimpleName("Y");
+   rewrite.replace(oldName, newName, null);
+
+   // computation of the text edits
+   TextEdit edits = rewrite.rewriteAST(document, cu.getJavaProject().getOptions(true));
+
+   // computation of the new source code
+   edits.apply(document);
+   String newSource = document.get();
+
+   // update of the compilation unit
+   cu.getBuffer().setContents(newSource);
+</pre>
+<p>修改API允许直接修改AST：</p>
+
+<ul>
+<li>请求记录修改（ <b><a href="../reference/api/org/eclipse/jdt/core/dom/CompilationUnit.html#recordModifications()">CompilationUnit.recordModifications（）</a></b> ）。</li>
+<li>在AST节点上执行修改。</li>
+<li>完成修改后，生成文本编辑，然后将其应用于原始源（ <b><a href="../reference/api/org/eclipse/jdt/core/dom/CompilationUnit.html#rewrite(org.eclipse.jface.text.IDocument, java.util.Map)">CompilationUnit.rewrite（...）</a></b> ）。</li>
+</ul>
+<pre class="color1">
+   // creation of a Document
+   ICompilationUnit cu = ... ; // content is "public class X {\n}"
+   String source = cu.getSource();
+   Document document= new Document(source);
+
+   // creation of DOM/AST from a ICompilationUnit
+   ASTParser parser = ASTParser.newParser(AST.JLS3);
+   parser.setSource(cu);
+   CompilationUnit astRoot = (CompilationUnit) parser.createAST(null);
+
+   // start record of the modifications
+   astRoot.recordModifications();
+
+   // modify the AST
+   TypeDeclaration typeDeclaration = (TypeDeclaration)astRoot.types().get(0);
+   SimpleName newName = astRoot.getAST().newSimpleName("Y");
+   typeDeclaration.setName(newName);
+
+   // computation of the text edits
+   TextEdit edits = astRoot.rewrite(document, cu.getJavaProject().getOptions(true));
+
+   // computation of the new source code
+   edits.apply(document);
+   String newSource = document.get();
+
+   // update of the compilation unit
+   cu.getBuffer().setContents(newSource);
+</pre>
+<h3><a name="javadeltas" id="javadeltas">响应Java元素的变化</a></h3>
+<p>如果您的插件在事后需要了解Java元素的更改，则可以使用<a href="../reference/api/org/eclipse/jdt/core/JavaCore.html"><b>JavaCore</b></a>注册Java <a href="../reference/api/org/eclipse/jdt/core/IElementChangedListener.html"><b>IElementChangedListener</b></a> 。</p>
+<pre class="color1">
+
+   JavaCore.addElementChangedListener(new MyJavaElementChangeReporter());
+</pre>
+<p>您可以更具体，并使用<a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#addElementChangedListener(org.eclipse.jdt.core.IElementChangedListener, int)"><b>addElementChangedListener（IElementChangedListener，int）</b></a>指定您感兴趣的事件类型。</p>
+<p>例如，如果您只对在协调操作期间侦听事件感兴趣：</p>
+<pre class="color1">
+
+   JavaCore.addElementChangedListener(new MyJavaElementChangeReporter(), ElementChangedEvent.POST_RECONCILE);
+</pre>
+<p><b>JavaCore</b>支持两种事件：</p>
+<ul>
+<li><a href="../reference/api/org/eclipse/jdt/core/ElementChangedEvent.html#POST_CHANGE"><b>POST_CHANGE</b></a> ：此事件类型的侦听器将在相应的<a href="../../org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/resources/IResourceChangeEvent.html#POST_CHANGE"><b>POST_CHANGE</b></a>资源更改通知期间收到通知。</li>
+<li><a href="../reference/api/org/eclipse/jdt/core/ElementChangedEvent.html#POST_RECONCILE"><b>POST_RECONCILE</b></a> ：此事件类型的侦听器将在工作副本上的协调操作结束时得到通知（请参阅<a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)"><b>ICompilationUnit.reconcile（int，boolean，WorkingCopyOwner，IProgressMonitor）</b></a> ）。</li>
+</ul>
+<p>Java元素更改侦听器在概念上类似于资源更改侦听器（在<a href="../../org.eclipse.platform.doc.isv/guide/resAdv_events.htm" class="XRef">跟踪资源更改中</a>描述）。以下代码段实现了一个Java元素更改报告器，它将元素增量打印到系统控制台。</p>
+<pre class="color1">
+
+   public class MyJavaElementChangeReporter implements IElementChangedListener {
+      public void elementChanged(ElementChangedEvent event) {
+         IJavaElementDelta delta= event.getDelta();
+         if (delta != null) {
+            System.out.println("delta received: ");
+            System.out.print(delta);
+         }
+      }
+   }
+</pre>
+<p><a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html"><b>IJavaElementDelta</b></a>包括已更改的<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#getElement()">元素</a>和描述发生的更改类型的<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#getFlags()">标志</a> 。大多数情况下，delta树根植于Java Model级别。然后，客户端必须使用<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#getAffectedChildren()"><b>getAffectedChildren</b></a>导航此增量，以找出已更改的项目。</p>
+
+<p>以下示例方法遍历增量并打印已添加，删除和更改的元素：</p>
+<pre class="color1">
+
+    void traverseAndPrint(IJavaElementDelta delta) {
+        switch (delta.getKind()) {
+            case IJavaElementDelta.ADDED:
+                System.out.println(delta.getElement() + " was added");
+                break;
+            case IJavaElementDelta.REMOVED:
+                System.out.println(delta.getElement() + " was removed");
+                break;
+            case IJavaElementDelta.CHANGED:
+                System.out.println(delta.getElement() + " was changed");
+                if ((delta.getFlags() &amp; IJavaElementDelta.F_CHILDREN) != 0) {
+                    System.out.println("The change was in its children");
+                }
+                if ((delta.getFlags() &amp; IJavaElementDelta.F_CONTENT) != 0) {
+                    System.out.println("The change was in its content");
+                }
+                /* Others flags can also be checked */
+                break;
+        }
+        IJavaElementDelta[] children = delta.getAffectedChildren();
+        for (int i = 0; i &lt; children.length; i++) {
+            traverseAndPrint(children[i]);
+        }
+    }
+</pre>
+<p>由于<a href="../reference/api/org/eclipse/jdt/core/IAnnotation.html"><b>IAnnotation</b></a>不是任何Java元素的子元素，因此使用<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#getAnnotationDeltas()"><b>getAnnotationDeltas（）</b></a>获取注释增量。</p>
+
+<p>几种操作可以触发Java元素更改通知。这里有些例子：</p>
+<ul>
+<li>创建资源，例如<a href="../reference/api/org/eclipse/jdt/core/IPackageFragment.html#createCompilationUnit(java.lang.String, java.lang.String, boolean, org.eclipse.core.runtime.IProgressMonitor)"><b>IPackageFragment.createCompilationUnit</b></a> （delta表示<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#ADDED">添加</a>了编译单元）</li>
+<li>修改资源，例如<a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#createType(java.lang.String, org.eclipse.jdt.core.IJavaElement, boolean, org.eclipse.core.runtime.IProgressMonitor)"><b>ICompilationUnit.createType</b></a> （delta表示编译单元已<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#CHANGED">更改，</a>并且已将类型<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#getAddedChildren()">添加</a>为此编译单元的子级）</li>
+
+<li>修改项目的类路径，例如<a href="../reference/api/org/eclipse/jdt/core/IJavaProject.html#setRawClasspath(org.eclipse.jdt.core.IClasspathEntry[], org.eclipse.core.runtime.IProgressMonitor)"><b>IJavaProject.setRawClasspath</b></a> （delta表示已将包片段根<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#F_ADDED_TO_CLASSPATH">添加到类路径</a> ， <a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#F_REMOVED_FROM_CLASSPATH">从类</a> <a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#F_ADDED_TO_CLASSPATH">路径</a>中<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#F_REMOVED_FROM_CLASSPATH">删除</a> ，或<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#F_CLASSPATH_REORDER">在类路径上重新排序</a> ）</li>
+<li>修改类路径变量值，例如<a href="../reference/api/org/eclipse/jdt/core/JavaCore.html#setClasspathVariable(java.lang.String, org.eclipse.core.runtime.IPath, org.eclipse.core.runtime.IProgressMonitor)"><b>JavaCore.setClasspathVariable</b></a> （delta也表示包片段根已受影响）</li>
+
+<li>将工作副本与其缓冲区协调，例如<a href="../reference/api/org/eclipse/jdt/core/ICompilationUnit.html#reconcile(int, boolean, org.eclipse.jdt.core.WorkingCopyOwner, org.eclipse.core.runtime.IProgressMonitor)"><b>ICompilationUnit.reconcile</b></a></li>
+<li>修改<a href="../../org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/resources/IFile.html"><b>的IFile</b></a>以“的.java”结尾，这是该项目的类路径，例如使用<b>IFile.setContents（</b>增量指示编译单元已更改，但<a href="../reference/api/org/eclipse/jdt/core/IJavaElementDelta.html#F_FINE_GRAINED">没有更细致的信息</a> ，因为这不是通过一个Java做的是提供型号操作）</li>
+</ul>
+<p>与<a href="../../org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/resources/IResourceDelta.html"><b>IResourceDelta</b></a>类似，Java元素增量可以使用<a href="../../org.eclipse.platform.doc.isv/reference/api/org/eclipse/core/resources/IWorkspaceRunnable.html"><b>IWorkspaceRunnable</b></a>进行批处理。在<b>IWorkspaceRunnable</b>中运行的多个Java Model操作产生的增量将<b>立即</b>合并并报告。</p>
+<p><a href="../reference/api/org/eclipse/jdt/core/JavaCore.html"><b>JavaCore</b></a>提供了一个用于批处理Java元素更改的<b>run</b>方法。</p>
+<p>例如，以下代码片段将触发2个Java元素更改事件：</p>
+
+<pre class="color1">
+
+    // Get package
+    IPackageFragment pkg = ...;
+    
+    // Create 2 compilation units
+    ICompilationUnit unitA = pkg.createCompilationUnit("A.java", "public class A {}", false, null);
+    ICompilationUnit unitB = pkg.createCompilationUnit("B.java", "public class B {}", false, null);
+</pre>
+<p>以下代码片段将触发1个Java元素更改事件：</p>
+<pre class="color1">
+
+    // Get package
+    final IPackageFragment pkg = ...;
+    
+    // Create 2 compilation units
+    JavaCore.run(
+        new IWorkspaceRunnable() {
+          public void run(IProgressMonitor monitor) throws CoreException {
+              ICompilationUnit unitA = pkg.createCompilationUnit("A.java", "public class A {}", false, null);
+              ICompilationUnit unitB = pkg.createCompilationUnit("B.java", "public class B {}", false, null);
+          }
+        },
+        null);
+</pre>
+</body>
+</html>

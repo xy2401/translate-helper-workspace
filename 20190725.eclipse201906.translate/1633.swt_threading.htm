@@ -1,0 +1,104 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>线程问题</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+<h2>线程问题</h2>
+
+<p>使用窗口小部件工具包时，了解用于读取和分派平台GUI事件的基础线程模型非常重要。UI线程的实现会影响应用程序在其代码中使用Java线程时必须遵循的规则。</p>
+
+
+<h3>本机事件调度</h3>
+
+<p>在任何GUI应用程序下，无论其语言或UI工具包如何，OS平台都会检测GUI事件并将其置于应用程序事件队列中。虽然不同操作系统平台的机制略有不同，但基础知识却相似。当用户单击鼠标，键入字符或曲面窗口时，操作系统会生成应用程序GUI事件，例如鼠标单击，击键或窗口绘制事件。它确定哪个窗口和应用程序应该接收每个事件并将其放在应用程序的事件队列中。</p>
+
+<p>任何窗口GUI应用程序的底层结构都是一个事件循环。应用程序初始化然后启动一个循环，它只是从队列中读取GUI事件并做出相应的反应。处理这些事件之一时所做的任何工作都必须快速完成，以保持GUI系统对用户的响应。</p>
+
+<p>UI事件触发的长操作应该在单独的线程中执行，以便允许事件循环线程快速返回并从应用程序的队列中获取下一个事件。但是，必须使用显式锁定和序列化来控制从其他线程访问窗口小部件和平台API。不遵守规则的应用程序可能导致OS调用失败，或者更糟糕的是，锁定整个GUI系统。</p>
+
+
+<h3>SWT UI线程</h3>
+
+<p>SWT遵循平台直接支持的线程模型。应用程序在其主线程中运行事件循环，并直接从该线程调度事件。UI线程是创建<strong><a href="../reference/api/org/eclipse/swt/widgets/Display.html">Display</a></strong>的线程。必须在UI线程中创建所有其他小部件。</p>
+
+<p>由于所有事件代码都是从应用程序的UI线程触发的，因此处理事件的应用程序代码可以自由访问窗口小部件并进行图形调用，而无需任何特殊技术。但是，应用程序负责在执行响应事件的长操作时分叉计算线程。</p>
+
+<blockquote><em>注意：对于必须从UI线程发出的非UI线程进行的任何调用，SWT将触发<strong><a href="../reference/api/org/eclipse/swt/SWTException.html">SWTException</a></strong> 。</em></blockquote>
+
+<p>SWT应用程序的主线程（包括事件循环）具有以下结构：</p>
+
+<pre>
+   public static void main (String [] args) {
+      Display display = new Display ();
+      Shell shell = new Shell (display);
+      shell.open ();
+      // start the event loop. We stop when the user has done
+      // something to dispose our window.
+      while (!shell.isDisposed ()) {
+         if (!display.readAndDispatch ())
+            display.sleep ();
+      }
+      display.dispose ();
+   }
+</pre>
+
+<p>创建窗口小部件并打开外壳后，应用程序将从操作系统队列中读取和分派事件，直到释放外壳窗口。如果队列中没有可用的事件，我们告诉显示器休眠，以便其他应用程序有机会运行。</p>
+
+<p>SWT提供了从后台线程调用窗口小部件和图形代码的特殊访问方法。</p>
+
+
+<h3><a name="syncExec">从非UI线程执行代码</a></h3>
+
+<p>希望从非UI线程调用UI代码的应用程序必须提供调用UI代码的<strong>Runnable</strong> 。<strong><a href="../reference/api/org/eclipse/swt/widgets/Display.html">Display</a></strong>类中的方法<strong>syncExec（Runnable）</strong>和<strong>asyncExec（Runnable）</strong>用于在事件循环期间在UI线程中执行这些runnable。</p>
+
+<ul>
+  <li>当非UI线程中的应用程序代码依赖于UI代码的返回值或者需要确保runnable在返回到线程之前运行完成时，应该使用<strong>syncExec（Runnable）</strong> 。SWT将阻止调用线程，直到从应用程序的UI线程运行runnable。例如，基于窗口当前大小计算内容的后台线程将希望同步运行代码以获取窗口的大小，然后继续其计算。</li>
+  <li>当应用程序需要执行某些UI操作时，应使用<strong>asyncExec（Runnable）</strong> ，但在继续之前不依赖于正在完成的操作。例如，更新进度指示器或重绘窗口的后台线程可以异步请求更新并继续其处理。在这种情况下，后台线程的时序与可运行的执行之间没有保证的关系。</li>
+</ul>
+
+<p>以下代码段演示了使用这些方法的模式：</p>
+
+<pre>
+   // do time-intensive computations
+   ...
+   // now update the UI. We don't depend on the result,
+   // so use async.
+   display.asyncExec (new Runnable () {
+      public void run () {
+         if (!myWindow.isDisposed())
+            myWindow.redraw ();
+      }
+   });
+   // now do more computations
+   ...
+</pre>
+
+<p>在使用asyncExec时，最好检查您的窗口小部件是否在runnable中处置。由于在调用<code>asyncExec</code>和执行runnable之间的UI线程中可能发生其他事情，因此在runnable执行时，您永远无法确定您的小部件处于什么状态。</p>
+
+
+<h3><a name="workbench_threads">工作台和线程</a></h3>
+
+<p>当您从头开始实现SWT应用程序时，线程规则非常清晰，因为您控制了事件循环的创建以及在应用程序中分叉计算线程的决定。</p>
+
+<p>当您向工作台提供插件代码时，事情会变得复杂一些。使用平台UI类时，可以将以下规则视为“参与规则”，尽管从发行版到发行版可能存在以下规则：</p>
+
+<ul>
+  <li>通常，您添加到平台的任何工作台UI扩展都将在工作台的UI线程中执行，除非它们与线程或后台作业（例如后台作业进度指示）特别相关。</li>
+  <li>如果从工作台收到事件，则无法保证它在工作台的UI线程中执行。请参阅定义侦听器或事件的特定类的javadoc。如果没有讨论线程的特定文档，并且该类显然是与UI相关的类，那么您可能希望事件到达工作台的UI线程中。</li>
+  <li>同样，平台UI库不应被视为线程安全，除非它具体记录。请注意，大多数平台UI类都会从触发事件的调用线程调度侦听器。Workbench和JFace API调用不会检查调用程序是否在UI线程中执行。这意味着如果您调用从非UI线程触发事件的方法，您的插件可能会引入问题。SWT为从非UI线程<strong><a href="../reference/api/org/eclipse/swt/SWTException.html">发出</a></strong>的所有API调用触发<strong><a href="../reference/api/org/eclipse/swt/SWTException.html">SWTException</a></strong> 。通常，避免从另一个线程调用平台UI代码，除非javadoc特别允许它。</li>
+   <li>如果您的插件分叉计算线程或使用工作台作业，则在调用工作台，JFace或SWT的任何API时，它必须使用<strong><a href="../reference/api/org/eclipse/swt/widgets/Display.html">Display</a></strong> <strong>asyncExec（Runnable）</strong>或<strong>syncExec（Runnable）</strong>方法，除非API特别允许调用 -从后台线程。</li>
+  <li>如果您的插件使用JFace <a href="../reference/api/org/eclipse/jface/operation/IRunnableContext.html"><strong>IRunnableContext</strong></a>接口来调用进度监视器并运行操作，则它会提供一个参数来指定计算线程是否为运行操作而分叉。</li>
+</ul>
+
+</body>
+</html>

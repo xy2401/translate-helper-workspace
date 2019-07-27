@@ -1,0 +1,77 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>工作安排</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>工作安排</h3>
+<p>到目前为止，我们的示例演示了简单的作业创建，计划和进度报告。作业调度机制实际上比我们迄今为止所展示的更强大。通过使用优先级，延迟和自定义调度条件，您可以对计划作业的方式进行更细粒度的控制。
+</p>
+<h4>工作重点</h4>
+<p>作业<i>优先级</i>可用于确定作业相对于系统中其他作业的重要性。设置作业的优先级不会影响已在运行的作业，但会影响等待作业相对于其他作业的计划方式。作业的优先级可以是几个预定义的优先级常量之一：</p>
+<ul>
+<li><b>互动</b>工作通常优先于其他工作。它们应该是短时间运行或处理器使用率低，因此它们不会阻止其他INTERACTIVE作业运行。</li>
+<li><b>短期</b>工作通常在一秒钟内完成，但可能需要更长时间。它们在后台运行并优先于除交互式工作之外的所有工作。</li>
+<li><b>LONG</b>工作适用于较长时间运行的后台作业。它们仅在运行INTERACTIVE和SHORT作业后才运行。</li>
+<li><b>BUILD</b>工作适用于与构建任务相关的工作。它们的优先级低于LONG。只有在所有LONG作业完成后才能运行BUILD作业。</li>
+<li><b>DECORATE</b>作业是系统中的最低优先级。它们用于提供可能有助于补充UI的信息的任务，但用户通常不会等待。</li>
+</ul>
+<p>作业的默认优先级是LONG。以下代码段创建了我们之前使用的简单作业，但将优先级设置为DECORATE以指示它是最低级别的优先级：</p>
+<pre>   TrivialJob job = new TrivialJob();
+   <b>job.setPriority(Job.DECORATE);</b>
+   job.schedule();
+</pre>
+
+<h4>延迟调度</h4>
+
+<p>用于控制如何调度作业的另一种技术是使用调度延迟。可以在安排作业时指定调度延迟。作业将在计划之前延迟指定的毫秒数。
+</p>
+<pre>   TrivialJob job = new TrivialJob();
+   <b>job.schedule(1000);  // wait one second before scheduling</b>
+</pre>
+
+<h4>重新安排工作</h4>
+
+<p>安排正在等待或正在睡觉的作业无效。但是，计划已运行的作业将导致它在完成后重新计划。这是重复作业（如背景轮询循环）的便捷机制。如果作业在运行期间被重新安排多次，则只会使用最近提供的延迟重新安排一次。以下代码段定义了一个作业，该作业在完成当前迭代后重新安排自己运行10秒。
+</p>
+<pre>   class RepetitiveTrivialJob extends Job {
+      public RepetitiveTrivialJob() {
+         super("Repetitive Trivial Job");
+      }
+      public IStatus run(IProgressMonitor monitor) {
+         System.out.println("Running the job.");
+         // reschedule after 10 seconds
+         <b>schedule(10000);</b>
+         return Status.OK_STATUS;
+      }
+   }
+</pre>
+
+<h4>自定义调度条件</h4>
+
+<p><b><a href="../reference/api/org/eclipse/core/runtime/jobs/Job.html">Job</a></b>类中的附加协议允许作业在计划或运行之前检查前提条件。这最好通过示例来说明：</p>
+<pre>class JobWithPreconditions extends Job {
+	...
+	public boolean <b>shouldSchedule()</b> {
+		return super.shouldSchedule() &amp;&amp; checkJobPreconditions();
+	}
+	public boolean <b>shouldRun()</b> {
+		return super.shouldRun() &amp;&amp; checkJobPreconditions();
+	}
+	...
+}
+</pre>
+<p>在作业管理器将作业放入队列之前调用<b>shouldSchedule</b>方法。如果不满足调度的基本前提条件，这允许作业自行取消。作业应该返回<tt>false</tt> ，不适合安排它。同样，在作业管理器运行作业之前调用<b>shouldRun</b>方法。必须在此时检查在运行作业之前必须满足的任何其他条件。
+</p>
+
+
+</body>
+</html>

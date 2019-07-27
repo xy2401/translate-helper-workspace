@@ -1,0 +1,43 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>插件和捆绑包</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>插件和捆绑包</h3>
+<p>支持插件的机制是使用<a href="http://www.osgi.org">OSGi</a>框架实现的。从这个角度来看，插件与OSGi <b>包</b>相同。bundle及其相关类指定并实现Java类加载，必备管理和bundle的生命周期的过程。对于本讨论的其余部分，除非在框架中讨论特定的类，否则我们可以交替使用术语<b>插件</b>和<b>bundle</b> 。
+</p>
+<h4>插入</h4>
+<p><b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>类表示在平台中运行的插件。它是集中插件的生命周期方面和整体语义的便利场所。插件可以实现其生命周期的<b>启动</b>和<b>停止</b>方面的专用功能。每个生命周期方法都包含对<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>的引用，该<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>可以提供其他信息。</p>
+<p>生命周期的<b>开始</b>部分值得特别讨论。我们已经看到，可以从插件的清单文件中获取有关插件的信息，而无需运行任何插件的代码。通常，工作台中的某些用户操作会导致需要启动插件的一系列事件。从实现的角度来看，在插件中包含的类需要加载之前，永远不会启动插件。
+</p>
+<p><b>start</b>方法是实现插件初始化和注册行为的便利场所。但是，重要的是要意识到您的插件可以在许多不同的环境中启动。像获取图标来装饰对象这样简单的事情可能会导致加载一个插件类，从而启动插件。过度的初始化可能导致插件的代码和数据在必要时很久就被加载。因此，仔细查看插件的初始化任务并考虑在启动时执行初始化的替代方法非常重要。</p>
+<ul>
+<li>如果可以快速执行<b>注册</b>活动，例如注册监听器或启动后台线程，则在插件启动期间是适当的。但是，如果注册活动具有诸如初始化大型数据结构或执行不相关操作之类的副作用，则建议将这些操作作为访问插件数据的一部分来触发。</li>
+<li>数据<b>初始化</b>最好是在首次访问数据时懒惰，而不是在启动代码中自动完成。这可确保在真正需要之前不构建大型数据结构。</li>
+</ul>
+
+<h4>捆绑上下文</h4>
+<p>生命周期管理是OSGi“捆绑”术语和平台“插件”术语相遇的地方。当您的插件启动时，它会被一个<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>引用，从中可以获取与该插件相关的信息。<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>还可用于查找系统中的其他bundle / plug-ins。
+</p>
+<p>
+<b>BundleContext.getBundles（）</b>可用于获取系统中所有包的数组。可以注册<b>BundleEvent的</b>监听器，以便插件在其他捆绑包的生命周期状态发生变化时知道。有关更多信息，请参阅<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>和<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleEvent.html">BundleEvent</a></b>的javadoc。
+</p>
+<blockquote><i>在3.0之前，提供了一个插件注册表（ <b>IPluginRegistry</b> ）来提供类似的信息。例如，可以查询系统中所有插件的插件描述符。现在不推荐使用此注册表，并且应该使用<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleContext.html">BundleContext</a></b>来实现此目的。平台注册表现在专门用于有关扩展和扩展点的信息。
+</i></blockquote>
+<h4>捆绑激活器</h4>
+<p><b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b>接口定义了<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin中</a></b>实现的启动和停止行为。尽管<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>类是实现此功能的便利位置，但插件开发人员可以完全自由地在适合插件设计的任何类中实现<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b>的接口。实际上，如果没有特定的生命周期管理需求，您的插件根本不需要实现此接口。</p>
+<h4>捆绑</h4>
+<p>每个插件下面都有一个由框架管理的OSGi包。<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle</a></b>是OSGi模块化单元。从根本上说，bundle只是安装在平台中的文件（资源和代码）的集合。每个bundle都有自己的Java类加载器，并包含用于启动，停止和卸载自身的协议。从Eclipse平台的角度来看， <b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/Bundle.html">Bundle</a></b>只是一个实现类。插件开发人员不会扩展bundle类，而是使用<b><a href="../reference/api/org/eclipse/core/runtime/Plugin.html">Plugin</a></b>或其他<b><a href="https://osgi.org/javadoc/r6/core/org/osgi/framework/BundleActivator.html">BundleActivator</a></b>实现来表示插件。</p>
+
+
+</body>
+</html>

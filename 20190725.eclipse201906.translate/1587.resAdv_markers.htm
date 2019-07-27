@@ -1,0 +1,175 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>资源标记</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body >
+<h2>资源标记</h2>
+<p>我们知道插件可以定义专门的文件扩展名，并提供编辑器，为这些文件类型提供专门的编辑功能。在编辑（或构建）资源的过程中，插件可能需要标记资源以向用户传达问题或其他信息。资源标记机制用于管理此类信息。</p>
+<p><b>标记</b>就像粘在资源上的黄色粘滞便笺。在标记上，您可以记录有关问题的信息（例如，位置，严重性）或要完成的任务。或者，您只需将标记的位置记录为书签即可。</p>
+<p>用户可以快速跳转到资源中的标记位置。工作台UI支持在编辑器一侧显示书签，断点，任务和问题。这些标记也可以显示为视图中的项目，例如任务或书签视图。</p>
+<p>平台资源API定义了用于创建标记，设置标记值以及使用新标记类型扩展平台的方法。虽然平台管理标记，但是插件可以控制它们的创建，删除和属性值。</p>
+<p>标记旨在成为小而轻的物体。在一个项目中可能有数百甚至数千个标记。例如，Java编译器使用标记来标记它在源代码中找到的每个问题。</p>
+<p>该平台将丢弃附加到已删除资源的标记，但插件负责在不再应用于仍然存在的资源时删除其陈旧标记。</p>
+
+<h3>标记操作</h3>
+<p>操纵标记与操纵资源类似。标记是<b>处理</b>对象。您可以从资源获取标记句柄，但在使用<b>exists（）</b>协议或尝试操作它之前，您不知道它是否确实存在。一旦确定存在标记，就可以查询可能已分配给它的命名属性。</p>
+
+<p>标记由平台拥有和管理，该平台负责使标记持久化并在添加，删除或更改标记时通知侦听器。插件负责创建任何必要的标记，更改其属性，并在不再需要时删除它们。</p>
+
+<h4>标记创建</h4>
+<p>标记不是使用构造函数直接创建的。它们是在关联资源上使用工厂方法（ <b>IResource.createMarker（）</b> ）创建的。</p>
+<pre>
+   IMarker marker = file.createMarker(IMarker.TASK);
+</pre>
+<p>要创建具有全局范围（不与任何特定资源关联）的标记，可以使用工作空间根（ <b>IWorkspace.getRoot（）</b> ）作为资源。</p>
+
+
+<h4>标记删除</h4>
+<p>删除标记的代码很简单。</p>
+<pre>
+   try {
+      marker.delete();
+   } catch (CoreException e) {
+      // Something went wrong
+   }
+</pre>
+<p>删除标记时，其标记对象（句柄）变为“陈旧”。插件应该使用<b>IMarker.exists（）</b>协议来确保标记对象仍然有效。</p>
+<p>可以通过要求资源删除其标记来批量删除标记。当一次删除多个标记或者单个标记引用或id不可用时，此方法很有用。</p>
+<pre>
+   int depth = IResource.DEPTH_INFINITE;
+   try {
+      resource.deleteMarkers(IMarker.PROBLEM, true, depth);
+   } catch (CoreException e) {
+      // something went wrong
+   }
+</pre>
+<p>删除一组标记时，指定要删除的标记<b>类型</b> ，例如<b>IMarker。问题</b> ，或<b>null</b>以删除所有标记。第二个参数表示是否要删除子类型标记。（当我们定义新的标记类型时，我们会看到一个子类型。）<b>depth</b>参数控制删除的深度。</p>
+
+
+<p>您还可以使用<b>IWorkspace.deleteMarkers（IMarker []）</b>删除标记。</p>
+
+
+<h4>标记属性</h4>
+<p>给定一个标记，您可以询问其关联资源，其id（相对于该资源的唯一性）及其类型。您还可以通过通用属性访问其他信息。</p>
+<p>每种类型的标记都有一组特定的属性，这些属性由标记类型的创建者使用命名约定定义。<b><a href="../reference/api/org/eclipse/core/resources/IMarker.html">IMarker</a></b>接口定义了一组常量，包含平台标记类型的标准属性名称（以及一些预期值）。以下方法使用平台常量操作属性。</p>
+<pre>
+   IMarker marker = file.createMarker(IMarker.TASK);
+   if (marker.exists()) {
+      try {
+         marker.setAttribute(IMarker.MESSAGE, &quot;A sample marker message&quot;);
+         marker.setAttribute(IMarker.PRIORITY, IMarker.PRIORITY_HIGH);
+      } catch (CoreException e) {
+         // You need to handle the case where the marker no longer exists      }
+   }</pre>
+
+
+<p>属性通常作为名称/值对维护，其中名称是字符串，值可以是任何一种受支持的值类型（布尔值，整数，字符串）。对值类型的限制允许平台快速简单地保留标记。</p>
+
+
+<h4>查询标记</h4>
+<p>可以查询资源的标记和子标记。例如，查询具有无限深度的工作空间根目录考虑工作空间中的所有标记。</p>
+<pre>
+   IMarker[] problems = null;
+   int depth = IResource.DEPTH_INFINITE;
+   try {
+      problems = resource.findMarkers(IMarker.PROBLEM, true, depth);
+   } catch (CoreException e) {
+      // something went wrong
+   }
+</pre>
+<p><b>findMarkers</b>返回的结果取决于传递的参数。在上面的代码片段中，我们正在寻找资源上出现的所有<b>PROBLEM</b>类型的标记及其所有直接和间接后代。</p>
+
+
+<p>如果将<b>null</b>作为标记类型传递，则将获得与资源关联的所有标记类型。第二个参数指定是否要查看资源的子项。当您查看资源的子项时， <b>depth</b>参数控制搜索的深度。深度可以是<b>DEPTH_ZERO</b> （仅限给定资源）， <b>DEPTH_ONE</b> （资源及其所有直接子<b>节点</b> ）或<b>DEPTH_INFINITE</b> （资源及其所有直接和间接后代）。</p>
+
+
+<h4>标记持久性</h4>
+<p>平台标准标记（任务，问题和书签）是<b>持久的</b> 。这意味着它们的状态将在工作台关闭和启动时保存。但是，通过将保留属性<strong>transient</strong>设置为true，可以选择性地使持久类型的标记成为瞬态。
+</p>
+<p>插件声明的新标记类型不是持久的，除非它们被声明为这样。</p>
+
+
+
+<h3>
+<a name="resAdv_markers_extending">使用新标记类型扩展平台</a></h3>
+<p>插件可以使用<b><a href="../reference/extension-points/org_eclipse_core_resources_markers.html">org.eclipse.core.resources.markers</a></b>扩展点声明自己的标记类型。问题，任务和书签的标准标记类型由平台在资源插件的标记中声明。</p>
+<pre>
+   &lt;extension
+      id=&quot;problemmarker&quot; 
+      point=&quot;org.eclipse.core.resources.markers&quot; 
+      name=&quot;%problemName&quot;&gt;
+      &lt;super type=&quot;org.eclipse.core.resources.marker&quot;/&gt;
+      &lt;persistent value=&quot;true&quot;/&gt;
+      &lt;attribute name=&quot;severity&quot;/&gt;
+      &lt;attribute name=&quot;message&quot;/&gt;
+      &lt;attribute name=&quot;location&quot;/&gt;
+   &lt;/extension&gt;
+   &lt;extension
+      id=&quot;taskmarker&quot; 
+      point=&quot;org.eclipse.core.resources.markers&quot; 
+      name=&quot;%taskName&quot;&gt;
+      &lt;super type=&quot;org.eclipse.core.resources.marker&quot;/&gt;
+      &lt;persistent value=&quot;true&quot;/&gt;
+      &lt;attribute name=&quot;priority&quot;/&gt;
+      &lt;attribute name=&quot;message&quot;/&gt;
+      &lt;attribute name=&quot;done&quot;/&gt;
+      &lt;attribute name=&quot;userEditable&quot;/&gt;      
+   &lt;/extension&gt;
+   &lt;extension
+      id=&quot;bookmark&quot; 
+      point=&quot;org.eclipse.core.resources.markers&quot; 
+      name=&quot;%bookmarkName&quot;&gt;
+      &lt;super type=&quot;org.eclipse.core.resources.marker&quot;/&gt;
+      &lt;persistent value=&quot;true&quot;/&gt;
+      &lt;attribute name=&quot;message&quot;/&gt;
+      &lt;attribute name=&quot;location&quot;/&gt;
+   &lt;/extension&gt;
+</pre>
+<p>新标记类型派生自使用多重继承的现有标记类型。新标记类型从其超类型继承所有属性，并添加作为声明的一部分定义的任何新属性。它们还可以从超类型的超类型中传递继承属性。以下标记在假设的<b>com.example.markers</b>插件中定义了一种新的标记。</p>
+<pre>
+   &lt;extension
+      id=&quot;mymarker&quot;
+      point=&quot;org.eclipse.core.resources.markers&quot; /&gt;
+   &lt;extension
+      id=&quot;myproblem&quot;
+      point=&quot;org.eclipse.core.resources.markers&quot;&gt;
+      &lt;super type=&quot;org.eclipse.core.resources.problemmarker&quot;/&gt;
+      &lt;super type=&quot;com.example.markers.mymarker&quot;/&gt;
+      &lt;attribute name=&quot;myAttribute&quot; /&gt;
+      &lt;persistent value=&quot;true&quot; /&gt;
+   &lt;/extension&gt;
+</pre>
+<p>请注意， <b>org.eclipse.core.resources.problemmarker</b>类型实际上是预定义类型之一（又名<b>IMarker）。问题</b> ）。</p>
+<p>未继承的标记超类型的唯一方面是其<b>持久性</b>标志。持久性的默认值为false，因此任何应持久的标记类型都必须指定<b>&lt;persistent value =“true”/&gt;</b> 。</p>
+<p>在插件清单文件中声明新标记类型后，您可以创建<b>com.example.markers.myproblem</b>标记类型的实例并自由设置或获取<b>myAttribute</b>属性。</p>
+<p>声明新属性允许您将数据与计划在其他位置（在视图和编辑器中）使用的标记相关联。特定类型的标记不必具有所有声明属性的值。属性声明更多地用于解决命名约定问题（因此每个人都使用“消息”来讨论标记的描述）而不是用于约束内容。</p>
+<pre>
+   public IMarker createMyMarker(IResource resource) {
+      try {
+         IMarker marker = resource.createMarker(&quot;com.example.markers.myproblem&quot;);
+         marker.setAttribute(&quot;myAttribute&quot;, &quot;MYVALUE&quot;);
+         return marker;
+      } catch (CoreException e) {
+         // You need to handle the cases where attribute value is rejected
+      }
+   }
+</pre>
+<p>您可以使用查询平台标记类型的相同方式查询自己的标记类型。下面的方法查找与给定目标资源及其所有后代关联的所有<b>mymarkers</b> 。请注意，这也将找到所有<b>myproblems，</b>因为<b>includeSubtypes</b>参数传递了true。</p>
+<pre>
+   public IMarker[] findMyMarkers(IResource target) {
+      String type = &quot;com.example.markers.mymarker&quot;;
+      IMarker[] markers = target.findMarkers(type, true, IResource.DEPTH_INFINITE);
+   }
+</pre>
+
+</body>
+</html>

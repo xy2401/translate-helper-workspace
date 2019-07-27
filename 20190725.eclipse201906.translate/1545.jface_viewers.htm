@@ -1,0 +1,89 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>观众</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>观众</h2>
+<p>当我们已经看到工作台UI贡献（如视图，编辑器，向导和对话框）可以直接使用SWT小部件实现时，为什么还要使用查看器？</p>
+<p>查看器允许您在仍使用模型对象的同时创建窗口小部件。如果直接使用SWT窗口小部件，则必须将对象转换为SWT所需的字符串和图像。查看器充当SWT小部件上的适配器，处理用于处理您自己必须自己实现的小部件事件的公共代码。</p>
+<p>我们首先在<b>ReadmeSectionsView中</b>看到自述工具视图贡献中的一个查看器。</p>
+<pre>
+   public void createPartControl(Composite parent) {
+      viewer = new ListViewer(parent);
+      ...
+   }
+</pre>
+<blockquote><i>注意：查看器可用于为工作台视图和编辑器提供实现。术语查看器并不意味着它们仅对实现视图有用。例如， <b>TextViewer</b>用于许多工作台和插件编辑器的实现中。</i></blockquote>
+
+<h3>标准观众</h3>
+<p>JFace为SWT中的大多数非平凡小部件提供查看器。查看器最常用于列表，树，表和文本小部件。</p>
+<p>每个查看器都有一个关联的SWT小部件。可以通过在便捷查看器构造函数中提供父<b>Composite</b>来隐式创建此窗口小部件，或者通过首先创建它并在其构造函数中将其提供给查看器来显式创建此窗口小部件。</p>
+<h4><a name="listviewer">面向列表的观众</a></h4>
+<p>列表，树和表从用户的角度共享许多常见功能，例如具有对象的人口，选择，排序和过滤。</p>
+<p>这些查看器保留域对象列表（称为<b>元素</b> ）并将其显示在相应的SWT窗口小部件中。列表查看器知道如何从列表中的任何元素获取文本标签。它从<a href="../reference/api/org/eclipse/jface/viewers/ILabelProvider.html"><b>ILabelProvider</b></a>获取标签，可以在查看器上设置。列表查看器知道如何从窗口小部件回调映射回查看器客户端已知的元素世界。</p>
+<p>使用普通SWT窗口小部件的客户端必须在SWT级别运行 - 其中项目是字符串，事件通常与字符串列表中的索引相关。查看器提供更高级别的语义。使用提供给查看器的元素向客户端通知选择和更改列表。查看器处理将索引映射回元素的所有繁琐工作，调整对象的过滤视图，并在必要时重新排序。</p>
+<p>通过为查看者指定查看器分类器（ <a href="../reference/api/org/eclipse/jface/viewers/ViewerSorter.html"><b>ViewerSorter</b></a> ）和/或查看器过滤器（ <a href="../reference/api/org/eclipse/jface/viewers/ViewerFilter.html"><b>ViewerFilter</b></a> ）来处理过滤和排序功能。（除了列表查看器之外，还可以为树和表查看器指定这些。）客户端只需提供一个可以比较或过滤列表中对象的类。查看器根据指定的顺序和过滤器处理填充列表的详细信息，并在添加和删除元素时维护顺序和过滤器。</p>
+
+
+<p>观看者不打算由客户进行扩展。要自定义查看器，您可以使用自己的内容和标签提供程序对其进行配置。</p>
+
+
+<p><b><a href="../reference/api/org/eclipse/jface/viewers/ListViewer.html">ListViewer</a></b>将列表中的元素映射到SWT <b><a href="../reference/api/org/eclipse/swt/widgets/List.html">列表</a></b>控件。</p>
+
+<p><a href="../reference/api/org/eclipse/jface/viewers/TreeViewer.html"><b>TreeViewer</b></a>在SWT <a href="../reference/api/org/eclipse/swt/widgets/Tree.html"><b>树</b></a>小部件中显示分层对象。它处理扩展和折叠项目的详细信息。对于不同的SWT树控件（普通树，表树，复选框树），有几种不同类型的树查看器。</p>
+<p><a href="../reference/api/org/eclipse/jface/viewers/TableViewer.html"><b>TableViewer</b></a>与列表查看器非常相似，但增加了查看表中每个元素的多个信息列的功能。表格查看器通过引入编辑单元格的概念，显着扩展了SWT表格小部件的功能。特殊单元格编辑器可用于允许用户使用组合框，对话框或文本小部件编辑表格单元格。表查看器在用户编辑需要时处理这些小部件的创建和放置。这是使用<b><a href="../reference/api/org/eclipse/jface/viewers/CellEditor.html">CellEditor</a></b>类完成的，例如<b><a href="../reference/api/org/eclipse/jface/viewers/TextCellEditor.html">TextCellEditor</a></b>和<b><a href="../reference/api/org/eclipse/jface/viewers/CheckboxCellEditor.html">CheckboxCellEditor</a></b> 。一个虚拟表，仅在查看时填充，表查看器仅运行指定数量的结果，而不管实际创建的是什么。数据库“懒惰地”请求JIT并且一次只查询预定数量。</p>
+
+
+<h4>文本查看器</h4>
+<p>文本小部件有许多常见的语义，例如双击行为，撤消，着色以及按索引或行导航。<b><a href="../reference/api/org/eclipse/jface/text/TextViewer.html">TextViewer</a></b>是SWT <a href="../reference/api/org/eclipse/swt/custom/StyledText.html"><b>StyledText</b></a>小部件的适配器。文本查看器向客户端提供文档模型，并管理文档到文本小部件提供的样式化文本信息的转换。</p>
+<p><a href="editors.htm" class="XRef">Workbench编辑器</a>中更详细地介绍了文本查看<a href="editors.htm" class="XRef">器</a> 。</p>
+
+
+
+<h3>查看器架构</h3>
+<p>要了解查看器，您必须熟悉查看器的输入元素，其内容，选择以及它正在操作的窗口小部件中实际显示的信息之间的关系。</p>
+
+<h4>输入元素</h4>
+<p><b>输入元素</b>是观看者正在显示（或编辑）的主要对象。从观看者的角度来看，输入元素可以是任何对象。它不假设输入元素实现任何特定接口。（我们会在看到内容提供商的那一刻看到原因。）</p>
+<p>查看者必须能够处理输入元素的更改。如果将新的输入元素设置到查看器中，则它必须根据新元素重新填充其窗口小部件，并将其自身与先前的输入元素解除关联。在输入元素上注册为侦听器并基于元素填充小部件的语义对于每种类型的查看器是不同的。</p>
+
+
+<h4>内容观看者</h4>
+<p><b>内容查看器</b>是具有良好定义的协议的查看器，用于从其输入元素获得信息。内容查看器使用两个专用帮助程序类<b><a href="../reference/api/org/eclipse/jface/viewers/IContentProvider.html">IContentProvider</a></b>和<b><a href="../reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a></b>来填充其窗口小部件并显示有关input元素的信息。</p>
+<p>
+<b><a href="../reference/api/org/eclipse/jface/viewers/IContentProvider.html">IContentProvider</a></b>提供基本生命周期协议，用于将内容提供者与输入元素相关联并处理输入元素的更改。针对不同类型的观看者实现了更专业的内容提供者。最常见的内容提供程序是<b><a href="../reference/api/org/eclipse/jface/viewers/IStructuredContentProvider.html">IStructuredContentProvider</a></b> ，它可以提供给定输入元素的对象列表。它用于类似列表的查看器，例如列表，表或树。通常，内容提供者知道如何在输入元素和期望的观看者内容之间进行映射。</p>
+<p>
+<b><a href="../reference/api/org/eclipse/jface/viewers/ILabelProvider.html">ILabelProvider</a></b>更进一步。给定观看者的内容（从输入元素和内容提供者导出），它可以产生在观看者中显示内容所需的特定UI元素，例如名称和图标。标签提供者可以帮助保存图标资源，因为它们可以确保图标的相同实例用于查看器中的所有类似类型。</p>
+<blockquote><i>注意：特定内容和标签提供程序的实例不应在多个查看器之间共享。即使您的所有观看者都使用相同类型的内容或标签提供者，也应使用其自己的提供者类实例初始化每个查看者。提供者生命周期协议旨在提供者与其查看者之间的一对一关系。</i></blockquote>
+<p>输入元素，内容提供程序和标签提供程序允许查看器隐藏大部分实现细节以填充窗口小部件。观众的客户只需要担心用适当类型的输入和内容提供者填充观众。标签提供者必须知道如何从查看者内容中获取UI信息。</p>
+<p>标签提供者不仅可以显示文本和图像。JFace提供了几个类和接口来支持额外的功能。TableViewer，AbstractTreeViewer和TableTreeViewer支持以下类。</p>
+<ul>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/IColorProvider.html">IColorProvider</a></b> 。使标签提供者实现此界面，为项目设置不同的前景色或背景色。除非使用系统颜色，否则应缓存这些颜色以最小化所使用的系统资源量。处理您的标签提供商处理时创建的任何颜色。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/IFontProvider.html">IFontProvider</a></b> 。在标签提供程序中实现此接口以设置视图中的项目字体。字体也应该被缓存，并在处置标签提供者时处理。应该尽可能少地调用<b>Control.getFont（）</b> ，因为它会在调用时创建一个新的<b>Font</b>实例。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/ILabelDecorator.html">ILabelDecorator</a></b> ILabelDecorator是一个可以拍摄图像或文本并为其添加装饰的对象。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/DecoratingLabelProvider.html">DecoratingLabelProvider</a></b> DecoratingLabelProvider是一个复合对象，它同时接受标签提供者和ILabelDecorator。这允许标签提供程序挂钩到装饰器机制，例如Workbench中提供的装饰机制。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/IViewerLabelProvider.html">IViewerLabelProvider</a></b> IViewerLabelProvider是一个标签提供程序，允许通过外部对象（如装饰器）构建标签。DecoratingLabelProvider是一个IViewerLabelProvider。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/IDelayedLabelDecorator.html">IDelayedLabelDecorator</a></b> IDelayedLabelDecorator是一个ILabelDecorator，它支持延迟的装饰（例如在Thread中装饰的IDecoratorManager）。IDecoratorManagers是IDelayedLabelDecorators。您可以通过调用<b><a href="../reference/api/org/eclipse/ui/IWorkbench.html">IWorkbench</a> .getDecoratorManager（）</b>来获取Workbench <b><a href="../reference/api/org/eclipse/ui/IDecoratorManager.html">IDecoratorManager</a></b> 。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/IColorDecorator.html">IColorDecorator</a></b> IColorDecorator是一个可以支持装饰前景色和背景色的对象。</li>
+  <li><b><a href="../reference/api/org/eclipse/jface/viewers/IFontDecorator.html">IFontDecorator</a></b> IFontDecorator是一个可以支持装饰字体的对象。</li>
+</ul>
+<p>可以从视图的标签提供程序中或通过装饰器影响视图中项目的颜色。通常，最好在标签提供程序中使用颜色和字体支持，因为装饰器会影响显示特定类型的每个视图。如果使用颜色或字体装饰器，请确保可以在“颜色和字体”首选项页面中设置其值。</p>
+
+<h3>观众和工作台</h3>
+<p>通过查看工作台如何使用它们，可以展示观众，内容提供商和标签提供商提供的灵活性。</p>
+<p><b><a href="../reference/api/org/eclipse/ui/model/WorkbenchContentProvider.html">WorkbenchContentProvider</a></b>是一个结构化内容提供程序，它通过询问其子项来从输入元素获取内容。再次使用适配器的概念以实现通用功能。当从输入元素中询问元素列表时， <b><a href="../reference/api/org/eclipse/ui/model/WorkbenchContentProvider.html">WorkbenchContentProvider</a></b> <b><a href="../reference/api/org/eclipse/ui/model/IWorkbenchAdapter.html">会</a></b>为input元素获取<b><a href="../reference/api/org/eclipse/ui/model/IWorkbenchAdapter.html">IWorkbenchAdapter</a></b> 。如果已为输入元素注册了<b><a href="../reference/api/org/eclipse/ui/model/IWorkbenchAdapter.html">IWorkbenchAdapter</a></b> ，则内容提供者可以安全地假设可以为其子项查询该元素。<b><a href="../reference/api/org/eclipse/ui/model/WorkbenchContentProvider.html">WorkbenchContentProvider</a></b>还可以完成工作区更改时使其查看器保持最新所需的工作。</p>
+<p><b><a href="../reference/api/org/eclipse/ui/model/WorkbenchLabelProvider.html">WorkbenchLabelProvider</a></b>是一个标签提供程序， <b><a href="../reference/api/org/eclipse/ui/model/IWorkbenchAdapter.html">它</a></b>从对象获取<b><a href="../reference/api/org/eclipse/ui/model/IWorkbenchAdapter.html">IWorkbenchAdapter</a></b>以查找其文本和图像。标签提供程序的概念对工作台对象特别有用，因为它允许单个标签提供程序缓存查看器中常用的图像。例如，一旦<b><a href="../reference/api/org/eclipse/ui/model/WorkbenchLabelProvider.html">WorkbenchLabelProvider</a></b>获得用于<b><a href="../reference/api/org/eclipse/core/resources/IProject.html">IProject</a></b>的图像，它就可以缓存该图像并将其用于查看器中显示的所有<b><a href="../reference/api/org/eclipse/core/resources/IProject.html">IProject</a></b>对象。</p>
+<p>通过定义公共适配器<b><a href="../reference/api/org/eclipse/ui/model/IWorkbenchAdapter.html">IWorkbenchAdapter</a></b>并为许多平台类型注册它，我们可以在许多常见查看器和包含它们的工作台视图中正确表示这些类型。</p>
+<p> </p>
+
+</body>
+</html>

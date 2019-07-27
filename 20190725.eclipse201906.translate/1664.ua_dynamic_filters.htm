@@ -1,0 +1,387 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
+<title>过滤器</title>
+
+<style type="text/css">
+	.deprecated {
+		color: #444444;
+	}
+	.warning {
+		color: red;
+	}
+	.highlight {
+		color: blue;
+	}
+</style>
+</head>
+<body >
+
+<h2>过滤器</h2>
+
+<p>如果文档的某些部分（例如，XHTML帮助主题中的列表项）只应在满足某些条件时显示给用户，则可以指定一个启用表达式，声明必须满足的条件才能显示该元素。
+</p>
+
+<p>通过添加<code>&lt;enablement&gt;</code>元素作为应有条件地过滤的元素的<em>子</em>元素来指定过滤器。使用的语法是<a href="../reference/api/org/eclipse/core/expressions/package-summary.html#package_description">核心表达式</a> ，它与用于从UI过滤菜单贡献等的语法相同。</p>
+
+<h3>系统测试</h3>
+
+<p>表达式通过执行测试来检查标准。一种类型的测试是系统测试，它根据预期值测试系统属性。下面列出了一些要测试的常见系统属性：</p>
+
+<table border="1">
+   <tr>
+      <td>
+         <strong>属性</strong>
+      </td>
+      <td>
+         <strong>含义</strong>
+      </td>
+      <td>
+         <strong>可能的值</strong>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>osgi.os</code>
+      </td>
+      <td>操作系统</td>
+      <td>
+         <code>win32，win32，linux，macosx，aix，solaris，hpux，qnx</code>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>osgi.ws</code>
+      </td>
+      <td>窗口系统</td>
+      <td>
+         <code>win32，motif，gtk，photon，carbon</code>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>osgi.arch</code>
+      </td>
+      <td>处理器架构</td>
+      <td>
+         <code>x86，x86_64，ia64，ia64_32，ppc，PA_RISC，sparc</code>
+      </td>
+   </tr>
+</table>
+
+<p>以下是一些系统测试示例：</p>
+<pre>&lt;p&gt;
+   This paragraph should only be displayed on Windows.
+   <span class="highlight">&lt;enablement&gt;
+      &lt;systemTest property=&quot;osgi.os&quot; value=&quot;win32&quot;/&gt;
+   &lt;/enablement&gt;</span>
+&lt;/p&gt;
+
+&lt;p&gt;
+   This paragraph should *not* be displayed on GTK.
+   <span class="highlight">&lt;enablement&gt;
+      &lt;not&gt;
+         &lt;systemTest property=&quot;osgi.ws&quot; value=&quot;gtk&quot;/&gt;
+      &lt;/not&gt;
+   &lt;/enablement&gt;</span>
+&lt;/p&gt;
+
+&lt;p&gt;
+   This paragraph should only be displayed on PowerPC Macs.
+   <span class="highlight">&lt;enablement&gt;
+      &lt;systemTest property=&quot;osgi.os&quot; value=&quot;macosx&quot;/&gt;
+      &lt;systemTest property=&quot;osgi.arch&quot; value=&quot;ppc&quot;/&gt;
+   &lt;/enablement&gt;</span>
+&lt;/p&gt;
+</pre>
+
+
+<p>
+<em>注意：当列出多个没有布尔运算符的子表达式时，它们默认为ANDed。有关详细信息，请参阅完整<a href="../reference/api/org/eclipse/core/expressions/package-summary.html#package_description">表达式语法</a>规范。</em>
+</p>
+
+<h3>物业测试</h3>
+
+<p>除了系统测试之外，只要有可用的<a href="../reference/extension-points/org_eclipse_core_expressions_propertyTesters.html">属性测试器</a> ，您就可以测试可用对象的任何属性。
+</p>
+
+<p>测试总是对某个对象的属性执行测试，每个对象都有不同的属性可以测试。用户帮助提供了两个用于选择要测试的对象的变量：</p>
+
+<ul>
+   <li><code>platform</code> - 您正在运行的基础平台</li>
+   <li><code>workbench</code> -  UI工作台</li>
+</ul>
+
+<p>您可以使用<code>&lt;with&gt;</code>元素对其中一个执行测试，如下所示：</p>
+
+<pre>&lt;enablement&gt;
+   <span class="highlight">&lt;with variable=&quot;platform&quot;&gt;</span>
+      &lt;test property=&quot;<em>x</em>&quot; value=&quot;<em>y</em>&quot;/&gt;
+   <span class="highlight">&lt;/with&gt;</span>
+&lt;/enablement&gt;
+</pre>
+
+<p>每个属性都有一个名称空间，它是一个前缀，例如<code>org.eclipse.ui</code> ，用于最小化由两个组件定义重复属性的机会。下表显示了您可以测试的一些常见属性：</p>
+
+<table border="1">
+   <tr>
+      <td>
+         <strong>属性</strong>
+      </td>
+      <td>
+         <strong>对象（变量）</strong>
+      </td>
+      <td>
+         <strong>含义</strong>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>org.eclipse.core.runtime.product</code>
+      </td>
+      <td>
+         <code>平台</code>
+      </td>
+      <td>测试期望值是否与当前活动产品的唯一ID匹配</td>
+   </tr>
+   <tr>
+      <td>
+         <code>org.eclipse.core.runtime.isBundleInstalled</code>
+      </td>
+      <td>
+         <code>平台</code>
+      </td>
+      <td>测试是否在平台上安装了具有指定为单个参数的符号名称的包（例如<code>org.eclipse.help</code> ）</td>
+   </tr>
+   <tr>
+      <td>
+         <code>org.eclipse.ui.isActivityEnabled</code>
+      </td>
+      <td>
+         <code>工作台</code>
+      </td>
+      <td>测试是否存在具有指定为单个参数的id的活动，并且当前在工作台中启用了该活动</td>
+   </tr>
+   <tr>
+      <td>
+         <code>org.eclipse.ui.isCategoryEnabled</code>
+      </td>
+      <td>
+         <code>工作台</code>
+      </td>
+      <td>测试是否存在具有指定为单个参数的id的活动类别，并且当前在工作台中启用了该类别。如果启用了所有活动，则启用类别</td>
+   </tr>
+</table>
+
+<p>以下是使用这些属性的一些示例：</p>
+
+<pre>&lt;p&gt;
+   This paragraph should only be displayed when running the Eclipse SDK.
+   <span class="highlight">&lt;enablement&gt;
+      &lt;with variable=&quot;platform&quot;&gt;
+         &lt;test property=&quot;org.eclipse.core.runtime.product&quot; value=&quot;org.eclipse.sdk.ide&quot;/&gt;
+      &lt;/with&gt;
+   &lt;/enablement&gt;</span>
+&lt;/p&gt;
+
+&lt;p&gt;
+   This paragraph should only be displayed when either the <code>com.myactivity.a</code> or
+   <code>com.myactivity.b</code> activity (or both) is enabled in the workbench.
+   <span class="highlight">&lt;enablement&gt;
+      &lt;with variable=&quot;workbench&quot;&gt;
+         &lt;or&gt;
+            &lt;test property=&quot;org.eclipse.ui.isActivityEnabled&quot; args=&quot;com.myactivity.a&quot;/&gt;
+            &lt;test property=&quot;org.eclipse.ui.isActivityEnabled&quot; args=&quot;com.myactivity.b&quot;/&gt;
+         &lt;or&gt;
+      &lt;/with&gt;
+   &lt;/enablement&gt;</span>
+&lt;/p&gt;
+
+&lt;p&gt;
+   This paragraph should only be displayed when the <code>com.mycategory</code> category
+   is enabled and the <code>com.mybundle</code> bundle is not installed.
+   <span class="highlight">&lt;enablement&gt;
+      &lt;with variable=&quot;workbench&quot;&gt;
+         &lt;test property=&quot;org.eclipse.ui.isCategoryEnabled&quot; args=&quot;com.mycategory&quot;/&gt;
+      &lt;/with&gt;
+      &lt;with variable=&quot;platform&quot;&gt;
+         &lt;not&gt;
+            &lt;test property=&quot;org.eclipse.core.runtime.isBundleInstalled&quot; args=&quot;com.mybundle&quot;/&gt;
+         &lt;/not&gt;
+      &lt;/with&gt;
+   &lt;/enablement&gt;</span>
+&lt;/p&gt;
+</pre>
+
+<p>
+<em>注意：确保使用<code>value</code>和<code>args</code>属性进行相应的测试。一般情况下，像产品字符串属性将使用<code>value</code> ，其中布尔测试（ <code>isSomethingTrue</code> ）将使用<code>args</code> 。有关如何编写表达式的更多详细信息，请参阅完整<a href="../reference/api/org/eclipse/core/expressions/package-summary.html#package_description">表达式语法</a>规范。</em>
+</p>
+
+<h3>定义自己的测试</h3>核心表达式框架允许您定义自己的测试，该测试可以测试任何对象的任意属性，这些属性可以通过为您所在的上下文定义的变量来访问。您可以通过定义<a href="../reference/extension-points/org_eclipse_core_expressions_propertyTesters.html">属性测试器来</a>完成此操作
+
+<p>注意：变量<code>platform</code>和<code>workbench</code>解析为<code>org.eclipse.core.runtime.Platform Class</code>对象（我们使用“静态”测试的类对象）和单例<code>org.eclipse.ui.IWorkbench</code>实例分别。您的属性测试人员必须为其类型声明这两个类中的一个。
+</p>
+
+<h3>在目录（TOC）文件中使用过滤器</h3>
+
+<p>可以在“目录”文件中使用过滤器来过滤掉不适用于当前安装的内容。下面的示例是一个主题，如果插件xyz正在运行，它只包含在TOC中。</p>
+
+<pre class="highlight">    &lt;topic href=&quot;html/subtopic.html&quot; label=&quot;This topic is shown only if plugin x,y.z is running&quot;&gt;
+      &lt;enablement&gt;
+      &lt;with variable=&quot;platform&quot;&gt;
+          &lt;test property=&quot;org.eclipse.core.runtime.isBundleInstalled&quot; args=&quot;x.y.z&quot;/&gt;
+      &lt;/with&gt;
+      &lt;/enablement&gt;
+    &lt;/topic&gt;</pre>
+
+<h3>过滤属性/元素<span class="warning">（不建议使用）</span></h3>
+
+<p>在3.3之前，使用<code>filter</code>属性或元素指定<code>filter</code> 。现在不推荐使用这些过滤器，您应该使用表达式（如上所述）。
+</p>
+
+<p>下表包含所有过滤器属性及其与过滤器元素和属性一起使用的可能值的完整列表。</p>
+
+<span class="warning">（废弃）</span>
+<table class="deprecated" border="1">
+   <tr>
+      <td>
+         <b>属性</b>
+      </td>
+      <td>
+         <b>含义</b>
+      </td>
+      <td>
+         <b>可能的值</b>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>口</code>
+      </td>
+      <td>操作系统</td>
+      <td>
+         <code>win32，win32，linux，macosx，aix，solaris，hpux，qnx</code>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>WS</code>
+      </td>
+      <td>窗口系统</td>
+      <td>
+         <code>win32，motif，gtk，photon，carbon</code>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>拱</code>
+      </td>
+      <td>处理器架构</td>
+      <td>
+         <code>x86，x86_64，ia64，ia64_32，ppc，PA_RISC，sparc</code>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>产品</code>
+      </td>
+      <td>eclipse产品标识符</td>
+      <td>任何产品标识符（例如，对于SDK， <code>org.eclipse.sdk.ide</code> ）</td>
+   </tr>
+   <tr>
+      <td>
+         <code>插入</code>
+      </td>
+      <td>插件存在</td>
+      <td>任何插件标识符（例如<code>org.eclipse.help</code> ）</td>
+   </tr>
+   <tr>
+      <td>
+         <code>类别</code>
+      </td>
+      <td>活动类别</td>
+      <td>任何活动类别标识符（例如，对于团队类别， <code>org.eclipse.categories.teamCategory</code> ）</td>
+   </tr>
+   <tr>
+      <td>
+         <code>活动</code>
+      </td>
+      <td>活动（能力）</td>
+      <td>任何活动标识符（例如，对于CVS支持活动， <code>org.eclipse.team.cvs</code> ）</td>
+   </tr>
+</table>
+
+<p>如果名称与任何预定义属性不匹配，则帮助系统将使用该名称的JVM系统属性。例如，您可以在启动时传入任何用户定义的属性，例如<code>-Dlocation=paris,france</code>并按该属性过滤。</p>
+
+<p>有两种方法可以在元素上指定过滤器;使用属性或元素。</p>
+
+<h3>过滤属性<span class="warning">（不建议使用）</span></h3>
+
+<p>第一种形式是向元素添加<span class="highlight"><code>filter</code></span>属性。一般形式是：</p>
+
+<pre>   &lt;element <span class="highlight">filter="[name][operator][value]"</span>&gt;
+      Some text.
+   &lt;/element&gt;
+</pre>
+
+<p><span class="highlight"><code>name</code></span>是要过滤的属性的名称，例如， <code>os</code>的操作系统。<span class="highlight"><code>operator</code></span>要么<code>=</code>表示<i>匹配</i> （完全匹配，区分大小写），要么<code>!=</code>表示<i>不匹配</i> 。该<span class="highlight"><code>value</code></span>是属性应该（或不应该）匹配的值。例如，对于<code>os</code> ，其中一个可能的值是<code>win32</code> （Windows）。下表提供了过滤器属性及其值的完整列表。</p>
+
+<p>下面的示例显示了如何在仅在Linux上运行时在XHTML文档中显示文本段落。</p>
+
+<pre>   &lt;p filter="os=linux"&gt;
+      This message will only appear when viewed on Linux.
+   &lt;/p&gt;
+</pre>
+
+<p>在第二个示例中，链接仅在未安装插件<code>com.my.plugin</code>时出现：</p>
+
+<pre>   &lt;a href="..." filter="plugin!=com.my.plugin"&gt;
+      Click here to download plugin com.my.plugin.
+   &lt;/a&gt;
+</pre>
+
+<h3>过滤元素<span class="warning">（不建议使用）</span></h3>
+
+<p>第二种形式是使用<code>filter</code>元素作为您要<code>filter</code>元素的<i>子</i>元素。此表单略长于属性表单，但它更强大，因为您可以在元素上指定任意数量的过滤器。一般形式是：</p>
+
+<pre>   &lt;element attribute="value"&gt;
+      <span class="highlight"><code>&lt;filter name="[name]" value="[modifier][value]"/&gt;</code></span>
+   &lt;/element&gt;
+</pre>
+
+<p>此处的<span class="highlight"><code>name</code></span>和<span class="highlight"><code>value</code></span>与属性相同。但是，由于它们是分开的，我们需要另一种方法来指定它是否应该匹配。默认情况下，如果未提供<span class="highlight"><code>modifier</code></span> ，则假定为匹配。如果<i>不</i>匹配，请将修改器设置为“ <code>!</code>“</p>
+
+<p>以下是第二种形式的上述第一个示例：</p>
+
+<pre>   &lt;p&gt;
+      &lt;filter name="os" value="linux"/&gt;
+      This message will only appear when viewed on Linux.
+   &lt;/p&gt;
+</pre>
+
+<p>第二个例子：</p>
+
+<pre>   &lt;a href="..."&gt;
+      &lt;filter name="plugin" value="!com.my.plugin"/&gt;
+      Click here to download plugin com.my.plugin.
+   &lt;/a&gt;
+</pre>
+
+<h3>信息中心</h3>
+
+<p>在<a href="ua_help_setup_infocenter.htm">信息中心</a>模式下运行帮助时，默认情况下会<strong>关闭</strong>过滤支持，从而导致包括过滤内容在内的所有内容都可见。如果您打算在工作台和信息中心模式下托管文档，即使关闭了过滤，也应该以一种有意义的方式使用过滤器。如果要在信息中心中启用过滤，请将自定义首选项<code>filterInfocenter</code>设置为true，请参阅<a href="ua_help_setup_preferences.htm">帮助系统自定义</a> 。
+</p>
+
+<h3>我在哪里可以使用过滤器？</h3>
+
+<p>过滤可用于任何基于XML的用户帮助文档，例如帮助XHTML主题，帮助目录，欢迎页面，备忘单等。您不能在HTML文档中使用过滤。
+</p>
+
+<p>在任何情况下，您都<b>不得</b>在任何删除该元素会导致<i>无效</i> XML的元素上放置过滤器。例如，您不应该在XHTML中的<code>html</code>元素上放置过滤器，因为没有该元素它不再是有效的XHTML。</p>
+
+</body>
+</html>

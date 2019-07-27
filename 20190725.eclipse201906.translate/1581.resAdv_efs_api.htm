@@ -1,0 +1,48 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2006. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>使用文件系统API</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>使用文件系统API</h3>
+<p><tt>org.eclipse.core.filesystem</tt>插件提供了一个用于与任意文件系统交互的通用API。此API类似于<tt>java.io.文件</tt> ，有一些关键的区别：</p>
+<ul>
+<li>插件可以为不同类型的文件系统安装提供程序。</li>
+<li>所有方法都集成了对报告进度和响应取消的支持，使其更易于集成到图形用户界面中。</li>
+<li>支持<tt>java.io中没有的一些其他功能。文件</tt> ，例如获取和设置文件权限。</li>
+<li>有更多便利方法，例如复制，移动和递归删除。</li>
+</ul>
+<p>在文件系统API中，任何给定文件的路径都表示为分层<tt>java.net。URI</tt> 。URI方案表示文件系统的类型，URI路径组件表示文件系统树中文件的位置。因此，任何给定的分层URI表示某个任意文件系统中的潜在文件或目录。
+</p>
+<p>用于处理文件和文件系统的API可在<b><a href="../reference/api/org/eclipse/core/filesystem/package-summary.html">org.eclipse.core.filesystem</a></b> ）包中找到。中央API类型是<b><a href="../reference/api/org/eclipse/core/filesystem/IFileStore.html">IFileStore</a></b> <tt>IFileStore</tt>的每个实例表示在文件系统中的单个文件。与<tt>IResource一样</tt> ， <tt>IFileStore</tt>实例的存在并不意味着磁盘上存在这样的文件。您可以使用<tt>IFileStore</tt>实例在文件上创建，删除，复制，移动或打开流。对于给定的<tt>URI</tt> ，您可以使用静态方法<tt>EFS.getStore（URI）</tt>来获取<tt>IFileStore</tt>实例
+</p>
+<p><b><a href="../reference/api/org/eclipse/core/filesystem/IFileSystem.html">IFileSystem</a></b>接口可用于查找有关文件系统的整体信息。每个<tt>IFileSystem</tt>实例代表一个URI方案，例如“file：”，“ftp：”等。您可以使用此类型来询问诸如支持哪些文件属性或文件系统是否区分大小写等问题。您还可以使用此类型获取给定<tt>URI</tt>的<tt>IFileStore</tt> 。</p>
+<p><tt>IFileStore</tt>上的大多数方法都有一个标志参数，允许提供额外的选项。标志值可以在<b><a href="../reference/api/org/eclipse/core/filesystem/EFS.html">EFS</a></b>类中找到。例如，要打开输出流以附加到文件，请使用：</p>
+<pre>
+	IFileStore store = ...//some file store
+	store.openOutputStream(EFS.APPEND, null);
+</pre>
+<p>如果需要方法的默认行为，请使用<b>EFS.NONE</b> 。</p>
+<p><b><a href="../reference/api/org/eclipse/core/filesystem/IFileInfo.html">IFileInfo</a></b>接口表示特定时刻的文件状态。特别是，您可以查看文件是否存在，它是否是目录，其属性是什么，等等。可以修改此信息，然后将其设置回文件中。例如，以下是一个片段，用于设置目录的只读属性：</p>
+<pre>
+	IFileStore store = ...//some file store
+	IFileInfo info = store.fetchInfo();
+	if (info.exists() &amp;&amp; info.isDirectory()) {
+		info.setAttribute(EFS.ATTRIBUTE_READ_ONLY, true);
+		store.putInfo(info, EFS.SET_ATTRIBUTES, null);
+	}
+</pre>
+<p>这种API允许您通过一次调用文件系统来获取和更改文件信息。在上面的示例中，只有一个文件系统调用来获取信息，然后您可以在<tt>IFileInfo</tt>对象上执行任意数量的操作，而无需再次访问磁盘。
+</p>
+<p><b><a href="../reference/api/org/eclipse/core/filesystem/EFS.html">EFS</a></b>类具有用于获取<tt>IFileStore</tt>和<tt>IFileSystem</tt>实例的静态工厂方法，以及各种选项常量和错误代码。
+</p>
+</body>
+</html>

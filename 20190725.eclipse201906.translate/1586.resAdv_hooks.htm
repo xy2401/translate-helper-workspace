@@ -1,0 +1,58 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>资源修改挂钩</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body >
+<h2>资源修改挂钩</h2>
+<p>到目前为止，我们假设资源API用于修改位于用户文件系统中的资源。这确实是工作空间的基本结构，但插件也可能增加了处理其他地方管理的资源的功能。例如，平台<a href="team.htm">团队支持</a>插件添加了处理版本控制存储库管理下的资源的功能。</p>
+
+<p>资源API包括专门添加的功能，以支持团队支持插件和使用团队支持实现存储库提供程序的插件。以下讨论涵盖了注册资源挂钩的通用机制。有关团队如何使用这些挂钩的讨论，请参阅<a href="team_provider_repository.htm#hooks">实现存储库提供程序</a> 。</p>
+
+<h3>资源移动/删除挂钩</h3>
+
+<p>此挂钩允许团队插件及其提供程序控制如何实现资源移动和删除。钩子包括防止这些操作发生的能力。实现者可以提供移动或删除文件，文件夹和项目的替代实现。</p>
+
+<p>团队插件使用<a href="../reference/extension-points/org_eclipse_core_resources_moveDeleteHook.html"><b>org.eclipse.core.resources.moveDeleteHook</b></a>扩展点来注册其钩子：</p>
+
+<pre >&lt;extension point=&quot;org.eclipse.core.resources.moveDeleteHook&quot; id=&quot;MoveDeleteHook&quot;&gt;
+	&lt;moveDeleteHook class=&quot;org.eclipse.team.internal.core.MoveDeleteManager&quot;/&gt;
+&lt;/extension&gt;
+</pre>
+
+<p>提供的类必须实现<a href="../reference/api/org/eclipse/core/resources/team/IMoveDeleteHook.html"><b>IMoveDeleteHook</b></a> ，每当移动或删除资源时，平台都会调用它。团队插件安装了一个移动删除钩子管理器，可以确定哪个团队提供者正在管理资源并调用其特定的钩子。</p>
+
+<h3>文件修改验证器</h3>
+
+<p>团队存储库提供程序也可能需要阻止或干预编辑或保存文件。团队插件通过使用扩展点<a href="../reference/extension-points/org_eclipse_core_resources_fileModificationValidator.html"><b>org.eclipse.core.resources.fileModificationValidator</b></a>来完成此操作，以注册每当要修改资源时调用的验证器。</p>
+
+<pre >&lt;extension point=&quot;org.eclipse.core.resources.fileModificationValidator&quot; id=&quot;FileValidator&quot;&gt;
+	&lt;fileModificationValidator class=&quot;org.eclipse.team.internal.core.FileModificationValidatorManager&quot;/&gt;
+&lt;/extension&gt;</pre>
+
+<p>提供的类必须实现<a href="../reference/api/org/eclipse/core/resources/team/FileModificationValidator.html"><b>FileModificationValidator</b></a> ，每当保存或打开资源时，平台都会调用该文件。团队插件安装文件修改管理器，该管理器可以确定哪个团队提供者正在管理资源并调用其特定的验证器。</p>
+
+<h3>一般团队勾手</h3>
+<p>存储库提供程序有时需要挂钩到其他工作空间操作，以便施加额外的限制或自定义工作空间行为。<a href="../reference/extension-points/org_eclipse_core_resources_teamHook.html"><b>org.eclipse.core.resources.teamHook</b></a>扩展点为团队提供者提供了一些其他特殊功能。特别是，这个钩子允许团队提供者决定是否允许给定项目的链接文件夹和文件。某些存储库系统对磁盘上项目的物理布局有严格的规定，并且无法处理链接到任意位置的资源。</p>
+<p>团队钩子还允许存储库提供者提供将由所有工作空间操作使用的<a href="runtime_jobs_rules.htm">调度规则</a>工厂。每次调用以某种方式修改工作空间的API方法时，工作空间都会获得调度规则。此调度规则可防止其他线程在调用API方法期间修改这些资源。如果存储库提供程序正在文件修改验证程序或移动/删除挂钩中执行其他工作，则提供程序还必须告知工作空间它将需要哪些其他调度规则。有关工作空间如何使用调度规则的更多详细信息，请参阅有关<a href="resAdv_batching.htm">资源批处理</a>的部分。
+</p>
+<p>为团队钩子提供的类必须实现<a href="../reference/api/org/eclipse/core/resources/team/TeamHook.html"><b>TeamHook</b></a> 。团队插件安装单个团队挂钩，可以确定哪个团队提供者正在管理资源并调用其特定的挂钩。</p>
+
+<blockquote>
+
+  <p><i>注意：所有这三个团队挂钩都是专门为团队核心插件使用而设计的。它们不适用于一般用途。团队提供者不应该使用这些扩展点来安装钩子，而是在他们的Repository Provider类中实现它们的钩子。有关使用这些挂钩的更多信息，请参阅<a href="team_provider_repository.htm#hooks">Team资源修改</a>挂钩。</i></p>
+
+</blockquote>
+
+
+
+</body>
+</html>

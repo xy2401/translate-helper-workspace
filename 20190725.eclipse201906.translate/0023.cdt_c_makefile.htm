@@ -1,0 +1,175 @@
+<html lang="zh-Hans" >
+
+<head>
+<meta http-equiv="Content-Language" content="zh-Hans">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Makefile文件</title>
+<link rel="stylesheet" type="text/css" href="../help.css">
+</head>
+
+<body >
+<div role="main">
+<h1>Makefile文件</h1>
+<p>makefile是一个文本文件，由make命令引用，用于描述目标的构建，并包含诸如源级依赖项和构建顺序依赖项之类的信息。</p>
+<p>CDT可以为您生成一个makefile，这样的项目称为Managed Make项目。一些项目（称为标准制作项目）允许您定义自己的makefile。</p>
+
+<h2>示例Makefile</h2>
+<pre>
+# A sample Makefile
+# This Makefile demonstrates and explains 
+# Make Macros, Macro Expansions,
+# Rules, Targets, Dependencies, Commands, Goals
+# Artificial Targets, Pattern Rule, Dependency Rule.
+
+# Comments start with a # and go to the end of the line.
+
+# Here is a simple Make Macro.
+LINK_TARGET = test_me.exe
+
+# Here is a Make Macro that uses the backslash to extend to multiple lines.
+# This allows quick modification of more object files.
+OBJS =  \
+ Test1.o \
+ Test2.o \
+ Main.o
+
+# Here is a Make Macro defined by two Macro Expansions.
+# A Macro Expansion may be treated as a textual replacement of the Make Macro.
+# Macro Expansions are introduced with $ and enclosed in (parentheses).
+REBUILDABLES = $(OBJS) $(LINK_TARGET)
+
+# Make Macros do not need to be defined before their Macro Expansions,
+# but they normally should be defined before they appear in any Rules.
+# Consequently Make Macros often appear first in a Makefile.
+
+# Here is a simple Rule (used for "cleaning" your build environment).
+# It has a Target named "clean" (left of the colon ":" on the first line),
+# no Dependencies (right of the colon),
+# and two Commands (indented by tabs on the lines that follow).
+# The space before the colon is not required but added here for clarity.
+clean : 
+ rm -f $(REBUILDABLES)
+ echo Clean done
+
+# There are two standard Targets your Makefile should probably have:
+# "all" and "clean", because they are often command-line Goals.
+# Also, these are both typically Artificial Targets, because they don't typically
+# correspond to real files named "all" or "clean".  
+
+# The rule for "all" is used to incrementally build your system.
+# It does this by expressing a dependency on the results of that system,
+# which in turn have their own rules and dependencies.
+all : $(LINK_TARGET)
+ echo All done
+
+# There is no required order to the list of rules as they appear in the Makefile.
+# Make will build its own dependency tree and only execute each rule only once
+# its dependencies' rules have been executed successfully.
+
+# Here is a Rule that uses some built-in Make Macros in its command:
+# $@ expands to the rule's target, in this case "test_me.exe".
+# $^ expands to the rule's dependencies, in this case the three files
+# main.o, test1.o, and  test2.o.
+$(LINK_TARGET) : $(OBJS)
+ g++ -g -o $@ $^
+
+# Here is a Pattern Rule, often used for compile-line.
+# It says how to create a file with a .o suffix, given a file with a .cpp suffix.
+# The rule's command uses some built-in Make Macros:
+# $@ for the pattern-matched target
+# $lt; for the pattern-matched dependency
+%.o : %.cpp
+ g++ -g -o $@ -c $&lt;
+
+# These are Dependency Rules, which are rules without any command.
+# Dependency Rules indicate that if any file to the right of the colon changes,
+# the target to the left of the colon should be considered out-of-date.
+# The commands for making an out-of-date target up-to-date may be found elsewhere
+# (in this case, by the Pattern Rule above).
+# Dependency Rules are often used to capture header file dependencies.
+Main.o : Main.h Test1.h Test2.h
+Test1.o : Test1.h Test2.h
+Test2.o : Test2.h
+
+# Alternatively to manually capturing dependencies, several automated
+# dependency generators exist.  Here is one possibility (commented out)...
+# %.dep : %.cpp
+#        g++ -M $(FLAGS) $&lt; &gt; $@
+# include $(OBJS:.o=.dep)
+</pre>
+
+
+<h2>经常问的问题：</h2>您的控制台视图对于调试构建非常有用。
+
+<p><strong>Q1。我的控制台视图显示<span class="typewriter"><q>错误启动构建器</q></span> 。那是什么意思？</strong></p>
+<pre>
+Error launching builder (make -k clean all )
+(Exec error:Launching failed)
+</pre>
+
+<p>最有可能的是，构建命令（默认情况下为“make”）不在您的路径上。您可以将它放在路径上并重新启动Eclipse。<br>您还可以将构建命令更改为路径上的某些内容。如果使用MinGW工具进行编译，则应将build命令替换为“mingw32-make”。</p>
+
+<p><strong>Q2。我的控制台视图说<span class="typewriter"><q>没有规则来制作目标'X'</q></span> 。</strong></p>
+<pre>
+make -k clean all 
+make: *** No rule to make target 'clean'.
+make: *** No rule to make target 'all'.
+</pre>
+
+<p>默认情况下，make程序会查找最常称为“Makefile”或“makefile”的文件。如果它在工作目录中找不到这样的文件，或者该文件为空或者文件不包含命令行目标的规则（在这种情况下为“clean”和“all”），则通常会失败并显示错误消息类似于显示的消息。</p>
+
+<p>如果您已有一个有效的Makefile，则可能需要更改构建的工作目录。build命令的默认工作目录是项目的根目录。您可以通过在Make Project属性中指定备用Build Directory来更改此设置。或者，如果您的Makefile被命名为其他名称（例如<span class="typewriter">buildFile.mk</span> ），则可以通过将默认的Build命令设置为<span class="typewriter">make -f buildFile.mk</span>来指定名称。</p>
+
+<p>如果没有有效的Makefile，请在根目录中创建名为Makefile的新文件。然后，您可以添加示例Makefile（上面）的内容，并根据需要进行修改。</p>
+
+<p><strong>Q3。我的控制台视图显示<span class="typewriter">“缺少分隔符”</span> 。</strong></p>
+<pre>
+make -k clean all 
+makefile:12: *** missing separator.  Stop.
+</pre>
+<p>Makefile的标准语法规定构建规则中的每一行必须以Tab字符开头。这个Tab字符经常被空格意外替换，并且因为两者都会导致空格缩进，所以这个问题很容易被忽视。在提供的示例中，错误消息可以精确定位到文件“makefile”的第12行;要解决此问题，请在该行的开头插入一个选项卡。</p>
+
+<p><strong>Q4。我的控制台视图显示<span class="typewriter"><q>Target'all'未因错误而重新制作</q></span> 。</strong></p>
+<pre>
+make -k clean all 
+make: *** [clean] Error 255
+rm -f Test1.o Test2.o Main.o test_me.exe
+g++ -g -o Test1.o -c Test1.cpp
+make: *** [Test1.o] Error 255
+make: *** [Test2.o] Error 255
+make: *** [Main.o] Error 255
+g++ -g -o Test2.o -c Test2.cpp
+g++ -g -o Main.o -c Main.cpp
+make: Target 'all' not remade because of errors.
+</pre>
+<p>这里可能的罪魁祸首是g ++不在你的路径上。<br>
+</p><p>错误255由make生成，因为它的命令shell无法找到特定规则的命令。<br>来自标准错误流（行错误255）和标准输出流（所有其他行）的消息将在此处的控制台视图中合并。</p>
+
+<p><strong>Q5。什么是-k标志？</strong></p>
+
+<p>-k标志告诉make即使在一个规则失败时也继续制定其他独立规则。这有助于构建大型项目。</p>
+<p>您可以通过打开项目属性&gt; C / C ++生成项目&gt;生成构建器&gt;停止第一次生成错误来删除-k标志</p>
+
+<p><strong>Q6。我的控制台视图如下所示：</strong></p>
+<pre>
+mingw32-make clean all 
+process_begin: CreateProcess((null), rm -f Test1.o Test2.o Main.o test_me.exe, ...) failed.
+make (e=2): The system cannot find the file specified.
+
+mingw32-make: *** [clean] Error 2
+rm -f Test1.o Test2.o Main.o test_me.exe
+</pre>
+
+<p>这意味着mingw32-make无法找到实用程序“rm”。不幸的是，MinGW没有“rm”。要更正此问题，请将Makefile中的clean规则替换为：</p>
+<p></p><pre>
+clean : 
+	-del $(REBUILDABLES)
+	echo Clean done
+</pre>
+<p>前导减号告诉make即使del命令返回失败也要认为干净规则是成功的。这可能是可以接受的，因为如果要删除的指定文件（或者不再存在），del命令将失败。</p>
+
+
+<p><img src="../images/ng00_04a.gif" alt="IBM版权声明"></p>
+</div>
+</body>
+</html>

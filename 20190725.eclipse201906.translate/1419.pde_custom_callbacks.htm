@@ -1,0 +1,69 @@
+<html lang="zh-Hans" >
+<head>
+  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2006, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
+  <title>自定义功能和插件构建</title>
+</head>
+<body >
+<h1>功能和插件自定义构建步骤</h1>
+<p>3.2中的新功能是功能或插件能够为自己的构建贡献自定义ant目标。这些自定义步骤可用于编译后检测字节代码，索引文档的帮助文件或将额外文件复制到包中。</p>
+<p>要使用自定义目标，功能部件或插件必须在其build.properties文件中定义属性<tt>customBuildCallbacks</tt> ;此属性的值是xml文件的位置，相对于包含自定义目标的feature / plug-in的根目录。如果xml文件位于其他位置，请使用属性customBuildCallbacks.buildpath设置要使用的目录。</p>
+<p>org.eclipse.pde.build/templates/plugins和org.eclipse.pde.build/templates/features中提供了名为<span style="font-style:italic">customBuildCallbacks.xml的</span>模板， <span style="font-style:italic">其中</span>包含受支持的自定义目标。可以将这些模板复制到您的功能/插件中，并根据需要进行修改。</p>
+ <p>将使用子任务调用自定义目标;默认情况下， <span style="font-style:italic">failonerror</span>设置为false。要更改此设置，请将属性<tt>customBuildCallbacks.failonerror</tt>设置为true。同样， <span style="font-style:italic">inheritall</span>参数默认为false。设置属性<tt>customBuildCallbacks.inheritall</tt>以更改此设置。
+</p>
+<h2>插件</h2>
+<p>生成的构建插件的build.xml包含执行特定任务的多个目标。PDE Build允许插件提供将在特定任务之前和之后调用的自定义前置和后置目标。除了可能已定义的任何ant属性之外，每个自定义目标还可以传递几个特定属性。以下目标支持自定义回调：<br>
+</p>
+<ul>
+  <li><span style="font-weight:bold">build.jars</span> ：build.jars目标将依次调用将为此bundle构建的每个编译目标。它支持<span style="font-weight:bold">pre.build.jars</span>和<span style="font-weight:bold">post.build.jars</span>目标，这些目标在调用所有编译目标之前和之后调用。pre和post目标都提供了属性<tt>build.result.folder</tt> ，该文件夹将构建结果复制到该文件夹。</li>
+  <li><span style="font-weight:bold">编译目标</span> ：build.xml为正在构建的每个jar定义一个编译目标（例如，对于bundle本身的@dot或library.jar）。每个编译目标都支持3个自定义回调：<ul>
+    <li><span style="font-weight:bold">pre。&lt;编译目标&gt;</span> ：在编译源文件之前调用。它具有以下属性：<ul>
+      <li><tt>target.folder</tt> ：将放置已编译类文件的文件夹</li>
+      <li><tt>source.folder &lt;N&gt;</tt> ：包含要编译的源的源文件夹。 （例如<tt>source.folder1</tt> ， <tt>source.folder2</tt>等）。</li>
+      <li><tt>&lt;compilation target&gt; .classpath</tt> ：对包含将在编译中使用的类路径的ant路径结构的引用。 （例如<tt>@ dot.classpath</tt> ， <tt>library.jar.classpath</tt> ）。对classpath的引用应该与<tt>refid</tt>一起使用。
+<br><b>例：</b>
+<pre>
+&lt;classpath refid="library.jar.classpath"/&gt;
+&lt;property name="mypath" refid="library.jar.classpath" /&gt;
+</pre>
+</li>
+    </ul>
+    </li>
+    <li><span style="font-weight:bold">post.compile。&lt;compilation target&gt;</span> ：在编译源之后，但在将类文件jared或复制到构建结果文件夹之前调用。它具有与pre。&lt;compilation target&gt;目标相同的属性。</li>
+    <li><span style="font-weight:bold">post。&lt;compilation target&gt;</span> ：在将结果复制到构建结果文件夹后，在编译目标的末尾调用。它具有以下属性：<ul>
+      <li>罐。位置：包含编译结果的jar或文件夹。</li>
+      <li>&lt;compilation target&gt; .classpath：对包含编译中使用的类路径的ant路径结构的引用。</li>
+    </ul>
+    </li>
+  </ul>
+  </li>
+  <li><span style="font-weight:bold">build.sources</span> ：此目标为每个编译目标构建源拉链。它支持<span style="font-weight:bold">pre.build.sources</span>和<span style="font-weight:bold">post.build.sources</span>目标。这两个目标都提供了属性build.result.folder，它是将源zip文件复制到的文件夹。</li>
+  <li><span style="font-weight:bold">gather.bin.parts</span> ：此目标将构建结果（即包中包含的jar和任何其他文件）复制到最终目标目录。它也是清单文件中替换版本限定符的目标（请参阅<a href="pde_version_qualifiers.htm">版本限定符</a> ）。它支持<span style="font-weight:bold">pre.gather.bin.parts</span>和<span style="font-weight:bold">post.gather.bin.parts</span>目标。为前后目标提供了两个属性：<ul>
+    <li><tt>build.result.folder</tt> ：包含构建结果的文件夹</li>
+    <li><tt>target.folder</tt> ：要将构建结果和包内容复制到的目标文件夹。</li>
+  </ul>
+  </li>
+  <li><span style="font-weight:bold">gather.sources</span> ：此目标收集包的源拉链。它支持<span style="font-weight:bold">pre.gather.sources</span>和<span style="font-weight:bold">post.gather.sources</span>目标。pre和post目标都提供了target.folder属性，该属性是将源复制到的文件夹。<br>
+  </li>
+  <li><span style="font-weight:bold">gather.logs</span> ：此目标从构建中收集日志文件。它支持<span style="font-weight:bold">pre.gather.logs</span>和<span style="font-weight:bold">post.gather.logs</span> 。pre和post目标都提供了destination.temp.folder，它是将日志文件复制到的临时文件夹。<br>
+  </li>
+  <li><span style="font-weight:bold">clean</span> ：此目标执行干净，它支持<span style="font-weight:bold">pre.clean</span>和<span style="font-weight:bold">post.clean</span>目标。前后目标具有以下属性：<ul>
+    <li><tt>plugin.destination</tt> ：最终包被复制到的文件夹。<br>
+    </li>
+    <li><tt>build.result.folder</tt> ：构建结果被复制到的文件夹</li>
+    <li><tt>temp.folder</tt> ：在复制到最终目标之前暂存结果的临时文件夹。<br>
+    </li>
+  </ul>
+  </li>
+</ul>
+<h2>特征</h2>
+<p>生成的功能build.xml仅支持gather.bin.parts目标的自定义构建回调。此目标将调用所有包含的功能和插件的gather.bin.parts目标。它支持pre.gather.bin.parts和post.gather.bin.parts。这两个目标都具有以下属性：</p>
+<ul>
+  <li><tt>destination.temp.folder</tt> ：插件将被复制到的目录。</li>
+  <li><tt>feature.directory</tt> ：将要复制此功能的文件的目录。<br>
+  </li>
+</ul>
+</body>
+</html>

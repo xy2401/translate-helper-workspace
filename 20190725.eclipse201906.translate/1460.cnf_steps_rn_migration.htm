@@ -1,0 +1,73 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) Oakland Software and others 2008, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>从ResourceNavigator迁移</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h1>从ResourceNavigator迁移</h1>
+
+<p>首先按照步骤<a href="cnf_steps_general.htm">添加Common Navigator，</a>并检查是否应用了使用<a href="cnf_steps_content.htm">资源内容</a>所需的步骤。
+</p>
+
+<p>以下步骤讨论ResourceNavigator的每个部分的迁移组件</p>
+
+<ol>
+<li>
+<code>org.eclipse.ui.ide.resourceFilters</code>
+<p>添加相应的<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / commonFilter</a></b>扩展。
+</p>
+</li>
+
+<li>
+<code>FrameList</code>支持<code>get/setFrameList()</code>
+<p>FrameList支持用于Go Into功能。对此的支持包含在CommonNavigator的ProjectExplorer子类中。您应该将ProjectExplorer子类化为CommonNavigator。
+</p>
+</li>
+
+
+<li>
+
+<code>ResourcePatternFilter</code>支持<code>get/setPatternFilter()</code>
+<p>使用<b><a href="../reference/extension-points/org_eclipse_ui_navigator_navigatorContent.html">org.eclipse.ui.navigator.navigatorContent / commonFilter</a></b>扩展来配置ResourcePatternFilter。然后，您可以使用以下代码访问过滤器的实例（其中<code>yourViewer</code>是CommonViewer的实例， <code>yourFilterId</code>是上面配置的常用过滤器的Id的字符串）：</p>
+<pre>
+INavigatorContentService contentService = yourViewer.getNavigatorContentService();
+INavigatorFilterService filterService = contentService.getFilterService();
+ICommonFilterDescriptor[] fds = filterService.getVisibleFilterDescriptors();
+for (int i = i; i &lt; fds.length; i++) {
+	if (fds[i].getId().equals(yourFilterId))
+		return filterService.getViewerFilter(filterDescriptor);
+}
+</pre>
+
+</li>
+
+<li>
+<code>IWorkingSet</code>支持<code>get/setWorkingSet()</code>
+<p>Common Navigator不直接支持工作集。但Project Explorer确实支持工作集。但是，Project Explorer中没有当前的API来操作工作集。Project Explorer提供了一个用于处理工作集的UI。如果需要此类API，请提交解释要求的增强请求。
+</p>
+</li>
+
+<li>
+<code>ResourceSorter</code>支持<code>get/setResourceSorter()</code>
+<p>使用Common Navigator中的排序工具。
+</p>
+</li>
+
+<li>
+<code>ResourceComparator</code>支持<code>get/setResourceComparator()</code>
+<p>现在使用ResourceSorter，因为Common Navigator不直接支持ResourceComparators。
+</p>
+</li>
+
+</ol>
+
+</body>
+</html>

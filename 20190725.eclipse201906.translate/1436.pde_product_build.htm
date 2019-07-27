@@ -1,0 +1,45 @@
+<html lang="zh-Hans" >
+<head>
+  <meta name="copyright" content="Copyright (c) 2006, 2015 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <link rel="STYLESHEET" href="../guide/book.css" type="text/css">
+  <title>从产品配置文件构建RCP应用程序</title>
+</head>
+<body >
+<h1>从产品配置文件构建RCP应用程序</h1>
+<p>PDE Build附带了从产品配置文件构建完整RCP应用程序的基础结构。这种构建所需的大多数设置都可以通过对PDE构建中提供的模板build.properties进行一些修改来完成。以下部分重点介绍如何设置简单的产品构建，假设产品文件引用的所有插件和功能（包括构建和预构建）都已在磁盘上本地可用。<br>
+</p>
+<h2>基本设置</h2>
+<p>设置构建的第一步是创建将在其中进行构建的目录。此目录将被称为<i>构建目录</i> ，并将包含要构建的插件和功能以及所有生成的工件。接下来，将插件和功能分别复制到“插件”和“功能”子目录中。您的产品配置文件应该位于其中一个插件/功能中。
+</p>设置构建的第二步是将模板build.properties文件从org.eclipse.pde.build/templates/headless-build复制到一个新目录，该目录将是构建配置目录（也称为<i>配置目录）</i> ）。编辑复制的build.properties文件并设置以下属性：<br>
+<ul>
+  <li><span style="font-weight:bold">product</span> ：产品配置文件的位置，格式为“ <code>/&lt;plug-in or
+feature id&gt;/path/to/.product</code> ”</li>
+  <li><span style="font-weight:bold">baseLocation</span> ：eclipse安装的位置，包含产品在features / plugins / subdirectories中所需的所有预构建功能和插件。org.eclipse.equinox.executable功能（可从eclipse p2存储库获得）是必需的，因为它包含org.eclipse.platform.launchers功能，该功能包含产品所需的启动器和根文件。</li>
+  <li><span style="font-weight:bold">buildDirectory</span> ：构建将在其中发生的目录。将其设置为先前创建的构建目录的完整路径。</li>
+  <li><span style="font-weight:bold">配置</span> ：列出您希望构建产品的配置。您可以取消注释所提供的配置（注意线路延续）。</li>
+  <li><span style="font-weight:bold">archivePrefix</span> ：安装在磁盘上后的产品目录名称。</li>
+</ul>
+<h3>目录结构概述</h3>
+<pre>&lt;buildDirectory&gt;/<br>	plugins/<br>		pluginToBuildA<br>		pluginToBuildB<br>			myProduct.product<br>		...<br>	features/<br>		featureToBuild<br>		...<br><br>&lt;buildConfiguration&gt;/<br>	build.properties<br><br>&lt;baseLocation&gt;<br>	plugins/<br>		org.eclipse.core.runtime<br>		org.eclipse.ui<br>		...<br>	features/<br>		org.eclipse.rcp<br>		org.eclipse.platform.launchers<br>		...<br>		<br></pre>
+<h2>运行构建</h2>要运行构建，您将使用org.eclipse.ant.core.antRunner应用程序。使用此应用程序调用eclipse执行构建时，需要在命令行上设置两个参数：<br>
+<ul>
+  <li><code>-buildfile &lt;/path/to/productBuild.xml&gt;</code> ：这是pde build提供的productBuild.xml的路径。它位于org.eclipse.pde.build/scripts/productBuild目录中。这是构建文件，它驱动整个产品构建过程。</li>
+  <li><code>-Dbuilder=&lt;/path/to/configuration folder&gt;</code> ：这是构建配置文件夹的路径。</li>
+</ul>使用以下命令运行antRunner应用程序：<br>
+<div style="text-align:center">
+<div style="text-align:left">
+<div style="margin-left:40px"><code>java -jar
+&lt;eclipseInstall&gt;/plugins/org.eclipse.equinox.launcher_&lt;version&gt;.jar -application
+org.eclipse.ant.core.antRunner -buildfile
+&lt;&lt;eclipseInstall&gt;/plugins/org.eclipse.pde.build_&lt;version&gt;/scripts/productBuild/productBuild.xml&gt;
+-Dbuilder=&lt;path to the build configuration folder&gt;</code><br>
+</div>
+</div>
+</div>
+<h2>高级方案</h2>
+<p>在幕后，此设置将生成一个功能，其中包含产品配置文件中指定的插件或功能。然后，此生成的特征用于驱动基于正常特征的无头构建。如果需要更多自定义构建（即从存储库获取），请参阅高级PDE构建主题以获取更多信息。
+</p>
+</body>
+</html>

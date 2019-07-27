@@ -1,0 +1,69 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<script language="JavaScript" src="PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript"></script>
+<title>调试活动帮助的提示</title>
+</head>
+<body >
+
+<h2>调试活动帮助的提示</h2>
+
+
+<p>触发我们的活动帮助链接的代码和标记看起来非常简单。但是，如果您的活动帮助链接似乎不起作用，您会怎么做？</p>
+
+
+<h4>提前测试你的行动</h4>
+
+
+<p>如果您的动作实现非常复杂，那么您应该使用Eclipse中的一些测试代码自行调用该动作。这样，在从JavaScript调用它之前，您将知道该操作没有错误。</p>
+
+
+<h4>确保JavaScript正在运行</h4>
+
+
+<p>您可以修改“ <b>liveHelp.js</b> ”（从plugins / org.eclipse.help插件制作此副本并更改您的<code>script</code>语句以引用您的本地副本）以包含对<b>alert</b>函数的调用，作为第一个语句。 <b>liveAction</b>功能：</p>
+
+
+<pre>function liveAction(pluginId, className, argument)
+{
+<b>	alert(&quot;liveAction called&quot;);
+	...</b></pre>
+
+
+<p><b>警报</b>功能在浏览器中打开警告对话框，可用于验证HTML中是否正确调用了<b>liveAction</b> 。如果在单击帮助链接时没有看到警告对话框，则表明HTML标记存在问题。</p>
+
+
+<h4>调试活动的帮助操作</h4>
+
+
+<p>一旦您知道JavaScript正在运行，您就可以从Eclipse内部调试您的操作。为此，您可以在帮助操作类中设置断点并启动自托管Eclipse实例。您必须使用新启动的Eclipse实例中的帮助浏览器测试活动帮助，而不是来自主机实例，因为帮助HTML中的JavaScript会调用启动浏览器的Eclipse帮助服务器上的servlet。</p>
+
+
+<p>如果在设置断点并单击活动帮助链接后没有任何反应，则可能是您的插件和活动帮助类未在JavaScript中正确指定。</p>
+
+
+<p>一旦您设法在操作中的断点处停止，就可以像调整任何其他Java代码一样调试操作。</p>
+
+
+<h4>确保您的UI代码包装在Display.syncExec中</h4>
+
+
+<p>常见的运行时问题是从调用活动帮助的线程中不正确地访问UI代码。如果您的实时帮助操作来自最初在UI线程中运行的代码，则需要对其进行修改以处理它从非UI线程运行的事实。</p>
+
+
+<pre>public void run() {
+		// Active help does not run on the UI thread, so we must use syncExec
+		Display.getDefault().syncExec(new Runnable() {
+							public void run() {
+								//do the UI work in here;
+							}
+		});		
+	}
+
+</pre>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2012, 2015. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>控制台外壳</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h1>控制台外壳</h1>
+
+<h2>一般特征</h2>Equinox OSGi控制台基于Apache Felix Gogo shell。控制台提供：<ul>
+      <li>支持ssh协议（除了telnet连接）</li>
+      <li>基于JAAS的用户身份验证</li>
+      <li>改进标签完成</li>
+  </ul>默认身份验证是基于密码的，但也支持基于密钥的身份验证。
+            
+  <h2>安装和配置控制台</h2>
+  
+  <h3>没有SSH运行</h3>
+  <ol>
+    <li>将必要的捆绑包放在一个文件夹中。捆绑包括：<ul>
+        <li>org.apache.felix.gogo.command_ &lt;版本&gt;的.jar</li>
+        <li>org.apache.felix.gogo.runtime_ &lt;版本&gt;的.jar</li>
+        <li>org.apache.felix.gogo.shell_ &lt;版本&gt;的.jar</li>
+        <li>org.eclipse.equinox.console_ &lt;版本&gt;的.jar</li>
+        <li>org.eclipse.osgi.jar</li>
+      </ul>
+    </li>
+    
+    <li>在其中创建<b>配置</b>子文件夹和<b>config.ini</b>文件。</li>
+    
+    <li>在<b>config.ini</b>文件中添加以下条目：<br>
+      <code>
+        osgi.bundles=org.apache.felix.gogo.runtime,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.apache.felix.gogo.command,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.apache.felix.gogo.shell,\ <br> 
+        &nbsp;&nbsp;&nbsp;&nbsp;org.eclipse.equinox.console <br>
+        osgi.console=&lt;port&gt; <br>
+      </code> <br>
+    </li>
+    
+    <li>使用以下命令行启动Equinox框架： <code>
+        java -jar org.eclipse.osgi.jar <br>
+      </code>
+    </li>
+  </ol><code>osgi.console</code>属性指定控制台应侦听telnet连接的端口。您可以使用<code>-console &lt;port&gt;</code>选项启动框架，而不是指定此属性。如果未以这两种方式之一指定端口，则控制台将不侦听telnet连接。如果从选项<code>-console</code>开始并且未指定端口，则可以通过标准输入与控制台进行交互。
+
+  
+  <h3>使用SSH运行</h3>如果要通过SSH访问控制台，则需要更多捆绑包和配置。
+  <ol>
+    <li>将必要的捆绑包放在一个文件夹中。捆绑包括：<ul>
+        <li>org.apache.felix.gogo.command_ &lt;版本&gt;的.jar</li>
+        <li>org.apache.felix.gogo.runtime_ &lt;版本&gt;的.jar</li>
+        <li>org.apache.felix.gogo.shell_ &lt;版本&gt;的.jar</li>
+        <li>org.eclipse.equinox.console_ &lt;版本&gt;的.jar</li>
+        <li>org.eclipse.equinox.console.ssh_ &lt;版本&gt;的.jar</li>
+        <li>org.eclipse.equinox.console.jaas.fragment_ &lt;版本&gt;的.jar</li>
+        <li>org.eclipse.osgi.jar</li>
+        <li>org.apache.mina.core_ &lt;版本&gt;的.jar</li>
+        <li>org.apache.sshd.core_ &lt;版本&gt;的.jar</li>
+        <li>SLF4J的API</li>
+        <li>一些slf4j-api实现</li>
+      </ul>
+    </li>
+                
+    <li>在其中创建<b>配置</b>子文件夹和<b>config.ini</b>文件。</li>
+                
+    <li>在<b>config.ini</b>文件中添加以下条目：<br>
+      <code>
+        osgi.bundles=org.apache.felix.gogo.runtime,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.apache.felix.gogo.command,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.apache.felix.gogo.shell,\ <br> 
+        &nbsp;&nbsp;&nbsp;&nbsp;org.eclipse.equinox.console,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;slf4j-api,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&lt;slf4j-api_impl&gt;,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.apache.mina.core,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.apache.sshd.core,\ <br> 
+        &nbsp;&nbsp;&nbsp;&nbsp;org.eclipse.equinox.console.ssh@start,\ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.eclipse.equinox.console.jaas.fragment<br>
+        osgi.console.ssh=&lt;port&gt; <br>
+        osgi.console.ssh.useDefaultSecureStorage=true <br>
+      </code> <br>
+    </li>
+                
+    <li>在<b>配置</b>子文件夹中创建名为<b>org.eclipse.equinox.console.authentication.config</b>的文件。</li>
+                
+    <li>将以下条目添加到<b>org.eclipse.equinox.console.authentication.config</b>文件中：<br>
+      <code>
+        equinox_console { <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;org.eclipse.equinox.console.jaas.SecureStorageLoginModule REQUIRED; <br>
+        }; <br>
+      </code>
+    </li>
+                
+    <li>创建日志配置文件。这取决于您选择的slf4j-api的特定实现。</li>
+                
+    <li>使用以下命令行启动Equinox框架： <code>
+        java -Djava.util.logging.config.file=configuration/logging.properties \ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;-Dssh.server.keystore=configuration/hostkey.ser \ <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;-Dorg.eclipse.equinox.console.jaas.file=configuration/store \<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;-Djava.security.auth.login.config=configuration/org.eclipse.equinox.console.authentication.config \<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;-jar org.eclipse.osgi.jar <br>
+      </code>
+    </li>
+  </ol>
+  <b>笔记：</b>
+  <ul>
+    <li>对于这两个属性，指定telnet和ssh端口，您还可以指定主机：<br>
+      <code>
+        osgi.console=&lt;host&gt;:&lt;port&gt; <br>
+        osgi.console.ssh=&lt;host&gt;:&lt;port&gt; <br>
+      </code>其中&lt;host&gt;是<b>localhost</b>或<b>127.0.0.1</b> ，因此控制台仅侦听来自localhost的telnet连接。<br>您可以同时使用telnet和ssh。为此，您必须指定这两个属性。<br>
+    </li>
+    <li>slf4j-api的版本必须在[1.5,2]的范围内</li>
+    <li>仅当使用ssh并使用默认登录机制（即，未提供自定义登录模块）时，才需要使用<code>osgi.console.ssh.useDefaultSecureStorage</code>属性。</li>
+    <li>配置文件<b>org.eclipse.equinox.console.authentication.config</b>可能具有不同的名称，但其名称必须相应地作为属性<code>-Djava.security.auth.login.config</code>的值给出。</li>
+    <li>包org.eclipse.equinox.console_ &lt;version&gt; .jar，org.eclipse.equinox.console.ssh_ &lt;version&gt; .jar和org.eclipse.equinox.console.jaas.fragment_ &lt;version&gt; .jar，以及Equinox SDK提供了三个Gogo软件包，可以从<a href="http://download.eclipse.org/equinox/">Equinox下载页面下载</a></li>
+    <li>您可以下载包org.apache.mina.core_ &lt;version&gt; .jar和org.apache.sshd.core_ &lt;version&gt; .jar <a href="http://download.eclipse.org/tools/orbit/downloads/">Eclipse Orbit存储库</a> 。</li>
+    <li>您可以从<a href="http://www.slf4j.org/download.html">这里</a>下载slf4j-api和slf4j实现。</li>
+    <li>对于日志记录，您可以使用<a href="http://download.eclipse.org/tools/orbit/downloads/">Eclipse Orbit存储库中的</a> org.slf4j.api。在这种情况下，您应该从此存储库中获取logback slf4j实现。它由三个包组成 -  ch.qos.logback.classic，ch.qos.logback.core和ch.qos.logback.slf4j。</li>
+    <li>除<b>config.ini</b>之外的所有配置文件都可以放在与配置子文件夹不同的文件夹中。在这种情况下，必须分别更改VM属性以指向正确的文件夹。</li>
+  </ul>
+                       
+  <h2>JAAS身份验证</h2>使用SSH时，Equinox控制台使用JAAS身份验证。在控制台中实现的默认JAAS登录模块使用自定义存储文件，用于存储用户和密码。密码是单向加密的。控制台还提供用于管理用户的shell命令：<ul>
+    <li>添加用户</li>
+    <li>删除用户</li>
+    <li>列出用户</li>
+    <li>重置用户密码</li>
+    <li>更改用户密码</li>
+    <li>添加用户角色</li>
+    <li>删除用户角色</li>
+  </ul>有一个默认用户<b>equinox，</b>带有密码<b>equinox</b> ，如果用户存储中没有其他用户，则在ssh启动时动态创建。首次登录时，控制台会提示用户创建新用户，并自动删除默认用户。密码长度必须至少为8个符号。用户名可以包含字母数字字符，加上下划线和点。目前，仅在控制台中实施身份验证。所有经过身份验证的用户都拥有类实施授权可能是未来的增强。这就是为什么引入角色的原因，尽管它们目前尚未使用。如果使用默认的JAAS登录模块，则必须将属性<code>osgi.console.ssh.useDefaultSecureStorage</code>设置为<code>true</code> 。存储用户的文件是通过属性<code>org.eclipse.equinox.console.jaas.file</code>指定的。
+            
+  <h2>使用自定义JAAS身份验证登录模块</h2>自定义JAAS身份验证登录模块可以与ssh一起使用，而不是默认值。如果使用自定义登录模块，则不得设置属性<code>osgi.console.ssh.useDefaultSecureStorage</code> 。必须在文件<code>org.eclipse.equinox.console.authentication.config</code>指定自定义模块，而不是在那里的默认条目，或在不同的文件中。如果使用其他文件，则必须将其名称指定为属性<code>-Djava.security.auth.login.config</code>的值，而不是<code>org.eclipse.equinox.console.authentication.config</code> 。此外，还需要为sshd-core bundle创建一个片段，用于导入自定义登录模块的包。这对于sshd能够加载模块类是必要的。
+            
+  <h2>基于密钥的身份验证</h2>控制台可以使用基于密钥的用户身份验证和ssh，而不是使用JAAS身份验证。可以提供包含允许连接到SSH控制台的密钥列表的文件。每次建立连接时都会读取该文件，以便在运行时动态修改该文件。该文件使用属性<code>ssh.server.authorized_keys</code>指定。如果使用基于密钥的身份验证，则无需指定与JAAS相关的属性<code>java.security.auth.login.config</code>和<code>osgi.console.ssh.useDefaultSecureStorage</code> 。
+  
+  <p>控制台还支持自定义公钥验证。如果未配置特定的authorized_keys文件（通过系统属性），则将搜索OSGi服务注册表以查找可用的身份验证器。要启用此功能，您必须将属性<code>ssh.custom.publickeys.auth</code>设置为<code>true</code> 。
+                     
+  </p><h2>通过Configuration Admin服务配置telnet和ssh主机和端口</h2>控制台提供了通过Configuration Admin而不是通过属性<code>osgi.console=&lt;host&gt;:&lt;port&gt;</code>和<code>osgi.console.ssh=&lt;host&gt;:&lt;port&gt;</code>配置telnet和ssh主机和端口的选项。这在更复杂的场景中可能会有所帮助，例如，当您想要在框架的不同子系统中运行控制台的不同实例时。在这种情况下，如果端口是通过系统属性配置的，则对于所有控制台实例它都是一个端口，并且只有一个端口能够绑定到套接字。如果使用此功能，那么您应该：<ul>
+    <li>将属性<code>osgi.console.useConfigAdmin</code>设置为<code>true</code></li> 
+    <li>安装和启动，以及控制台包，org.eclipse.equinox.cm包及其依赖项</li>
+    <li>编写一个bundle来为配置提供telnet和ssh属性</li>
+  </ul>telnet配置的配置PID是<code>osgi.console.telnet</code> ，ssh配置的配置是<code>osgi.console.ssh</code> 。两种配置都具有以下属性：<ul>
+    <li><code>host</code></li>
+    <li><code>port</code></li>
+    <li><code>enabled</code></li>
+  </ul>所有必须具有String类型的值。<code>enabled</code>属性确定是否要启动telnet / ssh。如果值为<code>true</code> ，则启动telnet / ssh。如果值为<code>false</code> ，或者缺少<code>enabled</code>的属性，则不会启动telnet / ssh。
+            
+  <h2>使用命令</h2>Equinox控制台所基于的Gogo shell支持Equinox当前支持的不同类型的命令。目前在Equinox中，命令由实现<code>CommandProvider</code>接口的类提供。Equinox控制台提供了从这种类型的命令到Gogo中使用的新类型命令的适配器。它们是任意类，注册为服务，具有两个特殊属性：<ul>
+    <li><code>osgi.command.scope</code> - 指定命令的范围</li>
+    <li><code>osgi.command.function</code> - 指定此服务提供的命令;这是服务类中公共方法的名称列表，必须可以作为命令执行</li>
+  </ul>Equinox控制台中的命令使用命令范围的概念。例如，范围可用于区分具有同一名称但由不同提供商提供的命令。然后他们应该有不同的范围。<br>范围是命令名称的前缀，与列分隔。在控制台中编写命令时，可能会也可能不会指定范围。如果未指定范围，则使用默认范围内具有此名称的命令。如果在默认范围内没有具有此类名称的命令，则搜索所有命令。<br>如果在不同的作用域中有多个具有指定名称的命令，则无法保证实际执行哪个命令。因此，如果您知道存在具有相同名称但作用域不同的命令，则必须在命令名称前面显式添加作用域，以确保您将完全按照所需的命令执行。<br>由Equinox控制台调整的传统命令具有范围<code>equinox</code> 。
+            
+  <h2>获取命令帮助</h2>Gogo中的默认帮助命令列出已注册命令的名称，如果使用命令名称作为参数调用它，则会显示指定命令的帮助消息。默认帮助命令不提供由Equinox控制台调整的旧版Equinox命令的帮助。因此，Equinox控制台提供了自己的帮助命令，该命令调用默认帮助，但也可以为旧命令提供帮助。<br>如果未指定参数，则显示所有新命令的名称。<br>如果指定了命令名，则显示此命令的帮助消息。如果命令是legacy，并且提供此命令的<code>CommandProvider</code>不为每个命令提供单独的帮助（这是Equinox 3.7中引入的新功能），则会显示此<code>CommandProvider</code>中所有命令的帮助消息。<br>help命令支持<code>-scope</code>参数，应该按如下方式使用： <code>help -scope &lt;command_scope&gt;</code> 。因此，help命令仅显示具有指定范围的命令的帮助。<br>还有一个<code>man</code>命令。它接受与help命令相同的参数，并具有相同的语义。<br>
+            
+  <h2>编写Gogo命令</h2>编写Gogo命令很容易。您必须执行以下操作：<ul>
+    <li>使用您希望实现为公共方法的所有命令编写您的类。方法可能有任意参数。此外，与Equinox命令提供程序不同，在RFC 147中，命令提供程序的类不应该实现任何接口。</li>
+    <li>将命令提供程序注册为具有上述两个属性的服务。</li>
+  </ul>Gogo命令的新功能是转换器和格式化程序。<br>转换器是一个类，它将在命令行上传递的参数转换为命令接受的实际参数。例如，该命令可能有一个<code>Bundle</code>类型的参数。可能有一个转换器，从长期发现具有此id的包。然后可以使用bundle的ID作为参数调用该命令，转换器将其转换为相应的<code>Bundle</code>对象，并且将使用此对象作为参数调用命令方法。<br>formatter是一个显示结果的类，由命令方法返回。<br>有关Gogo命令的更多信息，您可以查看<a href="http://felix.apache.org/documentation/subprojects/apache-felix-gogo.html">Gogo文档</a> 。
+            
+  <h2>标签完成</h2>控制台提供标签完成。仅当通过telnet或ssh连接时，此功能才可用。<br>完成适用于：<ul>
+    <li>命令名称</li>
+    <li>变量名 - 必须先在会话中定义;变量名可以作为命令参数传递</li>
+    <li>文件名 - 作为命令参数传递</li>
+  </ul>当键入<code>tab</code>键时，搜索当前单词的所有可能候选者。如果只有一个可能的完成，则当前字自动完成。如果有多个选项，则所有选项都显示在一列中。可以通过多次点击<code>tab</code>来迭代可能的选项，直到达到所需的完成候选者。<br>如果所有可用完成候选的最长公共前缀长于当前字，则在选择最终完成之前，当前字自动完成到该前缀。例如，如果我们对单词<code>bun</code>有以下可用的完成：<ul>
+    <li>捆绑</li>
+    <li>束</li>
+    <li>bundlelevel</li>
+  </ul>当前单词自动完成<code>bundle</code> ，然后通过点击<code>tab</code>您可以选择您喜欢的完成，或者可以自己键入。<br>控制台允许提供自定义命令完成程序。自定义完成器应该实现接口<code>org.eclipse.equinox.console.common.Completer</code> ，由Equinox控制台捆绑提供。它具有单个方法<code>getCandidates</code> ，它将整个命令行和当前光标位置作为参数，并返回包含所有完成候选的映射，以及命令行中完成开始的位置。地图中的键是候选者和值 - 完成的起始位置。
+  
+  <h2>命令行编辑</h2>除了选项卡完成之外，还可以使用telnet和ssh命令行编辑。支持以下功能：<ul>
+    <li>退格 - 删除光标左侧的字符</li>
+    <li>delete  - 删除光标位置上的字符</li>
+    <li>home / end  - 将光标移动到命令行的开头/结尾</li>
+    <li>左/右箭头 - 将光标向左/向右移动一个字符</li>
+    <li>向上/向下箭头 - 在命令历史记录中向后/向前移动一个条目</li>
+    <li>pageup / pagedown  - 移动到命令历史记录的第一个/最后一个条目</li>
+  </ul>当控制台与Equinox一起独立运行时，也支持这些功能。在PDE中，不支持这些功能。
+            
+  <h2>关闭Telnet或Ssh会话</h2>telnet和ssh会话都使用disconnect命令关闭。
+                        
+  <h2>运行非交互式Shell</h2>在某些情况下，您可能希望在没有交互式会话的情况下运行控制台。在这种情况下，控制台可以从telnet和ssh连接，但在标准输入和输出中不可用。为此，应指定以下属性： <code>-Dgosh.args=--nointeractive</code>          
+
+</body>
+</html>

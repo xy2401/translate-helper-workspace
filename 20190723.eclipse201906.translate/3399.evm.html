@@ -1,14 +1,14 @@
-﻿<html lang="zh-Hans" dir="ltr">
+﻿<html lang="zh-Hans" >
 <head>
-<meta charset="UTF-8"></meta>
+<meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
 <title>VIATRA事件驱动的虚拟机</title>
-<link rel="stylesheet" href="asset?aid=0"></link>
-<link rel="stylesheet" href="./asciidoctor.css"></link>
+<link rel="stylesheet" href="asset?aid=0">
+<link rel="stylesheet" href="./asciidoctor.css">
 </head>
-<body class="article" dir="ltr">
+<body class="article" >
 <div id="header">
 <h1>VIATRA事件驱动的虚拟机</h1>
 </div>
@@ -129,7 +129,16 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">/ *添加泛化规则的前提* / pattern possibleSuperClass（cl：Class，sup：Class）{neg find superClass（cl，_otherSup）; neg find superClass（_cl2，sup）; / / *创建自有操作的前提条件* / pattern onlyInheritedOperations（cl：Class）{find hasOperation（cl，_op）; neg find ownsOperation（cl，_ownOp）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">/* Precondition for add generalization rule */
+pattern possibleSuperClass(cl : Class, sup : Class) {
+	neg find superClass(cl, _otherSup);
+	neg find superClass(_cl2, sup);
+}
+/* Precondition for create owned operation */
+pattern onlyInheritedOperations(cl : Class) {
+	find hasOperation(cl, _op);
+	neg find ownsOperation(cl, _ownOp);
+}</code></pre>
 </div>
 </div>
 </div>
@@ -143,7 +152,22 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//作业指定在给定状态下触发激活时要执行的操作Job job = Jobs.newStatelessJob（CRUDActivationStateEnum。APPEARED，new PossibleSuperClassProcessor（）{@ Override public void process（Class cl，Class sup）{System.out.println（“Found cl”+ cl +“without superclass”）;泛化泛化= UMLFactory.eINSTANCE.createGeneralization（）; generalization.setGeneral（SUP）; generalization.setSpecific（CL）; }}; //生命周期确定事件如何影响激活状态DefaultActivationLifeCycle lifecycle = DefaultActivationLifeCycle。DEFAULT_NO_UPDATE_AND_DISAPPEAR; //工厂用于初始化匹配器的前提条件IMatcherFactory &lt;PossibleSuperClassMatcher&gt; factory = PossibleSuperClassMatcher.factory（）; //规则规范是一个独立于模型的定义，可用于实例化规则RuleSpecification spec = Rules.newSimpleMatcherRuleSpecification（factory，lifecycle，Sets.newHashSet（job））;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// the job specifies what to do when an activation is fired in the given state
+Job job = Jobs.newStatelessJob(CRUDActivationStateEnum.APPEARED, new PossibleSuperClassProcessor() {
+  @Override
+  public void process(Class cl, Class sup) {
+    System.out.println("Found cl " + cl + " without superclass");
+    Generalization generalization = UMLFactory.eINSTANCE.createGeneralization();
+    generalization.setGeneral(sup);
+    generalization.setSpecific(cl);
+  }
+});
+// the life-cycle determines how events affect the state of activations
+DefaultActivationLifeCycle lifecycle = DefaultActivationLifeCycle.DEFAULT_NO_UPDATE_AND_DISAPPEAR;
+// the factory is used to initialize the matcher for the precondition
+IMatcherFactory&lt;PossibleSuperClassMatcher&gt; factory = PossibleSuperClassMatcher.factory();
+// the rule specification is a model-independent definition that can be used to instantiate a rule
+RuleSpecification spec = Rules.newSimpleMatcherRuleSpecification(factory, lifecycle, Sets.newHashSet(job));</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -151,7 +175,18 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">Job job = Jobs.newStatelessJob（CRUDActivationStateEnum。APPEARED，new OnlyInheritedOperationsProcessor（）{@ Override public void process（Class cl）{System.out.println（“Found class”+ cl +“without operation”）;操作操作= UMLFactory.eINSTANCE.createOperation（）; operation.setName（ “newOp”）; operation.setClass_（CL）; }}; DefaultActivationLifeCycle lifecycle = DefaultActivationLifeCycle。DEFAULT_NO_UPDATE_AND_DISAPPEAR; IMatcherFactory &lt;OnlyInheritedOperationsMatcher&gt; factory = OnlyInheritedOperationsMatcher.factory（）; RuleSpecification spec = Rules.newSimpleMatcherRuleSpecification（factory，lifecycle，Sets.newHashSet（job））;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">Job job = Jobs.newStatelessJob(CRUDActivationStateEnum.APPEARED, new OnlyInheritedOperationsProcessor() {
+  @Override
+  public void process(Class cl) {
+    System.out.println("Found class " + cl + " without operation");
+    Operation operation = UMLFactory.eINSTANCE.createOperation();
+    operation.setName("newOp");
+    operation.setClass_(cl);
+  }
+});
+DefaultActivationLifeCycle lifecycle = DefaultActivationLifeCycle.DEFAULT_NO_UPDATE_AND_DISAPPEAR;
+IMatcherFactory&lt;OnlyInheritedOperationsMatcher&gt; factory = OnlyInheritedOperationsMatcher.factory();
+RuleSpecification spec = Rules.newSimpleMatcherRuleSpecification(factory, lifecycle, Sets.newHashSet(job));</code></pre>
 </div>
 </div>
 </div>
@@ -162,7 +197,16 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//通过查询引擎创建规则引擎RuleEngine ruleEngine = RuleEngines.createViatraQueryRuleEngine（engine）; //为执行创建上下文Context context = Context.create（）; //准备规则规范RuleSpecification createGeneralization = getCreateGeneralizationRule（）; RuleSpecification createOperation = getCreateOperationRule（）; //将规则规范添加到引擎ruleEngine.addRule（createGeneralization）; ruleEngine.addRule（createOperation）;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// create rule engine over query engine
+RuleEngine ruleEngine = RuleEngines.createViatraQueryRuleEngine(engine);
+// create context for execution
+Context context = Context.create();
+// prepare rule specifications
+RuleSpecification createGeneralization = getCreateGeneralizationRule();
+RuleSpecification createOperation = getCreateOperationRule();
+// add rule specifications to engine
+ruleEngine.addRule(createGeneralization);
+ruleEngine.addRule(createOperation);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -170,7 +214,17 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//检查规则适用性设置&lt;Activation&gt; createClassesActivations = ruleEngine.getActivations（createGeneralization）;如果（！createClassesActivations.isEmpty（））{//激活给定规则的激活createClassesActivations.iterator（）。next（）。fire（context）; } //检查任何适用的规则（！ruleEngine.getConflictingActivations（）。isEmpty（））{//尽可能激活下一次激活ruleEngine.getNextActivation（）。fire（context）; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// check rule applicability
+Set&lt;Activation&gt; createClassesActivations = ruleEngine.getActivations(createGeneralization);
+if (!createClassesActivations.isEmpty()) {
+    // fire activation of a given rule
+    createClassesActivations.iterator().next().fire(context);
+}
+// check for any applicable rules
+while (!ruleEngine.getConflictingActivations().isEmpty()) {
+    // fire next activation as long as possible
+    ruleEngine.getNextActivation().fire(context);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -178,7 +232,10 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//可以删除不再需要的规则ruleEngine.removeRule（createGeneralization）; //规则引擎管理添加规则的激活，直到处理ruleEngine.dispose（）;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// rules that are no longer needed can be removed
+ruleEngine.removeRule(createGeneralization);
+// rule engine manages the activations of the added rules until disposed
+ruleEngine.dispose();</code></pre>
 </div>
 </div>
 </div>
@@ -189,7 +246,16 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//使用IQBase更新回调进行调度执行UpdateCompleteBasedSchedulerFactory schedulerFactory = Schedulers.getIQEngineSchedulerFactory（engine）; //在ViatraQueryEngine上创建执行模式ExecutionSchema executionSchema = ExecutionSchemas.createViatraQueryExecutionSchema（engine，schedulerFactory）; //准备规则规范RuleSpecification createGeneralization = getCreateGeneralizationRule（）; RuleSpecification createOperation = getCreateOperationRule（）; //将规则规范添加到引擎executionSchema.addRule（createGeneralization）; executionSchema.addRule（createOperation）;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// use IQBase update callback for scheduling execution
+UpdateCompleteBasedSchedulerFactory schedulerFactory = Schedulers.getIQEngineSchedulerFactory(engine);
+// create execution schema over ViatraQueryEngine
+ExecutionSchema executionSchema = ExecutionSchemas.createViatraQueryExecutionSchema(engine, schedulerFactory);
+// prepare rule specifications
+RuleSpecification createGeneralization = getCreateGeneralizationRule();
+RuleSpecification createOperation = getCreateOperationRule();
+// add rule specifications to engine
+executionSchema.addRule(createGeneralization);
+executionSchema.addRule(createOperation);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -197,7 +263,14 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//执行模式等待调度来激活激活//我们通过在随机的SuperClassMatcher.factory（）中删除一个泛化来触发这个.getMatcher（engine）.forOneArbitraryMatch（new SuperClassProcessor（）{@Override public void process（Class sub，Class sup）{sub.getGeneralizations（）。remove（0）;}}）;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// execution schema waits for a scheduling to fire activations
+// we trigger this by removing one generalization at random
+SuperClassMatcher.factory().getMatcher(engine).forOneArbitraryMatch(new SuperClassProcessor() {
+    @Override
+    public void process(Class sub, Class sup) {
+        sub.getGeneralizations().remove(0);
+    }
+});</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -205,7 +278,11 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//可以删除不再需要的规则executionSchema.removeRule（createGeneralization）; //执行模式管理并触发添加的//规则的激活，直到处理executionSchema.dispose（）;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// rules that are no longer needed can be removed
+executionSchema.removeRule(createGeneralization);
+// execution schema manages and fires the activations of the added
+// rules until disposed
+executionSchema.dispose();</code></pre>
 </div>
 </div>
 </div>
@@ -222,7 +299,8 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//只需根据需要设置引擎的日志级别ruleEngine.getLogger（）。setLevel（Level。DEBUG）;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// just set the log level of the engine as needed
+ruleEngine.getLogger().setLevel(Level.DEBUG);</code></pre>
 </div>
 </div>
 </div>
@@ -374,7 +452,25 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类FiringLoggingEVMListener扩展AbstractTransformationListener {private final Logger logger; public FiringLoggingEVMListener（Logger logger）{this.logger = logger; } @Override public void beforeFiring（激活&lt;？&gt;激活）{logger.debug（“BEFORE FIRING”+ activation.toString（））; } @Override public void afterFiring（激活&lt;？&gt;激活）{logger.debug（“AFTER FIRING”+ activation.toString（））; }}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class FiringLoggingEVMListener extends AbstractTransformationListener{
+    private final Logger logger;
+
+    public FiringLoggingEVMListener(Logger logger) {
+        this.logger = logger;
+    }
+
+    @Override
+    public void beforeFiring(Activation&lt;?&gt; activation) {
+        logger.debug("BEFORE FIRING " + activation.toString());
+
+    }
+
+    @Override
+    public void afterFiring(Activation&lt;?&gt; activation) {
+        logger.debug("AFTER FIRING " + activation.toString());
+
+    }
+}</code></pre>
 </div>
 </div>
 </div>
@@ -385,7 +481,49 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">公共类ExecutorIteratorManipulatorAdapter扩展AbstractTransformationAdapter {@Override public Iterator &lt;Activation &lt;？&gt;&gt; getExecutableActivations（Iterator &lt;Activation &lt;？&gt;&gt; iterator）{if（iterator instanceof ConflictSetIterator）{return iterator; } else {return new ExecutorIteratorManipulatorIterator（iterator）;公共类ExecutorIteratorManipulatorIterator实现Iterator &lt;Activation &lt;？&gt;&gt; {private final Set &lt;Activation &lt;？&gt;&gt; activations = Sets.newHashSet（）; public ExecutorIteratorManipulatorIterator（Iterator &lt;Activation &lt;？&gt;&gt; delegatedIterator）{while（delegatedIterator.hasNext（））{activations.add（delegatedIterator.next（））; @Override public boolean hasNext（）{return！activations.isEmpty（）; } @Override公共激活&lt;？&gt; next（）{return getActivation（activations）; } @Override public void remove（）{throw new UnsupportedOperationException（“不支持从此迭代器中删除。”）;私人激活&lt;？&gt; getActivation（设置&lt;激活&lt;？&gt;&gt;激活）{//获取下一个要激活的激活}}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public class ExecutorIteratorManipulatorAdapter extends AbstractTransformationAdapter{
+
+    @Override
+    public Iterator&lt;Activation&lt;?&gt;&gt; getExecutableActivations(Iterator&lt;Activation&lt;?&gt;&gt; iterator) {
+    	if(iterator instanceof ConflictSetIterator){
+    		return iterator;
+    	}else{
+    		return new ExecutorIteratorManipulatorIterator(iterator);
+    	}
+
+    }
+
+    public class ExecutorIteratorManipulatorIterator implements Iterator&lt;Activation&lt;?&gt;&gt;{
+    	private final Set&lt;Activation&lt;?&gt;&gt; activations = Sets.newHashSet();
+
+    	public ExecutorIteratorManipulatorIterator(Iterator&lt;Activation&lt;?&gt;&gt; delegatedIterator){
+    		while(delegatedIterator.hasNext()){
+    			activations.add(delegatedIterator.next());
+    		}
+    	}
+
+		@Override
+		public boolean hasNext() {
+			return !activations.isEmpty();
+		}
+
+		@Override
+		public Activation&lt;?&gt; next() {
+			return getActivation(activations);
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("Deletion from this iterator is not supported.");
+
+		}
+
+    }
+
+    private Activation&lt;?&gt; getActivation(Set&lt;Activation&lt;?&gt;&gt; activations){
+        //Get the next activation to be fired
+    }
+}</code></pre>
 </div>
 </div>
 </div>
@@ -398,7 +536,27 @@
 <div class="listingblock">
 <div class="title">组装适应性规则库</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">public RuleEngine createAdaptableRuleEngine（ViatraQueryEngine queryEngine）{//创建一个包含默认任意冲突解决程序的自适应冲突解决程序//如果不需要自适应冲突解决程序，请创建任意冲突解决程序AdaptableConflictResolver conflictResolver = new AdaptableConflictResolver（new ArbitraryOrderConflictResolver（），this ）; //根据创建的冲突解决方案创建议程，无论其适应性如何议程debugAgenda = new Agenda（conflictResolver）; //设置使用的激活状态更改侦听器。此时，可以将适应性倾听者或默认听众交给议程。//注意，adaptable listener包装了默认的一个debugAgenda.setActivationListener（new AdaptableActivationNotificationListener（debugAgenda.getActivationListener（），this））; //基于创建的自适应或默认EVM组件创建基于自适应规则。//如果不需要监听规则添加，可以使用EVM默认值替换自适应规则库。RuleBase debugRulebase = new AdaptableRuleBase（ViatraQueryEventRealm.create（queryEngine），debugAgenda，this）; //根据规则库创建RuleEngine。return RuleEngine.create（debugRulebase）; } &lt;/ source&gt;</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public RuleEngine createAdaptableRuleEngine(ViatraQueryEngine queryEngine) {
+        //Create an adaptable conflict resolver that wraps a default arbitrary conflict resolver
+        //If an adaptable conflict resolver is not needed, create the arbitrary conflict resolver
+        AdaptableConflictResolver conflictResolver = new AdaptableConflictResolver(new ArbitraryOrderConflictResolver(),
+                this);
+
+        //Create an agenda based on the created conflict resolver regardless of adaptability
+        Agenda debugAgenda = new Agenda(conflictResolver);
+        //Set the used activation state change listener. At this point either an adaptable listener, or a default listener can be handed to the Agenda.
+        //Note, that the adaptable listener wraps the default one
+        debugAgenda.setActivationListener(
+                new AdaptableActivationNotificationListener(debugAgenda.getActivationListener(), this));
+
+        //Create an adaptable rule based based on the created adaptable or default EVM components.
+        //If listening to rule additions is not needed the adaptable RuleBase can be replaced with an EVM default one.
+        RuleBase debugRulebase = new AdaptableRuleBase(ViatraQueryEventRealm.create(queryEngine), debugAgenda, this);
+
+        //Create the RuleEngine based on the rule base.
+        return RuleEngine.create(debugRulebase);
+    }
+&lt;/source&gt;</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -415,7 +573,41 @@
 <div class="listingblock">
 <div class="title">组装适应性ExecutionSchema</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">public ExecutionSchema createAdaptableExecutionSchema（ViatraQueryEngine queryEngine，ISchedulerFactory schedulerFactory，ConflictResolver conflictResolver）{//创建一个包装默认EVM执行程序的自适应执行程序//如果不需要适应性执行程序，请创建默认EVM执行程序。IExecutor executor = new AdaptableExecutor（new Executor（），this）; //创建一个包含默认任意冲突解决程序的自适应冲突解决程序//如果不需要自适应冲突解决程序，则创建任意冲突解决程序ConflictResolver adaptableConflictResolver = new AdaptableConflictResolver（conflictResolver，this）; //根据创建的冲突解决方案创建议程，无论适应性如何议程debugAgenda = new Agenda（adaptableConflictResolver）; //设置使用的激活状态更改侦听器。此时，可以将适应性倾听者或默认听众交给议程。//注意，adaptable listener包装了默认的一个debugAgenda.setActivationListener（new AdaptableActivationNotificationListener（debugAgenda.getActivationListener（），this））; //基于创建的自适应或默认EVM组件创建基于自适应规则。//如果不需要监听规则添加，可以使用EVM默认值替换自适应规则库。RuleBase debugRulebase = new AdaptableRuleBase（ViatraQueryEventRealm.create（queryEngine），debugAgenda，this）; //基于执行程序和规则库对象创建计划执行实例。 （无论适应性如何）//计划执行负责处理调度重新进入。ScheduledExecution execution = new ScheduledExecution（debugRulebase，executor）; //基于计划的执行对象创建调度程序实例。 （无论适应性如何）Scheduler scheduler = schedulerFactory.prepareScheduler（execution）; //创建执行模式final ExecutionSchema schema = ExecutionSchema.create（scheduler）; //提供架构schema.setConflictResolver（adaptableConflictResolver）的conflcit解析;返回架构; }</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">public ExecutionSchema createAdaptableExecutionSchema(ViatraQueryEngine queryEngine,
+            ISchedulerFactory schedulerFactory, ConflictResolver conflictResolver) {
+
+        //Create an adaptable executor that wraps a default EVM executor
+        //If an adaptable Executor is not needed, create the default EVM one.
+        IExecutor executor = new AdaptableExecutor(new Executor(), this);
+
+        //Create an adaptable conflict resolver that wraps a default arbitrary conflict resolver
+        //If an adaptable conflict resolver is not needed, create the arbitrary conflict resolver
+        ConflictResolver adaptableConflictResolver = new AdaptableConflictResolver(conflictResolver, this);
+
+        //Create an agenda based on the created conflict resolver regardless of adaptability
+        Agenda debugAgenda = new Agenda(adaptableConflictResolver);
+        //Set the used activation state change listener. At this point either an adaptable listener, or a default listener can be handed to the Agenda.
+        //Note, that the adaptable listener wraps the default one
+        debugAgenda.setActivationListener(
+                new AdaptableActivationNotificationListener(debugAgenda.getActivationListener(), this));
+
+        //Create an adaptable rule based based on the created adaptable or default EVM components.
+        //If listening to rule additions is not needed the adaptable RuleBase can be replaced with an EVM default one.
+        RuleBase debugRulebase = new AdaptableRuleBase(ViatraQueryEventRealm.create(queryEngine), debugAgenda, this);
+
+        //Create a scheduled execution instance based on the executor and rule base objects. (regardless of adaptability)
+        //The scheduled execution is responsible for handling scheduling reentry.
+        ScheduledExecution execution = new ScheduledExecution(debugRulebase, executor);
+
+        //Create a scheduler instance based on the scheduled execution object. (regardless of adaptability)
+        Scheduler scheduler = schedulerFactory.prepareScheduler(execution);
+
+        //Create execution schema
+        final ExecutionSchema schema = ExecutionSchema.create(scheduler);
+        //Ser the conflcit resolve of the schema
+        schema.setConflictResolver(adaptableConflictResolver);
+        return schema;
+}</code></pre>
 </div>
 </div>
 </div>
@@ -644,7 +836,16 @@
 </div>
 <div id="evm-initialize" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//创建模式val schedulerFactory = Schedulers.getQueryEngineSchedulerFactory（engine）val schema = ExecutionSchemas.createViatraQueryExecutionSchema（engine，schedulerFactory）//安装冲突解析器schema.conflictResolver = resolver //将规则添加到模式schema.addRule（hostMapping）schema.addRule （appMapping）schema.startUnscheduledExecution</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Create schema
+val schedulerFactory = Schedulers.getQueryEngineSchedulerFactory(engine)
+val schema = ExecutionSchemas.createViatraQueryExecutionSchema(engine, schedulerFactory)
+// Setup conflict resolver
+schema.conflictResolver = resolver
+// Add rules to the schema
+schema.addRule(hostMapping)
+schema.addRule(appMapping)
+
+schema.startUnscheduledExecution</code></pre>
 </div>
 </div>
 </div>
@@ -663,7 +864,15 @@
 </div>
 <div id="evm-common" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//通过ViatraQueryEngine创建规则引擎val ruleEngine = RuleEngines.createViatraQueryRuleEngine（engine）//为执行创建上下文val context = Context.create（）//冲突解析器也可以在这里使用ruleEngine.conflictResolver = resolver //添加规则规范到engine ruleEngine.addRule（hostMapping）ruleEngine.addRule（appMapping）</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Create rule engine over ViatraQueryEngine
+val ruleEngine = RuleEngines.createViatraQueryRuleEngine(engine)
+// Create context for execution
+val context = Context.create()
+// Conflict resolver also can be used here
+ruleEngine.conflictResolver = resolver
+// Add rule specifications to engine
+ruleEngine.addRule(hostMapping)
+ruleEngine.addRule(appMapping)</code></pre>
 </div>
 </div>
 </div>
@@ -677,7 +886,12 @@
 </div>
 <div id="evm-createrule" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//检查规则适用性val createClassesActivations = ruleEngine.getActivations（hostMapping）if（！createClassesActivations.empty）{//激活给定规则的激活createClassesActivations.iterator.next.fire（context）}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Check rule applicability
+val createClassesActivations = ruleEngine.getActivations(hostMapping)
+if (!createClassesActivations.empty) {
+    // Fire activation of a given rule
+    createClassesActivations.iterator.next.fire(context)
+}</code></pre>
 </div>
 </div>
 </div>
@@ -691,7 +905,14 @@
 </div>
 <div id="evm-firing" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//检查任何适用的规则（！ruleEngine.conflictingActivations.empty）{//尽可能长时间激活下一次激活ruleEngine.nextActivation？.fire（context）} //执行后删除规则ruleEngine.removeRule（appMapping）ruleEngine.removeRule（hostMapping）</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Check for any applicable rules
+while (!ruleEngine.conflictingActivations.empty) {
+    // Fire next activation as long as possible
+    ruleEngine.nextActivation?.fire(context)
+}
+// Remove rules after execution
+ruleEngine.removeRule(appMapping)
+ruleEngine.removeRule(hostMapping)</code></pre>
 </div>
 </div>
 </div>
@@ -705,7 +926,21 @@
 </div>
 <div id="evm-filter" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//为IP var创建自定义过滤器eventFilter = new EventFilter &lt;HostInstancesMatch&gt;（）{override isProcessable（HostInstancesMatch eventAtom）{eventAtom.hostInstance.nodeIp == FILTERED_IP}} //用规则 - &gt;过滤器对替换简单规则engine ruleEngine.removeRule（hostMapping）ruleEngine.addRule（hostMapping，eventFilter）//同时触发所有激活（！ruleEngine.conflictingActivations.empty）{//尽可能长时间激活下次激活val nextActivation = ruleEngine.nextActivation nextActivation？.fire（context）}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Create custom filter for IP
+var eventFilter = new EventFilter&lt;HostInstancesMatch&gt;() {
+    override isProcessable(HostInstancesMatch eventAtom) {
+        eventAtom.hostInstance.nodeIp == FILTERED_IP
+    }
+}
+// Replace the simple rule with the rule-&gt;filter pair in the engine
+ruleEngine.removeRule(hostMapping)
+ruleEngine.addRule(hostMapping, eventFilter)
+// Fire all activations
+while (!ruleEngine.conflictingActivations.empty) {
+    // Fire next activation as long as possible
+    val nextActivation = ruleEngine.nextActivation
+    nextActivation?.fire(context)
+}</code></pre>
 </div>
 </div>
 </div>
@@ -719,7 +954,14 @@
 </div>
 <div id="evm-filter2" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//使用部分匹配对象创建查询匹配过滤器val matchFilter = ViatraQueryMatchEventFilter.createFilter（HostInstancesMatch.newMatch（engine.hostInstancesByIp.getOneArbitraryMatch（null，FILTERED_IP）.hostInstance））//将规则 - &gt;过滤器对添加到引擎ruleEngine。 addRule（hostMapping，matchFilter）</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Create query match filter with a partial match object
+val matchFilter = ViatraQueryMatchEventFilter.createFilter(
+    HostInstancesMatch.newMatch(
+        engine.hostInstancesByIp.getOneArbitraryMatch(null, FILTERED_IP).hostInstance
+    )
+)
+// Add the rule-&gt;filter pair to the engine
+ruleEngine.addRule(hostMapping, matchFilter)</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -730,7 +972,23 @@
 </div>
 <div id="evm-conflictset" class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">//检查是否有任何冲突的激活（！ruleEngine.conflictingActivations.empty）{//创建冲突集val conflictSet = ruleEngine.createScopedConflictSet（解析器，//来自过滤的hostMapping规则和未过滤的appMapping ImmutableMultimap.of（hostMapping，matchFilter，appMapping，appMapping.createEmptyFilter））//迭代激活冲突设置var nextActivation = conflictSet.nextActivation while（nextActivation！= null）{nextActivation.fire（context）nextActivation = conflictSet.nextActivation}}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">// Check that there is any conflicting activation
+if(!ruleEngine.conflictingActivations.empty) {
+    // Create the conflict set
+    val conflictSet = ruleEngine.createScopedConflictSet(resolver,
+        // From filtered hostMapping rule and unfiltered appMapping
+        ImmutableMultimap.of(
+            hostMapping, matchFilter,
+            appMapping, appMapping.createEmptyFilter
+        )
+    )
+    // Iterate over activations of the conflict set
+    var nextActivation = conflictSet.nextActivation
+    while(nextActivation != null) {
+        nextActivation.fire(context)
+        nextActivation = conflictSet.nextActivation
+    }
+}</code></pre>
 </div>
 </div>
 </div>

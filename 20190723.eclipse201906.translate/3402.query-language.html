@@ -1,15 +1,15 @@
-﻿<html lang="zh-Hans" dir="ltr">
+﻿<html lang="zh-Hans" >
 <head>
-<meta charset="UTF-8"></meta>
+<meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-<meta name="generator" content="Asciidoctor 1.5.6.1"></meta>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
 <title>VIATRA查询语言</title>
-<link rel="stylesheet" href="asset?aid=0"></link>
-<link rel="stylesheet" href="./asciidoctor.css"></link>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css"></link>
+<link rel="stylesheet" href="asset?aid=0">
+<link rel="stylesheet" href="./asciidoctor.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
 </head>
-<body id="vql-basics" class="article" dir="ltr">
+<body id="vql-basics" class="article" >
 <div id="header">
 <h1>VIATRA查询语言</h1>
 </div>
@@ -453,7 +453,13 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">导入“custom”作为自定义导入“http://www.eclipse.org/uml2/5.0.0/UML”作为uml模式importAliases（x：NamedElement）{//来自UML元模型，按导入顺序选择uml :: NamedElement（X）; //来自UML元模型，显式选择custom :: NamedElement（x）; //从自定义元模型中选择}</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">import "custom" as custom
+import "http://www.eclipse.org/uml2/5.0.0/UML" as uml
+
+pattern importAliases(x : NamedElement) { // From UML metamodel, selected by order of  imports
+  uml::NamedElement(x); // From UML metamodel, selected explicitly
+  custom::NamedElement(x); // Selected from the custom metamodel
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -488,7 +494,17 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">import“http://www.eclipse.org/emf/2002/Ecore”//错误的模式numberOfClasses1（n：EInt）{//从Ecore导入EInt EDataType n == count EClass（_c）; } //正确的模式numberOfClasses3（n：java整数）{//显式声明Java Integer n == count EClass（_c）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">import "http://www.eclipse.org/emf/2002/Ecore"
+
+// Incorrect
+pattern numberOfClasses1(n : EInt) { // imports EInt EDataType from Ecore
+  n == count EClass(_c);
+}
+
+// Correct
+pattern numberOfClasses3(n : java Integer) { // Explicitly declares Java Integer
+  n == count EClass(_c);
+}</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -553,7 +569,12 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern emapPattern（K：EString，V：EString）{EMapTestElement（M）; EMapTestElement.map（M，Map）; EStringToEStringMap.key（Map，K）; EStringToEStringMap.value（Map，V）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">  pattern emapPattern(K : EString, V : EString) {
+    EMapTestElement(M);
+    EMapTestElement.map(M, Map);
+    EStringToEStringMap.key(Map, K);
+    EStringToEStringMap.value(Map, V);
+  }</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -571,7 +592,9 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">模式无意义（x）{neg find无意义（x）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern meaningless(x) {
+  neg find meaningless(x);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -587,7 +610,17 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern qualifiedName（node：Node，name）{//对于子元素，由父类限定名查找父节点（node，parentNode）; Node.simpleName（node，simpleName）; find qualifiedName（parent，parentName）; //递归调用名称== eval（parentName +“。”+ simpleName）; }或{//对于根元素，只需使用简单名称neg find parent（node，_anyParent）; //没有父节点Node.simpleName（node，name）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">pattern qualifiedName(node : Node, name) {
+    // for a child element, compose from parents qualified name
+    find parent(node, parentNode);
+    Node.simpleName(node, simpleName);
+    find qualifiedName(parent, parentName); // recursive call
+    name == eval (parentName + "." + simpleName);
+  } or {
+    // for a root element, just use the simple name
+    neg find parent(node, _anyParent);  // has no parents
+    Node.simpleName(node, name);
+  }</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -609,7 +642,12 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">pattern happy（x：Person）= {Person.name（x，“Jane”）; }或{Person.knows（x，y）;找到快乐（y）; //没有根据的递归}</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">  pattern happy(x : Person) = {
+    Person.name(x, "Jane");
+  } or {
+    Person.knows(x, y);
+    find happy(y);  // ill-founded recursion
+  }</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -650,7 +688,21 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">//通过对关系模式directSecrets（人：人，秘密：EString）的谈话，由给定的人直接知道的秘密{人（其他）; Person.talksTo（其他，人）; Person.secret（其他，秘密）; } //由给定人员直接或传递已知的秘密模式allSecrets（人：学生，秘密：EString）{find directSecrets（person，secret）; }或{人（其他）; Person.talksTo（其他，人）;找到所有秘密（其他，秘密）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">// Directly known secrets by the given person through the talks to relationship
+pattern directSecrets(person : Person, secret : EString) {
+	Person(other);
+	Person.talksTo(other, person);
+	Person.secret(other, secret);
+}
+
+// Directly or transitively known secrets by the given person
+pattern allSecrets(person : Student, secret : EString) {
+	find directSecrets(person, secret);
+} or {
+	Person(other);
+	Person.talksTo(other, person);
+	find allSecrets(other, secret);
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -730,7 +782,24 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-vql" data-lang="vql">//这里第一个注释是多余的，因为无论如何它都是自动推断的//第二个注释通过@FunctionalDependency表示有价值的领域知识（forEach = house，unique = street，unique = houseNumber）@FunctionalDependency（forEach = street，forEach = houseNumber ，unique = house）模式地址（house：house，street：Street，houseNumber：java Integer）{Street.houses（street，house）; House.number（house，houseNumber）; } //房子要么在街道上，要么在道路上，但不能同时在两个地方; //但Viatra还不够智能（还）想出来。//在析取模式中，必须手动指定所有依赖项！@FunctionalDependency（forEach = house，unique = location）pattern locatedOnThoroughfare（house：house，location：Thoroughfare）{Street.houses（location，house）; }或{Road.houses（location，house）; }</code></pre>
+<pre class="highlight"><code class="language-vql" data-lang="vql">// Here the first annotation is superfluous, as it is inferred automatically anyway
+// The second annotation expresses valuable domain knowledge though
+@FunctionalDependency(forEach = house, unique = street, unique = houseNumber)
+@FunctionalDependency(forEach = street, forEach = houseNumber, unique = house)
+pattern address(house: House, street: Street, houseNumber: java Integer) {
+	Street.houses(street, house);
+	House.number(house, houseNumber);
+}
+
+// Houses are either on a Street or on a Road, but not both at the same time;
+//  however Viatra is not smart enough (yet) to figure that out.
+// In disjunctive patterns, all dependencies have to be specified manually!
+@FunctionalDependency(forEach = house, unique = location)
+pattern locatedOnThoroughfare(house: House, location: Thoroughfare) {
+	Street.houses(location, house);
+} or {
+	Road.houses(location, house);
+}</code></pre>
 </div>
 </div>
 </div>

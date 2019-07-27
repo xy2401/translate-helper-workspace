@@ -1,87 +1,40 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<meta name="copyright" content="Copyright (c) IBM Corporation 2007. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." />
-<link rel="stylesheet" type="text/css" href="../book.css" />
-<title> Working with SSL </title> 
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="copyright" content="Copyright (c) IBM Corporation 2007. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<link rel="stylesheet" type="text/css" href="../book.css">
+<title>使用SSL</title> 
 </head>
-<body>
+<body >
 <div role="main">
-<h1>Working with SSL</h1>
-<h2>SSL Overview</h2> 
+<h1>使用SSL</h1>
+<h2>SSL概述</h2> 
 
-<p>
-Secure-Sockets Layer (SSL) is a communications facility that encrypts all communications
-between a client and a target system. The DStore communications protocol in RSE supports SSL.
+<p>安全套接字层（SSL）是一种通信工具，用于加密客户端和目标系统之间的所有通信。RSE中的DStore通信协议支持SSL。</p>
+<p>SSL通过使用<em>证书</em>对双方之间建立的连接的每一方进行身份验证来实现其安全性。证书允许这些方的特定标识以及用于通信的加密信道的协商。证书本身是可以容易地检测其变更并且其来源由可信<em>证书机构</em>验证的<em>文件</em> 。
 </p>
-<p>
-SSL achieves its security by using <em>certificates</em> to authenticate each side of a
-connection made between two parties. The certificates allow for the certain identification of those
-parties and for the negotiation of an encrypted channel for communication. The certificates
-themselves are files whose alteration can be easily detected and whose origin is verified by a
-trusted <em>certificate authority</em>.
+<p>Web浏览器使用SSL并从其服务器请求SSL证书，以与在线商店，银行和其他服务提供商进行通信。这些是相同类型的证书，但用于不同的目的。Web浏览器通常会验证服务器的身份，并将联系证书颁发机构来执行此操作。另一方面，RSE用户通常会信任目标系统以向客户端系统提供证书，以便可以加密通信。
 </p>
-<p>
-Web browsers use SSL and request SSL certificates from their servers to communicate with
-on-line stores, banks, and other service providers. These are the same kind of certificates, but are
-used for a different purpose. A web browser will typically be verifying the identity of the server
-and will be contacting a certificate authority to do so. RSE users, on the other hand, will
-typically trust the target system to provide certificates to client systems so that the
-communications can be encrypted.
+<h2>使用SSL</h2> 
+<p>证书通常由服务提供商（例如目标系统）与证书颁发机构一起制造。权限可以是目标系统信任的任何实体，包括其自身。当两者正在协商SSL连接时，目标系统将证书传送到客户端系统。当启动与服务器的连接时，DStore首先尝试SSL连接，然后如果SSL失败则回退到非SSL。作为客户端，您根本不需要关心证书的处理，但您可以使用RSE SSL首选项页面来管理您从过去连接的目标系统收到的所有证书。
 </p>
-<h2>Using SSL</h2> 
-<p>
-Certificates are usually manufactured by a service provider (such as a target system) in concert
-with a certificate authority. The authority can be any entity that the target system trusts including
-itself. Certificates are delivered to a client system by the target system when the two are negotiating
-an SSL connection. When starting a connection to a server, DStore first attempts an SSL connection
-and then falls back to non-SSL if the SSL one fails. As a client, you don't need to be concerned
-with the handling of certificates at all, but you can use the RSE SSL preferences
-page to manage all your certificates that you have received from the target systems you have
-connected to in the past.
+<p>通过打开工作台的<code>Preferences</code> ，展开“ <code>Remote Systems</code>类别并选择“ <code>SSL</code>子类别”，可以访问RSE首选项页面。在那里，您将看到允许您添加证书，重命名以使其更易于管理，一旦过期就将其删除以及查看其内容的操作。您通常会看到使用SSL连接到的每个目标系统的一个证书。</p>
+<h2>设置服务器</h2> 
+<p>您可以通过编辑服务器位置中的<code>ssl.properties</code>文件来设置DStore服务器以使用SSL。此服务器命名密钥库及其密码，用于保存使用Java SDK中的<code>keytool</code>实用程序生成的证书。然后在SSL启动期间将这些证书提供给客户端，以便可以加密通信。
 </p>
-<p>
-You reach the RSE preferences page by opening the <code>Preferences</code> for the workbench,
-expanding the <code>Remote Systems</code> category and selecting the <code>SSL</code> subcategory.
-There you will see operations that allow you to add certificates, rename them to make them easier to
-manage, remove them once they have expired, and view their contents. You would typically see one
-certificate for each target system that you have connected to using SSL.
+<p><code>ssl.properties</code>引用的密钥库文件可以包含多个条目，但在客户端连接时只使用一个条目。密钥库中的条目本身可能具有密码，但dstore假定这些条目与密钥库密码完全相同。因此，有意义的是，只为dstore服务器维护一个密钥库，它只有一个条目，并且它与dstore服务器存在于同一目录中。该条目可以是自签名证书。
 </p>
-<h2>Setting Up The Server</h2> 
-<p>
-You set up the DStore server to use SSL by editing the <code>ssl.properties</code> file in the
-server location. This server names the keystore and its password used for holding certificates
-generated using the <code>keytool</code> utility from the Java SDK.
-These certificates are then given to the client during SSL
-startup so that communications can be encrypted.
-</p>
-<p>
-The keystore file referenced by <code>ssl.properties</code> can contain several entries but only one is 
-used when a client connects. The entries in the keystore may themselves have passwords, but dstore assumes 
-that these are all the same as the keystore password. It makes sense, therefore, to maintain only
-one keystore for the dstore server, that it have only one entry, and that it exist in the same
-directory as the dstore server. That entry can be a self-signed certificate.
-</p>
-<p>
-The following command will create a keystore and add a single self-signed certificate to it.
+<p>以下命令将创建密钥库并向其添加单个自签名证书。
 </p>
 <pre><code>
 keytool -genkey -keystore keystore_file -alias entry_name -storepass d98kMn50sV
    -dname "CN=dstore server, OU=division, O=company, L=city, ST=state, C=country"
 </code></pre>
-<p>
-The command would be entered on a single line. It appears here on multiple lines for readability.
+<p>该命令将输入一行。为了便于阅读，它在多行显示。
 </p>
-<p>
-After entering this command you will be prompted to supply a password for the entry itself.
-You should press enter to take the default which is the keystore password. 
+<p>输入此命令后，系统将提示您为条目本身提供密码。您应该按Enter键取默认值，即密钥库密码。
 </p>
-<p>
-One would then edit the ssl.properties file to use this as follows:
-</p>
+<p>然后，可以编辑ssl.properties文件以使用它，如下所示：</p>
 <pre><code>
 daemon_keystore_file=keystore_file
 daemon_keystore_password=d98kMn50sV

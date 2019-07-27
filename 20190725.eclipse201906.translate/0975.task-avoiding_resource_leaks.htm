@@ -1,0 +1,51 @@
+<html lang="zh-Hans" >
+<head>
+<meta name="copyright" content="Copyright (c) GK Software AG and others 2012. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<link rel="stylesheet" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>避免资源泄漏</title>
+</head>
+<body >
+<h1>避免资源泄漏</h1>
+<p>实现接口<code>java.io.类。Closeable</code> （自JDK 1.5起）和<code>java.lang.AutoCloseable</code> （因为JDK 1.7）被认为代表外部资源，当不再需要它们时，应该使用<code>close()</code>方法<code>close()</code>它们。
+</p>
+<p>Eclipse Java编译器能够分析使用此类型的代码是否符合此策略。例如，以下代码段表示明显的资源泄漏：</p>
+<pre>    int len(File f) throws IOException {
+        InputStream stream = new FileInputStream(f);
+        return stream.available();
+    }
+</pre>
+<p>编译器将标记为<b>“资源泄漏：'流'永远不会关闭”。</b>
+</p><h2>资源泄漏的基本流量分析</h2>
+<p>流量分析检测以下情况：</p>
+<ul>
+<li>资源肯定没有关闭</li>
+<li>资源未在所有控制流上关闭（标记为“可能未关闭”）</li>
+<li>资源未在方法出口点（return语句或引发异常时）关闭（肯定或在某些控制流上）</li>
+<li>在Java 7程序中，资源已关闭，但仍可通过使用try-with-resources语句来改进代码。</li>
+</ul>
+<p>此外，流分析尝试通过变量赋值来跟踪资源值。但是，如果可以将不同的资源分配给同一变量（在不同的控制流上或按顺序），则分析可能变得不太准确。
+</p>
+<p>并非所有分析都默认启用。有关各个配置选项，请参阅<a href="../reference/preferences/java/compiler/ref-preferences-errors-warnings.htm#resource-leak">编译器首</a>选项。
+</p>
+<p><strong>提示：</strong>如果不为不同目的重用资源类型变量，则代码通常更容易分析（并且更容易被人类读者理解）。理想情况下，在Java 7程序中，应使用try-with-resources语句管理所有资源。
+</p>
+<h2>所有权/责任</h2>
+<p>上述诊断基本上假设创建资源类型实例的方法也负责关闭此资源。但是，一些资源将在几种方法之间共享。这里的分析做出以下假设：</p>
+<ul>
+<li>如果方法将资源返回给其调用者，则它不负责关闭;没有问题报道。</li>
+<li>如果资源存储在字段中，则没有一种方法被视为负责关闭;没有问题报道。</li>
+<li>如果方法通过方法调用而不是通过<code>new</code>表达式获取资源，则它可能负责也可能不负责;任何问题都只被标记为潜在的资源泄漏。</li>
+<li>如果资源在方法调用或构造函数调用中作为参数传递，则当前方法可能负责也可能不负责;任何问题都只被标记为潜在的资源泄漏。</li>
+</ul>
+<h2>资源包装和无资源的可关闭</h2>
+<p>JDK定义了一些实现<code>Closeable</code>类，但不直接表示操作系统级别的资源。
+</p>
+<p><code>java.io.StringReader</code>是一个StringReader</code>的示例，它不需要调用<code>close()</code>因为<b>没有</b>需要清理的<b>操作系统资源</b> 。该分析使用显式白名单来检测属于此类别的<code>java.io</code>中的类。没有针对这些类发出资源泄漏警告。
+</p>
+<p>像<code>java.io.这样的类的实例。BufferedInputStream</code>是围绕另一个资源<b>包装</b> （其中包装器可以在多个级别被施加）。这些对象也不直接表示操作系统资源。如果包装的资源已关闭，则包装器不需要关闭。相反，如果封装器关闭，这将包括关闭包装的资源。该分析具有用于检测包装器资源的第二个白名单，并将识别是否将通过包装器直接或间接关闭基础实际资源。任何一个都足以沉默关于资源泄漏的警告。白名单包含来自<code>java.io</code> ， <code>java.util.zip</code> ， <code>java.security</code> ， <code>java.beans</code>和<code>java.sound.sampled</code> 。
+</p>
+<p><strong>提示：</strong>关闭最外面的包装器而不是包装资源通常是最好/最安全的。
+</p></body>
+</html>

@@ -1,71 +1,32 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html  xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page."/>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  <title>Threads in RAP</title>
-  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css"/>
+  <meta name="copyright" content="Copyright (c) 2007, 2019 EclipseSource. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>RAP中的线程</title>
+  <link rel="stylesheet" href="../../../PRODUCT_PLUGIN/book.css" type="text/css">
 </head>
-<body>
+<body >
 
-  <h1>Threads in RAP</h1>
+  <h1>RAP中的线程</h1>
 
-  <p>
-    Like in SWT, we have to distiguish two types of threads, the UI thread and other, non-UI threads,
-    also called “background threads”.
+  <p>就像在SWT中一样，我们必须抛弃两种类型的线程，即UI线程和其他非UI线程，也称为“后台线程”。
   </p>
 
-  <h2>The UI Thread</h2>
+  <h2>UI线程</h2>
 
-  <p>
-    In SWT, the <em>UI thread</em> is the thread in which the Display was created.
-    Widgets may only be created and accessed in this thread.
-    In RWT, this is no different, and in addition to that, the UI thread also provides the scope of
-    the UI session.
-    Thus, all methods in RWT that require the current UI Session or application context
-    must be called from this thread.
-    This includes most methods of
-    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT</a></em>, such as
-    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession()</a></em> and
-    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getApplicationContext--">RWT.getApplicationContext()</a></em>),
-    but also the
-    <em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil</a></em>.
+  <p>在SWT中， <em>UI线程</em>是创建Display的线程。只能在此线程中创建和访问窗口小部件。在RWT中，这没有什么不同，除此之外，UI线程还提供了UI会话的范围。因此，必须从此线程调用RWT中需要当前UI会话或应用程序上下文的所有方法。这包括<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT的</a></em>大多数方法，例如<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession（）</a></em>和<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getApplicationContext--">RWT.getApplicationContext（）</a></em> ），还包括<em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil</a></em> 。
   </p>
 
-  <p>
-    Since entrypoints an all event listeners are executed in the UI thread,
-    all application code has full access by default.
-    However, when an application forks new threads (<q>non-UI</q> or <q>background</q> threads),
-    these threads cannot directly access the UI session or the application context.
-    See <a href="threads.html#access">Session access from a background threads</a>.
+  <p>由于入口点的所有事件侦听器都在UI线程中执行，因此默认情况下所有应用程序代码都具有完全访问权限。但是，当应用程序分叉新线程（ <q>非UI</q>或<q>后台</q>线程）时，这些线程无法直接访问UI会话或应用程序上下文。请参阅<a href="threads.html#access">后台线程的会话访问权限</a> 。
   </p>
 
-  <h3 id="client">UI Updates from background threads</h3>
-  <p>
-    Any
-    <a href="client.html">RAP Client</a> that connects with a RAP server also stores some data,
-    usually for the duration of the UI Session.
-    Most notably, the client has a complete copy of the UI state, which it
-    presents to the user to interact with. It can only exchange data during HTTP requests,
-    which are triggered by user interactions. This means that if the UI state is changed by a
-    background thread, the client would normally not be updated until the next time the user does
-    something with the UI. See <a href="server-push.html">Server Push</a> for more.
+  <h3 id="client">来自后台线程的UI更新</h3>
+  <p>任何与RAP服务器连接的<a href="client.html">RAP客户端</a>也会存储一些数据，通常是在UI会话期间。最值得注意的是，客户端具有UI状态的完整副本，它呈现给用户进行交互。它只能在HTTP请求期间交换数据，这些数据由用户交互触发。这意味着如果UI状态由后台线程更改，则客户端通常不会更新，直到用户下次使用UI执行某些操作。请参阅<a href="server-push.html">Server Push</a>了解更多信息
   </p>
 
-  <h2 id="uisession">Session access from a background thread</h2>
+  <h2 id="uisession">来自后台线程的会话访问</h2>
 
-  <p>
-    RWT determines the <a href="scopes.html#uisession">UI session</a>
-    based on the current thread. When <i>background
-    threads</i> try to do so, the code will fail with an <em>java.lang.IllegalStateException</em>,
-    saying that this thread has no access. This may happen when using any method of
-    <em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT</a></em>
-    or
-    <em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil</a></em>.
-    Example:
-  </p>
+  <p>RWT根据当前线程确定<a href="scopes.html#uisession">UI会话</a> 。当<i>后台线程</i>尝试这样做时，代码将失败并带有<em>java.lang。IllegalStateException</em> ，表示此线程无权访问。使用<em><a href="../reference/api/org/eclipse/rap/rwt/RWT.html">RWT</a></em>或<em><a href="../reference/api/org/eclipse/rap/rwt/SingletonUtil.html">SingletonUtil的</a></em>任何方法时可能会发生这种情况。例：</p>
 <pre class="lang-java">
 // INCORRECT
 // will throw IllegalStateException: No context available ...
@@ -81,19 +42,9 @@ Runnable runnable = new Runnable() {
 };
 new Thread( runnable ).start();
 </pre>
-  <p>
-    The solution is to run the code in question in the context of the UI session.
-    To do so, it must be wrapped in a runnable and executed using the method
-    <em style="white-space:nowrap;"><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#exec-java.lang.Runnable-">UISession#exec( Runnable runnable )</a></em>.
-    This will execute the runnable in the context of the UI session, granting the code in its
-    <em>run()</em> method access to all session-scoped data.
-    However, the code can not access any widgets, because it is not executed in the UI Thread
-    (see <a href="#asyncexec">below</a>).
+  <p>解决方案是在UI会话的上下文中运行有问题的代码。为此，它必须包装在runnable中并使用<em style="white-space:nowrap"><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#exec-java.lang.Runnable-">UISession #exec（Runnable runnable）</a></em>方法<em style="white-space:nowrap"><a href="../reference/api/org/eclipse/rap/rwt/service/UISession.html#exec-java.lang.Runnable-">执行</a></em> 。这将在UI会话的上下文中执行runnable，在其<em>run（）</em>方法中授予对所有会话范围数据的访问权限的代码。但是，代码无法访问任何窗口小部件，因为它不在UI线程中执行（见<a href="#asyncexec">下文</a> ）。
   </p>
-  <p>
-    In case there is no reference to the current UISession available,
-    it can also be obtained from
-    <em style="white-space:nowrap;"><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession( Display display )</a></em>.
+  <p>如果没有可用的当前UISession的引用，也可以从<em style="white-space:nowrap"><a href="../reference/api/org/eclipse/rap/rwt/RWT.html#getUISession--">RWT.getUISession（显示器显示）</a></em>获得它。
   </p>
 <pre class="lang-java">
 // CORRECT
@@ -114,38 +65,16 @@ final Runnable runnable = new Runnable() {
 new Thread( runnable ).start();
 </pre>
 
-  <h2 id="asyncexec">Session access vs. UI access</h2>
+  <h2 id="asyncexec">会话访问与UI访问</h2>
   <p>
-    <a href="/help/topic/org.eclipse.platform.doc.isv/guide/swt_threading.htm">
-    Like in SWT</a>, widgets can only be accessed from a <a href="scopes.html#uithread">UI thread</a>.
-    While <em>UISession#exec</em> executes a runnable in the context of the UI session,
-    it does <em>not</em> execute this runnable within the UI thread
-    but in the same thread that the method is called.
-    Hence, <em>UISession#exec</em> is not suitable to execute code that accesses the UI.
-    To do so,
-    <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#asyncExec-java.lang.Runnable-">Display#asyncExec</a></em>
-    (or <em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#syncExec-java.lang.Runnable-">Display#syncExec</a></em>)
-    has to be used instead.
-    Please note that UI updates from a background thread will only be “pushed” to the client when the
-    <a href="server-push.html">Server Push</a> is active.
-    In contrast to <em>asyncExec</em>, running code using <em>UISession#exec</em> does not cause
-    any additional network traffic.
+    <a href="/help/topic/org.eclipse.platform.doc.isv/guide/swt_threading.htm">与SWT一样，</a>只能从<a href="scopes.html#uithread">UI线程</a>访问窗口小部件。虽然<em>UISession＃EXEC</em>在UI会话的上下文中执行一个可运行的，它<em>不会</em>在UI线程内，但在同一个线程，该方法被调用执行该运行的。因此， <em>UISession #exec</em>不适合执行访问UI的代码。为此，必须使用<em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#asyncExec-java.lang.Runnable-">Display＃asyncExec</a></em> （或<em><a href="../reference/api/org/eclipse/swt/widgets/Display.html#syncExec-java.lang.Runnable-">Display＃syncExec</a></em> ）。请注意，当<a href="server-push.html">服务器推送</a>处于活动状态时，后台线程的UI更新将仅“推送”到客户端。与<em>asyncExec相比</em> ，使用<em>UISession</em> <em>#exec</em>运行代码不会导致任何额外的网络流量。
   </p>
-  <p>
-    In summary, when a thread <i>only</i> needs to access the UI session context
-    (e.g. by using  <em>SingletonUtil</em>
-    or <em>RWT.getClient</em>), <em>UISession#exec</em> should be used.
-    But when the UI needs to be updated, <em>Display#asyncExec</em> <i>must</i> be used, as it
-    runs the code in the UI thread and thereby gives access to session scope <i>and</i> widgets.
-    Using <em>UISession#exec</em>
-    from within the UI thread is pointless.
+  <p>总之，当线程<i>只</i>需要访问UI会话上下文时（例如，通过使用<em>SingletonUtil</em>或<em>RWT.getClient</em> ），应该使用<em>UISession #exec</em> 。但是当需要更新UI时， <i>必须</i>使用<em>Display＃asyncExec</em> ，因为它运行UI线程中的代码，从而可以访问会话范围<i>和</i>小部件。在UI线程中使用<em>UISession #exec</em>是没有意义的。
   </p>
 
-  <h2>Using a Helper</h2>
+  <h2>使用助手</h2>
 
-  <p>
-    It can be helpful to create a helper class like this:
-  </p>
+  <p>创建一个这样的帮助器类会很有帮助：</p>
 <pre class="lang-java">
 abstract class SessionRunnable implements Runnable {
 
@@ -168,9 +97,7 @@ abstract class SessionRunnable implements Runnable {
   abstract void runInSession();
 }
 </pre>
-  <p>
-    The above example could then be shortened to this:
-  </p>
+  <p>以上示例可以缩短为：</p>
 <pre class="lang-java">
 final Runnable runnable = new SessionRunnable() {
   @Override

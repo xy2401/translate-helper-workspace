@@ -1,0 +1,51 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>锁</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>锁</h3>
+<p>系统中的多个作业可能需要访问和操作同一个对象。
+<b><a href="../reference/api/org/eclipse/core/runtime/jobs/ILock.html">ILock</a></b>定义了用于授予对共享对象的独占访问权的协议。当作业需要访问共享对象时，它会<i>获取</i>该对象的锁定。当它完成操作对象时，它<i>会释放</i>锁定。
+</p>
+<p>通常在创建共享对象或首先由插件访问时创建锁。也就是说，具有对共享对象的引用的代码也具有对其锁的引用。我们首先创建一个锁， <b>myLock</b> ，用于控制对<b>myObject的</b>访问：</p>
+<pre>   ...
+   myObject = initializeImportantObject();
+   IJobManager jobMan = Job.getJobManager();
+   <b>myLock = jobMan.newLock();</b>
+   ...
+</pre>
+<p>平台提供了强大的<b><a href="../reference/api/org/eclipse/core/runtime/jobs/ILock.html">ILock</a></b>实现。作业管理器提供此锁的实例以供客户端使用。这些锁彼此了解并且可以避免循环死锁。（我们马上解释一下这个陈述。）
+</p>
+<p>每当作业中的代码需要访问<b>myObject时</b> ，它必须首先获取对它的锁定。以下代码段显示了使用锁的常用习惯用法：</p>
+<pre>...
+// I need to manipulate myObject, so I get its lock first.
+try {		
+	<b>myLock.acquire();</b>
+	updateState(myObject);  // manipulate the object
+} finally {
+	<b>lock.release();</b>
+}
+...
+</pre>
+<p>在调用作业可以被授予对锁的独占访问权限之前， <b>acquire（）</b>方法不会返回。换句话说，如果某个其他作业已获得锁定，则此代码将被阻止，直到锁定可用。请注意，获取锁并操作<b>myObject</b>的代码将包装在<tt>try</tt>块中，以便在使用对象时发生任何异常时可以释放锁。
+</p>
+<p>看起来很简单吧？幸运的是，锁非常简单易用。它们也是可重入的，这意味着您不必担心您的工作多次获得相同的锁定。每个锁都会保留特定线程的获取和释放次数，并且只有当发布数等于获取次数时才会从作业中释放。
+</p>
+<h4>僵局</h4>
+<p>之前我们注意到作业管理器提供的锁彼此了解并且可以避免循环死锁。要了解死锁是如何发生的，让我们看一个简单的场景。假设“作业A”获得“锁定A”并随后尝试获取“锁定B”。同时，“锁定B”由“作业B”保持，“作业B”现在被阻止等待“锁定A”。这种死锁表明在作业之间使用锁定存在潜在的设计问题。虽然可以很容易地避免这种简单的情况，但随着设计中使用的作业和锁的数量增加，意外引入死锁的可能性也会增加。
+</p> 
+<p>幸运的是，该平台将帮助您识别死锁。当作业管理器检测到死锁条件时，它会将诊断信息输出到描述死锁条件的日志中。然后，它通过临时授予对被阻止的作业所拥有的锁的访问权限来等待其他正在等待的作业来打破僵局。仔细测试涉及多个锁的任何实现并修复平台报告的任何死锁条件非常重要。
+</p>
+
+
+</body>
+</html>

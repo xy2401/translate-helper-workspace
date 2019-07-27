@@ -1,10 +1,10 @@
-﻿<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+﻿<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>SystemTap用户指南 -  SystemTap IDE</title>
-		<link type="text/css" rel="stylesheet" href="../../../book.css"></link>
+		<link type="text/css" rel="stylesheet" href="../../../book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">SystemTap IDE</th>
@@ -50,11 +50,36 @@
 			<img border="0" src="images/Newfile.png">
 		</p>
 		<p>现在尝试编写新脚本或输入/复制以下示例：</p>
-		<pre>global read，write，start probe begin {start = gettimeofday_s（）} probe syscall.write {write + = count} probe timer.ms（1000）{printf（“％d \ t％d \ t％d \ n”， （gettimeofday_s（） -  start），read，write）read = 0 write = 0}</pre>
+		<pre>global read, write, start
+
+probe begin {
+	start = gettimeofday_s()
+}
+
+probe syscall.write {
+	write += count
+}
+
+probe timer.ms(1000) {
+	printf("%d\t%d\t%d\n", (gettimeofday_s()-start), read, write)
+	read=0
+	write=0
+}
+</pre>
 		<p>现在，为了演示Probe Alias浏览器的功能，我们将让您自己完成读取探测。首先在Probe Alias浏览器中打开syscall文件夹。如果浏览器中没有任何内容，则表示您遇到SystemTap安装问题，请参阅我们的<a href="#Installation">安装帮助页面</a> 。现在搜索“syscall.read”探测别名并双击它。SystemTap IDE将在您脚本的末尾插入框架探针，它应类似于以下内容：</p>
-		<pre>probe syscall.read {/ * *此探针上的可用变量：* $ buf：long int，$ count：long int，$ fd：long int，$ ret：long int，* argstr：string，buf_uaddr：long，count： long，fd：long，name：string * /}</pre>
+		<pre>probe syscall.read
+{
+	/*
+	 * available variables on this probe:
+	 * $buf:long int, $count:long int, $fd:long int, $ret:long int,
+	 * argstr:string, buf_uaddr:long, count:long, fd:long, name:string
+	 */
+
+}
+</pre>
 		<p>现在将以下行插入syscall.read探针：</p>
-		<pre>读+ =计数</pre>
+		<pre>read += count
+</pre>
 		<p>如果您愿意，可以删除评论（/ * ... * /）。这将计算每秒读取和写入的字节数并将其打印出来。通过获取一天中的时间，首先执行begin探测。每次调用函数时，读写探针都会递增。计时器探针每秒打印一次信息。</p>
 		<p>在编写新探针时获得帮助的另一种方法是在编辑期间的任何点按Ctrl + Space。这样做将为部分拼写的探针名称，探针内可用的变量和函数以及可用的文档提供自动完成。</p>
 		<p>
@@ -94,7 +119,26 @@
 		</p>
 		<p>您可以在此处指定要运行的脚本的路径，输入远程主机信息，以其他用户身份运行，以及运行SystemTap的各种其他选项。浏览各种选项卡和选项。工具提示应该有助于理解各种选项的作用。准备好后，单击“运行”以运行脚本。</p>
 		<p>现在我们将演示使用图形运行SystemTap脚本。要运行图表示例，您需要使用<a href="#Lesson_2:_Writing_Your_First_Script">第2课：编写您的第一个脚本中</a>提供的代码：</p>
-		<pre>全局读取，写入，启动探测开始{start = gettimeofday_s（）} probe syscall.write {write + = count} probe syscall.read {read + = count} probe timer.ms（1000）{printf（“％d \ tt ％d \ t％d \ n“，（gettimeofday_s（） -  start），read，write）read = 0 write = 0}</pre>
+		<pre>global read, write, start
+
+probe begin {
+	start = gettimeofday_s()
+}
+
+probe syscall.write {
+	write += count
+}
+
+probe syscall.read {
+	read += count
+}
+
+probe timer.ms(1000) {
+	printf("%d\t%d\t%d\n", (gettimeofday_s()-start), read, write)
+	read=0
+	write=0
+}
+</pre>
 		<p>为此，请选择<b>“运行方式” - &gt;“运行配置...”，</b>然后像以前一样创建新的SystemTap启动配置，并切换到“图形”选项卡。在本教程结束时，选项卡将如下所示：</p>
 		<p>
 			<img border="0" src="images/GraphingTab.png">
@@ -103,7 +147,8 @@
 		<p>首先，选择<b>Graph运行此脚本的输出</b> ，然后在标记为<b>正则表达式</b>的文本框中输入一个与脚本输出匹配的正则表达式。将括号（）放在要捕获图形的任何数据周围。
 		</p>
 		<p>对于此示例，请输入以下作为<b>正则表达式</b> ：</p>
-		<pre>（\ d +）\吨（\ d +）\吨（\ d +）</pre>
+		<pre>(\d+)\t(\d+)\t(\d+)
+</pre>
 		<p>或者，您可以单击标记为<b>单击此处</b>的按钮<b>以从printf语句生成正则表达式。</b> 单击此按钮将自动创建正则表达式，以捕获脚本的printf语句创建的输出。
 		</p>
 		<p>
@@ -113,13 +158,21 @@
 		<p>输入此表达式后，将出现<b>Title</b> s和<b>Sample Extracted Value</b> s表。要测试你的正则表达式是否按预期运行，可以作为<b>样本输出</b>输入一行类似于你希望你的脚本产生什么样的文字。
 		</p>
 		<p>对于此示例，将以下行复制并粘贴到“ <b>示例输出”</b>框中：</p>
-		<pre>10 1000 100</pre>
+		<pre>10	1000	100
+</pre>
 		<p>并输入以下<b>标题</b> ：</p>
-		<pre>时间读写</pre>
+		<pre>Time
+Reads
+Writes
+</pre>
 		<p>“ <b>样本提取值”</b>下显示的文本框现在显示正则表达式捕获的值，这些值将在您创建的使用这些值的任何图形中绘制。
 		</p>
 		<p>现在，使用解析的输出添加图形，单击Graph Set部分中的<b>Add ...</b>按钮，这将打开<a href="SystemTap-Graphing.html#Create_Graph_Wizard">Create Graph</a>向导。选择折线图作为<b>图表类型</b> ，并输入以下内容作为标题和系列值，然后单击<b>完成</b>以保存更改：</p>
-		<pre>标题：读写次数X系列：时间Y系列0：读取Y系列1：写入</pre>
+		<pre>Title:		Read Write Count
+X Series:	Time
+Y Series 0:	Reads
+Y Series 1:	Writes
+</pre>
 		<p>您还可以指定其他正则表达式来捕获输出。要执行此操作，请在键入“ <b>正则表达式”</b>文本框时按向下箭头键，或单击文本框的下拉箭头，然后单击标记为“ <b>新正则表达式”</b>的条目<b>...</b>
 		</p>
 		<p>
@@ -127,7 +180,8 @@
 		</p>
 		<p>您会注意到，在添加新的正则表达式后，到目前为止在“绘图”菜单中输入的所有数据（例如样本输出和图形）将不再可见。这是因为每个正则表达式都有自己的样本输出，列标题和与之关联的图形集（或图集）。显示当前所选表达式的数据，由于当前表达式为空白，因此列和图形设置也是空白。</p>
 		<p>要仅以10个单位时间间隔捕获示例脚本的输出，请使用下面的行作为第二个正则表达式：</p>
-		<pre>（\ d + 0）\吨（\ d +）\吨（\ d +）</pre>
+		<pre>(\d+0)\t(\d+)\t(\d+)
+</pre>
 		<p>输入用于第一个正则表达式的相同示例输出和标题值。同时添加一个与之前相同的系列数据的图形，标题为“十年读写计数”。</p>
 		<p>在此运行配置下执行脚本时，将打开图形选择器视图，它将包含数据视图和您创建的任何图形，并为每个正则表达式的图形集提供一个选项卡。数据视图图表填充了控制台的输出。如果单击标记为<b>图表集1</b>的选项卡，您应该会看到类似于以下内容的屏幕：</p>
 		<p>
@@ -277,7 +331,7 @@
 		<p>
 			<img border="0" src="images/ErrorLog.png">
 		</p>
-		<h4 id="Editors">编者</h4>
+		<h4 id="Editors">编辑器</h4>
 		<p>SystemTap IDE中提供了三个编辑器。</p>
 		<ul>
 			<li>
@@ -506,19 +560,270 @@
 		<p>还有一些示例说明 - <a href="http://sourceware.org/systemtap/examples/demo_script.txt">http://sourceware.org/systemtap/examples/demo_script.txt</a>
 		</p>
 		<h4 id="top.stp_-_Prints_the_top_20_system_calls_.28http:.2F.2Fsourceware.org.2Fsystemtap.2Fexamples.2Ftop.stp.29">top.stp  - 打印前20个系统调用（ <a href="http://sourceware.org/systemtap/examples/top.stp">http://sourceware.org/systemtap/examples/top.stp</a> ）</h4>
-		<pre>＃！/ usr / bin / env stap ##此脚本连续列出系统上的前20个系统调用#global syscalls function print_top（）{cnt = 0 log（“SYSCALL \ t \ t \ t \ t \ tCOUNT”）foreach（[name ]在syscalls-）{printf（“％ -  20s \ t \ t \ t％5d \ n”，name，syscalls [name]）if（cnt ++ = 20）break} printf（“---------- ---------------------------- \ n“）delete syscalls} probe kernel.function（”sys_ *“）{syscalls [probefunc（ ）] ++} #print top syscalls每5秒探测timer.ms（5000）{print_top（）</pre>
+		<pre>
+#!/usr/bin/env stap
+#
+# This script continuously lists the top 20 system calls on the system
+#
+
+global syscalls
+
+function print_top () {
+	cnt=0
+	log ("SYSCALL\t\t\t\tCOUNT")
+	foreach ([name] in syscalls-) {
+		printf("%-20s\t\t%5d\n",name, syscalls[name])
+		if (cnt++ = 20)
+			break
+	}
+	printf("--------------------------------------\n")
+	delete syscalls
+}
+
+probe kernel.function("sys_*") {
+	syscalls[probefunc()]++
+}
+
+# print top syscalls every 5 seconds
+probe timer.ms(5000) {
+	print_top ()
+</pre>
 		<h4 id="prof.stp_-_Simple_profiling_.28http:.2F.2Fsourceware.org.2Fsystemtap.2Fexamples.2Fprof.stp.29">prof.stp  - 简单分析（ <a href="http://sourceware.org/systemtap/examples/prof.stp">http://sourceware.org/systemtap/examples/prof.stp</a> ）</h4>
-		<pre>＃！/ usr / bin / env stap＃这是分析特定命令或pid的示例。＃它的工作原理是记录输入系统调用的时间#exit。＃用法：prof.stp -c“top -n5”＃将启动“top”并在5次迭代后退出。##用法：prof.stp -x 3323＃将命令pid 3323直到它被命中^ c。#project kernel.function（“sys_ *”）{if（target（）= tid（））calltime [tid（）] = gettimeofday_us（）} probe kernel.function（“sys _ *”）。return {if（target（ ）！= tid（））next now = gettimeofday_us（）c = calltime [tid（）] if（！c）下一个ttime [probefunc（）] &lt;&lt;&lt; now  -  c delete calltime [tid（）]} probe end {printf（“\ n”）foreach（x in ttime）printf（“％ -  20s \ tcalls：％6d \ ttavg time（ms）：％5d \ ttotal（ms）：％7d \ n“，x，@ count（ttime [x]），@ avg（ttime [x]），@ sum（ttime [x]））全球通话时间，ttime</pre>
+		<pre>
+#!/usr/bin/env stap
+
+# This is an example of profiling a specific command or pid.
+# It works by recording the time when a system call is entered
+# exited.
+
+# Usage: prof.stp -c "top -n5"
+# Will start up "top" and after 5 iterations, will exit.
+#
+# Usage: prof.stp -x 3323
+# Will profile pid 3323 until it ^c is hit.
+#
+
+probe kernel.function("sys_*") {
+	if (target() = tid())
+		calltime[tid()] = gettimeofday_us()
+}
+
+probe kernel.function("sys_*").return {
+	if (target() != tid())  next
+	now = gettimeofday_us()
+	c = calltime[tid()]
+	if (!c) next
+	ttime[probefunc()] &lt;&lt;&lt; now - c
+	delete calltime[tid()]
+}
+
+probe end {
+	printf("\n")
+	foreach (x in ttime)
+		printf("%-20s\tcalls:%6d\tavg time (ms):%5d\ttotal(ms):%7d\n",
+			x, @count(ttime[x]), @avg(ttime[x]), @sum(ttime[x]))
+}
+
+global calltime, ttime
+</pre>
 		<h4 id="keyhack.stp_-_Modifying_variables_in_the_kernel._.28http:.2F.2Fsourceware.org.2Fsystemtap.2Fexamples.2Fkeyhack.stp.29">keyhack.stp  - 修改内核中的变量。（ <a href="http://sourceware.org/systemtap/examples/keyhack.stp">http://sourceware.org/systemtap/examples/keyhack.stp</a> ）</h4>
-		<pre>＃！/ usr / bin / env stap＃这没用，但它表明#SystemTap可以修改正在运行的内核中的变量。＃用法：./ keyhack.stp -g probe kernel.function（“kbd_event”）{＃将'm'更改为'b'。if（$ event_code = 50）$ event_code = 48} probe end {printf（“\ nDONE \ n”）}</pre>
+		<pre>
+#! /usr/bin/env stap
+
+# This is not useful, but it demonstrates that
+# SystemTap can modify variables in a running kernel.
+
+# Usage: ./keyhack.stp -g
+
+probe kernel.function("kbd_event") {
+	# Changes 'm' to 'b' .
+	if ($event_code = 50) $event_code = 48
+}
+
+probe end {
+	printf("\nDONE\n")
+}
+</pre>
 		<h4 id="kmalloc.stp_-_Statistics_example._.28http:.2F.2Fsourceware.org.2Fsystemtap.2Fexamples.2Fkmalloc.stp.29">kmalloc.stp  - 统计示例。（ <a href="http://sourceware.org/systemtap/examples/kmalloc.stp">http://sourceware.org/systemtap/examples/kmalloc.stp</a> ）</h4>
-		<pre>＃！/ usr / bin / env stap＃使用统计信息检查内核内存分配全局kmalloc探测内核。函数（“__ kmalloc”）{kmalloc &lt;&lt;&lt; $ size} #rsout 10秒后退出探测timer.ms（10000）{exit（） } probe end {printf（“Count：％d allocations \ n”，@ count（kmalloc））printf（“Sum：％d Kbytes \ n”，@ sum（kmalloc）/ 1000）printf（“Average：％d bytes） \ n“，@ avg（kmalloc））printf（”Min：％d bytes \ n“，@ min（kmalloc））printf（”Max：％d bytes \ n“，@ max（kmalloc））print（”\ n按大小（以字节为单位）的分配\ n“）print（@hist_log（kmalloc））}</pre>
+		<pre>
+#! /usr/bin/env stap
+
+# Using statistics to examine kernel memory allocations
+
+global kmalloc
+
+probe kernel.function("__kmalloc") {
+	kmalloc &lt;&lt;&lt; $size
+}
+
+# Exit after 10 seconds
+probe timer.ms(10000) { exit () }
+
+probe end {
+	printf("Count:   %d allocations\n", @count(kmalloc))
+	printf("Sum:     %d Kbytes\n", @sum(kmalloc)/1000)
+	printf("Average: %d bytes\n", @avg(kmalloc))
+	printf("Min:     %d bytes\n", @min(kmalloc))
+	printf("Max:     %d bytes\n", @max(kmalloc))	
+	print("\nAllocations by size in bytes\n")
+	print(@hist_log(kmalloc))
+}
+</pre>
 		<h4 id="kmalloc2.stp_-_Example_using_arrays_of_statistics._.28http:.2F.2Fsourceware.org.2Fsystemtap.2Fexamples.2Fkmalloc2.stp.29">kmalloc2.stp  - 使用统计数组的示例。（ <a href="http://sourceware.org/systemtap/examples/kmalloc2.stp">http://sourceware.org/systemtap/examples/kmalloc2.stp</a> ）</h4>
-		<pre>＃！/ usr / bin / env stap＃使用统计信息和映射来检查内核内存分配全局kmalloc探针kernel.function（“__ kmalloc”）{kmalloc [execname（）] &lt;&lt;&lt; $ size} #slemer timer.ms退出10秒后（10000）{exit（）}探测结束{foreach（[名称]在kmalloc中）{printf（“分配为％s \ n”，名称）printf（“计数：％d分配\ n”，@ count（kmalloc [ name]））printf（“Sum：％d Kbytes \ n”，@ sum（kmalloc [name]）/ 1000）printf（“Average：％d bytes \ n”，@ avg（kmalloc [name]））printf（ “Min：％d bytes \ n”，@ min（kmalloc [name]））printf（“Max：％d bytes \ n”，@ max（kmalloc [name]））print（“\ n按大小以字节为单位的分配\” n“）print（@hist_log（kmalloc [name]））printf（”--------------------------------- ---------------------- \ n \ n“）; }}</pre>
+		<pre>
+#! /usr/bin/env stap
+
+# Using statistics and maps to examine kernel memory allocations
+
+global kmalloc
+
+probe kernel.function("__kmalloc") {
+	kmalloc[execname()] &lt;&lt;&lt; $size
+}
+
+# Exit after 10 seconds
+probe timer.ms(10000) { exit () }
+
+probe end {
+	foreach ([name] in kmalloc) {
+		printf("Allocations for %s\n", name)
+		printf("Count:   %d allocations\n", @count(kmalloc[name]))
+		printf("Sum:     %d Kbytes\n", @sum(kmalloc[name])/1000)
+		printf("Average: %d bytes\n", @avg(kmalloc[name]))
+		printf("Min:     %d bytes\n", @min(kmalloc[name]))
+		printf("Max:     %d bytes\n", @max(kmalloc[name]))	
+		print("\nAllocations by size in bytes\n")
+		print(@hist_log(kmalloc[name]))
+		printf("-------------------------------------------------------\n\n");
+	}
+}
+</pre>
 		<h3 id="Guide_to_Regular_Expressions">正则表达式指南</h3>
 		<p>正则表达式用于SystemTap图形，以解释它从脚本输出中收到的信息。</p>
 		<p>基本正则表达式（取自“ <a href="http://java.sun.com/j2se/1.5.0/docs/api/">http://java.sun.com/j2se/1.5.0/docs/api/</a> ） -</p>
-		<pre>正则表达式构造摘要构造匹配字符x字符x \\反斜杠字符\ 0n八进制值为0n的字符（0 &lt;= n &lt;= 7）\ 0nn八进制值为0nn的字符（0 &lt;= n &lt;= 7）\ 0mnn具有八进制值0mnn的字符（0 &lt;= m &lt;= 3,0 &lt;= n &lt;= 7）\ xhh具有十六进制值的字符0xhh \ uhhhh具有十六进制值的字符0xhhhh \ t制表符字符（' \ u0009'）\ n新行（换行符）字符（'\ u000A'）\ r \ n回车符（'\ u000D'）\ f换页符（'\ u000C'）\ a警报（ bell）字符（'\ u0007'）\ e转义字符（'\ u001B'）\ cx x字符类[abc] a，b或c（简单类）[^ abc]对应的控制字符除了a，b或c（否定）[a-zA-Z] a到z或A到Z，包括（范围）[ad [mp]] a到d，或m到p：[a-dm-p] （联合）[az &amp;&amp; [def]] d，e或f（交集）[az &amp;&amp; [^ bc]] a到z，b和c除外：[ad-z]（减法）[az &amp;&amp; [^ mp]]在通过z，而不是通过p：[a-lq-z]（减法）预定义的字符类。任何字符（可能与行终止符匹配也可能不匹配）\ d数字：[0-9] \ DA非数字：[^ 0-9] \ s空格字符：[\ t \ n \ x0B \ f \ r \ n ] \ SA非空白字符：[^ \ s] \ w单词字符：[a-zA-Z_0-9] \ WA非单词字符：[^ \ w] POSIX字符类（仅限US-ASCII） p {Lower}小写字母字符：[az] \ p {Upper}大写字母字符：[AZ] \ p {ASCII}所有ASCII：[\ x00- \ x7F] \ p {Alpha} An字母字符：[\ p {下} \ p {上}} \ p {数字}十进制数字：[0-9] \ p {Alnum}一个字母数字字符：[\ p {Alpha} \ p {Digit}] \ p {Punct}标点符号：其中之一！“＃$％＆'（）* +， - 。/ :; &lt;=&gt;？@ [\] ^ _` {|}〜\ p {Graph}可见字符：[\ p {Alnum} \ p {Punct}] \ p {Print}可打印字符：[\ p {Graph} \ x20] \ p {空白}空格或制表符：[\ t] \ p {Cntrl}控制字符：[\ x00- \ x1F \ x7F] \ p {XDigit}十六进制数字：[0-9a-fA-F ] \ p {Space}一个空白字符：[\ t \ n \ x0B \ f \ r] java.lang。字符类（简单的java字符类型）\ p {javaLowerCase}等同于java.lang。Character.isLowerCase（）\ p {javaUpperCase}相当于java.lang。Character.isUpperCase（）\ p {javaWhitespace}相当于java.lang。Character.isWhitespace（）\ p {javaMirrored}等同于java.lang。Character.isMirrored（）Unicode块和类别的类\ p {InGreek}希腊语块中的字符（简单块）\ p {Lu}大写字母（简单类别）\ p {Sc}货币符号\ P {InGreek除了希腊语块中的任何一个字符（否定）[\ p {L} &amp;&amp; [^ \ p {Lu}]]除了大写字母（减法）之外的任何字母边界匹配器^行的开头$结束line \ b A字边界\ BA非字边界\ A输入的开头\ G上一个匹配的结束\ Z输入的结束但是对于最终的终结符，如果有的话\ z输入结束贪婪量词X？X，一次或根本不是X * X，是X + X的0倍或更多倍，是X {n} X的一倍或多倍，恰好是X {n，} X的n倍，至少是X {n，m} X的n倍，至少n但不超过m次不情愿的量词X ??X，一次或不是X *？X，零次或多次X +？X，一次或多次X {n}？X，恰好是X {n，}的n倍？X，至少是X {n，m}的n倍？X，至少n次但不超过m次占有量词X？+ X，一次或不是X * + X，是X ++ X的零次或多次，X {n} + X的一倍或多次，恰好是X {n，} + X的n倍，至少是X {n的n倍， m} + X，至少n但不超过m次逻辑运算符XY X后跟YX | Y X或Y（X）X作为捕获组返回引用\ n无论第n个捕获组匹配Quotation \ Nothing，引用以下字符\ Q Nothing，但引用所有字符直到\ E \ E Nothing，但结尾引用由\ Q特殊构造（非捕获）（？：X）X，作为非捕获组（？idmsux-idmsux）没什么，但打开 - 关闭匹配标志（？idmsux-idmsux：X）X，作为非捕获组，给定的标志开 - 关（？= X）X，通过零宽度正向前瞻（？！X）X，通过零宽度负前瞻（？&lt;= X）X，通过零宽度正向观察（？&lt;！X）X，通过零宽度负向观察（？&gt; X）X，作为一个独立的非捕获组匹配一个不是单词边界的位置。
+		<pre> Summary of regular-expression constructs
+
+Construct 	Matches
+
+Characters
+x 	The character x
+\\ 	The backslash character
+\0n 	The character with octal value 0n (0 &lt;= n &lt;= 7)
+\0nn 	The character with octal value 0nn (0 &lt;= n &lt;= 7)
+\0mnn 	The character with octal value 0mnn (0 &lt;= m &lt;= 3, 0 &lt;= n &lt;= 7)
+\xhh 	The character with hexadecimal value 0xhh
+\uhhhh 	The character with hexadecimal value 0xhhhh
+\t 	The tab character ('\u0009')
+\n 	The newline (line feed) character ('\u000A')
+\r 	The carriage-return character ('\u000D')
+\f 	The form-feed character ('\u000C')
+\a 	The alert (bell) character ('\u0007')
+\e 	The escape character ('\u001B')
+\cx 	The control character corresponding to x
+
+Character classes
+[abc] 	a, b, or c (simple class)
+[^abc] 	Any character except a, b, or c (negation)
+[a-zA-Z] 	a through z or A through Z, inclusive (range)
+[a-d[m-p]] 	a through d, or m through p: [a-dm-p] (union)
+[a-z&amp;&amp;[def]] 	d, e, or f (intersection)
+[a-z&amp;&amp;[^bc]] 	a through z, except for b and c: [ad-z] (subtraction)
+[a-z&amp;&amp;[^m-p]] 	a through z, and not m through p: [a-lq-z](subtraction)
+
+Predefined character classes
+. 	Any character (may or may not match line terminators)
+\d 	A digit: [0-9]
+\D 	A non-digit: [^0-9]
+\s 	A whitespace character: [ \t\n\x0B\f\r]
+\S 	A non-whitespace character: [^\s]
+\w 	A word character: [a-zA-Z_0-9]
+\W 	A non-word character: [^\w]
+
+POSIX character classes (US-ASCII only)
+\p{Lower} 	A lower-case alphabetic character: [a-z]
+\p{Upper} 	An upper-case alphabetic character:[A-Z]
+\p{ASCII} 	All ASCII:[\x00-\x7F]
+\p{Alpha} 	An alphabetic character:[\p{Lower}\p{Upper}]
+\p{Digit} 	A decimal digit: [0-9]
+\p{Alnum} 	An alphanumeric character:[\p{Alpha}\p{Digit}]
+\p{Punct} 	Punctuation: One of !"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~
+\p{Graph} 	A visible character: [\p{Alnum}\p{Punct}]
+\p{Print} 	A printable character: [\p{Graph}\x20]
+\p{Blank} 	A space or a tab: [ \t]
+\p{Cntrl} 	A control character: [\x00-\x1F\x7F]
+\p{XDigit} 	A hexadecimal digit: [0-9a-fA-F]
+\p{Space} 	A whitespace character: [ \t\n\x0B\f\r]
+
+java.lang.Character classes (simple java character type)
+\p{javaLowerCase} 	Equivalent to java.lang.Character.isLowerCase()
+\p{javaUpperCase} 	Equivalent to java.lang.Character.isUpperCase()
+\p{javaWhitespace} 	Equivalent to java.lang.Character.isWhitespace()
+\p{javaMirrored} 	Equivalent to java.lang.Character.isMirrored()
+
+Classes for Unicode blocks and categories
+\p{InGreek} 	A character in the Greek block (simple block)
+\p{Lu} 	An uppercase letter (simple category)
+\p{Sc} 	A currency symbol
+\P{InGreek} 	Any character except one in the Greek block (negation)
+[\p{L}&amp;&amp;[^\p{Lu}]]  	Any letter except an uppercase letter (subtraction)
+
+Boundary matchers
+^ 	The beginning of a line
+$ 	The end of a line
+\b 	A word boundary
+\B 	A non-word boundary
+\A 	The beginning of the input
+\G 	The end of the previous match
+\Z 	The end of the input but for the final terminator, if any
+\z 	The end of the input
+
+Greedy quantifiers
+X? 	X, once or not at all
+X* 	X, zero or more times
+X+ 	X, one or more times
+X{n} 	X, exactly n times
+X{n,} 	X, at least n times
+X{n,m} 	X, at least n but not more than m times
+
+Reluctant quantifiers
+X?? 	X, once or not at all
+X*? 	X, zero or more times
+X+? 	X, one or more times
+X{n}? 	X, exactly n times
+X{n,}? 	X, at least n times
+X{n,m}? 	X, at least n but not more than m times
+
+Possessive quantifiers
+X?+ 	X, once or not at all
+X*+ 	X, zero or more times
+X++ 	X, one or more times
+X{n}+ 	X, exactly n times
+X{n,}+ 	X, at least n times
+X{n,m}+ 	X, at least n but not more than m times
+
+Logical operators
+XY 	X followed by Y
+X|Y 	Either X or Y
+(X) 	X, as a capturing group
+
+Back references
+\n 	Whatever the nth capturing group matched
+
+Quotation
+\ 	Nothing, but quotes the following character
+\Q 	Nothing, but quotes all characters until \E
+\E 	Nothing, but ends quoting started by \Q
+
+Special constructs (non-capturing)
+(?:X) 	X, as a non-capturing group
+(?idmsux-idmsux)  	Nothing, but turns match flags on - off
+(?idmsux-idmsux:X)   	X, as a non-capturing group with the given flags on - off
+(?=X) 	X, via zero-width positive lookahead
+(?!X) 	X, via zero-width negative lookahead
+(?&lt;=X) 	X, via zero-width positive lookbehind
+(?&lt;!X) 	X, via zero-width negative lookbehind
+(?&gt;X) 	X, as an independent, non-capturing group
+Match a position that is not a word boundary.
 </pre>
 		<p>有关正则表达式的信息可以在整个互联网上找到。下面列出了几个例子：</p>
 		<ul>

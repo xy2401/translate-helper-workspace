@@ -1,10 +1,10 @@
-﻿<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+﻿<html  xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>ATL用户指南 -  ATL语言</title>
-		<link type="text/css" rel="stylesheet" href="book.css"></link>
+		<link type="text/css" rel="stylesheet" href="book.css">
 	</head>
-	<body dir="ltr">
+	<body >
 		<table class="navigation" border="0" style="width:100%" summary="navigation">
 			<tr>
 				<th align="center" colspan="3" style="width:100%">ATL语言</th>
@@ -48,7 +48,8 @@
 		</p>
 		<h3 id="OclAny_operations">OclAny运营</h3>
 		<p>本节介绍一组对所有现有数据类型通用的操作。用于从ATL中的变量调用操作的语法遵循经典的点符号：</p>
-		<pre>self.operation_name（参数）</pre>
+		<pre>self.operation_name(parameters)
+</pre>
 		<p>ATL目前为以下OCL定义的操作提供支持：</p>
 		<ul>
 			<li>比较运算符：=，&lt;&gt;;</li>
@@ -88,7 +89,8 @@
 		<p>ATL模块数据类型还提供<i>resolveTemp</i>操作。该特定操作使得可以从ATL规则指向将由ATL匹配规则从给定源模型元素生成的任何目标模型元素（包括非默认元素）。
 		</p>
 		<p>操作<i>resolveTemp</i>具有以下声明：</p>
-		<pre>resolveTemp（var，target_pattern_name）</pre>
+		<pre>resolveTemp(var, target_pattern_name)
+</pre>
 		<p>参数var对应于ATL变量，该变量包含从中生成搜索到的目标模型元素的源模型元素。参数<i>target_pattern_name</i>是一个字符串值， <i>它对</i> <a href="The-ATL-Language.html#Matched_Rules">目标模式</a>元素的名称进行编码，该<a href="The-ATL-Language.html#Matched_Rules">模式</a>元素将提供的源模型元素（由var包含）映射到搜索的目标模型元素中。
 		</p>
 		<p>请注意，由于它是在ATL模块的范围内定义的，因此必须从变量<i>thisModule</i>调用此操作。在<a href="Overview-of-the-Atlas-Transformation-Language.html#Module_execution_semantics" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Module_execution_semantics">匹配阶段</a>完成之前，不得调用<i>resolveTemp</i>操作。这意味着可以从以下位置调用该操作：</p>
@@ -100,7 +102,16 @@
 		<p>ATL开发人员可能会注意到操作调用未指定生成的目标模型元素来自的匹配规则。但是，如“ <a href="Overview-of-the-Atlas-Transformation-Language.html#Rules" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃规则">规则”</a>部分所述，源模型元素不应与多个匹配的规则匹配。因此，可以从指定的源模型元素导出相关的匹配规则。
 		</p>
 		<p>以下是resolveTemp使用的示例：</p>
-		<pre>规则AtoAnnotedB {来自：MMA！A to ann：MMB！注释（），b：MMB！B（注释&lt; -  ann）}</pre>
+		<pre>rule AtoAnnotedB {
+	from
+		a : MMA!A
+	to
+		ann : MMB!Annotation (),
+		b : MMB!B (
+			annotation &lt;- ann
+		)
+}
+</pre>
 		<p>在第一个规则中，类型<i>A''</i>的对象<i>被转换为两个对象：一个</i> <i>带有''Annotation</i>实例（ <i>ann</i>变量） <i>的'B</i> （ <i>b''变量）实例</i> 。
 		</p>
 		<p>在第二个规则中，我们想要<i>从他们的'A</i>源中引用新创建的<i>B''元素</i> 。我们假设</p>
@@ -108,7 +119,15 @@
 			<li><i>ARef</i>类型有一个名为<i>ref的引用，</i>指向<i>A</i>元素</li>
 			<li><i>BRef</i>类型有一个名为<i>ref的引用，</i>指向一个<i>B</i>元素</li>
 		</ul>
-		<pre>规则ARefToBRef {来自aRef：MMA！ARef to bRef：MMB！BRef（ref &lt; -  thisModule.resolveTemp（aRef.ref，'b'））}</pre>
+		<pre>rule ARefToBRef {
+	from
+		aRef : MMA!ARef
+	to
+		bRef : MMB!BRef (
+			ref &lt;- thisModule.resolveTemp(aRef.ref, 'b')
+		)
+}
+</pre>
 		<p>请注意，变量名称作为String传递给resolveTemp方法。</p>
 		<h3 id="Primitive_data_types">原始数据类型</h3>
 		<p>OCL定义了四种基本的原始数据类型：</p>
@@ -134,11 +153,21 @@
 		</p>
 		<h5 id="Boolean_expressions_evaluation">布尔表达式评估</h5>
 		<p>在这种情况下：</p>
-		<pre>if（exp1和exp2）然后......否则......万一</pre>
+		<pre>if (exp1 and exp2)
+then ...
+else ...
+endif
+</pre>
 		<p>无论第一个表达式的结果如何，都将始终评估exp2。ATL对此进行评估：</p>
-		<pre>if（exp1.and（exp2））然后......否则......万一</pre>
+		<pre>if (exp1.and(exp2))
+then ...
+else ...
+endif
+</pre>
 		<p>所以请记住，在这种情况下：</p>
-		<pre>if（self.attributes-&gt; size（）&gt; 0和self.attributes-&gt; first（）。attr）</pre>
+		<pre>if (self.attributes->size() > 0
+     and self.attributes->first().attr)
+</pre>
 		<p>即使第一个成员为false，也可能在未定义的元素上调用“attr”属性，这将导致错误。</p>
 		<h4 id="String_data_type_operations">字符串数据类型操作</h4>
 		<p>OCL为字符串数据类型定义了以下操作：</p>
@@ -284,16 +313,19 @@
 			<li>序列是允许重复的集合。顺序是有序的。</li>
 		</ul>
 		<p>可以将集合视为模板数据类型。这意味着集合数据类型的声明必须包括类型实例将包含的元素的类型。无论包含的元素的类型如何，集合数据类型的声明都必须符合以下方案：</p>
-		<pre>collection_type（element_datatype）</pre>
+		<pre>collection_type(element_datatype)
+</pre>
 		<p>支持的集合数据类型是<b>Set</b> ， <b>OrderedSet</b> ， <b>Sequence</b>和<b>Bag</b> 。元素数据类型可以是任何支持的oclType，包括另一种集合类型。
 		</p>
 		<p>集合变量的定义如下：</p>
-		<pre>collection_type {元素}</pre>
+		<pre>collection_type{elements}
+</pre>
 		<p>请注意，类型定义中使用的括号必须在此处用大括号替换。可以在<a href="The-ATL-Language.html#Examples_2">此处</a>找到集合类型定义和实例化的示例。
 		</p>
 		<h4 id="Operations_on_collections">集合的操作</h4>
 		<p>ATL在不同的受支持集合类型的上下文中提供大量操作。请注意，存在一种用于在集合类型上调用操作的特定语法：</p>
-		<pre>自&gt; OPERATION_NAME（参数）</pre>
+		<pre>self->operation_name(parameters)
+</pre>
 		<p>不同类型的现有OCL集合共享许多常见操作：</p>
 		<ul>
 			<li>
@@ -426,7 +458,8 @@
 			</li>
 		</ul>
 		<p>用于调用迭代表达式的语法如下：</p>
-		<pre>source-&gt; operation_name（iterators | body）</pre>
+		<pre>source->operation_name(iterators | body)
+</pre>
 		<p>ATL目前为以下一组定义的迭代表达式提供支持：</p>
 		<ul>
 			<li>
@@ -450,11 +483,15 @@
 			</li>
 		</ul>
 		<p>请注意，ATL提供的<i>collect（）</i>操作实现了OCL规范中定义的<i>collectNested（）</i>操作的语义。通过在ATL <i>collect（）</i>迭代表达式提供的结果上调用<i>flatten（）</i>操作，可以简单地通过ATL实现获取OCL定义的<i>collect（）</i>操作的语义，如下所示：</p>
-		<pre>source-&gt; collect（iterator | body） - &gt; flatten（）</pre>
+		<pre>source->collect(iterator | body)->flatten()
+</pre>
 		<p>与OCL规范相比，ATL语言引入了另一个约束。规范确实允许在<i>exists（）</i>和<i>forAll（）</i>迭代表达式的范围内声明多个迭代器。
 		</p>
 		<p>除了这些预定义的迭代操作，OCL还指定了一个更通用的集合迭代器，名为<i>iterate（）</i> 。这个迭代表达式有一个迭代器，一个累加器和一个体。累加器对应于初始化的变量声明。<i>iterate（）</i>表达式的主体是一个表达式，它应该使用声明的迭代器和累加器。<i>iterate（）</i>表达式返回的值对应于执行最后一次迭代后累加器变量的值。使用以下语法定义迭代表达式：</p>
-		<pre>source-&gt; iterate（iterator; variable_declaration = init_exp | body）</pre>
+		<pre>source->iterate(iterator; variable_declaration = init_exp |
+	body
+)
+</pre>
 		<h4 id="Examples_2">例子</h4>
 		<p>在下文中，说明了对集合的一些操作：</p>
 		<ul>
@@ -558,15 +595,21 @@
 		<h3 id="Tuple_data_type">元组数据类型</h3>
 		<p>元组数据类型允许将多个值组合成单个变量。元组包含许多命名部分，每个部分可以具有不同的类型。请注意，元组类型未命名。因此，每次需要时，必须通过其完整声明来标识声明的元组类型。</p>
 		<p>元组类型的每个部分都与OclType相关联，并由唯一名称标识。元组数据类型的声明必须符合以下语法：</p>
-		<pre>TupleType（var_name1：var_type1，...，var_nameN：var_typeN）</pre>
+		<pre>TupleType(var_name1 : var_type1, ..., var_nameN : var_typeN)
+</pre>
 		<p>请注意，声明不同部分的顺序并不重要。例如，可以考虑将<a href="Overview-of-the-Atlas-Transformation-Language.html#Author_metamodel" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Author_metamodel">MMAuthor元模型</a>中的作者模型元素与编码书名称和本书编辑器名称的几个字符串相关联的元组类型的声明：</p>
-		<pre>TupleType（a：MMAuthor！作者，标题：字符串，编辑：字符串）</pre>
+		<pre>TupleType(a : MMAuthor!Author, title : String, editor : String)
+</pre>
 		<p>声明的元组变量的实例化必须遵循以下语法：</p>
-		<pre>元组{var_name1 [：var_type1]？= init_exp1，...，var_namen [：var_typen]？= init_expn}</pre>
+		<pre>Tuple{var_name1 [: var_type1]? = init_exp1, ..., var_namen [: var_typen]? = init_expn}
+</pre>
 		<p>声明元组实例时，可以省略元组部分的类型。因此，对应于上面定义的元组类型的以下两个元组实例是等效的：</p>
-		<pre>元组{editor：String ='ATL Eds。'，title：String ='ATL Manual'，a：MMAuthor！作者= anAuthor}元组{title ='ATL Manual'，a = anAuthor，editor ='ATL Eds。“}</pre>
+		<pre>Tuple{editor : String = 'ATL Eds.', title : String = 'ATL Manual', a : MMAuthor!Author = anAuthor}
+Tuple{title = 'ATL Manual', a = anAuthor, editor = 'ATL Eds.'}
+</pre>
 		<p>对于元组类型的声明，可以以任何顺序执行元组变量的不同部分的实例化。可以使用用于调用操作或访问<a href="The-ATL-Language.html#Model_element_data_type">模型元素</a>属性的相同点符号来访问元组结构的不同部分。因此，表达</p>
-		<pre>元组{title ='ATL Manual'，a = anAuthor，editor ='ATL Eds。'}。标题</pre>
+		<pre>Tuple{title = 'ATL Manual', a = anAuthor, editor = 'ATL Eds.'}.title
+</pre>
 		<p>提供对元组<i>标题</i>部分的访问。
 		</p>
 		<p>除了常用操作集之外，当前的ATL实现还在元组dada类型的上下文中定义了一个额外的转换操作： <i>asMap（）</i>操作返回一个<a href="The-ATL-Language.html#Map_data_type">map</a>变量，其中元组部分的名称与它们各自的值相关联。
@@ -575,13 +618,17 @@
 		<p>作为ATL实现中的附加工具提供，映射数据类型不属于OCL规范。此数据类型允许管理一个结构，其中每个值都与一个能够访问它的唯一键相关联（有关更多详细信息，请参阅<a href="http://java.sun.com/j2se/1.4.2/docs/api/java/util/Map.html">Java Map界面</a> ）。
 		</p>
 		<p>地图类型的声明必须符合以下语法：</p>
-		<pre>Map（key_type，value_type）</pre>
+		<pre>Map(key_type, value_type)
+</pre>
 		<p>请注意，作为元组类型，未命名地图类型，这再次暗示在需要时指定完整类型声明。以下映射声明将一些Author模型元素值与整数键相关联：</p>
-		<pre>地图（整数，MMAuthor！作者）</pre>
+		<pre>Map(Integer, MMAuthor!Author)
+</pre>
 		<p>根据以下语法实现实例化映射变量：</p>
-		<pre>映射{（key1，value1），...，（keyn，valuen）}</pre>
+		<pre>Map{(key1, value1), ..., (keyn, valuen)}
+</pre>
 		<p>例如，以下表达式实例化与上面声明的地图类型对应的两个条目映射：</p>
-		<pre>地图{（0，anAuthor1），（1，anAuthor2）}</pre>
+		<pre>Map{(0, anAuthor1), (1, anAuthor2)}
+</pre>
 		<p>除了常见操作集之外，ATL实现还对地图数据提供以下操作：</p>
 		<ul>
 			<li>
@@ -608,69 +655,134 @@
 		</p>
 		<h4 id="Full_name_reference_to_metamodel_classes">对元模型类的全名引用</h4>
 		<p>也可以使用以下方案包含完整路径：</p>
-		<pre>&lt;Package1Name&gt; :: &lt;Package2Name&gt; :: &lt;ClassifierName&gt;</pre>
+		<pre>&lt;Package1Name>::&lt;Package2Name>::&lt;ClassifierName>
+</pre>
 		<p>实际上ATL Parser不能很好地处理“::”因此我们需要使用“。”来包围路径。</p>
 		<p>例如，使用上面给出的元模型摘录，我们可以写：</p>
-		<pre>MM！“P1 :: C1”MM！“P1 :: P2 :: C2”MM！“P3 :: C3”</pre>
+		<pre>MM!"P1::C1"
+MM!"P1::P2::C2"
+MM!"P3::C3"
+</pre>
 		<p>在某些情况下，需要使用全名来避免名称冲突导致的歧义。让我们考虑以下元模型：</p>
-		<pre>包P1 {</pre>
-		<pre>C1级{}</pre>
-		<pre>包P2 {class C1 {}}}</pre>
-		<pre>包P3 {class C1 {}}</pre>
+		<pre>package P1 {
+</pre>
+		<pre>  class C1 {}
+</pre>
+		<pre>  package P2 {
+    class C1 {}
+  }
+}
+</pre>
+		<pre>package P3 {
+  class C1 {}
+}
+</pre>
 		<p>用MM！C1不正确，因为它无法可靠地映射到特定类。如果您尝试这样做，将在ATL控制台中报告警告。在这种情况下，必须写：</p>
-		<pre>MM！“P1 :: C1”MM！“P1 :: P2 :: C1”MM！“P3 :: C1”</pre>
+		<pre>MM!"P1::C1"
+MM!"P1::P2::C1"
+MM!"P3::C1"
+</pre>
 		<h4 id="Examples_3">例子</h4>
 		<p>以下是使用模型元素功能的OCL表达式示例。它们是在<a href="http://www.omg.org/docs/formal/02-04-03.pdf">MOF</a>元模型的上下文中定义的：</p>
 		<ul>
 			<li>收集所有MOF类的名称：</li>
 		</ul>
-		<pre>MOF！Class.allInstances（） - &gt; collect（e | e.name）</pre>
+		<pre>MOF!Class.allInstances()->collect(e | e.name)
+</pre>
 		<ul>
 			<li>通过过滤获取所有原始MOF类型的名称：</li>
 		</ul>
-		<pre>MOF！DataType.allInstances（） - &gt; select（e | e.oclIsTypeOf（MOF！PrimitiveType）） - &gt; collect（e | e.name）</pre>
+		<pre>MOF!DataType.allInstances()
+       ->select(e | e.oclIsTypeOf(MOF!PrimitiveType))
+       ->collect(e| e.name)
+</pre>
 		<ul>
 			<li>以简单的方式获取所有原始MOF类型的名称：</li>
 		</ul>
-		<pre>MOF！PrimitiveType.allInstances（） - &gt; collect（e | e.name）</pre>
+		<pre>MOF!PrimitiveType.allInstances()->collect(e| e.name)
+</pre>
 		<ul>
 			<li>MOF中的枚举实例：</li>
 		</ul>
-		<pre>MOF！VisibilityKind.labels</pre>
+		<pre>MOF!VisibilityKind.labels
+</pre>
 		<ul>
 			<li>获取从多个类继承的所有类的名称：</li>
 		</ul>
-		<pre>MOF！Class.allInstances（） - &gt; select（e | e.supertypes-&gt; size（）&gt; 1） - &gt; collect（e | e.name）</pre>
+		<pre>MOF!Class.allInstances()
+       ->select(e | e.supertypes->size() > 1)
+       ->collect(e | e.name)
+</pre>
 		<h2 id="ATL_Comments">ATL评论</h2>
 		<p>在ATL中，与OCL标准一样，注释以两个连续的连字符“ - ”开头，并在该行的末尾结束。如果使用标准配置，Eclipse中的ATL编辑器会使用深绿色标记注释：</p>
-		<pre>-  这是一个评论范例</pre>
+		<pre>-- this is an example of a comment
+</pre>
 		<h3 id="Since_ATL_3.1">自ATL 3.1起</h3>
 		<p>注释可用于指定ATL帮助程序和规则的单个文档，这些文档显示在内容辅助中。为了实现这一点，简单地使用三个连续的连字符“---”而不是两个，就在记录元素之前。</p>
-		<pre>---评估上下文是否具有给定的刻板印象。帮助器上下文UML！元素def：hasStereotype（stereotype：String）：Boolean = self.getAppliedStereotypes（） - &gt; collect（st | st.name） - &gt; includes（stereotype）;</pre>
+		<pre>--- Evaluates whether the context has the given stereotype or not.
+helper context UML!Element def: hasStereotype(stereotype : String) : Boolean =
+	self.getAppliedStereotypes() -> collect(st | st.name) -> includes(stereotype);
+</pre>
 		<h2 id="OCL_Declarative_Expressions">OCL声明表达式</h2>
 		<p>除了与支持的数据类型的实例相对应的声明性表达式，以及对这些数据类型的操作的调用之外，OCL还定义了旨在使开发人员能够构造OCL代码的其他声明性表达式。本节专门介绍这些声明性表达式。存在两种高级声明性表达式：“if”和“let”表达式。“if”表达式提供了替代表达式工具。对于它，“let”表达式可以定义和初始化新的OCL变量。</p>
 		<h3 id="If_expression">如果表达</h3>
 		<p>OCL“if”表达式用if-then-else-endif结构表示。作为表达式，在任何情况下都应评估“if”表达式（例如，必须具有值）。这意味着不能省略“if”表达式的“else”子句。所有“if”表达式必须符合以下语法：</p>
-		<pre>if condition然后exp1 else exp2 endif</pre>
+		<pre>if condition
+then
+	exp1
+else
+       exp2
+endif
+</pre>
 		<p>“if”表达式的<i>条件</i>是布尔表达式。根据对此布尔表达式的求值，“if”表达式将返回与<i>exp1</i>对应的值（如果<i>条件</i>被评估为true）或<i>exp2</i> （在<i>条件</i>被评估为false的情况<i>下</i> ）。这由以下简单的“if”表达式说明：</p>
-		<pre>如果3&gt; 2然后'三大于两'，否则'这种情况永远不会发生'结束</pre>
+		<pre>if 3 > 2
+then
+	'three is greater than two'
+else
+	'this case should never occur'
+endif
+</pre>
 		<p>请注意，“if”表达式的不同部分又可以包括另一个组合的OCL表达式，包括操作调用， <a href="The-ATL-Language.html#Let_expression">“let”</a>表达式或嵌套的“if”表达式。例如，可以考虑以下示例：</p>
-		<pre>如果mySequence-&gt; notEmpty（）然后如果mySequence-&gt; includes（myElement）那么'元素位于'+ mySequence-&gt; indexOf（myElement）.toString（）else'序列不包含元素'endif else'序列是空的'endif</pre>
+		<pre>if mySequence->notEmpty()
+then
+	if mySequence->includes(myElement)
+	then
+		'the element is at position '
+		+ mySequence->indexOf(myElement).toString()
+	else
+		'the sequence does not contain the element'
+	endif
+else
+	'the sequence is empty'
+endif
+</pre>
 		<h3 id="Let_expression">让表达</h3>
 		<p>OCL“let”表达式可以定义变量。“let”表达式必须符合以下语法：</p>
-		<pre>在exp中让var_name：var_type = var_init_exp</pre>
+		<pre>let var_name : var_type = var_init_exp in exp
+</pre>
 		<p>标识符<i>var_name</i>对应于声明的变量的名称。
 			<i>var_type</i>标识声明的变量的类型。必须使用<i>var_init_exp</i>初始化通过“let”表达式声明的变量。初始化表达式可以是任何可用的OCL表达式类型，包括嵌套的“let”表达式。最后， <i>in</i>关键字引入了可以使用新声明的变量的表达式。同样，该表达式可以是任何现有的OCL表达式类型。这通过以下简单示例说明：</p>
-		<pre>让a：整数= 1 in a + 1</pre>
+		<pre>let a : Integer = 1 in a + 1
+</pre>
 		<p>可以使用几个“let”表达式来声明多个变量，如下例所示：</p>
-		<pre>let x：Real = if aNumber&gt; 0则aNumber.sqrt（）else aNumber.square（）endif in let y：Real = 2 in x / y</pre>
+		<pre>let x : Real =
+	if aNumber > 0
+	then
+		aNumber.sqrt()
+	else
+		aNumber.square()
+	endif
+in let y : Real = 2 in x/y
+</pre>
 		<p>从声明到它所属的OCL表达式的末尾可以看到OCL变量。请注意，虽然不建议使用，但OCL允许开发人员在单个表达式中声明多个同名变量。在这种情况下，最后声明的变量将隐藏具有相同名称的其他变量。</p>
 		<p>“let”表达式在<a href="The-ATL-Tools.html#Debugging_ATL" title="ATL / ___ ATLPAGENAME ____-_ The_ATL_Tools＃Debugging_ATL">调试</a>阶段也证明非常有用。实际上，ATL开发工具集成了调试工具，除了其他功能外，还可以在执行ATL程序期间查询声明的变量的值。在许多情况下，证明有助于查询复杂OCL表达式返回的值也很有用。这可以通过声明用要检查的复杂表达式初始化的OCL变量来对OCL代码进行少量修改来实现。通过这种方式，由表达式计算的值将存储在OCL变量中，因此在ATL程序的调试期间可用于可视化。
 		</p>
 		<p>为了说明这一点，请考虑以下表达式：</p>
-		<pre>aSequence-&gt;第一（）。平方（）</pre>
+		<pre>aSequence->first().square()
+</pre>
 		<p>这里假设集合aSequence是Real元素的序列。如果此序列为空，则调用<i>first（）</i>操作将返回值OclUndefined。调用OclUndefined，操作<i>square（）</i>将在运行时引发错误。在这种情况下，通过将其值存储在专用变量中，能够在调试阶段检查第一个元素是否存在或是否未定义可能是有趣的。这是以下表达式的目的：</p>
-		<pre>在firstElt.square（）中让firstElt：Real = aSequence-&gt; first（）</pre>
+		<pre>let firstElt : Real = aSequence->first() in firstElt.square()
+</pre>
 		<h3 id="Other_expressions">其他表达</h3>
 		<p>除了“if”和“let”结构表达式之外，OCL语言还可以定义不同类型的表达式，其语法已在“ <a href="The-ATL-Language.html#Data_types">数据类型”</a>部分中引入。这些表达包括：</p>
 		<ul>
@@ -682,31 +794,61 @@
 		<h3 id="Expressions_tips_.26_tricks">表达提示和技巧</h3>
 		<p>在ATL中设计OCL表达式时，许多错误来自这些OCL表达式的评估模式。实际上，在许多语言中，例如C ++和Java，存在一个优化器，当找到真值后跟“或”逻辑运算符或伪值后跟“和”逻辑运算符时，它停止对逻辑表达式的求值。无论表达式的其余部分可能导致错误或异常，都将成功评估表达式。</p>
 		<p>与这些常见的编程语言相反，由OCL定义的组合表达式的语义使得每个表达式都必须被完全评估。因此，一些通常看起来正确的表达式会引发ATL中的错误，如以下示例所示：</p>
-		<pre>不是person.oclIsUndefined（）和person.name ='Isabel'</pre>
+		<pre>not person.oclIsUndefined() and person.name = 'Isabel'
+</pre>
 		<p>因此，在计算表达式<i>person.name</i>时，此表达式将引发未定义的人员模型元素的错误。表达等效逻辑表达式的无错误方法是：</p>
-		<pre>如果person.oclIsUndefined（）则为false，否则为person.name ='Isabel'endif</pre>
+		<pre>if person.oclIsUndefined()
+then
+	false
+else
+	person.name = 'Isabel'
+endif
+</pre>
 		<p>同样的注释可以类似地应用于使用逻辑“或”运算符的逻辑表达式，例如：</p>
-		<pre>person.oclIsUndefined（）或person.name ='Isabel'</pre>
+		<pre>person.oclIsUndefined() or person.name = 'Isabel'
+</pre>
 		<p>表达此逻辑表达式的正确方法是：</p>
-		<pre>if person.oclIsUndefined（）then true else person.name ='Isabel'endif</pre>
+		<pre>if person.oclIsUndefined()
+then
+	true
+else
+	person.name = 'Isabel'
+endif
+</pre>
 		<p>请注意，可能引发此类错误的逻辑表达式可能嵌入在更复杂的OCL表达式中：</p>
-		<pre>collection-&gt; select（person | not person.oclIsUndefined（）和person.name ='Isabel'）</pre>
+		<pre>collection->select(person | not person.oclIsUndefined() and person.name = 'Isabel')
+</pre>
 		<p>使用相同的重写规则，可以将此表达式转换为正确的以下表达式：</p>
-		<pre>collection-&gt; select（person | if person.oclIsUndefined（）then false else person.name ='Isabel'endif）</pre>
+		<pre>collection->select(person |
+	if person.oclIsUndefined()
+	then
+		false
+	else
+		person.name = 'Isabel'
+	endif
+)
+</pre>
 		<p>可能存在几种重写不正确表达式的方法。因此，以下表达式将计算相同的结果：</p>
-		<pre>collection  - &gt; select（person | not person.oclIsUndefined（）） - &gt; select（person | person.name ='Isabel'）</pre>
+		<pre>collection
+	->select(person | not person.oclIsUndefined())
+	->select(person | person.name = 'Isabel')
+</pre>
 		<p>请注意，出于有效的原因，第一个解决方案应优先于此解决方案：第一个解决方案仅迭代集合一次。</p>
 		<h2 id="ATL_Helpers">ATL助手</h2>
 		<p>ATL使开发人员能够在不同类型的ATL单元中定义方法。在ATL上下文中，这些方法称为帮助程序。它们可以定义分解后的ATL代码，然后可以从ATL程序的不同点调用它们。存在两种不同的，尽管它们的语法非常相似，各种助手：功能助手和属性助手。必须在给定数据类型的上下文中定义这两种助手。但是，与属性助手（通常称为属性）相比，功能助手（称为助手）可以接受参数。这种差异意味着两种辅助类型的<a href="Overview-of-the-Atlas-Transformation-Language.html#Module_execution_semantics" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Module_execution_semantics">执行语义</a>存在一些差异。
 		</p>
 		<h3 id="Helpers_2">助手</h3>
 		<p>ATL助手可以被视为与方法等效的ATL。它们使得可以定义可以从ATL变换的不同点调用的分解ATL代码。根据以下方案定义ATL帮助程序：</p>
-		<pre>帮助者[context context_type]？def：helper_name（参数）：return_type = exp;</pre>
+		<pre>helper [context context_type]? def : helper_name(parameters) : return_type = exp;
+</pre>
 		<p>每个帮助器的特征在于其上下文（context_type），其名称（helper_name），其参数集（参数）及其返回类型（return_type）。帮助程序的上下文由关键字context引入。它定义了助手应用的元素类型，即可以从中调用它的元素类型。请注意，辅助定义中可能会省略上下文。在这种情况下，帮助程序与ATL模块的全局上下文相关联。这意味着，在这样的帮助程序的范围内，变量self指的是运行模块/查询本身。</p>
 		<p>帮助程序的名称由关键字<i>def</i>引入。作为其上下文，它是帮助程序签名的一部分（以及参数和<i>return_type</i> ）。帮助程序接受辅助程序名称后括号中指定的一组参数。参数定义包括参数名称和参数类型，如以下方案所指定：</p>
-		<pre>parameter_name：parameter_type</pre>
+		<pre>parameter_name : parameter_type
+</pre>
 		<p>可以通过用逗号（“，”）分隔几个参数来声明它们。参数名称（ <i>parameter_name</i> ）是帮助程序中的变量标识符。这意味着，在给定的帮助程序定义中，每个参数名称必须是唯一的。请注意，指定的上下文类型以及参数的类型和返回类型可以是ATL支持的任何数据类型。帮助程序的主体被指定为OCL表达式。此表达式可以是任何受支持的表达式类型。例如，可以考虑以下帮助程序：</p>
-		<pre>helper def：averageLowerThan（s：Sequence（Integer），value：Real）：Boolean = let avg：Real = s-&gt; sum（）/ s-&gt; size（）in avg &lt;value;</pre>
+		<pre>helper def : averageLowerThan(s : Sequence(Integer), value : Real) : Boolean =
+	let avg : Real = s->sum()/s->size() in avg &lt; value;
+</pre>
 		<p>这个名为<i>averageLowerThan的</i>帮助器是在ATL模块的上下文中定义的（因为没有明确指定上下文）。它的目的是计算一个布尔值，说明整数序列包含的值的平均值（ <i>s''参数）是否严格低于给定的实际值（''value</i>参数）。辅助器的主体包含一个“let”表达式，用于定义和初始化<i>avg</i>变量。然后将该变量与参考<i>值</i>进行比较。
 		</p>
 		<p>请注意，在单个转换中，多个帮助程序可能具有相同的名称。但是，具有相同名称的帮助程序必须具有可由ATL引擎区分的不同签名（请参阅<a href="The-ATL-Language.html#Limitations">限制</a> ）。
@@ -714,28 +856,52 @@
 		<h4 id="Calling_super_helpers">打电话给超级助手</h4>
 		<p><code>super</code>关键字允许您调用具有在当前类型的超类型上定义的相同名称的帮助程序。</p>
 		<p>假设您有以下元模型：</p>
-		<pre>A类{} B类扩展A {}</pre>
+		<pre>class A {}
+class B extends A {}
+</pre>
 		<p>然后你可以写：</p>
-		<pre>helper context一个def：test（）：Integer = 1; helper context B def：test（）：Integer = super.test（）+ 1;</pre>
+		<pre>helper context A def: test() : Integer = 1;
+helper context B def: test() : Integer = super.test() + 1;
+</pre>
 		<h3 id="Attributes">属性</h3>
 		<p>除了帮助程序之外，ATL语言还可以定义属性。与帮助程序相比，可以将属性视为在特定上下文中指定的常量。辅助器和属性定义之间的主要区别在于该属性不接受任何参数。</p>
 		<p>用于定义ATL属性的语法非常接近功能助手的定义。唯一的区别是属性语法不能定义任何参数：</p>
-		<pre>帮助者[context context_type]？def：attribute_name：return_type = exp;</pre>
+		<pre>helper [context context_type]? def : attribute_name : return_type = exp;
+</pre>
 		<p>对于帮助程序，可以在属性声明中省略上下文定义。在这种情况下，该属性将与ATL模块上下文相关联。以下属性与<a href="Overview-of-the-Atlas-Transformation-Language.html#Person_metamodel" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Person_metamodel">MMPerson元模型</a>相关，可以视为一个示例：</p>
-		<pre>帮手def：getYoungest：MMPerson！Person = let allPersons：Sequence（MMPerson！人）= MMPerson！all.allInstances（） - &gt; allPersons-&gt; iterate中的asSequence（）（p; y：MMPerson！Person = allPersons-&gt; first（）|如果p.age &lt;y.age则p else y endif）;</pre>
+		<pre>helper def : getYoungest : MMPerson!Person =
+	let allPersons : Sequence(MMPerson!Person) =
+		MMPerson!Person.allInstances()->asSequence() in
+	allPersons->iterate(p; y : MMPerson!Person = allPersons->first() |
+		if p.age &lt; y.age
+		then
+			p
+		else
+			y
+		endif
+	);
+</pre>
 		<p>此属性名为<i>getYoungest</i> ，在ATL模块上下文中定义。它适用于包含<i>Person</i>模型元素的源元模型<i>MMPerson</i> 。它旨在计算源模型中最年轻的人（返回类型因此是MMPerson！人）。属性主体包含一个“let”表达式，用于定义<i>allPersons</i>变量。这个变量是一个MMPerson序列！包含源模型中定义的所有人员的人员模型元素（请注意，必须将计算的集合强制转换为序列）。然后通过<i>迭代</i>表达式迭代计算的序列，其中迭代变量<i>p''表示当前迭代的人。迭代表达式导致MMPerson！人模型元素，对应于最年轻的迭代人。这个结果包含在变量''y中</i> ，它被初始化为<i>allPersons</i>序列的第一个人（为了获得第一个人，需要定义一个序列而不是一个集合）。这个<i>迭代</i>表达式的主体包含一个“if”表达式，它简单地将当前最年轻人的年龄与当前迭代人的年龄进行比较。根据此比较的结果，“if”表达式将返回先前最年轻的人或迭代的人。
 		</p>
 		<p>声明无参数辅助函数和属性可能看起来是等效的。但是，助手和属性执行语义之间存在重大差异。每次调用此帮助程序时都会执行帮助程序的代码。与助手相反，属性不接受任何参数。这意味着，对于给定的执行上下文（输入模型元素或ATL模块），属性将始终返回相同的值。因此，ATL引擎仅在第一次调用此属性时计算属性的返回值，或者在ATL模块的上下文中声明的那些属性的转换/查询初始化阶段计算属性的返回值。</p>
 		<h3 id="Limitations">限制</h3>
 		<p>当前实现在助手/属性领域中存在三个限制。第一个涉及帮助者签名的定义。帮助者确实通过他们的签名来识别，其中包括帮助者名称，其上下文和参数。但是，当前实现仅考虑由该签名的帮助程序名称和帮助程序上下文组成的子集：帮助程序的参数不能区分具有相同名称和相同上下文的帮助程序。这意味着ATL程序中给定上下文中定义的所有帮助程序必须具有不同的名称。此限制还涉及在查询或模块中导入的库中定义的帮助程序。</p>
 		<p>第二个限制涉及集合类型上下文中助手的定义。这些定义实际上不受ATL引擎的支持。解决此问题的一个简单解决方案是将集合元素从上下文移动到参数，并在ATL模块的上下文中声明帮助程序。考虑一个帮助器的定义，该帮助器旨在从一组Person模型元素中选择那些年龄小于给定年龄的元素。该助手应定义为：</p>
-		<pre>帮助器上下文Set（MMPerson！人）def：getYoungPersons（年龄：整数）：Set（MMPerson！Person）= self-&gt; select（p | p.age &lt;age）;</pre>
+		<pre>helper context Set(MMPerson!Person) def : getYoungPersons(age : Integer) :
+	Set(MMPerson!Person) =
+	self->select(p | p.age &lt; age);
+</pre>
 		<p>考虑到当前的ATL限制，该助手可以定义如下：</p>
-		<pre>帮手def：getYoungPersons（s：Set（MMPerson！人），年龄：整数）：Set（MMPerson！人）= s-&gt;选择（p | p.age &lt;年龄）;</pre>
+		<pre>helper def : getYoungPersons(s : Set(MMPerson!Person), age : Integer) :
+	Set(MMPerson!Person) =
+	s->select(p | p.age &lt; age);
+</pre>
 		<p>请注意，此更改对帮助程序主体的影响非常有限。唯一的区别是在以前的版本，必须由代表集合（ <i>或多个</i> ）参数的名称替换助手所使用的自变量。最后，关于帮助者的最后限制与库单元有关。当前实现不支持ATL库中的属性定义。因此，开发人员应该将无参数帮助器替换为已开发库的每个属性。例如，在库的范围内，具有以下属性：</p>
-		<pre>helper context String def：getFirstChar：String = self.substring（1,1）;</pre>
+		<pre>helper context String def : getFirstChar : String = self.substring(1, 1);
+</pre>
 		<p>必须由相应的帮助者替换：</p>
-		<pre>helper context String def：getFirstChar（）：String = self.substring（1,1）;</pre>
+		<pre>helper context String def : getFirstChar() : String = self.substring(1, 1);
+</pre>
 		<h2 id="ATL_Rules">ATL规则</h2>
 		<p>在ATL语言的范围内，通过转换规则的规范来实现目标模型元素的生成。ATL定义了两种不同的转换规则：匹配规则和被调用规则。匹配规则使得能够匹配源模型的一些模型元素，并从中生成许多不同的目标模型元素。</p>
 		<p>与匹配的规则相反，必须从ATL命令块调用被调用的规则才能被执行。ATL命令性代码可以在匹配规则的动作块中定义，也可以在被调用规则的主体中定义</p>
@@ -744,38 +910,79 @@
 		<p>当前的ATL实现提供了三种语句：赋值语句，“if”语句和“for”语句。请注意，与OCL表达式相反，这些语句不返回任何值。因此，它们不能在某些ATL声明性代码的范围内使用。以下小节详细介绍了三种不同的命令性陈述。</p>
 		<h4 id="The_assignment_statement">作业陈述</h4>
 		<p>ATL赋值语句允许将值分配给在ATL模块的上下文中定义的属性或目标模型元素功能。赋值语句的语法符合以下方案：</p>
-		<pre>目标&lt; -  exp;</pre>
+		<pre>target &lt;- exp;
+</pre>
 		<p>如指定的那样，赋值的<i>目标</i>是模块属性或输出模型元素功能。指定的表达式（exp）可以是任何受支持的<a href="The-ATL-Language.html#OCL_Declarative_Expressions">ATL表达式</a> 。
 		</p>
 		<p>作为第一个示例，考虑以下属性定义，该定义在ATL模块的上下文中定义整数计数器：</p>
-		<pre>helper def：counter：Integer = 0;</pre>
+		<pre>helper def: counter : Integer = 0;
+</pre>
 		<p>可以使用赋值操作在命令块的范围内递增此<i>计数器</i>属性的值：</p>
-		<pre>thisModule.counter &lt; -  thisModule.counter + 1;</pre>
+		<pre>thisModule.counter &lt;- thisModule.counter + 1;
+</pre>
 		<p>赋值语句可以以相同的方式使用，以便在方式中为模型元素要素赋值。例如，考虑到Person模型元素<i>aPerson</i> ，可以编写：</p>
-		<pre>aPerson.father.age &lt; -  aPerson.age + 25;</pre>
+		<pre>aPerson.father.age &lt;- aPerson.age + 25;
+</pre>
 		<p>可以初始化新生成的目标模型元素的引用。以下赋值通过分配另一个本地生成的（例如在同一规则中）模型元素（ <i>anotherPerson</i> ）来说明这一点：</p>
-		<pre>aPerson.father &lt; -  anotherPerson;</pre>
+		<pre>aPerson.father &lt;- anotherPerson;
+</pre>
 		<p>以相同的方式，还可以为引用分配由不同<i>匹配规则</i>生成的模型元素。如所描述的<a href="The-ATL-Language.html#Simple_target_pattern_element">在这里</a> ，在这样的情况下，所分配的元素是对应的源元件。如果最后一个与规则默认目标模式元素不对应，则需要使用operationTemp <a href="The-ATL-Language.html#The_ATL_Module_data_type">（）</a>操作。但请注意，只有在转换的匹配阶段完成后才会调用resolveTemp操作。这意味着既不能从<a href="The-ATL-Language.html#Called_Rules">名为rule</a>的入口点调用resolveTemp，也不能从此入口点<a href="The-ATL-Language.html#Called_Rules">调用的</a>另一个调用规则调用resolveTemp。
 		</p>
 		<h4 id="The_if_statement">if语句</h4>
 		<p>“if”语句可以定义替代的命令性处理。 “if”语句必须符合以下语法：</p>
-		<pre>if（condition）{statements1} [else {statements2}]？
+		<pre>if(condition) {
+	statements1
+}
+[else {
+	statements2
+}]?
 </pre>
 		<p>每个“if”语句定义一个<i>条件</i> 。此条件必须是返回布尔值的OCL表达式。“if”语句还必须包含“then”语句部分。此部分在曲线括号之间指定，包含在条件表达式求值为true时执行的语句序列（ <i>statements1</i> ）。“if”语句还可以包含可选的“else”语句部分。指定时，此部分必须遵循“then”语句部分。它由关键字<i>else</i>引入，并且还必须在弯曲括号之间定义。本节包含在条件表达式求值为false时必须执行的可选语句序列（ <i>statements2</i> ）。
 		</p>
 		<p>以下示例说明了使用仅限于简单“then”部分的“if”语句：</p>
-		<pre>if（aPerson.gender = #male）{thisModule.menNb &lt; -  thisModule.menNb + 1; thisModule.men-&gt;包括（aPerson）; }</pre>
+		<pre>if(aPerson.gender = #male) {
+	thisModule.menNb &lt;- thisModule.menNb + 1;
+	thisModule.men->including(aPerson);
+}
+</pre>
 		<p>下一个示例显示了一个“if”表达式，它定义了“then”和“else”部分，并带有嵌套的“if”语句：</p>
-		<pre>if（aPerson.gender = #male）{thisModule.fullName &lt; - 'Mr. '+ aPerson.name +''+ aPerson.surname; } else {if（aPerson.isSingle）{thisModule.fullName &lt; - 'Miss'+ aPerson.name; thisModule.surname &lt; -  aPerson.surname; } else {thisModule.fullName &lt; - 'Mrs。 '+ aPerson.name; thisModule.surname &lt; -  aPerson.marriedTo.surname; } thisModule.fullName &lt; -  thisModule.fullName +''+ thisModule.surname; }</pre>
+		<pre>if(aPerson.gender = #male) {
+	thisModule.fullName &lt;- 'Mr. ' + aPerson.name + ' ' + aPerson.surname;
+}
+else {
+	if(aPerson.isSingle) {
+		thisModule.fullName &lt;- 'Miss ' + aPerson.name;
+		thisModule.surname &lt;- aPerson.surname;
+	}
+	else {
+		thisModule.fullName &lt;- 'Mrs. ' + aPerson.name;
+		thisModule.surname &lt;- aPerson.marriedTo.surname;
+	}
+	thisModule.fullName &lt;- thisModule.fullName + ' ' + thisModule.surname;
+}
+</pre>
 		<p>请注意，当相应的部分包含单个语句时，可以省略定义“then”和“else”部分的弯曲括号，如下例所示：</p>
-		<pre>if（aPerson.gender = #male）thisModule.men-&gt; including（aPerson）;否则thisModule.women-&gt;包括（aPerson）;</pre>
+		<pre>if(aPerson.gender = #male)
+	thisModule.men->including(aPerson);
+else
+	thisModule.women->including(aPerson);
+</pre>
 		<h4 id="The_for_statement">for语句</h4>
 		<p>“for”语句允许定义迭代命令式计算。“for”语句必须符合以下语法：</p>
-		<pre>for（集合中的迭代器）{statements}</pre>
+		<pre>for(iterator in collection) {
+	statements
+}
+</pre>
 		<p>“for”语句定义迭代变量（迭代器），它将迭代引用<i>集合</i>的不同元素。对于这些元素中的每一个，将执行“for”语句包含的<i>语句</i>序列。
 		</p>
 		<p>以下示例也与<a href="Overview-of-the-Atlas-Transformation-Language.html#Person_metamodel" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Person_metamodel">MMPerson元模型</a>有关，说明了使用“for”命令语句：</p>
-		<pre>for（p在MMPerson中！Person.allInstances（））{if（p.gender = #male）thisModule.men-&gt; including（aPerson）;否则thisModule.women-&gt;包括（aPerson）; }</pre>
+		<pre>for(p in MMPerson!Person.allInstances()) {
+	if(p.gender = #male)
+		thisModule.men->including(aPerson);
+	else
+		thisModule.women->including(aPerson);
+}
+</pre>
 		<h4 id="Current_limitations">目前的局限</h4>
 		<p>目前无法在ATL命令块中声明变量。可以在这些块的范围内使用的变量是：</p>
 		<ul>
@@ -787,34 +994,91 @@
 		<p>请注意，当前植入不能从命令性赋值语句中修改本地定义的变量。这意味着，除了源模型元素和目标模型元素之外，可以从命令块修改的唯一变量是已在ATL模块的上下文中定义的属性。因此，在当前实现中，必需的bock范围内可能需要的可修改变量必须声明为ATL模块属性。</p>
 		<h3 id="Matched_Rules">匹配规则</h3>
 		<p>ATL匹配规则机制为ATL开发人员提供了方便的方法来指定必须从源模型元素生成目标模型元素的方式。为此，匹配规则允许指定1）必须匹配哪个源模型元素，2）生成的目标模型元素的数量和类型，以及3）必须从匹配源初始化这些目标模型元素的方式元素。匹配规则的规范必须符合以下语法：</p>
-		<pre>rule rule_name {from in_var：in_type [in model_name]？[（条件）]？[using {var1：var_type1 = init_exp1; ...varn：var_typen = init_expn; }]？to out_var1：out_type1 [在model_name中]？（bindings1），out_var2：distinct out_type2 foreach（e in collection）（bindings2），...out_varn：out_typen [在model_name中]？（bindingsn）[do {statements}]？}</pre>
+		<pre>rule rule_name {
+	from
+		in_var : in_type [in model_name]? [(
+			condition
+		)]?
+	[using {
+		var1 : var_type1 = init_exp1;
+		...
+		varn : var_typen = init_expn;
+	}]?
+	to
+		out_var1 : out_type1 [in model_name]? (
+			bindings1
+		),
+		out_var2 : distinct out_type2 foreach(e in collection)(
+			bindings2
+		),
+		...
+		out_varn : out_typen [in model_name]? (
+			bindingsn
+		)
+	[do {
+		statements
+	}]?
+}
+</pre>
 		<p>每个匹配的规则由其名称（ <i>rule_name</i> ）标识。匹配的规则名称在ATL转换中必须是唯一的。一个ATL匹配的规则是由两个强制性的（ <i>从</i>该和<i>以</i>份）和两个可选（ <i>使用</i>的和<i>做</i>份）部分。请注意，可以在规则范围内声明的不同变量（源和目标模式元素以及局部变量）必须具有唯一名称。此限制不适用于此规则包含的OCL表达式。ATL匹配规则的不同部分将在以下小节中详细说明。
 		</p>
 		<h4 id="Source_pattern">来源模式</h4>
 		<p>from部分对应于规则源模式。此模式由单个源模式元素组成，包含源变量声明（ <i>in_var</i> ）。此声明指定将由规则（ <i>in_type</i> ）匹配的源模型元素的类型。它还可以在括号之间包含一个可选的布尔表达式（ <i>条件</i> ），该表达式能够定位符合源类型的转换源模型元素的子集。如果源模式元素不包含显式条件，则符合指定源类型的转换的所有源模型元素将与规则匹配。以下代码摘录说明了<i>from</i>部分的语法：</p>
-		<pre>来自p：MMPerson！人（p.name ='史密斯'）</pre>
+		<pre>from
+	p : MMPerson!Person (
+		p.name = 'Smith'
+	)
+</pre>
 		<p>请注意以下摘录</p>
-		<pre>来自p：MMPerson！人（真）</pre>
+		<pre>from
+	p : MMPerson!Person (
+		true
+	)
+</pre>
 		<p>相当于：</p>
-		<pre>来自p：MMPerson！人</pre>
+		<pre>from
+	p : MMPerson!Person
+</pre>
 		<p>声明可以指定输入模型匹配元素的位置。当多个输入模型符合相同的元模型时， <i>in</i>关键字允许仅获取指定模型名称中的元素。这是一个示例转换标头：</p>
-		<pre>从IN1创建...：MMPerson，IN2：MMPerson;</pre>
+		<pre>create ... from IN1 : MMPerson, IN2 : MMPerson;
+</pre>
 		<p>下面是一个只考虑IN2元素的输入模式：</p>
-		<pre>来自p：MMPerson！IN2中的人</pre>
+		<pre>from 
+       p : MMPerson!Person in IN2
+</pre>
 		<h4 id="Local_variables_section">局部变量部分</h4>
 		<p>可选的<i>using</i>部分可以在本地声明许多局部变量。本节中声明的变量可以在<i>using</i>部分本身中<i>使用</i> （假设变量在声明之前未被调用），以及<i>to</i>和<i>do</i>部分。每个声明的变量都由其名称（ <i>vari</i> ）及其类型（ <i>var_typei</i> ）标识，并且必须使用OCL表达式进行初始化。
 		</p>
 		<p>以下代码摘录说明了使用部分的用法：</p>
-		<pre>来自c：GeometricElement！使用{pi：Real = 3.14; area：Real = pi * c.radius.square（）; }</pre>
+		<pre>from
+	c : GeometricElement!Circle
+using {
+	pi : Real = 3.14;
+	area : Real = pi * c.radius.square();
+}
+</pre>
 		<h4 id="Simple_target_pattern_element">简单的目标模式元素</h4>
 		<p><i>to</i>部分对应于规则的目标模式。它包含许多目标模式元素。此部分是必需的，必须至少包含一个目标模式元素。当指定了几个目标模式元素时，它们必须用逗号（“，”）分隔。请注意，第一个目标模式元素对应于规则的默认模式元素。这意味着与此规则的默认目标模式关联的目标模型元素可以被视为与规则匹配的源模型元素的默认对应元素。
 		</p>
 		<p>在ATL中，存在两种不同的目标模式元素：简单元素和迭代元素元素。每个目标模式元素，无论其类型如何，都对应于以名称（ <i>out_vari</i> ）和类型（ <i>out_typei</i> ）为特征的变量声明。将一个简单的目标模式指定为一组绑定，这些绑定定义了必须初始化生成的元素的特征（属性或引用）的方式。每个绑定都必须符合以下语法：</p>
-		<pre>feature_name &lt; -  exp</pre>
+		<pre>feature_name &lt;- exp
+</pre>
 		<p>初始化特征（ <i>feature_name</i> ）的名称必须引用与目标模式元素关联的变量的特征，如其元模型中所定义。指定的表达式（ <i>exp</i> ）是一个OCL表达式。当目标模式元素包含多个绑定时，连续绑定必须由逗号分隔。请注意，不需要显式初始化生成的模型元素的所有功能。未通过显式绑定初始化的要素的默认值可能会根据用于访问模型元素的模型处理程序而更改。因此，强烈建议ATL开发人员不要生成依赖于这些默认值的代码。
 		</p>
 		<p>例如，可以考虑以下ATL规则，该规则在Biblio元模型上定义的<a href="Overview-of-the-Atlas-Transformation-Language.html#Biblio_metamodel" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Biblio_metamodel">Biblio元模型</a>的上下文中定义：</p>
-		<pre>规则Journal2Book {来自j：Biblio！期刊b：Biblio！书（标题&lt; -  j.title +'_（'+ j.vol +'）：'+ j.num，作者&lt; -  j.articles  - &gt;收集（e | e.authors） - &gt; flatten（） - &gt; asSet（）章节&lt; -  j.articles，pagesNb &lt; -  j.articles-&gt; collect（e | e.pagesNb） - &gt; sum（））}</pre>
+		<pre>rule Journal2Book {
+	from
+		j : Biblio!Journal
+	to
+		b : Biblio!Book (
+			title &lt;- j.title + '_(' + j.vol + '):' + j.num,
+			authors &lt;- j.articles
+					->collect(e | e.authors)->flatten()->asSet()
+			chapters &lt;- j.articles,
+			pagesNb &lt;- j.articles->collect(e | e.pagesNb)->sum()
+		)
+}
+</pre>
 		<p>此规则旨在从Journal模型元素生成Book模型元素。它初始化生成的Book的<i>标题</i> ， <i>作者</i> ， <i>章节</i>和<i>pagesNb</i>功能：</p>
 		<ul>
 			<li>本书的标题对应于与其卷（vol）及其编号（num）连接的期刊的标题;</li>
@@ -829,26 +1093,78 @@
 			<li>为引用分配另一个规则的非默认目标模型元素。</li>
 		</ul>
 		<p>第一种情况（指定由同一规则生成的模型元素）也是最简单的一种情况：可以使用其他目标模式元素的名称初始化所考虑的引用。考虑以下示例，其中规则<i>Case1</i>具有两个目标模式模型元素（ <i>o_1</i>和<i>o_2</i> ），其中<i>o_1</i>具有对定义的Class2模型元素的引用（ <i>linkToClass2</i> ）：</p>
-		<pre>规则Case1 {来自我：MM_A！ClassA到o_1：MM_B！Class1（linkToClass2 &lt; -  o_2），o_2：MM_B！Class2（......）}</pre>
+		<pre>rule Case1 {
+	from
+		i : MM_A!ClassA
+	to
+		o_1 : MM_B!Class1 (
+			linkToClass2 &lt;- o_2
+		),
+		o_2 : MM_B!Class2 (
+			...
+		)
+}
+</pre>
 		<p>此处的参考特征仅使用与目标模型元素对应的本地目标模式元素进行初始化。</p>
 		<p>在第二种情况下（指定另一个规则的默认目标元素），必须使用源模型元素初始化所考虑的引用，该源模型元素与远程规则匹配，以生成要分配的目标模型元素。在以下示例中，规则<i>Case2_R1</i>旨在生成目标模型元素（ <i>o_1</i> ），该元素具有对与规则<i>Case2_R2</i>的默认目标模式（ <i>o_1</i> ）对应的目标模型元素的引用。假设与<i>Case2_R1</i>匹配的源模型元素具有相关<i>MM_A的引用（ <i>linkToClassB</i> ） <i>！ClassB</i>源模型元素，此赋值表示如下：</p>
-		<pre>规则Case2_R1 {来自i：MM_A！ClassA到o_1：MM_B！Class1（linkToClass2 &lt; -  i.linkToClassB）}</pre>
-		<pre>规则Case2_R2 {来自i：MM_A！ClassB到o_1：MM_B！Class2（......），...}</pre>
+		<pre>rule Case2_R1 {
+	from
+		i : MM_A!ClassA
+	to
+		o_1 : MM_B!Class1 (
+			linkToClass2 &lt;- i.linkToClassB
+		)
+}
+</pre>
+		<pre>rule Case2_R2 {
+ 	from
+		i : MM_A!ClassB
+	to
+		o_1 : MM_B!Class2 (
+			...
+		),
+		...
+}
+</pre>
 		<p>此处的引用在生成目标模型元素<i>MM_B时使用与规则<i>Case2_R2</i>匹配的源模型元素进行初始化<i>！Class2</i> 。
 		</p>
 		<p>也可能发生开发人员想要使用远程规则的非默认目标模式元素初始化引用。最后一种情况需要使用在ATL模块的上下文中定义的<a href="The-ATL-Language.html#The_ATL_Module_data_type">resolveTemp（）</a>操作。此操作使得可以访问与远程规则的非默认目标模式元素相关联的目标模型元素。它接受两个参数：源模型元素，由远程规则匹配，用于生成要分配的目标模型元素，以及与之关联的目标模式元素的名称。这通过以下示例进行说明，该示例与前一示例类似，不同之处在于，要分配的目标模型元素不是由规则<i>Case3_R2</i>的默认目标模式生成的。
 		</p>
-		<pre>规则Case3_R1 {来自i：MM_A！ClassA到o_1：MM_B！Class1（linkToClass2 &lt; -  thisModule.resolveTemp（i.linkToClassB，'o_n'））}</pre>
-		<pre>规则Case3_R2 {来自：MM_A！ClassB到o_1：MM_B！Class3（......），...o_n：MM_B！Class2（......），...}</pre>
+		<pre>rule Case3_R1 {
+	from
+		i : MM_A!ClassA
+	to
+		o_1 : MM_B!Class1 (
+			linkToClass2 &lt;- thisModule.resolveTemp(i.linkToClassB, 'o_n')
+		)
+}
+</pre>
+		<pre>rule Case3_R2 {
+	from
+		in : MM_A!ClassB
+	to
+		o_1 : MM_B!Class3 (
+			...
+		),
+		...
+		o_n : MM_B!Class2 (
+			...
+		),
+		...
+}
+</pre>
 		<p>与前一种情况相比，此处的引用通过调用操作<i>resolveTemp（）</i>与源模型元素（ <i>i.linkToClassB</i> ，与前一示例中的相同）和目标模式的名称（“ <i>o_n</i> ”）作为参数进行<i>初始化</i> 。
 		</p>
 		<p>
 			<i>自ATL 3.1起：</i>
 		</p>
 		<p>声明可以指定输出模型创建元素的位置。当多个输出模型符合相同的元模型时， <i>in</i>关键字允许指定输出模型名称。这是一个示例转换标头：</p>
-		<pre>从...创建OUT1：MM_B，OUT2：MM_B;</pre>
+		<pre>create OUT1 : MM_B, OUT2 : MM_B from ... ;
+</pre>
 		<p>下面是一个输出模式，它在OUT2模型中创建元素：</p>
-		<pre>到o：MM_B！OUT2中的Class2</pre>
+		<pre>to
+    o : MM_B!Class2 in OUT2
+</pre>
 		<h4 id="Iterative_target_pattern_element">迭代目标模式元素</h4>
 		<p>
 			<i>警告：自ATL 2.0以来，不推荐使用迭代目标模式，因为它们会破坏内部可跟踪性链接。最好使用独特的惰性规则。</i>
@@ -856,7 +1172,15 @@
 		<p>与允许生成单个目标模型元素的简单目标图案元素相反，迭代目标图案元素使得可以生成符合相同类型的一组目标模型元素。关键字<i>distinct</i>引入迭代目标模式元素。它为属于给定引用有序集合（Sequence或OrderedSet）的每个元素生成目标模型元素。此集合及其关联的迭代器（e）由关键字<i>foreach</i>引入。对于简单的目标模式元素，迭代目标模式元素定义了许多绑定。这些绑定指定了初始化此目标模式元素生成的目标模型元素的特征的方式。
 		</p>
 		<p>以下示例旨在生成大量与集合大小相等的不同Cell模型元素：</p>
-		<pre>使用{coll：Sequence（String）= Sequence {'a'，'b'，'c'};到细胞：不同的表！Cell foreach（e in coll）（内容&lt; -  e，id &lt; -  coll-&gt; indexOf（e））</pre>
+		<pre>using {
+	coll : Sequence(String) = Sequence{'a', 'b', 'c'};
+}
+to
+	cells : distinct Table!Cell foreach(e in coll)(
+		content &lt;- e,
+		id &lt;- coll->indexOf(e)
+	)
+</pre>
 		<p>请注意，此处可以使用集合操作<i>indexOf</i>来计算唯一列<i>id，</i>因为引用集合（ <i>coll</i> ）不包含集合中同一元素的多个实例。否则，同一元素的多个实例的<i>id</i>都将使用此元素的第一个实例的索引进行初始化。
 		</p>
 		<p>由于参考集合在此示例中被定义为常量，因此其大小和内容都是已知的。因此，可以代替使用单个迭代目标图案元素来定义与集合中的元素数量一样多的简单目标图案元素。但是，在处理先验未知的集合（例如，来自源模型的集合）时，将需要使用迭代输出模式元素。</p>
@@ -866,7 +1190,20 @@
 			<li>将集合分配给迭代目标模式元素范围内的要素需要构建集合集合。</li>
 		</ul>
 		<p>以下示例说明了在迭代输出模式元素的范围内将集合分配给要素的方法：</p>
-		<pre>使用{coll：Sequence（String）= Sequence {'a'，'b'，'c'};行：不同的表！行foreach（e in coll）（id &lt; -  coll-&gt; indexOf（e），cell_titles &lt; -  Sequence {Set {'PlayerA_Score1'，'PlayerB_Score1'}，Set {'PlayerA_Score2'，'PlayerB_Score2'}，Set {'PlayerA_Total '，'PlayerB_ Total'，'Total'}}）</pre>
+		<pre>using {
+	coll : Sequence(String) = Sequence{'a', 'b', 'c'};
+}
+to
+	lines : distinct Table!Line foreach(e in coll)(
+		id &lt;- coll->indexOf(e),
+		cell_titles &lt;-
+			Sequence{
+				Set{'PlayerA_Score1', 'PlayerB_Score1'},
+				Set{'PlayerA_Score2', 'PlayerB_Score2'},
+				Set{'PlayerA_Total', 'PlayerB_ Total', 'Total'}
+			}
+	)
+</pre>
 		<p>此示例与前一个示例非常相似。它不是生成一些Cell模型元素，而是为参考集合（ <i>coll</i> ）的每个元素生成一个Line模型元素。每一行都与一个唯一的<i>id</i>相关联，该<i>ID的</i>计算方式与前一个示例相同。不同之处在于，每一行的特征还在于一系列字符串，这些字符串编码该行的不同单元格的标题。
 		</p>
 		<p>为了将每个生成的Line模型元素与其自己的单元格标题集相关联，将使用包含与引用集合一样多的元素的序列初始化属性<i>cell_titles</i> 。每个生成的行将与该序列中的对应元素（位于相同等级的元素）相关联。因此，第一个生成的行将与“PlayerA_Score1”和“PlayerB_Score1”单元标题相关联，而第三行将与“PlayerA_Total”，“PlayerB_Total”和“Total”单元标题相关联。请注意：</p>
@@ -880,7 +1217,21 @@
 		</ul>
 		<p>在引用迭代目标模式范围内生成的元素时，还必须注意。因此，在简单目标图案元素的范围内，迭代目标图案变量指的是由相应图案元素生成的整组生成元素。还可以从另一个迭代目标模式元素调用迭代目标模式变量，条件是：1）两个迭代目标模式元素属于同一规则，以及2）两个迭代目标模式元素迭代相同的有序集合。在这种情况下，变量指的是当前迭代生成的目标模型元素。</p>
 		<p>以下代码摘录说明了引用迭代目标模式元素生成的元素的不同方法：</p>
-		<pre>使用{coll：Sequence（String）= Sequence {'Score1'，'Score2'，'Total'};选项卡：表格！表（行&lt; -  t_lines），t_lines：不同的表！行foreach（e in coll）（id &lt; -  coll-&gt; indexOf（e），caption &lt; -  line_captions），line_captions：distinct表！标题foreach（e in coll）（内容&lt; -  e）</pre>
+		<pre>using {
+	coll : Sequence(String) = Sequence{'Score1', 'Score2', 'Total'};
+}
+to
+	tab : Table!Table (
+		lines &lt;- t_lines
+	),
+	t_lines : distinct Table!Line foreach(e in coll)(
+		id &lt;- coll->indexOf(e),
+		caption &lt;- line_captions
+	),
+	line_captions : distinct Table!Caption foreach(e in coll)(
+		content &lt;- e
+	)
+</pre>
 		<p>这个新例子的灵感来自之前的例子。目标是创建一个Table模型元素，它本身由Line模型元素组成。每一行必须与其自己的Caption模型元素相关联。在简单目标模式元素<i>选项卡</i>的范围内，变量<i>t_lines</i>指的是生成的线模型元素的整个序列。
 		</p>
 		<p>由于两个迭代目标图案元素迭代相同的参考集合，在<i>t_lines</i>目标图案元件中使用的变量<i>line_captions</i>指的是由<i>line_captions</i>目标图案元件产生的字幕的模型元素的单个。由于已使用的引用集合是有序的，因此<i>line_captions</i>变量将引用从引用集合的同一元素生成的Caption。
@@ -889,7 +1240,21 @@
 		<p>ATL匹配规则的最后一部分是可选的<i>do</i>部分。此部分允许指定一系列ATL命令式<i>语句</i> ，这些<i>语句</i>将在规则生成的目标模型元素的初始化完成后执行。该命令性块可以特别用于初始化一些尚未使用声明性绑定初始化的模型元素特征，或者用于修改一些已经初始化的特征。
 		</p>
 		<p>命令块提供了一种简单的方法，可以简单地为每个生成的模型元素分配唯一的id。以下与<a href="Overview-of-the-Atlas-Transformation-Language.html#Biblio_metamodel" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Biblio metamodel">Biblio元模型</a>相关的示例说明了这一点：</p>
-		<pre>helper def：id：Integer = 0; ...规则Journal2Book {来自j：Biblio！期刊b：Biblio！预订（...）做{thisModule.id &lt; -  thisModule.id + 1; b.id &lt; -  thisModule.id; }}</pre>
+		<pre>helper def : id : Integer = 0;
+...
+rule Journal2Book {
+	from
+		j : Biblio!Journal
+	to
+		b : Biblio!Book (
+			...
+		)
+	do {
+		thisModule.id &lt;- thisModule.id + 1;
+		b.id &lt;- thisModule.id;
+	}
+}
+</pre>
 		<p>在此示例中，全局id变量在ATL模块的上下文中定义，并初始化为零。为了将每个生成的模型元素与唯一的id相关联，匹配规则的命令块只是递增id全局变量的值，并将此新值分配给生成的模型元素的<i>id</i>属性。
 		</p>
 		<h3 id="Lazy_Rules">懒惰规则</h3>
@@ -897,20 +1262,69 @@
 			<b>如何调用懒惰规则：</b>
 		</p>
 		<p>让一个简单的懒惰规则：</p>
-		<pre>懒惰的规则getCross {来自我：ecore！EObject to rel：metamodel！关系（）}</pre>
+		<pre> lazy rule getCross {
+   from
+     i: ecore!EObject
+   to 
+     rel: metamodel!Relationship (
+     )
+ }
+</pre>
 		<p>我们可以从匹配的规则中调用它，如下所示：</p>
-		<pre>规则示例{来自s：ecore！EObject to t：metamodel！节点（名称&lt; -  s.toString（），edge &lt; -  thisModule.getCross（s））}</pre>
+		<pre> rule Example {
+   from 
+     s : ecore!EObject
+   to 
+     t : metamodel!Node (
+       name &lt;- s.toString(),
+       edges &lt;- thisModule.getCross(s)
+     )
+ }
+</pre>
 		<p>如果我们想多次调用延迟规则：</p>
-		<pre>规则示例{来自s：ecore！EObject to t：metamodel！节点（名称&lt; -  s.toString（），边缘&lt; -  ecore！EClass.allInstancesFrom（'yourmodel'） - &gt; collect（e | thisModule.getCross（e）））}</pre>
+		<pre> rule Example {
+   from 
+     s : ecore!EObject
+   to 
+     t : metamodel!Node (
+       name &lt;- s.toString(),
+       edges &lt;- ecore!EClass.allInstancesFrom('yourmodel')->collect(e | thisModule.getCross(e))
+     )
+  }
+</pre>
 		<h4 id="Unique_Lazy_Rules">独特的懒惰规则</h4>
 		<p>使用以下语法将惰性规则声明为<i>唯一</i> ：</p>
-		<pre>独特的懒惰规则示例{...}</pre>
+		<pre>unique lazy rule Example{
+     ...
+}
+</pre>
 		<p>给它以下行为：</p>
 		<p>执行唯一的延迟规则时，它始终返回给定源元素的相同目标元素。通过以类似于标准规则的方式导航内部可跟踪性链接来检索目标元素。</p>
 		<p>非唯一延迟规则不会导航可跟踪性链接，并在每次执行时创建新的目标元素。</p>
 		<h3 id="Called_Rules">被称为规则</h3>
 		<p>除了匹配的规则，ATL还定义了一种额外的规则，可以从命令式代码中显式生成目标模型元素。除了称为规则的入口点之外，必须从ATL命令块中显式调用此类规则。被调用规则的规范必须符合以下语法：</p>
-		<pre>[入口点]？rule rule_name''（''parameters''）{[using {var1：var_type1 = init_exp1; ...varn：var_typen = init_expn; }]？[to out_var1：out_type1（bindings1），out_var2：distinct out_type2 foreach（e in collection）（bindings2），...out_varn：out_typen（bindingsn）]？[do {statements}]？}</pre>
+		<pre>[entrypoint]? rule rule_name''(''parameters''){
+	[using {
+		var1 : var_type1 = init_exp1;
+		...
+		varn : var_typen = init_expn;
+	}]?
+	[to
+		out_var1 : out_type1 (
+			bindings1
+		),
+		out_var2 : distinct out_type2 foreach(e in collection)(
+			bindings2
+		),
+		...
+		out_varn : out_typen (
+			bindingsn
+		)]?
+	[do {
+		statements
+	}]?
+}
+</pre>
 		<p>被调用的规则由其名称（ <i>rule_name</i> ）标识。被调用的规则名称必须在ATL转换中是唯一的，并且不得与帮助器名称冲突。而且，被调用的规则不能称为“主”。可以选择将被调用的规则声明为转换<i>入口点</i> 。ATL转换可以包括一个称为规则的入口点。与其他调用规则相比，不需要显式调用称为规则的入口点：一旦<a href="Overview-of-the-Atlas-Transformation-Language.html#Default_mode_execution_semantics" title="ATL / ___ ATLPAGENAME ____-_ Overview_of_the_Atlas_Transformation_Language＃Default_mode_execution_semantics">模块初始化阶段</a>完成，就会在转换执行开始时隐式调用它。
 		</p>
 		<p>被调用的规则可以接受参数。必须以与<a href="The-ATL-Language.html#Helpers_2">帮助者</a>相同的方式指定它们。它由三个可选部分组成： <i>using</i> ， <i>to</i>和<i>do</i>部分。与匹配的规则相比，被调用的规则没有<i>from</i> section，而它<i>的</i> section是可选的。但请注意，可用部分的语义类似于为匹配规则定义的语义：</p>
@@ -921,13 +1335,52 @@
 			</li>
 		</ul>
 		<p>以下代码摘录提供了一个被调用的规则示例：</p>
-		<pre>帮手def：metamodel：KM3！Metamodel = OclUndefined; ...入口点规则Metamodel（）{to t：KM3！元模型做{thisModule.metamodel &lt; -  t; }}</pre>
+		<pre>helper def: metamodel : KM3!Metamodel = OclUndefined;
+...
+entrypoint rule Metamodel() {
+	to
+		t : KM3!Metamodel
+	do {
+		thisModule.metamodel &lt;- t;
+	}
+}
+</pre>
 		<p>此调用规则被定义为转换入口点。这意味着它在初始化和匹配阶段之间执行。它生成Metamodel模型元素。命令块中指定的代码使得在ATL模块的上下文中定义的变量（元模型）指向该模型元素。通过这种方式，生成的元模型仍然可以在变换期间进行进一步计算。</p>
 		<h3 id="Rule_inheritance">规则继承</h3>
 		<p>规则继承引入了两个关键字：abstract和extends。它们可以像这样使用：</p>
-		<pre>抽象规则A {from [fromA]使用[usingA]到[toA] do [doA]}规则B使用[usingB]扩展A {from [fromB]到[toB] do [doB]}规则C扩展B {来自[ fromC]使用[usingC]到[toC]做[doC]}</pre>
+		<pre> abstract rule A {
+   from [fromA]
+   using [usingA]
+   to [toA]
+   do [doA]
+ }
+ rule B extends A {
+   from [fromB]
+   using [usingB]
+   to [toB]
+   do [doB]
+ }
+ rule C extends B {
+   from [fromC]
+   using [usingC]
+   to [toC]
+   do [doC]
+ }
+</pre>
 		<p>当ATL编译这个转换时，它就像你将它作为输入一样：</p>
-		<pre>规则B {从[fromB]使用[usingB]到[toA.bindings union toB.bindings] do [doB]}规则C {从[fromC]使用[usingC]到[toA.bindings union toB.bindings union toC.bindings ]做[doC]}</pre>
+		<pre> rule B {
+   from [fromB]
+   using [usingB]
+   to [toA.bindings union toB.bindings]
+   do [doB]
+ }
+ rule C {
+   from [fromC]
+   using [usingC]
+   to [toA.bindings union toB.bindings union toC.bindings]
+   do [doC]
+ }
+</pre>
 		<p>但是，存在一些限制和约束。首先，编译器不支持多重继承，并且不计划实现。约束如下：</p>
 		<ul>
 			<li>子规则（例如B或C）输入模式（即来自部分）必须匹配其超级规则的子集。例如，如果您匹配超级规则中的特定类，则必须具有更严格的过滤器或匹配子类。</li>
@@ -935,22 +1388,143 @@
 			<li>输出模式变量名称必须在您想要联合的输出模式的超级和子规则中相同。</li>
 		</ul>
 		<p>这是一个完整的例子来说明。它是KM3复制器，即源模型中的每个模型元素都按原样复制到目标模型：</p>
-		<pre>模块复制;从IN：MM创建OUT：MM;</pre>
-		<pre>规则CopyDataType扩展了CopyClassifier {来自s：MM！DataType到t：MM！数据类型 }</pre>
-		<pre>规则CopyEnumeration扩展了CopyClassifier {来自s：MM！枚举到t：MM！枚举（文字&lt; -  s.literals）}</pre>
-		<pre>规则CopyParameter扩展了CopyTypedElement {来自s：MM！参数t：MM！参数}</pre>
-		<pre>规则CopyReference扩展了CopyStructuralFeature {来自s：MM！参考t：MM！参考（isContainer &lt; -  s.isContainer，对面&lt; -  s.opposite）}</pre>
-		<pre>规则CopyTypedElement扩展了CopyModelElement {来自s：MM！键入元素到t：MM！TypedElement（lower &lt; -  s.lower，upper &lt; -  s.upper，isOrdered &lt; -  s.isOrdered，isUnique &lt; -  s.isUnique，type &lt; -  s.type）}</pre>
-		<pre>规则CopyOperation扩展了CopyTypedElement {来自s：MM！操作到t：MM！操作（参数&lt; -  s.parameters）}</pre>
-		<pre>规则CopyAttribute扩展了CopyStructuralFeature {来自s：MM！属性t：MM！属性}</pre>
-		<pre>规则CopyEnumLiteral扩展了CopyModelElement {来自s：MM！EnumLiteral to t：MM！EnumLiteral}</pre>
-		<pre>规则CopyPackage扩展了CopyModelElement {来自s：MM！打包到：MM！包（内容&lt; -  s.contents）}</pre>
-		<pre>规则CopyClass扩展了CopyClassifier {来自s：MM！类到t：MM！类（isAbstract &lt; -  s.isAbstract，supertypes &lt; -  s.supertypes，structuralFeatures &lt; -  s.structuralFeatures，operations &lt; -  s.operations）}</pre>
-		<pre>规则CopyClassifier扩展了CopyModelElement {来自s：MM！分类器到t：MM！分类器}</pre>
-		<pre>抽象规则CopyModelElement扩展了CopyLocatedElement {来自s：MM！ModelElement to t：MM！ModelElement（name &lt; -  s.name）}</pre>
-		<pre>规则CopyMetamodel扩展了CopyLocatedElement {来自s：MM！Metamodel to t：MM！元模型（内容&lt; -  s.contents）}</pre>
-		<pre>抽象规则CopyLocatedElement {来自s：MM！位于t：MM的元素！LocationElement（location &lt; -  s.location）}</pre>
-		<pre>规则CopyStructuralFeature扩展了CopyTypedElement {来自s：MM！结构特征到：MM！StructuralFeature（subsetOf &lt; -  s.subsetOf，derivedFrom &lt; -  s.derivedFrom）}</pre>
+		<pre> module Copy;
+ create OUT : MM from IN : MM;
+</pre>
+		<pre> rule CopyDataType extends CopyClassifier {
+   from
+     s : MM!DataType
+   to
+     t : MM!DataType
+ }
+</pre>
+		<pre> rule CopyEnumeration extends CopyClassifier {
+   from
+     s : MM!Enumeration
+   to
+     t : MM!Enumeration (
+       literals &lt;- s.literals
+     )
+ }
+</pre>
+		<pre> rule CopyParameter extends CopyTypedElement {
+   from
+     s : MM!Parameter
+   to
+     t : MM!Parameter
+ }
+</pre>
+		<pre> rule CopyReference extends CopyStructuralFeature {
+   from
+     s : MM!Reference
+   to
+     t : MM!Reference (
+       isContainer &lt;- s.isContainer,
+       opposite &lt;- s.opposite
+     )
+ }
+</pre>
+		<pre> rule CopyTypedElement extends CopyModelElement {
+   from
+     s : MM!TypedElement
+   to
+     t : MM!TypedElement (
+       lower &lt;- s.lower,
+       upper &lt;- s.upper,
+       isOrdered &lt;- s.isOrdered,
+       isUnique &lt;- s.isUnique,
+       type &lt;- s.type
+     )
+ }
+</pre>
+		<pre> rule CopyOperation extends CopyTypedElement {
+   from
+     s : MM!Operation
+   to
+     t : MM!Operation (
+       parameters &lt;- s.parameters
+     )
+ }
+</pre>
+		<pre> rule CopyAttribute extends CopyStructuralFeature {
+   from
+     s : MM!Attribute
+   to
+     t : MM!Attribute
+ }
+</pre>
+		<pre> rule CopyEnumLiteral extends CopyModelElement {
+   from
+     s : MM!EnumLiteral
+   to
+     t : MM!EnumLiteral
+ }
+</pre>
+		<pre> rule CopyPackage extends CopyModelElement {
+   from
+     s : MM!Package
+   to
+     t : MM!Package (
+       contents &lt;- s.contents
+     )
+ }
+</pre>
+		<pre> rule CopyClass extends CopyClassifier {
+   from
+     s : MM!Class
+   to
+     t : MM!Class (
+       isAbstract &lt;- s.isAbstract,
+       supertypes &lt;- s.supertypes,
+       structuralFeatures &lt;- s.structuralFeatures,
+       operations &lt;- s.operations
+     )
+ }
+</pre>
+		<pre> rule CopyClassifier extends CopyModelElement {
+   from
+     s : MM!Classifier
+   to
+     t : MM!Classifier
+ }
+</pre>
+		<pre> abstract rule CopyModelElement extends CopyLocatedElement {
+   from
+     s : MM!ModelElement
+   to
+     t : MM!ModelElement (
+       name &lt;- s.name
+     )
+ }
+</pre>
+		<pre> rule CopyMetamodel extends CopyLocatedElement {
+   from
+     s : MM!Metamodel
+   to
+     t : MM!Metamodel (
+       contents &lt;- s.contents
+     )
+ }
+</pre>
+		<pre> abstract rule CopyLocatedElement {
+   from
+     s : MM!LocatedElement
+   to
+     t : MM!LocatedElement (
+       location &lt;- s.location
+     )
+ }
+</pre>
+		<pre> rule CopyStructuralFeature extends CopyTypedElement {
+   from
+     s : MM!StructuralFeature
+   to
+     t : MM!StructuralFeature (
+       subsetOf &lt;- s.subsetOf,
+       derivedFrom &lt;- s.derivedFrom
+     )
+ }
+</pre>
 		<h3 id="Rules_usage">规则用法</h3>
 		<p>以下是三种声明性规则：</p>
 		<ul>
@@ -1030,12 +1604,33 @@
 		<p>引入了精炼执行模式以简化精炼（或重构）变换的编程。通过精炼模式，ATL开发人员可以专注于专用于生成修改后的目标元素的ATL代码。其他模型元素（例如，在源模型和目标模型之间保持不变的模型元素）由ATL引擎隐式处理。</p>
 		<p>通过简单地用变换标题中的<i>refining</i>关键字替换<i>from</i>关键字，可以在ATL语言中选择此模式。显然，精炼模式可能仅用于内生变换，即当源模型和目标模型共享相同的元模型时。下面的清单显示了ClassDiagram元模型上的重构转换的标头如何。
 		</p>
-		<pre>模块精炼样本;创建OUT：ClassDiagram精炼IN：ClassDiagram;</pre>
+		<pre>module refiningSample;
+create OUT : ClassDiagram refining IN : ClassDiagram;
+</pre>
 		<p>ATL2010编译器实现了就地策略，例如，更改直接在源模型上执行，而不会复制任何元素。转换中的规则只需要指定已更改的值，而所有其他元素都保持不变。此模式下的转换分两步执行。在第一步中，变换引擎执行规则，结果产生一组暂时存储的变化。在第二步中，此集更改直接应用于源模型。</p>
 		<p>此编译器增强了2006编译器提供的精炼功能，该编译器还实现了就地策略。首先，它通过为用户提供一种在转换中指定必须删除匹配元素的明确方法来解决缺少删除支持的问题。</p>
 		<p>为了支持删除功能，在语言的具体和抽象语法中引入了一些修改，以提供新的关键字：DROP。下面的列表显示了ATL 2010精炼转换，它使用新的<i>drop</i>关键字来反转先前引入的属性可见性更改。
 		</p>
-		<pre>规则PrivateAttribute {来自s：ClassDiagram！属性（s.isPrivate和s.owner.op-&gt; exists（o | o.name ='get'+ s.name.toUpperCase（）和o.returnType = s.type））到t：ClassDiagram！属性（isPrivate &lt; -  false）}规则DeleteOperation {来自s：ClassDiagram！操作（s.owner.attr  - &gt;存在（a | a.name = s.name.toUpperCase（）。substring（3，s.name-&gt; size（））和a.isPrivate））要删除}</pre>
+		<pre>rule PrivateAttribute {
+  from
+      s : ClassDiagram!Attribute (s.isPrivate and
+          s.owner.op->exists(o|o.name = 'get' +
+          s.name.toUpperCase() and o.returnType = s.type)
+          )
+  to
+      t : ClassDiagram ! Attribute (
+          isPrivate &lt;- false
+      )
+} 
+rule DeleteOperation {
+  from
+      s : ClassDiagram!Operation (s.owner.attr
+          ->exists(a|a.name = s.name.toUpperCase().substring(3, s.name->size())
+              and a.isPrivate))
+  to
+      drop
+}
+</pre>
 		<p>从语义的角度来看，我们必须注意删除很容易与另一个修改产生冲突。发生这种情况是因为我们选择为组合关联提供带有级联删除语义的删除（即删除容器会触发删除所包含的元素）。出于这个原因，负责应用更改的转换的第二步是通过首先应用所有创建更改，然后是所有修改更改，最后是所有删除更改来实现的。</p>
 		<p>精炼模式不支持某些ATL标准模式高级功能。具体而言，不支持以下元素：动作块，延迟规则，多个输入元素和迭代输出模式。在未来的计划中涵盖这些高级功能以及提供新的精炼功能（如克隆）。</p>
 		<h3 id="Refining_Mode_support_in_previous_compilers:">以前编译器中的精炼模式支持：</h3>
@@ -1048,7 +1643,28 @@
 		<p>2004编译器实现了复制策略。ATL转换的表现就好像有隐式复制规则可以匹配显式（即程序员编写的）规则所不匹配的每个元素。这样的复制规则创建与源元素相同类型的目标元素。然后，它通过复制源元素的属性值来初始化新元素的所有属性。但是，并非所有元素都被复制。要复制，元素必须满足以下条件中的至少一个：1）它们由显式规则匹配，或者2）它们包含在复制的元素中，或者3）它们由复制的元素引用（非包含） 。</p>
 		<p>此条件允许删除对模型的部分，只需删除对它们的任何引用。</p>
 		<p>下面的清单显示了ATL 2004编译器中的精炼转换，它改变了属性的可见性并添加了相应的getter。</p>
-		<pre>规则PublicAttribute {来自s：ClassDiagram！属性（不是s.isPrivate而不是s.owner.op-&gt;存在（o | o.name ='get'+ s.name.toUpperCase（）和o.returnType = s.type））到t：ClassDiagram！属性（名称&lt; -  s.name，所有者&lt; -  s.owner，isPrivate &lt; -  true，类型&lt; -  s.type），getter：ClassDiagram！操作（名称&lt; - 'get'+ s.name.toUpperCase（），所有者&lt; -  s.owner，isPrivate &lt; -  false，returnType &lt; -  s.type）}</pre>
+		<pre>rule PublicAttribute {
+  from
+      s : ClassDiagram!Attribute (
+          not s.isPrivate and
+          not s.owner.op->exists(o | o.name = 'get' +
+            s.name.toUpperCase() and o.returnType = s.type)
+      )
+  to
+      t : ClassDiagram!Attribute (
+          name &lt;- s.name,
+          owner &lt;- s.owner,
+          isPrivate &lt;- true,
+          type &lt;- s.type
+      ),
+      getter : ClassDiagram!Operation (
+          name &lt;- 'get' + s.name.toUpperCase(),
+          owner &lt;- s.owner,
+          isPrivate &lt;- false,
+          returnType &lt;- s.type
+      )
+}
+</pre>
 		<ul>
 			<li>
 				<b>ATL 2006：</b>
@@ -1088,12 +1704,15 @@
 		<p>请记住，要在不同的编译器之间进行选择，转换的第一行必须包含带有@atlcompiler标记的注释，后跟编译器的名称（例如， -  @atlcompiler atl2010）</p>
 		<h2 id="ATL_Queries">ATL查询</h2>
 		<p>除模块单元外，ATL还允许开发人员在模型上定义查询。查询单元接受许多源模型，并生成任何支持的基元数据类型的单个返回值。查询单元由单个查询元素以及可以在ATL模块或查询源模型中定义的任何模型元素的上下文中定义的多个帮助器和属性组成。请注意，ATL查询单元必须以其查询元素的声明开头。此查询元素的规范必须符合以下语法：</p>
-		<pre>query''query_name''=''exp'';</pre>
+		<pre>query ''query_name'' = ''exp'';
+</pre>
 		<p>查询元素的命名没有约束。但是，建议为查询元素指定与其定义文件相同的名称。</p>
 		<p>查询元素（ <i>exp</i> ）的主体是任何受支持的基本数据类型的OCL表达式：string，boolean，integer或real。可以在查询元素主体的范围内调用查询文件中定义的助手和属性（以及属于导入的ATL库的助手和属性）。
 		</p>
 		<p>使用ATL集成开发环境（IDE）时，开发人员可能会将执行查询的结果写入文件。这可以通过生成一个字符串值（其他原始数据类型必须被转换为字符串）来轻松实现，在该字符串上可以调用操作<a href="The-ATL-Language.html#String_data_type_operations">''writeTo（）''</a> 。例如，可以考虑以下查询：</p>
-		<pre>查询PersonNb = MMPerson！Person.allInstances（） - &gt;尺寸（）的toString（）的writeTo（ '的Result.txt'）;。</pre>
+		<pre>query PersonNb =
+	MMPerson!Person.allInstances()->size().toString().writeTo('result.txt');
+</pre>
 		<p>此查询在包含许多Person实体的MMPerson模型上执行。查询首先获取模型中所有现有Person类的集合，并获取计算集的大小。为了在文件中写入此值，计算的整数值在写入文件“result.txt”之前被强制转换为字符串（operation <i>toString（）</i> ）。请注意，虽然结果写入文件，但查询仍会返回计算的字符串。
 		</p>
 		<h2 id="ATL_Keywords">ATL关键词</h2>
@@ -1113,7 +1732,12 @@
 		<p>当尝试通过两个不同的规则（ <i>ruleA</i>和<i>ruleB</i> ）分别匹配A和B元素时，会出现多重匹配问题。使用直观的源模式，例如：MM！A， <i>ruleA</i>将纯粹匹配A元素和B元素。由于这些最后一个也与<i>ruleB</i>匹配，因此会引发多重匹配问题。
 		</p>
 		<p>要解决此问题，开发人员必须确保<i>ruleA</i>仅匹配纯A元素。这是通过在<i>ruleA</i>的源模式中过滤规则要匹配的元素的类型来实现的：</p>
-		<pre>规则规则A {来自：MM！A（a.oclIsTypeOf（MM！一个） ） ...
+		<pre>rule ruleA {
+	from
+		a : MM!A (
+			a.oclIsTypeOf(MM!A)
+		)
+	...
 </pre>
 		<p>OCL函数<i>oclIsTypeOf</i>在这里测试输入模型元素是否是作为参数传递的元模型元素的实例。
 		</p>

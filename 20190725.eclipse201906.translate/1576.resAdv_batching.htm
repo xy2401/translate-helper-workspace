@@ -1,0 +1,75 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>批量资源更改</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h3>批量资源更改</h3>
+<p>当您需要修改工作区中的资源时，请务必记住其他插件可能正在使用相同的资源。资源API提供了强大的机制，可以使插件随时了解工作空间的变化，并确保多个插件不会同时修改同一资源。在可能的情况下，插件对工作空间的修改应在<b>可运行</b>工作<b>空间</b>内的<b>工作</b>单元中进行批处理。这些runnables有助于减少更改生成的更改通知量。它们还允许您声明要修改工作空间的哪个部分，以便可以锁定其他插件，而无需更改工作空间的相同部分。
+</p>
+<p><b><a href="../reference/api/org/eclipse/core/resources/IWorkspaceRunnable.html">IWorkspaceRunnable</a></b>的协议非常简单。可运行的工作空间看起来就像一个长时间运行的操作或平台作业。实际工作在<b>run</b>方法中完成，并将进度报告给提供的<b><a href="../reference/api/org/eclipse/core/runtime/IProgressMonitor.html">IProgressMonitor</a></b> 。操作工作空间的代码在<b>run</b>方法中执行。
+</p>
+<pre>IWorkspaceRunnable myRunnable = 
+	new IWorkspaceRunnable() {
+		<b>public void run(IProgressMonitor monitor) throws CoreException {</b>
+			//do the actual work in here
+			...
+		}
+}
+</pre>
+<p>当需要运行代码时，您的插件会告诉工作区代表它运行代码。这样，工作空间可以生成任何必要的更改事件，并确保没有两个插件同时修改同一资源。（即使您的插件没有使用后台作业和并发框架来修改工作区，其他插件也可能这样做。）
+</p>
+<h4>调度规则和锁定</h4>
+<p><b><a href="../reference/api/org/eclipse/core/resources/IWorkspace.html">IWorkspace</a></b>协议用于运行可运行的工作空间。首选技术是使用长形式的<b>run</b>方法，该方法提供调度规则并指定如何广播资源改变事件。
+</p>
+<p>在运行工作空间runnable时指定调度规则允许工作空间确定资源更改是否与其他线程中发生的工作空间更改冲突。（有关调度规则和<b><a href="../reference/api/org/eclipse/core/runtime/jobs/ISchedulingRule.html">ISchedulingRule</a></b>协议的概述，请参阅<a href="runtime_jobs_rules.htm">调度规则</a> 。）幸运的是， <b><a href="../reference/api/org/eclipse/core/resources/IResource.html">IResource</a></b>协议包含<b><a href="../reference/api/org/eclipse/core/runtime/jobs/ISchedulingRule.html">ISchedulingRule</a></b>的协议，这意味着资源通常可以用作自身的调度规则。
+</p>
+<p>困惑？代码可以帮助澄清这一点。假设您的插件已准备好修改特定项目中的一堆资源。它可以使用项目本身作为进行更改的调度规则。以下代码段运行我们之前创建的工作空间runnable：</p>
+<pre>IWorkspace workspace = ResourcesPlugin.getWorkspace();
+workspace.run(myRunnable, <b>myProject</b>, <b>IWorkspace.AVOID_UPDATE</b>, null);
+</pre>
+<p>runnable传递给工作空间，然后是代码正在操作的项目。这告诉工作区runnable中的所有更改都限制在<tt>myProject中</tt> 。其他线程更改<tt>myProject的</tt>任何请求<tt>都</tt>将被阻止，直到此runnable完成。同样，如果某个其他线程已在修改<tt>myProject</tt> ，则此调用将阻止。通过指定runnable将修改资源树的哪个部分，您允许其他线程继续修改工作区的其他部分。确保您的资源规则与runnable中正在进行的工作相匹配非常重要。使用非空调度规则时，任何访问调度规则范围之外的资源的尝试都将触发异常。
+</p>
+<p>有两个特殊的调度规则是重要的考虑因素。首先，如果您使用<tt>IWorkspaceRoot</tt>实例作为调度规则，则意味着您的线程阻止访问树中的<b>所有</b>资源。当一个线程保存根规则时，不允许其他线程修改工作空间。相反，规则为<tt>null</tt>表示该线程将阻止对树中<b>没有</b>资源的访问。虽然具有空规则的线程可以自由修改工作空间本身，但不会阻止其他线程执行自己的修改。<tt>IWorkspaceRoot</tt>和<tt>null</tt>调度规则占据并发频谱的两端。使用<tt>IWorkspaceRoot时</tt> ，没有并发性，并且一次只有一个线程正在修改工作空间。使用<tt>空</tt>规则，存在最大并发性，因为所有线程可以同时修改工作空间。
+</p>
+<p><b>run</b>方法的第三个参数指定是否应在此调用范围内广播任何周期性资源更改事件。使用<tt>IWorkspace。AVOID_UPDATE</tt>告诉平台在runnable运行时禁止任何资源更改事件，并在更改结束时广播一个事件。在此调用期间，在runnable中创建的任何其他runnable将被视为父批处理操作的一部分。在这些可运行的服务器中进行的资源更改将显示在父服务器的资源更改通知中。
+</p>
+<h4>资源规则工厂</h4>
+<p>在上面的示例中，我们假设runnable中的代码仅修改了特定项目中的资源。这使得为runnable指定调度规则变得非常容易。实际上，计算工作空间的哪些部分受特定更改影响可能更加困难。例如，将资源从一个项目移动到另一个项目会影响两个项目。<b><a href="../reference/api/org/eclipse/core/resources/IResourceRuleFactory.html">IResourceRuleFactory</a></b>可用于帮助为某些类型的资源更改计算适当的资源规则。您可以从工作区本身获取资源规则工厂。
+</p>
+<pre>IWorkspace workspace = ResourcesPlugin.getWorkspace();
+IResourceRuleFactory ruleFactory = <b>workspace.getRuleFactory()</b>;
+</pre>
+<p>工厂可以提供适合多种操作的规则。如果您的runnable正在将资源从一个位置移动到另一个位置，那么它可以获得适合此操作的规则：</p>
+<pre>ISchedulingRule movingRule = ruleFactory.moveResource(sourceResource, destinationResource);
+workspace.run(myRunnable, <b>movingRule</b>, IWorkspace.AVOID_UPDATE, null);
+</pre>
+<p>有关可用规则的列表，请参阅<b><a href="../reference/api/org/eclipse/core/resources/IResourceRuleFactory.html">IResourceRuleFactory</a></b>的javadoc。资源插件使用这些规则本身来实现大多数资源操作。浏览引用这些规则方法的代码将有助于演示它们在实践中的使用方式。
+</p>
+<p>可以使用<b><a href="../reference/api/org/eclipse/core/runtime/jobs/MultiRule.html">MultiRule</a></b>组合多个规则。
+</p>
+<pre>ISchedulingRule movingRule = ruleFactory.moveResource(sourceResource, destinationResource);
+ISchedulingRule modifyRule = ruleFactory.modifyResource(destinationResource);
+workspace.run(myRunnable, <b>MultiRule.combine(movingRule, modifyRule)</b>, IWorkspace.AVOID_UPDATE, null);
+</pre>
+<h4>忽略规则</h4>
+<p><b><a href="../reference/api/org/eclipse/core/resources/IWorkspace.html">IWorkspace</a></b>中的<b>run</b>方法的缩写形式也是可用的。保留它是为了向后兼容。简短形式不包括规则或更新标志。
+</p>
+<pre>workspace.run(myRunnable, null);
+</pre>
+<p>与呼叫实际上是一样的</p>
+<pre>workspace.run(myRunnable, workspace.getRoot(), IWorkspace.AVOID_UPDATE, null);
+</pre>
+<p>将工作空间根指定为调度规则将锁定整个工作空间，直到runnable完成。这是执行工作区更新的最保守的方法，但它对其他具有并发意识的插件并不友好。
+</p>
+
+</body>
+</html>

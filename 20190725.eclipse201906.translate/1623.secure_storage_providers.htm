@@ -1,0 +1,47 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2008, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>创建密码提供商</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+
+<h2>创建密码提供商</h2>
+
+<h4>扩展密码提供商</h4>
+
+<p>在安全存储中存储信息（例如CVS密码）时，信息将使用主密码加密。关于这个过程的有趣问题是如何存储主密码？</p> 
+
+<p>答案是在密码提供程序实现中。从逻辑上讲，密码提供程序模块代表一个受信任的第三方，一个外部黑盒子，我们相信它可以存储我们的主密码。黑盒子可以是操作系统，某些硬件，也可以是用户自己。</p>
+
+<p>SDK提供了几个密码提供程序模块。它们提供了基本的“后备”支持，并改进了对某些特定操作系统的支持。在大多数情况下，您不需要创建密码提供程序 - 除非您想要添加（或改进）与操作系统的集成或添加与某些特定硬件的交互。在这种情况下，可以轻松扩展密码提供程序集。</p>
+
+<h4>声明密码提供程序</h4>
+
+<p>必须将密码提供程序模块描述为扩展点<a href="../reference/extension-points/org_eclipse_equinox_security_secureStorage.html"><b>org.eclipse.equinox.security.secureStorage</b></a>的扩展。扩展必须指定ID;扩展的限定ID将用作提供程序模块的ID，不得在发行版之间更改。密码提供程序的可选名称和说明显示在<a class="command-link" href="javascript:void(0);"><img src="PLUGINS_ROOT/org.eclipse.help/command_link.png" alt="命令链接"> <strong>常规&gt;安全性&gt;安全存储</strong></a>首选项页面，对最终用户可见。</p>
+
+<p>提供者声明包括实现提供者的完全限定类名，数字优先级值和一组提示。</p> 
+
+<p>当新数据添加到安全存储时，优先级用于选择密码提供程序。默认情况下使用具有最高优先级的已启用提供程序。（请注意，可以使用<a href="../reference/api/org/eclipse/equinox/security/storage/provider/IProviderHints.html#REQUIRED_MODULE_ID"><b>IProviderHints #REQUIRED_MODULE_ID</b></a>或使用运行时选项“-eclipse.password”以编程方式覆盖它。）</p>
+
+<p>优先级是从0到10的整数，其中10是最高优先级。考虑在优先级中等范围内添加您的提供商，2到7，保留顶部和底部值。</p>
+
+<p>最终用户可以通过Secure Storage首选项页面禁用密码提供程序。当新数据添加到安全存储时，不会考虑禁用的提供程序，但如果数据最初是使用此提供程序加密的，则可以在数据检索时调用。</p>
+
+<p>提供者声明还可以指定一组提示，以帮助优化安全存储框架和提供者之间的交互。这组提示是开放的，将来可以扩展。在撰写本文时，唯一预期的提示是<b>“AutomaticPasswordGeneration”</b> 。此提示通知框架密码提供程序在没有用户交互的情况下创建主密码。</p>
+
+<h4>实施密码提供商</h4>
+
+<p>实现密码提供程序的类必须扩展<a href="../reference/api/org/eclipse/equinox/security/storage/provider/PasswordProvider.html"><b>PasswordProvider</b></a>类。该类的中心点是<a href="../reference/api/org/eclipse/equinox/security/storage/provider/PasswordProvider.html#getPassword(org.eclipse.equinox.security.storage.provider.IPreferencesContainer, int)"><b>getPassword（）</b></a>方法，该方法返回当前用户的提供程序的主密码。当期望创建新密码时，该方法接收提示（与检索先前生成的主密码相反）。</p>
+
+<p>如果您的密码提供程序具有用户交互或具有获取主密码的备用路径，您可以考虑重写<a href="../reference/api/org/eclipse/equinox/security/storage/provider/PasswordProvider.html#retryOnError(java.lang.Exception, org.eclipse.equinox.security.storage.provider.IPreferencesContainer)"><b>PasswordProvider＃retryOnError（）</b></a>方法以通知安全存储提供程序可能能够获得“更好”的密码。例如，考虑使用用户输入的主密码的密码提供程序。如果输入的密码无效，则将查询<a href="../reference/api/org/eclipse/equinox/security/storage/provider/PasswordProvider.html#retryOnError(java.lang.Exception, org.eclipse.equinox.security.storage.provider.IPreferencesContainer)"><b>PasswordProvider＃retryOnError（）</b></a>方法以查看密码提供程序是否可以获取正确的密码。</p>
+
+</body>
+</html>

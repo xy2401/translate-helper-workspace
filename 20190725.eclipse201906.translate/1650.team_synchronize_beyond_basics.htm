@@ -1,0 +1,75 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2016. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+  <meta content="text/css" http-equiv="Content-Style-Type">
+  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1">
+  <title>同步支持 - 超越基础</title>
+  <link href="../book.css" type="text/css" rel="stylesheet">
+</head>
+<body  style="background-color:rgb(255,255,255)">
+<h2>超越基础</h2>
+<p>如果您计划提供同步支持并且没有用于管理同步状态的现有机制，则本节将介绍如何从头开始实施订阅服务器。这意味着没有现有的同步基础结构，并说明了如何使用提供的某些API来维护同步状态。<br>
+</p>
+<p>对于本示例的其余部分，我们将使用一个运行示例。源代码可以在<a href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>插件的文件系统提供程序包中找到。您应该从Git存储库中检查项目，并在阅读本教程时将其用作参考。</p>
+<h3>从头开始实施订阅者</h3>
+<p>第一个示例假定没有用于维护本地工作空间的同步状态的现有基础结构。从头开始实现订户时，您可以使用<em>org.eclipse.team.core</em>插件中提供的一些其他API。<a href="../reference/api/org/eclipse/team/core/variants/package-summary.html">org.eclipse.team.core.variants</a>包中包含两个<a href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html">Subscriber</a>子类，可用于简化实现。第一个是<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a> ，将在下面的第二个例子中讨论。第二个是第一个的子类： <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a> 。此订户实现提供了几个有用的类，用于管理本地工作空间的同步状态。如果您没有任何现有的基础设施，这是一个很好的起点。</p>
+<p>将使用<a href="http://git.eclipse.org/c/www.eclipse.org/eclipse.git/tree/platform-ui/plugins/org.eclipse.ui.examples.filesystem/">org.eclipse.ui.examples.filesystem</a>插件中提供的文件系统示例来说明从头开始实现订户。以下描述中的代码保持最小，因为它可以从Eclipse Git存储库中获得。虽然从技术上讲不是三方用户，但文件系统示例仍然可以充分利用这种基础设施。FTP和WebDAV插件也是使用此基础结构构建的。</p>
+<h3>ThreeWaySubscriber</h3>
+<p>对于文件系统示例，我们已经有一个<a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html">RepositoryProvider</a>的实现，它将本地项目与文件系统位置相关联，其中本地内容被镜像。FileSystemSubscriber是作为<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>的子类创建的，以便利用<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>来管理工作区同步状态。此类的子类必须执行以下操作：</p>
+<ul>
+  <li>创建<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>实例以管理本地工作区同步状态。</li>
+  <li>创建<a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a>子类的实例以提供远程树刷新。
+  <ul>
+    <li>为此目的定义了FileSystemRemoteTree类</li>
+  </ul></li>
+  <li>实现一种方法来创建用于计算同步状态的资源变量句柄。
+    <ul>
+      <li>为此定义了FileSystemResourceVariant类（ <a href="../reference/api/org/eclipse/team/core/variants/CachedResourceVariant.html">CachedResourceVariant</a>的子类）</li>
+    </ul>
+  </li>
+  <li>实现根方法<ul>
+      <li>订阅者的根是映射到FileSystemProvider的所有项目。回调被添加到FileSystemProvider，以便允许FileSystemSubscriber在映射和取消映射项目时生成更改事件。</li>
+    </ul>
+  </li>
+</ul>
+<p>除了订户实现之外，还修改了文件系统提供程序的get和put操作，以更新ThreeWaySynchronizer中的同步状态。这些操作在org.eclipse.team.examples.filesystem类中实现。FileSystemOperations。</p>
+<h3>ThreeWaySynchronizer</h3>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>管理本地工作空间和远程位置之间的同步状态。它缓存并保留本地，基本和远程时间戳，以支持有效计算资源的同步状态。它还会向任何已注册的侦听器发出更改通知。<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>将这些更改事件转换为适当的格式，以发送给向订户注册的侦听器。</p>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>利用Core调度规则和锁来确保线程安全并提供更改通知批处理。</p>
+<h3>ThreeWayRemoteTree</h3>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a>是<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a>的子类，它是为<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>量身定制的。客户端必须重写它以提供从服务器获取远程状态的机制。在下一个示例中将更详细地讨论<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> 。</p>
+<h3>CachedResourceVariant</h3>
+<p><a href="../reference/api/org/eclipse/team/core/variants/CachedResourceVariant.html">CachedResourceVariant</a>是IResourceVariant的部分实现，它将任何提取的内容缓存一段时间（当前为1小时）。这是有帮助的，因为可以在短时间内多次访问内容（例如，确定同步状态并在比较编辑器中显示内容）。子类必须仍然提供唯一的内容标识符以及可以持久化的字节数组，以便重新创建资源变体句柄。</p>
+<h3>构建于现有工作区同步之上</h3>
+<p>许多存储库提供程序可能已经具有用于管理其同步状态的机制（例如，如果它们具有现有插件）。<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a>及其相关类提供了在现有同步基础结构之上构建的能力。例如，这是所有Git订阅者的超类。</p>
+<h4>ResourceVariantTreeSubscriber</h4>
+<p>正如前面的示例中所提到的， <a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySubscriber.html">ThreeWaySubscriber</a>是<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber</a>的子类，它使用<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer</a>提供本地工作区同步。<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTreeSubscriber.html">ResourceVariantTreeSubscriber的</a>子类必须提供：</p>
+<ul>
+  <li>
+    <p><a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a> （或<a href="../reference/api/org/eclipse/team/core/variants/AbstractResourceVariantTree.html">AbstractResourceVariantTree</a> ）的子类，它们提供遍历和刷新远程资源变体的行为，对于支持三向比较的订阅者，提供基本资源变体。</p>
+  </li>
+  <li><a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantComparator.html">IResourceVariantComparator</a>的实现，它执行本地资源及其基本和远程资源变体的双向或三向比较。通常还提供<a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html">SyncInfo</a>的子类以便定制同步状态确定算法。</li>
+  <li>用于提供订户根的根方法的实现和用于确定订户监督哪些资源的isSupervised方法的实现。</li>
+</ul>
+<p>使用这些设施实现订户的其他功能。</p>
+<h4>ResourceVariantTree</h4>
+<p><a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantTree.html">ResourceVariantTree</a>是<a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantTree.html">IResourceVariantTree</a>的具体实现，它提供以下内容：</p>
+<ul>
+  <li>遍历资源变体树</li>
+  <li>将先前资源变体树状态与当前获取状态合并的逻辑。</li>
+  <li>使用<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a>缓存资源变体树。</li>
+</ul>
+<p>以下内容必须由子类实现：</p>
+<ul>
+  <li>从表示资源变体的缓存字节创建资源变量句柄</li>
+  <li>从服务器获取当前远程状态</li>
+  <li>创建用于缓存唯一标识资源变体的字节的字节存储实例</li>
+</ul>
+<p>提供了<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore的</a>具体实现，它们跨工作台调用（ <a href="../reference/api/org/eclipse/team/core/variants/PersistantResourceVariantByteStore.html">PersistantResourceVariantByteStore</a> ） <a href="../reference/api/org/eclipse/team/core/variants/PersistantResourceVariantByteStore.html">持久</a>保存字节，或仅为当前会话缓存字节（ <a href="../reference/api/org/eclipse/team/core/variants/SessionResourceVariantByteStore.html">SessionResourceVariantByteStore</a> ）。但是，在现有工作区同步基础结构之上构建订户通常需要实现与底层同步器交互的<a href="../reference/api/org/eclipse/team/core/variants/ResourceVariantByteStore.html">ResourceVariantByteStore</a>子类。例如， <a href="../reference/api/org/eclipse/team/core/variants/ThreeWayRemoteTree.html">ThreeWayRemoteTree</a>使用一个字节存储实现，它将远程字节存储在<a href="../reference/api/org/eclipse/team/core/variants/ThreeWaySynchronizer.html">ThreeWaySynchronizer中</a> 。</p>
+<p>除了从资源变体树实例而不是订户请求句柄之外，此示例的资源变体句柄的创建与前面的示例没有区别。</p>
+
+</body>
+</html>

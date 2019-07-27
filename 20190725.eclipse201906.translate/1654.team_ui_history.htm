@@ -1,0 +1,58 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+<title>添加历史支持</title>
+
+<link rel="stylesheet" type="text/css" href="../book.css">
+</head>
+<body bgcolor="#ffffff" >
+<h2>添加历史支持</h2>
+<p>将History支持添加到存储库有两个部分：</p>
+<ul>
+<li>提供核心历史记录接口的实现;请参阅“ <b>提供历史”</b>部分。</li>
+<li>创建历史记录页面中显示的历史记录页面的UI元素;请参阅<b>显示历史记录</b>部分。</li>
+</ul>
+
+<h3>提供历史</h3>
+<p>核心历史记录接口允许用户通过查询<a href="../reference/api/org/eclipse/team/core/history/IFileHistoryProvider.html">RepositoryProvider</a>返回的<a href="../reference/api/org/eclipse/team/core/history/IFileHistoryProvider.html">IFileHistoryProvider</a>来访问项目的历史记录。为此，您需要：</p>
+<ul>
+<li>通过扩展<a href="../reference/api/org/eclipse/team/core/history/provider/FileHistory.html">FileHistory</a>为<a href="../reference/api/org/eclipse/team/core/history/IFileHistory.html">IFileHistory</a>提供实现。</li>
+<li>通过扩展<a href="../reference/api/org/eclipse/team/core/history/provider/FileRevision.html">FileRevision</a>为<a href="../reference/api/org/eclipse/team/core/history/IFileRevision.html">IFileRevision</a>提供实现。</li>
+<li>通过扩展<a href="../reference/api/org/eclipse/team/core/history/provider/FileHistoryProvider.html">FileHistoryProvider</a>为<a href="../reference/api/org/eclipse/team/core/history/IFileHistoryProvider.html">IFileHistoryProvider</a>提供实现。</li>
+<li>为<a href="../reference/api/org/eclipse/team/core/RepositoryProvider.html#getFileHistoryProvider()">getFileHistoryProvider</a>提供实现，以允许用户从RepositoryProvider获取IFileHistoryProvider。</li>
+</ul>
+
+<h3>显示历史</h3>
+<p>要显示存储库中项目的历史记录，您可以提供一个或多个将在“历史记录”视图中显示的HistoryPages。为此，您需要：</p>
+<ul>
+<li>通过扩展<a href="../reference/api/org/eclipse/team/ui/history/HistoryPage.html">HistoryPage</a>为<a href="../reference/api/org/eclipse/team/ui/history/IHistoryPage.html">IHistoryPage</a>提供实现<a href="../reference/api/org/eclipse/team/ui/history/HistoryPage.html">。</a></li>
+<li>通过扩展<a href="../reference/api/org/eclipse/team/ui/history/HistoryPageSource.html">HistoryPageSource</a>为<a href="../reference/api/org/eclipse/team/ui/history/IHistoryPageSource.html">IHistoryPageSource</a>提供实现。当选择要在“历史记录”视图中显示资源时，它将尝试调整从存储库提供程序获取的FileHistoryProvider到HistoryPageSource。如果它不成功，它将尝试调整存储库提供程序本身。对于非资源对象，“历史记录”视图将尝试使对象适应HistoryPageSource。FileSystem History视图示例注册适配器工厂，该工厂将FileHistoryProvider调整为IHistoryPageSource。
+ </li>
+<li>创建显示历史记录操作，为Action提供对象贡献。有关详细信息，请参阅<a href="../reference/extension-points/org_eclipse_ui_popupMenus.html"><b>org.eclipse.ui.popupMenus</b></a> 。</li>
+</ul>
+
+<h3>显示子文件元素的历史记录</h3>
+<p>要显示文件中包含的模型元素的历史记录，可以执行以下操作：</p>
+<ul>
+<li>为文件实现<a href="../reference/api/org/eclipse/compare/structuremergeviewer/StructureCreator.html"><b>StructureCreator</b></a> 。</li>
+<li>Subclass <a href="../reference/api/org/eclipse/team/ui/history/ElementLocalHistoryPageSource.html"><b>ElementLocalHistoryPageSource</b></a>并将您的子文件元素调整为子类的实例。</li>
+<li>要显示在历史记录查看历史记录，通过你的历史页面的源代码和元素的<code>showHistoryFor</code>的方法<a href="../reference/api/org/eclipse/team/ui/TeamUI.html"><b>TeamUI</b></a> 。</li>
+<li>要在对话框中显示历史记录，请提供使用<a href="../reference/api/org/eclipse/team/ui/history/HistoryPageCompareEditorInput.html"><b>HistoryPageCompareEditorInput</b></a>显示历史记录的历史记录操作（显示，比较，替换）。</li>
+</ul>
+
+<h3>文件系统历史示例</h3>
+<p>FileSystem示例说明了如何为存储库项目提供历史记录和历史记录页面。在FileSystem托管项目中选择资源，然后选择“ <b>团队”&gt;“显示历史记录”</b> 。FileSystem History页面将显示在History视图中，其中显示了所有本地修订以及FileSystem修订。您可以右键单击任何修订，然后从上下文菜单中选择“ <i>打开</i> ”以打开修订。</p>
+ 
+<h3>FileRevisionEditorInput</h3>
+<p>为了支持<i>Open</i>功能，FileSystem历史示例必须创建自己的FileSystemRevisionEditorInput（请参阅org.eclipse.team.examples.filesystem.ui。FileSystemRevisionEditorInput）。此类适用于IFileRevision和IFileState，可用于确定编辑器是包含远程内容（IFileRevision）还是本地历史记录内容（IFileState）。</p>
+
+<p>同样，随SDK一起提供并由CVS历史记录页面和本地历史记录页面使用的现有FileRevisionEditorInput都适用于IFileRevision，可用于确定编辑器中包含的修订是否是远程修订的修订。</p>
+
+</body>
+</html>

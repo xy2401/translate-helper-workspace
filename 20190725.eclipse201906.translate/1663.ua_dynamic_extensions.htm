@@ -1,0 +1,89 @@
+<html lang="zh-Hans"  xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2011. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <link rel="STYLESHEET" href="../book.css" type="text/css" charset="ISO-8859-1">
+    <script language="JavaScript" src=
+    "PLUGINS_ROOT/org.eclipse.help/livehelp.js" type="text/javascript">
+</script>
+    <title>内容扩展</title>
+
+    <style type="text/css">
+/*<![CDATA[*/
+    span.c1 {color: blue}
+    /*]]>*/
+    </style>
+  </head>
+  <body >
+    <h2>内容扩展</h2>
+    <p>内容扩展是内容对已知锚点的贡献（类似于扩展点的扩展），或者替换文档中的现有元素。
+    </p>
+
+    <h3>贡献锚</h3>
+    <p>锚元素（例如<code>&lt;anchor id="my_anchor"/&gt;</code> ）可以在任何用户帮助XML文档中指定，并表示允许其他组件扩展此文档的位置。指定锚点就像在标记中添加元素一样简单。
+    </p>
+    <p>要将内容提供给锚点，您必须将要添加的内容写入单独的XML文件中，并使用两个扩展点之一将其挂接到平台中。对于<a href="ua_help.htm">帮助</a>或<a href="ua_cheatsheet.htm">备忘单</a>内容，您必须使用<a href="../reference/extension-points/org_eclipse_help_contentExtension.html"><code>
+
+      org.eclipse.help.contentExtension</code></a>扩展点。对于<a href="ua_intro.htm">welcome（intro）</a>扩展，请使用<a href="../reference/extension-points/org_eclipse_ui_intro_configExtension.html"><code>org.eclipse.ui.intro.configExtension</code></a> 。目录标记还允许执行类似功能的特殊构造<a href="ua_help_content_nested.htm"><code>link</code></a>和<a href="ua_help_content_nested.htm"><code>link_to</code></a>包括和贡献，但执行将额外文档合并到索引以进行搜索的附加操作。
+    </p>
+
+    <p>例如，假设组件A的文档提供了它支持的文件格式列表。如果组件B将A的支持扩展到几种格式，则可以将锚点放在A的列表中，并从B扩展列表。例如：</p>
+    <pre>
+   &lt;p&gt;The following list shows the supported formats:&lt;/p&gt;
+   &lt;ul&gt;
+      &lt;li&gt;Portable Network Graphics (.png)&lt;/li&gt;
+
+      &lt;li&gt;Joint Photographic Experts Group (.jpeg)&lt;/li&gt;
+      &lt;li&gt;Graphical Interchange Format (.gif)&lt;/li&gt;
+      
+      &lt;!-- Extra formats go here --&gt;
+      <span class="c1">&lt;anchor id="image_format_list"/&gt;</span>
+   &lt;/ul&gt;
+
+</pre>
+    <p>然后，组件B可以对锚点做出贡献，通过指定以下扩展名将更多格式添加到列表中：</p>
+    <pre>
+   &lt;extension point="org.eclipse.help.contentExtension"&gt; 
+      &lt;contentExtension
+            file="path/to/extension.xml"/&gt;
+   &lt;/extension&gt;
+</pre>
+
+    <p>文件<code>path/to/extension.xml</code>可能包含的位置：</p>
+    <pre>
+   &lt;contentExtension&gt;
+      &lt;contribution
+            content="docs/mydoc.xhtml#mycontent"
+            path="/component_a_plugin/docs/doc_with_anchor.xhtml#anchorId"&gt;
+      &lt;/contribution&gt;
+
+   &lt;/contentExtension&gt;
+</pre>
+    <p>文档<code>id</code>具有<code>mycontent</code>属性<code>docs/mydoc.xhtml</code>的元素将包含您希望提供给锚点的内容。结果将是当用户查看文档时，额外内容将显示在锚点，就好像它已明确添加到原始文档中一样。
+    </p>
+
+    <h3>替换内容</h3>
+    <p>用户帮助文档中具有该文档唯一的<code>id</code>属性的任何XML元素都可以替换为任何其他元素。
+    </p>
+    <p>与对锚点的贡献一样，要替换元素，必须在单独的XML文件中编写要替换的新元素，并使用两个扩展点之一将其挂接到平台中。对于<a href="ua_help.htm">帮助</a>或<a href="ua_cheatsheet.htm">备忘单</a>内容，您必须使用<a href="../reference/extension-points/org_eclipse_help_contentExtension.html"><code>
+      org.eclipse.help.contentExtension</code></a>扩展点。对于<a href="ua_intro.htm">welcome（intro）</a>扩展，请使用<a href="../reference/extension-points/org_eclipse_ui_intro_configExtension.html"><code>org.eclipse.ui.intro.configExtension</code></a> 。
+    </p>
+    <p>替换与锚点的贡献相反的唯一区别是标记中使用的XML元素的名称;使用<code>replacement</code>元素而不是<code>contribution</code> （或欢迎的情况下的<code>replacementContent</code> ）。例如：</p>
+    <pre>
+   &lt;contentExtension&gt;
+
+      &lt;replacement
+            content="docs/mydoc.xml#myelement"
+            path="/plugin.id/path/doc.xml#elementId"&gt;
+      &lt;/replacement&gt;
+   &lt;/contentExtension&gt;
+</pre>
+    <p>（注意，对于welcome，标记是不同的，如<a href="../reference/extension-points/org_eclipse_ui_intro_configExtension.html"><code>org.eclipse.ui.intro.configExtension</code></a>扩展点中指定的那样）</p>
+
+    <h3>路径格式</h3>
+    <p><code>path</code>属性的格式是<code>/pluginId/path/file.xml#elementId</code> ，欢迎除了欢迎页面是<code>pageId/path/to/elementId</code> ，其中pageId是欢迎页面id，所有其他路径段都是容器元素的id组，导致目标元素。
+    </p>
+
+  </body>
+</html>

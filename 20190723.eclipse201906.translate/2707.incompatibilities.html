@@ -1,59 +1,37 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html lang="en">
+<html lang="zh-Hans" >
 <head>
-<meta name="copyright" content="Copyright (c) 2016, 2017 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page." >
+<meta name="copyright" content="Copyright (c) 2016, 2017 IBM Corporation and others. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="Content-Style-Type" content="text/css">
-<link rel="STYLESHEET" href="../../book.css" charset="ISO-8859-1" type="text/css">
-<title>Incompatibilities between Eclipse 4.6 and 4.7</title>
+<link rel="STYLESHEET" href="../../book.css" type="text/css" charset="ISO-8859-1">
+<title>Eclipse 4.6和4.7之间的不兼容性</title>
 </head>
 
-<body>
+<body >
 
-<h1>Incompatibilities between Eclipse 4.6 and 4.7</h1>
+<h1>Eclipse 4.6和4.7之间的不兼容性</h1>
 
-<p>
-  Eclipse changed in incompatible ways between 4.6 and 4.7 in ways that affect
-  plug-ins. The following entries describe the areas that changed and provide
-  instructions for migrating 4.6 plug-ins to 4.7. Note that you only need to look
-  here if you are experiencing problems running your 4.6 plug-in on 4.7.
+<p>Eclipse以4.6和4.7之间的不兼容方式以影响插件的方式进行了更改。以下条目描述了已更改的区域，并提供了将4.6插件迁移到4.7的说明。请注意，如果您在4.7上运行4.6插件时遇到问题，则只需查看此处。
 </p>
-<p>
-See also the list of <a href="../removals.html">deprecated API removals</a> for this release.
+<p>另请参阅此版本的<a href="../removals.html">已弃用API删除</a>列表。
 </p>
 
 <ol>
-<li><a href="#progress-convention">New calling convention for progress monitors</a></li>
+<li><a href="#progress-convention">进度监视器的新调用约定</a></li>
 </ol>
 
 <hr>
 
 <!-- ############################################## -->
-<h2><a name="progress-convention">1. New calling convention for progress monitors</a></h2>
+<h2><a name="progress-convention">1。进度监视器的新调用约定</a></h2>
 
-<p><strong>What is affected:</strong>
-<p>All methods which obtain their own top-level IProgressMonitor.</p>
+<p><strong>受影响的是什么：</strong>
+</p><p>获取自己的顶级IProgressMonitor的所有方法。</p>
 
-<p><strong>Description:</strong>
-<p>
-In order to reduce boilerplate code, Eclipse 4.7 has introduced a new calling convention for
-methods which receive an <code>org.eclipse.core.runtime.IProgressMonitor</code> as a parameter. In Eclipse 4.7 it is the
-caller's responsibility to invoke <code>done()</code> on IProgressMonitor rather than the
-receiver's. Callers can choose to use SubMonitor, which doesn't require the use of
-<code>done()</code>. This means that &mdash; in practice &mdash; most
-invocations of <code>done()</code> will be deleted along with their surrounding try/catch blocks.
-<p>
-This is not a breaking change for methods which receive a progress monitor as an argument, since
-they can tolerate callers whether or not the caller invokes done(). However, it may be a breaking
-change for methods that obtain their own top-level progress monitors.
-<p>
-Methods which obtain their own top-level progress monitors rather than receiving one as a
-parameter are now responsible for invoking done() on those monitors. Technically, they were
-always responsible for doing this, but some of them didn't do so because any method they
-passed it to would have invoked done() on their behalf. Now this will matter and the methods
-will need to be changed. For example:
-
-<pre>
+<p><strong>描述：</strong>
+</p><p>为了减少样板代码，Eclipse 4.7为接收<code>org.eclipse.core.runtime.IProgressMonitor</code>作为参数。在Eclipse 4.7中，调用者有责任在IProgressMonitor而不是接收者上调用<code>done()</code> 。调用者可以选择使用SubMonitor，它不需要使用<code>done()</code> 。这意味着 - 在实践中 - 大多数<code>done()</code>调用将与其周围的try / catch块一起被删除。
+</p><p>对于接收进度监视器作为参数的方法，这不是一个重大变化，因为无论调用者是否调用done（），它们都可以容忍调用者。但是，对于获得自己的顶级进度监视器的方法来说，这可能是一个重大变化。
+</p><p>获取自己的顶级进度监视器而不是接收一个作为参数的方法现在负责在这些监视器上调用done（）。从技术上讲，他们总是负责这样做，但有些人并没有这样做，因为他们传递给它的任何方法都会代表他们调用done（）。现在这很重要，需要改变方法。例如：</p><pre>
 // Before:
 public void doSaveAs() {
   IProgressMonitor monitor= getProgressMonitor();
@@ -73,43 +51,25 @@ public void doSaveAs() {
 }
 </pre>
 
-<p>
-Fortunately there are few of these methods and they are easy to find.
-<p>
-<strong>Action required:</strong>
-<ul>
-<li>Open the Call Hierarchy on <code>StatusLineManager#getProgressMonitor()</code>.</li>
-<li>Ensure that all callers of these methods contain a finally block that 
-    invokes done (as in the doSaveAs() example, above).</li>
-<li>Open the Type Hierarchy of <code>IProgressMonitor</code>. Look for progress monitors which do something in
-    their done() method besides reporting work, setting a task name, or calling done on another
-    monitor. SubMonitor can be ignored. Monitors which set a control's visibility or deallocate a
-    resource in their done() method must not be ignored.</li>
-<li>Use the Call Hierarchy view to locate every place that instantiates or accesses an instance of
-    one of those classes. Ensure that those access points contain a try/finally block that invokes done().</li>
+<p>幸运的是，这些方法很少，很容易找到。
+</p><p>
+<strong>需要采取的行动：</strong>
+</p><ul>
+<li>在<code>StatusLineManager#getProgressMonitor()</code>上打开调用层次结构。</li>
+<li>确保这些方法的所有调用者都包含一个调用done的finally块（如上面的doSaveAs（）示例）。</li>
+<li>打开<code>IProgressMonitor</code>的类型层次结构。查找进度监视器，除了报告工作，设置任务名称或在另一台监视器上调用done之外，还在其done（）方法中执行某些操作。SubMonitor可以忽略。不得忽略在其done（）方法中设置控件可见性或取消分配资源的监视器。</li>
+<li>使用“调用层次结构”视图查找实例化或访问其中一个类的实例的每个位置。确保这些访问点包含调用done（）的try / finally块。</li>
 </ul>
 
-<p><strong>More Information:</strong>
-<p>
-See <a href="https://eclipse.org/articles/Article-Progress-Monitors/article.html" target="_blank">this article</a> for
-more examples of how to use progress monitors with the new calling convention. Background and discussion
-about this change <a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=487372" target="_blank">can be found here.</a>
+<p><strong>更多信息：</strong>
+</p><p>有关如何将进度监视器与新调用约定一起使用的更多示例，请参阅<a href="https://eclipse.org/articles/Article-Progress-Monitors/article.html" target="_blank">此文章</a> 。关于这种变化的背景和讨论<a href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=487372" target="_blank">可以在这里找到。</a>
 
 
 <!-- ############################################## -->
 
-<h2>2. <a name="bidi-1.0.0">javax.xml removed from org.eclipse.e4.rcp feature</a></h2>
-<p><strong>What is affected:</strong> Clients that refer to
-the <code>javax.xml</code> bundle and use the <code>org.eclipse.e4.rcp</code> feature for that dependency.
+</p><h2>2. <a name="bidi-1.0.0">从org.eclipse.e4.rcp功能中删除了javax.xml</a></h2>
+<p><strong>受影响的内容：</strong>引用<code>javax.xml</code>包并为该依赖项使用<code>org.eclipse.e4.rcp</code>功能的客户端。
 </p>
-<p><strong>Description:</strong>
-
-The <code>javax.xml</code> plug-in has been removed from the <code>org.eclipse.e4.rcp</code> feature.
-The <code>javax.xml</code> package is provided by JavaSE 1.7 and the Eclipse Platform requires Java 1.8.
-</p>
-If you have a dependency to this bundle and if you are using the
-org.eclipse.e4.rcp you need to adjust require-bundle: javax.xml to
-import-package in the corresponding MANIFEST.MF.
-
-</body>
+<p><strong>说明：</strong>已从<code>javax.xml</code>功能中删除<code>org.eclipse.e4.rcp</code>插件。<code>javax.xml</code>包由JavaSE 1.7提供，Eclipse Platform需要Java 1.8。
+</p>如果您对此捆绑包有依赖关系，并且您正在使用org.eclipse.e4.rcp，则需要在相应的MANIFEST.MF中将require-bundle：javax.xml调整为import-package。</body>
 </html>

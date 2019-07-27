@@ -1,0 +1,81 @@
+<html lang="zh-Hans" >
+<head>
+
+<meta name="copyright" content="Copyright (c) IBM Corporation and others 2000, 2005. This page is made available under license. For full details see the LEGAL in the documentation book that contains this page.">
+
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type">
+  <meta content="text/css" http-equiv="Content-Style-Type">
+  <link type="text/css" href="../book.css" rel="STYLESHEET" charset="ISO-8859-1">
+  <title>同步支持</title>
+  <link href="../book.css" type="text/css" rel="stylesheet">
+</head>
+<body  style="background-color:rgb(255,255,255)">
+<h2>同步支持</h2>
+<p>Eclipse包括用于管理和显示工作空间资源与另一个位置的资源之间的同步状态的API。我们将工作空间外部的资源称为变体。同步是在不同位置显示资源之间的变化的行为，并且可选地允许用户通过执行动作来影响同步状态。同步API与RepositoryProvider API正交，无需存储库提供程序即可使用。同步API的目的是简化实现呈现资源同步状态的不同方式的任务。因此，API需要一种方法来查询资源的同步状态，但不需要一种方法来影响状态。影响状态的方法留给实现者（尽管UI确实提供了用于将提供者特定菜单项添加到菜单的钩子）。</p>
+<h3>术语</h3>
+<p>在描述同步API之前，介绍在讨论工作区同步时应用的一些术语和概念是有帮助的。</p>
+<blockquote>
+  <p><em>资源变体</em> ：映射到另一个位置存在的资源的本地资源可以称为该资源的变体。也就是说，资源通常非常相似，但可能略有不同（由于对本地资源的修改或其他用户对远程复制所做的更改）。我们以本地工作空间为中心视图，将本地副本称为资源，将任何远程副本称为资源变体。</p>
+  <p><em>同步</em> ：我们将同步作为向用户显示资源变体之间差异的操作。同步不会影响变体的状态，而是提供一个视图来帮助用户理解不同变体集之间的差异。然而，通常允许用户在同步时影响变体的状态（例如，允许登记或恢复）。</p>
+  <p><em>双向与三向同步</em> ：同步状态确定有两种基本类型：双向和三向。双向比较仅考虑本地资源和单个资源变体，称为远程资源变体。这种类型的比较只能显示两种资源之间的差异，但不能提供关于变化如何相互关联的提示。大多数代码存储库系统支持同步状态确定的三向比较。此类比较涉及本地资源，远程资源变体和基本资源变体。基本资源变体表示本地和远程资源的公共祖先。这允许指示更改方向的更复杂的同步状态。<br>
+  </p>
+  <p>表1：同步状态<br>
+  </p>
+  <table border="1" cellspacing="2" cellpadding="2" style="text-align:left;width:90%">
+    <tbody>
+      <tr>
+        <td style="vertical-align:top"><span style="font-weight:bold">双向</span></td>
+        <td style="vertical-align:top"><span style="font-weight:bold">三通</span></td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top">变<br>删除<br>添加</td>
+        <td style="vertical-align:top">外向变化<br>传入的变化<br>传出删除<br>传入删除<br>外出加法<br>传入的补充<br>冲突的变化<br>删除冲突<br>相互矛盾的加法</td>
+      </tr>
+    </tbody>
+  </table>
+</blockquote>
+<h3>基础知识 -  SyncInfo</h3>
+<p><a href="../reference/api/org/eclipse/team/core/synchronize/package-summary.html">org.eclipse.team.core.synchronize</a>中的类用于描述同步状态。最重要的类是<a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html">SyncInfo，</a>因为它是实际定义同步状态的类。它可以使用如下：</p>
+<pre><span style="color: rgb(68, 68, 204);">SyncInfo info = getSyncInfo(resource); // this is a simulated method of obtaining the sync info for a resource<br>int changekind = info.getKind();<br>if(info.getResourceComparator().isThreeWay()) {<br>  if((changeKind &amp; SyncInfo.DIRECTION_MASK) == SyncInfo.INCOMING) {<br>    // do something<br>  }<br>} else if(changeKind == SyncInfo.CHANGE) {<br>    // do something else<br>}</span></pre>
+<p>SyncInfo类提供双向和三向比较算法，客户端必须提供资源和可以比较资源的类（ <a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantComparator.html">IResourceVariantComparator</a> ）。这是一个示例变量比较器：</p>
+<pre style="color: rgb(68, 68, 204);">public class TimestampVariantComparator implements IResourceVariantComparator {	<br>  protected boolean compare(IResourceVariant e1, IResourceVariant e2) {<br>    if(e1.isContainer()) {<br>      if(e2.isContainer()) {<br>        return true;<br>      }<br>      return false;<br>    }<br>    if(e1 instanceof MyResourceVariant &amp;&amp; e2 instanceof MyResourceVariant) {<br>      MyResourceVariant myE1 = (MyResourceVariant)e1; <br>      MyResourceVariant myE2 = (MyResourceVariant)e2; <br>      return myE1.getTimestamp().equals(myE2.getTimestamp());<br>    }<br>    return false;<br>  }<br>  protected boolean compare(IResource e1, IResourceVariant e2) {<br>      <br>  }<br>  public boolean isThreeWay() {<br>    return true;<br>  }<br>}<br><br>SyncInfo info = new SyncInfo(resource, variant1, variant2, new TimestampComparator());<br>info.init(); // calculate the sync info</pre>
+<p>此程序包还包含专门设计用于包含SyncInfo和可应用于SyncInfo实例的过滤器的集合。
+</p>
+<h3>管理同步状态</h3>
+<p>正如我们在上面的示例中看到的， <a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html">SyncInfo</a>和<a href="../reference/api/org/eclipse/team/core/variants/IResourceVariantComparator.html">IResourceVariantComparator</a>类提供对资源同步状态的访问。但我们还没有看到的是如何管理国家。<a href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html">订阅者</a>使用双向或三向比较提供对本地工作空间中的资源与这些资源的一组资源变体之间的同步状态的访问，这取决于订户的性质。订户提供以下功能：</p>
+
+<ul>
+  <li><span style="font-weight:bold">本地工作空间遍历</span> ：订阅者支持遍历由订户<em>监督</em>的本地工作空间资源。这样，订户具有一组<em>根</em>资源，其定义订户控制下的工作空间子树，以及返回工作空间资源的受监督成员的<em>成员</em>方法。该遍历与通常的工作空间资源遍历的不同之处在于，被遍历的资源可以包括本地不存在的资源，这是因为它们已被本地用户删除或由第三方创建。<br>
+  </li>
+  <li><span style="font-weight:bold">资源同步状态确定</span> ：对于监督资源，订户提供对资源的同步状态的访问，包括对资源变体的访问。对于每个受监督的资源，订户提供<em>SyncInfo</em>对象，该对象包含同步状态和用于确定状态的<em>变体</em> 。订户还提供<em>IResourceVariantComparator</em> ，用于确定是使用双向还是三向比较，并提供SyncInfo在确定同步状态时用于比较资源变量的逻辑。<br>
+  </li>
+  <li><span style="font-weight:bold">刷新同步状态和更改通知</span> ：客户端可以通过侦听Core资源增量来对本地资源发生的更改做出反应。当本地资源改变时，然后可以从订户重新获得资源的同步状态。但是，客户端必须显式查询服务器以了解资源变体是否有更改。对于订阅者，此过程分为两部分。客户端可以明确<em>刷新</em>订户。作为响应，订户将从远程位置获得资源变体的最新状态，并且针对已经改变的任何资源变体获取<em>同步状态改变</em>事件。更改通知与刷新分开，因为可能有其他操作联系远程位置并获取最新的远程状态。</li>
+</ul>
+<p>API没有定义如何创建订阅服务器，这留给了特定的实现。例如，CVS插件在执行合并时创建订阅服务器，另一个用于比较，另一个用于在将本地工作空间与当前分支同步时创建订阅服务器。</p>
+<p>因此，让我们重新审视我们使用SyncInfo的第一个示例，并了解如何使用订阅服务器来访问SyncInfo。</p>
+
+<pre><span style="color: rgb(68, 68, 204);">// Create a file system subscriber and specify that the<br>// subscriber will synchronize with the provided file system location<br>Subscriber subscriber = new FileSystemSubscriber("c:\temp\repo");<br><br>// Allow the subscriber to refresh its state<br>subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, monitor);<br><br>// Collect all the synchronization states and print<br>IResource[] children = subscriber.roots();<br>for(int i=0; i &lt; children.length; i++) {<br>  printSyncState(children[i]);<br>}<br><br>...<br><br>void printSyncState(Subscriber subscriber, IResource resource) {<br>  System.out.println(subscriber.getSyncInfo(resource).toString());<br></span><span
+ style="color: rgb(68, 68, 204);"><span style="color: rgb(68, 68, 204);">  IResource[] children = subscriber.members(resource);<br>  for(int i=0; i &lt; children.length; i++) {<br>    IResource child = children[i];<br>    if(! child.exists()) {<br>      System.out.println(resource.getFullPath() + " doesn't exist in the workspace");<br>    }<br>    printSyncState(subscriber, children[i]);<br>  }<br>}<br></span></span></pre>
+<p>要记住的重要一点是，订阅者知道工作空间中不存在的资源，并且可以从<a href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html#members(org.eclipse.core.resources.IResource)">订阅者</a> <a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html#getLocal()">#member</a> <a href="../reference/api/org/eclipse/team/core/subscribers/Subscriber.html#members(org.eclipse.core.resources.IResource)">（）</a>和<a href="../reference/api/org/eclipse/team/core/synchronize/SyncInfo.html#getLocal()">SyncInfo＃getLocal（）</a>返回不存在的资源。
+ </p>
+<h3>在UI中显示同步状态</h3>
+<p>我们可以花更多时间来解释如何管理同步状态，而是让我们看看如何实际获得向用户显示的状态。<a href="../reference/api/org/eclipse/team/ui/synchronize/ISynchronizeParticipant.html">ISynchronizeParticipant</a>是用户界面组件，它显示同步状态并允许用户影响其状态。“同步视图”显示同步参与者，但也可以在对话框和向导中显示这些参与者。为了向用户提供向用户显示任何类型的同步状态的支持，即使那些不基于SyncInfo和订阅者的同步状态，参与者也是非常通用的组件。</p>
+<p>还有一个名为<a href="../reference/extension-points/org_eclipse_team_ui_synchronizeWizards.html">org.eclipse.team.ui.synchronizeWizards</a>的扩展点，用于添加同步创建向导。这将使您的向导进入全局同步操作和同步视图，以便用户可以轻松创建您的类型的同步。
+</p>
+<p>但是，如果您已实现订阅服务器，则可以从名为<a href="../reference/api/org/eclipse/team/ui/synchronize/SubscriberParticipant.html">SubscriberParticipant</a>的具体参与者中受益，该参与者将提供以下功能：</p>
+
+<ul>
+  <li>在后台从订阅服务器收集SyncInfo。</li>
+  <li>侦听工作区中的更改以及刷新订阅服务器时发现的更改，并动态更新同步状态。</li>
+  <li>提供支持过滤更改和布局的模式的用户界面。</li>
+  <li>支持使用订阅服务器安排刷新，以使同步状态保持最新。</li>
+  <li>支持在后台刷新订阅服务器。</li>
+  <li>支持导航更改并显示文件之间的差异。</li>
+  <li>支持按子类配置动作，工具栏和装饰器。<br>
+  </li>
+</ul>
+<p>解释这些概念的最佳方法是在一个简单示例的上下文中看到它们。转到<a href="team_synchronize_localhistory_example.htm">本地历史记录同步</a>示例，了解如何一起使用所有这些部分。或者，如果您想了解如何使用更高级的API，请转到<a href="team_synchronize_beyond_basics.htm">Beyond The Basics</a> 。<br>
+</p>
+
+</body>
+</html>
